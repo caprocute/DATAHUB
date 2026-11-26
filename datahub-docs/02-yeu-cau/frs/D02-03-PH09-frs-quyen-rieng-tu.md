@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH09
 ten: Đặc tả yêu cầu chức năng phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, chủ quản dữ liệu, cán bộ ATTT, kỹ sư dh-data, kiểm thử viên
@@ -33,13 +33,13 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH09 Use case; D03-02-PH09 Thiết kế c
 | Chỉ số | Giá trị |
 |---|---|
 | Yêu cầu chức năng | 64 (M: 42, S: 18, C: 4) |
-| Quy tắc nghiệp vụ | 61 (BR-09-001…61) |
-| Yêu cầu phi chức năng | 23 (NFR-09-001…23) |
+| Quy tắc nghiệp vụ | 62 (BR-09-001…62) |
+| Yêu cầu phi chức năng | 26 (NFR-09-001…26) |
 | Màn hình | 22 (UI-09-01…22) |
-| API | 237 operation dự kiến (226 control plane, 11 data plane), 32 sự kiện (EVT-09-01…32) |
-| Mã lỗi | 78 control (ERR-09-001…078), 13 data plane (ERR-09-101…113); lỗi `401`, `403` do thiếu quyền chức năng, `428` dùng mã nền ERR-00-401, 403, 428 |
-| Thực thể mức logic | 51 (EN-09-01…51) |
-| Tham số theo tenant | 36 khóa `09.*` (mục 8.2) |
+| API | 245 operation dự kiến (234 control plane, 11 data plane), 32 sự kiện (EVT-09-01…32) |
+| Mã lỗi | 82 control (ERR-09-001…082), 13 data plane (ERR-09-101…113); lỗi `401`, `403` do thiếu quyền chức năng, `428` dùng mã nền ERR-00-401, 403, 428 |
+| Thực thể mức logic | 55 (EN-09-01…55) |
+| Tham số theo tenant | 43 khóa `09.*` (mục 8.2) |
 | Câu hỏi mở | 19 (Q09-01…Q09-19) |
 | Chức năng hệ cũ được phủ | `LGC-TOOL-012` (Nâng cấp), `LGC-NGSP-003` (Giữ nguyên, PH-09 kiểm soát mục đích) |
 | Đợt | Đợt 2 (mốc W4); 4 chức năng mức C sang Đợt 3 |
@@ -246,7 +246,7 @@ Phân hệ gồm các thành phần nội bộ; bảng dưới giúp biết mộ
 | `privacy-ropa` | Hoạt động xử lý, cơ sở pháp lý, DPIA, xuất sổ | Spring, mẫu xuất DOCX, XLSX |
 | `privacy-purpose` | Mục đích, yêu cầu, chấp thuận, dựng và ký bundle, phát hiện bất thường | Spring, OPA bundle (Rego, `opa build --signing-key`), OpenBao transit sign, Kafka |
 | `privacy-decision` | Data plane: quyết định, kế hoạch che, áp che, chỉ mục phân loại | Spring WebFlux, bộ đệm trong bộ nhớ, Valkey cho bản chụp kế hoạch (không giữ giá trị rõ) |
-| `privacy-policy` | Chính sách che, mô phỏng, phiếu xem đầy đủ, cấu hình che log, quét rò rỉ | Spring, thư viện che dùng chung `dh-privacy-pep`, Loki query |
+| `privacy-policy` | Chính sách che, mô phỏng, phiếu xem đầy đủ, cấu hình che log, quét rò rỉ | Spring, thư viện che dùng chung `dh-privacy-client`, Loki query |
 | `privacy-crypto` | Miền và khóa giả danh hóa, giả danh hóa, khôi phục | OpenBao transit (HMAC, mã hóa dẫn xuất), Spring Cloud Vault |
 | `privacy-anon` | Cấu hình, job ẩn danh hóa, rủi ro, tập đã ẩn danh | Job Kubernetes Java, ARX 3.9 (Apache-2.0) |
 | `privacy-retention` | Lịch lưu giữ, tác vụ xóa, giữ pháp lý, xóa mật mã | ShedLock, tác vụ nền, OpenBao |
@@ -255,6 +255,8 @@ Phân hệ gồm các thành phần nội bộ; bảng dưới giúp biết mộ
 | `privacy-ops` | Kiểm toán, bảng điều khiển, báo cáo, tham số | Micrometer, Prometheus, thư viện kiểm toán chung |
 
 : Thành phần của PH-09
+
+Kho đối tượng của PH-09 là Garage (giao thức S3): tệp xuất, báo cáo, tập đã ẩn danh, kết quả khôi phục mã hóa SSE-C và bundle đã ký. Ceph RGW chỉ là kho WORM của nhật ký kiểm toán do PH-13 quản lý; PH-09 không ghi trực tiếp vào đó.
 
 Hình dưới là trình tự luồng chính: từ lúc chủ quản chấp thuận đến lúc một lời gọi API được quyết định và trả về đã che.
 
@@ -403,7 +405,7 @@ Quy tắc chọn giữa `DROP` và che một phần kế thừa từ SRS cũ (BR
 
 ### 4.2. Thực thể
 
-PH-09 có 51 thực thể mức logic, tất cả mang `tenant_id` và bật RLS (BR-09-060). Thiết kế vật lý ở D03-03-PH09; bảng dưới là nguồn mã `EN-09-nn` cho các tập sau. Các thực thể không chứa giá trị DLCN rõ, trừ phiếu yêu cầu chủ thể giữ định danh mã hóa envelope.
+PH-09 có 55 thực thể mức logic, tất cả mang `tenant_id` và bật RLS (BR-09-060). Thiết kế vật lý ở D03-03-PH09; bảng dưới là nguồn mã `EN-09-nn` cho các tập sau. Các thực thể không chứa giá trị DLCN rõ, trừ phiếu yêu cầu chủ thể giữ định danh mã hóa envelope.
 
 | Mã | Thực thể | Mô tả |
 |---|---|---|
@@ -458,6 +460,10 @@ PH-09 có 51 thực thể mức logic, tất cả mang `tenant_id` và bật RLS
 | EN-09-49 | `PrivacyAuditEvent` | Bản ghi kiểm toán thao tác bảo vệ dữ liệu (chuyển PH-13, giữ chỉ mục để tra) |
 | EN-09-50 | `ComplianceReport` | Báo cáo tuân thủ theo kỳ: chỉ số, tệp, người lập |
 | EN-09-51 | `TenantSetting` | Tham số `09.*` của tenant: khóa, giá trị, trần, sàn, người sửa |
+| EN-09-52 | `PurposeElement` | Trường được phép của một mục đích: phạm vi tối đa mà chấp thuận của mục đích đó được bao (bảng con của `Purpose`) |
+| EN-09-53 | `RetentionScheduleLine` | Dòng của lịch lưu giữ: bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động `RetentionAction` (bảng con của `RetentionSchedule`) |
+| EN-09-54 | `OutboxEvent` | Sự kiện chờ phát ghi cùng giao dịch với thay đổi (outbox, ADR-042), không mang giá trị DLCN |
+| EN-09-55 | `InboxEvent` | Sự kiện PH-09 tiêu thụ đã xử lý, chống xử lý trùng (đổi phân loại PH-06, đăng ký PH-02, lượt khai thác PH-14, sự cố PH-18) |
 
 : Thực thể mức logic của PH-09
 
@@ -632,7 +638,7 @@ Phân hệ có 64 chức năng chia 11 nhóm A đến K. Mức ưu tiên theo Mo
 | FR-09-060 | J | Hồ sơ vi phạm, khắc phục và bài học | S | Đợt 2 | UI-09-19 |
 | FR-09-061 | K | Ghi vết thao tác bảo vệ dữ liệu | M | Đợt 2 | UI-09-20 |
 | FR-09-062 | K | Bảng điều khiển tuân thủ quyền riêng tư | S | Đợt 2 | UI-09-01 |
-| FR-09-063 | K | Báo cáo tuân thủ định kỳ | C | Đợt 3 | UI-09-01 |
+| FR-09-063 | K | Báo cáo tuân thủ định kỳ | C | Đợt 3 | UI-09-01, UI-09-21 |
 | FR-09-064 | K | Cấu hình tham số PH-09 của tenant | M | Đợt 2 | UI-09-21 |
 
 : Danh sách chức năng của PH-09
@@ -665,7 +671,7 @@ Mỗi chức năng được đặc tả bằng một khối hai cột gồm 17 m
 
 : Các mục của bảng đặc tả chức năng
 
-Quy ước chung cho mọi chức năng, không lặp lại ở từng khối. API control plane có tiền tố `/api/privacy/v1`, data plane `/privacy/v1`; mọi `POST` đổi dữ liệu nhận `Idempotency-Key` (BR-09-061), mọi `PUT`, `PATCH` và chuyển trạng thái nhận `If-Match` (thiếu: `428`, lệch: ERR-09-004). Bước "chuyển duyệt bốn mắt" luôn theo trình tự dưới đây, nơi người đề nghị và người duyệt phải khác nhau (ERR-09-005) và việc duyệt xuất hiện trong "Việc của tôi" của người có quyền (FR-00-070).
+Quy ước chung cho mọi chức năng, không lặp lại ở từng khối. API control plane có tiền tố `/api/privacy/v1`, data plane `/privacy/v1`; mọi `POST` đổi dữ liệu nhận `Idempotency-Key` (BR-09-061; dùng lại khóa với thân khác: ERR-09-081; data plane không dùng khóa này), mọi `PUT`, `PATCH` và chuyển trạng thái nhận `If-Match` (thiếu: `428`, lệch: ERR-09-004). Bước "chuyển duyệt bốn mắt" luôn theo trình tự dưới đây, nơi người đề nghị và người duyệt phải khác nhau (ERR-09-005) và việc duyệt xuất hiện trong "Việc của tôi" của người có quyền (FR-00-070).
 
 ```{.mermaid caption="Trình tự duyệt bốn mắt dùng chung cho các chức năng có phiên bản"}
 sequenceDiagram
@@ -707,7 +713,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 ::: dac-ta
 **Mục đích.** Giữ danh mục bốn mức phân loại cố định (DD-08) cùng chính sách xử lý của từng mức theo bảng D03-07 §3.2, và nhãn chặn `STATE_SECRET`, để mọi chức năng sau dùng một nguồn duy nhất.
 
-**Tác nhân, quyền.** TA, SO sửa chính sách mức (`PERM-09-policy`); mọi vai trò có `PERM-09-read` xem; PA nạp mức mở rộng.
+**Tác nhân, quyền.** TA, SO sửa chính sách mức (`PERM-09-policy`); mọi vai trò có `PERM-09-read` xem.
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -717,7 +723,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 
 **Kích hoạt.** Mở tab "Mức phân loại" ở UI-09-02 hoặc nạp lúc khởi tạo tenant.
 
-**Đầu vào.** `code`, `name`, `rank` (1–9), `logPolicy` (`FULL`, `PARTIAL_MASK`, `NO_VALUE`), `displayPolicy` (`FULL`, `MASK_BY_ROLE`, `MASK_DEFAULT`), `encryptAtApp` (T-BOOL).
+**Đầu vào.** `code`, `name`, `rank` (1–4), `logPolicy` (`FULL`, `PARTIAL_MASK`, `NO_VALUE`), `displayPolicy` (`FULL`, `MASK_BY_ROLE`, `MASK_DEFAULT`), `encryptAtApp` (T-BOOL).
 
 **Luồng xử lý chính.**
 
@@ -725,11 +731,11 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 2. TA hoặc SO sửa `logPolicy`, `displayPolicy`; hệ thống kiểm `SENSITIVE` luôn `NO_VALUE`, `MASK_DEFAULT`, `encryptAtApp = true` và không cho đổi `code`, `rank` của bốn mức cố định (vi phạm: ERR-09-003).
 3. Hệ thống lưu, tăng phiên bản danh mục, ghi kiểm toán; bundle kế tiếp dùng chính sách mới.
 
-**Luồng thay thế.** PA thêm mức mở rộng `rank` 5–9 ở cấp nền tảng; tenant chỉ sửa chính sách mức.
+**Luồng thay thế.** Không có mức mở rộng: `DataClass` cố định bốn mức, `rank` 1 đến 4 theo đúng thứ tự `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE`; tenant chỉ sửa chính sách mức. Muốn thêm mức phải sửa DD-08 ở cấp nền tảng.
 
 **Luồng ngoại lệ.**
 
-- Ngừng mức mở rộng đang có trường dùng: ERR-09-011 (409); "Mục {mã} đang được {n} trường sử dụng nên không ngừng được."
+- Ngừng mức hoặc đổi `code`, `rank` của bốn mức cố định: ERR-09-003 (400); "Dữ liệu không hợp lệ: {chi tiết}."
 - Sửa lệch phiên bản: ERR-09-004 (409); "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
 
 **Đầu ra.** `200`; danh sách mức kèm `rank`, `fieldCount`, `ETag`.
@@ -797,7 +803,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 ::: dac-ta
 **Mục đích.** Đưa mọi trường của thực thể nội bộ, lược đồ API, lược đồ sự kiện vào danh mục phần tử dữ liệu (DD-09), từ phân hệ gọi, từ lược đồ nhập vào và từ khai báo MVP (`@Classified`, `x-dh-classification`).
 
-**Tác nhân, quyền.** PH-02, PH-04, PH-06, PH-10 (scope `privacy:register`); TA, SO, DS, SV (`PERM-09-classify`).
+**Tác nhân, quyền.** PH-02, PH-04, PH-06, PH-10 (scope `privacy:register`); TA, SO, DS, SV (`PERM-09-classify`); ngừng phần tử: TA, SO, DO.
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -816,13 +822,14 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 3. Với khai báo MVP, hệ thống tạo đề xuất `PROPOSED` giữ nguyên mức đã khai (BR-09-007); trường không khai báo vào hàng chờ đề xuất mức mặc định `SENSITIVE` (BR-09-001).
 4. Hệ thống phát kết quả đăng ký và kích hoạt tính lại mức hợp đồng (FR-09-006).
 
-**Luồng thay thế.** Đăng ký lặp cùng `target`: cập nhật siêu dữ liệu, không tạo mới; trường bị bỏ khỏi lược đồ mới được đánh dấu `REMOVED`, giữ lịch sử.
+**Luồng thay thế.** Ngừng phần tử (`ElementStatus.RETIRED`): TA, SO hoặc DO của tổ chức sở hữu gọi API-09-243 kèm lý do, chỉ khi phần tử không còn liên kết với hoạt động `ACTIVE` và không còn trong chấp thuận hiệu lực; phần tử ngừng vẫn giữ lịch sử phân loại. Đăng ký lặp cùng `target`: cập nhật siêu dữ liệu, không tạo mới; trường bị bỏ khỏi lược đồ mới được đánh dấu `REMOVED`, giữ lịch sử.
 
 **Luồng ngoại lệ.**
 
 - Phần tử trùng khi đăng ký đơn: ERR-09-014 (409); "Phần tử {đích} đã được đăng ký."
 - Lược đồ không đọc được: ERR-09-015 (422); "Không đọc được lược đồ: {lý do}."
 - Có nhãn bí mật nhà nước: ERR-09-018 (422); "Dữ liệu mang nhãn bí mật nhà nước không được đưa vào Datahub."
+- Ngừng phần tử còn liên kết hoặc còn trong chấp thuận hiệu lực: ERR-09-006 (409); "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 
 **Đầu ra.** `202` cho lô hoặc `201`; số phần tử `created`, `updated`, `rejected`.
 
@@ -836,7 +843,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 
 **Quy tắc nghiệp vụ.** BR-09-001; BR-09-007; BR-09-005.
 
-**Màn hình, API.** UI-09-02, UI-09-03; API-09-012, API-09-013, API-09-014, API-09-010, API-09-011.
+**Màn hình, API.** UI-09-02, UI-09-03; API-09-012, API-09-013, API-09-014, API-09-010, API-09-011, API-09-243.
 :::
 
 #### FR-09-004 · Đề xuất, xác nhận phân loại trường (hạ mức cần bốn mắt)
@@ -868,6 +875,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 **Luồng ngoại lệ.**
 
 - Người xác nhận ngoài tổ chức sở hữu: ERR-09-008 (403); "Bạn chỉ thao tác được trên dữ liệu thuộc tổ chức của mình."
+- Trường DLCN thiếu loại hoặc loại không khớp mức khi xác nhận: ERR-09-012 (422); "Trường {tên} là dữ liệu cá nhân, cần chọn loại dữ liệu cá nhân phù hợp."
 - Hạ mức thiếu căn cứ: ERR-09-013 (422); "Hạ mức phân loại cần nêu số văn bản căn cứ và lý do."
 - Người đề xuất tự xác nhận: ERR-09-005 (403); "Bạn là người đề nghị hoặc đã quyết định ở bước trước nên không được duyệt bước này."
 
@@ -1200,7 +1208,7 @@ Sổ hoạt động xử lý (ROPA) là hồ sơ pháp lý trả lời "Datahub 
 2. Người dùng chọn và thêm liên kết; hệ thống kiểm đối tượng cùng tenant và loại dữ liệu của phần tử nằm trong `categories` của hoạt động.
 3. Hợp đồng được liên kết thì mọi phần tử DLCN của hợp đồng được coi là thuộc hoạt động; hệ thống cập nhật số trường chưa phủ.
 
-**Luồng thay thế.** Gỡ liên kết khi hoạt động `ACTIVE` tạo phiên bản mới; gỡ liên kết cuối của một trường DLCN phải kèm hoạt động thay thế.
+**Luồng thay thế.** Liên kết là nội dung của phiên bản hoạt động: thêm hoặc gỡ liên kết khi hoạt động `ACTIVE` tạo phiên bản mới và qua duyệt như mọi thay đổi khác (BR-09-011); gỡ liên kết cuối của một trường DLCN phải kèm hoạt động thay thế.
 
 **Luồng ngoại lệ.**
 
@@ -1211,7 +1219,7 @@ Sổ hoạt động xử lý (ROPA) là hồ sơ pháp lý trả lời "Datahub 
 
 **Kết quả.** Cán bộ thấy trường nào chưa có cơ sở xử lý để xử lý trước hạn.
 
-**Hậu điều kiện.** Liên kết thuộc phiên bản hoạt động.
+**Hậu điều kiện.** Liên kết thuộc phiên bản hoạt động, không sửa tại chỗ khi `ACTIVE`.
 
 **Sự kiện phát ra.** Không.
 
@@ -1383,12 +1391,13 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 2. Người dùng chọn trường cần; hệ thống kiểm nằm trong phạm vi mục đích (ERR-09-028) và chưa có chấp thuận hiệu lực trùng (ERR-09-029).
 3. Người dùng gửi; hệ thống chuyển `SUBMITTED`, giao việc cho DO của tổ chức sở hữu hợp đồng ở "Việc của tôi".
 
-**Luồng thay thế.** Lưu nháp; rút yêu cầu trước khi duyệt (`WITHDRAWN`); gia hạn tạo từ chấp thuận hiện có (FR-09-017).
+**Luồng thay thế.** Lưu nháp; rút yêu cầu trước khi duyệt (`WITHDRAWN`); OR đề nghị gia hạn bằng cách lập yêu cầu loại `RENEWAL` kèm `renewsGrantId` của chấp thuận hiện có, DO duyệt ở FR-09-016 rồi hệ thống áp gia hạn (FR-09-017).
 
 **Luồng ngoại lệ.**
 
 - HTTT chưa hoạt động: ERR-09-027 (422); "HTTT {mã} chưa hoạt động hoặc chưa có đăng ký sử dụng hợp lệ."
 - Trường ngoài phạm vi: ERR-09-028 (422); "Trường {tên} nằm ngoài phạm vi của mục đích {mã}."
+- Mục đích đã hết hiệu lực khi lập hoặc gửi: ERR-09-026 (422); "Mục đích {mã} không còn hiệu lực."
 - Chấp thuận trùng: ERR-09-029 (409); "Đã có chấp thuận còn hiệu lực cho HTTT, mục đích và hợp đồng này."
 
 **Đầu ra.** `201`; yêu cầu kèm `requestId`, `status`.
@@ -1415,6 +1424,8 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 | `expectedVolume` | T-INT | Có | Lượt mỗi ngày, 1…10.000.000 | `2000` |
 | `requestedDays` | T-INT | Có | 1…`09.grant.max-days` | `365` |
 | `justification` | T-TEXT | Có | 20…2000 ký tự | `Tra cứu khi đăng ký khai sinh` |
+| `requestKind` | T-ENUM | Không | `AccessRequestKind`: `NEW` (mặc định), `RENEWAL` | `RENEWAL` |
+| `renewsGrantId` | T-ID | Khi `RENEWAL` | Chấp thuận `ACTIVE` của cùng HTTT và mục đích | `g-0001` |
 
 : Dữ liệu vào của FR-09-015
 
@@ -1440,7 +1451,8 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 1. DO mở yêu cầu, xem trường, mức, hoạt động xử lý, lịch sử khai thác của HTTT; hệ thống chuyển `UNDER_REVIEW`.
 2. DO chọn quyết định, thu hẹp trường, đặt hạn (≤ `09.grant.max-days`, ERR-09-030), hạn ngạch, điều kiện; từ chối hoặc yêu cầu bổ sung bắt buộc có lý do (ERR-09-007).
 3. Hệ thống kiểm DO không phải người lập (ERR-09-005) và đúng tổ chức (ERR-09-008); tạo `PurposeGrant` `ACTIVE` hoặc `SCHEDULED`.
-4. Hệ thống phát sự kiện, thông báo HTTT, kích hoạt dựng bundle (FR-09-018).
+4. Yêu cầu `RENEWAL` được chấp thuận thì hệ thống gia hạn chấp thuận gốc thay vì tạo chấp thuận mới, kiểm số lần gia hạn (ERR-09-031).
+5. Hệ thống phát sự kiện, thông báo HTTT, kích hoạt dựng bundle (FR-09-018).
 
 **Luồng thay thế.** Yêu cầu bổ sung chuyển `NEEDS_INFO`; quá `09.request.sla-days` ngày làm việc chưa xử lý thì nhắc DO và TA.
 
@@ -1478,7 +1490,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 
 **Tiền điều kiện.** Chấp thuận ở `ACTIVE` hoặc `SUSPENDED`.
 
-**Kích hoạt.** Hành động ở UI-09-09 hoặc UI-09-08; việc định kỳ 00:05 mỗi ngày.
+**Kích hoạt.** Hành động ở UI-09-09 hoặc UI-09-08; việc định kỳ mỗi 5 phút.
 
 **Đầu vào.** `action` (`renew`, `amend`, `suspend`, `resume`, `revoke`), `validTo`, `fields[]`, `quotaPerDay`, `reason`.
 
@@ -1487,9 +1499,9 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 1. Hệ thống kiểm trạng thái cho phép (ERR-09-006) và lý do cho suspend, revoke, amend (ERR-09-007).
 2. Gia hạn: kiểm số lần ≤ `09.grant.renew-max` (ERR-09-031) và hạn (ERR-09-030); sửa phạm vi chỉ thu hẹp tự do, mở rộng phải qua yêu cầu mới.
 3. Hệ thống ghi thay đổi, đưa vào bundle và đẩy sự kiện thu hồi, tạm dừng tới điểm thực thi trong 15 giây (BR-09-017).
-4. Việc định kỳ chuyển `EXPIRED` các chấp thuận quá hạn và phát cảnh báo 30 ngày trước (`09.grant.expiring-notice-days`).
+4. Điểm thực thi từ chối chấp thuận quá `validTo` trong 60 giây dù việc định kỳ chưa chạy; việc định kỳ chuyển `EXPIRED` trong 5 phút và phát cảnh báo 30 ngày trước (`09.grant.expiring-notice-days`, NFR-09-025).
 
-**Luồng thay thế.** Tạm dừng tự động khi FR-09-020 phát hiện bất thường và tenant bật `09.anomaly.auto-suspend`.
+**Luồng thay thế.** Tạm dừng tự động khi FR-09-020 phát hiện bất thường và tenant bật `09.anomaly.auto-suspend`: hệ thống thực hiện cùng nghiệp vụ `suspend` dưới danh nghĩa tác nhân `system:anomaly-detector` bằng lời gọi nội bộ, không qua API công khai, ghi kiểm toán và báo DO xác nhận trong 24 giờ (Q09-17).
 
 **Luồng ngoại lệ.**
 
@@ -1582,7 +1594,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 3. Chủ thể đang bị hạn chế: chỉ mục đích `statutory` được phép (BR-09-047).
 4. Hệ thống trả `{decision, reasonCode, allowedFields[], obligations[], grantId, planVersion}`; điểm thực thi trả `403` ERR-09-102 cho bên khai thác khi DENY.
 
-**Luồng thay thế.** Điểm thực thi dùng OPA cục bộ cho kết quả tương đương (NFR-09-008) và chỉ gọi API này khi cần giải thích.
+**Luồng thay thế.** Điểm thực thi dùng OPA cục bộ cho kết quả tương đương (NFR-09-008) và chỉ gọi API này khi cần giải thích. Thư viện `dh-privacy-client` đệm quyết định `ALLOW` tối đa `09.decision.cache-seconds` (15 giây) và `DENY` tối đa 5 giây (BR-09-062); sự kiện thu hồi, tạm dừng xóa đệm ngay để chặn lời gọi trong 15 giây (NFR-09-024).
 
 **Luồng ngoại lệ.**
 
@@ -1601,7 +1613,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 
 **Kiểm toán.** Có cho `SENSITIVE` và DENY: bên gọi, mục đích, hợp đồng, kết quả; không ghi nội dung.
 
-**Quy tắc nghiệp vụ.** BR-09-019; BR-09-005; BR-09-020.
+**Quy tắc nghiệp vụ.** BR-09-019; BR-09-005; BR-09-020; BR-09-062.
 
 **Màn hình, API.** Không; API-09-227.
 :::
@@ -1630,7 +1642,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 3. Hệ thống tạo `UsageAnomaly` (`AnomalyType`), thông báo DO và SO trong 5 phút, phát sự kiện.
 4. Người xử lý ghi nhận, loại trừ có lý do, tạm dừng chấp thuận hoặc chuyển thành vụ việc vi phạm (FR-09-058).
 
-**Luồng thay thế.** Ngưỡng cấu hình riêng theo mục đích; ngoại lệ tạm thời có hạn cho đợt tra cứu đã được phê duyệt.
+**Luồng thay thế.** Tự tạm dừng chấp thuận khi tenant bật `09.anomaly.auto-suspend` do hệ thống thực hiện nghiệp vụ `suspend` của FR-09-017, không qua API công khai; ngưỡng cấu hình riêng theo mục đích; ngoại lệ tạm thời có hạn cho đợt tra cứu đã được phê duyệt.
 
 **Luồng ngoại lệ.**
 
@@ -1639,7 +1651,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 
 **Đầu ra.** `200`; danh sách cảnh báo.
 
-**Kết quả.** Khai thác bất thường được thấy trong 5 phút, kèm bằng chứng đếm.
+**Kết quả.** Khai thác bất thường được thấy trong 5 phút (NFR-09-026), kèm bằng chứng đếm.
 
 **Hậu điều kiện.** Cảnh báo có trạng thái xử lý.
 
@@ -1858,11 +1870,12 @@ Nhóm D quyết định người dùng cuối thấy dữ liệu ở dạng nào
 2. Hệ thống áp chính sách nháp và chính sách `ACTIVE` lên mẫu trong bộ nhớ, trả bản trước và sau và danh sách khác biệt; mẫu không được lưu.
 3. Hệ thống chạy golden set (NFR-09-008) và ghi `MaskSimulation` `PASSED` hoặc `FAILED` để làm điều kiện gửi duyệt.
 
-**Luồng thay thế.** Mô phỏng theo vai trò khác để so sánh.
+**Luồng thay thế.** Mô phỏng theo vai trò khác để so sánh. Trước khi mô phỏng hệ thống quét mẫu bằng bộ mẫu của FR-09-005; mẫu có số định danh đúng kiểm tổng, số thẻ đúng Luhn hoặc thư điện tử, điện thoại không thuộc miền giả bị từ chối (ERR-09-080).
 
 **Luồng ngoại lệ.**
 
 - Mẫu quá lớn: ERR-09-039 (413); "Dữ liệu mẫu tối đa 1.000 dòng."
+- Mẫu có dấu hiệu là dữ liệu cá nhân thật: ERR-09-080 (422); "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả."
 
 **Đầu ra.** `200`; `{rows, diff, simulationId, result}`.
 
@@ -1990,7 +2003,7 @@ Nhóm D quyết định người dùng cuối thấy dữ liệu ở dạng nào
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm nhãn chặn trước; có nhãn thì từ chối toàn bản tin (ERR-09-101 (403); "Dữ liệu bị chặn theo quy định bảo vệ bí mật nhà nước.").
-2. Runtime áp `PARTIAL`, `REPLACE`, `GENERALIZE`, `DROP` bằng thư viện `dh-privacy-pep`; chỉ `KEYED_HASH`, `TOKENIZE` gọi PH-09 (ERR-09-009 khi OpenBao lỗi: ERR-09-108 (503); "Không băm có khóa hoặc token hóa được vì OpenBao không khả dụng.").
+2. Runtime áp `PARTIAL`, `REPLACE`, `GENERALIZE`, `DROP` bằng thư viện `dh-privacy-client`; chỉ `KEYED_HASH`, `TOKENIZE` gọi PH-09 (ERR-09-009 khi OpenBao lỗi: ERR-09-108 (503); "Không băm có khóa hoặc token hóa được vì OpenBao không khả dụng.").
 3. Trường chưa phân loại bị bỏ (`DROP`); hệ thống ghi kiểm toán số lượng theo trường, không ghi giá trị; không ghi được thì từ chối (ERR-09-110 (503); "Không ghi được nhật ký thao tác che, thao tác bị từ chối.").
 4. Hệ thống trả bản tin đã xử lý kèm `applied[]`, `warnings[]`.
 
@@ -2037,8 +2050,8 @@ Nhóm D quyết định người dùng cuối thấy dữ liệu ở dạng nào
 
 1. Hệ thống kiểm quyền (ERR-09-041), lý do (ERR-09-007), `neverReveal` (ERR-09-042), hạn mức `09.mask.reveal-max-per-hour` (ERR-09-043).
 2. Hệ thống ghi kiểm toán trước, rồi cấp phiếu `RevealGrant` hết hạn sau `09.mask.reveal-seconds` (60).
-3. DU chứa dữ liệu xác thực phiếu (`reveal-grants:verify`) rồi trả giá trị đã giải mã cho giao diện; PH-09 không thấy giá trị.
-4. Giao diện đếm ngược 60 giây rồi tự che; phiếu hết hạn không dùng lại.
+3. Giá trị đầy đủ chỉ nằm trong thân phản hồi `201` của API-09-102 với `Cache-Control: no-store`; PH-09 lấy giá trị từ DU chứa dữ liệu theo `recordRef`, giữ trong bộ nhớ đến khi trả lời, không ghi đĩa, không ghi log, không đưa vào sự kiện. DU có thể xác thực phiếu bằng API-09-236 khi giao diện nhúng gọi thẳng DU.
+4. Giao diện đếm ngược theo `expiresAt` do máy chủ trả cùng `serverTime` (không theo đồng hồ trình duyệt) rồi tự che; phiếu hết hạn không dùng lại.
 
 **Luồng thay thế.** Xuất tệp có giá trị rõ cần cùng điều kiện và thủy vân (FR-00-034).
 
@@ -2047,19 +2060,19 @@ Nhóm D quyết định người dùng cuối thấy dữ liệu ở dạng nào
 - Không ghi được vết: ERR-09-010 (503); "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
 - Phiếu hết hạn khi xác thực: ERR-09-112 (403); "Phiếu xem giá trị đầy đủ không hợp lệ hoặc đã hết hạn."
 
-**Đầu ra.** `201`; `{grantId, expiresAt}`.
+**Đầu ra.** `201`; `{grantId, token, status, issuedAt, expiresAt, serverTime, remainingThisHour, value}`; `value` chỉ có ở đây. Chi tiết một phiếu (không kèm giá trị) đọc bằng API-09-241.
 
 **Kết quả.** Người có quyền xem đủ trong thời gian ngắn; mọi lần xem đều truy được.
 
 **Hậu điều kiện.** Giá trị rõ không ghi đĩa, không vào log.
 
-**Sự kiện phát ra.** EVT-09-15 khi số lần vượt ngưỡng bất thường.
+**Sự kiện phát ra.** EVT-09-15 khi số lần xem của một người trong giờ đạt `09.mask.reveal-alert-per-hour`.
 
 **Kiểm toán.** Có: người, đối tượng, trường, lý do, thời điểm, hết hạn.
 
 **Quy tắc nghiệp vụ.** BR-09-026; BR-09-057.
 
-**Màn hình, API.** UI-09-22 (nhúng vào UI của phân hệ khác), UI-09-20; API-09-102, API-09-103, API-09-236.
+**Màn hình, API.** UI-09-22 (nhúng vào UI của phân hệ khác), UI-09-20; API-09-102, API-09-103, API-09-241, API-09-236.
 :::
 
 #### FR-09-030 · Cấu hình che cho log, trace và quét rò rỉ dữ liệu cá nhân trong log
@@ -2223,7 +2236,7 @@ Nhóm E gồm hai kỹ thuật khác bản chất. Giả danh hóa (FR-09-031 đ
 1. SO lập đề nghị; hệ thống kiểm miền đảo ngược được (ERR-09-048) và số lượng (ERR-09-049).
 2. DO duyệt cấp một, rồi TA hoặc DA duyệt cấp hai; ba người phải khác nhau (ERR-09-005); duyệt trong `09.reid.approval-ttl-hours`.
 3. SO thực hiện trong `09.reid.exec-window-minutes`, sau xác thực lại bước cao (MFA); hệ thống ghi kiểm toán trước rồi giải mã theo lô qua transit.
-4. Kết quả chỉ hiển thị 60 giây rồi hủy; thông báo SO và TA.
+4. Kết quả không trả trong thân phản hồi: API-09-124 trả `resultRef` là tham chiếu Garage mã hóa SSE-C, tải một lần, hết hạn theo `expiresAt` của máy chủ sau `09.mask.reveal-seconds` (60 giây) rồi hủy; thông báo SO và TA.
 
 **Luồng thay thế.** Từ chối ở bất kỳ cấp nào kèm lý do.
 
@@ -2231,6 +2244,7 @@ Nhóm E gồm hai kỹ thuật khác bản chất. Giả danh hóa (FR-09-031 đ
 
 - Miền HMAC: ERR-09-048 (422); "Miền {mã} dùng HMAC không đảo ngược, không khôi phục được giá trị gốc."
 - Hết hiệu lực: ERR-09-050 (409); "Đề nghị khôi phục đã hết hiệu lực. Lập đề nghị mới."
+- Chưa xác thực lại bước cao (MFA) trong 5 phút: `401` ERR-00-401 của khung lỗi chung
 - Không ghi được vết: ERR-09-010 (503); "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
 
 **Đầu ra.** `200`; kết quả hiển thị tức thời, không lưu.
@@ -2469,9 +2483,9 @@ Kiểm toán được ghi trước khi giải mã nên nếu ghi lỗi thì khô
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm mục tiêu hợp mức dữ liệu (ERR-09-055).
+1. Hệ thống kiểm mục tiêu hợp mức dữ liệu (ERR-09-055); dữ liệu `RESTRICTED` cho `AI_TRAINING` khi tenant chưa bật `09.ai.allow-restricted` bị từ chối (ERR-09-082).
 2. `NON_PROD_TEST`: sinh dữ liệu giả hoặc giả danh hóa HMAC khóa dùng một lần, hủy khóa sau job; `SENSITIVE` thật bị cấm.
-3. `AI_TRAINING`: bỏ mọi trường `SENSITIVE`; `RESTRICTED` chỉ sau ẩn danh hóa và khi tenant bật `09.ai.allow-restricted` với mô hình chạy nội bộ; `OPEN_DATA` ẩn danh đạt k.
+3. Không có ngưỡng k riêng cho AI: dùng chung `09.anon.k-min` (sàn 10), tenant muốn chặt hơn thì đặt k cao hơn trong cấu hình ẩn danh. `AI_TRAINING`: bỏ mọi trường `SENSITIVE`; `RESTRICTED` chỉ sau ẩn danh hóa và khi tenant bật `09.ai.allow-restricted` với mô hình chạy nội bộ; `OPEN_DATA` ẩn danh đạt k.
 4. Hệ thống ghi siêu dữ liệu tập (cấu hình, k, mô hình nhận) để truy từ mô hình về dữ liệu.
 
 **Luồng thay thế.** Không đạt thì từ chối, không có đường vòng.
@@ -2479,6 +2493,7 @@ Kiểm toán được ghi trước khi giải mã nên nếu ghi lỗi thì khô
 **Luồng ngoại lệ.**
 
 - Mục tiêu không cho phép: ERR-09-055 (422); "Mục đích {mã} không cho phép dùng dữ liệu có trường Nhạy cảm."
+- `RESTRICTED` cho AI khi cờ tắt: ERR-09-082 (422); "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted."
 - Rủi ro cao: ERR-09-053 (422); "Rủi ro tái định danh cao, không phát hành. Xem khuyến nghị của báo cáo."
 
 **Đầu ra.** `202`; `preparationId`.
@@ -2609,7 +2624,7 @@ Nhóm F thực hiện nguyên tắc hạn chế thời gian lưu trữ của Lu�
 
 1. Hệ thống tìm bản ghi hết hạn theo quy tắc, loại bản ghi đang giữ pháp lý (ERR-09-058), tạo tác vụ `QUEUED`; một tác vụ chạy trên một bảng tại một thời điểm (ERR-09-061).
 2. Chạy thử chỉ trả số lượng dự kiến, không đổi dữ liệu.
-3. Hệ thống gọi API xóa hoặc giả danh hóa của phân hệ sở hữu theo lô và ghi số lượng; lỗi lô thì thử lại, quá ba lần thì `FAILED` và cảnh báo.
+3. Hệ thống gọi hợp đồng `retention:purge` của phân hệ sở hữu (một thao tác theo lô nhận `table`, `cutoff`, `action` thuộc `RetentionAction`, `batchId`, `dryRun`; phân hệ sở hữu kiểm `cutoff` không muộn hơn thời điểm hiện tại trừ thời hạn lưu, loại đối tượng đang giữ pháp lý và trả `{processed, skipped}`; gọi lặp cùng `batchId` trả cùng kết quả) theo lô và ghi số lượng; lỗi lô thì thử lại, quá ba lần thì `FAILED` và cảnh báo.
 
 **Luồng thay thế.** Hủy tác vụ chưa chạy.
 
@@ -2750,7 +2765,7 @@ Nhóm F thực hiện nguyên tắc hạn chế thời gian lưu trữ của Lu�
 
 **Luồng ngoại lệ.**
 
-- Khoảng thời gian sai: ERR-09-003 (400)
+- Khoảng thời gian sai: ERR-09-003 (400); "Dữ liệu không hợp lệ: {chi tiết}."
 
 **Đầu ra.** `200`; bảng số liệu.
 
@@ -2805,7 +2820,7 @@ Nhóm G xử lý yêu cầu của công dân hoặc cán bộ có dữ liệu c�
 2. Hệ thống tính băm chủ thể, lưu định danh mã hóa, tạo `SubjectRequest` `RECEIVED`, tính hạn `09.dsr.sla-days` (10 ngày làm việc, Q09-02).
 3. Hệ thống gửi biên nhận cho chủ thể qua kênh đã chọn.
 
-**Luồng thay thế.** Yêu cầu từ người đại diện: ghi kèm giấy tờ (Q09-18).
+**Luồng thay thế.** Chủ thể hoặc người đại diện rút yêu cầu trước khi `RESPONDED`: SO, DS, TA gọi API-09-244 kèm lý do, yêu cầu sang `WITHDRAWN`, tác vụ đang mở bị hủy. Yêu cầu từ người đại diện: ghi kèm giấy tờ (Q09-18).
 
 **Luồng ngoại lệ.**
 
@@ -2823,7 +2838,7 @@ Nhóm G xử lý yêu cầu của công dân hoặc cán bộ có dữ liệu c�
 
 **Quy tắc nghiệp vụ.** BR-09-043; BR-09-045; BR-09-061.
 
-**Màn hình, API.** UI-09-16; API-09-164, API-09-165, API-09-166.
+**Màn hình, API.** UI-09-16; API-09-164, API-09-165, API-09-166, API-09-244.
 :::
 
 #### FR-09-046 · Xác minh danh tính chủ thể
@@ -2984,7 +2999,7 @@ Nhóm G xử lý yêu cầu của công dân hoặc cán bộ có dữ liệu c�
 2. Trước hạn `09.dsr.remind-days` (3) phát EVT-09-23; quá hạn đặt cờ `overdue` và phát EVT-09-24, thông báo SO và DA.
 3. Cho phép lý do gia hạn có căn cứ (BR-09-043).
 
-**Luồng thay thế.** Không.
+**Luồng thay thế.** Gia hạn hạn trả lời một lần theo quy định, kèm lý do và thông báo chủ thể: SO gọi API-09-242; hạn mới không quá ngày cuối cùng pháp luật cho phép. Tenant bật `09.feature.dsr-ph11` thì hạn và nhắc chạy trên PH-11, không thì dùng đồng hồ nội bộ.
 
 **Luồng ngoại lệ.**
 
@@ -3002,7 +3017,7 @@ Nhóm G xử lý yêu cầu của công dân hoặc cán bộ có dữ liệu c�
 
 **Quy tắc nghiệp vụ.** BR-09-043.
 
-**Màn hình, API.** UI-09-16, UI-09-01; API-09-174.
+**Màn hình, API.** UI-09-16, UI-09-01; API-09-174, API-09-242.
 :::
 
 #### FR-09-050 · Trả lời chủ thể, đóng yêu cầu, lưu bằng chứng
@@ -3139,7 +3154,7 @@ Sự đồng ý chỉ là căn cứ xử lý cho tiện ích không bắt buộc
 
 **Quy tắc nghiệp vụ.** BR-09-049.
 
-**Màn hình, API.** UI-09-17; API-09-182, API-09-183, API-09-184, API-09-185, API-09-186, API-09-187.
+**Màn hình, API.** UI-09-17; API-09-182, API-09-183, API-09-184, API-09-185, API-09-186, API-09-187, API-09-238.
 :::
 
 #### FR-09-053 · Ghi nhận, rút sự đồng ý và lưu bằng chứng
@@ -3163,7 +3178,8 @@ Sự đồng ý chỉ là căn cứ xử lý cho tiện ích không bắt buộc
 
 1. Hệ thống kiểm phiên bản mẫu còn hiệu lực và bằng chứng (ERR-09-071).
 2. Hệ thống lưu `Consent` `GIVEN` kèm băm bằng chứng bất biến (BR-09-050); định danh chỉ lưu băm và bản mã.
-3. Rút đồng ý: có hiệu lực ngay, không cần lý do (BR-09-051); phát sự kiện để tiện ích ngừng xử lý.
+3. Việc định kỳ mỗi 5 phút đặt `EXPIRED` cho bản ghi `GIVEN` quá `expiresAt` (hạn của mẫu); tra cứu coi bản ghi quá hạn là `EXPIRED` ngay cả trước khi việc chạy.
+4. Rút đồng ý: có hiệu lực ngay, không cần lý do (BR-09-051); phát sự kiện để tiện ích ngừng xử lý.
 
 **Luồng thay thế.** Rút qua yêu cầu chủ thể (FR-09-045).
 
@@ -3184,7 +3200,7 @@ Sự đồng ý chỉ là căn cứ xử lý cho tiện ích không bắt buộc
 
 **Quy tắc nghiệp vụ.** BR-09-050; BR-09-051.
 
-**Màn hình, API.** UI-09-17; API-09-188, API-09-189, API-09-190, API-09-191.
+**Màn hình, API.** UI-09-17; API-09-188, API-09-189, API-09-190, API-09-245, API-09-191. Tra theo định danh rõ (do bên có quyền nhập) dùng API-09-245 vì băm HMAC chỉ tính ở data plane (API-09-235).
 :::
 
 #### FR-09-054 · Tra cứu trạng thái đồng ý cho tiện ích không bắt buộc
@@ -3478,7 +3494,7 @@ Khi có vi phạm, thời gian là ràng buộc cứng: thông báo Cục A05 tr
 
 **Quy tắc nghiệp vụ.** BR-09-054; BR-09-055.
 
-**Màn hình, API.** UI-09-19; API-09-207, API-09-208, API-09-209, API-09-210.
+**Màn hình, API.** UI-09-19; API-09-207, API-09-208, API-09-209, API-09-210, API-09-239.
 :::
 
 ```{.mermaid caption="Trình tự xử lý đồng hồ 72 giờ"}
@@ -3540,7 +3556,7 @@ Các mốc 24, 48, 60 giờ là tham số `09.breach.alert-hours`; cảnh báo 6
 
 **Quy tắc nghiệp vụ.** BR-09-057; BR-09-055.
 
-**Màn hình, API.** UI-09-19; API-09-211, API-09-212, API-09-213, API-09-214.
+**Màn hình, API.** UI-09-19; API-09-211, API-09-212, API-09-213, API-09-214, API-09-240.
 :::
 
 ### 6.12. Nhóm K · Kiểm toán, báo cáo và cấu hình
@@ -3574,7 +3590,7 @@ Nhóm K gom các chức năng ngang: nhật ký riêng của PH-09 (FR-09-061), 
 
 **Luồng ngoại lệ.**
 
-- Khoảng thời gian quá rộng: ERR-09-036 (422); "Chọn khoảng thời gian tối đa 12 tháng."
+- Khoảng thời gian vượt `09.audit.query-max-days`: ERR-09-079 (422); "Chọn khoảng thời gian tối đa {n} ngày."
 
 **Đầu ra.** `200` hoặc `202`.
 
@@ -3661,7 +3677,7 @@ Nhóm K gom các chức năng ngang: nhật ký riêng của PH-09 (FR-09-061), 
 
 **Luồng ngoại lệ.**
 
-- Lịch sai: ERR-09-003 (400)
+- Lịch sai: ERR-09-003 (400); "Dữ liệu không hợp lệ: {chi tiết}."
 
 **Đầu ra.** `202`.
 
@@ -3675,7 +3691,7 @@ Nhóm K gom các chức năng ngang: nhật ký riêng của PH-09 (FR-09-061), 
 
 **Quy tắc nghiệp vụ.** BR-09-060.
 
-**Màn hình, API.** UI-09-01; API-09-220, API-09-221, API-09-222, API-09-223.
+**Màn hình, API.** UI-09-01, UI-09-21; API-09-220, API-09-221, API-09-222, API-09-223.
 :::
 
 #### FR-09-064 · Cấu hình tham số PH-09 của tenant
@@ -3729,16 +3745,16 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | Mã | Quy tắc | FR áp dụng |
 |---|---|---|
 | BR-09-001 | Phần tử chưa có phân loại ở trạng thái CONFIRMED được xử lý như `SENSITIVE`; hợp đồng chứa phần tử đó có mức tạm thời `SENSITIVE`, đánh dấu `provisional`. | 001, 003, 004, 006, 022, 027 |
-| BR-09-002 | Hạ mức phân loại, hoặc đổi loại DLCN từ `SENSITIVE` xuống `BASIC` hoặc `NONE`, cần số văn bản căn cứ và hai người khác nhau; nâng mức chỉ cần một người xác nhận. | 002, 004 |
+| BR-09-002 | Hạ mức phân loại, hoặc đổi loại DLCN từ `SENSITIVE` xuống `BASIC` hoặc `NONE`, cần số văn bản căn cứ và ba người đôi một khác nhau (người đề xuất, người xác nhận thứ nhất, người xác nhận thứ hai); nâng mức chỉ cần người xác nhận khác người đề xuất. | 002, 004 |
 | BR-09-003 | Chỉ TA, SO hoặc DO của tổ chức sở hữu phần tử xác nhận phân loại; DS và chủ dịch vụ chỉ đề xuất; người đề xuất không tự xác nhận. | 004 |
 | BR-09-004 | Mức của hợp đồng API, topic, luồng bằng mức cao nhất của các trường trong lược đồ đã đăng ký và tính lại khi phân loại đổi (D03-07 §3.2). | 006 |
 | BR-09-005 | Nhãn `STATE_SECRET` chặn tuyệt đối và toàn bộ bản tin, không lọc từng trường; thân lỗi không nêu trường nào mang nhãn; gỡ nhãn cần văn bản giải mật và hai người. | 003, 007, 019, 028 |
 | BR-09-006 | Kết quả quét chỉ là gợi ý, không tự đổi phân loại; mọi đổi mức đi qua FR-09-004. | 005 |
-| BR-09-007 | Khai báo MVP (`@Classified`, `x-dh-classification`) nhập vào ở trạng thái `PROPOSED` và giữ nguyên mức đã khai; xác nhận hàng loạt chỉ khi người xác nhận đã duyệt mẫu. | 003 |
+| BR-09-007 | Khai báo MVP (`@Classified`, `x-dh-classification`) nhập vào ở trạng thái `PROPOSED` và giữ nguyên mức đã khai; xác nhận hàng loạt chỉ khi người xác nhận đã duyệt mẫu và tenant bật `09.feature.auto-confirm-mvp`. | 003 |
 | BR-09-008 | Mỗi trường DLCN đã xác nhận phải thuộc ít nhất một hoạt động xử lý `ACTIVE` (SEC-37). | 011, 022 |
 | BR-09-009 | Mỗi hoạt động có đúng một cơ sở pháp lý chính; cơ quan nhà nước dùng `STATE_TASK` hoặc `LEGAL_OBLIGATION`; `CONSENT` chỉ cho tiện ích không bắt buộc (D03-07 §6.3). | 009, 012 |
 | BR-09-010 | Vai trò kiểm soát hoặc xử lý ghi theo từng luồng đúng bảng D03-07 §6.2; dữ liệu đi qua ghi vai trò xử lý và bên kiểm soát là cơ quan cung cấp, khai thác. | 009 |
-| BR-09-011 | Hoạt động `ACTIVE` không sửa tại chỗ; mọi thay đổi tạo phiên bản mới, kích hoạt cần người duyệt khác người soạn. | 010, 011 |
+| BR-09-011 | Hoạt động `ACTIVE` không sửa tại chỗ; mọi thay đổi tạo phiên bản mới, kể cả thêm hoặc gỡ liên kết với trường, API, topic, luồng (liên kết là nội dung của phiên bản); kích hoạt cần người duyệt khác người soạn. | 010, 011 |
 | BR-09-012 | Hoạt động xử lý DLCN bắt buộc có thời hạn lưu tường minh (số tháng hoặc điều kiện kết thúc) và hành động khi hết hạn. | 009, 010 |
 | BR-09-013 | Một chấp thuận gắn một bộ ba (HTTT, mục đích, hợp đồng hoặc tập trường), không chuyển nhượng cho HTTT khác. | 015, 016 |
 | BR-09-014 | Chỉ DO của tổ chức chủ quản dữ liệu thẩm định và quyết định; người lập yêu cầu không duyệt yêu cầu của mình. | 016, 017 |
@@ -3763,7 +3779,7 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | BR-09-033 | Hủy khóa chỉ khi không còn dữ liệu cần giải bằng khóa đó và có hai người duyệt; xoay khóa giữ phiên bản cũ ở chế độ chỉ giải. | 034, 043 |
 | BR-09-034 | Ẩn danh hóa không có đường khôi phục: không lưu ánh xạ, không giữ khóa giải; kiểm chứng được là điều kiện để coi dữ liệu thôi là DLCN. | 036, 039 |
 | BR-09-035 | Ngưỡng k tối thiểu 10 (SEC-38); sau ba vòng tổng quát hóa vẫn không đạt thì từ chối; rủi ro `HIGH` chặn phát hành; `MEDIUM` cần SO duyệt. | 035, 036, 037, 038 |
-| BR-09-036 | Trường định danh trực tiếp bị loại; trường bán định danh được tổng quát hóa; thuộc tính nhạy cảm cần l-đa dạng khi tenant bật. | 035 |
+| BR-09-036 | Trường định danh trực tiếp bị loại; trường bán định danh được tổng quát hóa; thuộc tính nhạy cảm cần l-đa dạng khi tenant bật `09.feature.l-diversity`. | 035 |
 | BR-09-037 | Ngoài PROD chỉ dùng dữ liệu sinh hoặc dữ liệu giả danh hóa không đảo ngược; dữ liệu `SENSITIVE` thật cấm ngoài PROD; dữ liệu cho AI chỉ ẩn danh, hoặc `RESTRICTED` khi tenant bật và mô hình chạy nội bộ (SEC-38, SEC-49). | 038 |
 | BR-09-038 | Mỗi bảng chứa DLCN có thời hạn lưu tường minh; hết hạn thì xóa, giả danh hóa hoặc ẩn danh hóa theo lịch; nhật ký kiểm toán WORM theo thời hạn riêng, không thuộc lịch này. | 040, 041, 044 |
 | BR-09-039 | Giữ pháp lý chặn mọi tác vụ xóa đối tượng liên quan; có số văn bản, cơ quan, hạn rà soát; gỡ giữ do người có quyền, có kiểm toán. | 041, 042 |
@@ -3781,14 +3797,15 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | BR-09-051 | Rút đồng ý có hiệu lực tại tra cứu trong 60 giây và không làm mất hiệu lực xử lý đã thực hiện trước đó. | 053 |
 | BR-09-052 | Hồ sơ đánh giá tác động lập cho hoạt động mà Datahub là bên kiểm soát (PH-06, PH-19, tài khoản và nhật ký) và hồ sơ bên xử lý cho phần truyền dẫn (D03-07 §6.4). | 055, 057 |
 | BR-09-053 | Rà soát hồ sơ tối thiểu 12 tháng một lần hoặc khi thêm, sửa hoạt động có rủi ro; nhắc trước 30 ngày. | 056 |
-| BR-09-054 | Đồng hồ 72 giờ tính từ `detectedAt` đã ghi nhận, không dừng hay đặt lại; bên xử lý báo chủ quản trong 24 giờ (SEC-74). | 058, 059 |
+| BR-09-054 | Đồng hồ 72 giờ tính từ `detectedAt` đã ghi nhận, không tạm dừng và không đặt lại; chỉ dừng khi thông báo Cục A05 đã `SENT` (`BreachStatus` = `NOTIFIED`); bên xử lý báo chủ quản trong 24 giờ (SEC-74). | 058, 059 |
 | BR-09-055 | Thông báo Cục A05 trong 72 giờ; thông báo chủ thể khi có rủi ro cao; không thông báo phải nêu căn cứ miễn trừ. | 059, 060 |
 | BR-09-056 | Hồ sơ vi phạm không chứa giá trị DLCN rõ; chỉ ghi số lượng, loại, băm. | 058 |
 | BR-09-057 | Thao tác đặc quyền (xem đầy đủ, khôi phục, khóa, xóa mật mã, gỡ nhãn) bị từ chối nếu không ghi được nhật ký kiểm toán. | 007, 029, 033, 060 |
 | BR-09-058 | Nhật ký kiểm toán không ghi giá trị `SENSITIVE`; ghi tên trường, băm có khóa và số lượng. | 030, 061 |
 | BR-09-059 | Tham số tenant không vượt trần hoặc sàn do PA đặt; mọi sửa tham số có kiểm toán và áp dụng không cần khởi động lại. | 064 |
 | BR-09-060 | Mọi bảng PH-09 mang `tenant_id` và bật RLS; khóa mật mã theo tenant; điểm thực thi chỉ nhận dữ liệu của tenant mình. | 008, 062, 063 |
-| BR-09-061 | Mọi POST tạo hoặc chuyển trạng thái nhận `Idempotency-Key` (ADR-041); gọi lặp cùng khóa trả cùng kết quả. | 045 |
+| BR-09-061 | Mọi POST tạo hoặc chuyển trạng thái ở control plane nhận `Idempotency-Key` (ADR-041); gọi lặp cùng khóa cùng thân trả cùng kết quả, khác thân trả ERR-09-081. Data plane không dùng khóa này: các POST tra cứu của nó chỉ đọc, kết quả thuần theo đầu vào và bundle. | 045 |
+| BR-09-062 | Điểm thực thi đệm quyết định `ALLOW` tối đa `09.decision.cache-seconds` (mặc định và trần 15 giây) và quyết định `DENY` tối đa 5 giây (hoặc ít hơn nếu tham số nhỏ hơn) để chống dò từng trường; sự kiện thu hồi hoặc tạm dừng xóa đệm ngay. | 019 |
 
 : Quy tắc nghiệp vụ BR-09
 
@@ -3823,6 +3840,9 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | NFR-09-021 | Bản sao và phục hồi | Data plane ≥ 3 bản sao trên 3 nút; mất 1 nút không giảm quá 33% thông lượng; RTO ≤ 30 phút, RPO ≤ 5 phút cho `ph09_privacy` | Diễn tập DR (ADR-034) |
 | NFR-09-022 | Quan sát | Phát chỉ số `privacy_decide_total{result}`, `privacy_decide_seconds`, `privacy_mask_total{type}`, `privacy_blocked_total{reason}`, `privacy_unclassified_fields`, `privacy_bundle_age_seconds`, `privacy_dsr_overdue`, `privacy_breach_clock_seconds`; cảnh báo theo ngưỡng ở UI-09-01 | Prometheus, Grafana |
 | NFR-09-023 | Phản hồi giao diện | Danh sách ≤ 1 giây p95 với 50.000 phần tử; mô phỏng chính sách 1.000 dòng ≤ 5 giây | NFR-00-003 |
+| NFR-09-024 | Độ trễ thu hồi tại điểm thực thi | p95 và tối đa ≤ 15 giây từ khi phát EVT-09-08 (thu hồi) hoặc EVT-09-07 (tạm dừng) đến khi điểm thực thi bắt đầu từ chối; nếu sự kiện đẩy mất thì chậm nhất 60 giây qua bundle (BR-09-017) | Đo từ EVT phát đến lời gọi bị từ chối đầu tiên, 3 điểm thực thi |
+| NFR-09-025 | Tự hết hạn chấp thuận | Điểm thực thi từ chối chấp thuận quá `validTo` trong ≤ 60 giây; `GrantStatus` chuyển `EXPIRED` trong ≤ 5 phút sau `validTo` | Kiểm thử với đồng hồ giả lập |
+| NFR-09-026 | Cảnh báo khai thác bất thường | Cảnh báo tới DO và SO ≤ 5 phút sau khi lượt khai thác vượt hạn ngạch, ngoài trường hoặc ngưỡng hàng loạt (BR-09-020) | Bộ đếm giả lập 1.000 lượt mỗi giờ |
 
 : Yêu cầu phi chức năng NFR-09
 
@@ -3844,11 +3864,18 @@ Các tham số dưới đây do từng tỉnh tự chỉnh qua FR-09-064; bảng
 | `09.bundle.valid-minutes` | 60 | 15…240 | Thời hạn hiệu lực của bundle đã ký |
 | `09.plan.cache-seconds` | 300 | 60…300 (trần) | Thời gian đệm kế hoạch che ở điểm thực thi |
 | `09.consent.cache-seconds` | 60 | 0…60 (trần) | Thời gian đệm kết quả tra đồng ý |
+| `09.decision.cache-seconds` | 15 | 0…15 (trần) | Thời gian đệm quyết định `ALLOW` ở điểm thực thi; quyết định `DENY` đệm tối đa 5 giây (BR-09-062) |
+| `09.feature.dsr-ph11` | `false` | `true`, `false` | Dùng PH-11 cho hạn và nhắc xử lý yêu cầu chủ thể; tắt thì dùng đồng hồ nội bộ |
+| `09.feature.l-diversity` | `false` | `true`, `false` | Bắt buộc l-đa dạng cho thuộc tính nhạy cảm khi ẩn danh hóa |
+| `09.feature.auto-confirm-mvp` | `false` | `true`, `false` | Cho xác nhận hàng loạt khai báo MVP sau khi duyệt mẫu |
+| `09.api.rate-user-per-min` | 300 | 60…1.200 (trần) | Hạn mức gọi control plane mỗi người dùng; vượt thì `429` ERR-09-113 |
+| `09.api.rate-du-per-sec` | 2.000 | 500…5.000 (trần) | Hạn mức gọi data plane mỗi DU |
 | `09.anomaly.quota-warn-percent` | 80 | 50…95 | Cảnh báo khi dùng hết phần trăm hạn ngạch |
 | `09.anomaly.bulk-threshold` | 1.000 | 100…100.000 lượt mỗi giờ | Ngưỡng nghi tra hàng loạt |
 | `09.anomaly.auto-suspend` | `false` | `true`, `false` | Tự tạm dừng chấp thuận khi phát hiện bất thường mức cao |
 | `09.mask.reveal-seconds` | 60 | 30…60 (trần) | Thời gian hiển thị giá trị đầy đủ |
 | `09.mask.reveal-max-per-hour` | 20 | 1…50 | Số lần xem đầy đủ tối đa mỗi người mỗi giờ |
+| `09.mask.reveal-alert-per-hour` | 10 | 1…50 (không quá `09.mask.reveal-max-per-hour`) | Số lần xem đầy đủ của một người trong giờ để phát EVT-09-15 |
 | `09.log.scan-cron` | `0 3 * * *` | cron | Lịch quét rò rỉ trong log |
 | `09.pseudo.key-rotate-days` | 365 | 90…730 | Chu kỳ xoay khóa giả danh hóa |
 | `09.pseudo.min-rotate-days` | 30 | 7…90 (sàn) | Giãn cách tối thiểu giữa hai lần xoay |
@@ -3875,13 +3902,13 @@ Các tham số dưới đây do từng tỉnh tự chỉnh qua FR-09-064; bảng
 
 ### 9.1. Mã lỗi
 
-Mã lỗi theo khung D03-04 §6: `{code, message, details, traceId}`. Control plane dùng ERR-09-001…078, data plane dùng ERR-09-101…113 để người vận hành điểm thực thi phân biệt được nguồn. Lỗi `401`, `403` do thiếu quyền chức năng và `428` do thiếu `If-Match` dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428; lỗi phạm vi tổ chức dùng ERR-09-008. Cột thông báo là câu hiển thị cho người dùng (control plane) hoặc người vận hành (data plane); thông báo viết bằng tiếng Việt, nêu việc đã xảy ra và việc cần làm, không lộ giá trị dữ liệu. Quy ước hiển thị ở 9.2.
+Mã lỗi theo khung D03-04 §6: `{code, message, details, traceId}`. Control plane dùng ERR-09-001…082, data plane dùng ERR-09-101…113 để người vận hành điểm thực thi phân biệt được nguồn. Lỗi `401`, `403` do thiếu quyền chức năng và `428` do thiếu `If-Match` dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428; lỗi phạm vi tổ chức dùng ERR-09-008. Cột thông báo là câu hiển thị cho người dùng (control plane) hoặc người vận hành (data plane); thông báo viết bằng tiếng Việt, nêu việc đã xảy ra và việc cần làm, không lộ giá trị dữ liệu. Quy ước hiển thị ở 9.2.
 
 | Mã | HTTP | Thông báo hiển thị |
 |---|---|---|
 | ERR-09-001 | 404, 410 | "Không tìm thấy {đối tượng} {mã}." |
 | ERR-09-002 | 409 | "Mã {mã} đã được dùng. Chọn mã khác." |
-| ERR-09-003 | 400 | Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại |
+| ERR-09-003 | 400 | "Dữ liệu không hợp lệ: {chi tiết}." |
 | ERR-09-004 | 409 | "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." |
 | ERR-09-005 | 403 | "Bạn là người đề nghị hoặc đã quyết định ở bước trước nên không được duyệt bước này." |
 | ERR-09-006 | 409 | "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này." |
@@ -3957,8 +3984,12 @@ Mã lỗi theo khung D03-04 §6: `{code, message, details, traceId}`. Control pl
 | ERR-09-076 | 409 | "Còn nghĩa vụ thông báo chưa hoàn tất, chưa đóng được hồ sơ." |
 | ERR-09-077 | 422 | "Không thông báo chủ thể cần nêu căn cứ miễn trừ và lý do." |
 | ERR-09-078 | 422 | "Giá trị của {khóa} ngoài miền cho phép {miền}." |
+| ERR-09-079 | 422 | "Chọn khoảng thời gian tối đa {n} ngày." |
+| ERR-09-080 | 422 | "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả." |
+| ERR-09-081 | 409 | "Idempotency-Key đã dùng với thân khác. Dùng khóa mới." |
+| ERR-09-082 | 422 | "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted." |
 
-: Mã lỗi control plane ERR-09-001…078 và thông báo
+: Mã lỗi control plane ERR-09-001…082 và thông báo
 
 | Mã | HTTP | Thông báo cho người vận hành |
 |---|---|---|
@@ -4255,6 +4286,14 @@ Control plane ở `/api/privacy/v1` qua APISIX, xác thực token người dùng
 | API-09-224 | `GET /settings` | 064 | config | Tham số tenant |
 | API-09-225 | `PUT /settings` | 064 | config | Sửa tham số |
 | API-09-226 | `GET /settings/history` | 064 | config | Lịch sử sửa tham số |
+| API-09-238 | `GET /consent-templates/{templateCode}` | 052 | consent | Chi tiết mẫu đồng ý và các phiên bản |
+| API-09-239 | `GET /breaches/{breachId}/notifications` | 059 | breach | Liệt kê thông báo của vụ việc |
+| API-09-240 | `GET /breaches/{breachId}/actions` | 060 | breach | Liệt kê biện pháp khắc phục của vụ việc |
+| API-09-241 | `GET /reveal-grants/{grantId}` | 029 | audit-read | Chi tiết một phiếu xem đầy đủ (không kèm giá trị) |
+| API-09-242 | `POST /subject-requests/{requestId}:extend` | 049 | dsr | Gia hạn hạn trả lời kèm lý do |
+| API-09-243 | `POST /data-elements/{elementId}:retire` | 003 | classify | Ngừng phần tử dữ liệu |
+| API-09-244 | `POST /subject-requests/{requestId}:withdraw` | 045 | dsr | Rút yêu cầu của chủ thể |
+| API-09-245 | `POST /consents:search` | 053 | consent | Tra đồng ý theo định danh trong thân, trả danh sách theo băm |
 
 : API control plane `/api/privacy/v1`
 
@@ -4268,7 +4307,7 @@ Control plane ở `/api/privacy/v1` qua APISIX, xác thực token người dùng
 | API-09-232 | `GET /privacy/v1/classification-index` | 027 | scope privacy:decide | Bản chụp chỉ mục phân loại (ETag) |
 | API-09-233 | `GET /privacy/v1/bundles/current` | 018 | scope privacy:decide | Bundle OPA hiện hành (ETag) |
 | API-09-234 | `POST /privacy/v1/consents:check` | 054 | scope privacy:consent | Tra trạng thái đồng ý |
-| API-09-235 | `POST /privacy/v1/subject-hashes:compute` | 047 | scope privacy:decide | Tính băm HMAC định danh chủ thể |
+| API-09-235 | `POST /privacy/v1/subject-hashes:compute` | 047, 053 | scope privacy:decide | Tính băm HMAC định danh chủ thể |
 | API-09-236 | `POST /privacy/v1/reveal-grants/{grantId}:verify` | 029 | scope privacy:decide | Xác thực phiếu xem đầy đủ |
 | API-09-237 | `POST /privacy/v1/usage-events:report` | 020 | scope privacy:decide | Điểm thực thi báo lượt khai thác theo lô |
 
@@ -4278,22 +4317,22 @@ Control plane ở `/api/privacy/v1` qua APISIX, xác thực token người dùng
 
 ### 10.1. Danh sách màn hình
 
-PH-09 có 22 màn hình trong khu "Dữ liệu" của cổng quản trị, route gốc `/du-lieu/quyen-rieng-tu`. Cột "PTN" là mẫu giao diện chuẩn của D03-05; chi tiết bố cục, trạng thái rỗng, lỗi và đáp ứng nằm ở D03-06-PH09. Màn nào hiển thị dữ liệu cá nhân đều che theo BR-09-001 và dùng hộp thoại UI-09-22 để xem đầy đủ.
+PH-09 có 22 màn hình trong khu "Dữ liệu" của cổng quản trị, route gốc `/du-lieu/quyen-rieng-tu`. Cột "PTN" là mẫu giao diện chuẩn của D03-05; chi tiết bố cục, trạng thái rỗng, lỗi và đáp ứng nằm ở D03-06-PH09. Màn nào hiển thị dữ liệu cá nhân đều che theo BR-09-001 và dùng hộp thoại UI-09-22 để xem đầy đủ. Các chức năng thuộc data plane không có màn hình và người kiểm tra không cần tìm ở giao diện: FR-09-019, 027, 028, 032 và 054 (đều do phân hệ gọi qua `/privacy/v1`). Ở UI-09-09 chỉ DO duyệt (`PERM-09-purpose-approve`), TA chỉ xem và phát hành bundle (`PERM-09-policy-approve`); UI-09-20 không dành cho TO vì TO không có `PERM-09-audit-read`.
 
 | Mã | Tên và route | Vai trò | Hành vi chính | FR |
 |---|---|---|---|---|
-| UI-09-01 | Tổng quan tuân thủ (`/du-lieu/quyen-rieng-tu`, PTN-06) | SO, TA, DA, DS, AU, VW | Thẻ chỉ số bấm được: trường chưa phân loại, hợp đồng bị chặn, yêu cầu quá hạn, đồng hồ vi phạm, tuổi bundle; xu hướng và cảnh báo | 020, 030, 049, 062, 063 |
-| UI-09-02 | Danh mục phân loại trường (`/du-lieu/quyen-rieng-tu/phan-loai`, PTN-08) | TA, SO, DS, DO, AU | Cây theo hệ thống và hợp đồng, bảng phần tử, lọc mức, loại DLCN; đề xuất, xác nhận hàng loạt; xuất | 001, 002, 003, 004, 006, 008, 022 |
-| UI-09-03 | Chi tiết phần tử dữ liệu (`/du-lieu/quyen-rieng-tu/phan-loai/{id}`, PTN-02) | TA, SO, DS, DO, AU | Tab Phân loại, Lịch sử, Hoạt động liên kết, Hợp đồng dùng; đề xuất, xác nhận, hạ mức bốn mắt | 003, 004, 006, 007, 008 |
+| UI-09-01 | Tổng quan tuân thủ (`/du-lieu/quyen-rieng-tu`, PTN-06) | SO, TA, DA, DS, AU, VW, DO (○), TO, PA | Thẻ chỉ số bấm được: trường chưa phân loại, hợp đồng bị chặn, yêu cầu quá hạn, đồng hồ vi phạm, tuổi bundle; xu hướng và cảnh báo | 020, 030, 049, 062, 063 |
+| UI-09-02 | Danh mục phân loại trường (`/du-lieu/quyen-rieng-tu/phan-loai`, PTN-08) | TA, SO, DS, DO, AU, SV (đề xuất) | Cây theo hệ thống và hợp đồng, bảng phần tử, lọc mức, loại DLCN; đề xuất, xác nhận hàng loạt; xuất | 001, 002, 003, 004, 006, 008, 022 |
+| UI-09-03 | Chi tiết phần tử dữ liệu (`/du-lieu/quyen-rieng-tu/phan-loai/{id}`, PTN-02) | TA, SO, DS, DO, AU, SV (đề xuất) | Tab Phân loại, Lịch sử, Hoạt động liên kết, Hợp đồng dùng; đề xuất, xác nhận, hạ mức bốn mắt | 003, 004, 006, 007, 008 |
 | UI-09-04 | Kết quả quét phát hiện (`/du-lieu/quyen-rieng-tu/phan-loai/quet`, PTN-10) | TA, SO, DS | Hộp việc kết quả quét; xác nhận là DLCN, loại trừ, đề xuất phân loại; chạy quét, sửa mẫu | 005 |
 | UI-09-05 | Sổ hoạt động xử lý (`/du-lieu/quyen-rieng-tu/hoat-dong-xu-ly`, PTN-01) | TA, SO, DS, DA, DO, AU | Danh sách hoạt động theo trạng thái, phiên bản; cảnh báo trường chưa thuộc hoạt động; xuất sổ | 009, 010, 011, 013 |
 | UI-09-06 | Biểu mẫu hoạt động xử lý (`/du-lieu/quyen-rieng-tu/hoat-dong-xu-ly/{id}/soan`, PTN-05) | TA, SO, DS | Trình hướng dẫn: mục đích, cơ sở, dữ liệu, bên nhận, thời hạn lưu, liên kết; gửi duyệt | 009, 010, 011 |
 | UI-09-07 | Danh mục mục đích và cơ sở pháp lý (`/du-lieu/quyen-rieng-tu/muc-dich`, PTN-01) | TA, SO, DO, DS | Hai tab Mục đích và Cơ sở, văn bản căn cứ; thêm, sửa, ngừng | 012, 014 |
 | UI-09-08 | Yêu cầu khai thác (`/du-lieu/quyen-rieng-tu/yeu-cau-khai-thac`, PTN-01, PTN-02) | TA, OR, SV, DO | Danh sách và chi tiết yêu cầu; lập, gửi, rút; xem chấp thuận hiện có, gia hạn | 015, 017 |
-| UI-09-09 | Hộp việc chấp thuận của chủ quản (`/du-lieu/quyen-rieng-tu/chap-thuan`, PTN-10) | DO, TA | Hộp việc thẩm định; chấp thuận có điều kiện, từ chối, yêu cầu bổ sung; tạm dừng, thu hồi; bundle, cảnh báo khai thác | 016, 017, 018, 020, 021, 022 |
+| UI-09-09 | Hộp việc chấp thuận của chủ quản (`/du-lieu/quyen-rieng-tu/chap-thuan`, PTN-10) | DO (duyệt), TA (xem, phát hành bundle) | Hộp việc thẩm định; chấp thuận có điều kiện, từ chối, yêu cầu bổ sung; tạm dừng, thu hồi; bundle, cảnh báo khai thác | 016, 017, 018, 020, 021, 022 |
 | UI-09-10 | Chính sách che (`/du-lieu/quyen-rieng-tu/chinh-sach-che`, PTN-03) | TA, SO, DS, DA | Quy tắc theo mức, loại DLCN, vai trò, mục đích, kênh; phiên bản, so sánh, duyệt, quay lại | 023, 024, 026, 030 |
 | UI-09-11 | Mô phỏng che (`/du-lieu/quyen-rieng-tu/chinh-sach-che/mo-phong`, PTN-03) | TA, SO, DS | Dán hoặc tải dữ liệu mẫu tối đa 1.000 dòng, chọn vai trò, mục đích, kênh; xem trước sau che | 025 |
-| UI-09-12 | Miền giả danh và khóa (`/du-lieu/quyen-rieng-tu/gia-danh`, PTN-01) | TA, SO, DA | Miền, phiên bản khóa, xoay, ngừng, hủy; đề nghị và duyệt khôi phục (cấp 1, 2) | 031, 034 |
+| UI-09-12 | Miền giả danh và khóa (`/du-lieu/quyen-rieng-tu/gia-danh`, PTN-01) | TA, SO, DA | Miền, phiên bản khóa, xoay, ngừng, hủy; liên kết sang UI-09-13 cho đề nghị và duyệt khôi phục | 031, 034 |
 | UI-09-13 | Khôi phục giá trị gốc (`/du-lieu/quyen-rieng-tu/gia-danh/khoi-phuc`, PTN-10) | SO, DO, TA | Đề nghị khôi phục, duyệt hai cấp, thực hiện có MFA; nhật ký khôi phục | 033 |
 | UI-09-14 | Ẩn danh hóa và đánh giá rủi ro (`/du-lieu/quyen-rieng-tu/an-danh`, PTN-05) | TA, SO, DS | Cấu hình, chạy job, báo cáo rủi ro, tập đã ẩn danh, chuẩn bị dữ liệu cho AI và ngoài PROD | 035, 036, 037, 038, 039 |
 | UI-09-15 | Lịch lưu giữ và tác vụ xóa (`/du-lieu/quyen-rieng-tu/luu-giu`, PTN-01) | TA, SO, DS | Lịch lưu giữ theo phiên bản, tác vụ xóa, giữ pháp lý, xóa mật mã tenant, báo cáo tuân thủ | 040, 041, 042, 043, 044 |
@@ -4301,8 +4340,8 @@ PH-09 có 22 màn hình trong khu "Dữ liệu" của cổng quản trị, route
 | UI-09-17 | Sự đồng ý (`/du-lieu/quyen-rieng-tu/dong-y`, PTN-01) | SO, TA, DS | Mẫu đồng ý theo phiên bản; bản ghi đồng ý và rút; tra cứu bằng chứng | 052, 053 |
 | UI-09-18 | Hồ sơ đánh giá tác động (`/du-lieu/quyen-rieng-tu/dpia`, PTN-03) | SO, TA, DS, DA | Soạn hồ sơ, duyệt, phiên bản, hạn rà soát, xuất gửi Cục A05 | 055, 056, 057 |
 | UI-09-19 | Vi phạm dữ liệu cá nhân (`/du-lieu/quyen-rieng-tu/vi-pham`, PTN-02) | SO, TA, TO | Danh sách và chi tiết vụ việc, đồng hồ 72 giờ, thông báo, khắc phục, bài học | 058, 059, 060 |
-| UI-09-20 | Nhật ký bảo vệ dữ liệu (`/du-lieu/quyen-rieng-tu/nhat-ky`, PTN-11) | SO, AU, TO | Tra bản ghi theo thời gian, người, đối tượng, loại thao tác; lịch sử xem đầy đủ; xuất | 029, 061 |
-| UI-09-21 | Cài đặt PH-09 (`/du-lieu/quyen-rieng-tu/cai-dat`, PTN-12) | TA, PA | Nhóm tham số 09.* theo khu vực, lịch báo cáo, bộ che log, ngưỡng cảnh báo | 064 |
+| UI-09-20 | Nhật ký bảo vệ dữ liệu (`/du-lieu/quyen-rieng-tu/nhat-ky`, PTN-11) | SO, AU, PA | Tra bản ghi theo thời gian, người, đối tượng, loại thao tác; lịch sử xem đầy đủ; xuất | 029, 061 |
+| UI-09-21 | Cài đặt PH-09 (`/du-lieu/quyen-rieng-tu/cai-dat`, PTN-12) | TA, PA | Nhóm tham số 09.* theo khu vực, lịch báo cáo, bộ che log, ngưỡng cảnh báo | 063, 064 |
 | UI-09-22 | Hộp thoại xem giá trị đầy đủ (dùng chung) (nhúng, không có route, PTN-04) | Người có PERM-09-unmask | Nhập lý do, đồng hồ đếm ngược 60 giây, tự che lại; nhúng vào màn của PH-06, PH-19 và phân hệ khác | 029 |
 
 : Danh sách màn hình của PH-09
@@ -4321,7 +4360,7 @@ Màn chính sách che (UI-09-10, ảnh `ui-09-10.png`) soạn quy tắc che. Tr�
 
 ### 10.3. Quy ước tab con và query của route
 
-Mọi màn giữ route gốc ở 10.1; trạng thái xem đặt ở đoạn tab con hoặc query để liên kết được và dùng được nút Quay lại. Tab con ví dụ: UI-09-03 `/phan-loai`, `/lich-su`, `/hoat-dong`; UI-09-10 `/quy-tac`, `/kieu-che`, `/log`; UI-09-12 `/mien`, `/khoa`; UI-09-15 `/lich`, `/tac-vu`, `/giu-phap-ly`, `/bao-cao`. Query lọc dùng tên không dấu (`muc`, `trang-thai`, `tu`, `den`, `trang`). Không đưa số định danh, họ tên, điện thoại vào đường dẫn hay query; tra theo cá nhân gửi bằng `POST`.
+Mọi màn giữ route gốc ở 10.1; trạng thái xem đặt ở đoạn tab con hoặc query để liên kết được và dùng được nút Quay lại. Tab con ví dụ: UI-09-03 `/phan-loai`, `/lich-su`, `/hoat-dong`; UI-09-10 `/quy-tac`, `/kieu-che`, `/log`; UI-09-12 `/mien`, `/khoa`; UI-09-15 `/lich`, `/tac-vu`, `/giu-phap-ly`, `/xoa-mat-ma`, `/bao-cao`; UI-09-03 thêm `/hop-dong`; UI-09-07 `/muc-dich`, `/co-so`, `/van-ban`; UI-09-09 `/hop-viec`, `/hieu-luc`, `/canh-bao`, `/bundle`, `/bao-cao`, `/bi-chan`; UI-09-14 `/cau-hinh`, `/job`, `/rui-ro`, `/tap`, `/chuan-bi`. Query lọc dùng tên không dấu (`muc`, `trang-thai`, `tu`, `den`, `trang`). Không đưa số định danh, họ tên, điện thoại vào đường dẫn hay query; tra theo cá nhân gửi bằng `POST`.
 
 ## 11. Truy vết
 
@@ -4406,6 +4445,19 @@ SRS cũ (`docs/07-srs/SRS-PH-09-privacy.md`) có 11 FR, 6 thực thể và nhóm
 
 : Ánh xạ API cũ sang API mới
 
+Bảng dưới ghi những hành vi của SRS cũ mà FRS này cố ý đổi, để tập sau không chép nhầm hành vi cũ.
+
+| Hành vi SRS cũ | Hành vi FRS này | Căn cứ |
+|---|---|---|
+| Ngưỡng k-ẩn danh tối thiểu 5 | k ≥ 10 (`09.anon.k-min`, sàn 10) | D03-07 §6.7, SEC-38, BR-09-035 |
+| Không có ngưỡng k riêng cho dữ liệu AI | Giữ nguyên: dùng chung sàn k ≥ 10, không thêm `09.anon.k-min-ai` | Tránh hai ngưỡng; tenant đặt k cao hơn trong cấu hình |
+| Bí danh khôi phục được lưu rõ trong bảng ánh xạ | Không lưu bảng ánh xạ; HMAC không đảo ngược, token đảo ngược bằng giải mã transit | BR-09-030 |
+| Trường chưa phân loại bị chặn | Xử lý như `SENSITIVE`, hợp đồng chứa nó có mức tạm thời `SENSITIVE`, không chặn bản tin | BR-09-001 |
+| Mẫu che số định danh giữ 4 ký tự đầu và 4 cuối | Mặc định giữ 3 ký tự cuối (`KEEP_LAST_N`, n = 3); mẫu cũ cấu hình được bằng `KEEP_FIRST_LAST` | D03-07 §3.2, BR-09-021 |
+| Bốn chế độ `none`, `mask`, `pseudonymize`, `anonymize` | `MaskType` bảy giá trị ở Phụ lục A | FR-09-023 |
+
+: Hành vi của SRS cũ được đổi trong FRS mới
+
 ## 12. Phụ thuộc, giả định và ràng buộc
 
 ### 12.1. Phụ thuộc
@@ -4425,7 +4477,7 @@ Bảng dưới phân biệt phụ thuộc cứng và mềm, và ghi PH-09 ứng 
 | PH-18 Sự cố | Mềm | Vi phạm ghi tay; cảnh báo đồng hồ vẫn chạy |
 | PH-20 Chấm dứt tenant | Mềm | Xóa mật mã làm tay theo FR-09-043 |
 | PH-01, PH-07, PH-10 | Mềm | Đăng ký nguồn, mã hành chính, hạ tầng sự kiện |
-| Garage, ARX (Job) | Mềm | Ẩn danh hóa không chạy; che, quyết định vẫn chạy |
+| Garage (kho đối tượng, không phải Ceph RGW), ARX (Job) | Mềm | Ẩn danh hóa không chạy; che, quyết định vẫn chạy |
 
 : Phụ thuộc của PH-09
 
@@ -4489,15 +4541,15 @@ Phân hệ đạt khi thỏa các tiêu chí dưới đây, gồm độ trễ qu
 
 1. Mọi FR mức M có ít nhất một ca dương và một ca âm đạt ở D05-02-PH09; ca rò rỉ chéo tenant cho mọi API đọc đạt (NFR-09-019).
 2. Quyết định mục đích p95 ≤ 20 ms tại điểm thực thi có đệm và ≤ 50 ms trực tiếp ở tải 5.000 yêu cầu mỗi giây (NFR-09-001, NFR-09-004); bundle tới mọi OPA trong ≤ 60 giây (NFR-09-005).
-3. Hợp đồng `SENSITIVE` không kích hoạt được khi thiếu chấp thuận (FR-09-022); chấp thuận bị thu hồi chặn lời gọi trong ≤ 60 giây.
+3. Hợp đồng `SENSITIVE` không kích hoạt được khi thiếu chấp thuận (FR-09-022); chấp thuận bị thu hồi chặn lời gọi trong ≤ 15 giây qua sự kiện đẩy và chậm nhất 60 giây qua bundle (NFR-09-024).
 4. Bản tin chứa nhãn `STATE_SECRET` bị chặn ở mọi điểm thực thi (ERR-09-101 (403); "Dữ liệu bị chặn theo quy định bảo vệ bí mật nhà nước.").
-5. Quét CSDL, log, topic, tệp xuất không thấy giá trị `SENSITIVE` ở dạng rõ (NFR-09-014); quét hằng ngày đạt 0 phát hiện (NFR-09-009).
+5. Quét CSDL, log, topic, tệp xuất không thấy giá trị `SENSITIVE` ở dạng rõ (NFR-09-014, gồm quét hằng ngày đạt 0 phát hiện).
 6. Xem đầy đủ hết hạn đúng 60 giây, ghi kiểm toán trước, từ chối khi PH-13 không ghi được (NFR-09-015, NFR-09-013).
 7. Khôi phục giá trị gốc cần ba người khác nhau; người trùng bị từ chối (ERR-09-005).
 8. Tập ẩn danh phát hành đạt k ≥ 10 và rủi ro không `HIGH`; Rủi ro `HIGH` chặn (NFR-09-012).
 9. Tác vụ lưu giữ chạy hằng ngày, tôn trọng giữ pháp lý; xóa mật mã làm bản mã trong sao lưu không giải được (NFR-09-018).
 10. ≥ 98% yêu cầu chủ thể đóng đúng hạn trong thử nghiệm 30 ngày (NFR-09-016).
-11. Giả lập vi phạm: cảnh báo ở 24, 48, 60 giờ, đồng hồ dừng khi `NOTIFIED` (NFR-09-017).
+11. Giả lập vi phạm: cảnh báo ở 24, 48, 60 giờ, đồng hồ chỉ dừng khi thông báo Cục A05 đã `SENT` (NFR-09-017, BR-09-054).
 12. Mất một nút data plane không giảm thông lượng quá 33%, RTO ≤ 30 phút (NFR-09-021).
 13. Mọi mục ở 11.1 và 11.3 có kết luận; 19 câu hỏi mở có người trả lời hoặc giả định được chấp nhận.
 
@@ -4507,7 +4559,7 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-09 (UC, SDD, CSDL, API,
 
 | Enum | Giá trị | Dùng ở |
 |---|---|---|
-| `DataClass` | `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE` (DD-08, thứ hạng 1 đến 4) | FR-001, 004, 024 |
+| `DataClass` | `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE` (DD-08, thứ hạng `rank` cố định 1 đến 4, không có mức mở rộng) | FR-001, 004, 024 |
 | `BlockLabel` | `STATE_SECRET` | FR-001, 007 |
 | `PersonalDataType` | `NONE`, `BASIC`, `SENSITIVE` | FR-002, 004 |
 | `PersonalDataCategory` (nạp sẵn) | Cơ bản: `FULL_NAME`, `DATE_OF_BIRTH`, `GENDER`, `NATIONAL_ID`, `PHONE`, `EMAIL`, `ADDRESS`, `TAX_ID`, `SOCIAL_INSURANCE_ID`; nhạy cảm: `HEALTH`, `BIOMETRIC`, `GENETIC`, `POLITICAL_RELIGIOUS`, `CRIMINAL_RECORD`, `FINANCIAL_ACCOUNT`, `LOCATION_TRACKING`, `MINOR`, `ETHNICITY` | FR-002 |
@@ -4568,8 +4620,25 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-09 (UC, SDD, CSDL, API,
 | `BreachSource` | `PERSON`, `INCIDENT_PH18`, `AUDIT_PH13`, `ANOMALY` | FR-058 |
 | `NotificationRecipient` | `A05`, `SUBJECT`, `CONTROLLER` | FR-059 |
 | `NotificationStatus` | `DRAFT`, `SENT` | FR-059 |
+| `LogPolicy` | `FULL`, `PARTIAL_MASK`, `NO_VALUE` (chính sách ghi log của mức) | FR-001 |
+| `DisplayPolicy` | `FULL`, `MASK_BY_ROLE`, `MASK_DEFAULT` (chính sách hiển thị của mức) | FR-001 |
+| `TargetKind` | `ELEMENT`, `API`, `TOPIC`, `FLOW` (đối tượng của nhãn chặn và liên kết hoạt động) | FR-007, 011 |
+| `BlockLabelStatus` | `ACTIVE`, `RELEASE_REQUESTED`, `RELEASED` (suy từ cột `released_*`, không có cột trạng thái) | FR-007 |
+| `SchemaFormat` | `OPENAPI`, `JSON_SCHEMA`, `AVRO` | FR-003 |
+| `FindingResolution` | `CLASSIFY`, `EXCLUDE`, `FIXED` | FR-005, 030 |
+| `AccessRequestKind` | `NEW`, `RENEWAL` (đề xuất của FRS 0.2, cần thêm vào DDL và OpenAPI) | FR-015, 016 |
+| `DecideReason` | `GRANTED`, `NO_GRANT`, `BLOCK_LABEL`, `RESTRICTED_SUBJECT`, `SENSITIVE_NO_PURPOSE` (lý do quyết định mục đích) | FR-019 |
+| `BundleTrigger` | `AUTO`, `MANUAL`, `ROLLBACK` (cách dựng bundle; trạng thái dựng, ký, phát hành suy từ `test_passed`, `published_at`) | FR-018 |
+| `MaskPolicyScope` | `TENANT`, `CONTRACT` | FR-024 |
+| `UsageGroupBy` | `HTTT`, `PURPOSE`, `CONTRACT`, `DAY` | FR-021 |
+| `ConsentCheckStatus` | `GIVEN`, `WITHDRAWN`, `EXPIRED`, `NONE` (kết quả tra đồng ý, `NONE` là chưa từng đồng ý) | FR-054 |
+| `BreachClockLevel` | `OK`, `WARN_24`, `WARN_48`, `WARN_60`, `OVERDUE` | FR-059 |
+| `AuditOutcome` | `SUCCESS`, `DENIED`, `FAILED` | FR-061 |
+| `ReportFormat` | `PDF`, `XLSX`, `DOCX` | FR-008, 013, 061, 063 |
 
 : Nguồn chuẩn giá trị liệt kê của PH-09
+
+Các enum từ `LogPolicy` đến `AuditOutcome` (trừ `AccessRequestKind`) lấy đúng từ ràng buộc CHECK của DDL và lược đồ OpenAPI; `ConsentStatus.EXPIRED` do việc định kỳ ở FR-09-053 sinh ra.
 
 ## Phụ lục B. Đề nghị đồng bộ
 
@@ -4587,12 +4656,76 @@ PH-09 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từn
 | D02-03-PH04 | FR-04-067: tiêu đề `dh-data-classes` mang mức `DataClass`, đổi chữ "Cá nhân" thành bốn mức DD-08; gọi FR-09-027, 028 |
 | D02-03-PH06 | FR-06-004, 052, 058 dùng FR-09-004, 027, 045 đến 051; Q06-53 xử lý ở Q09-19 |
 | D02-03-PH02, PH12, PH13, PH14, PH20 | PH-02 gọi FR-09-022, 043; PH-12 nạp bundle FR-09-018; PH-13 tra theo `subjectHash` (Q09-16); PH-14 báo lượt khai thác; PH-20 gọi xóa mật mã |
-| Lệch so với SRS cũ | Bốn chế độ `none`, `mask`, `pseudonymize`, `anonymize` thành `MaskType`; API `/api/v1/privacy` thành `/api/privacy/v1` và `/privacy/v1`; thêm 8 nhóm chức năng mới |
+| D02-03-PH06 (đối chiếu loại yêu cầu chủ thể) | PH-09 giữ `DsrType.RESTRICT`; PH-06 dùng `RESTRICTION` ở FR-06-058. Ánh xạ khi PH-09 chuyển tác vụ: `ACCESS` sang `ACCESS`, `RECTIFY` sang `RECTIFICATION`, `RESTRICT` sang `RESTRICTION`; `ERASE`, `OBJECT`, `WITHDRAW_CONSENT`, `INFO` PH-06 không nhận qua kênh này |
+| D03-03-PH09 (DDL) | Thêm khóa `09.decision.cache-seconds`, `09.feature.dsr-ph11`, `09.feature.l-diversity`, `09.feature.auto-confirm-mvp`, `09.api.rate-user-per-min`, `09.api.rate-du-per-sec`, `09.mask.reveal-alert-per-hour` vào ràng buộc `ck_tenant_setting_key`; thêm enum `AccessRequestKind` (cột loại và `renews_grant_id` của yêu cầu khai thác) |
+| D03-04-PH09 (OpenAPI) | Thêm API-09-238 đến 245 (mục 9.4), ERR-09-082, trường `requestKind`, `renewsGrantId` của yêu cầu khai thác; hạn tham chiếu kết quả khôi phục API-09-124 là 60 giây (API đang ghi 15 phút); `serverTime`, `remainingThisHour` ở API-09-102 |
+| Lệch so với SRS cũ | Bốn chế độ `none`, `mask`, `pseudonymize`, `anonymize` thành `MaskType`; API `/api/v1/privacy` thành `/api/privacy/v1` và `/privacy/v1`; thêm 8 nhóm chức năng mới; k từ 5 lên 10, bỏ lưu bí danh rõ, trường chưa phân loại thành `SENSITIVE` thay vì chặn, mẫu che số định danh giữ 3 ký tự cuối (bảng ở 11.3) |
 
 : Đề nghị đồng bộ với tài liệu khác
+
+## Phụ lục C. Nhật ký hấp thụ đề nghị
+
+Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC gửi về FRS. Cột "Xử lý" ghi mục đã sửa hoặc lý do không nhận. Mã đã cấp không đổi số; mã mới lấy số kế tiếp (ERR-09-079 đến 082, API-09-238 đến 245, NFR-09-024 đến 026, BR-09-062, EN-09-52 đến 55).
+
+| Nguồn | Đề nghị | Xử lý |
+|---|---|---|
+| UC §8.2 ĐN-UC-01 | Gắn ERR-09-012 vào luồng ngoại lệ FR-09-004 | Đã hấp thụ: FR-09-004, luồng ngoại lệ |
+| UC §8.2 ĐN-UC-02 | Câu thông báo cho ERR-09-003 | Đã hấp thụ: ERR-09-003 "Dữ liệu không hợp lệ: {chi tiết}." ở 9.1 và 9.2 |
+| UC §8.2 ĐN-UC-03 | API gia hạn hạn trả lời `:extend` | Đã hấp thụ: API-09-242 (FR-09-049); OpenAPI chưa có |
+| UC §8.2 ĐN-UC-04 | API ngừng phần tử `:retire` và rút yêu cầu `:withdraw` | Đã hấp thụ: API-09-243 (FR-09-003) và API-09-244 (FR-09-045); OpenAPI chưa có |
+| UC §8.2 ĐN-UC-05 | Gắn ERR-09-026 vào FR-09-015 | Đã hấp thụ: FR-09-015, luồng ngoại lệ |
+| UC §8.2 ĐN-UC-06 | Tác nhân hệ thống gọi `:suspend` khi tự tạm dừng | Hấp thụ dạng nghiệp vụ nội bộ: FR-09-017, FR-09-020 (tác nhân `system:anomaly-detector`, không qua API công khai); không thêm API |
+| MH C1 | UI-09-09 liệt kê TA nhưng TA không có `PERM-09-purpose-approve` | Đã hấp thụ: 10.1 ghi DO duyệt, TA xem và phát hành bundle |
+| MH C2 | UI-09-20 liệt kê TO nhưng TO không có `PERM-09-audit-read` | Hấp thụ phương án bỏ TO, thêm PA (có quyền): 10.1; không cấp thêm quyền cho TO để giữ nguyên tắc tối thiểu quyền |
+| MH C3 | UI-09-12 trùng UI-09-13 | Đã hấp thụ: 10.1, UI-09-12 chỉ liên kết sang UI-09-13 |
+| MH C4 | Thêm DO, TO, PA vào UI-09-01 và SV vào UI-09-02, 03 | Đã hấp thụ: 10.1 |
+| MH C5 | Thêm FR-09-063 vào UI-09-21 | Đã hấp thụ: FR-09-063, mục Màn hình, API |
+| MH C6 | Bổ sung tab con ở 10.3 | Đã hấp thụ: 10.3 |
+| MH C7 | OR cần đề nghị gia hạn | Đã hấp thụ theo phương án loại yêu cầu: `AccessRequestKind.RENEWAL`, trường `renewsGrantId` ở FR-09-015, 016; DDL và OpenAPI cần thêm trường |
+| MH C8 | Tra đồng ý theo định danh trong thân ở control plane | Đã hấp thụ: API-09-245 `POST /consents:search` (FR-09-053); OpenAPI chưa có |
+| MH C9 | ERR-09-079, 080 | Đã hấp thụ: 9.1, HTTP 422 và câu thông báo đúng như API 6.3; gắn vào FR-09-061 và FR-09-025 |
+| MH C10 | Đồng hồ theo `expiresAt` của máy chủ, `serverTime`, áp 60 giây cho kết quả khôi phục | Đã hấp thụ: FR-09-029 và FR-09-033; API-09-124 ghi hạn tham chiếu 15 phút nên cần chỉnh theo 60 giây |
+| MH C11 | Ghi rõ chức năng data plane không có màn hình | Đã hấp thụ: 10.1 (FR-09-019, 027, 028, 032, 054) |
+| MH C12 | `RESTRICT` (PH-09) và `RESTRICTION` (PH-06) | Giữ `RESTRICT`; bảng ánh xạ ở Phụ lục B, dòng D02-03-PH06 |
+| SDD 13.5 (1) | Chốt tên thư viện PEP | Đã hấp thụ: `dh-privacy-client` ở FR-09-028 và 2.4 |
+| SDD 13.5 (2) | Tham số `09.decision.cache-seconds` | Đã hấp thụ: 8.2 (mặc định 15, trần 15, miền 0…15), FR-09-019 |
+| SDD 13.5 (3) | Cờ `09.feature.*` | Đã hấp thụ: 8.2; BR-09-007, BR-09-036 và FR-09-049 nêu cờ |
+| SDD 13.5 (4) | Hợp đồng `retention:purge` | Đã hấp thụ: FR-09-041 bước 3 (`table`, `cutoff`, `action`, `batchId`, `dryRun`, kiểm `cutoff`); không thêm API của PH-09 vì hợp đồng do phân hệ sở hữu cung cấp |
+| SDD 13.5 (5) | NFR độ trễ thu hồi tại PEP ≤ 15 giây | Đã hấp thụ: NFR-09-024; 14.3 sửa từ 60 giây thành 15 giây qua sự kiện và 60 giây qua bundle |
+| SDD 13.5 (6) | BR đệm `DENY` 5 giây; rà API-09-216 đến 226 | BR đã hấp thụ: BR-09-062; việc rà API do tập API đảm nhiệm, không cần sửa FRS |
+| CSDL 9.2 (1) | Enum ngoài Phụ lục A | Đã hấp thụ: Phụ lục A thêm `LogPolicy`, `DisplayPolicy`, `TargetKind`, `MaskPolicyScope`, `ReportFormat` đúng giá trị CHECK của DDL |
+| CSDL 9.2 (2) | `rank` 1…9 ở FR-09-001 lệch Phụ lục A | Đã hấp thụ: FR-09-001 `rank` 1 đến 4, bỏ mức mở rộng; EN-09-01 |
+| CSDL 9.2 (3) | BR-09-002 "hai người khác nhau" mơ hồ | Đã hấp thụ: BR-09-002 ba người đôi một khác nhau |
+| CSDL 9.2 (4) | Enum trạng thái nhãn chặn | Hấp thụ dạng enum suy ra: `BlockLabelStatus` ở Phụ lục A, không thêm cột trạng thái |
+| CSDL 9.2 (5) | Trạng thái bundle | Không thêm enum trạng thái; ghi ở Phụ lục A rằng trạng thái dựng, ký, phát hành suy từ `test_passed`, `published_at`; thêm `BundleTrigger` theo API |
+| CSDL 9.2 (6) | Liên kết hoạt động thuộc nội dung phiên bản | Đã hấp thụ: FR-09-011, BR-09-011 |
+| CSDL 9.2 (7) | Tác vụ sinh `ConsentStatus.EXPIRED` | Đã hấp thụ: FR-09-053 bước 3 (việc mỗi 5 phút) |
+| CSDL 9.2 (8) | Enum `LegalDocType` | Không nhận: loại văn bản là danh mục mở của tenant (mã dạng chữ hoa), không cần enum cố định |
+| CSDL 9.2 (9) | k ≥ 10 thay k ≥ 5 cũ, không lưu bí danh | Đã hấp thụ: bảng 11.3 và Phụ lục B |
+| CSDL (tổng quan) | Garage là kho đối tượng, Ceph RGW chỉ WORM | Đã hấp thụ: 2.4, 12.1 |
+| CSDL (tổng quan) | Bốn bảng ngoài danh mục EN | Đã hấp thụ: EN-09-52 `PurposeElement`, 53 `RetentionScheduleLine`, 54 `OutboxEvent`, 55 `InboxEvent` |
+| API 10.1 | Enum chỉ có ở API (`LogPolicy`, `DisplayPolicy`, `TargetKind`, `MaskPolicyScope`, `ReportFormat`, trạng thái nhãn, `trigger` bundle) | Đã hấp thụ: Phụ lục A; thêm `SchemaFormat`, `FindingResolution`, `DecideReason`, `UsageGroupBy`, `ConsentCheckStatus`, `BreachClockLevel`, `AuditOutcome` có trong OpenAPI |
+| API 10.2 (1) | ERR-09-081 | Đã hấp thụ: 9.1; dùng ở BR-09-061 và quy ước 6.1 |
+| API 10.2 (2) | Bốn GET còn thiếu | Đã hấp thụ: API-09-238 (mẫu đồng ý), 239 (thông báo vi phạm), 240 (biện pháp khắc phục), 241 (phiếu xem đầy đủ) |
+| API 10.2 (3) | `09.api.rate-*`, ERR-09-079, 080 | Đã hấp thụ: 8.2 (`09.api.rate-user-per-min`, `09.api.rate-du-per-sec`), 9.1 |
+| API 10.2 (4) | Data plane không bắt buộc `Idempotency-Key` | Đã hấp thụ: BR-09-061 (cả data plane không dùng khóa) |
+| API 10.2 (5) | Cách trả giá trị API-09-102 và kết quả API-09-124 | Đã hấp thụ: FR-09-029 (giá trị trong thân `no-store`), FR-09-033 (tham chiếu Garage SSE-C, tải một lần, hết hạn 60 giây) |
+| API 10.2 (6) | Đường dẫn data plane đầy đủ hay tương đối | Đã hấp thụ: 9.4 và 6.1 đã ghi data plane bằng đường dẫn đầy đủ `/privacy/v1/...`, control plane tính từ `/api/privacy/v1` |
+| TC 10.1 ĐN-TC-01 | Chỉ tiêu thu hồi 15 giây khác 60 giây ở 14.3 | Đã hấp thụ: chốt 15 giây qua sự kiện, 60 giây qua bundle (NFR-09-024, 14.3) |
+| TC 10.1 ĐN-TC-02 | Đồng hồ 72 giờ BR-09-054 khác 14.11 | Đã hấp thụ: chốt đồng hồ chỉ dừng khi thông báo Cục A05 đã `SENT`, không có đường tạm dừng hay đặt lại khác (BR-09-054, 14.11) |
+| TC 10.1 ĐN-TC-03 | Tham số ngưỡng của EVT-09-15 | Đã hấp thụ: `09.mask.reveal-alert-per-hour` (mặc định 10) ở 8.2, FR-09-029 |
+| TC 10.1 ĐN-TC-04 | Thiếu mã lỗi (AI khi cờ tắt, tra nhật ký quá khoảng, khôi phục thiếu MFA, khóa trùng khác thân) | ERR-09-079 và 081 đã có từ API; thêm ERR-09-082 cho AI khi cờ tắt; thiếu MFA dùng ERR-00-401 của khung lỗi chung (FR-09-033), không cấp mã PH-09 |
+| TC 10.1 ĐN-TC-05 | Lệch SRS cũ chưa ghi ở Phụ lục B | Đã hấp thụ: bảng 11.3 và dòng "Lệch so với SRS cũ" của Phụ lục B |
+| TC 10.1 ĐN-TC-06 | `09.anon.k-min-ai` cho dữ liệu AI | Không nhận: giữ một sàn k ≥ 10 và cho đặt k cao hơn trong cấu hình ẩn danh; ghi ở FR-09-038 và 11.3 |
+| TC 10.1 ĐN-TC-07 | Số cho ERR-09-107, 113 | Đã hấp thụ: ERR-09-107 nêu 1 MiB và 500 giá trị, ERR-09-113 nêu 2.000 mỗi giây mỗi DU qua `09.api.rate-du-per-sec` |
+| TC 10.1 ĐN-TC-08 | NFR tự hết hạn và cảnh báo 5 phút | Đã hấp thụ: NFR-09-025 (hết hạn trong 60 giây, `EXPIRED` trong 5 phút), NFR-09-026 (cảnh báo trong 5 phút); FR-09-017 đổi việc định kỳ thành mỗi 5 phút |
+| TC 10.1 ĐN-TC-09 | §14.5 dẫn nhầm NFR-09-009; `410` của ERR-09-001 | Đã hấp thụ: 14.5 dẫn NFR-09-014; ERR-09-001 nêu `410` khi đối tượng danh mục đã `RETIRED` |
+
+: Nhật ký hấp thụ đề nghị vào FRS 0.2
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
-| 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 64 FR đủ 17 mục chia 11 nhóm, mở rộng từ 11 FR của SRS cũ; 61 BR, 23 NFR, 78 + 13 mã lỗi, 32 sự kiện, 237 API dự kiến, 22 màn hình, 51 thực thể, 36 tham số |
+| 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 64 FR đủ 17 mục chia 11 nhóm, mở rộng từ 11 FR của SRS cũ; 62 BR, 26 NFR, 82 + 13 mã lỗi, 32 sự kiện, 245 API dự kiến, 22 màn hình, 55 thực thể, 43 tham số |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, MH, SDD, CSDL, API, TC (bảng ở Phụ lục C): rank 1 đến 4, tên thư viện `dh-privacy-client`, 4 mã lỗi mới (ERR-09-079 đến 082), 8 API mới, 3 NFR mới, 7 tham số mới, 15 enum mới, 4 thực thể mới |
