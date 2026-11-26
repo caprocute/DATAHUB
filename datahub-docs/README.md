@@ -29,8 +29,8 @@ Thư mục này là **bộ tài liệu độc lập**. Nó tham khảo nội dun
 | D00-02 | Sổ quyết định kiến trúc (ADR) | `00-chung/`, `00-chung/adr/` | Bản 0.1 (ADR-001…013) |
 | D00-03 | Ma trận truy vết (RTM), gồm kiểm kê chức năng hệ cũ | `00-chung/` | Bản 0.1 (phần kiểm kê) |
 | D00-04 | [Sổ tra cứu gọn](00-chung/D00-04-so-tra-cuu-gon.md) và [khuôn rỗng bảy tập phân hệ](00-chung/khuon/README.md) | `00-chung/` | Bản 0.1 (26/11/2026) |
-| D01-01 | Báo cáo nghiên cứu khả thi | `01-khoi-tao/` | Đang viết (luồng riêng) |
-| D01-02 | Kế hoạch dự án | `01-khoi-tao/` | Đang viết (luồng riêng) |
+| D01-01 | Báo cáo nghiên cứu khả thi | `01-khoi-tao/` | Dự thảo 0.2 (26/11/2026) |
+| D01-02 | Kế hoạch dự án | `01-khoi-tao/` | Dự thảo 0.2 (26/11/2026) |
 | D02-01 | Tài liệu yêu cầu nghiệp vụ (BRD) | `02-yeu-cau/` | Bản 0.1 |
 | D02-02 | Đặc tả yêu cầu phần mềm cấp hệ thống (SRS) | `02-yeu-cau/` | Bản 0.1 |
 | D02-03 | Đặc tả chức năng (FRS), 20 tập theo phân hệ | `02-yeu-cau/frs/` | Đợt 2–4 |
