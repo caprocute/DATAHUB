@@ -1,0 +1,2576 @@
+# D03-04-PH11 · AsyncAPI PH-11. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: 'Datahub PH-11 Quy trình liên thông: sự kiện'
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-11-01…21 (D03-04-PH11 §4, FRS 9.3). Ghi vào `ph11_bpm.outbox_event` cùng giao dịch nghiệp vụ (ADR-042), bộ chuyển outbox đưa
+    lên Kafka; CloudEvents 1.0 dạng cấu trúc, khóa phân vùng `businessKey` giữ thứ tự theo hồ sơ. Không sự kiện nào mang giá trị biến. EVT-11-17 là lệnh tới PH-04
+    (ADR 112, PH-11 không gọi HTTT trực tiếp); EVT-11-18, 19 do PH-04 phát, PH-11 tiêu thụ và tương quan theo `commandId`. Tương thích BACKWARD: chỉ thêm trường tùy
+    chọn trong `v1` (ADR-070). Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU, `dh-runtime`, Kafka Connect; mTLS, ACL theo tiền tố tenant.'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  modelPublished:
+    address: '{tenant}.bpm.model.published.v1'
+    title: EVT-11-01
+    description: 'model.published. Bên tiêu thụ: PH-13, PH-10.'
+    messages:
+      modelPublished:
+        $ref: '#/components/messages/modelPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.model.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  modelRetired:
+    address: '{tenant}.bpm.model.retired.v1'
+    title: EVT-11-02
+    description: 'model.retired. Bên tiêu thụ: PH-13.'
+    messages:
+      modelRetired:
+        $ref: '#/components/messages/modelRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.model.retired.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  instanceStarted:
+    address: '{tenant}.bpm.instance.started.v1'
+    title: EVT-11-03
+    description: 'instance.started. Bên tiêu thụ: DVC, HTTT một cửa, PH-13.'
+    messages:
+      instanceStarted:
+        $ref: '#/components/messages/instanceStarted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.instance.started.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  instanceStepCompleted:
+    address: '{tenant}.bpm.instance.step.completed.v1'
+    title: EVT-11-04
+    description: 'instance.step.completed. Bên tiêu thụ: DVC (tiến độ), HTTT một cửa.'
+    messages:
+      instanceStepCompleted:
+        $ref: '#/components/messages/instanceStepCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.instance.step.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  instanceCompleted:
+    address: '{tenant}.bpm.instance.completed.v1'
+    title: EVT-11-05
+    description: 'instance.completed. Bên tiêu thụ: DVC, PH-01, PH-07, PH-19.'
+    messages:
+      instanceCompleted:
+        $ref: '#/components/messages/instanceCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.instance.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  instanceCancelled:
+    address: '{tenant}.bpm.instance.cancelled.v1'
+    title: EVT-11-06
+    description: 'instance.cancelled. Bên tiêu thụ: DVC, phân hệ khởi tạo.'
+    messages:
+      instanceCancelled:
+        $ref: '#/components/messages/instanceCancelled'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.instance.cancelled.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  instanceSuspended:
+    address: '{tenant}.bpm.instance.suspended.v1'
+    title: EVT-11-07
+    description: 'instance.suspended. Bên tiêu thụ: HTTT một cửa.'
+    messages:
+      instanceSuspended:
+        $ref: '#/components/messages/instanceSuspended'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.instance.suspended.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  taskCreated:
+    address: '{tenant}.bpm.task.created.v1'
+    title: EVT-11-08
+    description: 'task.created. Bên tiêu thụ: Hộp việc, HTTT một cửa.'
+    messages:
+      taskCreated:
+        $ref: '#/components/messages/taskCreated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.task.created.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  taskAssigned:
+    address: '{tenant}.bpm.task.assigned.v1'
+    title: EVT-11-09
+    description: 'task.assigned. Bên tiêu thụ: Hộp việc.'
+    messages:
+      taskAssigned:
+        $ref: '#/components/messages/taskAssigned'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.task.assigned.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  taskCompleted:
+    address: '{tenant}.bpm.task.completed.v1'
+    title: EVT-11-10
+    description: 'task.completed. Bên tiêu thụ: Hộp việc, PH-13.'
+    messages:
+      taskCompleted:
+        $ref: '#/components/messages/taskCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.task.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  taskDueSoon:
+    address: '{tenant}.bpm.task.due-soon.v1'
+    title: EVT-11-11
+    description: 'task.due-soon. Bên tiêu thụ: Thông báo.'
+    messages:
+      taskDueSoon:
+        $ref: '#/components/messages/taskDueSoon'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.task.due-soon.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  taskOverdue:
+    address: '{tenant}.bpm.task.overdue.v1'
+    title: EVT-11-12
+    description: 'task.overdue. Bên tiêu thụ: PH-13, thông báo.'
+    messages:
+      taskOverdue:
+        $ref: '#/components/messages/taskOverdue'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.task.overdue.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  sagaCompensationStarted:
+    address: '{tenant}.bpm.saga.compensation.started.v1'
+    title: EVT-11-13
+    description: 'saga.compensation.started. Bên tiêu thụ: PH-13.'
+    messages:
+      sagaCompensationStarted:
+        $ref: '#/components/messages/sagaCompensationStarted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.saga.compensation.started.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  sagaCompensationCompleted:
+    address: '{tenant}.bpm.saga.compensation.completed.v1'
+    title: EVT-11-14
+    description: 'saga.compensation.completed. Bên tiêu thụ: PH-13, DVC.'
+    messages:
+      sagaCompensationCompleted:
+        $ref: '#/components/messages/sagaCompensationCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.saga.compensation.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  sagaCompensationFailed:
+    address: '{tenant}.bpm.saga.compensation.failed.v1'
+    title: EVT-11-15
+    description: 'saga.compensation.failed. Bên tiêu thụ: PH-13 (P1).'
+    messages:
+      sagaCompensationFailed:
+        $ref: '#/components/messages/sagaCompensationFailed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.saga.compensation.failed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  incidentOpened:
+    address: '{tenant}.bpm.incident.opened.v1'
+    title: EVT-11-16
+    description: 'incident.opened. Bên tiêu thụ: PH-13.'
+    messages:
+      incidentOpened:
+        $ref: '#/components/messages/incidentOpened'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.incident.opened.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  serviceRequested:
+    address: '{tenant}.bpm.service.requested.v1'
+    title: EVT-11-17
+    description: 'service.requested. Bên tiêu thụ: PH-04.'
+    messages:
+      serviceRequested:
+        $ref: '#/components/messages/serviceRequested'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.service.requested.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  serviceCompleted:
+    address: '{tenant}.bpm.service.completed.v1'
+    title: EVT-11-18
+    description: 'service.completed. Bên tiêu thụ: PH-11 (do PH-04 phát).'
+    messages:
+      serviceCompleted:
+        $ref: '#/components/messages/serviceCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.service.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  serviceFailed:
+    address: '{tenant}.bpm.service.failed.v1'
+    title: EVT-11-19
+    description: 'service.failed. Bên tiêu thụ: PH-11 (do PH-04 phát).'
+    messages:
+      serviceFailed:
+        $ref: '#/components/messages/serviceFailed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.service.failed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  notificationRequested:
+    address: '{tenant}.bpm.notification.requested.v1'
+    title: EVT-11-20
+    description: 'notification.requested. Bên tiêu thụ: Kênh thông báo, PH-03.'
+    messages:
+      notificationRequested:
+        $ref: '#/components/messages/notificationRequested'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.notification.requested.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  auditRecorded:
+    address: '{tenant}.bpm.audit.recorded.v1'
+    title: EVT-11-21
+    description: 'audit.recorded. Bên tiêu thụ: PH-13.'
+    messages:
+      auditRecorded:
+        $ref: '#/components/messages/auditRecorded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.bpm.audit.recorded.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+operations:
+  sendModelPublished:
+    action: send
+    channel:
+      $ref: '#/channels/modelPublished'
+    title: EVT-11-01
+    summary: '`dh-platform` phát EVT-11-01'
+    messages:
+    - $ref: '#/channels/modelPublished/messages/modelPublished'
+  sendModelRetired:
+    action: send
+    channel:
+      $ref: '#/channels/modelRetired'
+    title: EVT-11-02
+    summary: '`dh-platform` phát EVT-11-02'
+    messages:
+    - $ref: '#/channels/modelRetired/messages/modelRetired'
+  sendInstanceStarted:
+    action: send
+    channel:
+      $ref: '#/channels/instanceStarted'
+    title: EVT-11-03
+    summary: '`dh-platform` phát EVT-11-03'
+    messages:
+    - $ref: '#/channels/instanceStarted/messages/instanceStarted'
+  sendInstanceStepCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/instanceStepCompleted'
+    title: EVT-11-04
+    summary: '`dh-platform` phát EVT-11-04'
+    messages:
+    - $ref: '#/channels/instanceStepCompleted/messages/instanceStepCompleted'
+  sendInstanceCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/instanceCompleted'
+    title: EVT-11-05
+    summary: '`dh-platform` phát EVT-11-05'
+    messages:
+    - $ref: '#/channels/instanceCompleted/messages/instanceCompleted'
+  sendInstanceCancelled:
+    action: send
+    channel:
+      $ref: '#/channels/instanceCancelled'
+    title: EVT-11-06
+    summary: '`dh-platform` phát EVT-11-06'
+    messages:
+    - $ref: '#/channels/instanceCancelled/messages/instanceCancelled'
+  sendInstanceSuspended:
+    action: send
+    channel:
+      $ref: '#/channels/instanceSuspended'
+    title: EVT-11-07
+    summary: '`dh-platform` phát EVT-11-07'
+    messages:
+    - $ref: '#/channels/instanceSuspended/messages/instanceSuspended'
+  sendTaskCreated:
+    action: send
+    channel:
+      $ref: '#/channels/taskCreated'
+    title: EVT-11-08
+    summary: '`dh-platform` phát EVT-11-08'
+    messages:
+    - $ref: '#/channels/taskCreated/messages/taskCreated'
+  sendTaskAssigned:
+    action: send
+    channel:
+      $ref: '#/channels/taskAssigned'
+    title: EVT-11-09
+    summary: '`dh-platform` phát EVT-11-09'
+    messages:
+    - $ref: '#/channels/taskAssigned/messages/taskAssigned'
+  sendTaskCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/taskCompleted'
+    title: EVT-11-10
+    summary: '`dh-platform` phát EVT-11-10'
+    messages:
+    - $ref: '#/channels/taskCompleted/messages/taskCompleted'
+  sendTaskDueSoon:
+    action: send
+    channel:
+      $ref: '#/channels/taskDueSoon'
+    title: EVT-11-11
+    summary: '`dh-platform` phát EVT-11-11'
+    messages:
+    - $ref: '#/channels/taskDueSoon/messages/taskDueSoon'
+  sendTaskOverdue:
+    action: send
+    channel:
+      $ref: '#/channels/taskOverdue'
+    title: EVT-11-12
+    summary: '`dh-platform` phát EVT-11-12'
+    messages:
+    - $ref: '#/channels/taskOverdue/messages/taskOverdue'
+  sendSagaCompensationStarted:
+    action: send
+    channel:
+      $ref: '#/channels/sagaCompensationStarted'
+    title: EVT-11-13
+    summary: '`dh-platform` phát EVT-11-13'
+    messages:
+    - $ref: '#/channels/sagaCompensationStarted/messages/sagaCompensationStarted'
+  sendSagaCompensationCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/sagaCompensationCompleted'
+    title: EVT-11-14
+    summary: '`dh-platform` phát EVT-11-14'
+    messages:
+    - $ref: '#/channels/sagaCompensationCompleted/messages/sagaCompensationCompleted'
+  sendSagaCompensationFailed:
+    action: send
+    channel:
+      $ref: '#/channels/sagaCompensationFailed'
+    title: EVT-11-15
+    summary: '`dh-platform` phát EVT-11-15'
+    messages:
+    - $ref: '#/channels/sagaCompensationFailed/messages/sagaCompensationFailed'
+  sendIncidentOpened:
+    action: send
+    channel:
+      $ref: '#/channels/incidentOpened'
+    title: EVT-11-16
+    summary: '`dh-platform` phát EVT-11-16'
+    messages:
+    - $ref: '#/channels/incidentOpened/messages/incidentOpened'
+  sendServiceRequested:
+    action: send
+    channel:
+      $ref: '#/channels/serviceRequested'
+    title: EVT-11-17
+    summary: '`dh-platform` phát EVT-11-17'
+    messages:
+    - $ref: '#/channels/serviceRequested/messages/serviceRequested'
+  receiveServiceCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/serviceCompleted'
+    title: EVT-11-18
+    summary: '`dh-platform` nhận EVT-11-18'
+    messages:
+    - $ref: '#/channels/serviceCompleted/messages/serviceCompleted'
+  receiveServiceFailed:
+    action: receive
+    channel:
+      $ref: '#/channels/serviceFailed'
+    title: EVT-11-19
+    summary: '`dh-platform` nhận EVT-11-19'
+    messages:
+    - $ref: '#/channels/serviceFailed/messages/serviceFailed'
+  sendNotificationRequested:
+    action: send
+    channel:
+      $ref: '#/channels/notificationRequested'
+    title: EVT-11-20
+    summary: '`dh-platform` phát EVT-11-20'
+    messages:
+    - $ref: '#/channels/notificationRequested/messages/notificationRequested'
+  sendAuditRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/auditRecorded'
+    title: EVT-11-21
+    summary: '`dh-platform` phát EVT-11-21'
+    messages:
+    - $ref: '#/channels/auditRecorded/messages/auditRecorded'
+components:
+  securitySchemes:
+    mtls:
+      type: X509
+      description: mTLS, ACL theo CN và tiền tố tenant.
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  messages:
+    modelPublished:
+      name: modelPublished
+      title: EVT-11-01
+      summary: 'EVT-11-01: model.published. Trường chính: `processKey`, `version`, `checksum`, `publishedBy`, `approvedBy`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/modelPublishedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `processKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000001
+          type: vn.datahub.bpm.model.published.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            processKey: LT_KHAI_SINH
+            version: 3
+            checksum: sha256:3f2a9c
+            publishedBy: ie.tranvanc
+            approvedBy: ia.lethid
+    modelRetired:
+      name: modelRetired
+      title: EVT-11-02
+      summary: 'EVT-11-02: model.retired. Trường chính: `processKey`, `version`, `status` (`DEPRECATED`, `RETIRED`), `reason`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/modelRetiredEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `processKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000002
+          type: vn.datahub.bpm.model.retired.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            processKey: LT_KHAI_SINH
+            version: 2
+            status: DEPRECATED
+            reason: Thay bằng phiên bản 3.
+    instanceStarted:
+      name: instanceStarted
+      title: EVT-11-03
+      summary: 'EVT-11-03: instance.started. Trường chính: `instanceId`, `processKey`, `version`, `businessKey`, `startChannel`, `dueAt`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/instanceStartedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000003
+          type: vn.datahub.bpm.instance.started.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            processKey: LT_KHAI_SINH
+            version: 3
+            businessKey: HS-T68-2026-000142
+            startChannel: API
+            dueAt: '2026-11-26T08:00:00+07:00'
+    instanceStepCompleted:
+      name: instanceStepCompleted
+      title: EVT-11-04
+      summary: 'EVT-11-04: instance.step.completed. Trường chính: `instanceId`, `businessKey`, `elementId`, `publicName`, `displayStatus`, `percentEstimate`, `manual`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/instanceStepCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000004
+          type: vn.datahub.bpm.instance.step.completed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            businessKey: HS-T68-2026-000142
+            elementId: Task_DangKyKhaiSinh
+            publicName: Đăng ký khai sinh
+            displayStatus: IN_PROGRESS
+            percentEstimate: 33
+            manual: false
+    instanceCompleted:
+      name: instanceCompleted
+      title: EVT-11-05
+      summary: 'EVT-11-05: instance.completed. Trường chính: `instanceId`, `businessKey`, `outcome` (`InstanceOutcome`), `dueResult`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/instanceCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000005
+          type: vn.datahub.bpm.instance.completed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            businessKey: HS-T68-2026-000142
+            outcome: APPROVED
+            dueResult: MET
+    instanceCancelled:
+      name: instanceCancelled
+      title: EVT-11-06
+      summary: 'EVT-11-06: instance.cancelled. Trường chính: `instanceId`, `businessKey`, `reason` (mã), `compensated`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/instanceCancelledEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000006
+          type: vn.datahub.bpm.instance.cancelled.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            businessKey: HS-T68-2026-000142
+            reason: CITIZEN_WITHDRAWN
+            compensated: false
+    instanceSuspended:
+      name: instanceSuspended
+      title: EVT-11-07
+      summary: 'EVT-11-07: instance.suspended. Trường chính: `instanceId`, `businessKey`, `state` (`SUSPENDED`, `RESUMED`)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/instanceSuspendedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000007
+          type: vn.datahub.bpm.instance.suspended.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            businessKey: HS-T68-2026-000142
+            state: SUSPENDED
+    taskCreated:
+      name: taskCreated
+      title: EVT-11-08
+      summary: 'EVT-11-08: task.created. Trường chính: `taskId`, `instanceId`, `elementId`, `candidates`, `dueAt`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/taskCreatedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000008
+          type: vn.datahub.bpm.task.created.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            taskId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            elementId: Task_DangKyThuongTru
+            candidates:
+            - CB_CONG_AN_XA
+            dueAt: '2026-11-26T08:00:00+07:00'
+    taskAssigned:
+      name: taskAssigned
+      title: EVT-11-09
+      summary: 'EVT-11-09: task.assigned. Trường chính: `taskId`, `assignee`, `delegatedFrom`, `via` (`CLAIM`, `TRANSFER`, `DELEGATION`, `BULK`)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/taskAssignedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000009
+          type: vn.datahub.bpm.task.assigned.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            taskId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            assignee: cb.nguyenvana
+            delegatedFrom: ví dụ
+            via: CLAIM
+    taskCompleted:
+      name: taskCompleted
+      title: EVT-11-10
+      summary: 'EVT-11-10: task.completed. Trường chính: `taskId`, `decision`, `completedBy`, `dueResult`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/taskCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000010
+          type: vn.datahub.bpm.task.completed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            taskId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            decision: COMPLETE
+            completedBy: cb.nguyenvana
+            dueResult: MET
+    taskDueSoon:
+      name: taskDueSoon
+      title: EVT-11-11
+      summary: 'EVT-11-11: task.due-soon. Trường chính: `taskId` hoặc `instanceId`, `subject`, `dueAt`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/taskDueSoonEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000011
+          type: vn.datahub.bpm.task.due-soon.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            taskId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            subject: TASK
+            dueAt: '2026-11-26T08:00:00+07:00'
+    taskOverdue:
+      name: taskOverdue
+      title: EVT-11-12
+      summary: 'EVT-11-12: task.overdue. Trường chính: `subject`, `id`, `dueAt`, `escalationLevel`, `action`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/taskOverdueEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000012
+          type: vn.datahub.bpm.task.overdue.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            subject: TASK
+            id: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            dueAt: '2026-11-26T08:00:00+07:00'
+            escalationLevel: 1
+            action: NOTIFY_MANAGER
+    sagaCompensationStarted:
+      name: sagaCompensationStarted
+      title: EVT-11-13
+      summary: 'EVT-11-13: saga.compensation.started. Trường chính: `sagaId`, `instanceId`, `trigger`, `stepCount`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/sagaCompensationStartedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000013
+          type: vn.datahub.bpm.saga.compensation.started.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            sagaId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            trigger: STEP_FAILURE
+            stepCount: 3
+    sagaCompensationCompleted:
+      name: sagaCompensationCompleted
+      title: EVT-11-14
+      summary: 'EVT-11-14: saga.compensation.completed. Trường chính: `sagaId`, `status` = `SUCCEEDED`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/sagaCompensationCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000014
+          type: vn.datahub.bpm.saga.compensation.completed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            sagaId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            status: SUCCEEDED
+    sagaCompensationFailed:
+      name: sagaCompensationFailed
+      title: EVT-11-15
+      summary: 'EVT-11-15: saga.compensation.failed. Trường chính: `sagaId`, `manualSteps`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/sagaCompensationFailedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000015
+          type: vn.datahub.bpm.saga.compensation.failed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            sagaId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            manualSteps:
+            - Task_DangKyKhaiSinh
+    incidentOpened:
+      name: incidentOpened
+      title: EVT-11-16
+      summary: 'EVT-11-16: incident.opened. Trường chính: `incidentId`, `type`, `instanceId`, `elementId`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/incidentOpenedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000016
+          type: vn.datahub.bpm.incident.opened.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            incidentId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            type: JOB_FAILED
+            instanceId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            elementId: Task_CapTheBHYT
+    serviceRequested:
+      name: serviceRequested
+      title: EVT-11-17
+      summary: 'EVT-11-17: service.requested. Trường chính: `commandId`, `intentCode`, `elementId`, `replyTopic`, `timeoutAt`, `payload` (tham chiếu)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/serviceRequestedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000017
+          type: vn.datahub.bpm.service.requested.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            commandId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            intentCode: DK_KHAI_SINH
+            elementId: Task_DangKyKhaiSinh
+            replyTopic: t68.bpm.service.completed.v1
+            timeoutAt: '2026-11-26T08:00:00+07:00'
+            payload:
+              objectRef: s3://dh-bpm/t68/cmd/0193b1d4.json
+              checksum: sha256:9a1c
+              sizeBytes: 2048
+    serviceCompleted:
+      name: serviceCompleted
+      title: EVT-11-18
+      summary: 'EVT-11-18: service.completed. Trường chính: `commandId`, `output`, `completedAt`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/serviceCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000018
+          type: vn.datahub.bpm.service.completed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            commandId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            output:
+              soGiayKhaiSinh: KS-2026-001
+            completedAt: '2026-11-26T08:00:00+07:00'
+    serviceFailed:
+      name: serviceFailed
+      title: EVT-11-19
+      summary: 'EVT-11-19: service.failed. Trường chính: `commandId`, `errorKind`, `errorCode`, `message`, `attempts`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/serviceFailedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000019
+          type: vn.datahub.bpm.service.failed.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            commandId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            errorKind: TECHNICAL
+            errorCode: UPSTREAM_TIMEOUT
+            message: Hệ thống đích không phản hồi.
+            attempts: 3
+    notificationRequested:
+      name: notificationRequested
+      title: EVT-11-20
+      summary: 'EVT-11-20: notification.requested. Trường chính: `templateCode`, `audience`, `channel`, `params` (không DLCN)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/notificationRequestedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `businessKey`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000020
+          type: vn.datahub.bpm.notification.requested.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            templateCode: TB_HO_SO_HOAN_THANH
+            audience: APPLICANT
+            channel: SMS
+            params:
+              maHoSo: HS-T68-2026-000142
+    auditRecorded:
+      name: auditRecorded
+      title: EVT-11-21
+      summary: 'EVT-11-21: audit.recorded. Trường chính: `action`, `objectType`, `objectId`, `actor`, `traceId`, `hashRef` (không giá trị biến)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/auditRecordedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `objectId`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000021
+          type: vn.datahub.bpm.audit.recorded.v1
+          source: dh-platform/bpm/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            action: MODEL_PUBLISH
+            objectType: process_version
+            objectId: LT_KHAI_SINH:3
+            actor: ia.lethid
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            hashRef: h:0193b1d4
+  schemas:
+    FieldError:
+      type: object
+      description: Lỗi theo trường.
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+      - field
+      - message
+    AssignmentType:
+      type: string
+      enum:
+      - USER
+      - CANDIDATE_GROUP
+      - ORG_UNIT
+      - RULE
+    CalendarDayType:
+      type: string
+      enum:
+      - HOLIDAY
+      - MAKEUP_WORKDAY
+      - SPECIAL_OFF
+    CancelCompensate:
+      type: string
+      enum:
+      - AUTO
+      - NONE
+    ChangeStatus:
+      type: string
+      enum:
+      - PENDING
+      - APPLIED
+      - REJECTED
+    ChangeType:
+      type: string
+      enum:
+      - VARIABLE_UPDATE
+      - MOVE_TOKEN
+    CheckSeverity:
+      type: string
+      enum:
+      - ERROR
+      - WARNING
+      - INFO
+    CompensationPolicy:
+      type: string
+      enum:
+      - AUTO
+      - MANUAL
+      - NONE_APPROVED
+    CompensationTrigger:
+      type: string
+      enum:
+      - STEP_FAILURE
+      - INSTANCE_CANCEL
+      - MANUAL
+    DataClass:
+      type: string
+      enum:
+      - PUBLIC
+      - INTERNAL
+      - RESTRICTED
+      - SENSITIVE
+    Decision:
+      type: string
+      enum:
+      - APPROVE
+      - REJECT
+      - RETURN
+      - REQUEST_SUPPLEMENT
+      - COMPLETE
+    DelegationStatus:
+      type: string
+      enum:
+      - SCHEDULED
+      - ACTIVE
+      - EXPIRED
+      - REVOKED
+    DisplayStatus:
+      type: string
+      enum:
+      - RECEIVED
+      - IN_PROGRESS
+      - WAITING_SUPPLEMENT
+      - COMPLETED
+      - REJECTED
+      - CANCELLED
+    DueResult:
+      type: string
+      enum:
+      - MET
+      - MISSED
+    DueStatus:
+      type: string
+      enum:
+      - ON_TIME
+      - DUE_SOON
+      - OVERDUE
+      - PAUSED
+    DueUnit:
+      type: string
+      enum:
+      - WORKING_DAY
+      - WORKING_HOUR
+      - CALENDAR_DAY
+      - CALENDAR_HOUR
+    Environment:
+      type: string
+      enum:
+      - TEST
+      - STAGING
+      - PROD
+    ErrorKind:
+      type: string
+      enum:
+      - BUSINESS
+      - TECHNICAL
+    IncidentStatus:
+      type: string
+      enum:
+      - OPEN
+      - RETRYING
+      - RESOLVED
+      - IGNORED
+    IncidentType:
+      type: string
+      enum:
+      - JOB_FAILED
+      - SERVICE_TIMEOUT
+      - CORRELATION_FAILED
+      - TIMER_FAILED
+      - COMPENSATION_FAILED
+      - STUCK_INSTANCE
+      - ENGINE_ERROR
+      - SUPPLEMENT_EXPIRED
+    InstanceStatus:
+      type: string
+      enum:
+      - RUNNING
+      - SUSPENDED
+      - COMPENSATING
+      - COMPLETED
+      - CANCELLED
+      - COMPENSATED
+      - FAILED
+    MigrationStatus:
+      type: string
+      enum:
+      - DRAFT
+      - VALIDATED
+      - PENDING_APPROVAL
+      - RUNNING
+      - COMPLETED
+      - PARTIAL
+      - REJECTED
+    PauseReason:
+      type: string
+      enum:
+      - WAITING_SUPPLEMENT
+      - LEGAL_SUSPENSION
+    PublicStepStatus:
+      type: string
+      enum:
+      - DONE
+      - IN_PROGRESS
+      - PENDING
+    PublishKind:
+      type: string
+      enum:
+      - PUBLISH
+      - RESTORE
+      - TEMPLATE
+    PublishRequestStatus:
+      type: string
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+      - WITHDRAWN
+      - DEPLOY_FAILED
+    ReconcileStatus:
+      type: string
+      enum:
+      - RUNNING
+      - COMPLETED
+      - FAILED
+    ResourceStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PUBLISHED
+      - RETIRED
+      - ACTIVE
+      - DEPRECATED
+    SagaStatus:
+      type: string
+      enum:
+      - RUNNING
+      - SUCCEEDED
+      - PARTIAL
+      - FAILED
+    SagaStepStatus:
+      type: string
+      enum:
+      - PENDING
+      - RUNNING
+      - DONE
+      - FAILED
+      - MANUAL
+      - SKIPPED
+    ServiceCallStatus:
+      type: string
+      enum:
+      - REQUESTED
+      - COMPLETED
+      - FAILED
+      - TIMED_OUT
+      - CANCELLED
+    StartChannel:
+      type: string
+      enum:
+      - API
+      - EVENT
+      - MANUAL
+      - CALL_ACTIVITY
+      - TIMER
+      - TEST
+    StepType:
+      type: string
+      enum:
+      - START_EVENT
+      - END_EVENT
+      - USER_TASK
+      - SERVICE_TASK
+      - SEND_TASK
+      - BUSINESS_RULE_TASK
+      - EXCLUSIVE_GATEWAY
+      - PARALLEL_GATEWAY
+      - INCLUSIVE_GATEWAY
+      - EVENT_BASED_GATEWAY
+      - TIMER_EVENT
+      - MESSAGE_EVENT
+      - COMPENSATION_THROW
+      - TIMER_BOUNDARY
+      - ERROR_BOUNDARY
+      - COMPENSATION_BOUNDARY
+      - MESSAGE_BOUNDARY
+      - SUB_PROCESS
+      - CALL_ACTIVITY
+      - TEXT_ANNOTATION
+      - ASSOCIATION
+      - GROUP
+    TaskKind:
+      type: string
+      enum:
+      - STANDARD
+      - APPROVAL
+      - PUBLISH_REVIEW
+      - MANUAL_COMPENSATION
+      - INCIDENT_HANDLING
+    TaskStatus:
+      type: string
+      enum:
+      - UNASSIGNED
+      - ASSIGNED
+      - DELEGATED
+      - COMPLETED
+      - CANCELLED
+    TestRunStatus:
+      type: string
+      enum:
+      - RUNNING
+      - PASSED
+      - FAILED
+      - ABORTED
+    ValidateMode:
+      type: string
+      enum:
+      - QUICK
+      - FULL
+    VariableType:
+      type: string
+      enum:
+      - STRING
+      - NUMBER
+      - BOOLEAN
+      - DATE
+      - DATETIME
+      - JSON
+      - CODE_REF
+      - FILE_REF
+    VersionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - IN_REVIEW
+      - PUBLISHED
+      - DEPRECATED
+      - RETIRED
+    WaitState:
+      type: string
+      enum:
+      - NONE
+      - WAITING_USER
+      - WAITING_SERVICE
+      - WAITING_MESSAGE
+      - WAITING_TIMER
+    PayloadRef:
+      type: object
+      description: Tham chiếu tới nội dung lệnh (không nhúng dữ liệu cá nhân).
+      properties:
+        objectRef:
+          type: string
+        checksum:
+          type: string
+        sizeBytes:
+          type: integer
+      required:
+      - objectRef
+    ModelPublishedData:
+      type: object
+      description: Phiên bản mô hình được phát hành (FR-11-008).
+      properties:
+        processKey:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{2,63}$
+        version:
+          type: integer
+        checksum:
+          type: string
+        publishedBy:
+          type: string
+        approvedBy:
+          type: string
+      required:
+      - processKey
+      - version
+      - checksum
+      - publishedBy
+      - approvedBy
+    ModelRetiredData:
+      type: object
+      description: Phiên bản ngừng dùng hoặc thu hồi (FR-11-009).
+      properties:
+        processKey:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{2,63}$
+        version:
+          type: integer
+        status:
+          type: string
+          enum:
+          - DEPRECATED
+          - RETIRED
+        reason:
+          type: string
+      required:
+      - processKey
+      - version
+      - status
+    InstanceStartedData:
+      type: object
+      description: Phiên khởi tạo (FR-11-018…020).
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        processKey:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{2,63}$
+        version:
+          type: integer
+        businessKey:
+          type: string
+          minLength: 3
+          maxLength: 100
+        startChannel:
+          $ref: '#/components/schemas/StartChannel'
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - instanceId
+      - processKey
+      - version
+      - businessKey
+      - startChannel
+    StepCompletedData:
+      type: object
+      description: Bước công khai hoàn thành; tiến độ cho DVC (FR-11-056).
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        businessKey:
+          type: string
+          minLength: 3
+          maxLength: 100
+        elementId:
+          type: string
+        publicName:
+          type: string
+        displayStatus:
+          $ref: '#/components/schemas/DisplayStatus'
+        percentEstimate:
+          type: integer
+        manual:
+          type: boolean
+      required:
+      - instanceId
+      - businessKey
+      - elementId
+      - displayStatus
+    InstanceCompletedData:
+      type: object
+      description: Phiên hoàn thành.
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        businessKey:
+          type: string
+          minLength: 3
+          maxLength: 100
+        outcome:
+          $ref: '#/components/schemas/InstanceOutcome'
+        dueResult:
+          $ref: '#/components/schemas/DueResult'
+      required:
+      - instanceId
+      - businessKey
+      - outcome
+    InstanceCancelledData:
+      type: object
+      description: Phiên bị hủy.
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        businessKey:
+          type: string
+          minLength: 3
+          maxLength: 100
+        reason:
+          type: string
+        compensated:
+          type: boolean
+      required:
+      - instanceId
+      - businessKey
+      - reason
+      - compensated
+    InstanceSuspendedData:
+      type: object
+      description: Phiên tạm dừng hoặc tiếp tục.
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        businessKey:
+          type: string
+          minLength: 3
+          maxLength: 100
+        state:
+          $ref: '#/components/schemas/SuspendState'
+      required:
+      - instanceId
+      - businessKey
+      - state
+    TaskCreatedData:
+      type: object
+      description: Việc được tạo (FR-11-034).
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        instanceId:
+          type: string
+          format: uuid
+        elementId:
+          type: string
+        candidates:
+          type: array
+          items:
+            type: string
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - taskId
+      - instanceId
+      - elementId
+    TaskAssignedData:
+      type: object
+      description: Việc được giao hoặc nhận.
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        assignee:
+          type: string
+        delegatedFrom:
+          type: string
+        via:
+          $ref: '#/components/schemas/AssignVia'
+      required:
+      - taskId
+      - assignee
+      - via
+    TaskCompletedData:
+      type: object
+      description: Việc hoàn thành.
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        decision:
+          $ref: '#/components/schemas/Decision'
+        completedBy:
+          type: string
+        dueResult:
+          $ref: '#/components/schemas/DueResult'
+      required:
+      - taskId
+      - completedBy
+    TaskDueSoonData:
+      type: object
+      description: 'Sắp đến hạn: `taskId` khi chủ thể là việc, `instanceId` khi là phiên.'
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        instanceId:
+          type: string
+          format: uuid
+        subject:
+          $ref: '#/components/schemas/DueSubject'
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - subject
+      - dueAt
+    TaskOverdueData:
+      type: object
+      description: Quá hạn, kèm leo thang.
+      properties:
+        subject:
+          $ref: '#/components/schemas/DueSubject'
+        id:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+        escalationLevel:
+          type: integer
+        action:
+          $ref: '#/components/schemas/EscalationAction'
+      required:
+      - subject
+      - id
+      - dueAt
+      - escalationLevel
+    SagaStartedData:
+      type: object
+      description: Bắt đầu bù trừ.
+      properties:
+        sagaId:
+          type: string
+          format: uuid
+        instanceId:
+          type: string
+          format: uuid
+        trigger:
+          $ref: '#/components/schemas/CompensationTrigger'
+        stepCount:
+          type: integer
+      required:
+      - sagaId
+      - instanceId
+      - trigger
+      - stepCount
+    SagaCompletedData:
+      type: object
+      description: Bù trừ thành công.
+      properties:
+        sagaId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - SUCCEEDED
+      required:
+      - sagaId
+      - status
+    SagaFailedData:
+      type: object
+      description: Bù trừ thất bại, còn bước thủ công.
+      properties:
+        sagaId:
+          type: string
+          format: uuid
+        manualSteps:
+          type: array
+          items:
+            type: string
+      required:
+      - sagaId
+      - manualSteps
+    IncidentOpenedData:
+      type: object
+      description: Mở sự cố engine.
+      properties:
+        incidentId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/IncidentType'
+        instanceId:
+          type: string
+          format: uuid
+        elementId:
+          type: string
+      required:
+      - incidentId
+      - type
+    ServiceRequestedData:
+      type: object
+      description: Lệnh thực thi service task tới PH-04 (FR-11-028).
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        intentCode:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.-]{0,63}$
+        elementId:
+          type: string
+        replyTopic:
+          type: string
+        timeoutAt:
+          type: string
+          format: date-time
+        payload:
+          $ref: '#/components/schemas/PayloadRef'
+      required:
+      - commandId
+      - intentCode
+      - elementId
+      - replyTopic
+      - timeoutAt
+      - payload
+    ServiceCompletedData:
+      type: object
+      description: Kết quả service task do PH-04 phát (FR-11-029).
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        output:
+          type: object
+        completedAt:
+          type: string
+          format: date-time
+      required:
+      - commandId
+      - completedAt
+    ServiceFailedData:
+      type: object
+      description: Lỗi service task do PH-04 phát.
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        errorKind:
+          $ref: '#/components/schemas/ErrorKind'
+        errorCode:
+          type: string
+        message:
+          type: string
+        attempts:
+          type: integer
+      required:
+      - commandId
+      - errorKind
+      - attempts
+    NotificationRequestedData:
+      type: object
+      description: Yêu cầu gửi thông báo (FR-11-032); `params` không chứa DLCN.
+      properties:
+        templateCode:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.-]{0,63}$
+        audience:
+          $ref: '#/components/schemas/NotifyAudience'
+        channel:
+          type: string
+        params:
+          type: object
+      required:
+      - templateCode
+      - audience
+      - channel
+    AuditRecordedData:
+      type: object
+      description: Bản ghi kiểm toán của module `bpm`; không mang giá trị biến (FR-11-065).
+      properties:
+        action:
+          type: string
+        objectType:
+          type: string
+        objectId:
+          type: string
+        actor:
+          type: string
+        traceId:
+          type: string
+        hashRef:
+          type: string
+      required:
+      - action
+      - objectType
+      - objectId
+      - actor
+      - traceId
+    AssignVia:
+      type: string
+      enum:
+      - CLAIM
+      - TRANSFER
+      - DELEGATION
+      - BULK
+    DueSubject:
+      type: string
+      enum:
+      - INSTANCE
+      - TASK
+    EscalationAction:
+      type: string
+      enum:
+      - NOTIFY_MANAGER
+      - REASSIGN_GROUP
+      - RAISE_PRIORITY
+      - OPEN_INCIDENT
+    InstanceOutcome:
+      type: string
+      enum:
+      - APPROVED
+      - REJECTED
+      - COMPLETED
+    NotifyAudience:
+      type: string
+      enum:
+      - APPLICANT
+      - ASSIGNEE
+      - GROUP
+    SuspendState:
+      type: string
+      enum:
+      - SUSPENDED
+      - RESUMED
+    modelPublishedEvent:
+      type: object
+      description: EVT-11-01 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.model.published.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ModelPublishedData'
+    modelRetiredEvent:
+      type: object
+      description: EVT-11-02 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.model.retired.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ModelRetiredData'
+    instanceStartedEvent:
+      type: object
+      description: EVT-11-03 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.instance.started.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/InstanceStartedData'
+    instanceStepCompletedEvent:
+      type: object
+      description: EVT-11-04 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.instance.step.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/StepCompletedData'
+    instanceCompletedEvent:
+      type: object
+      description: EVT-11-05 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.instance.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/InstanceCompletedData'
+    instanceCancelledEvent:
+      type: object
+      description: EVT-11-06 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.instance.cancelled.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/InstanceCancelledData'
+    instanceSuspendedEvent:
+      type: object
+      description: EVT-11-07 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.instance.suspended.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/InstanceSuspendedData'
+    taskCreatedEvent:
+      type: object
+      description: EVT-11-08 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.task.created.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TaskCreatedData'
+    taskAssignedEvent:
+      type: object
+      description: EVT-11-09 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.task.assigned.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TaskAssignedData'
+    taskCompletedEvent:
+      type: object
+      description: EVT-11-10 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.task.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TaskCompletedData'
+    taskDueSoonEvent:
+      type: object
+      description: EVT-11-11 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.task.due-soon.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TaskDueSoonData'
+    taskOverdueEvent:
+      type: object
+      description: EVT-11-12 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.task.overdue.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TaskOverdueData'
+    sagaCompensationStartedEvent:
+      type: object
+      description: EVT-11-13 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.saga.compensation.started.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SagaStartedData'
+    sagaCompensationCompletedEvent:
+      type: object
+      description: EVT-11-14 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.saga.compensation.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SagaCompletedData'
+    sagaCompensationFailedEvent:
+      type: object
+      description: EVT-11-15 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.saga.compensation.failed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SagaFailedData'
+    incidentOpenedEvent:
+      type: object
+      description: EVT-11-16 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.incident.opened.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IncidentOpenedData'
+    serviceRequestedEvent:
+      type: object
+      description: EVT-11-17 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.service.requested.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ServiceRequestedData'
+    serviceCompletedEvent:
+      type: object
+      description: EVT-11-18 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.service.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ServiceCompletedData'
+    serviceFailedEvent:
+      type: object
+      description: EVT-11-19 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.service.failed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ServiceFailedData'
+    notificationRequestedEvent:
+      type: object
+      description: EVT-11-20 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.notification.requested.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/NotificationRequestedData'
+    auditRecordedEvent:
+      type: object
+      description: EVT-11-21 · CloudEvents 1.0 dạng cấu trúc.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.bpm.audit.recorded.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/bpm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/AuditRecordedData'

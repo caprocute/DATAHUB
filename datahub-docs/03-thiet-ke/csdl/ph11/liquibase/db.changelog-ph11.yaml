@@ -1,0 +1,40 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_platform_migrator (thành viên ph11_owner), defaultSchemaName=ph11_bpm.
+# Context: bootstrap (vai trò, extension, schema). Khởi tạo tenant bằng thủ tục p_seed_tenant (11-0800-seed.sql); mẫu quy trình COMMON seed bằng phiên PLATFORM.
+databaseChangeLog:
+  - include:
+      file: changes/11-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0010-model.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0020-instance.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0030-task.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0040-sla.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0050-saga.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0060-ops.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0070-messaging.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0075-compliance.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0800-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/11-0900-grants.sql
+      relativeToChangelogFile: true

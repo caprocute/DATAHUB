@@ -323,8 +323,16 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-09-breach | Ghi nhận, xử lý vi phạm DLCN | TA, TO, SO |
 | PERM-09-audit-read | Xem nhật ký bảo vệ dữ liệu, lịch sử xem đầy đủ | PA, SO, AU |
 | PERM-09-config | Tham số `09.*`, ngưỡng cảnh báo, lịch báo cáo | PA (trần), TA |
-| PERM-11-model | Thiết kế, phát hành mô hình quy trình | TA, IA |
+| PERM-11-read | Xem mô hình, phiên, việc quy trình trong phạm vi | TA, TO, IE, IA, AU, VW |
+| PERM-11-model | Soạn mô hình quy trình, gửi duyệt phát hành (mẫu `COMMON` do PA soạn) | TA, IE, PA |
+| PERM-11-publish | Duyệt phát hành, ngừng dùng, thu hồi phiên bản mô hình (bốn mắt, khác người gửi) | TA, IA |
+| PERM-11-instance | Khởi tạo thủ công, tạm dừng, tiếp tục, hủy phiên quy trình | TA, TO |
+| PERM-11-instance-admin | Sửa biến, chuyển bước, di trú phiên (bốn mắt) | TA |
 | PERM-11-task | Xử lý việc được giao trong quy trình | Mọi người dùng được giao việc |
+| PERM-11-task-admin | Phân công lại, giao lại việc hàng loạt | TA, TO |
+| PERM-11-compensate | Kích hoạt, xử lý bù trừ thủ công; xử lý sự cố engine | TA, TO |
+| PERM-11-config | Lịch làm việc, tham số `11.*`, chính sách lưu giữ (PA đặt trần ở `COMMON`) | TA, PA |
+| PERM-11-audit-read | Xem lịch sử bước đầy đủ, xuất bằng chứng tuân thủ | TA, AU |
 | PERM-15-portal-admin | Quản trị nội dung cổng nhà phát triển | TA, CA |
 | PERM-15-content-write | Soạn, sửa, gửi duyệt trang nội dung cổng; nhập từ Git | TA, CA, SV (○) |
 | PERM-15-content-publish | Duyệt, đăng, gỡ trang nội dung cổng (người soạn không tự duyệt) | TA, CA |
