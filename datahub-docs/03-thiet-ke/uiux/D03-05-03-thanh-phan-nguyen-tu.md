@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05-03
 ten: Thành phần nguyên tử
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -14,7 +14,7 @@ nguoi_lap: Luồng giao diện
 
 ### 1.1. Mục đích
 
-Tài liệu này đặc tả 36 **thành phần nguyên tử (atomic component)** của gói `@datahub/ui`. Thành phần nguyên tử là đơn vị giao diện nhỏ nhất có ý nghĩa độc lập: một nút, một ô nhập, một nhãn trạng thái, một giá trị thời gian. Chúng không chứa thành phần nguyên tử khác ngoại trừ `CMP-Icon`, `CMP-Spinner` và `CMP-Tooltip` (ba thành phần này được phép lồng vào nguyên tử khác vì đóng vai trò trang trí hoặc phụ trợ). Thành phần phức hợp như `CMP-FormField`, `CMP-DataTable`, `CMP-Modal` được ghép từ các nguyên tử ở đây và được đặc tả ở D03-05-04.
+Tài liệu này đặc tả 44 **thành phần nguyên tử (atomic component)** của gói `@datahub/ui`. Thành phần nguyên tử là đơn vị giao diện nhỏ nhất có ý nghĩa độc lập: một nút, một ô nhập, một nhãn trạng thái, một giá trị thời gian. Chúng không chứa thành phần nguyên tử khác ngoại trừ `CMP-Icon`, `CMP-Spinner` và `CMP-Tooltip` (ba thành phần này được phép lồng vào nguyên tử khác vì đóng vai trò trang trí hoặc phụ trợ). Thành phần phức hợp như `CMP-FormField`, `CMP-DataTable`, `CMP-Modal` được ghép từ các nguyên tử ở đây và được đặc tả ở D03-05-04.
 
 Mục tiêu của tài liệu là để kỹ sư giao diện và AI agent sinh mã có thể hiện thực từng thành phần mà không phải tự quyết định thêm về hành vi, màu sắc hay nội dung. Mọi giá trị thị giác đều đến từ token định nghĩa ở D03-05-02; tài liệu này chỉ ghi tên token (dạng `TKN-…` hoặc tên token ngắn trong dấu `` ` ``), không ghi giá trị màu thô. Quy tắc vật liệu Liquid Glass (ADR-020) và thành phần nguyên thủy `CMP-GlassSurface`, `CMP-ThemeProvider` được đặc tả ở D03-05-01; tài liệu này chỉ nêu thành phần nào được phép đặt trên glass.
 
@@ -22,7 +22,7 @@ Ba yêu cầu chi phối toàn bộ tài liệu là NFR-00-045 (100% màn hình 
 
 ### 1.2. Cách đọc
 
-Tài liệu được chia theo nhóm chức năng để người đọc tìm nhanh. Mục 2 nêu quy tắc chung về trạng thái tương tác áp dụng cho mọi thành phần tương tác, nên phải đọc trước khi đọc từng thành phần. Mục 3 đến mục 8 đặc tả từng thành phần, theo thứ tự: hành động (mục 3), chữ và biểu tượng (mục 4), chỉ báo và nhãn (mục 5), phản hồi tiến trình và gợi ý (mục 6), nhập liệu (mục 7), hiển thị dữ liệu nghiệp vụ (mục 8). Mục 9 là bảng tổng hợp, mục 10 là checklist nghiệm thu, sau đó là Truy vết và Đề xuất bổ sung D00-01.
+Tài liệu được chia theo nhóm chức năng để người đọc tìm nhanh. Mục 2 nêu quy tắc chung về trạng thái tương tác áp dụng cho mọi thành phần tương tác, nên phải đọc trước khi đọc từng thành phần. Mục 3 đến mục 8 đặc tả từng thành phần, theo thứ tự: hành động (mục 3), chữ và biểu tượng (mục 4), chỉ báo và nhãn (mục 5), phản hồi tiến trình và gợi ý (mục 6), nhập liệu (mục 7), hiển thị dữ liệu nghiệp vụ (mục 8). Mục 9 là bảng tổng hợp kèm bảng tên gọi khác, mục 10 là checklist nghiệm thu, mục 11 là truy vết và mục 12 là các đề xuất bổ sung.
 
 Từ "phải" diễn đạt quy tắc bắt buộc, kiểm tra được trong review mã hoặc kiểm thử tự động. Từ "nên" diễn đạt khuyến nghị, được phép làm khác khi có lý do ghi trong mô tả PR. Từ "cấm" diễn đạt hành vi mà lint, test hoặc reviewer phải chặn.
 
@@ -457,6 +457,24 @@ export interface DhCopyButtonProps {
 | `notification` | `Bell` | Thông báo |
 | `logout` | `LogOut` | Đăng xuất |
 | `drag` | `GripVertical` | Tay cầm kéo (luôn kèm phương án bàn phím, WCAG 2.5.7) |
+| `offline` | `CloudOff` | Mất kết nối, chưa lưu lên máy chủ |
+| `expression` | `SquareFunction` | Mở trình soạn biểu thức (ƒx) |
+| `connection` | `Plug` | Kết nối PH-05, thành phần cần kết nối |
+| `schema` | `Braces` | Lược đồ dữ liệu |
+| `undo` | `Undo2` | Hoàn tác |
+| `redo` | `Redo2` | Làm lại |
+| `zoom-in` | `ZoomIn` | Phóng to |
+| `zoom-out` | `ZoomOut` | Thu nhỏ |
+| `fit-view` | `Scan` | Vừa khung nhìn |
+| `fullscreen` | `Maximize2` | Toàn màn hình |
+| `pin` | `Pin` | Ghim vị trí, ghim mục |
+| `comment` | `MessageSquare` | Bình luận |
+| `diff` | `GitCompare` | So sánh khác biệt |
+| `tasks` | `ListChecks` | Khay tác vụ nền |
+| `command` | `Command` | Bảng lệnh (CommandPalette) |
+| `sticky-note` | `StickyNote` | Ghi chú dán trên canvas |
+| `minimap` | `Map` | Bản đồ thu nhỏ |
+| `panel` | `PanelLeft` | Thu gọn, mở ngăn bên |
 
 Ghi chú: `approve` và `success` cùng dùng `CircleCheck` vì cùng một ý "đạt"; đây là ngoại lệ được chấp nhận duy nhất của quy tắc một biểu tượng một nghĩa, vì hai nghĩa không xuất hiện cạnh nhau trong cùng một vị trí.
 
@@ -905,6 +923,49 @@ export interface DhAvatarProps {
 
 **Điều cấm.** Cấm dùng ảnh mặc định của bên thứ ba (Gravatar) vì gửi thư điện tử băm ra ngoài. Cấm chọn màu ngẫu nhiên mỗi lần hiển thị.
 
+### 5.6. CMP-AvatarGroup
+
+**Mục đích.** `CMP-AvatarGroup` hiển thị một nhóm người cùng liên quan tới một đối tượng ở cùng thời điểm: người đang mở cùng phiên bản luồng (PH-04 UI-04-04, FR-04-010), người được giao một việc duyệt, thành viên một nhóm đầu mối. Đây là cách dùng `Avatar.Group` đã nêu ở mục 5.5, được tách thành mã riêng vì có thêm hai hành vi mà Avatar đơn không có: chỉ báo hiện diện và lời giải thích bằng chữ.
+
+**Khi dùng / không dùng.** Dùng khi số người là thông tin quan trọng và tên từng người xem được khi cần. Không dùng thay cho danh sách người duyệt có trạng thái quyết định (dùng `CMP-ApprovalPanel` hoặc `CMP-Timeline`), không dùng để liệt kê hơn 20 người (dùng `CMP-Popover` chứa danh sách).
+
+**Nền antd.** `Avatar.Group` với `max={{ count, popover: { trigger: 'click' } }}`; phần "+n" mở `CMP-Popover` (`glass-overlay`) liệt kê đủ tên, không mở bằng rê chuột để dùng được với bàn phím.
+
+**Biến thể.** `static` (danh sách cố định) và `presence` (người đang hiện diện, cập nhật theo nhịp máy chủ; mỗi ảnh có chấm hiện diện 8px `color-success-solid` có viền 2px `color-surface-solid` ở góc dưới phải). Ở biến thể `presence`, khi có từ một người khác trở lên, thành phần hiện chữ đi kèm do màn hình truyền vào (ví dụ "Đang có 2 người khác mở luồng này") để thông tin không chỉ nằm ở hình.
+
+**Kích thước.** `sm` 24px (thanh công cụ trình thiết kế, bảng), `md` 32px. Mặc định `count` là 3. Ảnh chồng lên nhau 25% đường kính, viền 2px cùng màu nền đặt để tách ảnh.
+
+**Trạng thái.** Rỗng (không hiển thị gì, không để khoảng trống), có người, đang tải lần đầu (`CMP-Skeleton` hình tròn), lỗi tải (ẩn thành phần; hiện diện là thông tin phụ, không báo lỗi to).
+
+**Token.** Như `CMP-Avatar`, thêm `TKN-color-success-solid`, `TKN-color-surface-solid`, `TKN-space-1`.
+
+**Nền đặt.** Nền đặc, `glass-chrome` (thanh trên), `glass-overlay`.
+
+**Bàn phím và ARIA.** Nhóm là `role="group"` có `aria-label` ("Người đang mở luồng"). Mỗi ảnh có tên truy cập là họ tên kèm thời điểm ("Trần Thị B, mở từ 09:12"); "+n" là nút có `aria-label="Xem thêm n người"` và `aria-expanded`. Thay đổi hiện diện không đọc qua `aria-live` (quá ồn); chỉ chữ đi kèm thay đổi.
+
+**Nội dung.** Tooltip mỗi ảnh: "{tên} mở từ {HH:mm}". Không hiển thị thư điện tử hay đơn vị trong tooltip.
+
+**API.**
+
+```tsx
+export interface DhAvatarGroupProps {
+  people: Array<{ id: string; name: string; src?: string; since?: string /* T-TS */ }>;
+  variant?: 'static' | 'presence';
+  max?: number;                    // mặc định 3
+  size?: 'sm' | 'md';
+  caption?: string;                // chữ đi kèm, bắt buộc với presence khi people.length > 0
+  'aria-label': string;
+  testId?: string;
+}
+```
+
+```tsx
+<AvatarGroup variant="presence" aria-label="Người đang mở luồng" size="sm"
+  people={others} caption={others.length ? `Đang có ${others.length} người khác mở luồng này` : undefined} />
+```
+
+**Điều cấm.** Cấm chỉ dùng chấm màu để báo hiện diện. Cấm mở danh sách "+n" bằng rê chuột. Cấm đưa người dùng hiện tại vào nhóm `presence` (người dùng biết mình đang mở).
+
 ## 6. Nhóm phản hồi tiến trình và gợi ý
 
 ### 6.1. CMP-Spinner
@@ -1053,6 +1114,59 @@ export interface DhTooltipProps {
 ```
 
 **Điều cấm.** Cấm đặt thông tin bắt buộc duy nhất trong tooltip. Cấm liên kết, nút trong tooltip. Cấm dùng thuộc tính HTML `title` thay tooltip. Cấm tooltip glass. Cấm tooltip trên phần tử `disabled` gốc (không nhận sự kiện; dùng `disabledReason`).
+
+### 6.5. CMP-SaveIndicator
+
+**Mục đích.** `CMP-SaveIndicator` cho người dùng biết công việc đang soạn đã an toàn trên máy chủ hay chưa, ở các màn có tự lưu hoặc phiên soạn dài: trình thiết kế luồng (PH-04 UI-04-04), lưới sửa danh mục (PH-07 UI-07-05), trình soạn mô hình quy trình (PH-11). Đây là hiện thực của nguyên tắc 4 "Trung thực về trạng thái" (D03-05 §2) cho thao tác ghi không có nút Lưu rõ ràng.
+
+**Khi dùng / không dùng.** Dùng khi màn có tự lưu hoặc lưu nền. Không dùng cho biểu mẫu thường có nút Lưu (trạng thái đã thể hiện bằng nút `loading` và `CMP-Toast`, ST-09, ST-10 ở D03-06-00 §4.2).
+
+**Nền antd.** Không có thành phần antd tương ứng; dựng từ `CMP-Icon`, `CMP-Text` và `CMP-Button` biến thể `text` cỡ `sm` cho hành động "Thử lại".
+
+**Sáu trạng thái.** Bảng dưới là hợp đồng duy nhất cho mọi phân hệ. Chữ là kênh thông tin chính, biểu tượng là kênh thứ hai, màu là kênh thứ ba.
+
+| Trạng thái | Biểu tượng | Chữ | Màu chữ | Hành động |
+|---|---|---|---|---|
+| `dirty` | Chấm tròn đặc 6px | "Chưa lưu" | `color-warning-text` | Bấm để lưu ngay (tương đương `Ctrl+S`) |
+| `saving` | `CMP-Spinner` cỡ `sm` (đổi độ đục thay vì quay khi giảm chuyển động) | "Đang lưu…" | `color-text-secondary` | Không |
+| `saved` | `success` (dấu tích) | "Đã lưu {HH:mm}" | `color-text-secondary` | Tooltip nêu thời điểm đầy đủ `CMP-Timestamp` |
+| `error` | `warning` | "Lưu lỗi" + nút "Thử lại" | `color-error-text` | "Thử lại"; tooltip nêu mã lỗi và mã truy vết |
+| `offline` | `offline` | "Chưa lưu lên máy chủ (mất kết nối)" | `color-warning-text` | Không; tự lưu lại khi có kết nối, bản nháp giữ cục bộ |
+| `readonly` | `lock` | "Chỉ đọc" | `color-text-secondary` | Tooltip nêu lý do (đang duyệt, không có quyền, phiên bản đã phát hành) |
+
+**Quy tắc chuyển trạng thái.** `saving` chỉ hiện sau 300ms để tránh nhấp nháy khi máy chủ trả nhanh; `saved` giữ nguyên tới lần thay đổi tiếp theo; `error` không tự biến mất. Khi chuyển sang `error` hoặc `offline`, thành phần phát một thông báo `aria-live="polite"` một lần ("Lưu không thành công"); các chuyển trạng thái khác không đọc để tránh ồn. Thời điểm trong `saved` lấy từ phản hồi máy chủ (`updatedAt`), không lấy đồng hồ máy trạm.
+
+**Kích thước.** Một dòng, cao `size-control-sm`; chữ `font-footnote`. Dưới 1280px chỉ còn biểu tượng kèm `aria-label` và tooltip đầy đủ chữ.
+
+**Token.** `TKN-color-warning-text`, `TKN-color-error-text`, `TKN-color-text-secondary`, `TKN-font-footnote`, `TKN-size-icon-sm`, `TKN-size-control-sm`, `TKN-space-1`.
+
+**Nền đặt.** Nền đặc (thanh công cụ đặc của trình thiết kế). Không đặt trên `glass-chrome-scrolled` vì chữ màu trạng thái không đạt ngưỡng trên vật liệu đó (D03-05-01 §3.2).
+
+**Bàn phím và ARIA.** Vùng gốc `role="status"`. Ở trạng thái `dirty` và `error`, phần tương tác là `<button>` có tên truy cập đầy đủ ("Lưu ngay", "Thử lưu lại").
+
+**API.**
+
+```tsx
+export type DhSaveState = 'dirty' | 'saving' | 'saved' | 'error' | 'offline' | 'readonly';
+
+export interface DhSaveIndicatorProps {
+  state: DhSaveState;
+  savedAt?: string;                 // T-TS từ máy chủ, bắt buộc khi state = 'saved'
+  error?: DhApiError;               // khi state = 'error'
+  readonlyReason?: string;          // khi state = 'readonly'
+  onSaveNow?: () => void;
+  onRetry?: () => void;
+  compact?: boolean;
+  testId?: string;
+}
+```
+
+```tsx
+<SaveIndicator state={session.saveState} savedAt={version.updatedAt} error={session.lastError}
+  onSaveNow={session.flush} onRetry={session.flush} />
+```
+
+**Điều cấm.** Cấm báo "Đã lưu" khi dữ liệu mới chỉ nằm ở IndexedDB hay `localStorage`. Cấm tự ẩn trạng thái lỗi. Cấm dùng `CMP-Toast` cho mỗi lần tự lưu thành công.
 
 ## 7. Nhóm nhập liệu
 
@@ -1628,3 +1742,534 @@ export interface DhUploadProps {
 
 **Điều cấm.** Cấm vùng kéo thả không có nút chọn tệp. Cấm tin phần mở rộng tệp ở máy chủ. Cấm xem trước, xử lý tệp trước khi quét xong. Cấm đọc toàn bộ tệp lớn vào bộ nhớ trình duyệt để kiểm tra (chỉ kiểm tra siêu dữ liệu). Cấm thanh tiến độ giả.
 
+### 7.14. CMP-RadioCard
+
+**Mục đích.** `CMP-RadioCard` chọn một trong 2 đến 6 phương án loại trừ nhau khi mỗi phương án cần một câu giải thích để người dùng chọn đúng: điểm xuất phát khi tạo luồng ("Trống", "Từ khuôn mẫu", "Từ API", "Nhập YAML", PH-04 UI-04-03), kiểu nguồn danh mục ("Tự quản", "Đồng bộ quốc gia", "Kết hợp", PH-07), chế độ nhập ("Thêm mới", "Ghi đè", "Gộp").
+
+**Khi dùng / không dùng.** Dùng ở bước đầu của wizard hoặc biểu mẫu khi lựa chọn quyết định các trường xuất hiện phía sau. Lựa chọn ngắn không cần giải thích dùng `CMP-Radio`; chuyển chế độ xem dùng `CMP-SegmentedControl`.
+
+**Nền antd.** `Radio.Group` với mỗi mục là `Radio` được bọc trong khung thẻ (thuộc tính ngữ nghĩa `classNames` của antd v6 gắn lớp `dh-radio-card`). Không dùng `Card` của antd làm mục vì `Card` không mang vai trò radio.
+
+**Giải phẫu.** (1) Biểu tượng `CMP-Icon` cỡ `lg` tùy chọn; (2) tiêu đề `font-body-strong`; (3) mô tả tối đa hai dòng `font-footnote` màu `color-text-secondary`; (4) chấm radio ở góc trên phải; (5) thẻ phụ tùy chọn ("Khuyến nghị", "Cần quyền quản trị").
+
+**Biến thể và bố cục.** Lưới 2, 3 hoặc 4 cột theo số phương án; dưới `bp-md` chuyển một cột. Mọi thẻ cùng chiều cao theo thẻ cao nhất.
+
+**Trạng thái.** Mặc định: nền `color-surface-solid`, viền 1px `color-border-control`. Rê: nền `color-fill-hover`. Focus bàn phím: vòng focus kép của thẻ (không chỉ của chấm radio). Đã chọn: viền 2px `color-accent`, nền `color-accent-subtle`, chấm radio đầy; tiêu đề giữ `color-text-primary`. Vô hiệu: chữ `color-text-disabled` kèm `disabledReason` hiện bằng chữ phụ trong thẻ (không chỉ tooltip, vì người dùng cần đọc lý do trước khi chọn phương án khác). Lỗi (bắt buộc mà chưa chọn): viền nhóm `color-error-text` và thông báo của `CMP-FormField`.
+
+**Token.** `TKN-color-surface-solid`, `TKN-color-border-control`, `TKN-color-fill-hover`, `TKN-color-accent`, `TKN-color-accent-subtle`, `TKN-color-text-primary`, `TKN-color-text-secondary`, `TKN-color-text-disabled`, `TKN-color-error-text`, `TKN-radius-lg`, `TKN-space-4`, `TKN-font-body-strong`, `TKN-font-footnote`.
+
+**Nền đặt.** Chỉ nền đặc (biểu mẫu, giếng nội dung của Modal).
+
+**Bàn phím và ARIA.** `role="radiogroup"` có `aria-labelledby` trỏ tới nhãn của `CMP-FormField`; mỗi thẻ là `role="radio"` với `aria-checked` và `aria-describedby` trỏ tới mô tả. Tab vào nhóm focus thẻ đang chọn (hoặc thẻ đầu); mũi tên di chuyển và chọn (đúng mẫu radio của ARIA APG); cả thẻ là vùng bấm.
+
+**Nội dung.** Tiêu đề là danh từ hoặc cụm danh từ ngắn ("Từ khuôn mẫu"); mô tả nói kết quả của lựa chọn ("Bắt đầu từ khuôn có sẵn chín chặng chuẩn, đã gắn xử lý lỗi").
+
+**API.**
+
+```tsx
+export interface DhRadioCardOption<V extends string = string> {
+  value: V; title: string; description?: string; icon?: DhIconName;
+  badge?: string; disabled?: boolean; disabledReason?: string;
+}
+
+export interface DhRadioCardProps<V extends string = string> {
+  options: DhRadioCardOption<V>[];   // 2–6 mục
+  value?: V; onChange?: (value: V) => void;
+  columns?: 2 | 3 | 4;
+  status?: 'error';
+  id?: string; 'aria-labelledby'?: string; testId?: string;
+}
+```
+
+```tsx
+<RadioCard columns={4} value={origin} onChange={setOrigin} aria-labelledby="lbl-origin" options={[
+  { value: 'blank', title: 'Trống', icon: 'add', description: 'Luồng chỉ có điểm vào, tự thêm chặng.' },
+  { value: 'template', title: 'Từ khuôn mẫu', icon: 'history', badge: 'Khuyến nghị', description: 'Có sẵn chín chặng chuẩn và xử lý lỗi.' },
+  { value: 'api', title: 'Từ API', icon: 'external', description: 'Sinh route cho từng thao tác của API PH-02.' },
+  { value: 'yaml', title: 'Nhập YAML', icon: 'upload', description: 'Nạp tệp Camel YAML có sẵn.' },
+]} />
+```
+
+**Điều cấm.** Cấm dùng RadioCard cho lựa chọn nhiều giá trị (dùng `CMP-Checkbox` dạng thẻ chỉ khi D03-05-04 bổ sung). Cấm hơn 6 phương án. Cấm đặt nút hoặc liên kết bên trong thẻ (lồng phần tử tương tác vào radio).
+
+### 7.15. CMP-CronPicker
+
+**Mục đích.** `CMP-CronPicker` cho người dùng đặt lịch chạy định kỳ bằng ngôn ngữ thường thay vì viết biểu thức cron: lịch đồng bộ danh mục quốc gia (PH-07 UI-07-09, UI-07-13), lịch chạy luồng định thời (PH-04, thành phần `timer`/`quartz`), lịch đối soát (PH-19), lịch xuất báo cáo. Kết quả là biểu thức cron 6 trường kiểu Spring (`giây phút giờ ngày tháng thứ`) theo múi giờ `Asia/Ho_Chi_Minh`.
+
+**Khi dùng / không dùng.** Dùng cho lịch lặp lại. Thời điểm chạy một lần dùng `CMP-DatePicker` có giờ. Chu kỳ ngắn kiểu "mỗi 30 giây" của luồng tích hợp dùng `CMP-NumberInput` có đơn vị (tham số `period`), không dùng cron.
+
+**Nền antd.** Ghép `CMP-SegmentedControl` (chọn kiểu lịch), `CMP-Select`, `CMP-Checkbox` (các thứ trong tuần), `TimePicker` của antd và `CMP-Input` (chế độ tùy chỉnh). Không có thành phần antd tương ứng trọn vẹn.
+
+**Năm kiểu lịch.**
+
+| Kiểu | Điều khiển | Ví dụ hiển thị | Cron sinh ra |
+|---|---|---|---|
+| Hằng giờ | Phút thứ (0–59) | "Hằng giờ vào phút 15" | `0 15 * * * *` |
+| Hằng ngày | Giờ phút | "Hằng ngày lúc 01:00" | `0 0 1 * * *` |
+| Hằng tuần | Các thứ + giờ phút | "Thứ Hai, Thứ Năm lúc 22:30" | `0 30 22 * * MON,THU` |
+| Hằng tháng | Ngày (1–28, "ngày cuối tháng") + giờ phút | "Ngày 1 hằng tháng lúc 02:00" | `0 0 2 1 * *` hoặc `0 0 2 L * *` |
+| Tùy chỉnh | Ô nhập cron 6 trường | Diễn giải tiếng Việt sinh tự động | Như người dùng nhập |
+
+Ngày trong tháng giới hạn 1–28 ở chế độ thân thiện để không có tháng bị bỏ lịch; cần ngày 29–31 thì dùng "ngày cuối tháng" hoặc chế độ tùy chỉnh.
+
+**Xem trước và giới hạn.** Dưới điều khiển luôn có dòng "Lần chạy kế tiếp: 26/11/2026 01:00 · 27/11/2026 01:00 · 28/11/2026 01:00" (ba lần, tính ở trình duyệt bằng thư viện phân tích cron và kiểm tra lại ở máy chủ khi lưu). Màn hình truyền `minIntervalMinutes` (ví dụ PH-07 là 60 theo tham số `07.rdm.sync-min-interval`); lịch dày hơn ngưỡng bị báo lỗi "Lịch không được chạy dày hơn 1 giờ một lần". Biểu thức tùy chỉnh sai cú pháp báo lỗi chỉ ra trường sai ("Trường giờ phải trong khoảng 0–23").
+
+**Trạng thái.** Mặc định, đang nhập, lỗi cú pháp, lỗi vượt ngưỡng, vô hiệu, chỉ đọc (chỉ hiện diễn giải và ba lần chạy kế tiếp).
+
+**Token.** Như các điều khiển ghép; dòng xem trước `TKN-font-footnote`, `TKN-color-text-secondary`, `TKN-font-feature-tabular`.
+
+**Nền đặt.** Nền đặc.
+
+**Bàn phím và ARIA.** Nhóm là `role="group"` có nhãn; dòng xem trước có `aria-live="polite"` để người dùng trình đọc màn hình nghe kết quả sau khi đổi; ô cron tùy chỉnh có `aria-describedby` trỏ tới diễn giải.
+
+**Nội dung.** Diễn giải bằng câu đầy đủ, dùng "Thứ Hai … Chủ nhật", giờ 24 giờ. Luôn ghi "(giờ Việt Nam)" khi người dùng mở chế độ tùy chỉnh.
+
+**API.**
+
+```tsx
+export interface DhCronPickerProps {
+  value?: string;                       // cron 6 trường
+  onChange?: (cron: string) => void;
+  kinds?: Array<'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'>;  // mặc định đủ năm
+  minIntervalMinutes?: number;
+  previewCount?: number;                // mặc định 3
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-labelledby'?: string; testId?: string;
+}
+```
+
+```tsx
+<CronPicker value={form.scheduleCron} onChange={(v) => form.setFieldValue('scheduleCron', v)}
+  minIntervalMinutes={60} aria-labelledby="lbl-schedule" />
+```
+
+**Điều cấm.** Cấm cron 5 trường hoặc 7 trường (mỗi hệ một kiểu gây lệch giờ chạy). Cấm hiển thị lịch theo giờ UTC. Cấm lưu khi máy chủ chưa xác nhận biểu thức hợp lệ.
+
+### 7.16. CMP-ExpressionField
+
+**Mục đích.** `CMP-ExpressionField` nhập một biểu thức ngắn có ngôn ngữ: điều kiện rẽ nhánh, biểu thức gán header, đường dẫn trích dữ liệu trong trình thiết kế luồng (PH-04, FR-04-016), quy tắc chất lượng dữ liệu (PH-08), điều kiện cổng trong mô hình quy trình (PH-11).
+
+**Khi dùng / không dùng.** Biểu thức một dòng hoặc vài dòng. Đoạn mã dài, ánh xạ dữ liệu, tệp cấu hình dùng `CMP-CodeEditor` (D03-05-04); ô ƒx của trường này mở `CMP-CodeEditor` trong Modal khi cần soạn dài (PH-04 UI-04-06).
+
+**Nền antd.** `Space.Compact` ghép `CMP-Select` cỡ `sm` (ngôn ngữ) và một ô một dòng có tô cú pháp. Ô tô cú pháp dùng CodeMirror 6 chế độ một dòng (nhẹ hơn Monaco, nạp tức thì), không dùng `Input` của antd vì không tô được. Nút ƒx là `CMP-IconButton`.
+
+**Ngôn ngữ.** Danh sách ngôn ngữ do màn hình truyền vào (PH-04 dùng `simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery` theo catalog Camel). Mỗi ngôn ngữ có bộ tô cú pháp và bộ gợi ý riêng; ngôn ngữ chưa có bộ tô thì hiện chữ đơn sắc.
+
+**Kiểm tra.** Kiểm tra cú pháp chạy ở máy chủ (PH-04 API-04-032) sau 400ms kể từ lần gõ cuối, hủy yêu cầu cũ bằng `AbortController`. Lỗi hiện dưới ô theo `CMP-FormField`, kèm vị trí ("Lỗi ở ký tự 18: thiếu dấu `}`") và gạch chân sóng tại vị trí lỗi. Đang kiểm tra: biểu tượng `CMP-Spinner` cỡ `sm` ở cuối ô. Hợp lệ: không hiện gì (không làm ồn bằng dấu tích xanh).
+
+**Gợi ý.** `Ctrl+Space` mở danh sách gợi ý (`glass-overlay`): biến có sẵn của ngôn ngữ (`${header.*}`, `${body}`), header và thuộc tính đã khai báo ở các chặng trước, trường của lược đồ đầu vào nếu có. Gõ `${` tự mở gợi ý.
+
+**Trạng thái.** Mặc định, focus, đang kiểm tra, lỗi, vô hiệu, chỉ đọc (vẫn tô cú pháp, cho chọn và sao chép).
+
+**Token.** `TKN-font-mono`, `TKN-color-surface-solid`, `TKN-color-border-control`, `TKN-color-error-text`, `TKN-size-control-sm`, `TKN-size-control-md`; màu tô cú pháp dùng bảng `color-chart-*` có tương phản ≥ 4,5:1 trên `color-surface-solid` (`color-chart-1`, `-3`, `-4`, `-5`, `-6`, `-7`).
+
+**Nền đặt.** Chỉ nền đặc (Inspector, biểu mẫu).
+
+**Bàn phím và ARIA.** Ô có `role="textbox"`, `aria-multiline="false"`, nhãn từ `CMP-FormField`. `Tab` rời ô (không chèn ký tự tab); `Enter` không xuống dòng mà xác nhận; `Shift+Enter` mở Modal soạn dài. Danh sách gợi ý theo mẫu combobox.
+
+**API.**
+
+```tsx
+export interface DhExpressionValue { language: string; expression: string }
+
+export interface DhExpressionFieldProps {
+  value?: DhExpressionValue; onChange?: (v: DhExpressionValue) => void;
+  languages: Array<{ value: string; label: string }>;
+  validate?: (v: DhExpressionValue, signal: AbortSignal) => Promise<{ ok: true } | { ok: false; message: string; offset?: number }>;
+  suggestions?: (ctx: { language: string; prefix: string }) => Promise<Array<{ label: string; insertText: string; detail?: string }>>;
+  onOpenEditor?: () => void;            // nút ƒx
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+```
+
+```tsx
+<ExpressionField languages={camelLanguages} value={step.when} onChange={setWhen}
+  validate={(v, signal) => api.int.compileExpression(v, { signal })} onOpenEditor={openExpressionModal} />
+```
+
+**Điều cấm.** Cấm đánh giá (eval) biểu thức ở trình duyệt. Cấm cho nhập bí mật dạng chữ trong biểu thức (dùng `CMP-SecretRefField`); máy chủ báo lỗi nếu phát hiện chuỗi giống bí mật.
+
+### 7.17. CMP-SecretRefField
+
+**Mục đích.** `CMP-SecretRefField` gán giá trị bí mật cho một tham số **bằng tham chiếu**, không bao giờ bằng giá trị: mật khẩu, khóa, token trong cấu hình luồng (PH-04 tham số có `secret: true`), cấu hình bộ điều hợp (PH-05), kênh thanh toán (PH-19). Đây là đối trọng của `CMP-SecretField` (mục 7.2): SecretField nhận hoặc hiển thị bí mật một lần, SecretRefField chỉ trỏ tới nơi bí mật đã được cất.
+
+**Khi dùng / không dùng.** Dùng ở mọi nơi cấu hình kỹ thuật cần bí mật. Nhập bí mật lần đầu vào kho dùng `CMP-SecretField` ở màn quản lý kết nối PH-05.
+
+**Nền antd.** `CMP-Select` có tải từ xa, hiển thị giá trị đã chọn dạng `CMP-CodeText` có biểu tượng `key`.
+
+**Hai nguồn tham chiếu.** (1) Khóa của kết nối PH-05 được cấp cho không gian làm việc: `{{conn:<mã-kết-nối>.<khóa>}}`, ví dụ `{{conn:ndxp-ho-tich.password}}`. (2) Đường dẫn trong kho bí mật do nền tảng cấp cho tenant: `{{vault:<đường-dẫn>#<khóa>}}`. Danh sách lấy từ máy chủ theo quyền; người dùng không gõ tự do được đường dẫn kho.
+
+**Hiển thị.** Ô chỉ hiện tham chiếu và nhãn nguồn ("Kết nối ndxp-ho-tich · khóa password"), kèm chỉ báo môi trường có giá trị ("TEST ✓ · PROD ✓", thiếu môi trường nào thì ghi "PROD chưa có giá trị" màu `color-warning-text`). Không có nút "Hiện", không có cách nào xem giá trị thật từ giao diện.
+
+**Trạng thái.** Chưa chọn (bắt buộc thì báo lỗi khi gửi), đã chọn, tham chiếu không còn hợp lệ (kết nối bị thu hồi quyền hoặc bị xóa: viền lỗi, chữ "Tham chiếu không còn hợp lệ", PH-04 ERR-04-010), đang tải danh sách, vô hiệu, chỉ đọc.
+
+**Token.** `TKN-font-mono`, `TKN-color-warning-text`, `TKN-color-error-text`, `TKN-color-surface-solid-2`.
+
+**Nền đặt.** Chỉ nền đặc.
+
+**Bàn phím và ARIA.** Như `CMP-Select`; tên truy cập của giá trị đã chọn đọc đầy đủ ("Tham chiếu bí mật: kết nối ndxp-ho-tich, khóa password").
+
+**API.**
+
+```tsx
+export interface DhSecretRef { source: 'conn' | 'vault'; ref: string /* chuỗi {{…}} */ }
+
+export interface DhSecretRefFieldProps {
+  value?: DhSecretRef; onChange?: (v: DhSecretRef | undefined) => void;
+  sources?: Array<'conn' | 'vault'>;     // mặc định cả hai
+  fetchRefs: (q: string, signal: AbortSignal) => Promise<Array<DhSecretRef & { label: string; envs: Record<string, boolean>; valid: boolean }>>;
+  requiredEnvs?: string[];               // ví dụ ['PROD']
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+```
+
+**Điều cấm.** Cấm ô nhập tự do cho tham số bí mật. Cấm lưu, ghi log hoặc gửi giá trị bí mật thật từ trình duyệt. Cấm hiển thị một phần giá trị (bốn ký tự cuối) của bí mật.
+
+### 7.18. CMP-ResourceSelect và các biến thể theo phân hệ
+
+**Mục đích.** Nhiều màn hình phải chọn một đối tượng do phân hệ khác quản lý: bảng mã của PH-07, kết nối của PH-05, lược đồ của PH-06, API của PH-02, topic của PH-10. Nếu mỗi màn tự dựng một Select, nhãn, cách hiển thị phiên bản và cách báo "không có quyền" sẽ khác nhau. `CMP-ResourceSelect` là `CMP-Select` tải từ xa có thêm ba hành vi chung; các biến thể theo phân hệ là cấu hình sẵn của nó, mỗi biến thể có mã `CMP-` riêng để màn hình truy vết.
+
+**Ba hành vi chung.** Thứ nhất, mỗi lựa chọn hiển thị tên, mã (`CMP-Identifier` nhỏ) và một chỉ báo trạng thái gọn (`CMP-StatusDot`). Thứ hai, khi đối tượng có phiên bản, sau khi chọn đối tượng thì hiện ô chọn phiên bản cạnh bên với mặc định "Phiên bản hiện hành (tự theo)" hoặc một phiên bản cố định; lựa chọn này được lưu tường minh (`version: 'CURRENT' | số`). Thứ ba, giá trị đã lưu trỏ tới đối tượng người dùng không còn quyền xem hoặc đã bị xóa vẫn hiển thị mã gốc kèm chữ "Không xem được (không có quyền hoặc đã xóa)" thay vì để trống, để không mất dữ liệu khi lưu lại.
+
+| Mã | Đối tượng | Nguồn API | Bộ lọc mặc định | Chỉ báo riêng |
+|---|---|---|---|---|
+| `CMP-CodeListSelect` | Danh mục dùng chung PH-07 | API-07-001 (`scope`, trạng thái `PUBLISHED`) | Danh mục tenant được dùng | Nguồn: địa phương, quốc gia, kết hợp (token `color-source-*`, D03-05-02 §4.6) |
+| `CMP-ConnectionSelect` | Kết nối PH-05 | Danh sách kết nối được cấp cho không gian | Đúng loại kết nối mà tham số yêu cầu | Môi trường có giá trị (TEST, STAGING, PROD); "Chưa sẵn sàng cho PROD"; nút "Tạo kết nối mới" mở PH-05 ở thẻ mới |
+| `CMP-SchemaSelect` | Lược đồ dữ liệu PH-06 | Danh sách lược đồ đã công bố | Lược đồ tenant được dùng | Định dạng (JSON Schema, XSD, Avro) |
+| `CMP-ApiSelect` | API PH-02 | Danh mục API người dùng được xem | `PUBLISHED` | Phiên bản API, trạng thái `DEPRECATED` có cảnh báo |
+| `CMP-TopicSelect` | Topic PH-10 | Topic của dự án sự kiện được cấp | Đúng chiều (phát hay nhận) | Quyền phát/nhận |
+
+**Nền antd, token, nền đặt, bàn phím.** Như `CMP-Select` (mục 7.5). Popup `glass-overlay`. Ô nằm trên nền đặc.
+
+**API.**
+
+```tsx
+export interface DhResourceRef { id: string; code: string; version?: 'CURRENT' | number }
+
+export interface DhResourceSelectProps {
+  kind: 'codeList' | 'connection' | 'schema' | 'api' | 'topic';
+  value?: DhResourceRef; onChange?: (v: DhResourceRef | undefined) => void;
+  filter?: Record<string, string | string[]>;    // ví dụ { connectionType: 'jdbc-postgresql' }
+  versioned?: boolean;                           // hiện ô chọn phiên bản
+  allowCreateLink?: boolean;                     // nút "Tạo … mới" mở phân hệ nguồn
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+
+// Biến thể là hàm bọc cố định `kind`:
+export const CodeListSelect = (p: Omit<DhResourceSelectProps, 'kind'>) => <ResourceSelect kind="codeList" versioned {...p} />;
+```
+
+```tsx
+<ConnectionSelect filter={{ connectionType: param.connectionType }} allowCreateLink
+  value={stepConfig.connection} onChange={(v) => setParam('connection', v)} />
+```
+
+**Điều cấm.** Cấm tải toàn bộ đối tượng của phân hệ khác về trình duyệt. Cấm lưu nhãn hiển thị thay cho mã. Cấm âm thầm đổi giá trị đã lưu khi đối tượng không còn xem được.
+
+## 8. Nhóm hiển thị dữ liệu nghiệp vụ
+
+Năm thành phần ở mục này hiển thị một **giá trị** có quy tắc định dạng riêng của nghiệp vụ nhà nước: thời điểm, thời lượng, số tiền, mã định danh và dữ liệu cá nhân cần che. Chúng có chung ba quy tắc. Thứ nhất, định dạng chỉ đi qua các hàm của `@datahub/ui/format`; không màn hình nào tự gọi `dayjs().format()` hay `toLocaleString()`. Thứ hai, giá trị rỗng (`null`, `undefined`, chuỗi rỗng) luôn hiển thị "—" màu `color-text-tertiary` kèm `aria-label="Không có giá trị"` (kế thừa CRUD-R-05). Thứ ba, chữ số dùng `font-feature-tabular` để các giá trị trong cột bảng thẳng hàng.
+
+### 8.1. CMP-Timestamp
+
+**Mục đích.** `CMP-Timestamp` hiển thị một thời điểm (`T-TS`) hoặc một ngày (`T-DATE`) theo đúng một quy ước trên toàn hệ thống: múi giờ `Asia/Ho_Chi_Minh`, định dạng ngày `DD/MM/YYYY`, giờ 24 giờ. Máy chủ luôn trả thời điểm theo ISO 8601 có múi giờ (UTC), giao diện quy đổi. D00-01 §5 ghi dạng đầy đủ của `T-TS` là `dd/MM/yyyy HH:mm:ss`; giao diện mặc định rút gọn tới phút ở bảng và chi tiết để dễ đọc, và luôn cho xem dạng đầy đủ qua tooltip.
+
+**Khi dùng / không dùng.** Mọi chỗ hiện thời điểm: cột bảng, mô tả chi tiết, dòng thời gian, thông báo, log. Khoảng thời gian (từ… đến…) dùng hai Timestamp nối bằng " – ". Thời lượng dùng `CMP-Duration`.
+
+**Nền antd.** Không có; là phần tử `<time>` có `dateTime` là chuỗi ISO gốc.
+
+**Biến thể.**
+
+| Biến thể | Định dạng | Ví dụ | Dùng ở |
+|---|---|---|---|
+| `date` | `DD/MM/YYYY` | 20/11/2026 | Ngày hiệu lực, ngày ban hành |
+| `datetime` (mặc định) | `DD/MM/YYYY HH:mm` | 20/11/2026 14:05 | Bảng, chi tiết (CRUD-TBL-08) |
+| `datetime-second` | `DD/MM/YYYY HH:mm:ss` | 20/11/2026 14:05:09 | Lịch sử sửa, kết quả chạy thử, giao dịch |
+| `datetime-ms` | `DD/MM/YYYY HH:mm:ss.SSS` | 20/11/2026 14:05:09.412 | Log, truy vết (PTN-11) |
+| `smart` | Trong ngày: `HH:mm`; hôm qua: "Hôm qua HH:mm"; trong năm: `DD/MM HH:mm`; khác năm: `DD/MM/YYYY HH:mm` | 14:05 · Hôm qua 09:12 | Dòng thời gian, hộp việc, thông báo |
+| `relative` | "vừa xong" (dưới 1 phút), "{n} phút trước", "{n} giờ trước", từ 24 giờ chuyển sang `datetime` | 5 phút trước | Thông báo, "cập nhật lần cuối" |
+
+Biến thể `relative` tự cập nhật mỗi 60 giây bằng một bộ đếm chung cho cả trang (không tạo bộ đếm riêng cho mỗi phần tử). Mọi biến thể trừ `date` có `CMP-Tooltip` hiện thời điểm đầy đủ đến giây kèm dòng UTC ("20/11/2026 14:05:09 (giờ Việt Nam) · 2026-11-20T07:05:09Z") để kỹ sư đối chiếu log.
+
+**Quá hạn và sắp hết hạn.** Prop `deadline` biến Timestamp thành mốc hạn: quá hạn hiện thêm chữ "Quá hạn {n} ngày" màu `color-error-text`; còn dưới ngưỡng (mặc định 24 giờ) hiện "Còn {n} giờ" màu `color-warning-text`. Màu luôn kèm chữ.
+
+**Token.** `TKN-font-feature-tabular`, `TKN-color-text-primary`, `TKN-color-text-tertiary`, `TKN-color-error-text`, `TKN-color-warning-text`.
+
+**Nền đặt.** Mọi nền; chữ màu trạng thái (`deadline`) chỉ trên nền đặc và `glass-overlay`.
+
+**ARIA.** `<time dateTime="2026-11-20T07:05:09Z">`. Tên truy cập của biến thể `smart` và `relative` là dạng đầy đủ ("20 tháng 11 năm 2026, 14 giờ 05") để trình đọc màn hình không đọc "Hôm qua" thiếu ngữ cảnh khi nghe lại.
+
+**API.**
+
+```tsx
+export interface DhTimestampProps {
+  value?: string | null;                // ISO 8601 có múi giờ, hoặc YYYY-MM-DD với variant 'date'
+  variant?: 'date' | 'datetime' | 'datetime-second' | 'datetime-ms' | 'smart' | 'relative';
+  deadline?: { warnHours?: number };    // coi value là hạn
+  showUtcTooltip?: boolean;             // mặc định true, trừ 'date'
+  testId?: string;
+}
+```
+
+```tsx
+<Timestamp value={row.updatedAt} />
+<Timestamp value={task.dueAt} variant="smart" deadline={{ warnHours: 24 }} />
+```
+
+**Điều cấm.** Cấm hiển thị giờ UTC mà không ghi rõ. Cấm định dạng `MM/DD/YYYY` hay `YYYY-MM-DD` trên giao diện người dùng (trừ khối mã, JSON). Cấm lấy đồng hồ máy trạm làm mốc cho dữ liệu nghiệp vụ (chỉ dùng cho biến thể `relative`, đã hiệu chỉnh lệch đồng hồ theo tiêu đề `Date` của máy chủ).
+
+### 8.2. CMP-Duration
+
+**Mục đích.** `CMP-Duration` hiển thị thời lượng: độ trễ lượt gọi, thời gian chạy của một chặng, thời gian xử lý của tác vụ nền, SLA.
+
+**Quy tắc định dạng.** Dưới 1 giây: "{n} ms" (số nguyên, ví dụ "184 ms"). Từ 1 giây đến dưới 1 phút: một chữ số thập phân dấu phẩy, "1,2 s". Từ 1 phút: "2 phút 05 giây"; từ 1 giờ: "1 giờ 04 phút"; từ 1 ngày: "2 ngày 3 giờ". Biến thể `compact` cho cột bảng hẹp dùng "2m05s", "1h04m" với tooltip dạng đầy đủ. Số theo `vi-VN` (dấu chấm phân cách nghìn: "12.480 ms" chỉ xuất hiện khi màn hình ép đơn vị `ms`).
+
+**So với ngưỡng.** Prop `threshold` (ví dụ SLA 5.000 ms) tô chữ `color-warning-text` khi vượt 80% và `color-error-text` khi vượt 100%, kèm biểu tượng `warning`/`error` và tooltip "Vượt SLA 5 s".
+
+**Token, nền đặt, ARIA.** `TKN-font-feature-tabular`, `TKN-color-warning-text`, `TKN-color-error-text`; mọi nền đặc và `glass-overlay`; phần tử `<time dateTime="PT1.2S">` với tên truy cập đầy đủ ("1,2 giây").
+
+**API.**
+
+```tsx
+export interface DhDurationProps {
+  ms?: number | null;
+  variant?: 'default' | 'compact';
+  unit?: 'auto' | 'ms';
+  threshold?: { warnRatio?: number; limitMs: number };
+  testId?: string;
+}
+```
+
+**Điều cấm.** Cấm tự tính thời lượng bằng hiệu hai thời điểm của đồng hồ máy trạm. Cấm hiển thị "0 ms" cho giá trị chưa đo (dùng "—").
+
+### 8.3. CMP-Money
+
+**Mục đích.** `CMP-Money` hiển thị số tiền: phí dịch vụ công, giao dịch thanh toán, đối soát, hoàn tiền (PH-19), đơn giá gói sử dụng (PH-02). Sai một dấu phân cách trên màn đối soát là sai nghiệp vụ, nên quy tắc là bắt buộc tuyệt đối.
+
+**Quy tắc định dạng.** Máy chủ trả số tiền theo kiểu `T-MONEY` của D00-01 §5: **số nguyên đồng** (`integer` int64 trong OpenAPI, ví dụ `1250000`); kiểu `number` của JavaScript biểu diễn chính xác tới khoảng 9 triệu tỷ đồng nên đủ cho mọi giao dịch. Mã tiền tệ ISO 4217 mặc định `VND`. Giao diện hiển thị "1.250.000 ₫": dấu chấm phân cách nghìn, ký hiệu "₫" sau số cách một khoảng trắng không ngắt. Đồng Việt Nam không có phần thập phân. Ngoại tệ (hiếm, chỉ đối soát quốc tế) hiển thị "1.250,50 USD" với hai chữ số thập phân dấu phẩy. Số âm (hoàn tiền, điều chỉnh) dùng dấu trừ thật "−1.250.000 ₫", không dùng ngoặc.
+
+**Biến thể.** `default`; `signed` (luôn có dấu "+" hoặc "−", tô `color-success-text` cho dương và `color-error-text` cho âm, dùng cho chênh lệch đối soát; màu kèm dấu nên không chỉ dựa vào màu); `compact` cho thẻ KPI ("1,25 tỷ ₫", "350 triệu ₫") với tooltip giá trị đầy đủ. `compact` cấm dùng trong bảng và màn đối soát.
+
+**Căn lề.** Trong bảng, cột tiền căn phải (D03-05-04 §8.1.3), chữ số đều độ rộng.
+
+**Token, nền đặt.** `TKN-font-feature-tabular`, `TKN-color-success-text`, `TKN-color-error-text`; mọi nền.
+
+**ARIA.** Tên truy cập đọc thành chữ số kèm đơn vị: "1.250.000 đồng"; số âm "âm 1.250.000 đồng".
+
+**API.**
+
+```tsx
+export interface DhMoneyProps {
+  amount?: number | null;               // T-MONEY: số nguyên đồng
+  currency?: string;                    // mặc định 'VND'
+  variant?: 'default' | 'signed' | 'compact';
+  testId?: string;
+}
+```
+
+```tsx
+<Money amount={tx.amount} />
+<Money amount={recon.diffAmount} variant="signed" />
+```
+
+**Điều cấm.** Cấm nhận số tiền dạng số thực hoặc có phần thập phân với VND. Cấm làm tròn số tiền ở giao diện. Cấm cộng tổng tiền ở giao diện cho màn đối soát (tổng do máy chủ tính).
+
+### 8.4. CMP-Identifier
+
+**Mục đích.** `CMP-Identifier` hiển thị một mã định danh kỹ thuật hoặc nghiệp vụ mà người dùng hay phải đọc, sao chép, đối chiếu: mã HTTT, mã API, mã luồng, mã tenant, mã giao dịch, mã hồ sơ, `trace_id`, mã ĐVQHNS. Nó khác `CMP-CodeText` ở chỗ có hành vi sao chép, rút gọn có kiểm soát và có thể là liên kết.
+
+**Nền antd.** `Typography.Text` với `code={false}` và lớp `dh-identifier`, ghép `CMP-CopyButton` biến thể `icon` cỡ `sm`.
+
+**Biến thể.** `inline` (mặc định, trong câu hoặc ô bảng), `badge` (nền `color-fill-control`, bo `radius-sm`, dùng cạnh tiêu đề trong `CMP-PageHeader`), `link` (là liên kết tới trang chi tiết của đối tượng mang mã; với `trace_id` là liên kết tới trang truy vết PTN-11).
+
+**Rút gọn.** Mã dài (băm, UUID, `trace_id` 32 ký tự) rút gọn giữa với dấu "…" theo `truncate` ("4bf92f35…a3ce929d", giữ 8 ký tự đầu và 8 ký tự cuối); tooltip và nội dung sao chép luôn là mã đầy đủ. Mã nghiệp vụ ngắn (dưới 24 ký tự) không bao giờ rút gọn.
+
+**Sao chép.** Nút sao chép hiện khi rê hoặc focus vào mã (luôn hiện trên thiết bị cảm ứng và ở biến thể `badge`), vùng chạm mở rộng 24×24 (mục 2.5). Sao chép xong, `CMP-CopyButton` đổi biểu tượng `copied` 2 giây và thông báo `aria-live` "Đã sao chép mã".
+
+**Token.** `TKN-font-mono`, `TKN-font-footnote`, `TKN-color-text-primary`, `TKN-color-text-link`, `TKN-color-fill-control`, `TKN-radius-sm`.
+
+**Nền đặt.** Mọi nền; biến thể `link` không đặt trên `glass-chrome-scrolled` và `glass-modal` (D03-05-01 §3.2).
+
+**ARIA.** Tên truy cập của mã rút gọn là mã đầy đủ; có `aria-label` tiền tố loại mã khi màn hình truyền `kind` ("Mã truy vết 4bf92f35…").
+
+**API.**
+
+```tsx
+export interface DhIdentifierProps {
+  value?: string | null;
+  kind?: string;                        // 'Mã truy vết', 'Mã giao dịch'…
+  variant?: 'inline' | 'badge' | 'link';
+  href?: string;                        // với variant 'link'
+  truncate?: 'none' | 'middle';         // mặc định 'middle' khi value dài từ 24 ký tự
+  copyable?: boolean;                   // mặc định true
+  testId?: string;
+}
+```
+
+```tsx
+<Identifier kind="Mã truy vết" value={error.traceId} variant="link" href={`/giam-sat/truy-vet/${error.traceId}`} />
+```
+
+**Điều cấm.** Cấm dùng Identifier cho dữ liệu cá nhân (số CCCD, số điện thoại là dữ liệu cá nhân, dùng `CMP-MaskedValue`). Cấm rút gọn bằng cắt đuôi (người đối chiếu cần cả đầu và cuối). Cấm viết hoa lại hoặc thêm khoảng trắng vào mã.
+
+### 8.5. CMP-MaskedValue
+
+**Mục đích.** `CMP-MaskedValue` hiển thị dữ liệu cá nhân đã được che theo mức phân loại và cho người có quyền mở xem có kiểm soát. Đây là hiện thực trên giao diện của nguyên tắc 5 (D03-05 §2), NT-10 của D03-01, FR-00-034 và FR-00-040, và là một kiểm soát của hồ sơ bảo vệ dữ liệu cá nhân (Luật BVDLCN 91/2025/QH15).
+
+**Nguyên tắc.** Che là việc của **máy chủ**: API trả giá trị đã che (`"0912****78"`) cùng cờ `masked: true` và mã trường. Giao diện không bao giờ nhận giá trị thật rồi che bằng CSS. Mở xem gọi một API riêng (`POST …/reveal` theo mẫu của từng phân hệ) có lý do, máy chủ kiểm quyền `PERM-09-unmask` (D02-08), ghi kiểm toán và trả giá trị thật.
+
+**Mẫu che chuẩn.** Bảng dưới là mẫu máy chủ áp dụng và giao diện mô tả trong tài liệu hướng dẫn; giao diện chỉ hiển thị.
+
+| Loại dữ liệu | Mẫu che | Ví dụ |
+|---|---|---|
+| Số định danh cá nhân (12 chữ số) | Giữ 3 đầu, 2 cuối | `001*******34` |
+| Số điện thoại | Giữ 4 đầu, 2 cuối | `0912****78` |
+| Thư điện tử | Giữ ký tự đầu của phần tên và tên miền | `n****@****.gov.vn` |
+| Họ tên (khi phân loại Nhạy cảm) | Giữ chữ cái đầu mỗi từ | `N. V. A.` |
+| Ngày sinh | Giữ năm | `**/**/1990` |
+| Địa chỉ | Giữ cấp tỉnh | `***, Tỉnh Mẫu A` |
+| Số tài khoản ngân hàng | Giữ 4 cuối | `********1234` |
+
+**Luồng mở xem.** (1) Người dùng bấm nút "Hiện" (biểu tượng `view`). (2) `CMP-ReasonDialog` (D03-05-04 §7.4) mở với ô lý do bắt buộc tối thiểu 10 ký tự và danh sách lý do thường dùng do phân hệ cấu hình. (3) Sau khi máy chủ trả giá trị, giá trị thật hiển thị tại chỗ, kèm chữ phụ "Đang hiện · tự che sau 30 giây" và nút "Ẩn" (`hide`). (4) Sau 30 giây, khi rời trang, khi đổi tenant hoặc khi cửa sổ mất focus quá 30 giây, giá trị tự che lại và bị xóa khỏi bộ nhớ thành phần. (5) Mở xem lần nữa cần lý do lần nữa (mỗi lần là một bản ghi kiểm toán). Trong một bảng, chỉ mở được từng ô; không có "Hiện tất cả".
+
+**Biến thể.** `revealable` (có nút Hiện khi `canReveal`), `static` (không bao giờ có nút, dùng cho log vận hành và giá trị giao diện tự nhận diện, D03-06-00 PTN-11). Khi người dùng không có quyền, nút không hiện (không hiện vô hiệu), đúng quy ước ẩn khi thiếu quyền (D03-05-04 §2.3).
+
+**Trạng thái.** Che, đang mở (đợi máy chủ: spinner trong nút), đang hiện, lỗi mở (Toast lỗi với mã lỗi, giá trị giữ nguyên che), hết hạn hiện (tự che).
+
+**Token.** `TKN-font-mono` (với giá trị dạng số), `TKN-color-text-secondary` (ký tự che), `TKN-color-warning-text` (chữ "Đang hiện"), `TKN-font-caption`.
+
+**Nền đặt.** Nền đặc. Không đặt dữ liệu cá nhân trên lớp glass.
+
+**Bàn phím và ARIA.** Giá trị che có tên truy cập "Đã che: số điện thoại" (không đọc từng dấu sao). Nút "Hiện" có `aria-label="Hiện số điện thoại"`. Khi giá trị hiện, vùng gốc thông báo `aria-live="polite"` "Đang hiện số điện thoại, tự che sau 30 giây".
+
+**Chống lộ phụ.** Giá trị đã hiện không được đưa vào bộ nhớ đệm TanStack Query (mutation `gcTime: 0`), không vào URL, không vào nội dung xuất Excel (xuất luôn xuất bản che), có `user-select: all` để sao chép có chủ đích nhưng không có nút sao chép riêng. Trang in (`@media print`) luôn in bản che.
+
+**API.**
+
+```tsx
+export interface DhMaskedValueProps {
+  masked: string;                        // giá trị đã che do máy chủ trả
+  fieldLabel: string;                    // 'số điện thoại'
+  variant?: 'revealable' | 'static';
+  canReveal?: boolean;                   // từ allowedActions/quyền
+  reveal?: (reason: string) => Promise<string>;   // gọi API mở xem
+  reasonPresets?: string[];
+  autoHideSeconds?: number;              // mặc định 30
+  testId?: string;
+}
+```
+
+```tsx
+<MaskedValue masked={citizen.phone} fieldLabel="số điện thoại" canReveal={can('unmask')}
+  reveal={(reason) => api.privacy.reveal({ subjectId: citizen.id, field: 'phone', reason })} />
+```
+
+**Điều cấm.** Cấm che bằng CSS hoặc ở giao diện. Cấm "Hiện tất cả". Cấm giữ giá trị đã hiện quá thời hạn. Cấm dùng MaskedValue cho bí mật (dùng `CMP-SecretField`, `CMP-SecretRefField`).
+
+## 9. Bảng tổng hợp thành phần nguyên tử
+
+Bảng dưới đây là danh mục chính thức các thành phần nguyên tử, dùng để đối chiếu danh mục Storybook khi nghiệm thu design system (D03-05 §6). Cột "Mức" theo MoSCoW cho đợt MVP: M bắt buộc có trước khi phát triển phân hệ, S cần có trước khi làm phân hệ dùng nó. Cột "Story tối thiểu" là số story bắt buộc chưa nhân với hai chế độ sáng/tối và hai chế độ kính `full`/`off`.
+
+| Mục | Mã | Nền antd hoặc thư viện | Mức | Story tối thiểu | Đặt trên glass |
+|---|---|---|---|---|---|
+| 3.1 | `CMP-Button` | `Button` | M | 6 biến thể × 8 trạng thái | Có |
+| 3.2 | `CMP-IconButton` | `Button` `shape` | M | 4 | Có |
+| 3.3 | `CMP-Link` | `Typography.Link` | M | 4 | Hạn chế (mục 3.3) |
+| 3.4 | `CMP-CopyButton` | `Button` + Clipboard API | M | 3 | Có |
+| 4.1 | `CMP-Icon` | Lucide | M | 1 (bảng biểu tượng) | Có |
+| 4.2 | `CMP-Text` | `Typography.Text` | M | 5 | Có |
+| 4.3 | `CMP-Heading` | `Typography.Title` | M | 4 | Có |
+| 4.4 | `CMP-Kbd` | thẻ `kbd` | S | 1 | Có |
+| 4.5 | `CMP-CodeText` | `Typography.Text code` | M | 2 | Không |
+| 4.6 | `CMP-Divider` | `Divider` | M | 2 | Có |
+| 5.1 | `CMP-StatusTag` | `Tag` | M | 5 sắc thái + bảng mã | Có |
+| 5.2 | `CMP-Tag` | `Tag` | M | 4 | Có |
+| 5.3 | `CMP-Badge` | `Badge` | M | 3 | Có |
+| 5.4 | `CMP-StatusDot` | `Badge status` | M | 5 | Có |
+| 5.5 | `CMP-Avatar` | `Avatar` | M | 3 | Có |
+| 5.6 | `CMP-AvatarGroup` | `Avatar.Group` | S | 3 | Có |
+| 6.1 | `CMP-Spinner` | `Spin` | M | 3 | Có |
+| 6.2 | `CMP-Skeleton` | `Skeleton` | M | 4 hình dạng | Không |
+| 6.3 | `CMP-ProgressBar` | `Progress` | M | 4 | `glass-overlay` |
+| 6.4 | `CMP-Tooltip` | `Tooltip` | M | 2 | Có (nền đảo) |
+| 6.5 | `CMP-SaveIndicator` | tự dựng | S | 6 trạng thái | Không |
+| 7.1 | `CMP-Input` | `Input` | M | 8 trạng thái | `glass-overlay` |
+| 7.2 | `CMP-SecretField` | `Input.Password` | M | 2 chế độ × 3 | Không |
+| 7.3 | `CMP-TextArea` | `Input.TextArea` | M | 4 | Không |
+| 7.4 | `CMP-NumberInput` | `InputNumber` | M | 4 | Không |
+| 7.5 | `CMP-Select` | `Select` | M | 4 tính năng × 3 | Popup `glass-overlay` |
+| 7.6 | `CMP-TreeSelect` | `TreeSelect` | M | 3 | Popup `glass-overlay` |
+| 7.7 | `CMP-Checkbox` | `Checkbox` | M | 4 | Có |
+| 7.8 | `CMP-Radio` | `Radio` | M | 3 | Có |
+| 7.9 | `CMP-Switch` | `Switch` | M | 4 | `glass-overlay` |
+| 7.10 | `CMP-SegmentedControl` | `Segmented` | M | 3 | Có |
+| 7.11 | `CMP-DatePicker` | `DatePicker` | M | 4 | Popup `glass-overlay` |
+| 7.12 | `CMP-DateRangePicker` | `DatePicker.RangePicker` | M | 4 | Popup `glass-overlay` |
+| 7.13 | `CMP-Upload` | `Upload` | M | 3 biến thể × 5 trạng thái tệp | Không |
+| 7.14 | `CMP-RadioCard` | `Radio.Group` | S | 4 | Không |
+| 7.15 | `CMP-CronPicker` | ghép | S | 5 kiểu lịch + lỗi | Không |
+| 7.16 | `CMP-ExpressionField` | CodeMirror 6 + `Select` | S | 5 | Không |
+| 7.17 | `CMP-SecretRefField` | `Select` | S | 4 | Không |
+| 7.18 | `CMP-ResourceSelect` (`CMP-CodeListSelect`, `CMP-ConnectionSelect`, `CMP-SchemaSelect`, `CMP-ApiSelect`, `CMP-TopicSelect`) | `Select` | S | 3 mỗi biến thể | Popup `glass-overlay` |
+| 8.1 | `CMP-Timestamp` | thẻ `time` | M | 6 biến thể | Có |
+| 8.2 | `CMP-Duration` | thẻ `time` | M | 3 | Có |
+| 8.3 | `CMP-Money` | tự dựng | M | 3 | Có |
+| 8.4 | `CMP-Identifier` | `Typography.Text` | M | 3 | Có (trừ `link` trên glass dày) |
+| 8.5 | `CMP-MaskedValue` | tự dựng | M | 5 trạng thái | Không |
+
+Tổng cộng 44 thành phần nguyên tử. Tính cả năm biến thể theo phân hệ của `CMP-ResourceSelect` (có mã riêng để truy vết nhưng dùng chung một hiện thực) thì có 49 mã `CMP-`.
+
+**Tên gọi khác đã gặp trong tài liệu phân hệ.** Một số tập D03-06 viết trước khi tập này hoàn thành dùng tên khác cho cùng thành phần. Bảng dưới là ánh xạ chính thức; tập phân hệ được sửa theo tên chuẩn ở lần cập nhật kế tiếp và lint tài liệu (`build/check-cmp.py`, đề xuất ở mục 12) cảnh báo tên không có trong danh mục.
+
+| Tên đã dùng | Tên chuẩn | Ghi chú |
+|---|---|---|
+| `CMP-Segmented` | `CMP-SegmentedControl` | |
+| `CMP-SearchInput` | `CMP-SearchField` (D03-05-04 §3.3) | Ô tìm có bỏ dấu và debounce |
+| `CMP-FileDrop`, `CMP-FileDropzone` | `CMP-Upload` biến thể `dropzone` | |
+| `CMP-CodeBlock` | `CMP-CodeEditor` chế độ chỉ đọc (D03-05-04 §9.1) hoặc `CMP-JsonViewer` | Khối mã nhiều dòng |
+
+## 10. Checklist nghiệm thu thành phần nguyên tử
+
+Kiểm thử viên và người duyệt PR dùng checklist dưới đây cho mỗi thành phần trước khi phát hành `@datahub/ui`.
+
+- [ ] Có đủ story theo cột "Story tối thiểu" của mục 9, mỗi story ở sáng, tối, kính `full` và `off`.
+- [ ] axe-core không có vi phạm A/AA trên mọi story (NFR-00-040).
+- [ ] Mọi giá trị thị giác đến từ token; lint "không giá trị thô" không báo lỗi (D03-05-02 §15).
+- [ ] Không có `{...rest}` xuống antd; interface liệt kê tường minh prop được phép (mục 1.4).
+- [ ] Vòng focus kép hiển thị đúng trên nền đặc, nền nhấn và `glass-overlay`, đạt 3:1.
+- [ ] Vùng chạm tối thiểu 24×24 (WCAG 2.5.8), kể cả nút phụ nhỏ (sao chép, đóng nhãn).
+- [ ] Không có thông tin chỉ truyền bằng màu (WCAG 1.4.1): trạng thái có chữ hoặc hình dạng đi kèm.
+- [ ] Chuỗi cố định lấy từ `dhMessages`, không viết cứng trong JSX.
+- [ ] Hành vi bàn phím đúng mục "Bàn phím và ARIA" của thành phần, đã thử với NVDA trên Windows cho nhóm nhập liệu.
+- [ ] Ở chế độ giảm chuyển động, không còn chuyển động trượt, quay hay phóng to.
+- [ ] Thành phần nhận `ref`, `testId`, `id`, `aria-*` theo mục 1.4.
+- [ ] Thành phần nhập liệu chạy đúng trong `Form.Item` (cặp `value`/`onChange`).
+- [ ] Thành phần hiển thị dữ liệu (mục 8) hiển thị "—" cho giá trị rỗng và dùng hàm của `@datahub/ui/format`.
+- [ ] `CMP-MaskedValue`, `CMP-SecretField`, `CMP-SecretRefField`: kiểm thử bảo mật xác nhận giá trị thật không nằm trong bộ nhớ đệm, URL, `localStorage`, tệp xuất.
+
+## 11. Truy vết
+
+| Yêu cầu | Đáp ứng tại |
+|---|---|
+| RB-03 React + antd v6, Liquid Glass tới từng thành phần nguyên tử | Toàn bộ tài liệu; vật liệu từng thành phần ở mục "Nền đặt" |
+| NFR-00-040…043 WCAG 2.2 AA, tương phản, bàn phím, giảm chuyển động | Mục 2, mục "Bàn phím và ARIA" của mỗi thành phần, mục 10 |
+| NFR-00-045 100% màn hình dùng `@datahub/ui` | Mục 1.4, mục 9 |
+| FR-00-034, FR-00-040 che và mở xem dữ liệu cá nhân có kiểm toán | `CMP-MaskedValue` (8.5) |
+| FR-00-050 xác nhận thao tác ảnh hưởng vận hành | `CMP-Switch` (7.9) prop `confirm` |
+| FR-00-053 nhãn trạng thái thống nhất | `CMP-StatusTag` (5.1), `CMP-StatusDot` (5.4) |
+| FR-00-054 tác vụ dài và trạng thái lưu | `CMP-ProgressBar` (6.3), `CMP-SaveIndicator` (6.5) |
+| FR-00-080, FR-00-081 thông báo lỗi và lỗi theo trường | Mục 7.0, `CMP-ExpressionField` (7.16) |
+| CRUD-R-05, CRUD-TBL-08 của `docs/ui_ux_rule.md` | Mục 8 (giá trị rỗng, định dạng ngày giờ) |
+| PH-04 D03-06-PH04 §27.3 (thành phần đề nghị bổ sung) | `CMP-AvatarGroup`, `CMP-SaveIndicator`, `CMP-RadioCard`, `CMP-ExpressionField`, `CMP-SecretRefField`, `CMP-ConnectionSelect`, `CMP-SchemaSelect`, `CMP-CodeListSelect`; phần còn lại ở D03-05-04 |
+| PH-07 D03-06-PH07 Phụ lục A-05 | `CMP-CronPicker`; `CMP-FileDrop` là `CMP-Upload`; phần còn lại ở D03-05-04 |
+| PH-19 BRD (hiển thị số tiền, giao dịch) | `CMP-Money` (8.3), `CMP-Timestamp` biến thể `datetime-second` (8.1) |
+
+## 12. Đề xuất bổ sung
+
+1. **D00-01 §5 (kiểu dữ liệu).** Bổ sung cho `T-MONEY` trường đi kèm `currency` (ISO 4217, mặc định `VND`) dành cho trường hợp đối soát ngoại tệ hiếm gặp, để `CMP-Money` không phải đoán đơn vị.
+2. **D00-01 thuật ngữ.** Bổ sung "tham chiếu bí mật" (secret reference): chuỗi `{{conn:…}}` hoặc `{{vault:…}}` trỏ tới bí mật đã cất, không chứa giá trị.
+3. **Công cụ kiểm tra tài liệu.** Bổ sung `datahub-docs/build/check-cmp.py`: quét mọi tệp `.md` trong `datahub-docs/`, liệt kê mã `CMP-*` không có trong bảng tổng hợp mục 9 của tài liệu này và của D03-05-04, chạy trong cổng kiểm tra liên kết (DoD "kiểm tra liên kết chạy sạch").
+4. **Bộ biểu tượng.** Bổ sung các khóa biểu tượng ở bảng của mục 4.1 (đã thêm ở bản 0.2): `offline`, `expression`, `connection`, `schema`, `undo`, `redo`, `zoom-in`, `zoom-out`, `fit-view`, `fullscreen`, `pin`, `comment`, `diff`, `tasks`, `command`, `sticky-note`, `minimap`, `panel`.
