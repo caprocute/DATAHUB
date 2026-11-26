@@ -1,13 +1,46 @@
 ---
 ma_tai_lieu: D05-01
 ten: Kế hoạch kiểm thử tổng thể (Master Test Plan)
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Quản lý dự án, Trưởng nhóm kiểm thử, Kiểm thử viên, Trưởng nhóm kỹ thuật, Kiến trúc sư, Vận hành, Chủ đầu tư, Hội đồng thẩm định
+mo_ta: Kế hoạch kiểm thử cấp cao nhất của Datahub theo ISO/IEC/IEEE 29119-3, chốt đối tượng, chiến lược theo rủi ro, mức và loại kiểm thử, cổng phát hành RG-1 đến RG-5, môi trường, dữ liệu, tổ chức và lịch kiểm thử.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D00-03 Ma trận truy vết; D02-01 BRD; D02-02 SRS; D03-01 SAD; D03-07 Thiết kế ATTT; D03-09 Hạ tầng và DR; D03-10 Thiết kế đa tenant; D05-02; D05-03; D05-04; D05-05
 ---
 
 # D05-01 · Kế hoạch kiểm thử tổng thể (Master Test Plan)
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Tài liệu chốt cách Datahub được kiểm thử trước khi đưa vào vận hành: kiểm thử cái gì, đến mức nào, bằng công cụ và môi trường nào, ai làm và khi nào. Đây là kế hoạch kiểm thử cấp cao nhất; các kế hoạch chuyên đề về test case, hiệu năng, bảo mật và chấp nhận kế thừa và chỉ được chặt hơn.
+
+**Phạm vi.** Toàn bộ vòng đời kiểm thử từ mốc khởi động T0 đến khi đợt 3 được nghiệm thu, cho 20 phân hệ và cả hai hồ sơ triển khai (tỉnh độc lập, nền tảng dùng chung). Tài liệu gồm chiến lược dựa trên rủi ro, bảy mức và mười lăm loại kiểm thử, tiêu chí vào, ra cùng năm cổng phát hành `RG-1` đến `RG-5`, môi trường, dữ liệu kiểm thử, tự động hóa, quản lý lỗi, chỉ số, tổ chức, lịch và ma trận truy vết từng yêu cầu phi chức năng tới phương pháp kiểm chứng. Hạ tầng phần cứng và hệ thống của bên thứ ba không thuộc phạm vi.
+
+**Căn cứ.** STD-02 (ISO/IEC/IEEE 29119-3: cấu trúc kế hoạch kiểm thử), STD-03 (OWASP ASVS 5.0 mức 2: kiểm thử bảo mật ứng dụng), STD-04 (WCAG 2.2 mức AA: kiểm thử khả năng truy cập); CMP-LAW-06 và CMP-LAW-08 (Nghị định 331/2026/NĐ-CP, TCVN 14423:2026: kiểm tra an ninh mạng định kỳ và phát triển ứng dụng an toàn ở cấp độ 3); CMP-LAW-16 (Luật An ninh mạng 116/2025/QH15); CMP-LAW-05 và CMP-LAW-04 (Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15, Nghị định 356/2025/NĐ-CP: cấm dùng dữ liệu cá nhân thật trong môi trường kiểm thử nếu không có căn cứ).
+
+**Những điểm hội đồng cần lưu ý.** (1) Công sức kiểm thử được phân bổ theo rủi ro sản phẩm chứ không chia đều: 21 rủi ro `RSK-T01…21` được chấm ảnh hưởng nhân khả năng, năm rủi ro điểm cao nhất (cách ly tenant, bảo mật API, thanh toán, di trú, chạy song song strangler) nhận cường độ kiểm thử sâu nhất. (2) Mọi yêu cầu phi chức năng của SRS có một dòng trong ma trận ở chương 17 gắn với loại kiểm thử, công cụ, môi trường và cổng, nên không có chỉ tiêu nào để ngỏ phương pháp kiểm chứng. (3) Kiểm thử rò rỉ chéo tenant là bắt buộc, tự sinh theo mọi endpoint, kỳ vọng `404`, chặn merge khi không đạt. (4) Cổng `RG-1` đến `RG-5` là cổng kỹ thuật, là đầu vào cho cổng quản lý dự án chứ không thay thế; mỗi cổng có người quyết định rõ, riêng `RG-4` do chủ đầu tư quyết định. (5) Môi trường kiểm thử không dùng dữ liệu cá nhân thật; dữ liệu là tổng hợp hoặc đã che, có dữ liệu canary để phát hiện rò rỉ. (6) Lịch ở chương 14 là giả định theo mốc T0 và còn phụ thuộc các câu hỏi mở ở chương 21 (sandbox PayGov, môi trường thử NDXP, đơn vị kiểm thử xâm nhập độc lập, đối chiếu TCVN 14423:2026).
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Phân hệ là đối tượng kiểm thử | 20 (`PH-01…20`), cộng thành phần xuyên suốt mã `PH-00` |
+| Mức kiểm thử | 7 (đơn vị, tích hợp module, tích hợp hệ thống, hợp đồng, đầu–cuối, hệ thống, chấp nhận) |
+| Tỷ lệ tháp kiểm thử | Khoảng 60% đơn vị, 10% module, 15% tích hợp hệ thống, 10% hợp đồng, 5% đầu–cuối |
+| Rủi ro sản phẩm và rủi ro hoạt động kiểm thử | 21 (`RSK-T01…21`) và 8 (`RSK-T30…37`) |
+| Cổng phát hành | 5 (`RG-1…5`), cổng PR dùng lại Gate A, B, C, D, S |
+| Môi trường phi sản xuất | 5 (DEV, TEST, STAGING, PERF, UAT) |
+| Thí nghiệm kiểm thử hỗn loạn | 8 (`CX-01…08`) |
+| Yêu cầu phi chức năng có dòng truy vết ở chương 17 | 42 |
+| Ngưỡng độ phủ mã | Không dưới 80% backend, 70% giao diện (NFR-00-053) |
+| Độ phủ kiểm thử rò rỉ chéo tenant | 100% endpoint không miễn trừ |
+| Mức lỗi chặn phát hành | 0 lỗi S1 và S2 mở tại `RG-2` (với tính năng trong bản) và `RG-4` |
+| Lịch | 18 tháng kể từ T0, `RG-4` đợt 3 ở T0 + 18 |
+
+: Con số chính của kế hoạch kiểm thử tổng thể
+
+Các con số trên lấy từ chương 2, 3, 4, 6, 7, 11, 14 và 17 của tài liệu này; số mục truy vết và số rủi ro có thể tăng khi D05-02 đến D05-05 được viết.
 
 ## 1. Giới thiệu
 
@@ -15,7 +48,7 @@ nguoi_doc: Quản lý dự án, Trưởng nhóm kiểm thử, Kiểm thử viên
 
 Tài liệu này là kế hoạch kiểm thử cấp cao nhất của dự án Datahub. Nó trả lời bốn câu hỏi mà mọi kế hoạch kiểm thử theo ISO/IEC/IEEE 29119-3 phải trả lời: **kiểm thử cái gì** (hạng mục và phạm vi), **kiểm thử đến mức nào** (chiến lược dựa trên rủi ro, mức và loại kiểm thử, tiêu chí vào và ra), **kiểm thử bằng gì và ở đâu** (công cụ, môi trường, dữ liệu kiểm thử) và **ai làm, khi nào** (tổ chức, vai trò, lịch theo mốc). Mọi kế hoạch kiểm thử chuyên đề phía sau — test case theo phân hệ (D05-02), kế hoạch kiểm thử hiệu năng (D05-03), kế hoạch kiểm thử bảo mật (D05-04) và kế hoạch kiểm thử chấp nhận (D05-05) — kế thừa các quyết định ở đây và chỉ được chặt hơn, không được lỏng hơn.
 
-Kế hoạch phục vụ ba nhóm người đọc. Hội đồng thẩm định dùng mục 3, mục 5, mục 6 và mục 17 để đánh giá rằng mọi yêu cầu phi chức năng ở SRS (D02-02) đều có phương pháp kiểm chứng cụ thể, gắn với công cụ, môi trường và cổng phát hành. Quản lý dự án và chủ đầu tư dùng mục 6, mục 13 và mục 14 để biết cổng nào chặn phát hành và lịch kiểm thử theo từng đợt. Đội phát triển và đội kiểm thử dùng mục 4, mục 7 đến mục 12 làm luật làm việc hằng ngày: viết kiểm thử ở mức nào, dùng dữ liệu gì, pipeline chạy gì, ghi lỗi ra sao.
+Kế hoạch phục vụ hội đồng thẩm định, quản lý dự án, chủ đầu tư, đội phát triển và đội kiểm thử; từng nhóm người đọc cần đọc phần nào được nêu ở mục 1.6.
 
 ### 1.2. Phạm vi tài liệu
 
@@ -23,7 +56,7 @@ Tài liệu bao phủ toàn bộ vòng đời kiểm thử của sản phẩm Da
 
 Tài liệu không chứa test case chi tiết. Test case nằm ở D05-02, mỗi phân hệ một tập. Kịch bản tải chi tiết nằm ở D05-03; kịch bản kiểm thử xâm nhập và bảng kiểm ASVS chi tiết nằm ở D05-04; kịch bản UAT và biên bản nghiệm thu nằm ở D05-05.
 
-### 1.3. Căn cứ
+### 1.3. Căn cứ và tài liệu tham chiếu
 
 Kế hoạch được lập dựa trên các tài liệu và tiêu chuẩn dưới đây. Bảng cho biết mỗi căn cứ chi phối phần nào của kế hoạch, để khi căn cứ thay đổi người đọc biết phải rà lại mục nào.
 
@@ -44,13 +77,15 @@ Kế hoạch được lập dựa trên các tài liệu và tiêu chuẩn dư�
 | Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15, Nghị định 356/2025/NĐ-CP | Cấm dùng dữ liệu cá nhân thật trong môi trường kiểm thử nếu không có căn cứ; che dữ liệu | 8 |
 | `docs/08-implementation/04-ke-hoach-phat-trien.md`, `02-huong-dan-lap-trinh.md` (repo) | Các wave W0–W6, lane `L-QA`, cổng CI hiện có Gate A/B/C/D/S | 9, 14 |
 
+: Căn cứ pháp lý, tiêu chuẩn và tài liệu chi phối kế hoạch kiểm thử
+
 > **Câu hỏi mở Q360:** Các nhóm yêu cầu "quản lý kiểm tra an ninh mạng" và "phát triển ứng dụng an toàn" ở cấp độ 3 của TCVN 14423:2026 (dự kiến mục 5.17 và 5.18) chưa được đối chiếu toàn văn. Cần xác nhận tần suất kiểm tra, đánh giá an ninh mạng bắt buộc (ví dụ kiểm thử xâm nhập trước vận hành và định kỳ hằng năm) để chốt lịch ở mục 14 và D05-04.
 
 ### 1.4. Quan hệ với các tài liệu kiểm thử khác
 
 Bộ tài liệu kiểm thử được tổ chức thành năm tài liệu. Sơ đồ dưới đây cho thấy chiều kế thừa và chiều cung cấp bằng chứng giữa chúng.
 
-```mermaid
+```{.mermaid caption="Quan hệ giữa D05-01 và các tài liệu kiểm thử khác"}
 flowchart TB
   SRS[D02-02 SRS<br/>FR-00, NFR-00] --> MTP
   FRS[D02-03 FRS 20 tập<br/>FR-PH, BR-PH] --> TC
@@ -76,6 +111,8 @@ Phân chia trách nhiệm cụ thể giữa các tài liệu được ghi ở b�
 | D05-04 Bảo mật | Phạm vi ASVS 5.0 L2, công cụ SAST/DAST, bộ kiểm thử rò rỉ chéo tenant, tần suất pentest, ngưỡng chặn | Bảng kiểm ASVS từng mục, kịch bản pentest, ánh xạ chi tiết `SEC-nn` → ca kiểm thử |
 | D05-05 UAT | Tiêu chí vào/ra UAT, vai trò người dùng tham gia, gắn với KPI "Từ nghiệm thu" | Kịch bản nghiệp vụ theo `BP`, lịch buổi UAT, mẫu biên bản |
 
+: Phân chia quyết định giữa D05-01 và các tài liệu kiểm thử chuyên đề
+
 ### 1.5. Thuật ngữ dùng trong tài liệu
 
 Tài liệu dùng thuật ngữ đã định nghĩa ở D00-01. Một số thuật ngữ kiểm thử dưới đây chưa có trong D00-01 và được đề xuất bổ sung (mục 20).
@@ -93,6 +130,52 @@ Tài liệu dùng thuật ngữ đã định nghĩa ở D00-01. Một số thu�
 | Cổng phát hành | Release gate | Điểm kiểm soát chất lượng mà một bản dựng phải vượt qua trước khi được đưa lên môi trường hoặc giai đoạn tiếp theo; mã `RG-n` |
 | Kiểm thử khói | Smoke test | Bộ kiểm thử ngắn kiểm tra các chức năng thiết yếu còn chạy sau khi triển khai |
 | Ca kiểm thử bất ổn | Flaky test | Ca kiểm thử cho kết quả khác nhau qua các lần chạy mà mã không đổi |
+
+: Thuật ngữ kiểm thử riêng của tài liệu
+
+Chữ viết tắt chung (BRD, SRS, SAD, DU, PH, FR, NFR, REQ, KPI, RTM) theo D00-01 §2. Các chữ viết tắt riêng của tài liệu này: `MTP` (Master Test Plan, kế hoạch kiểm thử tổng thể), `TS` và `TC` (kịch bản và ca kiểm thử), `RG` (cổng phát hành), `RSK-T` (rủi ro kiểm thử), `CX` (thí nghiệm hỗn loạn), `SIT` (kiểm thử tích hợp hệ thống), `PERF`, `STAGING`, `TEST`, `UAT` (tên môi trường), `S1…S4` (mức nghiêm trọng của lỗi).
+
+### 1.6. Người đọc và phần cần đọc
+
+Tài liệu dài và nhiều nhóm người dùng; bảng dưới đây chỉ ra mỗi nhóm cần đọc chương nào để khỏi phải đọc toàn bộ.
+
+| Người đọc | Mục đích đọc | Phần cần đọc |
+|---|---|---|
+| Hội đồng thẩm định | Đánh giá mọi yêu cầu phi chức năng đều có phương pháp kiểm chứng gắn công cụ, môi trường và cổng | Tóm tắt, chương 3, 5, 6, 17 |
+| Chủ đầu tư, quản lý dự án | Biết cổng nào chặn phát hành, lịch kiểm thử theo đợt và rủi ro hoạt động | Chương 6, 13, 14, 15, 21 |
+| Trưởng nhóm kiểm thử, kiểm thử viên | Áp dụng chiến lược, mẫu test case và quản lý lỗi hằng ngày | Chương 3 đến 5, 10, 11, 12 |
+| Lập trình viên, trưởng nhóm kỹ thuật | Biết viết kiểm thử ở mức nào, dùng dữ liệu gì, pipeline chạy gì | Chương 4, 6.1, 7 đến 9, 12 |
+| Kiến trúc sư, trưởng nhóm ATTT | Đối chiếu kiểm thử cách ly tenant, bảo mật, chịu lỗi với thiết kế | Chương 5.4 đến 5.6, 17 |
+| Vận hành | Chuẩn bị môi trường, diễn tập DR và kiểm thử sẵn sàng | Chương 5.4, 7, 14 |
+
+: Nhóm người đọc và phần cần đọc của kế hoạch kiểm thử
+
+### 1.7. Cấu trúc tài liệu
+
+Tài liệu theo trình tự của ISO/IEC/IEEE 29119-3: bối cảnh và đối tượng, chiến lược, mức và loại kiểm thử, tiêu chí và cổng, môi trường và dữ liệu, tự động hóa, quản lý lỗi và chỉ số, tổ chức và lịch, rủi ro, công cụ, truy vết. Bảng dưới đây liệt kê nội dung từng chương.
+
+| Chương | Nội dung |
+|---|---|
+| 1. Giới thiệu | Mục đích, phạm vi, căn cứ, quan hệ với các tài liệu kiểm thử khác, thuật ngữ, người đọc, cấu trúc |
+| 2. Bối cảnh kiểm thử | Đối tượng kiểm thử theo phân hệ, đơn vị triển khai, hồ sơ triển khai; trong và ngoài phạm vi |
+| 3. Chiến lược kiểm thử dựa trên rủi ro | Nguyên tắc, phương pháp chấm rủi ro, bảng rủi ro sản phẩm |
+| 4. Các mức kiểm thử | Bảy mức từ đơn vị đến chấp nhận, tháp kiểm thử |
+| 5. Các loại kiểm thử | Chức năng, hồi quy, hiệu năng, sẵn sàng và DR, bảo mật, rò rỉ chéo tenant, khả năng truy cập, di trú, strangler, thanh toán, NDXP, Camel, giao diện, tương thích |
+| 6. Tiêu chí vào, ra và cổng phát hành | Cổng PR, cổng `RG-1…5`, tiêu chí tạm dừng và tiếp tục |
+| 7. Môi trường kiểm thử | Năm môi trường và giả lập dịch vụ ngoài |
+| 8. Dữ liệu kiểm thử và che dữ liệu | Dữ liệu tổng hợp, che dữ liệu, dữ liệu canary |
+| 9. Tự động hóa và tích hợp liên tục | Kiến trúc, ngân sách pipeline, chọn ca tự động hóa, báo cáo, ca bất ổn |
+| 10. Quản lý lỗi | Mức nghiêm trọng, vòng đời, thời hạn sửa |
+| 11. Chỉ số kiểm thử và báo cáo | Chỉ số và nhịp báo cáo |
+| 12. Quy ước định danh và mẫu test case | Mã `TS`, `TC` và mẫu |
+| 13. Tổ chức, vai trò và kỹ năng | Vai trò, RACI, đào tạo |
+| 14. Lịch kiểm thử theo mốc | Lịch theo T0, wave và đợt |
+| 15. Rủi ro kiểm thử và giả định | Rủi ro của hoạt động kiểm thử, giả định |
+| 16. Công cụ | Công cụ theo nhóm |
+| 17. Ma trận truy vết NFR → kiểm thử | Từng NFR tới loại kiểm thử, công cụ, môi trường, cổng |
+| 18 đến 21 | Quan hệ với D05-02 đến D05-05, truy vết, mã đề xuất bổ sung D00-01, câu hỏi mở |
+
+: Cấu trúc các chương của tài liệu
 
 ## 2. Bối cảnh kiểm thử
 
@@ -125,6 +208,8 @@ Bảng dưới đây liệt kê 20 phân hệ cùng đợt phát hành (theo D02
 | PH-19 | Thanh toán | `dh-payment` | Đợt 2 | Rất cao | Sandbox PayGov, chữ ký callback, idempotency, đối soát, `T-MONEY` |
 | PH-20 | Quản trị tenant | `dh-platform` | **MVP** | Rất cao | Saga khởi tạo NFR-00-057, sáp nhập tenant, kiểm tra cách ly sau khởi tạo |
 
+: Hai mươi phân hệ theo đơn vị triển khai, đợt, mức rủi ro và loại kiểm thử nổi bật
+
 Ngoài 20 phân hệ, các **thành phần xuyên suốt** cũng là đối tượng kiểm thử riêng: thư viện dùng chung `libs/common-java` (bộ lọc tenant, Problem Details, `trace_id`), design system `@datahub/ui`, bộ manifest Kustomize và cấu hình Argo CD, chính sách mạng Cilium, cấu hình Istio ambient, cấu hình sao lưu và DR. Các thành phần này được kiểm thử theo cùng chiến lược nhưng không gắn mã phân hệ; test case của chúng dùng mã `PH` = `00` (ví dụ `TC-00-015`).
 
 ### 2.2. Trong phạm vi
@@ -143,6 +228,8 @@ Bảng dưới đây liệt kê những gì kế hoạch không kiểm thử, k�
 | Ba chức năng hệ cũ loại bỏ (LGC-TOOL-022, LGC-TOOL-027, LGC-IAM-007) | Chủ đầu tư đã chấp thuận loại bỏ (D00-03 §5.1) | Có ca kiểm thử âm chứng minh chức năng không tồn tại (ví dụ không nạp được JAR vào runtime) |
 | Hiệu năng và chất lượng của mô hình ngôn ngữ bên ngoài cho PH-17 | Không thuộc Datahub | Chỉ kiểm thử lớp cổng AI: giới hạn, che dữ liệu, khả năng tắt |
 | Kiểm thử chứng nhận cấp độ ATTT của cơ quan có thẩm quyền | Do đơn vị thẩm định thực hiện | D05-04 cung cấp bằng chứng đầu vào cho hồ sơ D03-08 |
+
+: Nội dung ngoài phạm vi kiểm thử, lý do và cách xử lý phần giao
 
 ## 3. Chiến lược kiểm thử dựa trên rủi ro
 
@@ -164,6 +251,8 @@ Bảng sau ánh xạ mức rủi ro sang cường độ kiểm thử tối thi�
 | Cao | Phân hoạch tương đương, giá trị biên, chuyển trạng thái | Đơn vị, tích hợp module, tích hợp hệ thống, hợp đồng, E2E luồng chính | ≥ 90% ca hồi quy tự động | Rà soát chéo trong nhóm |
 | Trung bình | Phân hoạch tương đương, giá trị biên | Đơn vị, tích hợp hệ thống, E2E luồng chính | ≥ 70% ca hồi quy tự động | Tự rà soát theo bảng kiểm |
 | Thấp | Phân hoạch tương đương | Đơn vị, tích hợp hệ thống | Tùy chọn | Tự rà soát |
+
+: Cường độ kiểm thử tối thiểu theo mức rủi ro
 
 ### 3.3. Bảng rủi ro sản phẩm
 
@@ -193,9 +282,11 @@ Bảng dưới đây là danh sách rủi ro sản phẩm ban đầu, mã `RSK-T
 | RSK-T20 | Trợ lý AI tiết lộ dữ liệu ngoài quyền người hỏi hoặc dữ liệu tenant khác | REQ-17 | 3 | 2 | 6 | Kiểm thử chống tiêm lời nhắc (prompt injection), kiểm thử rò rỉ chéo tenant trên kho vector |
 | RSK-T21 | Hạn mức tenant không chặn được tenant "hàng xóm ồn ào" | D03-10 §5.3; NFR-00-060 | 2 | 2 | 4 | Kiểm thử tải nhiều tenant: một tenant vượt hạn mức, đo ảnh hưởng tới tenant khác |
 
+: Danh sách rủi ro sản phẩm RSK-T01 đến RSK-T21 và đáp ứng kiểm thử
+
 Sơ đồ dưới đây xếp các rủi ro trên vào ma trận ảnh hưởng – khả năng, để thấy vùng tập trung công sức kiểm thử.
 
-```mermaid
+```{.mermaid caption="Ma trận rủi ro sản phẩm theo ảnh hưởng và khả năng"}
 quadrantChart
   title Ma trận rủi ro sản phẩm RSK-T
   x-axis Khả năng thấp --> Khả năng cao
@@ -226,7 +317,7 @@ Ma trận cho thấy năm rủi ro điểm 9 (cách ly tenant, bảo mật API, 
 
 Datahub dùng bảy mức kiểm thử. Bốn mức dưới (đơn vị, tích hợp module, tích hợp hệ thống, hợp đồng) do đội phát triển viết và chạy trong pipeline của mỗi PR; ba mức trên (đầu–cuối, hệ thống, chấp nhận) do đội kiểm thử dẫn dắt và chạy trên môi trường dùng chung. Sơ đồ dưới đây thể hiện tháp kiểm thử cùng tỷ lệ số lượng ca mục tiêu và thời gian chạy điển hình mỗi ca.
 
-```mermaid
+```{.mermaid caption="Tổng quan và tháp kiểm thử"}
 flowchart TB
   UAT["Chấp nhận UAT<br/>thủ công có kịch bản · theo đợt"]
   SYS["Hệ thống · phi chức năng<br/>k6, chaos, ZAP, DR · định kỳ trên PERF/STAGING"]
@@ -358,6 +449,8 @@ Bảng tóm tắt dưới đây gom các mức kiểm thử để tra nhanh khi 
 | Hệ thống | Đội kiểm thử, vận hành, đơn vị độc lập | Đội kiểm thử | Mỗi bản ứng viên phát hành | STAGING, PERF | Toàn bộ mục 16 | `RG-3` |
 | Chấp nhận | Đội kiểm thử chuẩn bị | Người dùng, chủ đầu tư | Mỗi đợt | UAT | Kịch bản D05-05, bảng hỏi SUS | `RG-4` |
 
+: Bảy mức kiểm thử theo người viết, người chạy, thời điểm, môi trường và công cụ
+
 ## 5. Các loại kiểm thử
 
 Mục này mô tả từng loại kiểm thử: nó kiểm chứng yêu cầu nào, làm thế nào, đạt khi nào. Loại kiểm thử nào có tài liệu chuyên đề thì mục này chỉ chốt phạm vi, chỉ tiêu và công cụ.
@@ -401,6 +494,8 @@ Bảng dưới đây hiện thực hóa phương pháp đo ở SRS cho từng NF
 | NFR-00-062 | Sinh 5 triệu bản ghi siêu dữ liệu/ngày × 365 ngày cho 1 tenant (dữ liệu tổng hợp); chạy truy vấn báo cáo chuẩn của PH-13 | Thời gian truy vấn, dung lượng | Truy vấn trả kết quả; ngưỡng thời gian chốt ở D05-03 |
 | RSK-T21 | Một tenant phát gấp 3 hạn mức 500 lượt/giây, tenant khác ở tải danh định | Độ trễ và lỗi của tenant khác | Tenant khác vẫn đạt NFR-00-001; tenant vượt nhận `429` |
 
+: Kịch bản, điểm đo và điều kiện đạt của từng NFR hiệu năng
+
 > **Câu hỏi mở Q361:** NFR-00-062 chưa có chỉ tiêu thời gian truy vấn trên tập 12 tháng (khoảng 1,8 tỷ bản ghi mỗi tenant). Đề nghị bổ sung vào SRS (ví dụ truy vấn tổng hợp theo ngày cho một API trong 30 ngày ≤ 5 giây) để D05-03 có điều kiện đạt.
 
 Chạy hiệu năng trên môi trường PERF có cấu hình bằng hồ sơ "tỉnh vừa" ở D03-09. Mỗi lần chạy ghi lại phiên bản phần mềm, cấu hình tài nguyên, kết quả và so sánh với đường cơ sở (baseline) lần trước; suy giảm quá 10% ở chỉ số p95 bất kỳ là lỗi mức S2 dù chưa vượt chỉ tiêu. Một kịch bản tải rút gọn (5 phút, 100 lượt/giây) chạy hằng đêm trên TEST để phát hiện suy giảm sớm.
@@ -425,6 +520,8 @@ Kiểm thử hỗn loạn dùng **Chaos Mesh** (lựa chọn mặc định vì c
 | CX-06 Trễ và mất gói tới đích ngoài | REQ-14, REQ-19 | `NetworkChaos` trễ 2 giây, mất 30% gói tới giả lập NDXP và PayGov | Circuit breaker mở, lỗi trả nhanh với mã `ERR` đúng, bản tin vào DLQ đúng chính sách, không cạn luồng xử lý |
 | CX-07 OpenBao không truy cập được | ADR-012 | Chặn mạng tới OpenBao 30 phút | DU đang chạy tiếp tục phục vụ với bí mật đã nạp; cảnh báo phát trong ≤ 5 phút (KPI-15) |
 | CX-08 Lệch đồng hồ | FR-00-042, chữ ký callback | `TimeChaos` lệch 10 phút trên một pod | Chữ ký callback quá cửa sổ thời gian bị từ chối; chuỗi băm kiểm toán không bị phá |
+
+: Tám thí nghiệm hỗn loạn CX-01 đến CX-08
 
 #### 5.4.3. Kiểm thử phục hồi ở mức thành phần
 
@@ -453,6 +550,8 @@ Kiểm thử bảo mật được chia thành các lớp chạy ở tần suất
 | Kiểm thử xâm nhập | Đơn vị độc lập với đội phát triển, hộp xám, theo OWASP WSTG và API Security Top 10 2023, gồm kịch bản leo thang liên tenant | Trước vận hành chính thức mỗi đợt; định kỳ ít nhất hằng năm và khi thay đổi lớn (Q360) | 0 phát hiện Critical/High còn mở khi phát hành | Mọi nhóm |
 | Kiểm tra bổ sung cấp độ 4 | Chỉ khi tenant hoặc hồ sơ nâng cấp | Theo D05-04 | Theo D03-07 | SEC-90–99 |
 
+: Các lớp kiểm thử bảo mật theo công cụ, thời điểm và ngưỡng chặn
+
 Các kiểm thử bảo mật tự động đều xuất kết quả ở định dạng SARIF về một nơi tập trung (DefectDojo hoặc trang bảo mật của nền tảng Git) để theo dõi ngoại lệ, hạn xử lý và xu hướng. Ngoại lệ (chấp nhận rủi ro tạm thời) phải có người duyệt là trưởng nhóm ATTT, hạn hết hiệu lực tối đa 90 ngày và lý do.
 
 > **Câu hỏi mở Q362:** Cần xác định đơn vị kiểm thử xâm nhập độc lập (đơn vị chuyên trách an ninh mạng của tỉnh, doanh nghiệp được cấp phép, hay đơn vị do Bộ Công an chỉ định cho hồ sơ cấp độ) và yêu cầu năng lực, giấy phép của đơn vị đó theo NĐ 331/2026.
@@ -474,6 +573,8 @@ Luật kỳ vọng của bộ kiểm thử được chốt như bảng dưới �
 | Tạo trùng mã nghiệp vụ `T-CODE` đã có ở A | Thành công (mã nghiệp vụ duy nhất trong phạm vi tenant); nếu bị từ chối với "đã tồn tại" thì là rò rỉ |
 | Gửi `tenant_id` của A trong thân hoặc header `X-DH-Tenant` từ ngoài | Bị bỏ qua hoặc `ERR-00-003` (FR-00-010); bản ghi được tạo thuộc B |
 | Thời gian phản hồi của định danh tồn tại ở A so với định danh ngẫu nhiên | Không phân biệt được về thống kê (kiểm tra kênh phụ ở D05-04, không chặn PR) |
+
+: Kỳ vọng khi tenant B thao tác lên tài nguyên của tenant A
 
 #### 5.6.2. Bộ kiểm thử tự động sinh theo mọi endpoint
 
@@ -507,6 +608,8 @@ Rò rỉ không chỉ qua REST. Bảng dưới đây liệt kê các kiểm th�
 | Trợ lý AI | Truy vấn ngữ nghĩa của `T91` không trả đoạn văn bản nhúng của `T90`; lời nhắc tiêm yêu cầu dữ liệu tenant khác bị từ chối | Tích hợp hệ thống |
 | Sáp nhập tenant | Sau sáp nhập `T90` vào `T92`, `T91` vẫn không thấy dữ liệu nào; dữ liệu có `origin_tenant_id` đúng | Hệ thống |
 
+: Ca kiểm thử cách ly ở các tầng ngoài API
+
 Saga khởi tạo tenant (D03-10 §5.2) chạy chính bộ kiểm thử cách ly ở bước 9 (kiểm tra khói) dưới dạng rút gọn, để một tenant mới không bao giờ được chuyển `ACTIVE` khi ACL hay chính sách thiếu.
 
 ### 5.7. Kiểm thử khả năng truy cập (WCAG 2.2 AA)
@@ -535,8 +638,8 @@ Di trú (FR-00-090…093) có rủi ro điểm 9 (RSK-T09) và được kiểm t
 
 Trong giai đoạn chuyển đổi (BP-09, REQ-22), mỗi API hoặc luồng được chuyển từ hệ cũ sang Datahub qua ba bước, mỗi bước có kiểm thử riêng.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Kiểm thử song song strangler (so sánh hệ cũ – hệ mới)"}
+flowchart TB
   HT[HTTT gọi] --> GWO[Gateway cũ / điểm chia lưu lượng]
   GWO -->|100% phản hồi thật| OLD[Hệ LGSP cũ]
   GWO -.->|bản sao bất đồng bộ| SH[Bộ nhân bản lưu lượng]
@@ -602,12 +705,14 @@ Ba loại kiểm thử sau có phạm vi nhỏ nhưng bắt buộc. **Kiểm th�
 | Gate D | axe-core trên màn bị đổi | Cảnh báo trước `RG-2`; chặn từ `RG-2` |
 | Gate S | gitleaks, Semgrep, Trivy (thư viện, IaC, ảnh) | Có với phát hiện vượt ngưỡng mục 5.5 |
 
+: Nội dung kiểm thử bắt buộc của từng cổng CI ở mức PR
+
 ### 6.2. Cổng phát hành RG-1 … RG-5
 
 Cổng phát hành là điểm kiểm soát mà một bản dựng phải vượt qua trước khi lên môi trường hoặc giai đoạn tiếp theo. Mã `RG-{n}` được đề xuất mới (mục 20). Các cổng này là cổng kỹ thuật của kiểm thử; chúng là đầu vào cho cổng quản lý dự án (G1, G2… ở D01-02), không thay thế cổng quản lý.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Chuỗi cổng phát hành RG-1 … RG-5"}
+flowchart TB
   PR[PR<br/>Gate A B C D S] --> RG1[RG-1<br/>Vào TEST]
   RG1 --> RG2[RG-2<br/>Ứng viên phát hành<br/>vào STAGING, PERF]
   RG2 --> RG3[RG-3<br/>Kết thúc kiểm thử hệ thống<br/>vào UAT]
@@ -627,6 +732,8 @@ Bảng dưới đây chốt tiêu chí vào, tiêu chí ra và người quyết 
 | RG-4 Nghiệm thu, vận hành | RG-3 đạt; UAT hoàn tất theo D05-05; diễn tập DR gần nhất đạt; 14 ngày đo sẵn sàng trên STAGING đạt | Biên bản UAT ký; 0 lỗi S1, S2 mở; lỗi S3 còn mở có kế hoạch sửa được chủ đầu tư chấp nhận; các KPI "Từ nghiệm thu" đạt (KPI-03, 04, 07, 09, 12, 15, 16, 17); KPI-18 SUS ≥ 75; hồ sơ cấp độ có bằng chứng kiểm thử (D03-08); kế hoạch quay lui đã diễn tập | Chủ đầu tư |
 | RG-5 Cắt chuyển khối hệ cũ | RG-4 của đợt chứa phân hệ thay thế đạt; di trú đã diễn tập ≥ 2 lần | Báo cáo đối chiếu di trú 100% khớp hoặc sai khác được chấp nhận; chạy bóng đạt điều kiện mục 5.9; chuyển dần 100% giữ đủ thời gian quan sát không có sự cố S1; đơn vị vận hành xác nhận | Chủ đầu tư, đơn vị vận hành tỉnh |
 
+: Tiêu chí vào, tiêu chí ra và người quyết định của từng cổng phát hành
+
 ### 6.3. Tiêu chí tạm dừng và tiếp tục
 
 Kiểm thử ở một mức hoặc trên một môi trường được tạm dừng khi xảy ra một trong các điều kiện: kiểm thử khói thất bại sau triển khai; có lỗi S1 chặn trên 30% số ca của đợt chạy; môi trường không ổn định khiến trên 10% số ca thất bại vì nguyên nhân hạ tầng; phát hiện dữ liệu cá nhân thật trên môi trường kiểm thử (dừng ngay, xử lý theo mục 8.3). Kiểm thử tiếp tục khi nguyên nhân đã được khắc phục, kiểm thử khói đạt lại và trưởng nhóm kiểm thử xác nhận; các ca đã chạy trên bản dựng lỗi được chạy lại.
@@ -644,6 +751,8 @@ Datahub dùng năm môi trường phi sản xuất. Bảng dưới đây mô t�
 | STAGING | Ứng viên phát hành, kiểm thử hệ thống, chaos, DR, kiểm thử xâm nhập; giống sản xuất | Như hồ sơ sản xuất về số bản sao, chính sách mạng, TLS, WAF; hai site cho diễn tập DR | Tổng hợp quy mô trung bình | Có duyệt, theo `RG-2` | Sandbox PayGov, môi trường thử NDXP (nếu có), còn lại giả lập |
 | PERF | Kiểm thử hiệu năng, bền, chịu tải | Đúng hồ sơ "tỉnh vừa" của D03-09; nút sinh tải k6 tách riêng cụm để không tranh tài nguyên | Tổng hợp khối lượng lớn (1 triệu bản ghi màn danh sách, 2.000 API, 500 luồng, 34 tenant) | Có duyệt, theo lịch | Giả lập có độ trễ cấu hình được |
 | UAT | Kiểm thử chấp nhận, diễn tập di trú, đào tạo | Như STAGING một site | Tổng hợp có hình dạng tỉnh thí điểm; bản trích hệ cũ đã che khi được phép | Có duyệt, theo `RG-3` | Sandbox PayGov, môi trường thử NDXP, HTTT giả lập và HTTT thử của sở nếu có |
+
+: Năm môi trường kiểm thử theo mục đích, cấu hình, dữ liệu và cách triển khai
 
 PERF và STAGING có thể dùng chung cụm vật lý luân phiên theo lịch để tiết kiệm tài nguyên, với điều kiện khi chạy hiệu năng không có hoạt động nào khác trên cụm. Việc mỗi môi trường đặt ở TTDL tỉnh thí điểm hay ở hạ tầng của nhà thầu phụ thuộc thỏa thuận (Q366).
 
@@ -664,6 +773,8 @@ Bảng dưới đây liệt kê các dịch vụ ngoài được giả lập, c�
 | Máy chủ thư, SMS | Mailpit, WireMock | — | Kiểm tra nội dung thư không chứa dữ liệu Hạn chế (FR-00-062) |
 | LDAP/AD | OpenLDAP container | — | Cho PH-12 |
 | SIEM tỉnh | Bộ nhận Syslog/OTLP giả lập | RFC 5424, OTLP | IF-08 |
+
+: Công cụ và nguồn đặc tả để giả lập từng dịch vụ ngoài
 
 ## 8. Dữ liệu kiểm thử và che dữ liệu
 
@@ -705,6 +816,8 @@ Bảng dưới đây đặt ngân sách thời gian để vòng phản hồi đ�
 | Hằng đêm | E2E đầy đủ ba trình duyệt, visual regression, đột biến PIT, ZAP, tải rút gọn, quét canary, hợp đồng thật NDXP/PayGov | ≤ 4 giờ |
 | Hằng tuần | Bền 8 giờ trên PERF, chaos CX-01 rút gọn, CX-03, CX-05, kube-bench | Theo lịch |
 
+: Ngân sách thời gian p90 của từng giai đoạn pipeline
+
 ### 9.3. Tiêu chí chọn ca để tự động hóa
 
 Một ca kiểm thử được tự động hóa khi nó chạy lặp lại ở mỗi bản dựng, có kết quả mong đợi xác định được bằng máy, và chi phí bảo trì thấp hơn chi phí chạy tay qua vòng đời. Ca thuộc phân hệ rủi ro Rất cao được tự động hóa toàn bộ phần hồi quy (mục 3.2). Ca không tự động hóa: kiểm thử khám phá, kiểm tra trình đọc màn hình, đánh giá trải nghiệm, UAT, kiểm thử xâm nhập thủ công.
@@ -730,9 +843,13 @@ Mỗi lỗi có hai thuộc tính độc lập. **Mức nghiêm trọng** (S1–
 | S3 Trung bình | Chức năng sai ở trường hợp ít gặp, có cách làm thay dễ; lỗi giao diện ảnh hưởng hiểu nội dung | Lọc khoảng thời gian sai biên múi giờ; thông báo lỗi thiếu hướng dẫn khắc phục |
 | S4 Thấp | Thẩm mỹ, chính tả, không ảnh hưởng chức năng | Lệch căn lề, sai chính tả |
 
+: Định nghĩa mức nghiêm trọng của lỗi S1 đến S4 kèm ví dụ
+
 ### 10.2. Vòng đời lỗi
 
-```mermaid
+Mỗi lỗi đi qua một vòng đời có trạng thái và điều kiện chuyển rõ ràng, để không lỗi nào bị bỏ quên hoặc đóng khi chưa kiểm thử lại. Sơ đồ dưới đây mô tả các trạng thái và điều kiện chuyển.
+
+```{.mermaid caption="Vòng đời lỗi"}
 stateDiagram-v2
   [*] --> MOI: Ghi nhận
   MOI --> DA_PHAN_LOAI: Phân loại S/P, gán chủ sở hữu
@@ -761,6 +878,8 @@ Bảng dưới đây đặt thời hạn phản hồi và sửa trong giai đo�
 | S3 | 3 ngày | Trong sprint kế tiếp | Trong sprint |
 | S4 | 5 ngày | Theo ưu tiên backlog | — |
 
+: Thời hạn phân loại, sửa và kiểm thử lại theo mức nghiêm trọng
+
 ## 11. Chỉ số kiểm thử và báo cáo
 
 ### 11.1. Chỉ số
@@ -781,6 +900,8 @@ Các chỉ số dưới đây được đo tự động từ CI, công cụ qu�
 | Tỷ lệ ca bất ổn | Ca bất ổn / tổng ca tự động | < 1% |
 | Thời gian pipeline | p90 mỗi giai đoạn | Trong ngân sách mục 9.2 |
 | Hình dạng tháp | Tỷ lệ số ca theo mức | E2E ≤ 10% |
+
+: Chỉ số kiểm thử, cách tính và mục tiêu
 
 ### 11.2. Báo cáo
 
@@ -815,6 +936,8 @@ Bảng dưới đây là mẫu bắt buộc cho mỗi test case trong D05-02. V�
 | Tự động hóa | Có / Không; đường dẫn mã kiểm thử |
 | Môi trường | DEV / TEST / STAGING / PERF / UAT |
 
+: Các trường của mẫu test case
+
 Ví dụ một cặp test case cho FR-00-032 (nhập tệp tất cả hoặc không): `TC-07-021` (dương) — nhập tệp 1.000 dòng hợp lệ, kỳ vọng 1.000 bản ghi được tạo, một sự kiện `t90.rdm.catalog.items-imported.v1`, một bản ghi kiểm toán; `TC-07-022` (âm) — nhập tệp 1.000 dòng trong đó dòng 517 có ngày `31/02/2026`, kỳ vọng bước xem trước báo lỗi đúng dòng 517 cột "Ngày hiệu lực", sau khi xác nhận không dòng nào được ghi.
 
 ## 13. Tổ chức, vai trò và kỹ năng
@@ -836,6 +959,8 @@ Bảng dưới đây mô tả các vai trò tham gia kiểm thử. Một ngườ
 | Đơn vị kiểm thử bảo mật độc lập | Kiểm thử xâm nhập (Q362) |
 | Người dùng nghiệp vụ của tỉnh | Thực hiện UAT |
 | Chủ đầu tư | Duyệt hoãn lỗi, quyết định `RG-4`, `RG-5` |
+
+: Vai trò trong hoạt động kiểm thử và trách nhiệm chính
 
 ### 13.2. Ma trận RACI
 
@@ -859,6 +984,8 @@ Ma trận dưới đây phân công theo hoạt động: R thực hiện, A ch�
 | Quyết định cổng RG-3 | A | I | I | C | R | I | R | C | I |
 | Quyết định cổng RG-4, RG-5 | R | I | I | I | C | I | C | C | A |
 
+: Ma trận RACI của các hoạt động kiểm thử
+
 ### 13.3. Kỹ năng và đào tạo
 
 Kế hoạch đòi hỏi các kỹ năng chưa phổ biến ở đội kiểm thử truyền thống. Bảng dưới đây ghi kỹ năng cần, đối tượng và hình thức đào tạo, thực hiện trong hai tháng đầu (T0 + 0 … T0 + 2) trước khi bước vào kiểm thử hệ thống MVP.
@@ -874,6 +1001,8 @@ Kế hoạch đòi hỏi các kỹ năng chưa phổ biến ở đội kiểm th
 | Kiểm thử bảo mật API, OWASP ASVS 5.0, ZAP | Kiểm thử viên, lập trình viên | Khóa 2 ngày |
 | Cách ly đa tenant và bộ rò rỉ chéo tenant | Toàn đội | Buổi giới thiệu bắt buộc khi gia nhập dự án |
 | Nghiệp vụ LGSP, thanh toán, danh mục | Kiểm thử viên | Tự học tài liệu hệ cũ, buổi trao đổi với cán bộ vận hành hệ cũ |
+
+: Kỹ năng cần có, đối tượng và hình thức đào tạo
 
 ## 14. Lịch kiểm thử theo mốc
 
@@ -896,6 +1025,8 @@ Lịch dùng mốc T0 (khởi động dự án) cộng số tháng, không gắn
 | Hằng quý từ T0 + 6 | Mọi giai đoạn | Diễn tập DR (NFR-00-014) | — |
 | Hằng năm và khi thay đổi lớn | Sau vận hành | Kiểm thử xâm nhập định kỳ, rà soát ASVS | — |
 
+: Lịch kiểm thử theo mốc T0, wave, đợt và cổng
+
 ## 15. Rủi ro kiểm thử và giả định
 
 ### 15.1. Rủi ro của hoạt động kiểm thử
@@ -912,6 +1043,8 @@ Khác với rủi ro sản phẩm ở mục 3, các rủi ro dưới đây đe d
 | RSK-T35 | Không có dữ liệu "bẩn" thật của hệ cũ cho di trú | Lỗi di trú lộ ra khi cắt chuyển | Dữ liệu tổng hợp mô phỏng lỗi đã biết; xin bản trích đã che (Q367); diễn tập ≥ 2 lần |
 | RSK-T36 | Người dùng UAT không đủ thời gian tham gia | UAT kéo dài, KPI-18 không đo được | Lịch UAT thống nhất từ đầu đợt; UAT theo buổi ngắn có hướng dẫn |
 | RSK-T37 | Tính năng mô phỏng (stub) trong repo bị tính nhầm là đã đạt | Nghiệm thu sai | Quy tắc mục 5.12: chỉ đạt khi chạy thật; kiểm thử phát hiện stub trên STAGING (cấm profile `dev`) |
+
+: Rủi ro RSK-T30 đến RSK-T37 của hoạt động kiểm thử và biện pháp
 
 ### 15.2. Giả định
 
@@ -938,6 +1071,8 @@ Bảng dưới đây chốt bộ công cụ kiểm thử. Phiên bản cụ th�
 | Dữ liệu | Datafaker (`dh-testdata`), công cụ che dữ liệu, bộ quét canary | Dữ liệu tổng hợp, che, phát hiện rò rỉ |
 | Báo cáo | JUnit XML, SARIF, Allure Report hoặc ReportPortal, Grafana | Tổng hợp kết quả, chỉ số |
 | Quản lý | Công cụ quản lý lỗi và test case của nền tảng Git dự án (issue, nhãn) hoặc công cụ quản lý kiểm thử tương đương | Vòng đời lỗi, liên kết TC–FR |
+
+: Công cụ kiểm thử theo nhóm và mục đích dùng
 
 ## 17. Ma trận truy vết NFR → kiểm thử
 
@@ -987,6 +1122,8 @@ Ma trận dưới đây là cam kết của kế hoạch với hội đồng th�
 | NFR-00-061 | Gấp đôi tài nguyên ≥ 1,8 lần thông lượng | Tải so sánh | k6 | PERF | RG-3 | 5.3 |
 | NFR-00-062 | 5 triệu bản ghi/ngày/tenant, 12 tháng | Dung lượng | Bộ sinh dữ liệu, truy vấn | PERF | RG-3 | 5.3 |
 
+: Truy vết từng NFR tới loại kiểm thử, công cụ, môi trường và cổng
+
 Các yêu cầu chức năng dùng chung có kiểm thử chuyên đề cũng được truy vết như sau: FR-00-010, 011, 012 → mục 5.6, cổng PR và mọi `RG`; FR-00-040…043 → mục 4.4 và RSK-T14; FR-00-090…093 → mục 5.8, cổng `RG-5`; FR-00-003 → mục 5.1 (đồng hồ giả lập).
 
 ## 18. Quan hệ với D05-02, D05-03, D05-04, D05-05
@@ -1025,6 +1162,8 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định và rủi ro nguồn 
 | LGC-NFR-002, 006, 010 | Mục 5.3, 5.4, 5.14 |
 | Dải SEC-01…99 (D03-07) | Mục 5.5 |
 
+: Truy vết nguồn yêu cầu và tài liệu tới mục đáp ứng
+
 ## 20. Mã và thuật ngữ mới đề xuất bổ sung D00-01
 
 Tài liệu đề xuất bổ sung vào D00-01 các mã và thuật ngữ sau; luồng lõi gộp vào D00-01 theo §9.3.
@@ -1038,6 +1177,8 @@ Tài liệu đề xuất bổ sung vào D00-01 các mã và thuật ngữ sau; l
 | Quy ước | Tenant kiểm thử dùng dải `T90`–`T99`; tenant tạm theo lần chạy | D05-01 §8.2 |
 | Quy ước | Mã `PH` = `00` cho test case của thành phần xuyên suốt (`TS-00-nn`, `TC-00-nnn`) | D05-01 §2.1 |
 | Thuật ngữ | Mức kiểm thử, loại kiểm thử, tháp kiểm thử, kiểm thử hợp đồng, kiểm thử rò rỉ chéo tenant, kiểm thử hỗn loạn, lưu lượng bóng, visual regression, cổng phát hành, kiểm thử khói, ca kiểm thử bất ổn, giá trị canary | D05-01 §1.5, §8.4 |
+
+: Mã, quy ước và thuật ngữ mới đề xuất bổ sung D00-01
 
 ## 21. Câu hỏi mở
 
@@ -1060,3 +1201,10 @@ Tài liệu đề xuất bổ sung vào D00-01 các mã và thuật ngữ sau; l
 > **Câu hỏi mở Q368:** Lịch ở mục 14 là giả định của đội kiểm thử theo wave W0–W6 và ba đợt BRD; cần đồng bộ với kế hoạch dự án D01-02 và quan hệ giữa cổng `RG-n` với cổng quản lý G1, G2… khi D01-02 được phát hành.
 
 > **Câu hỏi mở Q369:** Cần chủ đầu tư xác nhận danh sách 10 luồng chính kiểm tra bằng NVDA (NFR-00-040) đề xuất ở mục 5.7, và khả năng mời người dùng khiếm thị tham gia đánh giá trong UAT.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: bối cảnh, chiến lược theo rủi ro, mức và loại kiểm thử, cổng phát hành RG-1 đến RG-5, môi trường, dữ liệu, tự động hóa, quản lý lỗi, chỉ số, tổ chức, lịch, công cụ, ma trận truy vết NFR |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung metadata `mo_ta` và `tai_lieu_lien_quan`; gộp mục 1.3 thành Căn cứ và tài liệu tham chiếu; thêm mục 1.6 Người đọc và phần cần đọc, mục 1.7 Cấu trúc tài liệu, đoạn chữ viết tắt ở mục 1.5; thêm đoạn mở cho mục 10.2; chuyển hai sơ đồ Mermaid (cổng phát hành, strangler) sang `flowchart TB`; viết lại 31 chú thích bảng và ba chú thích hình để cụ thể và không trùng |

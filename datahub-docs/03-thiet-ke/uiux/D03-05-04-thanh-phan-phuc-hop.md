@@ -1,14 +1,43 @@
 ---
 ma_tai_lieu: D03-05-04
 ten: Thành phần phức hợp và tổ chức
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
-nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
+nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã, Hội đồng thẩm định
 nguoi_lap: Luồng giao diện
+mo_ta: Đặc tả 75 thành phần phức hợp và tổ chức của gói giao diện dùng chung gồm biểu mẫu, điều hướng, phản hồi, lớp nổi, bảng dữ liệu, quy trình, canvas thiết kế và khung ứng dụng, làm nguồn lắp mọi mẫu màn hình của các phân hệ.
+tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D03-05-02 Design token; D03-05-03 Thành phần nguyên tử; D03-06-00 IA, layout, mẫu màn hình; D00-01 Thuật ngữ và quy ước; D02-02 SRS; ADR-020
 ---
 
 # D03-05-04 · Thành phần phức hợp và tổ chức
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Các phân hệ của Datahub có hàng trăm màn hình nhưng cùng một cách danh sách, lọc, xuất, xác nhận, xử lý xung đột, xem lịch sử, duyệt, thông báo và báo lỗi. Tài liệu đặc tả 75 thành phần phức hợp và tổ chức của gói `@datahub/ui` để mỗi hành vi dùng chung của FR-00 được hiện thực đúng một lần và mọi phân hệ kế thừa, thay vì mỗi nơi tự làm một kiểu.
+
+**Phạm vi.** Tài liệu gồm quy tắc chung về vật liệu, trạng thái dữ liệu, quyền, lỗi và nội dung tiếng Việt (chương 2), mười một nhóm thành phần từ biểu mẫu, điều hướng, phản hồi, lớp nổi, bảng dữ liệu, mã và so sánh, quy trình, canvas thiết kế, khung ứng dụng đến dữ liệu chuyên dụng (chương 3 đến 13), và bảng tổng hợp, checklist nghiệm thu, truy vết (chương 14). Thành phần nguyên tử ở D03-05-03; vật liệu và token ở D03-05-01, D03-05-02.
+
+**Căn cứ.** NFR-00-040 đến NFR-00-045 (WCAG 2.2 AA, bàn phím, tương phản, 100% màn hình dùng `@datahub/ui`), NFR-00-005 (hiệu năng giao diện), FR-00-003 (hết phiên), FR-00-020 đến FR-00-023 (tìm kiếm, lọc), FR-00-050 đến FR-00-052 (xác nhận, xóa mềm, xung đột), FR-00-060 đến FR-00-062 (thông báo), FR-00-070 đến FR-00-072 (duyệt), FR-00-080, FR-00-081 (lỗi) và ADR-020 (Liquid Glass). Về pháp lý, `CMP-AuditTrail` và `CMP-ReasonDialog` phục vụ yêu cầu nhật ký, truy vết của CMP-LAW-06 và CMP-LAW-08; thành phần dữ liệu cá nhân dùng nguyên tử che của D03-05-03 theo CMP-LAW-05.
+
+**Những điểm hội đồng cần lưu ý.** (1) Vật liệu glass chỉ dùng cho lớp điều hướng và lớp nổi, nội dung dày (bảng, biểu mẫu, mã, biểu đồ, canvas) luôn trên nền đặc để giữ tương phản WCAG; không có glass chồng glass ngoài ngoại lệ đã nêu và không quá bốn lớp `backdrop-filter` đồng thời. (2) Mọi thành phần nhận dữ liệu hiển thị cùng một bộ trạng thái (tải lần đầu, làm mới, rỗng, không có kết quả, lỗi, không có quyền) và nhận lỗi theo một hợp đồng `DhApiError`. (3) Hành động hiển thị theo `allowedActions` và `disabledReasons` do máy chủ trả về, giao diện không tự suy ra quyền. (4) Khóa truy vấn luôn bắt đầu bằng mã tenant, đổi tenant không để lại dữ liệu cũ. (5) Mọi thao tác kéo thả có phương án bàn phím (WCAG 2.5.7). (6) Hiệu năng là điều kiện nghiệm thu: `CMP-DataTable` 10.000 dòng, `CMP-EditableTable` 50.000 × 30, `CMP-FlowCanvas` 300 nút, `CMP-LogViewer` 1 triệu dòng đạt 60 khung hình mỗi giây.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Thành phần phức hợp và tổ chức | 75 (77 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`) |
+| Quy mô design system | 121 thành phần (75 phức hợp, 44 nguyên tử, 2 nền tảng) |
+| Nhóm thành phần | 11 (chương 3 đến 13) |
+| Thành phần trọng điểm có tiểu mục hành vi chi tiết | 17 |
+| Trạng thái dữ liệu dùng chung | 6 |
+| Loại bề mặt vật liệu | 5 (`glass-chrome`, `glass-chrome-scrolled`, `glass-modal`, `glass-overlay`, nền đặc) |
+| Số lớp `backdrop-filter` tối đa đồng thời | 4 |
+| Ngưỡng hiệu năng | 60 khung hình mỗi giây ở 10.000 dòng bảng, 300 nút canvas, 1 triệu dòng log |
+
+: Con số chính của tài liệu thành phần phức hợp và tổ chức
+
+Các con số trên lấy từ chương 1, 2, 11 và 14 của tài liệu này.
 
 ## 1. Mục đích, phạm vi và cách đọc
 
@@ -35,6 +64,87 @@ Bảng dưới đây liệt kê các nhóm thành phần và mục tương ứng
 | 13 | Dữ liệu chuyên dụng | `CMP-EditableTable`, `CMP-KeyValueEditor`, `CMP-DynamicForm`, `CMP-SchemaTree`, `CMP-TreeGrid`, `CMP-DiffTable`, `CMP-VersionTimeline`, `CMP-DependencyGraph`, `CMP-CommentThread`, `CMP-DecisionPanel`, `CMP-EnvCard`, `CMP-EmbeddedDashboard`, `CMP-Wizard` |
 | 14 | Tổng hợp | Bảng tổng hợp, tên gọi khác, checklist nghiệm thu, truy vết, đề xuất |
 
+: Nhóm thành phần của tài liệu và mục tương ứng
+
+### 1.1. Mục đích
+
+Phần này nêu lý do tài liệu tồn tại và điều người dùng tài liệu có thể làm sau khi đọc.
+
+Tài liệu là nguồn chuẩn duy nhất cho thành phần phức hợp và tổ chức của design system. Kỹ sư và AI agent sinh mã hiện thực từng thành phần theo đặc tả mà không phải suy diễn; nhà thiết kế dựng mẫu màn hình chỉ từ các thành phần này; kiểm thử viên lấy danh sách story và checklist ở chương 14 làm chuẩn nghiệm thu; hội đồng thẩm định dùng tài liệu để đánh giá mức thống nhất và mức bảo đảm truy cập của giao diện toàn hệ thống.
+
+### 1.2. Phạm vi
+
+Bảng dưới chỉ ra tài liệu này gồm những gì và phần nào thuộc tài liệu khác.
+
+| Thuộc tài liệu này | Nằm ở tài liệu khác |
+|---|---|
+| 75 thành phần phức hợp và tổ chức, quy tắc chung chương 2 | 44 thành phần nguyên tử: D03-05-03 |
+| Thành phần nào dùng vật liệu nào ở phần con nào | Định nghĩa vật liệu, lớp `.dh-glass--*`, chế độ `full`, `lite`, `off`, `CMP-GlassSurface`: D03-05-01 |
+| Tên token từng thành phần dùng | Giá trị và hợp đồng token: D03-05-02 |
+| Thành phần dùng chung của mẫu màn hình | Mẫu PTN-01…14, bố cục, IA: D03-06-00 |
+
+: Phạm vi của tài liệu thành phần phức hợp và tổ chức so với tài liệu liên quan
+
+### 1.3. Người đọc
+
+Mỗi nhóm người đọc cần một phần khác nhau của tài liệu.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Kỹ sư giao diện | Chương 2, rồi thành phần cần dùng ở chương 3 đến 13, đặc biệt giao diện props, ví dụ TSX và Điều cấm |
+| Nhà thiết kế | Chương 2 (vật liệu), bảng giải phẫu, biến thể và kích thước của từng thành phần, chương 11 và 12 cho canvas và khung ứng dụng |
+| Kiểm thử viên | Mục Trạng thái và Bàn phím, ARIA của từng thành phần, mục 14.3 |
+| AI agent sinh mã | Toàn bộ, ưu tiên mục 2.6, bảng đặc tả, 14.1 và 14.2 |
+| Hội đồng thẩm định | Tóm tắt ở đầu tài liệu, mục 2.1 đến 2.4, 7.3, 7.4, 10.2, 10.4, 14.3 và 14.4 |
+
+: Người đọc và phần tài liệu cần đọc
+
+### 1.4. Thuật ngữ và chữ viết tắt
+
+Thuật ngữ chung xem D00-01 §2; bảng dưới chỉ nêu những từ riêng của tài liệu này.
+
+| Thuật ngữ | Nghĩa trong tài liệu này |
+|---|---|
+| Thành phần phức hợp (composite) | Tổ hợp các thành phần nguyên tử, ví dụ `CMP-FormField` |
+| Thành phần tổ chức (organism) | Khối giao diện lớn mang nghiệp vụ dùng chung hoặc khung ứng dụng, ví dụ `CMP-DataTable`, `CMP-AppShell` |
+| Giải phẫu (anatomy) | Danh sách các phần con của thành phần kèm vật liệu và token từng phần |
+| `allowedActions`, `disabledReasons` | Danh sách hành động được phép và lý do bị khóa do máy chủ trả về, giao diện chỉ hiển thị |
+| `DhApiError` | Kiểu lỗi chuẩn mọi thành phần dữ liệu nhận (mục 2.4) |
+| Glass chrome, modal, overlay | Ba lớp vật liệu kính dùng cho điều hướng, khung lớp nổi và lớp nổi nhỏ (mục 2.1) |
+| Giếng nội dung | Vùng nền đặc bên trong khung glass để đặt nội dung dày |
+| Mức M, S | Mức ưu tiên MoSCoW ở bảng 14.1: M bắt buộc, S cần có trước khi bàn giao |
+
+: Thuật ngữ riêng của tài liệu thành phần phức hợp và tổ chức
+
+### 1.5. Tài liệu tham chiếu
+
+Các tài liệu dưới đây là nguồn của giá trị, yêu cầu và quy ước mà tài liệu này dẫn tới.
+
+| Mã | Tài liệu | Dùng để |
+|---|---|---|
+| D03-05 | Design system Datahub | Khung chung và quy tắc phát hành |
+| D03-05-01 | Vật liệu Liquid Glass | Lớp glass, chế độ kính |
+| D03-05-02 | Design token | Giá trị token và lint "không giá trị thô" |
+| D03-05-03 | Thành phần nguyên tử | Nguyên tử mà thành phần phức hợp ghép từ |
+| D03-06-00 | IA, layout, mẫu màn hình | Mẫu PTN-01…14 lắp từ tài liệu này |
+| D02-02 | SRS | FR-00, NFR-00 dùng chung |
+| D00-01 | Thuật ngữ và quy ước | Thuật ngữ chung, mã CMP-LAW |
+
+: Tài liệu tham chiếu của tài liệu thành phần phức hợp và tổ chức
+
+### 1.6. Cấu trúc tài liệu
+
+Bảng nhóm thành phần ở đầu chương 1 đã nêu các chương 3 đến 14; bảng dưới bổ sung chương 2 và cách mỗi thành phần được trình bày.
+
+| Chương | Nội dung |
+|---|---|
+| 1 | Mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc |
+| 2 | Quy tắc vật liệu, mô hình trạng thái dữ liệu, mô hình quyền và hành động, mô hình lỗi, nội dung tiếng Việt, quy ước mã nguồn |
+| 3 đến 13 | Từng nhóm thành phần; mỗi thành phần có đoạn mở, bảng đặc tả, giao diện TypeScript và ví dụ TSX |
+| 14 | Bảng tổng hợp 75 thành phần, tên gọi khác, checklist nghiệm thu, truy vết, đề xuất bổ sung |
+
+: Cấu trúc tài liệu theo chương
+
 ## 2. Quy tắc chung cho mọi thành phần phức hợp
 
 ### 2.1. Quy tắc vật liệu
@@ -49,11 +159,13 @@ Vật liệu là quyết định thiết kế quan trọng nhất của mỗi th
 | `glass-overlay` | `.dh-glass--overlay` | Popover, DropdownMenu, popup của Select/DatePicker/TreeSelect, Notification, NotificationCenter, popup của TenantSwitcher, UserMenu và BackgroundTaskTray; điều khiển nổi trên canvas (CanvasControls, Minimap, QuickInsert, BulkActionBar `floating`); FullscreenBar | Nội dung đặt trực tiếp lên glass vì vật liệu đạt ngưỡng mọi nấc chữ ở trường hợp xấu nhất |
 | Nền đặc | không lớp glass | Bảng, biểu mẫu, thẻ, log, mã, so sánh, biểu đồ, bề mặt canvas và nút trên canvas, NodePalette, Inspector, DesignerToolbar, BottomPanel, BulkActionBar dính đầu bảng, giếng nội dung | `color-surface-solid` hoặc `color-surface-solid-2`; Tooltip và Toast dùng nền đảo `color-surface-inverse` |
 
+: Vật liệu glass, lớp CSS và điều kiện bắt buộc của từng loại bề mặt
+
 Ba quy tắc phụ được kiểm tra trong review mã. Thứ nhất, không đặt glass chồng glass; ngoại lệ duy nhất là lớp `glass-overlay` mở từ bên trong `glass-modal` (ví dụ Select trong Modal), được phép vì overlay có độ đục 0,94. Thứ hai, ở chế độ glass `lite` và `off`, thành phần không đổi cấu trúc DOM mà chỉ đổi giá trị biến (`glass-lite-tint`, `glass-off-tint`, `blur-none`), do `CMP-ThemeProvider` điều khiển qua `data-glass` trên `<html>`; thành phần không tự đọc `prefers-reduced-transparency`. Thứ ba, vật liệu được gắn vào phần tử con của thành phần antd qua thuộc tính ngữ nghĩa `classNames` của antd v6 (đã đối chiếu antd 6.7.1: Modal có các khóa `root`, `wrapper`, `mask`, `container`, `header`, `title`, `body`, `footer`, `close`; Drawer có `section` thay cho `content` đã lỗi thời; Select có `popup.root`; Dropdown có `root`, `menu`; Popover và Tooltip có `root`, `container`), không ghi đè lớp nội bộ `.ant-*`.
 
 ### 2.2. Mô hình trạng thái dữ liệu
 
-Mọi thành phần nhận dữ liệu từ máy chủ hiển thị đủ năm trạng thái, theo cùng một hợp đồng để người dùng gặp cùng trải nghiệm ở mọi phân hệ. Bảng sau là hợp đồng đó; cột cuối chỉ thành phần hiển thị trạng thái.
+Mọi thành phần nhận dữ liệu từ máy chủ hiển thị đủ sáu trạng thái, theo cùng một hợp đồng để người dùng gặp cùng trải nghiệm ở mọi phân hệ. Bảng sau là hợp đồng đó; cột cuối chỉ thành phần hiển thị trạng thái.
 
 | Trạng thái | Điều kiện | Hiển thị | Thành phần |
 |---|---|---|---|
@@ -63,6 +175,8 @@ Mọi thành phần nhận dữ liệu từ máy chủ hiển thị đủ năm t
 | Không có kết quả | Không có bản ghi với bộ lọc hiện tại | `CMP-EmptyState` biến thể `no-result` kèm nút "Đặt lại bộ lọc" | `CMP-EmptyState` |
 | Lỗi | Truy vấn lỗi | `CMP-Alert` loại `error` theo FR-00-080, có nút "Thử lại" | `CMP-Alert` |
 | Không có quyền | Máy chủ trả 403 hoặc quyền xem bị thiếu | `CMP-EmptyState` biến thể `no-permission` trong phạm vi khối; toàn trang thì `CMP-ResultPage` 403 | `CMP-EmptyState`, `CMP-ResultPage` |
+
+: Sáu trạng thái dữ liệu dùng chung, điều kiện, cách hiển thị và thành phần áp dụng
 
 Truy vấn dùng TanStack Query với khóa luôn bắt đầu bằng mã tenant hiện tại (`['t', tenantId, ...]`). Quy ước này giúp `CMP-TenantSwitcher` xóa sạch bộ nhớ đệm khi đổi tenant và giúp không bao giờ hiển thị nhầm dữ liệu tỉnh khác (FR-00-004, FR-00-011).
 
@@ -116,6 +230,8 @@ Bảng sau đặc tả thành phần.
 | Nội dung | Nhãn là danh từ ngắn không có dấu hai chấm ("Mã dịch vụ"). Lỗi nêu điều cần sửa: "Mã chỉ gồm chữ hoa, số, dấu chấm, gạch dưới, gạch ngang; tối đa 64 ký tự." thay cho "Không hợp lệ". |
 | Điều cấm | Không dùng chữ giữ chỗ (placeholder) thay nhãn; không hiển thị lỗi chỉ ở đầu trang; không đặt hai điều khiển trong một FormField trừ cặp khoảng (từ ngày, đến ngày). |
 
+: Đặc tả của CMP-FormField
+
 ```ts
 export interface DhFormFieldProps {
   name: string | (string | number)[];
@@ -155,6 +271,8 @@ export interface DhFormFieldProps {
 | Bàn phím, ARIA | Enter trong ô một dòng gửi biểu mẫu; Ctrl/⌘+Enter gửi khi đang ở ô nhiều dòng; Esc trong biểu mẫu panel chuyển cho khung xử lý (đóng có cảnh báo nếu bẩn). Biểu mẫu là `<form>` có `aria-labelledby` trỏ tiêu đề; nhóm trường là `<fieldset>` với `<legend>`. Sau khi gửi lỗi, focus chuyển tới trường lỗi đầu tiên. |
 | Nội dung | Nút chính nêu hành động: "Lưu", "Tạo dịch vụ", "Gửi duyệt". Cảnh báo rời trang: "Bạn có thay đổi chưa lưu. Rời trang sẽ mất các thay đổi này." với hai nút "Ở lại" và "Rời trang". |
 | Điều cấm | Không tắt nút "Lưu" khi biểu mẫu chưa hợp lệ (người dùng không biết vì sao); thay vào đó cho bấm và chỉ ra lỗi. Không tự lưu ngầm đối tượng nghiệp vụ trừ khi SDD phân hệ quy định. |
+
+: Đặc tả của CMP-Form
 
 Hành vi xung đột ETag được nối như sau: khi tải đối tượng, `CMP-Form` ghi lại `ETag`; khi gửi, nó đặt `If-Match`; nếu máy chủ trả 412, biểu mẫu giữ nguyên giá trị người dùng nhập, tải bản mới nhất và mở `CMP-DiffViewer` ở chế độ xung đột để người dùng chọn "Ghi đè" hoặc "Tải lại" (FR-00-052, CRUD-U-05).
 
@@ -199,6 +317,8 @@ export interface DhFormProps<T extends object> {
 | Nội dung | Chữ giữ chỗ nêu phạm vi: "Tìm theo mã hoặc tên dịch vụ". Tìm không phân biệt hoa thường và dấu tiếng Việt ở máy chủ (FR-00-020). |
 | Điều cấm | Không tìm tự động theo từng phím trên danh sách máy chủ; chỉ tìm khi Enter hoặc sau khi ngừng gõ 400ms nếu SDD cho phép. Không cắt khoảng trắng giữa từ. |
 
+: Đặc tả của CMP-SearchField
+
 ```ts
 export interface DhSearchFieldProps {
   variant?: 'inline' | 'capsule';
@@ -232,6 +352,8 @@ export interface DhSearchFieldProps {
 | Nội dung | Nhãn nút "Tìm kiếm", "Đặt lại", "Bộ lọc nâng cao", "Lưu bộ lọc này…". Nhãn bộ lọc đang áp dụng dạng "Trạng thái: Đã công bố, Tạm dừng". |
 | Điều cấm | Không lọc trên dữ liệu đã tải; không giữ trang hiện tại khi đổi bộ lọc (luôn về trang 1, CRUD-FLT-06); không đặt quá ba bộ lọc ở hàng cơ bản. |
 
+: Đặc tả của CMP-FilterBar
+
 **Hành vi chi tiết.** Thứ nhất, FilterBar giữ một bản nháp điều kiện trong trạng thái cục bộ; chỉ khi người dùng bấm "Tìm kiếm" hoặc Enter, bản nháp mới được ghi lên URL bằng `setSearchParams` (thay `replace` cho lần ghi đầu, `push` cho các lần sau để nút quay lại của trình duyệt hoạt động) và trang về 1. Bộ lọc dạng Select đơn hoặc Segmented có thể áp dụng ngay khi đổi nếu SDD phân hệ quy định, nhưng mặc định là áp dụng khi bấm tìm. Thứ hai, quy ước tham số URL thống nhất cho mọi danh sách được nêu ở bảng dưới, nhờ đó backend và frontend không hiểu khác nhau (bài học của docs/ui_ux_rule.md §2.2).
 
 | Tham số URL | Ý nghĩa | Ví dụ |
@@ -243,6 +365,8 @@ export interface DhSearchFieldProps {
 | `{tên-trường}` | Giá trị lọc theo mã giá trị `kebab-case`; nhiều giá trị nối bằng dấu phẩy (FR-00-023) | `trang-thai=phat-hanh,tam-dung` |
 | `{tên-trường}-tu`, `{tên-trường}-den` | Khoảng thời gian, dạng `yyyy-MM-dd`, bao gồm hai đầu; với một khoảng duy nhất của màn dùng `tu`, `den` | `ngay-tao-tu=2026-11-01` |
 | `nang-cao` | Vùng nâng cao đang mở (`1`) | `nang-cao=1` |
+
+: Tham số URL của CMP-FilterBar, ý nghĩa và ví dụ
 
 Bảng tham số này là cụ thể hóa của quy tắc URL ở D03-06-00 §2.4 (tài liệu đó thắng khi có khác biệt). Hook `useDhListParams` ánh xạ hai chiều giữa tên tham số tiếng Việt trên URL và tên tham số API (`page`, `size`, `sort`, tên trường camelCase) bằng bảng ánh xạ khai báo cùng `DhFilterDef`, nên mã gọi API không phụ thuộc tên trên URL.
 
@@ -295,6 +419,8 @@ export interface DhFilterBarProps {
 | Nội dung | Dùng tên nhóm và tên màn hình như trên Sidebar; tên đối tượng dùng tên hiển thị, không dùng UUID. |
 | Điều cấm | Không làm mục cuối thành liên kết; không thêm biểu tượng nhà cho mục đầu. |
 
+: Đặc tả của CMP-Breadcrumb
+
 ```ts
 export interface DhBreadcrumbProps {
   items?: Array<{ title: string; href?: string }>; // mặc định sinh từ router
@@ -323,6 +449,8 @@ export interface DhBreadcrumbProps {
 | Bàn phím, ARIA | Tiêu đề là `<h1>` duy nhất của trang và là đích của lối tắt "Bỏ qua tới nội dung"; nút quay lại có `aria-label="Quay lại {tên màn hình cha}"`. |
 | Nội dung | Tiêu đề là tên nghiệp vụ ("Danh sách dịch vụ", "Dịch vụ tra cứu hộ tịch"), không dùng "Quản lý…" chung chung. |
 | Điều cấm | Không đặt quá một nút chính; không đặt hành động phá hủy ở vị trí nút chính. |
+
+: Đặc tả của CMP-PageHeader
 
 ```ts
 export interface DhPageHeaderProps {
@@ -365,6 +493,8 @@ export interface DhPageHeaderProps {
 | Nội dung | Nhãn danh từ ngắn; tab nhật ký kiểm toán luôn tên "Lịch sử" và đặt cuối. |
 | Điều cấm | Không lồng Tabs trong Tabs quá hai cấp; không quá 7 tab cấp trang. |
 
+: Đặc tả của CMP-Tabs
+
 ```ts
 export interface DhTabsProps {
   variant?: 'page' | 'card';
@@ -398,6 +528,8 @@ export interface DhTabsProps {
 | Nội dung | Tổng: "Tổng 1.234 bản ghi"; bộ chọn: "20 / trang"; ô nhảy: "Đến trang". Tổng số trang tính `ceil(total / size)` (CRUD-PAG-06). |
 | Điều cấm | Không để tổng, số dòng mỗi trang và tổng số trang lệch nhau; không giữ trang lớn hơn tổng số trang sau khi xóa (CRUD-D-08: tự lùi về trang cuối hợp lệ). |
 
+: Đặc tả của CMP-Pagination
+
 ```ts
 export interface DhPaginationProps {
   page: number; size: number; total: number;
@@ -424,6 +556,8 @@ Nhóm này quy định cách hệ thống nói với người dùng. Bảng dư�
 | Khối không có dữ liệu | `CMP-EmptyState` | Theo dữ liệu |
 | Toàn trang không hiển thị được (403, 404, 500, bảo trì) hoặc kết quả cuối của một quy trình | `CMP-ResultPage` | Theo trang |
 
+: Chọn thành phần phản hồi theo tình huống và thời gian tồn tại
+
 ### 5.1. CMP-Alert
 
 `CMP-Alert` là khối thông báo nằm trong luồng nội dung, gắn với một vùng cụ thể: lỗi tải dữ liệu của bảng, lỗi chung của biểu mẫu, cảnh báo trước một thao tác, thông tin hướng dẫn. Đây là thành phần chính hiện thực FR-00-080 cho lỗi trong trang.
@@ -440,6 +574,8 @@ Nhóm này quy định cách hệ thống nói với người dùng. Bảng dư�
 | Bàn phím, ARIA | Lỗi và cảnh báo xuất hiện sau thao tác dùng `role="alert"`; thông tin tĩnh dùng `role="status"` hoặc không có vai trò. Không chuyển focus vào Alert, trừ lỗi chung của biểu mẫu sau khi gửi. |
 | Nội dung | Tiêu đề nói điều gì sai bằng ngôn ngữ nghiệp vụ ("Không tải được danh sách dịch vụ"), mô tả nói cách khắc phục ("Kiểm tra kết nối mạng rồi bấm Thử lại. Nếu lỗi lặp lại, gửi mã truy vết cho bộ phận hỗ trợ."). |
 | Điều cấm | Không hiển thị stack trace, tên lớp Java, câu SQL hay thông điệp tiếng Anh thô; không dùng Alert cho kết quả thành công tạm thời (dùng Toast). |
+
+: Đặc tả của CMP-Alert
 
 ```ts
 export interface DhAlertProps {
@@ -475,6 +611,8 @@ export interface DhAlertProps {
 | Nội dung | "Hệ thống bảo trì từ 22:00 đến 23:30 ngày 25/11/2026. Các thay đổi chưa lưu trong thời gian này có thể bị mất." |
 | Điều cấm | Không dùng Banner cho thông báo của một màn hình cụ thể; không xếp quá hai banner. |
 
+: Đặc tả của CMP-Banner
+
 ```ts
 export interface DhBannerProps {
   id: string;
@@ -508,6 +646,8 @@ pushBanner({ id: 'offline', type: 'error', message: 'Mất kết nối tới má
 | Nội dung | Mẫu "Đã {động từ} {đối tượng}" ("Đã xóa 3 dịch vụ"). Không quá 80 ký tự. |
 | Điều cấm | Không xếp quá 3 Toast cùng lúc (`maxCount: 3`); không đặt nội dung quan trọng duy nhất trong Toast vì nó tự biến mất. |
 
+: Đặc tả của CMP-Toast
+
 ```ts
 export function useDhToast(): {
   success(msg: string, opts?: { action?: { label: string; onClick: () => void } }): void;
@@ -539,6 +679,8 @@ toast.success(`Đã xóa ${formatNumber(ids.length)} dịch vụ`);
 | Nội dung | "Xuất dữ liệu xong. Tệp danh-sach-dich-vu.xlsx (12.345 dòng) sẵn sàng tải đến 14:30 ngày 22/11/2026." |
 | Điều cấm | Không chứa dữ liệu Hạn chế hoặc Nhạy cảm trong thông báo (đồng bộ với tinh thần FR-00-062); không quá 3 thẻ cùng lúc. |
 
+: Đặc tả của CMP-Notification
+
 ```ts
 export function useDhNotify(): (n: { type: 'info'|'success'|'warning'|'error'|'approval'; title: string; description?: string; action?: { label: string; href?: string; onClick?: () => void } }) => void;
 ```
@@ -563,6 +705,8 @@ notify({ type: 'success', title: 'Xuất dữ liệu xong', description: 'Tệp 
 | Bàn phím, ARIA | Minh họa `aria-hidden="true"`; tiêu đề là đoạn văn, không phải heading, khi nằm trong bảng. |
 | Nội dung | Tiêu đề khẳng định trạng thái, mô tả gợi ý việc làm tiếp: "Thử bỏ bớt điều kiện lọc hoặc tìm bằng từ khóa khác." |
 | Điều cấm | Không dùng chung một thông điệp "Không có dữ liệu" cho cả bốn nguyên nhân. |
+
+: Đặc tả của CMP-EmptyState
 
 ```ts
 export interface DhEmptyStateProps {
@@ -592,6 +736,8 @@ export interface DhEmptyStateProps {
 | Bàn phím, ARIA | Tiêu đề là `<h1>`; khi điều hướng tới trang lỗi, focus chuyển vào tiêu đề để trình đọc màn hình đọc ngay. |
 | Nội dung | 403: "Bạn không có quyền truy cập trang này. Nếu cần quyền, hãy liên hệ quản trị tỉnh và gửi kèm mã truy vết bên dưới." 404: "Không tìm thấy trang hoặc đối tượng. Đường dẫn có thể đã thay đổi hoặc đối tượng đã bị xóa." |
 | Điều cấm | Không hiển thị thông điệp kỹ thuật thô; trang 403 không tiết lộ đối tượng có tồn tại hay không ở tenant khác (FR-00-011). |
+
+: Đặc tả của CMP-ResultPage
 
 ```ts
 export interface DhResultPageProps {
@@ -627,6 +773,8 @@ export interface DhResultPageProps {
 | Nội dung | Tiêu đề danh từ ngắn ("Thông tin kết nối", "Lượt gọi 7 ngày"). |
 | Điều cấm | Không đặt glass cho Card; không lồng Card. |
 
+: Đặc tả của CMP-Card
+
 ```ts
 export interface DhCardProps {
   title?: string; subtitle?: string; extra?: React.ReactNode; footer?: React.ReactNode;
@@ -657,6 +805,8 @@ export interface DhCardProps {
 | Bàn phím, ARIA | Toàn thẻ có nhãn đọc liền mạch: "Lượt gọi API hôm nay: 1.234.567, tăng 12,5% so với 7 ngày trước"; sparkline `aria-hidden="true"` vì giá trị đã có ở chữ. |
 | Nội dung | Chiều tăng không mặc định là tốt: thành phần nhận `goodDirection` để tô `color-success-text` hay `color-error-text` (ví dụ tỷ lệ lỗi tăng là xấu); màu luôn kèm mũi tên và chữ "tăng"/"giảm". |
 | Điều cấm | Không làm tròn mất nghĩa (dùng "1,2 triệu" chỉ khi có Tooltip giá trị đầy đủ); không chỉ dùng màu để báo tăng giảm. |
+
+: Đặc tả của CMP-KpiCard
 
 ```ts
 export interface DhKpiCardProps {
@@ -689,6 +839,8 @@ export interface DhKpiCardProps {
 | Nội dung | Nhãn như nhãn biểu mẫu tương ứng để người dùng nhận ra cùng trường. |
 | Điều cấm | Không để giá trị trống; không đặt hành động sửa trong từng ô. |
 
+: Đặc tả của CMP-DescriptionList
+
 ```ts
 export interface DhDescriptionListProps {
   items: Array<{ key: string; label: string; value: React.ReactNode; span?: number; copyable?: string }>;
@@ -719,6 +871,8 @@ export interface DhDescriptionListProps {
 | Bàn phím, ARIA | Mẫu ARIA Tree: `role="tree"`, `role="treeitem"`, `aria-expanded`, `aria-level`, `aria-setsize`, `aria-posinset`; mũi tên lên/xuống di chuyển, phải mở/vào con, trái đóng/về cha, Home/End, ký tự đầu để nhảy, Space chọn ở biến thể `checkable`. |
 | Nội dung | Nhãn nút dạng "Mã · Tên" khi mã có nghĩa ("79 · TP. Hồ Chí Minh"). |
 | Điều cấm | Không chỉ cho kéo thả để sắp xếp; không tải toàn bộ cây lớn hơn 5.000 nút một lần. |
+
+: Đặc tả của CMP-Tree
 
 ```ts
 export interface DhTreeNode { key: string; title: string; isLeaf?: boolean; count?: number; allowedActions?: string[]; children?: DhTreeNode[] }
@@ -754,6 +908,8 @@ export interface DhTreeProps {
 | Nội dung | Tiêu đề khung theo nghiệp vụ ("Quyền có thể gán", "Quyền đã gán"). |
 | Điều cấm | Không chỉ dùng kéo thả để chuyển mục. |
 
+: Đặc tả của CMP-Transfer
+
 ```ts
 export interface DhTransferProps<K extends string = string> {
   dataSource: Array<{ key: K; title: string; description?: string; disabledReason?: string }>;
@@ -783,6 +939,8 @@ export interface DhTransferProps<K extends string = string> {
 | Bàn phím, ARIA | Phần tử chứa có `role="figure"` và `aria-labelledby` trỏ tiêu đề, `aria-describedby` trỏ đoạn tóm tắt sinh tự động (ví dụ "Lượt gọi tăng từ 12.300 lên 18.900 trong 7 ngày, cao nhất ngày 20/11/2026"). Tùy chọn `aria: { enabled: true, decal: { show: true } }` của ECharts bật hoa văn (decal) phân biệt chuỗi khi in hoặc khi người dùng bật chế độ tương phản. Nút "Xem dạng bảng" mở `<table>` HTML thật (có `<caption>`, `<th scope>`) thay thế vùng vẽ; bảng này luôn có trong DOM ở dạng ẩn trực quan để trình đọc màn hình truy cập. Tooltip mở được bằng bàn phím: khi vùng vẽ có focus, mũi tên trái/phải di chuyển giữa các điểm dữ liệu và giá trị được đọc qua `aria-live="polite"`. |
 | Nội dung | Số theo định dạng Việt Nam trong trục và Tooltip (`1.234.567`, `12,5%`); thời gian trục `HH:mm` hoặc `DD/MM`; tiêu đề nêu đại lượng và đơn vị ("Độ trễ p95 (ms)"). |
 | Điều cấm | Không dùng biểu đồ 3D, biểu đồ tròn trên 5 phần, hai trục tung khác đơn vị trừ khi có nhãn rõ; không phân biệt chuỗi chỉ bằng màu; không viết mã màu hex trong `option`. |
+
+: Đặc tả của CMP-Chart
 
 Theme được sinh như đoạn mã dưới đây; biểu đồ nghiệp vụ không tự đặt `color`, `textStyle` hay `backgroundColor`. Nhãn trực tiếp được bật bằng `endLabel` cho đường và `label.show` cho cột; khi có trên 4 chuỗi, thành phần chuyển sang chú giải có ký hiệu (`legend.icon` lần lượt `circle`, `rect`, `triangle`, `diamond`…) để giữ phân biệt không dựa vào màu.
 
@@ -831,6 +989,8 @@ Lớp nổi là nơi vật liệu glass được dùng nhiều nhất, nên nhó
 | `CMP-Popover`, `CMP-DropdownMenu`, popup Select | `glass-overlay` | Trực tiếp trên glass | `z-popover` | Có (ngoại lệ glass trên glass được phép) |
 | `CMP-SessionTimeoutDialog` | `glass-modal` | Giếng nội dung đặc | `z-session-dialog` | Luôn nằm trên mọi lớp |
 
+: So sánh các lớp nổi theo vật liệu khung, nội dung và lớp chồng
+
 ### 7.1. CMP-Modal
 
 `CMP-Modal` là hộp thoại chặn (modal dialog) cho tác vụ ngắn cần tập trung: biểu mẫu nhanh ít trường (PTN-04), xem trước, chọn đối tượng. Nó là khung chung mà `CMP-ConfirmDialog`, `CMP-ReasonDialog`, `CMP-SessionTimeoutDialog` và `CMP-CommandPalette` kế thừa. Không dùng Modal cho biểu mẫu trên 8 trường hoặc có cuộn dài (dùng `CMP-Drawer` hoặc trang PTN-03), không dùng để hiển thị thông báo thành công (dùng Toast), và không mở Modal từ trong Modal.
@@ -846,6 +1006,8 @@ Modal có cấu trúc hai lớp theo nguyên tắc bo góc đồng tâm của Li
 | Đầu (tiêu đề, nút đóng) | `header`, `title`, `close` | Trên khung glass; tiêu đề `font-title-2` `color-text-primary`; đệm `space-4` `space-4` `space-3` |
 | Thân (giếng nội dung) | `body` | `color-surface-solid`, bo 12px, đệm `space-5` (gọn `space-4`), cuộn nội bộ khi cao hơn 70vh |
 | Chân (footer) | `footer` | Trên khung glass; đệm `space-3` `space-4`; nút căn phải: nút phụ trước, nút chính sau cùng |
+
+: Các phần con của CMP-Modal, khóa classNames, vật liệu và token
 
 Ở chế độ glass `off`, khung có nền `glass-off-tint` (`color-surface-solid`) và giếng nội dung có thêm viền `color-border-subtle` để vẫn phân biệt hai lớp. Ở chế độ `lite`, khung dùng `glass-lite-tint` và `blur-none`.
 
@@ -866,6 +1028,8 @@ Bảng sau quy định hành vi bắt buộc của Modal; đây là các điểm
 | Chuyển động | Phóng `motion-scale-enter` với `motion-duration-slow` và `motion-ease-emphasized`; đóng `motion-ease-exit`; giảm chuyển động thì chỉ mờ dần | Token `motionDurationSlow`, `motionEaseOutBack` |
 | Đang gửi | Nút chính loading, nút đóng và Esc tạm khóa cho tới khi có kết quả | `confirmLoading`, `keyboard={!submitting}` |
 
+: Quy định hành vi của CMP-Modal và cấu hình antd tương ứng
+
 | Khía cạnh | Đặc tả |
 |---|---|
 | Nền | `Modal` của antd v6. Props cố định: `centered`, `mask={{ blur: false, closable: false }}`, `focusable={{ trap: true, focusTriggerAfterClose: true }}`, `destroyOnHidden`, `classNames={{ container: 'dh-glass--modal dh-modal__frame', body: 'dh-modal__well' }}`, `width` từ `size-modal-sm`/`md`/`lg`. Không dùng `Modal.confirm` tĩnh; dùng `CMP-ConfirmDialog`. |
@@ -876,6 +1040,8 @@ Bảng sau quy định hành vi bắt buộc của Modal; đây là các điểm
 | Bàn phím, ARIA | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` trỏ tiêu đề, `aria-describedby` trỏ đoạn mô tả đầu giếng nếu có; nút đóng `aria-label="Đóng"`, vùng chạm ≥ 24×24. |
 | Nội dung | Tiêu đề là hành động hoặc đối tượng ("Thêm khóa truy cập"); nút chính lặp lại động từ của tiêu đề ("Thêm"); nút phụ luôn là "Hủy". |
 | Điều cấm | Không chồng Modal; không đặt liên kết hoặc chữ cấp hai trực tiếp trên khung glass; không đóng khi bấm lớp che; không đặt bảng dữ liệu đầy đủ trong Modal (dùng Drawer `lg` hoặc trang). |
+
+: Đặc tả của CMP-Modal
 
 ```ts
 export interface DhModalProps {
@@ -913,6 +1079,8 @@ export interface DhModalProps {
 | Nội dung | Như Modal. Drawer xem nhanh luôn có liên kết "Mở trang đầy đủ" để có URL chia sẻ được. |
 | Điều cấm | Không mở Drawer từ Modal; không đặt liên kết trực tiếp trên khung; không dùng Drawer bên trái ngoài biến thể `nav`. |
 
+: Đặc tả của CMP-Drawer
+
 ```ts
 export interface DhDrawerProps extends Omit<DhModalProps, 'size' | 'variant'> {
   size?: 'md' | 'lg'; variant?: 'form' | 'view' | 'filter' | 'nav';
@@ -941,6 +1109,8 @@ ConfirmDialog có ba mức nghiêm trọng, chọn theo hậu quả của thao t
 | `destructive` | Xóa mềm, thu hồi; khôi phục được bởi quản trị | Hai nút, nút chính phá hủy (`color-error-solid`), focus ban đầu ở "Hủy" | "Xóa dịch vụ Tra cứu hộ tịch?" |
 | `dangerous` | Xóa đối tượng có phụ thuộc rộng, xóa tenant, thu hồi chứng thư gốc, xóa hàng loạt trên 50 bản ghi | Như `destructive` và bắt buộc gõ đúng tên hoặc mã đối tượng; nút chính chỉ bật khi khớp | "Nhập T68 để xác nhận xóa tenant" |
 
+: Các mức xác nhận của CMP-ConfirmDialog, khi dùng và ví dụ
+
 | Khía cạnh | Đặc tả |
 |---|---|
 | Nền | `CMP-Modal` cỡ `sm`, biến thể nội bộ `confirm`; gọi qua hook `useDhConfirm()` trả về `Promise<boolean>`. |
@@ -953,6 +1123,8 @@ ConfirmDialog có ba mức nghiêm trọng, chọn theo hậu quả của thao t
 | Bàn phím, ARIA | `role="alertdialog"`, `aria-describedby` trỏ đoạn hậu quả; focus ban đầu: `normal` vào nút chính, `destructive` vào "Hủy", `dangerous` vào ô nhập; Enter không kích hoạt nút phá hủy khi focus đang ở "Hủy". So khớp tên phân biệt hoa thường, cắt khoảng trắng hai đầu, không cho dán từ bộ nhớ tạm bị chặn (cho phép dán để hỗ trợ công nghệ hỗ trợ). |
 | Nội dung | Tiêu đề "Xóa dịch vụ “Tra cứu hộ tịch”?"; mô tả "Dịch vụ sẽ bị gỡ khỏi danh mục và không thể gọi được nữa. Quản trị tỉnh có thể khôi phục trong 30 ngày." Nút chính "Xóa dịch vụ", không dùng "Đồng ý" hay "OK". |
 | Điều cấm | Không dùng `Popconfirm` cho thao tác phá hủy (khó dùng với bàn phím, nội dung quá ngắn); không đặt nút phá hủy làm focus mặc định; không xác nhận bằng hộp thoại `window.confirm`. |
+
+: Đặc tả của CMP-ConfirmDialog
 
 ConfirmDialog là trường hợp duy nhất được mở từ bên trong Drawer hoặc Modal (ví dụ xóa một dòng con trong Drawer). Khi đó `DhModal` không mở lớp thứ hai mà thay giếng nội dung hiện tại bằng nội dung xác nhận, giữ nguyên khung, và trả về nội dung cũ khi hủy; nhờ vậy quy tắc "không chồng Modal" vẫn được giữ.
 
@@ -993,6 +1165,8 @@ await confirm({ severity: 'dangerous', title: `Xóa tenant “${t.name}”?`, ty
 | Nội dung | Tiêu đề "Tạm dừng dịch vụ “Tra cứu hộ tịch”"; mô tả "Các HTTT đang gọi dịch vụ sẽ nhận lỗi 503 cho tới khi dịch vụ được kích hoạt lại." |
 | Điều cấm | Không cho gửi lý do toàn khoảng trắng hoặc ký tự lặp vô nghĩa dưới 10 ký tự; không điền sẵn lý do; không dùng ReasonDialog cho xóa thông thường không ảnh hưởng vận hành. |
 
+: Đặc tả của CMP-ReasonDialog
+
 ```ts
 export interface DhReasonOptions {
   variant?: 'operational' | 'reject' | 'sensitive-access';
@@ -1029,6 +1203,8 @@ await askReason({ title: `Tạm dừng dịch vụ “${s.name}”`, confirmText
 | Nội dung | Ngắn, tối đa 3 đoạn. |
 | Điều cấm | Không mở Popover chồng Popover; không đặt Popover chứa nội dung bắt buộc phải đọc mới làm tiếp được. |
 
+: Đặc tả của CMP-Popover
+
 ```ts
 export interface DhPopoverProps { title?: string; content: React.ReactNode; actions?: React.ReactNode; children: React.ReactElement; placement?: 'top' | 'bottom' | 'left' | 'right' | 'bottomLeft' | 'bottomRight' }
 ```
@@ -1055,6 +1231,8 @@ export interface DhPopoverProps { title?: string; content: React.ReactNode; acti
 | Bàn phím, ARIA | Mẫu ARIA Menu Button: nút `aria-haspopup="menu"`, `aria-expanded`; menu `role="menu"`, mục `role="menuitem"`; Enter/Space/mũi tên xuống mở và focus mục đầu, mũi tên lên/xuống di chuyển, Home/End, ký tự đầu nhảy mục, Esc đóng và trả focus. |
 | Nội dung | Nhãn động từ ("Sao chép", "Tạm dừng…"); dấu "…" cuối nhãn khi lệnh mở hộp thoại tiếp theo. |
 | Điều cấm | Không quá 10 mục; không lồng quá một cấp; không chứa hành động duy nhất của màn hình (nút chính phải hiện ra ngoài). |
+
+: Đặc tả của CMP-DropdownMenu
 
 ```ts
 export type DhMenuItem =
@@ -1090,6 +1268,8 @@ Cơ chế hoạt động như sau. Bộ đếm không thao tác lắng nghe `poi
 | Bàn phím, ARIA | `role="alertdialog"`, focus ban đầu vào "Tiếp tục làm việc"; đồng hồ không đọc mỗi giây: vùng `aria-live="polite"` chỉ thông báo khi mở ("Phiên làm việc sẽ hết sau 2 phút"), khi còn 60 giây và 15 giây (đáp ứng WCAG 2.2.1 về điều chỉnh thời hạn: người dùng được cảnh báo và gia hạn bằng một thao tác đơn). |
 | Nội dung | Tiêu đề "Phiên làm việc sắp hết"; mô tả "Bạn đã không thao tác trong 28 phút. Để bảo vệ dữ liệu, hệ thống sẽ tự đăng xuất sau 01:59. Các thay đổi chưa lưu sẽ bị mất." |
 | Điều cấm | Không tự gia hạn khi chỉ có yêu cầu nền (thăm dò, SSE) mà người dùng không thao tác; không ẩn hộp thoại sau Modal khác; không dùng Toast cho cảnh báo này. |
+
+: Đặc tả của CMP-SessionTimeoutDialog
 
 ```ts
 export interface DhSessionTimeoutConfig {
@@ -1135,6 +1315,8 @@ DataTable dựa trên `ProTable` của `@ant-design/pro-components` (phiên bả
 | `locale.emptyText` | `CMP-EmptyState` theo nguyên nhân | CRUD-TBL-12 |
 | `showSorterTooltip` | `{ target: 'sorter-icon' }` | Tooltip giải thích chiều sắp xếp (CRUD-TBL-04) |
 
+: Thuộc tính ProTable cố định của CMP-DataTable và lý do
+
 #### 8.1.2. Giải phẫu và vật liệu
 
 Bảng dữ liệu là **nền đặc tuyệt đối**: không phần con nào của DataTable dùng glass, kể cả khi tiêu đề dính trượt dưới Topbar. Lý do là bảng chứa chữ cỡ nhỏ mật độ cao, cần tương phản tối đa và ổn định khi cuộn; glass ở đây chỉ làm giảm khả năng đọc và tăng chi phí kết xuất trên máy văn phòng.
@@ -1153,6 +1335,8 @@ Bảng dữ liệu là **nền đặc tuyệt đối**: không phần con nào c
 | Phân trang | `CMP-Pagination` ở chân thẻ, căn phải; tổng số bản ghi bên trái | Nền đặc |
 | `CMP-BulkActionBar` | Xuất hiện khi có bản ghi được chọn (mục 8.2) | Nền đặc |
 
+: Các phần con của CMP-DataTable, mô tả, vật liệu và token
+
 #### 8.1.3. Cột và kiểu giá trị
 
 Mỗi cột khai báo `valueType` chuẩn của Datahub; DataTable tự chọn thành phần nguyên tử, căn chỉnh và độ rộng tối thiểu theo bảng dưới đây (kế thừa chuẩn căn chỉnh của docs/ui_ux_rule.md §2.3).
@@ -1170,6 +1354,8 @@ Mỗi cột khai báo `valueType` chuẩn của Datahub; DataTable tự chọn t
 | `user` | `CMP-Avatar` cỡ nhỏ và tên | Trái | Có |
 | `tags` | Tối đa 2 `CMP-Tag`, "+3" có Tooltip | Trái | Không |
 | `actions` | Theo `allowedActions` của dòng | Giữa | Không |
+
+: Kiểu giá trị dhType của cột CMP-DataTable, cách hiển thị, căn chỉnh và sắp xếp
 
 Quy tắc sắp xếp: chỉ cột khai báo `sortable` mới có biểu tượng; mỗi thời điểm một tiêu chí chính (CRUD-TBL-05), bấm lần lượt tăng → giảm → bỏ; trạng thái ghi vào tham số `sap-xep` trên URL. Khi người dùng bỏ sắp xếp, bảng trở về thứ tự mặc định do máy chủ quy định và hiển thị biểu tượng mặc định trên cột tương ứng.
 
@@ -1219,6 +1405,8 @@ Bảng dưới đây liệt kê trạng thái hiển thị của DataTable và �
 | Đang xử lý hàng loạt | Đã gửi hành động hàng loạt | BulkActionBar loading, các dòng được chọn khóa Checkbox |
 | Bản ghi đã thay đổi | Hành động trên dòng trả 404 hoặc 412 | Toast cảnh báo "Bản ghi đã bị xóa hoặc thay đổi. Danh sách đã được tải lại." và tự làm mới |
 
+: Trạng thái của CMP-DataTable, điều kiện và cách hiển thị
+
 | Khía cạnh | Đặc tả |
 |---|---|
 | Biến thể | `list` (PTN-01, kèm FilterBar), `embedded` (bảng con trong tab chi tiết, phân trang `simple` nếu ít dòng, không xuất), `selector` (trong Modal `select`, chọn một hoặc nhiều, không có cột thao tác). |
@@ -1227,6 +1415,8 @@ Bảng dưới đây liệt kê trạng thái hiển thị của DataTable và �
 | Bàn phím, ARIA | Bảng là `<table>` ngữ nghĩa có `<caption>` ẩn trực quan nêu tên danh sách và tổng số bản ghi; tiêu đề cột sắp xếp được là `<button>` trong `<th>` với `aria-sort`; Tab đi qua phần tử tương tác theo thứ tự hàng (liên kết tên, Checkbox, nút thao tác), không bẫy focus trong bảng; sau khi đổi trang, focus về `<caption>`/đầu bảng và vùng `aria-live="polite"` đọc "Trang 3 trên 12, hiển thị 41 đến 60 trong 234 bản ghi". Bấm vào dòng không mở chi tiết (tránh xung đột với Checkbox và nút, docs/ui_ux_rule.md §11 điểm 11); chỉ liên kết tên mở chi tiết. |
 | Nội dung | Tiêu đề cột là thuật ngữ nghiệp vụ thống nhất (CRUD-TBL-01), danh từ ngắn, không viết tắt khó hiểu; tooltip biểu tượng: "Xuất dữ liệu", "Tải lại", "Mật độ hiển thị", "Cài đặt cột". |
 | Điều cấm | Không phân trang hoặc lọc ở trình duyệt; không dùng glass cho bất kỳ phần nào; không tự suy luận hành động từ vai trò; không bắt đầu lại STT mỗi trang; không mở chi tiết khi bấm cả dòng; không lưu cài đặt cột chỉ ở `localStorage`. |
+
+: Đặc tả của CMP-DataTable
 
 ```ts
 export interface DhColumn<T> {
@@ -1302,6 +1492,8 @@ export interface DhDataTableProps<T extends { id: string; allowedActions?: strin
 | Nội dung | Số đếm chính xác, định dạng Việt Nam (CRUD-SEL-04). |
 | Điều cấm | Không hiện khi chưa chọn gì; không cho chạy hành động trên bản ghi không đủ quyền; không chỉ báo "Thành công" khi có bản ghi thất bại. |
 
+: Đặc tả của CMP-BulkActionBar
+
 ```ts
 export interface DhBulkActionBarProps { selectedCount: number; acrossPages: boolean; actions: Array<{ key: string; label: string; eligibleCount: number; danger?: boolean; onRun: () => void }>; onClear: () => void; result?: DhBulkResult; running?: boolean }
 ```
@@ -1332,6 +1524,8 @@ Nhóm này hiển thị nội dung kỹ thuật dày đặc nên luôn dùng n�
 | Nội dung | Thông điệp chẩn đoán dịch sang tiếng Việt cho lỗi phổ biến; giữ thông điệp gốc trong Tooltip phụ. |
 | Điều cấm | Không tải Monaco từ CDN; không hiển thị bí mật trong trình soạn (bí mật luôn là `T-SECRET-REF`); không dùng Monaco cho trường văn bản thường. |
 
+: Đặc tả của CMP-CodeEditor
+
 ```ts
 export interface DhCodeEditorProps { language: 'yaml' | 'json' | 'xml' | 'sql' | 'rego' | 'markdown' | 'javascript'; value: string; onChange?: (v: string) => void; schemaUri?: string; variant?: 'edit' | 'readonly' | 'inline'; ariaLabel: string; height?: number; onValidate?: (markers: Array<{ line: number; message: string; severity: 'error' | 'warning' }>) => void }
 ```
@@ -1357,6 +1551,8 @@ export interface DhCodeEditorProps { language: 'yaml' | 'json' | 'xml' | 'sql' |
 | Bàn phím, ARIA | Cây theo mẫu ARIA Tree như `CMP-Tree`; màu kiểu luôn kèm cách viết phân biệt (chuỗi trong ngoặc kép, `null` viết chữ) nên không dựa vào màu. |
 | Nội dung | Khóa giữ nguyên; không dịch. |
 | Điều cấm | Không hiển thị giá trị trường mức Nhạy cảm chưa che (che từ máy chủ, NFR-00-029). |
+
+: Đặc tả của CMP-JsonViewer
 
 ```ts
 export interface DhJsonViewerProps { value: unknown; variant?: 'tree' | 'raw' | 'compact'; defaultExpandDepth?: number; maskedPaths?: string[] }
@@ -1386,6 +1582,8 @@ Log có thể lên tới hàng trăm nghìn dòng, vì vậy danh sách luôn **
 | Bàn phím, ARIA | Danh sách `role="log"` với `aria-live="off"` khi bám đuôi (không đọc liên tục) và vùng tóm tắt riêng `aria-live="polite"` báo "Có 3 lỗi mới" tối đa mỗi 10 giây; mũi tên lên/xuống di chuyển dòng đang chọn, Enter mở rộng, Ctrl/⌘+F focus ô tìm của thành phần (không chặn tìm của trình duyệt khi focus ở ngoài), End bật lại bám đuôi. |
 | Nội dung | Nhãn mức là chữ đầy đủ in hoa ngắn "ERROR", "WARN", "INFO", "DEBUG" đặt trong nhãn nền nhẹ, nên mức log được nhận ra bằng chữ chứ không chỉ bằng màu. |
 | Điều cấm | Không dựng toàn bộ dòng vào DOM; không hiển thị PII chưa che; không tô màu cả dòng chỉ bằng màu chữ mà không có nhãn mức. |
+
+: Đặc tả hành vi của CMP-LogViewer
 
 ```ts
 export interface DhLogLine { ts: string; level: 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'TRACE'; source?: string; message: string; traceId?: string; fields?: Record<string, unknown> }
@@ -1417,6 +1615,8 @@ Khi `CMP-Form` nhận 412 Precondition Failed (ETag không khớp `If-Match`), D
 | Bàn phím, ARIA | F7 / Shift+F7 tới khác biệt kế tiếp/trước (theo Monaco) và nút tương đương trên thanh điều khiển; mỗi khác biệt được đọc dạng "Dòng 12, đã thêm: …"; bảng so sánh theo trường là `<table>` có tiêu đề cột. Thêm/xóa luôn có ký hiệu "+"/"−" nên không dựa vào màu. |
 | Nội dung | Nhãn cột dùng ngôn ngữ người dùng, không dùng "original/modified". |
 | Điều cấm | Không tự hợp nhất thay đổi ngầm; không bỏ dữ liệu người dùng đang nhập khi họ bấm "Hủy". |
+
+: Đặc tả chế độ xung đột ETag của CMP-DiffViewer
 
 ```ts
 export interface DhDiffViewerProps {
@@ -1455,6 +1655,8 @@ export interface DhDiffViewerProps {
 | Nội dung | Tiêu đề bước là danh từ ("Thông tin chung", "Kết nối", "Xác nhận"); nút chuyển "Tiếp tục", "Quay lại", nút cuối nêu hành động ("Tạo tenant"). |
 | Điều cấm | Không quá 7 bước; không cho nhảy tới bước chưa đủ điều kiện; không chỉ dùng màu để báo trạng thái bước. |
 
+: Đặc tả của CMP-Steps
+
 ```ts
 export interface DhStepsProps { variant?: 'wizard' | 'status'; current: number; items: Array<{ key: string; title: string; content?: string; status?: 'wait' | 'process' | 'finish' | 'error'; errorCount?: number }>; onStepClick?: (index: number) => void }
 ```
@@ -1483,6 +1685,8 @@ Hành vi bốn mắt được bảo đảm ở hai lớp. Máy chủ là lớp q
 | Bàn phím, ARIA | `<section aria-labelledby>`; sau khi quyết định thành công, focus chuyển tới thông báo kết quả `role="status"`; trong PTN-10, phím J/K chuyển yêu cầu kế tiếp/trước chỉ khi người dùng bật phím tắt ký tự trong cài đặt (WCAG 2.1.4). |
 | Nội dung | Nút "Duyệt", "Từ chối…", "Yêu cầu bổ sung…"; Toast "Đã duyệt yêu cầu đăng ký sử dụng của Sở Tư pháp". |
 | Điều cấm | Không cho từ chối không có lý do; không hiện nút duyệt cho người tạo khi loại duyệt yêu cầu bốn mắt; không cho duyệt hàng loạt các loại duyệt được đánh dấu bốn mắt mà không có ý kiến chung. |
+
+: Đặc tả của CMP-ApprovalPanel
 
 ```ts
 export interface DhApprovalPanelProps {
@@ -1519,6 +1723,8 @@ Tiến độ được lấy bằng SSE từ API tác vụ (`/api/platform/v1/job
 | Nội dung | Tên tác vụ gồm động từ và đối tượng ("Xuất danh sách dịch vụ"); thời gian còn lại dạng "khoảng 2 phút". |
 | Điều cấm | Không chặn màn hình trong khi chạy; không hiện phần trăm giả khi chưa biết tổng. |
 
+: Đặc tả của CMP-JobProgress
+
 ```ts
 export interface DhJobProgressProps { jobId: string; variant?: 'inline' | 'card' | 'list-item'; title?: string; onDone?: (job: { status: 'SUCCEEDED' | 'PARTIAL' | 'FAILED' | 'CANCELLED'; fileUrl?: string; expiresAt?: string }) => void }
 ```
@@ -1544,6 +1750,8 @@ export interface DhJobProgressProps { jobId: string; variant?: 'inline' | 'card'
 | Nội dung | Câu dạng "Nguyễn Văn A đã tạm dừng dịch vụ. Lý do: Bảo trì máy chủ nguồn." Giá trị trước/sau dùng nhãn trường như biểu mẫu. |
 | Điều cấm | Không có hành động sửa, xóa, ẩn mục; không hiển thị giá trị nhạy cảm chưa che; không sắp xếp tăng dần mặc định. |
 
+: Đặc tả của CMP-AuditTrail
+
 ```ts
 export interface DhAuditTrailProps { objectType: string; objectId: string; variant?: 'object' | 'compact'; fullHistoryHref?: string }
 ```
@@ -1568,6 +1776,8 @@ export interface DhAuditTrailProps { objectType: string; objectId: string; varia
 | Bàn phím, ARIA | `<ol>`; mỗi mục có thời điểm trong `<time datetime>`; biểu tượng kết quả có chữ thay thế. |
 | Nội dung | Thời điểm qua `CMP-Timestamp`; trong ngày hiện tại hiển thị "14:05", ngày khác "20/11/2026 14:05". |
 | Điều cấm | Không chỉ dùng màu chấm để phân biệt kết quả. |
+
+: Đặc tả của CMP-Timeline
 
 ```ts
 export interface DhTimelineProps { variant?: 'default' | 'compact' | 'status'; groupByDay?: boolean; items: Array<{ key: string; at: string; content: React.ReactNode; result?: 'success' | 'error' | 'warning' | 'info'; icon?: string; pending?: boolean }> }
@@ -1612,6 +1822,8 @@ Nhóm này là bộ khung của mẫu PTN-07 (D03-06-00 §4.10) và được dù
 | Bàn phím, ARIA | Canvas là `role="application"` có `aria-roledescription="sơ đồ"` và `aria-label` ("Sơ đồ route nhan-khai-sinh, 12 chặng"); `Tab` vào canvas focus nút đang chọn hoặc nút đầu; mũi tên di chuyển focus giữa các nút theo thứ tự cấu trúc (không theo tọa độ); `Enter` mở Inspector; `Delete` xóa có hoàn tác; `Ctrl+A` chọn tất cả; `Esc` bỏ chọn; `Shift+F10` mở menu ngữ cảnh; `+`/`−`/`0` thu phóng. Mỗi thay đổi cấu trúc đọc một câu qua `aria-live="polite"` ("Đã chèn chặng Ánh xạ dữ liệu sau Kiểm lược đồ"). |
 | Nội dung | Lời mời ở trạng thái rỗng nêu cả cách kéo và cách không kéo. |
 | Điều cấm | Không vẽ cạnh tự do không suy ra từ cấu trúc; không đặt kính dưới nút; không lưu tọa độ vào cấu trúc đem triển khai; không chỉ hỗ trợ kéo thả. |
+
+: Đặc tả của CMP-FlowCanvas
 
 ```ts
 export interface DhFlowNodeTypeDescriptor {
@@ -1664,6 +1876,8 @@ export interface DhFlowCanvasProps {
 | Nội dung | Tên ưu tiên mô tả do người dùng đặt; không có thì tiêu đề tiếng Việt của loại nút. Tham số chứa biểu thức hiện dạng thẻ nhỏ. |
 | Điều cấm | Không chỉ dùng màu viền để báo lỗi (luôn có huy hiệu và chữ trong `aria-label`); không cổng nhỏ hơn vùng nhận 24×24; không chữ dưới 12px. |
 
+: Đặc tả của CMP-FlowNode
+
 ```ts
 export interface DhFlowNodeData {
   type: string; label: string; subtitle?: string;
@@ -1687,6 +1901,8 @@ export interface DhFlowNodeData {
 | Bàn phím, ARIA | `role="group"` với `aria-roledescription="nhóm"`, `aria-expanded`; `→` mở và vào nút đầu, `←` thu hoặc ra nhóm cha. |
 | Điều cấm | Không cho kéo nút con ra ngoài nhóm bằng thao tác bố cục (ra ngoài là thay đổi cấu trúc, đi qua lệnh có xác nhận ở vùng thả). |
 
+: Đặc tả của CMP-GroupNode
+
 ### 11.4. CMP-StickyNote
 
 `CMP-StickyNote` là ghi chú dán trên canvas để kỹ sư ghi chú thiết kế. Ghi chú thuộc lớp bố cục, không vào cấu trúc triển khai.
@@ -1699,6 +1915,8 @@ export interface DhFlowNodeData {
 | Trạng thái | Xem, đang sửa (nhấp đúp hoặc `Enter`, `Esc` thoát), đang chọn. |
 | Bàn phím, ARIA | `role="note"`; trong chế độ danh sách hiện như mục "Ghi chú" theo thứ tự đặt. Liên kết mở thẻ mới, chỉ nhận `https`. |
 | Điều cấm | Không cho HTML thô; không cho ảnh nhúng; không đặt dữ liệu cá nhân (nhắc trong chữ giữ chỗ "Ghi chú thiết kế, không ghi dữ liệu cá nhân"). |
+
+: Đặc tả của CMP-StickyNote
 
 ### 11.5. CMP-NodePalette
 
@@ -1714,6 +1932,8 @@ export interface DhFlowNodeData {
 | Token | `color-surface-solid`, `color-border-subtle`, `color-fill-hover`, `color-focus-ring`, `color-text-secondary`, `color-chart-1…8`, `font-callout`, `font-caption`. |
 | Bàn phím, ARIA | Danh sách là `role="listbox"` có nhóm (`role="group"` có nhãn); mũi tên di chuyển, `Enter` chèn mục vào sau nút đang chọn trên canvas và đọc kết quả qua `aria-live`; mục kéo được có `aria-roledescription="thành phần kéo được"` và gợi ý "Nhấn Enter để chèn". |
 | Điều cấm | Không hiện mục mà chính sách tenant cấm; không chỉ cho kéo; không tải toàn bộ tài liệu thành phần vào bảng (chỉ chỉ mục tìm kiếm dựng sẵn). |
+
+: Đặc tả của CMP-NodePalette
 
 ### 11.6. CMP-Inspector
 
@@ -1732,6 +1952,8 @@ export interface DhFlowNodeData {
 | Bàn phím, ARIA | `<aside role="complementary" aria-label="Thuộc tính chặng">`; `Enter` trên nút canvas đưa focus vào trường đầu của Inspector; `Esc` trong Inspector đưa focus về nút trên canvas. |
 | Điều cấm | Không là Modal che canvas; không lưu từng phím gõ lên máy chủ (gộp và tự lưu theo phiên soạn); không có ô nhập tự do cho tham số bí mật. |
 
+: Đặc tả của CMP-Inspector
+
 ### 11.7. CMP-CanvasControls
 
 `CMP-CanvasControls` là cụm điều khiển nổi góc dưới trái canvas: thu, mức thu phóng, phóng, vừa khung, vừa vùng chọn, khóa bố cục, bật minimap, chú giải.
@@ -1744,6 +1966,8 @@ export interface DhFlowNodeData {
 | Bàn phím, ARIA | `role="toolbar"` `aria-label="Điều khiển sơ đồ"`, mũi tên trái phải giữa các nút (roving tabindex). Mức thu phóng là nút có nhãn "Mức thu phóng 85%". |
 | Điều cấm | Không đặt cụm này trên nền đặc tự vẽ (phải là `glass-overlay` để phân biệt lớp nổi với nội dung). |
 
+: Đặc tả của CMP-CanvasControls
+
 ### 11.8. CMP-Minimap
 
 `CMP-Minimap` là bản đồ thu nhỏ góc dưới phải canvas, tự hiện khi sơ đồ có trên 20 nút.
@@ -1753,6 +1977,8 @@ export interface DhFlowNodeData {
 | Nền | `MiniMap` của XYFlow, `pannable`, `zoomable`; nút có lỗi vẽ màu `color-error-solid` có viền để vẫn nhận ra khi mù màu đỏ xanh (hình chấm to hơn nút thường). |
 | Vật liệu | Khung `glass-overlay`; bên trong vẽ nền đặc `color-surface-solid-2` để nút nhỏ đọc được. Kích thước 200×140px. |
 | Bàn phím, ARIA | `aria-hidden="true"` (thông tin đã có ở chế độ danh sách và bảng vấn đề); nút ✕ ẩn minimap focus được. |
+
+: Đặc tả của CMP-Minimap
 
 ### 11.9. CMP-QuickInsert
 
@@ -1765,6 +1991,8 @@ export interface DhFlowNodeData {
 | Nội dung | Gợi ý do phân hệ tính (PH-04: theo nút trước; PH-11: theo loại phần tử BPMN); nhóm "Gợi ý" trên, "Kết quả" dưới. |
 | Bàn phím, ARIA | Mẫu combobox; `Esc` đóng và trả focus về nút ⊕; sau khi chèn, focus chuyển tới nút mới trên canvas. |
 | Điều cấm | Không chèn khi lựa chọn không hợp lệ ở vị trí (mục bị ẩn khỏi danh sách, không hiện vô hiệu). |
+
+: Đặc tả của CMP-QuickInsert
 
 ### 11.10. CMP-DesignerToolbar
 
@@ -1779,6 +2007,8 @@ export interface DhFlowNodeData {
 | Bàn phím, ARIA | `role="toolbar"` có `aria-label="Thanh công cụ trình thiết kế"`; phím tắt ghi trong tooltip và trong `CMP-ShortcutSheet`. |
 | Điều cấm | Không quá một nút chính (thường là "Gửi duyệt" hoặc "Lưu"); không ẩn hành động bị vô hiệu do trạng thái (hiện vô hiệu kèm lý do, D03-05-04 §2.3). |
 
+: Đặc tả của CMP-DesignerToolbar
+
 ### 11.11. CMP-EntityRail
 
 `CMP-EntityRail` là dải tab ngang dưới thanh công cụ, liệt kê các thực thể trong cùng một tệp hoặc mô hình (route, cấu hình, bean, REST trong PH-04; tiến trình, tiến trình con trong PH-11). Mỗi mục là một `CMP-EntityTab`.
@@ -1791,6 +2021,8 @@ export interface DhFlowNodeData {
 | Trạng thái | Một thực thể (dải tự ẩn khi phân hệ cho phép), nhiều thực thể, tab có lỗi, tab đang đổi tên (nhấp đúp), tràn (cuộn ngang có nút mũi tên và menu "…"). |
 | Bàn phím, ARIA | Mẫu tab của ARIA APG; `Delete` trên tab mở xác nhận xóa; `Ctrl+Shift+←/→` đổi thứ tự. |
 | Điều cấm | Không xóa thực thể không xác nhận; không đổi thứ tự chỉ bằng kéo. |
+
+: Đặc tả của CMP-EntityRail
 
 ### 11.12. CMP-BottomPanel
 
@@ -1805,6 +2037,8 @@ export interface DhFlowNodeData {
 | Bàn phím, ARIA | `<section aria-label="Bảng dưới">`; số vấn đề thay đổi đọc qua `aria-live="polite"` tối đa một lần mỗi 2 giây. |
 | Điều cấm | Không tự mở bảng dưới mỗi khi có cảnh báo mới (chỉ tự mở khi người dùng bấm chạy thử hoặc gửi duyệt mà có lỗi chặn). |
 
+: Đặc tả của CMP-BottomPanel
+
 ### 11.13. CMP-Splitter
 
 `CMP-Splitter` là tay nắm đổi kích thước giữa hai ngăn (bảng thành phần, canvas, Inspector, bảng dưới; cũng dùng ở PTN-08 cây + bảng và PTN-11 tra log).
@@ -1815,6 +2049,8 @@ export interface DhFlowNodeData {
 | Vật liệu | Đường 1px `color-border-subtle`; khi rê hoặc focus, dải 4px `color-accent`. Vùng nhận 8px. |
 | Bàn phím, ARIA | `role="separator"` `aria-orientation`, `aria-valuenow/min/max` theo px; mũi tên đổi 16px, `Shift`+mũi tên 64px, `Enter` thu gọn hoặc mở, nhấp đúp trả về mặc định. |
 | Điều cấm | Không có tay nắm chỉ kéo được bằng chuột. |
+
+: Đặc tả của CMP-Splitter
 
 ## 12. Khung ứng dụng
 
@@ -1835,6 +2071,8 @@ Nhóm này dựng khung chung của `dh-console`: lớp điều hướng Liquid 
 | Token | `color-canvas`, `color-canvas-wash`, `size-sidebar`, `size-sidebar-collapsed`, `size-topbar`, `space-2`, `space-6`, `z-sidebar`, `z-topbar`. |
 | Bàn phím, ARIA | Landmark theo D03-06-00 §3.6: `<nav aria-label="Điều hướng chính">`, `<header>`, `<main>`, `<aside>`; thứ tự focus: bỏ qua → thanh trên → sidebar → nội dung. Đổi route: focus chuyển về `<h1>` của trang mới và vùng `polite` đọc tiêu đề trang. |
 | Điều cấm | Không có màn hình nào dựng khung riêng; không đặt nội dung nghiệp vụ trực tiếp lên kính; không giữ dữ liệu tenant cũ sau khi đổi tenant. |
+
+: Đặc tả của CMP-AppShell
 
 ```ts
 export interface DhAppShellProps {
@@ -1860,6 +2098,8 @@ export interface DhAppShellProps {
 | Bàn phím, ARIA | `<header role="banner">`; ô tìm là `<button>` có nhãn "Tìm kiếm (Ctrl+K)" và mở bảng lệnh; mọi nút có tên truy cập. |
 | Điều cấm | Không thêm hành động nghiệp vụ của phân hệ lên thanh trên (đặt trong `CMP-PageHeader`); không quá 7 điều khiển ở vùng phải. |
 
+: Đặc tả của CMP-Topbar
+
 ### 12.3. CMP-Sidebar
 
 `CMP-Sidebar` là thanh điều hướng chính hai cấp, tấm kính nổi cách mép `space-2`, bo `radius-xl`, bóng `shadow-2` (D03-06-00 §3.3).
@@ -1874,6 +2114,8 @@ export interface DhAppShellProps {
 | Bàn phím, ARIA | `<nav aria-label="Điều hướng chính">`; mũi tên lên xuống giữa mục, `→`/`←` mở thu nhóm, `Home`/`End`; mục hiện tại có `aria-current="page"`. |
 | Điều cấm | Không quá hai cấp; không hiện mục người dùng không có quyền (D03-06-00 §2.6); không đặt nội dung động ngoài số đếm lên sidebar. |
 
+: Đặc tả của CMP-Sidebar
+
 ### 12.4. CMP-TenantSwitcher
 
 `CMP-TenantSwitcher` hiển thị tenant hiện tại và cho đổi tenant hoặc bước vào chế độ liên tenant (FR-00-004, FR-00-011, FR-00-012). Hành vi đầy đủ ở D03-06-00 §2.11.
@@ -1887,6 +2129,8 @@ export interface DhAppShellProps {
 | Bàn phím, ARIA | Nút có `aria-haspopup="dialog"` và nhãn "Tenant hiện tại: Tỉnh Mẫu A. Đổi tenant"; danh sách theo mẫu listbox. |
 | Điều cấm | Không đổi tenant mà giữ route cũ; không để yêu cầu mạng nào mang ngữ cảnh tenant cũ sau khi đổi. |
 
+: Đặc tả của CMP-TenantSwitcher
+
 ### 12.5. CMP-UserMenu
 
 `CMP-UserMenu` là menu tài khoản ở góc phải thanh trên (D03-06-00 §2.10).
@@ -1898,6 +2142,8 @@ export interface DhAppShellProps {
 | Vật liệu | Popup `glass-overlay`. |
 | Hành vi | Đăng xuất gọi đăng xuất phía Keycloak và xóa bộ nhớ đệm truy vấn, `sessionStorage`, bản nháp cục bộ có dữ liệu của người dùng. |
 | Điều cấm | Không hiển thị mã định danh cá nhân, số điện thoại trong khối thông tin. |
+
+: Đặc tả của CMP-UserMenu
 
 ### 12.6. CMP-CommandPalette
 
@@ -1911,6 +2157,8 @@ export interface DhAppShellProps {
 | Tìm kiếm | Bỏ dấu, không phân biệt hoa thường (`matchVi`), khớp tiền tố từ và khớp mã chính xác (FR-00-020). |
 | Bàn phím, ARIA | `role="dialog"` `aria-modal="true"`; ô nhập `role="combobox"` `aria-controls` trỏ `role="listbox"`; mũi tên, `Enter`, `Tab` chuyển nhóm, `Esc` đóng và trả focus. |
 | Điều cấm | Không trả đối tượng ngoài tenant hiện tại hoặc ngoài quyền xem; không thực thi lệnh phá hủy trực tiếp từ bảng lệnh (lệnh mở màn hoặc hộp xác nhận). |
+
+: Đặc tả của CMP-CommandPalette
 
 ```ts
 export function useRegisterCommand(cmd: { id: string; title: string; keywords?: string[]; shortcut?: string; run: () => void; when?: () => boolean }): void;
@@ -1930,6 +2178,8 @@ export function useRegisterCommand(cmd: { id: string; title: string; keywords?: 
 | Bàn phím, ARIA | Nút chuông có nhãn "Thông báo, 3 chưa đọc"; tăng số đếm không đọc `assertive`. |
 | Điều cấm | Không đưa dữ liệu Hạn chế hoặc Nhạy cảm vào nội dung thông báo (chỉ mã và liên kết). |
 
+: Đặc tả của CMP-NotificationCenter
+
 ### 12.8. CMP-BackgroundTaskTray
 
 `CMP-BackgroundTaskTray` là khay tác vụ nền trên thanh trên: xuất tệp lớn (FR-00-031), nhập dữ liệu, chạy thử, phát hành, đồng bộ (FR-00-054). Nó cho người dùng rời màn mà vẫn theo dõi được tác vụ do chính mình khởi chạy.
@@ -1944,6 +2194,8 @@ export function useRegisterCommand(cmd: { id: string; title: string; keywords?: 
 | Bàn phím, ARIA | Nút có nhãn "Tác vụ nền, 2 đang chạy"; khi tác vụ xong, vùng `polite` đọc một câu ("Xuất danh sách giao dịch đã xong") và trung tâm thông báo nhận thông báo. |
 | Điều cấm | Không hiện tác vụ của người khác; không giữ liên kết tải tệp quá thời hạn của máy chủ (liên kết ký hết hạn thì hiện "Tạo lại liên kết"). |
 
+: Đặc tả của CMP-BackgroundTaskTray
+
 ### 12.9. CMP-ShortcutSheet
 
 `CMP-ShortcutSheet` là bảng tra phím tắt mở bằng `?` (khi focus không ở ô nhập) hoặc từ `CMP-UserMenu`.
@@ -1955,6 +2207,8 @@ export function useRegisterCommand(cmd: { id: string; title: string; keywords?: 
 | Cài đặt | Công tắc "Bật phím tắt một ký tự" (mặc định bật) để đáp ứng WCAG 2.1.4; tắt thì chỉ còn phím có `Ctrl`/`Alt`. |
 | Điều cấm | Không ghi đè phím chuẩn của trình duyệt và trình đọc màn hình (`Ctrl+L`, `Ctrl+T`, phím đơn khi trình đọc màn hình ở chế độ duyệt). |
 
+: Đặc tả của CMP-ShortcutSheet
+
 ### 12.10. CMP-FullscreenBar
 
 `CMP-FullscreenBar` là thanh nổi nhỏ góc trên phải khi khung ở chế độ toàn màn hình (D03-06-00 §3.9): tên màn, đồng hồ (dashboard), nút "Thoát toàn màn hình".
@@ -1964,6 +2218,8 @@ export function useRegisterCommand(cmd: { id: string; title: string; keywords?: 
 | Vật liệu | `glass-overlay`, bo `radius-pill`. |
 | Hành vi | Tự mờ sau 3 giây không di chuột, hiện lại khi di chuột hoặc focus; `Esc` thoát. Dải liên tenant và dải hệ thống mức lỗi vẫn hiển thị. |
 | Bàn phím, ARIA | `role="toolbar"` `aria-label="Thanh toàn màn hình"`; không bao giờ ẩn khỏi cây truy cập. |
+
+: Đặc tả của CMP-FullscreenBar
 
 ### 12.11. CMP-StatusBar
 
@@ -1976,6 +2232,8 @@ export function useRegisterCommand(cmd: { id: string; title: string; keywords?: 
 | Nội dung | "1.248 bản ghi · 12 đã sửa · 3 lỗi · Đang chọn 4 ô"; số lỗi là nút đi tới lỗi đầu tiên. |
 | Bàn phím, ARIA | `role="status"`; không đọc mỗi thay đổi (chỉ số lỗi đổi mới đọc, tối đa một lần mỗi 2 giây). |
 | Điều cấm | Không đặt hành động chính ở chân trạng thái. |
+
+: Đặc tả của CMP-StatusBar
 
 ## 13. Thành phần dữ liệu chuyên dụng
 
@@ -1998,6 +2256,8 @@ Nhóm này gồm các thành phần mà tập màn hình PH-04 và PH-07 đề n
 | Token | `color-surface-solid`, `color-surface-solid-2`, `color-accent`, `color-error-text`, `color-warning-solid`, `color-diff-added-bg`, `color-diff-changed-bg`, `color-diff-removed-bg` (D03-05-02 §4.6), `size-table-row`, `font-callout`. |
 | Bàn phím, ARIA | `role="grid"` với `aria-rowcount`/`aria-colcount` theo tổng thật; ô `role="gridcell"` có `aria-rowindex`/`aria-colindex`; roving tabindex; mũi tên, Home/End, Ctrl+Home/End, PageUp/PageDown; Enter hoặc F2 sửa, Esc hủy, Tab xác nhận sang ô kế; Ctrl+Z hoàn tác; ô lỗi `aria-invalid` và `aria-describedby` (kế thừa D03-06-PH07 §20.1). Dán vùng từ Excel (`Ctrl+V`) dán vào nhiều ô, có hoàn tác. |
 | Điều cấm | Không lưu từng phím gõ; không mất thay đổi chưa lưu khi đổi trang (hỏi trước, D03-06-00 §4.3); không chỉ dùng màu nền để báo dòng đã sửa. |
+
+: Đặc tả của CMP-EditableTable
 
 ```ts
 export interface DhEditableColumn<Row> {
@@ -2031,6 +2291,8 @@ export interface DhEditableTableProps<Row extends { key: string }> {
 | Bàn phím, ARIA | Mỗi dòng là `role="group"` có nhãn "Cặp 3"; nút xóa có nhãn "Xóa cặp linh-vuc"; sau khi thêm, focus vào ô khóa mới. |
 | Điều cấm | Không cho khóa rỗng; không âm thầm gộp khóa trùng. |
 
+: Đặc tả của CMP-KeyValueEditor
+
 ```ts
 export interface DhKeyValueEditorProps {
   value?: Array<{ key: string; value: string }>; onChange?: (v: Array<{ key: string; value: string }>) => void;
@@ -2054,6 +2316,8 @@ export interface DhKeyValueEditorProps {
 | Trạng thái | Đang tải lược đồ, lược đồ lỗi (`CMP-Alert` "Không đọc được lược đồ biểu mẫu" kèm mã truy vết), sẵn sàng, lược đồ đổi trong khi sửa (Alert "Lược đồ thuộc tính vừa được thay đổi. Tải lại lược đồ"), như `CMP-Form`. |
 | Bàn phím, ARIA | Như `CMP-Form` (mục 3.2); nhóm `object` là `<fieldset>` có `<legend>`. |
 | Điều cấm | Không tự viết lại quy tắc kiểm tra song song với lược đồ máy chủ; không hiển thị trường `hidden`; không sinh trường bí mật dạng ô nhập. |
+
+: Đặc tả của CMP-DynamicForm
 
 ```ts
 export interface DhDynamicFormProps {
@@ -2079,6 +2343,8 @@ export interface DhDynamicFormProps {
 | Bàn phím, ARIA | Mẫu `tree` (D03-06-PH07 §20.2); nút có `aria-label` "khaiSinh.nguoiMe.hoTen, chuỗi, bắt buộc, đã ánh xạ". |
 | Điều cấm | Không tải lược đồ trên 5 MB về trình duyệt (máy chủ trả dạng nạp lười theo nhánh). |
 
+: Đặc tả của CMP-SchemaTree
+
 ### 13.5. CMP-TreeGrid
 
 `CMP-TreeGrid` là bảng có cột mà dòng phân cấp mở được. Hai cách dùng chính: chế độ danh sách thay thế canvas cho người dùng bàn phím và trình đọc màn hình (PH-04 §10.18, biến thể `structure`), và bảng dữ liệu phân cấp có nhiều cột (bản ghi danh mục có cha con xem kèm thuộc tính, cây ĐVHC kèm mã).
@@ -2090,6 +2356,8 @@ export interface DhDynamicFormProps {
 | Vật liệu | Nền đặc. |
 | Bàn phím, ARIA | `role="treegrid"`; dòng có `aria-level`, `aria-expanded`, `aria-posinset`, `aria-setsize`; mũi tên phải trái mở thu dòng khi focus ở dòng, di chuyển ô khi focus ở ô. Mỗi thao tác cấu trúc đọc một câu qua `aria-live`. |
 | Điều cấm | Không có thao tác nào chỉ làm được trên canvas mà không làm được trên TreeGrid `structure`. |
+
+: Đặc tả của CMP-TreeGrid
 
 ### 13.6. CMP-DiffTable
 
@@ -2104,6 +2372,8 @@ export interface DhDynamicFormProps {
 | Bàn phím, ARIA | `<table>` ngữ nghĩa; giá trị cũ, mới có văn bản ẩn "Giá trị cũ:", "Giá trị mới:" (nhiều trình đọc không đọc ngữ nghĩa `del`, `ins`, D03-06-PH07 §20.3). |
 | Điều cấm | Không chỉ tô màu nền để báo loại khác biệt; không tính khác biệt ở trình duyệt với tập trên 1.000 bản ghi. |
 
+: Đặc tả của CMP-DiffTable
+
 ### 13.7. CMP-VersionTimeline
 
 `CMP-VersionTimeline` là dải thời gian hiệu lực của các phiên bản: mỗi phiên bản đã phát hành là một đoạn `[hiệu lực từ, hiệu lực đến)` trên trục ngày, đoạn đang hiệu lực tô đậm, phiên bản tương lai nét đứt (danh mục PH-07, phiên bản API PH-02, phiên bản luồng PH-04 theo môi trường).
@@ -2114,6 +2384,8 @@ export interface DhDynamicFormProps {
 | Vật liệu | Nền đặc; đoạn hiệu lực `color-accent`, đoạn đã hết hiệu lực `color-neutral-solid`, đoạn tương lai viền nét đứt `color-accent`; nhãn số phiên bản trên đoạn. |
 | Bảng thay thế | Thông tin của dải luôn có trong bảng phiên bản (cột Hiệu lực); dải có `aria-hidden="true"` và nút "Bỏ qua dải thời gian". |
 | Điều cấm | Không dùng dải làm nơi duy nhất thể hiện hiệu lực. |
+
+: Đặc tả của CMP-VersionTimeline
 
 Tên `CMP-LineageTimeline` trong D03-06-PH07 (dòng lịch sử một bản ghi qua các phiên bản) là `CMP-Timeline` biến thể `status` có nhóm theo phiên bản; không phải thành phần riêng.
 
@@ -2130,6 +2402,8 @@ Tên `CMP-LineageTimeline` trong D03-06-PH07 (dòng lịch sử một bản ghi 
 | Bảng thay thế | Nút "Xem dạng danh sách" chuyển sang bảng (Loại, Tên, Quan hệ, Trạng thái); đồ thị `role="img"` có `aria-label` tóm tắt ("Phụ thuộc vào 2 kết nối, 1 topic, 3 bảng mã; được dùng bởi 1 API"). |
 | Điều cấm | Không cho sửa quan hệ trên đồ thị; không hiện tên đối tượng người dùng không có quyền xem. |
 
+: Đặc tả của CMP-DependencyGraph
+
 ### 13.9. CMP-CommentThread
 
 `CMP-CommentThread` là luồng bình luận gắn với một phần tử: chặng trên canvas hoặc dòng YAML khi duyệt luồng (PH-04), bản ghi danh mục khi duyệt công bố (PH-07), trường trong hồ sơ kết nạp (PH-01).
@@ -2143,6 +2417,8 @@ Tên `CMP-LineageTimeline` trong D03-06-PH07 (dòng lịch sử một bản ghi 
 | Bàn phím, ARIA | Danh sách `role="feed"`; mỗi bình luận `role="article"` có `aria-labelledby` (tên, thời điểm). |
 | Điều cấm | Không cho sửa bình luận của người khác; không xóa bình luận đã gắn với một quyết định duyệt (chỉ ẩn, giữ kiểm toán); không nhận HTML. |
 
+: Đặc tả của CMP-CommentThread
+
 ### 13.10. CMP-DecisionPanel
 
 `CMP-DecisionPanel` là ngăn quyết định theo trạng thái: hiển thị trạng thái hiện tại của đối tượng có vòng đời và các hành động hợp lệ tiếp theo lấy từ `allowedActions` / `disabledReasons`, mỗi hành động có thể yêu cầu xác nhận, lý do hoặc tùy chọn (PH-07 UI-07-07 duyệt phiên bản, UI-07-09 xác nhận đồng bộ với "Bỏ qua bản ghi lỗi", "Loại trừ mã", "Phát hành ngay"). `CMP-ApprovalPanel` (mục 10.2) là cấu hình sẵn của DecisionPanel cho phê duyệt bốn mắt.
@@ -2155,6 +2431,8 @@ Tên `CMP-LineageTimeline` trong D03-06-PH07 (dòng lịch sử một bản ghi 
 | Trạng thái | Đang tải, sẵn sàng, đang gửi quyết định, xung đột (người khác vừa quyết định: Alert và tự làm mới), chỉ đọc (đối tượng đã kết thúc). |
 | Bàn phím, ARIA | `<section aria-labelledby>`; sau quyết định, focus tới thông báo kết quả `role="status"`. |
 | Điều cấm | Không suy diễn hành động từ vai trò ở giao diện; không gửi quyết định không kèm `If-Match`. |
+
+: Đặc tả của CMP-DecisionPanel
 
 ```ts
 export interface DhDecisionAction {
@@ -2183,6 +2461,8 @@ export interface DhDecisionPanelProps {
 | Bàn phím, ARIA | Thẻ là `<article aria-labelledby>`; nhóm thẻ là `role="list"`. |
 | Điều cấm | Không hiện nút thăng cấp lên PROD cho người không có quyền `promote`; không chỉ dùng màu chấm cho sức khỏe. |
 
+: Đặc tả của CMP-EnvCard
+
 ### 13.12. CMP-EmbeddedDashboard
 
 `CMP-EmbeddedDashboard` nhúng một bảng điều khiển giám sát của PH-13 vào trang chi tiết của phân hệ khác, đã lọc theo đối tượng (lượng bản tin theo giây, lỗi, độ trễ, tài nguyên của một luồng; lượt gọi của một API).
@@ -2196,6 +2476,8 @@ export interface DhDecisionPanelProps {
 | Truy cập | Mỗi biểu đồ có bảng dữ liệu thay thế theo `CMP-Chart` (mục 6.6). |
 | Điều cấm | Không dùng iframe; không truy vấn quá 7 ngày mỗi lần từ trang nhúng. |
 
+: Đặc tả của CMP-EmbeddedDashboard
+
 ### 13.13. CMP-Wizard
 
 `CMP-Wizard` là khung của mẫu PTN-05 (D03-06-00 §4.8): `CMP-Steps` + nội dung bước + thanh hành động dính đáy + bước rà soát. Mọi wizard của các phân hệ (kết nạp HTTT, đăng ký API từ OpenAPI, tạo luồng, tạo danh mục, nhập dữ liệu) dùng thành phần này để có cùng hành vi kiểm tra bước, quay lại, lưu nháp và rời trang.
@@ -2207,6 +2489,8 @@ export interface DhDecisionPanelProps {
 | Vật liệu | Steps trên canvas; nội dung bước trong `CMP-Card` đặc; thanh hành động đặc `color-surface-solid` có bóng `shadow-2` khi nội dung cuộn dưới nó. |
 | Bàn phím, ARIA | Khi chuyển bước, focus tới tiêu đề bước và vùng `polite` đọc "Bước 2 trên 4, Đầu mối"; `Ctrl+Enter` tương đương "Tiếp tục". |
 | Điều cấm | Không dùng Modal cho wizard trên 3 bước; không mất dữ liệu bước khi quay lại; không gửi khi chưa qua bước rà soát. |
+
+: Đặc tả của CMP-Wizard
 
 ```ts
 export interface DhWizardStep<V> { key: string; title: string; description?: string; fields?: Array<keyof V & string>; render: () => React.ReactNode; validate?: (v: V) => Promise<void>; longRunning?: boolean }
@@ -2297,9 +2581,13 @@ Bảng dưới là danh mục chính thức để đối chiếu Storybook khi n
 | 13.12 | `CMP-EmbeddedDashboard` | `CMP-Chart` | Đặc | S | PH-04 |
 | 13.13 | `CMP-Wizard` | `CMP-Steps` + `CMP-Form` | Đặc | M | PH-01, PH-04, PH-07 |
 
+: Danh mục thành phần phức hợp và tổ chức theo nền, vật liệu, mức và phân hệ dùng đầu tiên
+
 Tổng cộng 75 thành phần phức hợp và tổ chức (77 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`). Cộng 44 thành phần nguyên tử ở D03-05-03 và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`), design system có 121 thành phần.
 
 ### 14.2. Tên gọi khác đã gặp trong tài liệu phân hệ
+
+Bảng dưới ánh xạ các tên thành phần mà tập phân hệ đã dùng sang tên chuẩn của tài liệu này, để phân hệ đổi tên ở lần cập nhật kế tiếp.
 
 | Tên đã dùng | Tên chuẩn | Ghi chú |
 |---|---|---|
@@ -2316,21 +2604,27 @@ Tổng cộng 75 thành phần phức hợp và tổ chức (77 mã kể cả `C
 | `CMP-ConflictDialog` | `CMP-DiffViewer` biến thể `conflict` trong `CMP-Modal` `lg` (mục 9.4.1) | PH-07 |
 | `CMP-DecisionPanel` | Đã thành thành phần chính thức (13.10) | |
 
+: Ánh xạ tên thành phần phức hợp đã dùng trong tập phân hệ sang tên chuẩn
+
 `CMP-KpiCard` có thêm biến thể `filter` từ bản 0.2: cả thẻ là nút bật tắt (`aria-pressed`) dùng làm bộ lọc nhanh trên danh sách (PH-07 UI-07-01, UI-07-06); thẻ đang bật có viền 2px `color-accent` và nền `color-accent-subtle`; không có sparkline và liên kết.
 
 ### 14.3. Checklist nghiệm thu thành phần phức hợp
+
+Kiểm thử viên và người duyệt PR dùng checklist dưới đây cho mỗi thành phần trước khi phát hành `@datahub/ui`.
 
 - [ ] Có story cho mọi trạng thái ghi ở bảng đặc tả, ở sáng, tối, kính `full` và `off`; với nhóm 11 có thêm story mật độ Gọn và thu phóng 25%, 100%, 400%.
 - [ ] axe-core 0 vi phạm A/AA; thử thủ công với NVDA cho `CMP-DataTable`, `CMP-EditableTable`, `CMP-Form`, `CMP-Modal`, `CMP-FlowCanvas` + `CMP-TreeGrid` `structure`, `CMP-AppShell`.
 - [ ] Vật liệu khớp bảng mục 2.1 và mục 14.1; không có kính chồng kính ngoài ngoại lệ đã nêu; không quá bốn lớp `backdrop-filter` đồng thời trên story màn đầy đủ.
 - [ ] Mọi thao tác kéo có phương án bàn phím (WCAG 2.5.7) và có kiểm thử Playwright chỉ dùng bàn phím.
-- [ ] Thành phần dữ liệu hiển thị đủ năm trạng thái mục 2.2 và nhận lỗi dạng `DhApiError` (mục 2.4).
+- [ ] Thành phần dữ liệu hiển thị đủ sáu trạng thái mục 2.2 và nhận lỗi dạng `DhApiError` (mục 2.4).
 - [ ] Hành động hiển thị theo `allowedActions` và `disabledReasons` (mục 2.3).
 - [ ] Khóa truy vấn bắt đầu bằng mã tenant; đổi tenant không để lại dữ liệu cũ.
 - [ ] Hiệu năng: `CMP-DataTable` 10.000 dòng, `CMP-EditableTable` 50.000 × 30, `CMP-FlowCanvas` 300 nút, `CMP-LogViewer` 1 triệu dòng đạt 60 khung/giây khi cuộn hoặc kéo trên máy chuẩn.
 - [ ] Không có tên `CMP-*` ngoài danh mục mục 14.1 và D03-05-03 §9 trong mã và tài liệu (công cụ `check-cmp.py`, D03-05-03 §12).
 
 ### 14.4. Truy vết
+
+Bảng dưới nối yêu cầu và tài liệu phân hệ với thành phần hoặc mục của tài liệu này đáp ứng chúng.
 
 | Yêu cầu | Đáp ứng tại |
 |---|---|
@@ -2349,8 +2643,19 @@ Tổng cộng 75 thành phần phức hợp và tổ chức (77 mã kể cả `C
 | D03-06-PH04 §27.3 | Mục 11, 12.9, 12.10, 13.2, 13.4, 13.5, 13.11; phần nguyên tử ở D03-05-03 |
 | D03-06-PH07 Phụ lục A-05 | 13.1, 13.6, 13.10, 12.8, 9.1; `CMP-CronPicker` ở D03-05-03 |
 
+: Truy vết yêu cầu và mẫu màn hình tới mục của D03-05-04
+
 ### 14.5. Đề xuất bổ sung
+
+Các đề xuất dưới đây cần chủ sở hữu tài liệu liên quan xử lý ở lần cập nhật kế tiếp; tài liệu này không sửa chéo.
 
 1. D03-04 bổ sung hợp đồng dùng chung "tác vụ nền của người dùng" (danh sách, SSE, hủy) cho `CMP-BackgroundTaskTray` và "bình luận có neo" cho `CMP-CommentThread`, để các phân hệ không tự định nghĩa.
 2. D03-04 bổ sung định nghĩa bảng điều khiển nhúng của PH-13 (JSON) cho `CMP-EmbeddedDashboard`.
 3. D03-06-PH04 và D03-06-PH07 đổi tên thành phần theo bảng 14.2 ở lần cập nhật kế tiếp (bản 0.2 của tập này đã đổi sẵn các tên trùng nghĩa trực tiếp).
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản trước: 75 thành phần phức hợp và tổ chức, quy tắc chung, bảng tổng hợp, tên gọi khác, checklist, truy vết, đề xuất (gồm biến thể `filter` của `CMP-KpiCard`, đổi tên trùng nghĩa) |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.1 đến 1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho các mục 14.2 đến 14.5; viết lại 91 chú thích bảng thành dạng cụ thể ("Đặc tả của CMP-…", "Các phần con của …"), không trùng; thêm metadata `mo_ta`, `tai_lieu_lien_quan` |

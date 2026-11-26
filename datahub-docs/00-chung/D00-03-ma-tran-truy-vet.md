@@ -1,13 +1,42 @@
 ---
 ma_tai_lieu: D00-03
 ten: Ma trận truy vết (RTM) — Phần A, kiểm kê chức năng hệ LGSP cũ
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, Quản lý dự án, Đội kỹ thuật
+mo_ta: Ma trận truy vết phần A kiểm kê 186 chức năng hệ LGSP cũ theo chín khối, kết luận cho từng chức năng và tổng hợp độ phủ vào Datahub.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước §3; D01-01 Báo cáo nghiên cứu khả thi; D02-02 SRS; D02-03 FRS PH-04, PH-07; D05-02 Test case PH-04, PH-07
 ---
 
 # D00-03 · Ma trận truy vết
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Ma trận chứng minh hai điều chủ đầu tư yêu cầu. Thứ nhất, Datahub phủ toàn bộ nghiệp vụ của hệ LGSP cũ: mỗi chức năng cũ có một kết luận rõ ràng và có chỗ hiện thực trong hệ mới. Thứ hai, mọi yêu cầu đi được tới kiểm thử, từ mục tiêu nghiệp vụ qua yêu cầu chức năng, API, dữ liệu, màn hình tới test case.
+
+**Phạm vi.** Bản này hoàn thiện phần A, kiểm kê 186 chức năng hệ cũ (mã `LGC`) thuộc chín khối Bus, Tooling, Hub, APIM, DMDC, PAY, NGSP, IAM và NFR, kèm kết luận, phân hệ đích và ghi chú chuyển hóa. Phần B, C, D (ánh xạ tới FR, ánh xạ dọc, ánh xạ pháp lý) hoàn thiện dần ở các đợt sau.
+
+**Căn cứ.** Kiểm kê lập từ tài liệu thiết kế và hướng dẫn của hệ cũ trong thư mục `lgsp_document` (mục 2). Phần D sẽ ánh xạ các căn cứ CMP-LAW trong D00-01 §7 tới yêu cầu và bằng chứng kiểm chứng; công văn 631/THH-THHT của hệ cũ là CMP-LAW-09.
+
+**Những điểm hội đồng cần lưu ý.** (1) Mọi chức năng có đúng một trong bốn kết luận Giữ nguyên, Nâng cấp, Thay thế, Loại bỏ (D00-01 §3.2), riêng một mục hợp đồng bảo trì xếp là "Khác". (2) Chỉ ba mục bị loại bỏ, đều đã được chủ đầu tư chấp thuận ngày 21/11/2026 (mục 5.1): sửa pom, nhập JAR, đăng nhập mạng xã hội, vì rủi ro chuỗi cung ứng, kiểm soát phần mềm cấp độ 3 và tính phù hợp với cơ quan nhà nước. (3) Phụ lục `PTYC_Toolings.xlsx` không có, nên khối Tooling dựa trên giả định GĐ-01 (mục 6). (4) Các giá trị phi chức năng mới ở khối NFR chỉ là dự kiến, chốt tại D02-02.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Chức năng hệ cũ được kiểm kê | 186 |
+| Giữ nguyên | 85 |
+| Nâng cấp | 72 |
+| Thay thế | 25 |
+| Loại bỏ | 3 |
+| Khác (ngoài phạm vi kỹ thuật) | 1 |
+| Khối nghiệp vụ | 9 |
+| Giả định ghi ở mục 6 | 3 |
+
+: Con số chính của ma trận truy vết phần A
+
+Các con số được đếm từ bảng ở mục 4 và khớp với bảng tổng hợp ở mục 5.
 
 ## 1. Mục đích
 
@@ -21,6 +50,77 @@ Tài liệu gồm bốn phần, được hoàn thiện dần theo các đợt vi
 | B | Ánh xạ `LGC` → `FR` cụ thể | Đợt 2–4, theo từng phân hệ |
 | C | Ánh xạ dọc `BO` → `REQ` → `FR` → `UC/US` → `API/EN/UI` → `TC` | Đợt 2–4 |
 | D | Ánh xạ pháp lý `CMP-LAW` → yêu cầu → bằng chứng kiểm chứng | Đợt 1 (khung), Đợt 5 (bằng chứng) |
+
+: Bốn phần của ma trận truy vết và đợt hoàn thành
+
+### 1.1. Phạm vi
+
+Phần A của ma trận chỉ kiểm kê chức năng hệ cũ; việc ánh xạ sang yêu cầu, API, màn hình và test case thuộc các phần B, C, D và các tài liệu phân hệ, như bảng dưới.
+
+| Thuộc tài liệu này (phần A) | Nằm ở tài liệu khác |
+|---|---|
+| Danh sách `LGC`, kết luận, phân hệ đích, ghi chú | Ánh xạ `LGC` tới FR: FRS từng phân hệ (ví dụ D02-03-PH04 §9.1) |
+| Tổng hợp độ phủ, mục loại bỏ, giả định | Ánh xạ tới test case, nghiệm thu: D05-02 từng phân hệ |
+| Nguồn kiểm kê từ hệ cũ | Định nghĩa các họ mã và kết luận: D00-01 §3 |
+
+: Phân định phạm vi giữa D00-03 và các tài liệu khác
+
+### 1.2. Người đọc
+
+Bảng dưới gợi ý phần cần đọc theo vai trò.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, mục 5, 6 | Đánh giá độ phủ nghiệp vụ và các mục loại bỏ |
+| Quản lý dự án | Mục 1, 5, 6 | Theo dõi tiến độ hoàn thiện các phần B, C, D |
+| Kiến trúc sư, người viết FRS | Mục 3, 4 | Biết chức năng cũ nào thuộc phân hệ của mình và cách chuyển hóa |
+| Kiểm thử viên | Mục 4, 5 | Xác định chức năng cũ cần kiểm thử tương đương |
+
+: Người đọc D00-03 và phần cần đọc theo vai trò
+
+### 1.3. Thuật ngữ và chữ viết tắt
+
+Bảng dưới chỉ gồm thuật ngữ riêng của ma trận. Thuật ngữ chung theo D00-01 §2.
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| `LGC` | Mã chức năng hệ cũ, dạng `LGC-{khối}-{nnn}` |
+| RTM | Ma trận truy vết, tên tắt của tài liệu này |
+| Kết luận | Một trong Giữ nguyên, Nâng cấp, Thay thế, Loại bỏ (D00-01 §3.2) |
+| PH đích | Phân hệ Datahub chịu trách nhiệm hiện thực chức năng |
+| Khối | Nhóm chức năng cùng nguồn: Bus, Tooling, Hub, APIM, DMDC, PAY, NGSP, IAM, NFR |
+| GĐ | Giả định đã ghi cơ sở, thay cho câu hỏi mở (mục 6) |
+
+: Thuật ngữ riêng của ma trận truy vết
+
+### 1.4. Tài liệu tham chiếu
+
+Các tài liệu dưới đây được dẫn chiếu trong D00-03.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| D00-01 | Thuật ngữ và quy ước chung | Định nghĩa mã `LGC` và bốn kết luận |
+| D01-01 | Báo cáo nghiên cứu khả thi | Dùng kết quả kiểm kê để đánh giá phạm vi thay thế hệ cũ |
+| D02-02 | Đặc tả yêu cầu phần mềm (SRS) | Chốt giá trị mới của khối NFR |
+| D02-03-PH04, D02-03-PH07 | FRS các phân hệ | Phần B đã có cho khối BUS, TOOL, DMDC |
+| D05-02-PH04, D05-02-PH07 | Test case các phân hệ | Ánh xạ tới kiểm thử và nghiệm thu |
+| `lgsp_document` | Tài liệu hệ LGSP cũ | Nguồn kiểm kê (mục 2) |
+
+: Tài liệu tham chiếu của D00-03
+
+### 1.5. Cấu trúc tài liệu
+
+Bảng dưới tóm tắt từng chương.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 2 | Nguồn kiểm kê theo khối | Hội đồng, kiến trúc sư |
+| 3 | Cách đọc bảng kiểm kê và bốn kết luận | Mọi người đọc |
+| 4 | Kiểm kê chức năng hệ cũ, chín khối | Kiến trúc sư, kiểm thử viên |
+| 5 | Tổng hợp độ phủ và các mục loại bỏ | Hội đồng, quản lý dự án |
+| 6 | Câu hỏi mở và giả định | Hội đồng, quản lý dự án |
+
+: Cấu trúc chương của D00-03
 
 ## 2. Nguồn kiểm kê
 
@@ -37,6 +137,8 @@ Phần A được lập từ các tài liệu trong thư mục `lgsp_document` c
 | NGSP — kết nối quốc gia | `phucluc_ketnoiNGSP` |
 | IAM — định danh | Mục Keycloak trong các PTYC, `huongdanlaytokenkeycloak` |
 | NFR — phi chức năng, vận hành | Mục 4 của các PTYC, các tài liệu HDVH và hướng dẫn cài đặt |
+
+: Tài liệu nguồn của hệ cũ theo khối kiểm kê
 
 ## 3. Cách đọc bảng kiểm kê
 
@@ -99,6 +201,8 @@ Khối Bus của hệ cũ quản trị các "chương trình tích hợp". Mỗi
 | LGC-BUS-040 | Connector: CSDL (Oracle, MySQL…), NoSQL (MongoDB, Cassandra), LDAP, Hadoop, message broker (AMQP, MQTT), HTTP, SOAP, FTP, File, cloud, SMPP, lập lịch | Nâng cấp | PH-05 | — | Danh mục adapter có phiên bản; mỗi loại có Kamelet được duyệt |
 | LGC-BUS-041 | Bảo mật route (Shiro, Spring), mã hóa bản tin, bảo mật endpoint (Basic, SSL, WS-Security) | Nâng cấp | PH-03, PH-04, PH-12 | — | OAuth 2.1, mTLS, mã hóa trường nhạy cảm |
 
+: Bus — quản trị trục tích hợp (LGC-BUS)
+
 ### 4.2. Tooling — công cụ thiết kế luồng (`LGC-TOOL`)
 
 Hệ cũ có studio kéo thả viết bằng Angular, sinh Camel XML và tự cập nhật file pom. Datahub thay bằng trình thiết kế luồng React dùng Camel YAML DSL. Repo DATAHUB đã có một bản hiện thực vượt về chức năng so với hệ cũ, nên phần lớn các dòng dưới đây có kết luận Nâng cấp.
@@ -135,6 +239,8 @@ Hệ cũ có studio kéo thả viết bằng Angular, sinh Camel XML và tự c�
 | LGC-TOOL-028 | Data mapping: nhập tài liệu mẫu, export mapping, reset mapping | Nâng cấp | PH-04 | Trình ánh xạ dữ liệu sinh JQ, lưu cùng phiên bản luồng |
 | LGC-TOOL-029 | Phiên nháp (`draft_session`) lưu XML đang soạn | Giữ nguyên | PH-04 | |
 
+: Tooling — công cụ thiết kế luồng (LGC-TOOL)
+
 ### 4.3. Hub — trung tâm tích hợp publish/subscribe (`LGC-HUB`)
 
 Khối Hub dùng Apache Pulsar. Dữ liệu cốt lõi gồm dự án tích hợp (`project`), topic (có thể phân vùng, có cấu trúc dữ liệu và chế độ định tuyến), publisher, subscriber, publication (publisher gắn với topic) và subscription (subscriber gắn với topic, kèm URI nhận, số worker, số lần thử lại, thời điểm bắt đầu). Datahub chuyển sang Kafka và giữ nguyên các khái niệm nghiệp vụ này.
@@ -155,6 +261,8 @@ Khối Hub dùng Apache Pulsar. Dữ liệu cốt lõi gồm dự án tích hợ
 | LGC-HUB-012 | Quản lý publication (publisher ↔ topic) | Giữ nguyên | PH-10 | — | Quyền phát trên topic |
 | LGC-HUB-013 | Quản lý subscription: URI nhận, số worker, số lần thử lại, thời điểm bắt đầu | Nâng cấp | PH-10 | — | Hai chế độ giao nhận: đẩy về URI (webhook có ký) hoặc HTTT tự kéo |
 | LGC-HUB-014 | Danh mục kiểu giao tiếp (`type_of_comm`) và chế độ định tuyến (`routing_mode`) | Giữ nguyên | PH-10 | — | Danh mục cấu hình |
+
+: Hub — trung tâm tích hợp publish/subscribe (LGC-HUB)
 
 ### 4.4. APIM — quản lý API (`LGC-APIM`)
 
@@ -190,6 +298,8 @@ Khối API Management của hệ cũ có mô hình tương tự Gravitee. Datahu
 | LGC-APIM-026 | Dashboard hoạt động chung của hệ thống API | Giữ nguyên | PH-13 | Có | |
 | LGC-APIM-027 | Audit: thông tin tác động hệ thống | Nâng cấp | PH-13 | Có | Nhật ký kiểm toán không sửa được (WORM) |
 
+: APIM — quản lý API (LGC-APIM)
+
 ### 4.5. DMDC — danh mục dùng chung Aita (`LGC-DMDC`)
 
 Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá trị: bảng `Category` (mã, tên, cờ cho phép cập nhật), `category_fields` (thuộc tính do người dùng khai báo, có thứ tự và trạng thái), `Category_details` (bản ghi) và `Category_details_value` (giá trị theo từng thuộc tính, tối đa 2.000 ký tự). Datahub giữ khả năng **khai báo thuộc tính động** nhưng thêm kiểu dữ liệu, ràng buộc, phân cấp, phiên bản và đồng bộ với danh mục quốc gia.
@@ -215,6 +325,8 @@ Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá 
 | LGC-DMDC-017 | Cờ cho phép cập nhật danh mục (`Is_update`) | Nâng cấp | PH-07 | — | Phân biệt danh mục nguồn quốc gia (chỉ đọc) và danh mục địa phương |
 | LGC-DMDC-018 | Thứ tự và trạng thái thuộc tính (`Order`, `status`) | Giữ nguyên | PH-07 | — | |
 | LGC-DMDC-019 | Kết nối danh mục dùng chung quốc gia qua NGSP: danh sách danh mục, lấy cấu trúc, bổ sung danh mục, lấy dữ liệu | Nâng cấp | PH-07, PH-14 | — | Đồng bộ định kỳ và theo yêu cầu, có đối chiếu khác biệt |
+
+: DMDC — danh mục dùng chung Aita (LGC-DMDC)
 
 ### 4.6. PAY — thanh toán (`LGC-PAY`)
 
@@ -249,6 +361,8 @@ Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh
 | LGC-PAY-025 | Ba trạng thái hoàn trả `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` chỉ có trong bộ trạng thái, không có chức năng (TKCT 3.4) | Nâng cấp | PH-19 | Có | Nghiệp vụ hoàn tiền đầy đủ: lập, duyệt một hoặc hai cấp, thực thi qua NCC hoặc thủ công có chứng từ (FR-19-038…041; ADR-043, ADR-046) |
 | LGC-PAY-026 | Số liệu tổng trên dashboard được đệm 10 phút (TKCT 3.1) | Nâng cấp | PH-19 | Có | Số liệu trễ tối đa 60 giây (FR-19-056, NFR-19-006) |
 
+: PAY — thanh toán (LGC-PAY)
+
 ### 4.7. NGSP — kết nối quốc gia (`LGC-NGSP`)
 
 Phụ lục kết nối NGSP liệt kê các dịch vụ quốc gia mà hệ cũ đã kết nối thông qua cổng AM của trục quốc gia. Mỗi dịch vụ dùng header `Service-code` để phân biệt nghiệp vụ trên cùng một đường dẫn, và xác thực bằng Bearer token lấy theo grant `password` hoặc `client_credentials`. Trong Datahub, mỗi nhóm dịch vụ trở thành một adapter của PH-14 có hợp đồng riêng. Danh sách dịch vụ phải được đối chiếu lại với danh mục dịch vụ hiện hành của NDXP trước khi xây dựng.
@@ -264,9 +378,13 @@ Phụ lục kết nối NGSP liệt kê các dịch vụ quốc gia mà hệ cũ
 | LGC-NGSP-007 | Văn bản quy phạm pháp luật: tìm kiếm toàn văn, lĩnh vực, cơ quan ban hành, chi tiết, loại văn bản, người ký, chức danh | Giữ nguyên | PH-14 |
 | LGC-NGSP-008 | Lấy token qua cổng AM bằng Consumer Key / Secret | Nâng cấp | PH-14, PH-12 | 
 
+: NGSP — kết nối quốc gia (LGC-NGSP)
+
 Ghi chú về LGC-NGSP-008: tài liệu hệ cũ chứa Consumer Key / Secret dạng văn bản và địa chỉ IP công khai của cổng token chạy HTTP. Datahub lưu mọi thông tin xác thực đối ngoại trong kho bí mật, gọi qua kênh mã hóa, và phải cấp lại khóa khi cắt chuyển (xem D06-01).
 
 ### 4.8. IAM — định danh và truy cập (`LGC-IAM`)
+
+Khối IAM gồm tám chức năng định danh của hệ cũ, chủ yếu dựa trên Keycloak; Datahub gom về PH-12 và đổi một số cách xác thực để theo OAuth 2.1.
 
 | Mã | Chức năng hệ cũ | Kết luận | PH đích | Ghi chú chuyển hóa |
 |---|---|---|---|---|
@@ -278,6 +396,8 @@ Ghi chú về LGC-NGSP-008: tài liệu hệ cũ chứa Consumer Key / Secret d�
 | LGC-IAM-006 | Lấy token bằng grant `password` (hướng dẫn lấy token) | Thay thế | PH-12, PH-15 | OAuth 2.1 bỏ grant `password`; người dùng dùng Authorization Code + PKCE, máy dùng `client_credentials` |
 | LGC-IAM-007 | Đăng nhập mạng xã hội (Google, Facebook…) | Loại bỏ | — | Lý do: không phù hợp hệ thống của CQNN; thay bằng VNeID khi có yêu cầu |
 | LGC-IAM-008 | SSO bằng SAML của midPoint cho màn quản trị Bus | Thay thế | PH-12 | Thống nhất về Keycloak OIDC |
+
+: IAM — định danh và truy cập (LGC-IAM)
 
 ### 4.9. NFR — yêu cầu phi chức năng và vận hành (`LGC-NFR`)
 
@@ -300,6 +420,8 @@ Các yêu cầu phi chức năng của hệ cũ được sao chép giống nhau 
 | LGC-NFR-013 | HDVH: profile hệ thống, khởi động / dừng, tham số cấu hình, giám sát, sự cố, tối ưu, bảo dưỡng, checklist định kỳ | Giữ nguyên | D06-03 |
 | LGC-NFR-014 | Công nghệ Java 8, PostgreSQL, Angular | Thay thế | Java 21, Spring Boot 4, Camel Quarkus, PostgreSQL 18, React 19, antd v6 |
 
+: NFR — yêu cầu phi chức năng và vận hành (LGC-NFR)
+
 ## 5. Tổng hợp độ phủ
 
 Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đợt 0, mọi mục đã có kết luận và có phân hệ đích. Cột FR sẽ được điền ở phần B khi viết FRS từng phân hệ.
@@ -311,11 +433,13 @@ Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đ
 | HUB | 14 | 7 | 5 | 2 | 0 | 0 |
 | APIM | 27 | 14 | 10 | 3 | 0 | 0 |
 | DMDC | 19 | 7 | 12 | 0 | 0 | 0 |
-| PAY | 23 | 16 | 7 | 0 | 0 | 0 |
+| PAY | 26 | 16 | 10 | 0 | 0 | 0 |
 | NGSP | 8 | 7 | 1 | 0 | 0 | 0 |
 | IAM | 8 | 3 | 2 | 2 | 1 | 0 |
 | NFR | 14 | 3 | 8 | 2 | 0 | 1 |
-| **Tổng** | **183** | **85** | **69** | **25** | **3** | **1** |
+| **Tổng** | **186** | **85** | **72** | **25** | **3** | **1** |
+
+: Số chức năng hệ cũ theo khối và theo kết luận
 
 Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp đồng chứ không phải yêu cầu kỹ thuật.
 
@@ -325,11 +449,15 @@ Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 �
 
 ### 5.1. Các mục loại bỏ (chủ đầu tư đã chấp thuận ngày 21/11/2026)
 
+Bảng dưới nêu ba mục không đưa sang hệ mới cùng lý do, đã được chủ đầu tư chấp thuận.
+
 | Mã | Chức năng | Lý do |
 |---|---|---|
 | LGC-TOOL-022 | Người dùng tự cập nhật file pom của luồng | Phụ thuộc thư viện do nền tảng quản lý. Cho phép người dùng tự thêm thư viện tạo rủi ro chuỗi cung ứng phần mềm và không kiểm soát được bản quyền. |
 | LGC-TOOL-027 | Nhập component từ file JAR | Nạp mã tùy ý vào runtime vi phạm yêu cầu kiểm soát phần mềm của cấp độ 3. Thay bằng quy trình đăng ký Kamelet có duyệt. |
 | LGC-IAM-007 | Đăng nhập bằng tài khoản mạng xã hội | Không phù hợp với hệ thống của CQNN. Định danh công dân, nếu cần, dùng VNeID. |
+
+: Ba chức năng loại bỏ, mã và lý do
 
 ## 6. Câu hỏi mở
 
@@ -338,3 +466,10 @@ Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 �
 > **Giả định GĐ-02 (thay Q02, 25/11/2026).** Bảy nhóm dịch vụ quốc gia ở mục 4.7 vẫn còn nhu cầu. Từ nay chúng được kết nối qua Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo NĐ 278/2025 (thay trục NGSP cũ), xác thực OAuth 2.1 `client_credentials`, không dùng Consumer Key/Secret tĩnh. Địa chỉ, mã dịch vụ và cách xác thực cụ thể là **cấu hình theo tenant** của PH-14, không ghi cứng trong tài liệu hay mã. *Cơ sở:* phụ lục NGSP của hệ cũ; CMP-LAW-03/19. *Cách cập nhật:* khi nhận được danh mục dịch vụ hiện hành, đối chiếu từng dịch vụ, đánh dấu "Còn", "Đổi đặc tả" hoặc "Ngừng" trong bảng 4.7; dịch vụ đổi đặc tả chỉ sửa adapter PH-14.
 
 > **Giả định GĐ-03 (thay Q03, 25/11/2026).** Máy trạng thái giao dịch PH-19 dùng bộ trạng thái **nội bộ** của Datahub: `KHOI_TAO`, `CHO_THANH_TOAN`, `THANH_CONG`, `THAT_BAI`, `HET_HAN`, `DA_HUY`, `HOAN_TIEN_MOT_PHAN`, `HOAN_TIEN_TOAN_PHAN`; cờ đối soát tách riêng: `CHUA_DOI_SOAT`, `KHOP`, `LECH`. Mã kết quả của PayGov **không** được dùng trực tiếp mà ánh xạ sang trạng thái nội bộ qua bảng cấu hình; mã chưa biết luôn rơi về "chờ xác minh", không tự coi là thành công. *Cơ sở:* mô hình phổ biến của cổng thanh toán trung gian; tài liệu hệ cũ có giao dịch, đối soát, tra cứu nhưng không liệt kê trạng thái. *Cách cập nhật:* khi có tài liệu PayGov, chỉ điền bảng ánh xạ; máy trạng thái chỉ đổi nếu PayGov có trạng thái không quy được về bộ trên.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: nguồn kiểm kê, kiểm kê chức năng chín khối, tổng hợp độ phủ, mục loại bỏ, câu hỏi mở |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 đến 1.5 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 4.8 và 5.1; viết lại chú thích bảng cho cụ thể; sửa bảng tổng hợp độ phủ ở mục 5 cho khớp mục 4.6 (khối PAY 26 mục, nâng cấp 10; tổng 186 mục, nâng cấp 72) |

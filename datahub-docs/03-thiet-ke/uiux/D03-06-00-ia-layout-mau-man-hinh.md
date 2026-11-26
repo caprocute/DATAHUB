@@ -1,14 +1,45 @@
 ---
 ma_tai_lieu: D03-06-00
 ten: Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhà thiết kế giao diện, Kỹ sư giao diện, Kiểm thử viên, Chuyên viên phân tích nghiệp vụ, AI agent sinh mã
 nguoi_lap: Luồng giao diện
+mo_ta: Kiến trúc thông tin hai ứng dụng, khung bố cục CMP-AppShell và 14 mẫu màn hình chuẩn PTN cùng vi văn bản và nghiệm thu chung cho mọi màn hình Datahub.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D02-02 SRS; D03-01 SAD; D03-05 Design system; D03-06-PH{nn} Tập UI phân hệ; D05-02 Kịch bản kiểm thử
 ---
 
 # D03-06-00 · Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Chốt một lần cách người dùng tìm thấy màn hình (kiến trúc thông tin), khung chứa màn hình (bố cục) và khuôn dựng màn hình (14 mẫu PTN), để hơn hai trăm màn hình của hai mươi phân hệ nhất quán và kỹ sư hay AI agent dựng màn mới không phải tự thiết kế lại.
+
+**Phạm vi.** Hai ứng dụng web `dh-console` và `dh-portal`. Không gồm trang đăng nhập do Keycloak phục vụ, thư điện tử thông báo và báo cáo xuất tệp.
+
+**Căn cứ.** Yêu cầu giao diện dùng chung FR-00-001…082 và NFR-00-003, NFR-00-005, NFR-00-040…045 của D02-02; chuẩn WCAG 2.2 mức AA (STD trong D00-01 §7); quyết định Q4 giữ màn hệ cũ có giá trị vận hành.
+
+**Những điểm hội đồng cần lưu ý.**
+
+(1) Kiến trúc thông tin chia menu theo nhóm người dùng và hiển thị, ẩn theo quyền (§2.6, §2.13), không theo cấu trúc kỹ thuật.
+(2) Khung bố cục tuân thủ quy tắc không đặt kính chồng kính; vùng nội dung không bao giờ dùng vật liệu kính (§3.3).
+(3) Mỗi màn chỉ chọn một mẫu PTN và chỉ mô tả phần khác biệt (§1.3, §4).
+(4) Mọi màn đều phải xử lý bộ trạng thái chuẩn ST-01…ST-13 (§4.2) và đạt checklist nghiệm thu chung (§6).
+(5) Các màn hệ cũ có giá trị vận hành được giữ và ánh xạ sang mẫu mới (§7).
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Ứng dụng web | 2 (`dh-console`, `dh-portal`) |
+| Nhóm menu cấp 1 của `dh-console` | 10 |
+| Mục menu cấp 2 | 46 |
+| Mẫu màn hình chuẩn | 14 (PTN-01…14) |
+| Trạng thái chuẩn dùng chung | 13 (ST-01…13) |
+| Mục hệ cũ được phủ ở §7 | 46 |
+
+: Các con số chính của tài liệu, lấy từ §2.3.2, §4 và §7
 
 ## 1. Mục đích, phạm vi và cách dùng
 
@@ -22,7 +53,7 @@ Tài liệu đáp ứng trực tiếp nhóm yêu cầu giao diện dùng chung `
 
 Bộ tài liệu giao diện được tổ chức thành hai tầng. Tầng design system (D03-05) định nghĩa "viên gạch": token giá trị, vật liệu Liquid Glass và các thành phần `CMP-*`. Tầng thiết kế màn hình (D03-06) định nghĩa "căn nhà": cách ghép các viên gạch thành màn hình. Sơ đồ dưới đây cho thấy chiều phụ thuộc giữa các tài liệu.
 
-```mermaid
+```{.mermaid caption="Quan hệ với các tài liệu khác"}
 flowchart TB
     subgraph DS["D03-05 · Design system"]
         T["D03-05-02<br/>Token"]
@@ -79,6 +110,70 @@ Bảng khai báo trên có bốn quy tắc đi kèm. Thứ nhất, trường "M�
 
 Tài liệu áp dụng cho hai ứng dụng web của Datahub là `dh-console` (giao diện quản trị cho mọi phân hệ) và `dh-portal` (cổng nhà phát triển của PH-15). Tài liệu không áp dụng cho trang đăng nhập (do Keycloak phục vụ theo FR-00-001, giao diện trang đăng nhập được tùy biến bằng chủ đề Keycloak dùng chung token ở D03-05-02 nhưng nằm ngoài bố cục mô tả ở đây), cho thư điện tử thông báo và cho báo cáo xuất tệp.
 
+### 1.5. Người đọc
+
+Mỗi nhóm người đọc cần một phần khác nhau của tài liệu, nên bảng dưới đây chỉ ra đọc phần nào trước.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Nhà thiết kế giao diện | §2 (kiến trúc thông tin), §3 (khung), §4 (mẫu), §5 (vi văn bản) |
+| Kỹ sư giao diện | §2.3.2, §2.4 (menu và URL), §3.4 (responsive), §4 (mẫu), §6 (nghiệm thu) |
+| Kiểm thử viên | §4.2 (trạng thái chuẩn), §6 (nghiệm thu chung), §2.6 (hiển thị theo quyền) |
+| Chuyên viên phân tích nghiệp vụ | §1.3 (khối đặc tả màn), §2.13, §7 (màn hệ cũ được giữ) |
+| AI agent sinh mã | Toàn bộ, nhất là §1.3, §4 và §6 |
+| Hội đồng thẩm định | Tóm tắt, §1, §3.3, §8 |
+
+: Bảng người đọc và phần cần đọc
+
+### 1.6. Thuật ngữ và chữ viết tắt
+
+Thuật ngữ chung dùng theo D00-01 §2. Bảng dưới đây chỉ liệt kê các thuật ngữ riêng của tài liệu này.
+
+| Thuật ngữ | Nghĩa |
+|---|---|
+| IA | Kiến trúc thông tin (information architecture), cách tổ chức menu, URL và lối vào màn hình |
+| PTN | Mẫu màn hình chuẩn (screen pattern), mã `PTN-{nn}` |
+| ST | Trạng thái chuẩn dùng chung của màn hình, mã `ST-{nn}` (§4.2) |
+| `UI-{PH}-{nn}` | Mã một màn hình trong tập UI của phân hệ |
+| Khung (shell) | `CMP-AppShell`, gồm sidebar, thanh trên và vùng `main` |
+| Vi văn bản | Chữ ngắn trên giao diện như nhãn nút, thông báo, trạng thái rỗng (§5) |
+
+: Thuật ngữ và chữ viết tắt riêng của tài liệu
+
+### 1.7. Tài liệu tham chiếu
+
+Bảng dưới đây liệt kê các tài liệu mà thiết kế màn hình dựa vào, ngoài các tài liệu đã nêu ở mục 1.2.
+
+| Tài liệu | Nội dung dùng |
+|---|---|
+| D00-01 | Thuật ngữ, quy ước mã |
+| D02-02 SRS | FR-00 và NFR-00 của giao diện dùng chung |
+| D03-01 SAD | Bảng phân hệ và đợt triển khai (§4.1) |
+| D03-05 | Token, vật liệu Liquid Glass, thành phần `CMP-*` |
+| D03-06-PH{nn} | Tập UI từng phân hệ dùng các mẫu ở đây |
+| D05-02 | Kịch bản kiểm thử giao diện, tham chiếu §6 |
+| `docs/ui_ux_rule.md` | Bộ quy tắc CRUD cũ được kế thừa |
+
+: Tài liệu tham chiếu của D03-06-00
+
+### 1.8. Cấu trúc tài liệu
+
+Tài liệu gồm chín chương, đi từ kiến trúc thông tin tới khung, mẫu, vi văn bản và nghiệm thu.
+
+| Chương | Nội dung |
+|---|---|
+| 1 | Mục đích, phạm vi, cách dùng |
+| 2 | Kiến trúc thông tin: menu, URL, quyền, tìm kiếm, thông báo, tenant |
+| 3 | Khung bố cục `CMP-AppShell`, lưới, responsive, truy cập |
+| 4 | Mười bốn mẫu màn hình chuẩn và trạng thái dùng chung |
+| 5 | Vi văn bản tiếng Việt |
+| 6 | Nghiệm thu chung cho mọi màn hình |
+| 7 | Màn hệ cũ được giữ và mẫu tương ứng |
+| 8 | Truy vết tới yêu cầu |
+| 9 | Đề xuất bổ sung |
+
+: Cấu trúc tài liệu theo chương
+
 ## 2. Kiến trúc thông tin
 
 ### 2.1. Hai ứng dụng và lý do tách
@@ -96,6 +191,8 @@ Datahub có hai ứng dụng giao diện với hai đối tượng người dùn
 | Bố cục | Sidebar + topbar (mục 3) | Topbar ngang + mục lục trái trong trang tài liệu (PTN-14) |
 | Quan hệ quản trị | Quản trị nội dung cổng (trang giới thiệu, API công khai, duyệt ứng dụng) đặt trong `dh-console`, nhóm "Kết nối & API" | Chỉ hiển thị, không quản trị |
 
+: Hai ứng dụng và lý do tách
+
 Việc tách hai ứng dụng có ba lý do. Thứ nhất, bề mặt tấn công khác nhau: `dh-portal` có thể mở ra ngoài mạng nội bộ tỉnh, còn `dh-console` chỉ truy cập từ mạng quản trị; tách mã và tách miền giúp chính sách mạng và CSP đơn giản. Thứ hai, nhịp phát hành khác nhau: nội dung cổng thay đổi theo tài liệu API, còn console thay đổi theo tính năng. Thứ ba, người dùng khác nhau về thói quen: nhà phát triển quen bố cục tài liệu kiểu "mục lục trái, nội dung giữa, ví dụ phải", còn cán bộ quản trị cần điều hướng chức năng sâu.
 
 ### 2.2. Nguyên tắc tổ chức menu
@@ -112,9 +209,9 @@ Menu của `dh-console` được chia theo **nhóm nhiệm vụ của người d
 
 #### 2.3.1. Sơ đồ tổng quát
 
-Sơ đồ dưới đây thể hiện mười hai nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
+Sơ đồ dưới đây thể hiện mười nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
 
-```mermaid
+```{.mermaid caption="Cây điều hướng dh-console, mười nhóm cấp 1 và mục cấp 2"}
 flowchart LR
     ROOT(["dh-console"])
     ROOT --> N0["Tổng quan"]
@@ -197,6 +294,8 @@ Bảng dưới đây là đặc tả chuẩn của cây menu. Kỹ sư dùng nó
 | 45 | Quản trị | Cài đặt tỉnh | PH-20 (phần tenant tự quản) | `/quan-tri/cai-dat-tinh` | Quản trị tỉnh | PTN-12 | MVP |
 | 46 | Quản trị | Tenant | PH-20 | `/nen-tang/tenant` | Quản trị nền tảng | PTN-01 | MVP |
 
+: Bảng mục menu chi tiết
+
 Có bốn điểm trong bảng cần thuyết minh. Thứ nhất, màn "Bảng điều khiển" ở mục 1 thuộc PH-13 về dữ liệu nhưng đóng vai trò trang chủ của mọi người dùng, nên nội dung thẻ được lắp theo quyền: cán bộ đối soát thấy thẻ giao dịch, kỹ sư tích hợp thấy thẻ luồng lỗi, lãnh đạo thấy thẻ chỉ tiêu; người không có quyền xem số liệu nào chỉ thấy thẻ "Việc của tôi" và "Thông báo mới". Thứ hai, mục "Tenant" (mục 46) dùng nhánh route `/nen-tang/` thay vì `/quan-tri/` vì đây là màn của vai trò nền tảng, thao tác trên nhiều tenant; nó chỉ xuất hiện trong nhóm Quản trị khi người dùng có vai trò nền tảng, và được đặt cuối nhóm, ngăn cách bằng `CMP-Divider` với nhãn "Nền tảng". Thứ ba, màn thiết kế luồng (PTN-07) không có mục menu riêng; người dùng vào từ danh sách luồng (`/tich-hop/luong/{ma-luong}/thiet-ke`) để luôn có ngữ cảnh luồng nào đang sửa. Thứ tư, PH-17 (Trợ lý AI) không có mục menu vì nó là năng lực xuyên suốt, được mở bằng nút trên thanh trên hoặc từ CommandPalette (mục 2.12).
 
 #### 2.3.3. Lối vào ngoài sidebar
@@ -212,6 +311,8 @@ Một số màn không nằm trên sidebar nhưng vẫn có route ổn định v
 | Trợ giúp | Mở HDSD theo ngữ cảnh ở tab mới | Nút trợ giúp trên thanh trên (FR-00-082) | — |
 | Trang lỗi 403, 404, 500, bảo trì | `/loi/403`, `/loi/404`, `/loi/500`, `/bao-tri` | Hệ thống tự điều hướng | PTN-13 |
 | Chọn tenant | `/chon-tenant` | Sau đăng nhập khi người dùng thuộc nhiều tenant và chưa có tenant mặc định | PTN-13 (biến thể) |
+
+: Lối vào ngoài sidebar
 
 ### 2.4. Quy tắc URL
 
@@ -234,6 +335,8 @@ URL là một phần của giao diện: người dùng chia sẻ URL cho đồng
 | `khoang` | Khoảng tương đối | `khoang=24h` | Dùng cho PTN-06 và PTN-11; loại trừ `tu`/`den` |
 | `chon` | Đối tượng đang mở trong Drawer hoặc bảng bên | `chon=GD20261121000123` | Cho phép liên kết sâu tới Drawer chi tiết |
 | `bo-loc` | Mã bộ lọc đã lưu | `bo-loc=bl_01J…` | FR-00-024; khi có, các tham số lọc khác ghi đè lên bộ lọc đã lưu |
+
+: Quy tắc URL
 
 Ba quy tắc về hành vi đi kèm bảng trên. Thứ nhất, giá trị trên URL dùng **mã giá trị** (ví dụ `phat-hanh`) chứ không dùng nhãn hiển thị (ví dụ "Phát hành"), để URL không đổi khi đổi nhãn hay đổi ngôn ngữ. Thứ hai, thay đổi bộ lọc hoặc từ khóa ghi lên URL bằng `replace` (không tạo mục lịch sử mới cho mỗi phím gõ), còn chuyển trang và mở chi tiết dùng `push` để nút Quay lại của trình duyệt hoạt động như người dùng kỳ vọng. Thứ ba, tham số không hợp lệ (cỡ trang 37, trang âm, giá trị lọc không tồn tại) bị bỏ qua và được sửa lại trên URL bằng `replace`, kèm một `CMP-Toast` mức thông tin "Một số điều kiện lọc không còn hợp lệ nên đã được bỏ qua."; không hiển thị trang lỗi.
 
@@ -265,6 +368,8 @@ Datahub phân quyền theo hành động (`PERM-{PH}-{động-từ}`, định ng
 | Thẻ trên bảng điều khiển | Ẩn thẻ | Bảng điều khiển lắp theo quyền |
 | Tab trong trang chi tiết | Ẩn tab; riêng tab Lịch sử luôn hiện với người có quyền xem đối tượng | FR-00-043 |
 
+: Hiển thị và ẩn theo quyền
+
 Thông tin quyền được nạp một lần sau đăng nhập dưới dạng tập quyền hiệu lực của người dùng trong tenant hiện tại (do PH-12 trả về), lưu trong bộ nhớ của TanStack Query với khóa gắn tenant, và được làm mới khi đổi tenant hoặc khi API trả 403 bất ngờ (dấu hiệu quyền vừa bị thu hồi). Khi một thao tác bị backend từ chối 403 dù giao diện đã cho hiện nút, giao diện hiển thị `CMP-Alert` mức lỗi "Bạn không còn quyền thực hiện thao tác này. Quyền của bạn có thể vừa được thay đổi." kèm mã truy vết, làm mới tập quyền và vẽ lại màn hình.
 
 Trang 403 có nút "Yêu cầu quyền" mở biểu mẫu nhanh (PTN-04) gửi yêu cầu tới quản trị tỉnh với nội dung tự điền: màn hình, quyền thiếu, lý do do người dùng nhập. Nút này chỉ hiện khi tenant bật quy trình yêu cầu quyền (cấu hình PH-12); nếu không, trang hiển thị tên và thư điện tử đầu mối quản trị của tỉnh.
@@ -281,6 +386,8 @@ CommandPalette là lớp nổi vật liệu `glass-modal`, rộng `size-modal-md
 | Đối tượng | API tìm kiếm hợp nhất của các phân hệ theo mã và tên (mã API, mã danh mục, mã luồng, mã HTTT, mã giao dịch) | Gõ "DM_GIOI" ra danh mục "Giới tính" | Mở trang chi tiết (PTN-02) |
 | Lệnh | Danh sách lệnh đăng ký bởi từng màn và lệnh toàn cục | "Tạo API mới", "Chuyển sang chế độ tối", "Đổi tenant", "Mở Hộp việc" | Thực thi lệnh; lệnh tạo mới mở PTN-03 hoặc PTN-04 |
 | Hỏi trợ lý AI | PH-17 (Đợt 3, khi tenant bật) | Câu hỏi tự nhiên "API nào trả thông tin hộ tịch?" | Mở bảng bên Trợ lý AI với câu hỏi đã điền |
+
+: Tìm kiếm toàn cục và CommandPalette
 
 Tìm kiếm trong CommandPalette tuân thủ FR-00-020: không phân biệt hoa thường và dấu tiếng Việt, khớp theo tiền tố từ và khớp mã chính xác. Kết quả "Màn hình" và "Lệnh" được lọc ngay tại trình duyệt; kết quả "Đối tượng" gọi máy chủ sau 250ms kể từ lần gõ cuối, tối thiểu hai ký tự, và chỉ trả đối tượng người dùng có quyền xem trong tenant hiện tại. Người dùng điều hướng bằng phím mũi tên, `Enter` để chọn, `Esc` để đóng, `Tab` để chuyển giữa các nhóm. Khi mở lại, CommandPalette hiển thị năm mục gần đây của người dùng (lưu cục bộ theo người dùng và tenant).
 
@@ -341,6 +448,8 @@ Ma trận dưới đây cho biết nhóm người dùng nào thường thấy nh
 | Vận hành | ● | ● | ○ | | | | | |
 | Quản trị | ● | ● | | | | | | ○ |
 
+: Ma trận nhóm người dùng và nhóm menu
+
 Từ ma trận có thể rút ra hai hệ quả thiết kế. Thứ nhất, lãnh đạo chủ yếu chỉ thấy Tổng quan và Báo cáo chỉ tiêu, nên bảng điều khiển phải tự đủ cho họ (PTN-06 có thẻ chỉ tiêu và liên kết tới báo cáo), không bắt họ đi tìm trong menu. Thứ hai, kiểm toán viên thấy nhiều nhóm ở mức "○" (chỉ đọc), nên mọi màn họ vào phải hiển thị đúng ở chế độ chỉ đọc: nút ghi bị ẩn, tab Lịch sử luôn có.
 
 ### 2.14. Kiến trúc thông tin của `dh-portal`
@@ -358,6 +467,8 @@ Từ ma trận có thể rút ra hai hệ quả thiết kế. Thứ nhất, lãn
 | Sandbox | `/sandbox` | Bắt buộc | PTN-11 (biến thể) | Lịch sử lượt gọi thử, dữ liệu giả lập |
 | Tài khoản | `/tai-khoan` | Bắt buộc | PTN-12 | Thông tin cá nhân, giao diện, thông báo |
 
+: Kiến trúc thông tin của dh-portal
+
 Thanh trên của cổng gồm logo và tên cổng của tỉnh, các liên kết "API", "Hướng dẫn", "Ứng dụng của tôi", ô tìm kiếm (cũng mở bằng `Ctrl+K`, chỉ có nhóm "API" và "Bài hướng dẫn"), chọn ngôn ngữ và nút đăng nhập hoặc menu tài khoản. Dưới `bp-md`, các liên kết gộp vào nút menu mở `CMP-Drawer`.
 
 ## 3. Khung bố cục
@@ -373,6 +484,8 @@ Thanh trên của cổng gồm logo và tên cổng của tỉnh, các liên k�
 | Thanh trên | `CMP-Topbar` | `glass-chrome` khi nội dung chưa cuộn dưới nó; `glass-chrome-scrolled` cộng `glass-scroll-edge` khi nội dung cuộn dưới | `size-topbar`, `shadow-2` khi cuộn | `z-topbar` |
 | Vùng nội dung | `<main>` chứa `CMP-PageHeader` và các khối `CMP-Card`, `CMP-DataTable`, `CMP-Form` | Nền trong suốt để lộ canvas; mỗi khối nội dung là bề mặt đặc `color-surface-solid` với `radius-lg`, `shadow-1` | `size-page-max`, `space-6` (lề), `space-8` (khoảng giữa phần lớn) | `z-base`, tiêu đề bảng dính `z-sticky` |
 | Lớp phủ | `CMP-Drawer`, `CMP-Modal`, `CMP-CommandPalette`, `CMP-Popover`, `CMP-DropdownMenu`, `CMP-Notification`, `CMP-Toast`, `CMP-Tooltip` | `glass-modal` (Drawer, Modal, CommandPalette), `glass-overlay` (Popover, Dropdown, Notification), nền đảo đặc `color-surface-inverse` (Toast, Tooltip) | `size-drawer-md`, `size-drawer-lg`, `size-modal-sm/md/lg`, `radius-xl`, `shadow-3`, `shadow-4`, `color-scrim` | `z-drawer`, `z-modal`, `z-popover`, `z-tooltip`, `z-toast`, `z-session-dialog` |
+
+: Giải phẫu CMP-AppShell
 
 Quy tắc "không đặt kính chồng kính" chi phối trực tiếp khung này. Sidebar và topbar là hai bề mặt kính nằm cạnh nhau trên canvas chứ không chồng lên nhau; vùng nội dung không bao giờ được đặt bề mặt kính (một `CMP-Card` không được dùng `glass-chrome` để "trông đẹp hơn"). Khi một lớp phủ mở, nó nằm trên `color-scrim` che toàn bộ khung, nên kính của lớp phủ làm nhòe một nền đã bị che chứ không làm nhòe trực tiếp kính của sidebar; trường hợp ngoại lệ duy nhất là popover mở từ trong Modal, được phép vì `glass-overlay` có độ đục 0,94.
 
@@ -434,6 +547,8 @@ Vùng nội dung dùng lưới 12 cột của antd (`Row`/`Col`) để các kh�
 | `bp-md` … < `bp-lg` (768–991px) | Ẩn; mở bằng nút ≡ thành `CMP-Drawer` trái | `space-4` | `space-4` | 12 | Biểu mẫu chuyển một cột; bảng cuộn ngang với cột hành động dính phải |
 | < `bp-md` (dưới 768px) | Như trên | `space-4` | `space-3` | 4 (gộp) | Chỉ đảm bảo đọc và thao tác cơ bản; PTN-07 hiển thị thông báo "Trình thiết kế cần màn hình rộng tối thiểu 992px" |
 
+: Lưới, lề và hành vi responsive
+
 Có ba điểm cần giải thích. Thứ nhất, D02-02 §2.2 đặt màn hình tối thiểu 1280×720 cho màn quản trị, còn D03-05-02 §12.3 lấy 1366×768 làm độ phân giải mục tiêu thiết kế. Hai số không mâu thuẫn: thiết kế tối ưu cho 1366×768, và mọi màn vẫn phải dùng được đầy đủ (không mất chức năng, không cuộn ngang toàn trang) ở 1280×720 với sidebar thu gọn; kiểm thử viên chạy cả hai kích thước. Thứ hai, ở 1200–1365px sidebar mặc định thu gọn nhưng người dùng có thể mở rộng; lựa chọn được ghi nhớ theo người dùng. Khi sidebar thu gọn, mục cấp 1 chỉ còn biểu tượng (`size-icon-lg`) và rê chuột hoặc focus vào biểu tượng mở popover `glass-overlay` liệt kê mục cấp 2; popover này mở được bằng phím `Enter` hoặc `→`. Thứ ba, chiều cao 768px buộc khung tiết kiệm chiều dọc: thanh trên 56px (48px ở mật độ Gọn), không có thanh chân trang (footer) trong `dh-console`, và `CMP-PageHeader` một dòng tiêu đề.
 
 Chiều rộng tối đa `size-page-max` chỉ áp dụng cho trang biểu mẫu (PTN-03), chi tiết (PTN-02) và cài đặt (PTN-12); trang danh sách (PTN-01), dashboard (PTN-06), designer (PTN-07) và tra log (PTN-11) dùng toàn bộ chiều rộng vì dữ liệu dạng bảng và biểu đồ hưởng lợi từ chiều ngang. Cột biểu mẫu đơn không vượt `size-form-max`.
@@ -459,6 +574,8 @@ Việc phát hiện cuộn dùng `IntersectionObserver` trên một phần tử 
 | Bảng bên Trợ lý AI, bảng Inspector của PTN-07 | `<aside role="complementary">` | "Trợ lý AI", "Thuộc tính nút" |
 | Dải liên tenant, dải thông báo hệ thống | `<section role="region">` | "Cảnh báo truy cập liên tenant", "Thông báo hệ thống" |
 | Vùng thông báo động | `<div aria-live>` (mục 3.7) | |
+
+: Thanh "Bỏ qua tới nội dung", landmark và thứ tự focus
 
 **Thứ tự focus.** Thứ tự focus theo thứ tự đọc thị giác: liên kết bỏ qua, dải cảnh báo (nếu có, chỉ các nút trong dải), thanh trên (nút ≡, chọn tenant, ô tìm kiếm, Trợ lý, Trợ giúp, Thông báo, Tài khoản), sidebar (các mục theo thứ tự hiển thị), rồi `main` (breadcrumb, tiêu đề, hành động trang, bộ lọc, bảng, phân trang). Không dùng `tabindex` dương. Trong sidebar, toàn bộ cây menu chỉ chiếm một điểm dừng `Tab`; di chuyển giữa các mục bằng phím mũi tên lên, xuống, `→` để mở nhóm, `←` để đóng nhóm (mẫu "tree view" của ARIA APG), giúp người dùng bàn phím không phải nhấn `Tab` hai mươi lần để vào nội dung. Khi đổi route, focus được chuyển tới `h1` của trang mới để trình đọc màn hình đọc tiêu đề.
 
@@ -505,6 +622,8 @@ Mỗi mẫu `PTN-{nn}` dưới đây được đặc tả theo cùng một khung
 | PTN-13 | Trang lỗi và trạng thái hệ thống | Không thể hiển thị nội dung bình thường? | 403, 404, bảo trì |
 | PTN-14 | Tài liệu cổng nhà phát triển | Đọc tài liệu dài có cấu trúc và thử API? | Tài liệu API trên dh-portal |
 
+: Cách đọc một mẫu
+
 ### 4.2. Bảng trạng thái chuẩn dùng chung
 
 Mọi mẫu có tải dữ liệu đều phải xử lý đầy đủ bộ trạng thái dưới đây, kế thừa và mở rộng mục 5 của `docs/ui_ux_rule.md`. Mỗi mẫu ở các mục sau chỉ ghi phần **cụ thể hóa** của mình (vị trí, nội dung); những gì không ghi được hiểu là theo bảng này. Mã trạng thái `ST-xx` là mã cục bộ của tài liệu này, dùng để kiểm thử viên tham chiếu.
@@ -526,6 +645,8 @@ Mọi mẫu có tải dữ liệu đều phải xử lý đầy đủ bộ trạ
 | ST-13 | Xung đột phiên bản | 412 do `If-Match` không khớp (FR-00-052) | `CMP-Modal` "Đối tượng đã được {người} cập nhật lúc {giờ}" với `CMP-DiffViewer` so sánh bản của bạn và bản mới nhất; ba lựa chọn "Tải bản mới nhất" (mặc định), "Ghi đè" (cần quyền, màu cảnh báo, hỏi xác nhận), "Hủy" để tự sao chép dữ liệu | `CMP-Modal`, `CMP-DiffViewer` |
 | ST-14 | Hết phiên | Không thao tác quá ngưỡng (FR-00-003) | `CMP-SessionTimeoutDialog` 2 phút trước; khi hết, biểu mẫu chưa lưu được giữ bản nháp cục bộ (không gồm trường bí mật) để khôi phục sau đăng nhập | `CMP-SessionTimeoutDialog` |
 | ST-15 | Chỉ đọc | Người dùng có quyền xem nhưng không có quyền sửa, hoặc chế độ liên tenant | Nút ghi ẩn hoặc vô hiệu theo mục 2.6; biểu mẫu hiển thị dạng mô tả | |
+
+: Bảng trạng thái chuẩn dùng chung
 
 Thời gian chờ mặc định của một yêu cầu đọc từ giao diện là 15 giây, của yêu cầu ghi là 30 giây; vượt thời gian chờ được xử lý như ST-05. TanStack Query được cấu hình thử lại tự động tối đa 2 lần cho yêu cầu đọc lỗi mạng hoặc 5xx (không thử lại 4xx), và không bao giờ tự thử lại yêu cầu ghi trừ khi API có khóa idempotency.
 
@@ -549,7 +670,7 @@ Bốn hành vi dưới đây xuất hiện ở nhiều mẫu nên được quy �
 
 **Ví dụ trong Datahub.** Danh sách API (PH-02, `/ket-noi/api`), danh sách giao dịch thanh toán (PH-19, `/thanh-toan/giao-dich`), danh sách HTTT thành viên (PH-01), danh sách luồng (PH-04), danh sách người dùng (PH-12), hàng đợi lỗi DLQ (PH-18).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -587,6 +708,8 @@ Sơ đồ cho thấy toàn bộ bộ lọc, bảng và phân trang nằm trong *
 | ⑤ | `CMP-DataTable` (ProTable), `CMP-StatusTag`, `CMP-Identifier`, `CMP-Timestamp`, `CMP-Money`, `CMP-DropdownMenu` (⋯) | Đặc; tiêu đề cột `color-surface-solid-2` dính `z-sticky` | Hàng chọn `color-fill-selected` |
 | ⑥ | `CMP-Pagination` | Đặc | |
 | Chi tiết nhanh | `CMP-Drawer` `size-drawer-md` | `glass-modal`, nội dung trong giếng đặc | Tùy chọn: xem nhanh không rời danh sách, query `chon` |
+
+: PTN-01 · Danh sách · Thành phần và vật liệu theo vùng.
 
 **Hành vi.**
 
@@ -631,7 +754,7 @@ Sơ đồ cho thấy toàn bộ bộ lọc, bảng và phân trang nằm trong *
 
 **Ví dụ trong Datahub.** Chi tiết API (PH-02, `/ket-noi/api/{ma-api}` với tab Tổng quan, Phiên bản, Gói sử dụng, Đăng ký, Thống kê, Lịch sử); chi tiết HTTT thành viên (PH-01, tab Hồ sơ, Ứng dụng và thông tin xác thực, Đầu mối, API đang dùng, Lịch sử); chi tiết giao dịch (PH-19); chi tiết danh mục (PH-07, tab Mục, Thuộc tính, Phiên bản, Lịch sử).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -662,6 +785,8 @@ Sơ đồ có hai cột ở tab Tổng quan: cột chính 8/12 chứa các khố
 | ③ | `CMP-Card`, `CMP-DescriptionList`, `CMP-DataTable`, `CMP-CodeEditor` (chỉ đọc), `CMP-JsonViewer`, `CMP-MaskedValue` | Đặc |
 | ④ | `CMP-Card`, `CMP-Steps` hoặc `CMP-Timeline`, `CMP-ApprovalPanel` (khi đối tượng đang chờ duyệt) | Đặc |
 | Tab Lịch sử | `CMP-AuditTrail`, `CMP-DiffViewer` | Đặc |
+
+: PTN-02 · Chi tiết · Thành phần và vật liệu theo vùng.
 
 **Tab Lịch sử (bắt buộc, FR-00-043).** Mọi trang chi tiết đối tượng phải có tab "Lịch sử" ở vị trí cuối cùng, hiển thị nhật ký kiểm toán của chính đối tượng đó từ PH-13. Tab dùng `CMP-AuditTrail`: dòng thời gian theo thứ tự mới nhất trên cùng, mỗi mục gồm thời điểm, chủ thể (người hoặc máy, kèm đơn vị), hành động (Tạo, Sửa, Đổi trạng thái, Duyệt, Từ chối, Xem dữ liệu nhạy cảm, Xuất), lý do nếu có, kết quả và mã truy vết. Mục "Sửa" mở rộng được để xem `CMP-DiffViewer` giá trị trước và sau (đã che theo FR-00-041). Tab có bộ lọc theo loại hành động, chủ thể và khoảng thời gian, phân trang máy chủ, và có liên kết "Mở trong Nhật ký kiểm toán" tới PTN-11 với bộ lọc đối tượng điền sẵn. Tab Lịch sử là chỉ đọc tuyệt đối, không có hành động sửa hay xóa (FR-00-042). Route `/{ma}/lich-su` mở thẳng tab này.
 
@@ -701,7 +826,7 @@ Sơ đồ có hai cột ở tab Tổng quan: cột chính 8/12 chứa các khố
 
 **Ví dụ trong Datahub.** Tạo/sửa gói sử dụng (PH-02, kiểu xác thực, rate limit, quota, danh sách đường dẫn); tạo dịch vụ thu (PH-19); sửa hồ sơ HTTT (PH-01); tạo chính sách cổng API (PH-03); tạo quy tắc chất lượng (PH-08).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -758,7 +883,7 @@ Biểu mẫu chia thành các khối đặc theo nhóm nghiệp vụ; mỗi kh�
 
 **Ví dụ trong Datahub.** Thêm mục danh mục (PH-07, Drawer); thêm đầu mối kỹ thuật cho HTTT (PH-01, Drawer); xoay vòng bí mật ứng dụng (PH-01, Modal, hiện bí mật một lần); yêu cầu quyền từ trang 403 (Modal); tạo topic nhanh (PH-10, Drawer).
 
-**Sơ đồ vùng (Drawer).**
+**Sơ đồ vùng (Drawer).** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
                               ┌ Drawer glass-modal, size-drawer-md, radius-xl cạnh hở ┐
@@ -805,7 +930,7 @@ Khung Drawer là vật liệu `glass-modal`, cách mép phải và mép trên/d�
 
 **Ví dụ trong Datahub.** Kết nạp HTTT thành viên (PH-01: thông tin hệ thống → đầu mối → hồ sơ pháp lý → rà soát → gửi duyệt); đăng ký API từ OpenAPI (PH-02: tải đặc tả → kiểm tra và xem trước endpoint → phân loại → gói sử dụng → rà soát); kích hoạt dịch vụ thu có giao dịch thử (PH-19); chạy di trú hệ cũ (PH-18: chọn nguồn → chọn phạm vi → chạy thử đối chiếu → chạy thật → báo cáo FR-00-092); khởi tạo tenant (PH-20).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -851,7 +976,7 @@ Khung Drawer là vật liệu `glass-modal`, cách mép phải và mép trên/d�
 
 **Ví dụ trong Datahub.** Tổng quan (`/tong-quan`, thẻ lắp theo quyền); bảng giám sát PH-13 (lượt gọi API, tỷ lệ lỗi, độ trễ p95, luồng lỗi, DLQ tồn); dashboard kênh thanh toán PH-19 (giao dịch theo kênh, tỷ lệ thành công); điểm chất lượng dữ liệu PH-08; báo cáo chỉ tiêu PH-16.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -910,7 +1035,7 @@ Sơ đồ đi từ tổng quát tới cụ thể: hàng KPI trả lời "mọi t
 
 **Ví dụ trong Datahub.** Thiết kế luồng tích hợp PH-04 (`/tich-hop/luong/{ma}/thiet-ke`, đồng bộ Camel YAML DSL theo ADR-010); sơ đồ kết nối topic PH-10 (`/tich-hop/so-do`, chế độ chỉ xem, publisher → topic → subscriber); mô hình quy trình BPMN PH-11 (Đợt 2).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng, không lề dưới, cao = viewport − topbar) ───────────────┐
@@ -965,7 +1090,7 @@ Designer chiếm toàn bộ vùng nội dung, không cuộn trang; mỗi vùng t
 
 **Ví dụ trong Datahub.** Danh mục dùng chung PH-07 (`/du-lieu/danh-muc`: cây nhóm danh mục trái, bảng danh mục phải; trong chi tiết một danh mục phân cấp như đơn vị hành chính: cây mục trái, chi tiết mục phải); nhóm dịch vụ thu PH-19; nhóm và vai trò PH-12 (cây nhóm trái, danh sách thành viên và quyền phải).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -1016,7 +1141,7 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 
 **Ví dụ trong Datahub.** Nhập danh mục từ Excel PH-07 (`/du-lieu/danh-muc/{ma}/nhap`, 100.000 dòng trong ≤ 2 phút theo NFR-00-008); nhập danh sách HTTT từ hệ cũ PH-01; nhập tệp đối soát PH-19; nhập người dùng hàng loạt PH-12.
 
-**Sơ đồ vùng.** PTN-09 là một wizard ba bước chuyên biệt (kế thừa khung PTN-05).
+**Sơ đồ vùng.** PTN-09 là một wizard ba bước chuyên biệt (kế thừa khung PTN-05). Wireframe dưới đây cho thấy vùng xem trước nằm giữa hai nút chuyển bước, và được giữ dạng chữ theo quy ước K-MH.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -1070,7 +1195,7 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 
 **Ví dụ trong Datahub.** `/viec-cua-toi` gồm: duyệt kết nạp HTTT, duyệt phát hành API, duyệt đăng ký sử dụng, duyệt phát hành luồng, duyệt công bố danh mục, chấp thuận khai thác dữ liệu, duyệt hoàn tiền, việc BPMN.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -1127,7 +1252,7 @@ Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: 
 
 **Ví dụ trong Datahub.** Tra log PH-13 (`/giam-sat/log`); truy vết theo `trace_id` (`/giam-sat/truy-vet/{trace-id}` với biểu đồ dải thời gian các span); nhật ký kiểm toán (`/giam-sat/kiem-toan`, xuất bằng chứng); nút gateway PH-03.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -1180,7 +1305,7 @@ Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: 
 
 **Khi dùng.** Cài đặt cá nhân (`/ca-nhan/cai-dat`: giao diện, kính, mật độ, giảm chuyển động, kênh thông báo FR-00-061, phím tắt); tham số hệ thống PH-18 (`/van-hanh/tham-so`, mỗi phân hệ một không gian tên như `07.rdm.*`, `04.flow.*`); cài đặt tỉnh PH-20 (`/quan-tri/cai-dat-tinh`: tên hiển thị, logo, chủ quản CNTT, ngưỡng mật khẩu và phiên trong giới hạn nền tảng); quản trị cổng nhà phát triển PH-15; tài khoản trên `dh-portal`. **Khi không dùng.** Cấu hình có vòng đời và phiên bản (chính sách gateway, khuôn luồng): dùng PTN-02 + PTN-03 vì cần duyệt và lịch sử như đối tượng nghiệp vụ.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -1237,7 +1362,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 
 **Hai cách hiển thị.** *Trong khung* (`in-shell`): giữ `CMP-AppShell`, sidebar và thanh trên, thay `main` bằng `CMP-ResultPage`; dùng cho 403, 404, 410, lỗi tải trang chính, để người dùng vẫn điều hướng được. *Toàn trang* (`standalone`): không có khung, nền `color-canvas`; dùng khi khung không dựng được (500 lúc khởi động, bảo trì toàn hệ thống, trình duyệt không hỗ trợ, chọn tenant).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (in-shell) hoặc viewport (standalone) ──────────────────────────────────┐
@@ -1271,6 +1396,8 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 | Tenant tạm ngưng | `standalone` | "Tỉnh {tên} đang tạm ngưng sử dụng Datahub" | Lý do do nền tảng ghi, đầu mối; với người thuộc nhiều tenant: "Chọn tỉnh khác" |
 | Trình duyệt không hỗ trợ | `standalone`, HTML tĩnh không cần JavaScript | "Trình duyệt chưa được hỗ trợ" | Danh sách trình duyệt hỗ trợ (hai phiên bản chính gần nhất của Chrome, Edge, Firefox, Cốc Cốc; Safari từ 17) |
 
+: PTN-13 · Trang lỗi và trạng thái hệ thống · Các biến thể.
+
 **Hành vi.**
 
 1. Trang lỗi không đổi URL người dùng đã mở (trừ chọn tenant và bảo trì toàn hệ thống), để tải lại sau khi được cấp quyền hoặc hết sự cố là vào đúng trang.
@@ -1294,7 +1421,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 
 **Khi dùng.** Tài liệu một API theo phiên bản (`/api/{ma-api}/{phien-ban}`), bài hướng dẫn (`/huong-dan/{bai}`: xác thực, mã lỗi, giới hạn, sự kiện), trang chủ cổng (biến thể trang chào). **Khi không dùng.** Quản trị API trong `dh-console` (PTN-02 của PH-02).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ Thanh trên dh-portal (glass-chrome → glass-chrome-scrolled) ─────────────────────┐
@@ -1352,6 +1479,8 @@ Giọng văn của Datahub là **lịch sự, trực tiếp, trung tính**: nói
 
 ### 5.2. Quy tắc chính tả và trình bày
 
+Bảng dưới đây nêu các quy tắc chính tả và cách trình bày chữ trên giao diện, mỗi quy tắc kèm ví dụ đúng và sai.
+
 | Quy tắc | Đúng | Sai |
 |---|---|---|
 | Viết hoa chữ đầu câu, không viết hoa mỗi từ | "Thêm dịch vụ thu" | "Thêm Dịch Vụ Thu" |
@@ -1365,6 +1494,8 @@ Giọng văn của Datahub là **lịch sự, trực tiếp, trung tính**: nói
 | Thuật ngữ kỹ thuật giữ nguyên tiếng Anh khi là khái niệm người dùng tra cứu | "route", "Kamelet", "topic", "webhook" | dịch gượng "tuyến", "chủ đề sự kiện" |
 | Mã, tên tham số, mã lỗi trong phông đơn cách | `ERR-07-018`, `07.rdm.sync-default-cron` | in đậm hoặc trong ngoặc kép |
 | Ô không có giá trị | "—" | "null", "N/A", để trống |
+
+: Quy tắc chính tả và trình bày
 
 ### 5.3. Nhãn hành động
 
@@ -1390,6 +1521,8 @@ Nhãn nút là động từ hoặc cụm động từ, nêu đối tượng khi 
 | Mở xem dữ liệu đã che | "Hiện" / "Ẩn" | "Xem", "Bỏ che" | |
 | Chạy thử | "Chạy thử" | "Test", "Kiểm thử" | |
 
+: Nhãn hành động
+
 Nút có dấu "…" ở cuối khi bấm sẽ mở hộp thoại cần thêm thông tin trước khi thực hiện ("Từ chối…", "Xuất…" khi có tùy chọn); nút thực hiện ngay không có dấu "…".
 
 ### 5.4. Tiêu đề, chữ giữ chỗ, trợ giúp
@@ -1397,6 +1530,8 @@ Nút có dấu "…" ở cuối khi bấm sẽ mở hộp thoại cần thêm th
 Tiêu đề trang là danh từ nghiệp vụ số nhiều ngầm, không có động từ: "Danh mục dùng chung", "Giao dịch". Tiêu đề trang tạo, sửa: "Thêm dịch vụ thu", "Sửa dịch vụ thu {tên}". Chữ giữ chỗ chỉ là ví dụ định dạng, không thay nhãn và không chứa hướng dẫn bắt buộc ("Ví dụ: DM_GIOI_TINH"); hướng dẫn đặt ở chữ trợ giúp dưới trường. Chữ trợ giúp tối đa hai dòng; dài hơn thì đặt liên kết "Tìm hiểu thêm" tới HDSD (FR-00-082).
 
 ### 5.5. Thông báo theo loại
+
+Thông báo được viết theo khuôn riêng cho từng loại để người dùng nhận ra ngay mức độ và việc cần làm tiếp.
 
 | Loại | Khuôn | Ví dụ |
 |---|---|---|
@@ -1407,6 +1542,8 @@ Tiêu đề trang là danh từ nghiệp vụ số nhiều ngầm, không có đ
 | Lỗi hệ thống | "Không {hành động} được do lỗi hệ thống. Thử lại sau ít phút; nếu vẫn lỗi, gửi mã truy vết cho bộ phận hỗ trợ." | kèm mã lỗi và mã truy vết |
 | Cảnh báo trước khi làm | "{Hệ quả}. {Câu hỏi}?" | "Luồng sẽ ngừng nhận bản tin ở PROD. Tạm dừng luồng Đồng bộ khai sinh?" |
 | Không có quyền | "Bạn không có quyền {hành động}. Liên hệ {vai trò} để được cấp." | |
+
+: Thông báo theo loại
 
 ### 5.6. Hộp xác nhận
 
@@ -1502,9 +1639,13 @@ Theo quyết định Q4 (phủ đủ nghiệp vụ hệ cũ và giữ màn có g
 | LGC-PAY-019 | Chi tiết giao dịch và lịch sử trạng thái | Giữ nguyên | PTN-02 | Chi tiết giao dịch, `CMP-Timeline` biến thể `status` |
 | LGC-PAY-020 | Dashboard kênh thanh toán | Giữ nguyên | PTN-06 | `/thanh-toan/kenh` |
 
+: Màn hệ cũ được giữ và mẫu tương ứng
+
 Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có mẫu và đích; không mục nào bị bỏ. Các mục "Thay thế" chuyển sang màn giám sát dùng chung của PH-13 vì hệ mới thu số liệu theo luồng, theo pod chứ không theo agent JMX; người dùng cũ tìm thấy chúng qua liên kết "Giám sát" ngay trên trang chi tiết đối tượng (`CMP-EmbeddedDashboard`), nên đường đi không dài hơn hệ cũ.
 
 ## 8. Truy vết
+
+Bảng dưới đây ánh xạ các yêu cầu giao diện dùng chung tới mục của tài liệu đáp ứng chúng.
 
 | Yêu cầu | Đáp ứng tại |
 |---|---|
@@ -1524,8 +1665,21 @@ Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có m�
 | Dàn ý D03-06 mục 3 (mỗi màn có bố cục, trạng thái, thông điệp) | §1.3, §4, §5 |
 | Dàn ý D03-06 mục 5 (danh sách màn hệ cũ được giữ) | §7 |
 
+: Truy vết
+
 ## 9. Đề xuất bổ sung
+
+Các đề xuất dưới đây cần chủ sở hữu các tài liệu liên quan xem xét, tài liệu này không tự sửa chéo.
 
 1. **D00-01 §9 (quy ước tên file).** Như D03-05 §9: tài liệu chia phần dùng `{mã-tài-liệu}-{nn}-{tên}.md`; tập UI phân hệ dùng `D03-06-PH{nn}-{tên}.md`.
 2. **D05-02.** Mục 6 của tài liệu này là phần chung của mọi ca kiểm thử giao diện; mỗi tập D05-02 phân hệ tham chiếu thay vì chép lại.
 3. **Route của tập PH-07.** Bản 0.3 của D03-06-PH07 đã chuyển route `/rdm/...` và tham số truy vấn tiếng Anh sang quy tắc URL ở §2.4 (đường dẫn `/du-lieu/danh-muc`, tham số `trang`, `co`, `sap-xep`); đường dẫn cũ được chuyển hướng phía client trong hai đợt phát hành để liên kết đã chia sẻ không hỏng.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.2 | 26/11/2026 | Luồng giao diện | Bản dự thảo trước khi áp chuẩn trình bày kết hợp |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm metadata `mo_ta` và `tai_lieu_lien_quan`, Tóm tắt cho hội đồng thẩm định, các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu), đoạn mở cho §5.2, §5.5, §8, §9, đoạn dẫn cho 15 wireframe |
+
+: Lịch sử phiên bản của D03-06-00

@@ -1,14 +1,44 @@
 ---
 ma_tai_lieu: D03-05-02
 ten: Design token và ánh xạ sang Ant Design v6
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
+mo_ta: Đặc tả design token của Datahub gồm kiến trúc ba tầng, màu, vật liệu glass, bo góc, bóng, khoảng cách, chữ, chuyển động, ánh xạ sang Ant Design v6, đóng gói, kiểm tra tự động và giới hạn tùy biến theo tenant.
+tai_lieu_lien_quan: ADR-020 Liquid Glass trên antd v6; ADR-021 Phông chữ; D00-01 Thuật ngữ và quy ước; D02-02 SRS; D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D03-05-03 Thành phần nguyên tử; D03-05-04 Thành phần phức hợp; D03-06-PH07 Màn hình danh mục
 nguoi_lap: Luồng giao diện
 ---
 
 # D03-05-02 · Design token và ánh xạ sang Ant Design v6
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Mọi màu, độ trong suốt, độ nhòe, bo góc, đổ bóng, khoảng cách, cỡ chữ và thời lượng chuyển động của giao diện đều đến từ một token được định nghĩa một lần, để nhà thiết kế, kỹ sư và kiểm thử viên cùng dùng một tên và một giá trị. Tài liệu là hợp đồng giá trị của design system, kèm ánh xạ sang Ant Design v6 và đoạn mã `ConfigProvider` dùng ngay, nhờ đó mockup, Storybook và ứng dụng thật không thể lệch nhau.
+
+**Phạm vi.** Tài liệu gồm kiến trúc ba tầng token (chương 2), bảng màu gốc và token màu ngữ nghĩa (chương 3, 4), token vật liệu glass và độ nhòe (chương 5, 6), bo góc, bóng, khoảng cách, chữ, chuyển động, kích thước, lớp chồng, điểm ngắt, mật độ (chương 7 đến 12), ánh xạ sang antd v6 kèm mã tham chiếu (chương 13), đóng gói, kiểm tra tự động và tùy biến theo tenant (chương 14 đến 16). Quy tắc đặt kính nằm ở D03-05-01; đặc tả thành phần nằm ở D03-05-03, D03-05-04.
+
+**Căn cứ.** STD-04 (WCAG 2.2, mức AA: tương phản chữ 4,5:1, phần tử đồ họa 3:1, vùng chạm tối thiểu 24×24 px); NFR-00-040, NFR-00-041, NFR-00-043, NFR-00-044, NFR-00-045 và FR-00-053 của SRS; ADR-020 (Liquid Glass trên antd v6) và ADR-021 (phông chữ Inter, JetBrains Mono).
+
+**Những điểm hội đồng cần lưu ý.** (1) Giá trị tương phản được tính bằng tập lệnh theo công thức độ chói tương đối của WCAG 2.2, không ước lượng bằng mắt, và chạy lại trong CI mỗi khi đổi token. (2) Độ đục của bốn vật liệu glass được chọn theo trường hợp xấu nhất; những cặp chữ không đạt (ví dụ chữ liên kết trên `glass-chrome`) bị cấm đặt trực tiếp lên vật liệu đó. (3) Màu luôn đi kèm chữ hoặc ký hiệu, không dùng màu làm kênh duy nhất, kể cả màu khác biệt và màu nguồn dữ liệu. (4) Tenant chỉ được chọn một trong sáu bộ màu nhấn đã kiểm định, không nhập mã màu tự do, và màu trạng thái không đổi theo tenant. (5) Một tệp nguồn `tokens.json` sinh cả CSS variables lẫn đối tượng `theme` của antd, và CI chặn giá trị màu, cỡ, bo góc, bóng, `z-index` viết tay.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Tầng token | 3 (gốc, ngữ nghĩa, thành phần) |
+| Vật liệu glass | 4, mỗi vật liệu có tương phản xấu nhất ghi trong bảng ở mục 5 |
+| Màu chữ chính trên nút nhấn | 5,38:1 (chữ trắng trên `#0A66D8`) |
+| Màu biểu đồ phân loại | 8, mỗi màu đạt ít nhất 3:1 với bề mặt đặc (mục 4.5) |
+| Token màu khác biệt và màu nguồn | 4 màu khác biệt và 4 màu nguồn dữ liệu (mục 4.6) |
+| Bộ màu nhấn cho tenant | 6 (mục 16) |
+| Thang khoảng cách | Cơ sở 4 px |
+| Phiên bản antd đã đối chiếu | 6.7.1 |
+| Kiểm tra tự động trên mỗi PR đổi token | 4 (mục 15) |
+
+: Con số chính của đặc tả design token
+
+Các con số trên được lấy từ chương 2, 4, 5, 13, 15 và 16 của tài liệu này.
 
 ## 1. Mục đích và cách dùng tài liệu
 
@@ -18,11 +48,95 @@ Tài liệu gồm ba phần. Phần thứ nhất (mục 2 đến 12) định ngh
 
 Các giá trị tương phản trong tài liệu được tính theo công thức độ chói tương đối của WCAG 2.2 bằng một tập lệnh kiểm tra, không ước lượng bằng mắt. Mỗi khi đổi giá trị token, tập lệnh này phải chạy lại trong CI (mục 15).
 
+### 1.1. Mục đích của tài liệu
+
+Tài liệu là nguồn chuẩn duy nhất về giá trị thị giác của design system. Hội đồng thẩm định dùng bảng tương phản để đánh giá NFR-00-041. Nhà thiết kế và kỹ sư dùng cùng tên token trong tệp thiết kế và trong mã; kiểm thử viên dùng chương 15 để nghiệm thu kiểm tra tự động.
+
+### 1.2. Phạm vi
+
+Bảng dưới phân định điều tài liệu này quy định và điều nằm ở tài liệu khác.
+
+| Thuộc tài liệu này | Nằm ở tài liệu khác |
+|---|---|
+| Giá trị màu, glass, bo góc, bóng, khoảng cách, chữ, chuyển động, kích thước | Quy tắc đặt kính, cấu tạo CSS, chế độ hiển thị, hạ cấp: D03-05-01 |
+| Ánh xạ sang antd v6 và mã `ConfigProvider` tham chiếu | Đặc tả hành vi, API từng thành phần: D03-05-03, D03-05-04 |
+| Đóng gói token, kiểm tra tự động, giới hạn tùy biến theo tenant | Màn hình quản trị tenant: tập phân hệ PH-20 |
+| Lý do chọn phông chữ ở mức tóm tắt | Quyết định phông chữ đầy đủ: ADR-021 |
+
+: Phân định phạm vi giữa D03-05-02 và các tài liệu liên quan
+
+### 1.3. Người đọc và cách đọc
+
+Bảng dưới gợi ý phần cần đọc theo vai trò.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, chương 4, 5, 16 | Đánh giá tương phản, vật liệu glass, giới hạn tùy biến theo tenant |
+| Kỹ sư giao diện | Chương 2, 13, 14, 15 | Dùng token đúng tầng, cấu hình antd, đóng gói, lint |
+| Nhà thiết kế | Chương 3 đến 12 | Dùng đúng tên token trong tệp thiết kế |
+| Kiểm thử viên | Chương 4, 5, 15 | Nghiệm thu tương phản, kiểm tra tự động |
+| AI agent sinh mã | Chương 2, 4, 13 | Chỉ dùng token ngữ nghĩa, không dùng giá trị thô |
+
+: Người đọc D03-05-02 và phần cần đọc theo vai trò
+
+### 1.4. Thuật ngữ và chữ viết tắt
+
+Bảng dưới chỉ gồm thuật ngữ riêng của design token. Thuật ngữ chung theo D00-01 §2.
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| Token gốc (primitive) | Màu có tên trung lập như `blue-600`; thành phần không dùng trực tiếp |
+| Token ngữ nghĩa (semantic) | Token đặt tên theo vai trò như `color-text-primary`; đổi giá trị giữa sáng và tối |
+| Token thành phần (component) | Giá trị riêng của một thành phần như `table-row-height`; luôn tham chiếu token ngữ nghĩa |
+| `--dh-*` | Tiền tố CSS variable do `@datahub/tokens` sinh ra |
+| `TKN-*` | Mã truy vết của token, ví dụ `TKN-color-text-primary` |
+| DTCG | Định dạng Design Tokens Community Group của tệp `tokens.json` |
+| Tint | Lớp màu bán trong suốt của vật liệu glass |
+| Bo góc đồng tâm | Quy tắc bán kính góc trong bằng bán kính góc ngoài trừ khoảng đệm |
+| Seed, Map, Alias token | Ba lớp token toàn cục của antd v6 |
+
+: Thuật ngữ riêng của design token
+
+### 1.5. Tài liệu tham chiếu
+
+Các tài liệu dưới đây được dẫn chiếu trong D03-05-02.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| STD-04 | WCAG 2.2 | Ngưỡng tương phản, vùng chạm |
+| ADR-020, ADR-021 | Liquid Glass trên antd v6; phông chữ | Lý do chọn vật liệu và phông chữ |
+| D00-01 | Thuật ngữ và quy ước | §6 quy ước đặt tên token |
+| D02-02 | Đặc tả yêu cầu phần mềm (SRS) | NFR-00-040…045, FR-00-053 |
+| D03-05 | Design system (tài liệu tổng) | Nguyên tắc, thứ tự ưu tiên giữa các tập |
+| D03-05-01 | Vật liệu Liquid Glass | Quy tắc đặt kính dùng token chương 5 |
+| D03-05-03, D03-05-04 | Thành phần nguyên tử, phức hợp | Thành phần dùng token |
+| D03-06-PH07 | Màn hình danh mục | Nguồn đề nghị token màu khác biệt và màu nguồn dữ liệu |
+
+: Tài liệu tham chiếu của D03-05-02
+
+### 1.6. Cấu trúc tài liệu
+
+Tài liệu đi từ kiến trúc token tới giá trị theo nhóm, rồi ánh xạ, đóng gói và kiểm tra. Bảng dưới tóm tắt từng chương.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 2 | Kiến trúc ba tầng token | Kỹ sư, nhà thiết kế |
+| 3, 4 | Bảng màu gốc, token màu ngữ nghĩa, bảng tương phản | Nhà thiết kế, kiểm thử viên, hội đồng |
+| 5, 6 | Token vật liệu glass, độ nhòe và độ trong | Kỹ sư, kiểm thử viên |
+| 7 đến 11 | Bo góc, bóng, khoảng cách, chữ, chuyển động | Nhà thiết kế, kỹ sư |
+| 12 | Kích thước, lớp chồng, điểm ngắt, mật độ | Kỹ sư |
+| 13 | Ánh xạ sang antd v6, mã cấu hình tham chiếu | Kỹ sư, AI agent |
+| 14, 15 | Đóng gói token, kiểm tra tự động | Kỹ sư, kiểm thử viên |
+| 16 | Tùy biến theo tenant | Hội đồng, quản trị nền tảng |
+| 17 | Truy vết | Quản lý chất lượng |
+
+: Cấu trúc chương của D03-05-02
+
 ## 2. Kiến trúc ba tầng token
 
 Token được tổ chức thành ba tầng. Tầng dưới cùng là **token gốc (primitive)**: bảng màu có tên trung lập như `blue-600`, `gray-900`; tầng này không bao giờ được thành phần dùng trực tiếp. Tầng giữa là **token ngữ nghĩa (semantic)**: tên mô tả vai trò như `color-text-primary`, `color-surface-solid`, `glass-chrome-tint`; đây là tầng mà thành phần dùng, và là tầng duy nhất thay đổi giá trị giữa sáng và tối. Tầng trên cùng là **token thành phần (component)**: giá trị riêng cho một thành phần, như chiều cao hàng bảng, độ rộng sidebar; tầng này luôn tham chiếu token ngữ nghĩa chứ không tham chiếu token gốc.
 
-```mermaid
+```{.mermaid caption="Kiến trúc ba tầng token"}
 flowchart LR
   P[Token gốc<br/>blue-600, gray-900, white-a72] --> S[Token ngữ nghĩa<br/>color-text-primary<br/>glass-chrome-tint]
   S --> C[Token thành phần<br/>table-row-height<br/>sidebar-width]
@@ -76,6 +190,8 @@ Bảng màu gốc chỉ dùng để định nghĩa token ngữ nghĩa. Màu ch�
 | red | 700 / 300d | `#B4232A` / `#FF6B6B` | Lỗi, phá hủy |
 | red | 600 | `#C9252D` | Nền nút phá hủy (chữ trắng 5,55:1) |
 
+: Bảng màu gốc theo nhóm, nấc và ghi chú sử dụng
+
 Hậu tố `d` đánh dấu nấc chỉ dùng cho chế độ tối. Việc tách nấc tối riêng thay vì đảo thang sáng là có chủ đích: Apple dùng màu nhấn sáng hơn ở chế độ tối để giữ tương phản trên nền gần đen, và Datahub làm theo cách đó.
 
 ## 4. Token màu ngữ nghĩa
@@ -99,6 +215,8 @@ Bảng dưới đây định nghĩa các lớp nền. Thứ tự từ dưới l�
 | `color-surface-inverse` | `#1D1D1F` | `#F5F5F7` | Nền Tooltip, Toast |
 | `color-text-on-inverse` | `#F5F5F7` | `#1D1D1F` | Chữ trên nền đảo |
 
+: Token bề mặt và nền theo chế độ sáng, tối
+
 ### 4.2. Chữ và biểu tượng
 
 Có bốn nấc chữ. Nấc cấp ba vẫn đạt 4,5:1 trên mọi nền đặc nên được dùng cho chữ giữ chỗ (placeholder), chú thích và nhãn phụ. Chỉ nấc "vô hiệu" được phép dưới ngưỡng, vì WCAG miễn yêu cầu tương phản cho thành phần bị vô hiệu hóa.
@@ -114,7 +232,11 @@ Có bốn nấc chữ. Nấc cấp ba vẫn đạt 4,5:1 trên mọi nền đặ
 | `color-icon-primary` | `#1D1D1F` | `#F5F5F7` | Như chữ chính | |
 | `color-icon-secondary` | `#63636D` | `#A1A1A8` | ≥ 3:1 theo ngưỡng phần tử đồ họa | |
 
+: Token màu chữ và biểu tượng theo chế độ sáng, tối
+
 ### 4.3. Nhấn, viền và focus
+
+Màu nhấn, viền điều khiển và vòng focus quyết định khả năng nhận biết thành phần tương tác. Bảng dưới đặt giá trị ở hai chế độ kèm lý do chọn để giữ tương phản chữ trắng trên nền nhấn.
 
 | Token | Sáng | Tối | Ghi chú |
 |---|---|---|---|
@@ -130,6 +252,8 @@ Có bốn nấc chữ. Nấc cấp ba vẫn đạt 4,5:1 trên mọi nền đặ
 | `color-focus-ring` | `#0A66D8` | `#4C9EFF` | Vòng focus 2px, cách thành phần 2px; 5,38 / 6,19 trên bề mặt |
 | `color-focus-ring-inner` | `#FFFFFF` | `#0E0E10` | Vòng trong 2px tạo viền kép, đảm bảo 3:1 trên mọi nền kể cả nền nhấn |
 
+: Token màu nhấn, viền và vòng focus theo chế độ sáng, tối
+
 Viền kép của focus (một vòng màu nhấn bên ngoài, một vòng nền bên trong) là cách bảo đảm vòng focus đạt 3:1 dù thành phần nằm trên nền trắng, nền nhấn xanh hay nền glass. Đây là yêu cầu của NFR-00-041 cho "vòng focus ≥ 3:1".
 
 ### 4.4. Trạng thái
@@ -143,6 +267,8 @@ Mỗi trạng thái có bốn token: màu chữ dùng trên nền đặc, màu n
 | `color-error` | `#B4232A` / `#FF6B6B` | `#FDECEC` / `#2D1517` | `#B4232A` 5,72 / `#FF6B6B` 6,15 | `#C9252D` (nền nút phá hủy, chữ trắng 5,55) |
 | `color-info` | `#0A66D8` / `#4C9EFF` | `#E8F1FC` / `#11233A` | `#0A66D8` 4,72 / `#4C9EFF` 5,77 | `#0A66D8` |
 | `color-neutral` | `#4B4B55` / `#C7C7CC` | `#EEEEF1` / `#2A2A2E` | `#4B4B55` 7,44 / `#C7C7CC` 8,49 | `#63636D` |
+
+: Token màu trạng thái theo bốn vai trò
 
 Ánh xạ trạng thái vòng đời nghiệp vụ sang năm sắc thái trên (ví dụ "Đã công bố" là success, "Tạm dừng" là warning, "Thu hồi" là error, "Bản nháp" là neutral, "Chờ duyệt" là info) được quy định một lần ở `CMP-StatusTag` (D03-05-03) để mọi phân hệ dùng chung (FR-00-053).
 
@@ -161,6 +287,8 @@ Biểu đồ dùng bảng màu phân loại tám màu. Mỗi màu đạt tối t
 | 7 | `color-chart-7` | `#5B6474` 5,97 | `#A1A1AA` 6,64 |
 | 8 | `color-chart-8` | `#B8860B` 3,25 | `#FACC15` 11,11 |
 
+: Bảng màu biểu đồ tám màu phân loại
+
 ### 4.6. Màu khác biệt và màu nguồn dữ liệu
 
 Hai nhóm token dưới đây được bổ sung ở bản 0.2 theo đề nghị của tập màn hình PH-07 (D03-06-PH07 Phụ lục A-02, A-03) và dùng chung cho mọi màn so sánh phiên bản (`CMP-DiffTable`, `CMP-EditableTable`, `CMP-FlowNode` ở chế độ khác biệt). Mỗi cặp nền nhẹ và chữ trên nền nhẹ đạt 4,5:1, nên nhãn đặt được trên nền đặc và trong `glass-overlay`. Màu luôn đi kèm chữ hoặc ký hiệu ("＋ Thêm", "~ Sửa", "− Ngừng"); không thành phần nào dùng màu khác biệt làm kênh duy nhất.
@@ -172,6 +300,8 @@ Hai nhóm token dưới đây được bổ sung ở bản 0.2 theo đề nghị
 | `color-diff-removed` | `#FDECEC` / `#2D1517` | `#B4232A` / `#FF6B6B` | 5,72 / 6,15 | "−", chữ gạch ngang, chữ "Ngừng dùng" hoặc "Đã xóa" |
 | `color-diff-moved` | `#E8F1FC` / `#11233A` | `#0A66D8` / `#4C9EFF` | 4,72 / 5,77 | "↕", chữ "Di chuyển" |
 
+: Màu khác biệt giữa hai phiên bản kèm ký hiệu đi kèm
+
 Bốn token khác biệt dùng cùng giá trị với token trạng thái tương ứng ở mục 4.4 nhưng tách tên để có thể chỉnh riêng (ví dụ tăng độ đậm nền khác biệt trong lưới dày) mà không đổi nhãn trạng thái.
 
 | Token | `…-bg` (sáng / tối) | `…-text` (sáng / tối) | Tương phản (sáng / tối) | Nghĩa |
@@ -180,6 +310,8 @@ Bốn token khác biệt dùng cùng giá trị với token trạng thái tươn
 | `color-source-national` | `#F1EBFE` / `#231B38` | `#6D28D9` / `#B79CFB` | 6,11 / 7,13 | Dữ liệu đồng bộ từ nguồn quốc gia (chỉ đọc) |
 | `color-source-hybrid` | `#E3F4F1` / `#0F2926` | `#0B7268` / `#2DD4BF` | 5,10 / 8,26 | Nguồn quốc gia có mở rộng địa phương |
 | `color-source-common` | `#EEEEF1` / `#2A2A2E` | `#4B4B55` / `#C7C7CC` | 7,44 / 8,49 | Danh mục dùng chung nền tảng (mọi tenant) |
+
+: Màu nguồn dữ liệu của danh mục
 
 Nhãn nguồn hiển thị bằng `CMP-Tag` có biểu tượng và chữ riêng cho mỗi nguồn (bảng nhãn ở D03-06-PH07 §5.1), nên người mù màu vẫn phân biệt được. Màn PH-07 bản 0.1 đặt tên các token này với tiền tố `TKN-` và hậu tố `-fg`; tên chuẩn là tên ở bảng trên với hậu tố `-text`.
 
@@ -196,6 +328,8 @@ Datahub có bốn vật liệu glass. Mỗi vật liệu là tổ hợp của m�
 | `glass-modal` | `rgba(255,255,255,0.88)` / `rgba(28,28,30,0.88)` | `blur-xl` 40px | 160% | Khung Modal, Drawer, CommandPalette | 12,80 / 6,55 / 4,09 — 10,87 / 7,03 / 4,31 |
 | `glass-overlay` | `rgba(255,255,255,0.94)` / `rgba(28,28,30,0.90)` | `blur-lg` 32px | 160% | Popover, Dropdown, danh sách chọn của Select, DatePicker, Notification | 14,73 / 7,54 / 4,71 — 11,63 / 7,52 / 4,61 |
 
+: Bốn vật liệu glass với tint, độ nhòe, bão hòa và tương phản xấu nhất
+
 Ghi chú quan trọng cho người triển khai. Vật liệu `glass-chrome` không đạt ngưỡng cho chữ cấp hai và chữ liên kết trong trường hợp xấu nhất, nhưng nó chỉ được đặt trên canvas, nơi phông nền do hệ thống kiểm soát; trên canvas, cả ba nấc chữ đạt lần lượt 16,36 / 8,38 / 5,23 (sáng) và 16,32 / 10,55 / 6,46 (tối). Khi topbar có nội dung cuộn bên dưới, nó **bắt buộc** chuyển sang `glass-chrome-scrolled` (xem D03-05-01 §5). Trên `glass-chrome-scrolled` và `glass-modal`, chữ màu nhấn (liên kết) dưới 4,5:1 trong trường hợp xấu nhất, nên **không đặt chữ liên kết cỡ thường trực tiếp lên hai vật liệu này**; liên kết trong Modal luôn nằm trong vùng nội dung đặc (`color-surface-solid`). Vật liệu `glass-overlay` đạt ngưỡng cho mọi nấc chữ kể cả trường hợp xấu nhất, nên nội dung của popover và menu thả xuống được đặt trực tiếp lên glass.
 
 Các token phụ của vật liệu:
@@ -209,7 +343,11 @@ Các token phụ của vật liệu:
 | `glass-off-tint` | `color-surface-solid` | | Tint ở chế độ "Tắt" (nền đặc hoàn toàn) |
 | `glass-scroll-edge` | `linear-gradient(to bottom, rgba(242,243,247,0.9), rgba(242,243,247,0))` | `linear-gradient(to bottom, rgba(14,14,16,0.9), rgba(14,14,16,0))` | Dải mờ dần 16px dưới topbar khi nội dung cuộn |
 
+: Token phụ của vật liệu glass: mép, viền, tint hạ cấp và dải scroll edge
+
 ## 6. Độ nhòe và độ trong
+
+Độ nhòe phông nền của vật liệu glass được đặt theo một thang cố định để các vật liệu không tự chọn giá trị riêng. Bảng dưới liệt kê từng nấc và vật liệu dùng nấc đó.
 
 | Token | Giá trị | Ghi chú |
 |---|---|---|
@@ -221,6 +359,8 @@ Các token phụ của vật liệu:
 | `saturate-glass` | `180%` | Tăng bão hòa giúp màu phông nền "sống" khi đi qua kính |
 | `saturate-glass-muted` | `160%` | Cho lớp nổi phía trên nội dung, tránh màu chói |
 | `opacity-disabled` | `0.4` | Không dùng cho chữ; chữ vô hiệu dùng `color-text-disabled` |
+
+: Thang độ nhòe phông nền
 
 Độ nhòe lớn hơn 40px không mang lại khác biệt thị giác đáng kể nhưng tăng chi phí GPU gần tuyến tính theo bán kính, nên 40px là trần.
 
@@ -239,6 +379,8 @@ Liquid Glass dùng nguyên tắc **bo góc đồng tâm (concentric)**: một h�
 | `radius-pill` | `9999px` | Nút dạng viên nang, Switch, StatusTag, thanh tìm kiếm trên topbar |
 | `radius-concentric(outer, padding)` | `max(outer − padding, radius-xs)` | Hàm tính trong mã, không phải giá trị cố định |
 
+: Thang bo góc và nơi dùng
+
 Ví dụ áp dụng: Modal có `radius-xl` 20px và khoảng đệm 8px giữa khung glass và vùng nội dung đặc, nên vùng nội dung có bán kính 20 − 8 = 12px.
 
 ## 8. Đổ bóng và độ cao
@@ -252,6 +394,8 @@ Vật liệu glass cần bóng để tách khỏi nền, nhưng bóng của Liqu
 | `shadow-2` | `0 2px 6px rgba(16,24,40,0.06), 0 8px 24px rgba(16,24,40,0.08)` | `0 2px 6px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4)` | Sidebar nổi, topbar khi cuộn |
 | `shadow-3` | `0 4px 12px rgba(16,24,40,0.08), 0 16px 40px rgba(16,24,40,0.12)` | `0 4px 12px rgba(0,0,0,0.5), 0 16px 40px rgba(0,0,0,0.5)` | Popover, Dropdown |
 | `shadow-4` | `0 8px 24px rgba(16,24,40,0.12), 0 32px 64px rgba(16,24,40,0.18)` | `0 8px 24px rgba(0,0,0,0.6), 0 32px 64px rgba(0,0,0,0.6)` | Modal, Drawer, CommandPalette |
+
+: Thang đổ bóng và độ cao
 
 Bóng của vật liệu glass luôn được ghép với `glass-highlight-top` và `glass-edge` thành một khai báo `box-shadow` duy nhất (D03-05-01 §4).
 
@@ -274,6 +418,8 @@ Khoảng cách dùng thang cơ sở 4px. Thành phần chỉ được dùng các
 | `space-12` | `48px` | Khoảng trống trạng thái rỗng |
 | `space-16` | `64px` | |
 
+: Thang khoảng cách cơ sở 4px
+
 Lưới bố cục, kích thước khung (topbar, sidebar), điểm ngắt và mật độ được định nghĩa ở mục 12 và được dùng trong D03-06-00.
 
 ## 10. Chữ
@@ -286,6 +432,8 @@ Họ chữ được chọn tại ADR-021: **Inter** cho giao diện và **JetBra
 | `font-family-mono` | `"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace` |
 | `font-feature-ui` | `"cv11", "ss01"` (chữ số 1 có chân, a một tầng dễ đọc trên màn hình) |
 | `font-feature-tabular` | `"tnum"` (chữ số đều độ rộng, bắt buộc cho cột số, thời gian, tiền) |
+
+: Họ phông chữ và tính năng chữ
 
 Thang cỡ chữ bám thang của antd để thành phần antd không lệch, nhưng chiều cao dòng được tăng cho tiếng Việt. Chữ Việt có dấu chồng hai tầng (ví dụ "Ể", "ỗ"), nếu chiều cao dòng dưới 1,4 thì dấu của dòng dưới chạm chân chữ của dòng trên.
 
@@ -303,6 +451,8 @@ Thang cỡ chữ bám thang của antd để thành phần antd không lệch, n
 | `font-display-lg` | 38px / 46px / 700 | Dự phòng cho trang chào |
 | `font-mono-sm` | 12px / 18px / 400 mono | Log, khối mã trong bảng |
 | `font-mono` | 13px / 20px / 400 mono | Khối mã, YAML, JSON |
+
+: Thang cỡ chữ, chiều cao dòng và độ đậm
 
 Cỡ chữ tối thiểu cho thông tin có nghĩa là 12px. Không dùng chữ in hoa toàn bộ cho tiêu đề tiếng Việt, vì dấu của chữ in hoa bị nén và khó đọc; nhãn nhóm menu dùng chữ thường cỡ `font-caption` độ đậm 600.
 
@@ -322,11 +472,15 @@ Chuyển động của Liquid Glass gợi cảm giác vật liệu có quán tí
 | `motion-ease-exit` | `cubic-bezier(0.3, 0, 1, 1)` | Lớp nổi biến mất |
 | `motion-scale-enter` | `0.96 → 1` | Lớp nổi phóng từ 96% lên 100% khi xuất hiện |
 
+: Token thời lượng và đường cong chuyển động
+
 Khi người dùng bật giảm chuyển động (hệ điều hành `prefers-reduced-motion: reduce` hoặc công tắc trong cài đặt), mọi token thời lượng trên 80ms được đặt về `0ms` trừ hiệu ứng mờ dần (`opacity`), giữ ở `motion-duration-fast` để người dùng vẫn nhận ra có thay đổi. Phóng to, trượt và hiệu ứng thị sai bị tắt.
 
 ## 12. Kích thước, lớp chồng, điểm ngắt và mật độ
 
 ### 12.1. Kích thước điều khiển
+
+Kích thước điều khiển có hai cột theo mật độ chuẩn và gọn, và cỡ nhỏ nhất vẫn đạt vùng chạm 24×24 px của WCAG 2.5.8. Bảng dưới là giá trị chuẩn cho điều khiển, biểu tượng và khung bố cục.
 
 | Token | Chuẩn | Gọn | Ghi chú |
 |---|---|---|---|
@@ -346,7 +500,11 @@ Khi người dùng bật giảm chuyển động (hệ điều hành `prefers-re
 | `size-drawer-lg` | 880px | 880px | Drawer chứa biểu mẫu hai cột hoặc so sánh |
 | `size-modal-sm` / `md` / `lg` | 416 / 560 / 800px | như chuẩn | |
 
+: Kích thước điều khiển ở mật độ chuẩn và gọn
+
 ### 12.2. Lớp chồng
+
+Lớp chồng (`z-index`) được đặt thành thang token để Modal, Drawer, tooltip và hộp thoại hết phiên luôn xếp đúng thứ tự mà không thành phần nào tự chọn số. Bảng dưới liệt kê từ lớp nội dung tới lớp trên cùng.
 
 | Token | Giá trị | Lớp |
 |---|---|---|
@@ -361,6 +519,8 @@ Khi người dùng bật giảm chuyển động (hệ điều hành `prefers-re
 | `z-tooltip` | 1070 | |
 | `z-session-dialog` | 1200 | Hộp thoại sắp hết phiên luôn nằm trên cùng (FR-00-003) |
 
+: Thang lớp chồng z-index
+
 ### 12.3. Điểm ngắt
 
 Datahub dùng nguyên điểm ngắt của antd để `Grid` và `useBreakpoint` hoạt động không cần cấu hình thêm. Độ phân giải mục tiêu tối thiểu là 1366×768 (máy văn phòng phổ biến); dưới `lg` (992px) giao diện quản trị vẫn dùng được nhưng sidebar chuyển thành Drawer và bảng cuộn ngang.
@@ -372,6 +532,8 @@ Datahub dùng nguyên điểm ngắt của antd để `Grid` và `useBreakpoint`
 | `bp-lg` | 992px | Sidebar chuyển thành Drawer bên dưới mức này |
 | `bp-xl` | 1200px | Sidebar mặc định thu gọn ở 1200–1365px |
 | `bp-xxl` | 1600px | Bảng điều khiển hiển thị lưới 4 cột |
+
+: Điểm ngắt và hành vi bố cục
 
 ### 12.4. Mật độ
 
@@ -449,6 +611,8 @@ Bảng dưới đây là bảng ánh xạ đầy đủ những token toàn cục
 | `wireframe` | `false` | `false` | |
 | `zIndexPopupBase` | 1000 | 1000 | `z-modal` |
 
+: Ánh xạ token toàn cục sang antd v6
+
 Thuật toán: chế độ sáng dùng `theme.defaultAlgorithm`, chế độ tối dùng `theme.darkAlgorithm`, mật độ gọn ghép thêm `theme.compactAlgorithm`. Vì phần lớn token màu đã được đặt tường minh, thuật toán chủ yếu ảnh hưởng tới các token dẫn xuất ít gặp (ví dụ màu của bảng sắc độ preset dùng cho `Tag` có thuộc tính `color`). Datahub không dùng `Tag color="..."` với màu preset; nhãn màu luôn đi qua `CMP-StatusTag`.
 
 ### 13.3. Ánh xạ token thành phần
@@ -498,6 +662,8 @@ Bảng dưới đây liệt kê token thành phần antd được Datahub đặt
 | `Notification` | (dùng `classNames`) | | Gắn `dh-glass--overlay` |
 | `Message` | `contentBg` | `#1D1D1F` / `#F5F5F7` | Toast dùng nền đảo đặc, đọc được trên mọi nền |
 | `Switch` | `trackHeight`, `handleSize` | 22, 18 | Viên nang kiểu iOS thu nhỏ cho mật độ quản trị |
+
+: Ánh xạ token thành phần sang antd v6
 
 ### 13.4. Mã cấu hình tham chiếu
 
@@ -647,6 +813,8 @@ Nguồn sự thật duy nhất là tệp `packages/tokens/tokens.json` theo đ�
 | Đối tượng TypeScript | `dist/tokens.ts` (xuất `tokens.light`, `tokens.dark` có kiểu chặt) | `buildAntdTheme`, biểu đồ ECharts |
 | Bảng tra cứu | `dist/tokens.md` | Tự chèn vào Storybook và kiểm tra lệch với tài liệu này |
 
+: Ba đầu ra của công cụ đóng gói token
+
 Phông chữ Inter và JetBrains Mono (bản biến thiên, định dạng WOFF2, tập con Latin + Latin Extended + Vietnamese) nằm trong `packages/tokens/fonts/` và được khai báo `@font-face` với `font-display: swap` trong `tokens.css`.
 
 ## 15. Kiểm tra tự động
@@ -660,6 +828,8 @@ CI của `@datahub/ui` chạy bốn kiểm tra trên mỗi PR thay đổi token 
 | Truy cập | axe-core chạy trên mọi story của Storybook ở cả hai chế độ và ba chế độ glass | 0 vi phạm mức A, AA (NFR-00-040) |
 | Hồi quy hình ảnh | Playwright chụp story ở sáng, tối, glass `full` và `off` | Khác biệt điểm ảnh dưới ngưỡng đã duyệt |
 
+: Bốn kiểm tra tự động trên mỗi PR đổi token
+
 ## 16. Tùy biến theo tenant
 
 Datahub là sản phẩm đa tenant, mỗi tỉnh muốn thấy dấu ấn của mình. Tuy nhiên, cho phép tenant tự chọn màu bất kỳ sẽ phá vỡ toàn bộ bảng tương phản ở mục 4. Vì vậy phạm vi tùy biến bị giới hạn như sau.
@@ -671,9 +841,13 @@ Datahub là sản phẩm đa tenant, mỗi tỉnh muốn thấy dấu ấn của
 | Lớp dải màu canvas | Theo màu nhấn đã chọn | Sinh tự động từ màu nhấn, độ bão hòa thấp |
 | Phông chữ, bo góc, khoảng cách, vật liệu | Không | Giữ thống nhất giữa các tỉnh để tài liệu hướng dẫn và đào tạo dùng chung |
 
+: Phạm vi tùy biến token theo tenant
+
 Màu trạng thái (thành công, cảnh báo, lỗi) không đổi theo tenant, vì đổi màu nhấn sang đỏ son không được làm nhãn "Thu hồi" và nút chính trông giống nhau; khi tenant chọn bộ Đỏ son, nút phá hủy tự chuyển sang kiểu viền (`CMP-Button` biến thể `danger-outline`) để giữ khác biệt.
 
 ## 17. Truy vết
+
+Bảng dưới nối yêu cầu phi chức năng và quyết định kiến trúc với mục của tài liệu này.
 
 | Yêu cầu | Đáp ứng tại |
 |---|---|
@@ -684,3 +858,13 @@ Màu trạng thái (thành công, cảnh báo, lỗi) không đổi theo tenant,
 | NFR-00-045 Thống nhất giao diện, lint | Mục 13.1, 15 |
 | FR-00-053 Nhãn trạng thái thống nhất | Mục 4.4 |
 | RB-03, ADR-020, ADR-021 | Mục 10, 13 |
+
+: Truy vết yêu cầu và ADR tới mục của D03-05-02
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: kiến trúc ba tầng token, bảng màu, token màu ngữ nghĩa, vật liệu glass, bo góc, bóng, khoảng cách, chữ, chuyển động, ánh xạ antd v6, đóng gói, kiểm tra, tùy biến theo tenant, truy vết |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Thêm token màu khác biệt và màu nguồn dữ liệu (mục 4.6) theo đề nghị của D03-06-PH07 |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.1–1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 4.3, 6, 12.1, 12.2 và chương 17; viết lại 26 chú thích bảng cho cụ thể, bỏ chú thích trùng; thêm metadata mo_ta và tai_lieu_lien_quan |
