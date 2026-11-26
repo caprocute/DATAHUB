@@ -156,7 +156,7 @@ Căn cứ pháp lý được đánh mã `CMP-LAW-*` theo D00-04; tài liệu d�
 
 ### 1.6. Cấu trúc tài liệu
 
-Chương 2 trình bày tổng quan phân hệ cho hội đồng thẩm định: vai trò, Hub Pulsar cũ và hạn chế, mục tiêu đo được, vị trí trong kiến trúc, thành phần và luồng chính, quy trình nghiệp vụ, chức năng hệ cũ được phủ. Chương 3 nêu tác nhân, ma trận quyền và tách nhiệm vụ. Chương 4 mô tả khái niệm, thực thể, sáu máy trạng thái và định dạng sự kiện. Chương 5 là bảng danh sách 76 chức năng. Chương 6 đặc tả chi tiết từng chức năng bằng khối 17 mục, chia mười một nhóm A…K. Chương 7 liệt kê quy tắc nghiệp vụ; chương 8 yêu cầu phi chức năng và lưu giữ; chương 9 mã lỗi, câu thông báo, sự kiện và danh mục API. Chương 10 liệt kê màn hình và giới thiệu hai giao diện tiêu biểu. Chương 11 là truy vết; chương 12 phụ thuộc, giả định, ràng buộc và đề nghị đồng bộ; chương 13 câu hỏi mở; chương 14 tiêu chí chấp nhận; chương 15 nhật ký hấp thụ đề nghị từ các tập. Phụ lục A là bảng mã và enum chuẩn.
+Chương 2 là tổng quan cho hội đồng; chương 3 tác nhân và quyền; chương 4 khái niệm, thực thể, máy trạng thái; chương 5 danh sách 76 chức năng; chương 6 đặc tả 17 mục theo nhóm A…K; chương 7 đến 9 quy tắc, phi chức năng, mã lỗi, sự kiện, API; chương 10 giao diện; chương 11 truy vết; chương 12 phụ thuộc và đề nghị đồng bộ; chương 13 đến 15 câu hỏi mở, tiêu chí chấp nhận, nhật ký hấp thụ. Phụ lục A là bảng mã và enum chuẩn.
 
 ## 2. Tổng quan phân hệ
 
@@ -265,7 +265,6 @@ Sơ đồ trình tự dưới đây là luồng chính của phân hệ theo quy
 
 ```{.mermaid caption="Luồng chính của PH-10: khai báo có duyệt, cấp phát GitOps, phát, giao đẩy và kéo"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư tích hợp
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -552,6 +551,8 @@ stateDiagram-v2
   APPROVED --> CANCELLED : hủy trước khi chạy
 ```
 
+Lượt phát lại chỉ chạy sau khi được duyệt và luôn kết thúc ở `COMPLETED`, `FAILED`, `CANCELLED` hoặc `REJECTED`.
+
 ```{.mermaid caption="Máy trạng thái mục DLQ"}
 stateDiagram-v2
   [*] --> NEW : giao thất bại hết lượt thử (FR-10-049)
@@ -588,92 +589,92 @@ Sự kiện chỉ mang định danh và loại thay đổi khi đối tượng c
 
 ## 5. Danh sách chức năng
 
-Bảng sau liệt kê 76 chức năng của PH-10 theo mười một nhóm A…K, đúng thứ tự đặc tả ở chương 6. Cột "Mức" theo MoSCoW rút gọn (M bắt buộc, S nên có, C có thể có); cột "Đợt" là MVP hoặc Đợt sau. Cột UC lấy từ D02-04-PH10, cột UI từ mục 10.1, cột API từ mục 9.4; "—" là chức năng của hệ thống không có màn hoặc API riêng (chạy nền, tiêu thụ sự kiện, hoặc dùng API của chức năng khác).
+Bảng sau liệt kê 76 chức năng của PH-10 theo thứ tự đặc tả ở chương 6: nhóm A là FR-10-001…005, B 006…016, C 017…024, D 025…029, E 030…034, F 035…048, G 049…053, H 054…059, I 060…065, J 066…069, K 070…076. Cột "Mức" theo MoSCoW rút gọn (M bắt buộc, S nên có, C có thể có); cột "Đợt" là MVP hoặc Đợt sau. Cột UC lấy từ D02-04-PH10, cột UI từ mục 10.1, cột API từ mục 9.4; "—" là chức năng của hệ thống không có màn hoặc API riêng (chạy nền, tiêu thụ sự kiện, hoặc dùng API của chức năng khác).
 
-| FR | Nhóm | Tên | Mức | Đợt | UC | UI | API |
-|---|---|---|---|---|---|---|---|
-| FR-10-001 | A | Liệt kê, tìm kiếm và lọc dự án tích hợp | M | MVP | UC-10-01 | UI-10-02 | API-10-001 |
-| FR-10-002 | A | Xem chi tiết dự án | M | MVP | UC-10-01 | UI-10-03 | API-10-003 |
-| FR-10-003 | A | Tạo dự án tích hợp | M | MVP | UC-10-01 | UI-10-02, 04 | API-10-002 |
-| FR-10-004 | A | Sửa dự án | M | MVP | UC-10-01 | UI-10-03, 04 | API-10-004 |
-| FR-10-005 | A | Lưu trữ và khôi phục dự án | M | MVP | UC-10-01 | UI-10-02, 03 | API-10-005, 006 |
-| FR-10-006 | B | Liệt kê, tìm kiếm và lọc topic | M | MVP | UC-10-02 | UI-10-05 | API-10-008 |
-| FR-10-007 | B | Xem chi tiết topic | M | MVP | UC-10-02 | UI-10-06 | API-10-010, 020 |
-| FR-10-008 | B | Tạo topic và gửi duyệt | M | MVP | UC-10-02 | UI-10-03, 07 | API-10-009, 011, 012 |
-| FR-10-009 | B | Duyệt tạo topic và cấp phát trên cụm | M | MVP | UC-10-03 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
-| FR-10-010 | B | Theo dõi cấp phát và xử lý cấp phát thất bại | M | MVP | UC-10-03 | UI-10-06 | API-10-013, 014 |
-| FR-10-011 | B | Tăng số phân vùng của topic đang hoạt động | M | MVP | UC-10-04 | UI-10-06, 13 | API-10-015 |
-| FR-10-012 | B | Thay đổi lưu giữ và chính sách dọn (compaction) | M | MVP | UC-10-04 | UI-10-06 | API-10-015 |
-| FR-10-013 | B | Chế độ định tuyến và khóa phân vùng | M | MVP | UC-10-02, 04 | UI-10-06 | API-10-015 |
-| FR-10-014 | B | Ngừng khuyến nghị và ngừng dùng topic | M | MVP | UC-10-05 | UI-10-06 | API-10-011, 016, 017 |
-| FR-10-015 | B | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | M | MVP | UC-10-05 | UI-10-06 | API-10-018 |
-| FR-10-016 | B | Theo dõi chuyển đổi bên nhận sang phiên bản topic mới | S | MVP | UC-10-05 | UI-10-01, 06 | API-10-019 |
-| FR-10-017 | C | Soạn và kiểm tra lược đồ | M | MVP | UC-10-02, 06 | UI-10-07, 08 | API-10-023, 025, 026 |
-| FR-10-018 | C | Kiểm tra tương thích với các phiên bản đã có | M | MVP | UC-10-06 | UI-10-08 | API-10-026 |
-| FR-10-019 | C | Gửi duyệt và duyệt phiên bản lược đồ | M | MVP | UC-10-06 | UI-10-08, 13 | API-10-027, 057, 058, 059, 101, 102 |
-| FR-10-020 | C | Xem lịch sử phiên bản, so sánh và tải lược đồ | M | MVP | UC-10-06 | UI-10-08 | API-10-021, 022, 024, 030 |
-| FR-10-021 | C | Đặt mức tương thích của lược đồ | M | MVP | UC-10-04 | UI-10-08 | API-10-015 |
-| FR-10-022 | C | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | S | MVP | UC-10-06 | UI-10-08 | API-10-028, 029 |
-| FR-10-023 | C | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | S | MVP | UC-10-11 | — | API-10-031 |
-| FR-10-024 | C | Cung cấp tra cứu lược đồ cho bên ngoài | S | MVP | UC-10-10 | UI-10-06 | API-10-020, 084 |
-| FR-10-025 | D | Liệt kê bên phát và bên nhận | M | MVP | UC-10-07 | UI-10-09, 10 | API-10-032, 034, 037, 039 |
-| FR-10-026 | D | Đăng ký bên phát | M | MVP | UC-10-07 | UI-10-09 | API-10-033 |
-| FR-10-027 | D | Đăng ký bên nhận | M | MVP | UC-10-07 | UI-10-10 | API-10-038 |
-| FR-10-028 | D | Sửa, tạm ngừng, tiếp tục và ngừng dùng bên phát, bên nhận | M | MVP | UC-10-08 | UI-10-09, 10 | API-10-035, 036, 040, 041, 092, 093, 094, 095 |
-| FR-10-029 | D | Đồng bộ trạng thái với PH-01 và PH-04 | M | MVP | UC-10-08 | — | — |
-| FR-10-030 | E | Đề nghị publication | M | MVP | UC-10-09 | UI-10-09 | API-10-042, 043, 044 |
-| FR-10-031 | E | Duyệt publication, cấp scope OAuth và ACL Kafka | M | MVP | UC-10-09 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
-| FR-10-032 | E | Tạm ngừng, tiếp tục và thu hồi publication | M | MVP | UC-10-11 | UI-10-09 | API-10-045, 096, 097 |
-| FR-10-033 | E | Phát sự kiện qua API phát | M | MVP | UC-10-10 | — | API-10-079 |
-| FR-10-034 | E | Phát sự kiện trực tiếp qua Kafka | M | MVP | UC-10-11 | — | API-10-020 |
-| FR-10-035 | F | Đề nghị subscription | M | MVP | UC-10-12 | UI-10-11 | API-10-046, 047, 048 |
-| FR-10-036 | F | Xác minh endpoint webhook | M | MVP | UC-10-12 | UI-10-11 | API-10-051, 091 |
-| FR-10-037 | F | Duyệt subscription và cấp phát nhóm tiêu thụ | M | MVP | UC-10-13 | UI-10-13 | API-10-057, 058, 059, 101, 102, 120 |
-| FR-10-038 | F | Giao nhận ĐẨY: webhook ký HMAC | M | MVP | UC-10-14 | — | API-10-073 |
-| FR-10-039 | F | Thử lại giãn dần và chính sách khi thất bại | M | MVP | UC-10-14 | — | API-10-086, 119 |
-| FR-10-040 | F | Điểm bắt đầu và offset bắt đầu | M | MVP | UC-10-12 | UI-10-11 | — |
-| FR-10-041 | F | Tạm dừng, tiếp tục subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 098 |
-| FR-10-042 | F | Xoay khóa ký webhook | M | MVP | UC-10-17 | UI-10-12 | API-10-054, 100, 120 |
-| FR-10-043 | F | Giao nhận KÉO qua API | M | MVP | UC-10-15 | — | API-10-073, 080, 081, 082 |
-| FR-10-044 | F | Giao nhận KÉO qua Kafka listener ngoài | S | MVP | UC-10-15 | — | API-10-083 |
-| FR-10-045 | F | Giao nhận nội bộ cho luồng và DU | M | MVP | UC-10-25 | — | — |
-| FR-10-046 | F | Sửa tham số subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-049 |
-| FR-10-047 | F | Thu hồi subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 099 |
-| FR-10-048 | F | Lọc sự kiện và gộp lô khi đẩy | C | Đợt sau | — | — | — |
-| FR-10-049 | G | Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện | M | MVP | UC-10-14 | UI-10-15 | — |
-| FR-10-050 | G | Tra cứu, xem và loại bỏ mục DLQ | M | MVP | UC-10-18 | UI-10-15 | API-10-060, 061, 062, 103 |
-| FR-10-051 | G | Đề nghị và duyệt phát lại theo khoảng offset hoặc thời gian | M | MVP | UC-10-19 | UI-10-13, 16 | API-10-057, 058, 059, 064, 101, 102 |
-| FR-10-052 | G | Thực thi, theo dõi và hủy lượt phát lại | M | MVP | UC-10-19 | UI-10-16 | API-10-063, 065, 087, 088, 104 |
-| FR-10-053 | G | Phát lại mục DLQ | M | MVP | UC-10-18 | UI-10-15 | API-10-064, 088, 089 |
-| FR-10-054 | H | Thu thập consumer lag | M | MVP | UC-10-20 | UI-10-12, 17 | API-10-055 |
-| FR-10-055 | H | Cảnh báo lag và nhóm tiêu thụ ngừng tiến | M | MVP | UC-10-20 | UI-10-12, 17 | API-10-056 |
-| FR-10-056 | H | Thống kê giao nhận và lượt giao gần đây | M | MVP | UC-10-16 | UI-10-12 | API-10-048, 052, 053, 085 |
-| FR-10-057 | H | Dashboard sự kiện | M | MVP | UC-10-21 | UI-10-01 | API-10-066 |
-| FR-10-058 | H | Sơ đồ kết nối tương tác | M | MVP | UC-10-21 | UI-10-14 | API-10-007 |
-| FR-10-059 | H | Xuất số liệu sang PH-13 | M | MVP | UC-10-20 | — | — |
-| FR-10-060 | I | Danh mục kiểu giao tiếp | M | MVP | UC-10-22 | UI-10-18 | API-10-067, 105 |
-| FR-10-061 | I | Danh mục chế độ định tuyến | M | MVP | UC-10-22 | UI-10-18 | API-10-068, 106 |
-| FR-10-062 | I | Hạn mức theo tenant và phân bổ cho bên tham gia | M | MVP | UC-10-22 | UI-10-01, 18 | API-10-069, 107 |
-| FR-10-063 | I | Tham số phân hệ theo tenant | M | MVP | UC-10-22 | UI-10-18 | API-10-070, 108 |
-| FR-10-064 | I | Cách ly đa tenant trên trục sự kiện | M | MVP | UC-10-10, 24 | — | — |
-| FR-10-065 | I | Kiểm toán và lịch sử thay đổi | M | MVP | UC-10-01 | — | — |
-| FR-10-066 | J | Đăng ký topic hộ PH-05 cho CDC | M | MVP | UC-10-23 | — | API-10-009 |
-| FR-10-067 | J | Đăng ký topic cho DU nội bộ và topic nền tảng | M | MVP | UC-10-24 | — | API-10-009 |
-| FR-10-068 | J | Xử lý thông báo thay đổi lược đồ CDC | M | MVP | UC-10-23 | — | API-10-018, 023 |
-| FR-10-069 | J | Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế | M | MVP | UC-10-25 | — | API-10-008, 071, 072, 109 |
-| FR-10-070 | K | Xuất khai báo | S | MVP | UC-10-28 | UI-10-02 | API-10-074 |
-| FR-10-071 | K | Nhập khai báo có xem trước | C | Đợt sau | UC-10-28 | UI-10-19 | API-10-075, 110, 111, 121 |
-| FR-10-072 | K | Nhập kiểm kê Pulsar và lập ánh xạ | M | MVP | UC-10-26 | UI-10-20 | API-10-075, 076, 110, 111, 112 |
-| FR-10-073 | K | Cầu nối Pulsar sang Kafka tạm thời | M | MVP | UC-10-27 | UI-10-13, 20 | API-10-077, 090, 113, 114, 115 |
-| FR-10-074 | K | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | S | MVP | UC-10-27 | UI-10-20 | API-10-077, 090, 113, 114, 115 |
-| FR-10-075 | K | Đối chiếu, chuyển hẳn và quay lui | M | MVP | UC-10-27 | UI-10-20 | API-10-078, 116, 117 |
-| FR-10-076 | K | Báo cáo tiến độ di trú | S | MVP | UC-10-27 | UI-10-20 | API-10-078, 118 |
+| FR | Tên | Mức | Đợt | UC | UI | API |
+|---|---|---|---|---|---|---|
+| FR-10-001 | Liệt kê, tìm kiếm và lọc dự án tích hợp | M | MVP | UC-10-01 | UI-10-02 | API-10-001 |
+| FR-10-002 | Xem chi tiết dự án | M | MVP | UC-10-01 | UI-10-03 | API-10-003 |
+| FR-10-003 | Tạo dự án tích hợp | M | MVP | UC-10-01 | UI-10-02, 04 | API-10-002 |
+| FR-10-004 | Sửa dự án | M | MVP | UC-10-01 | UI-10-03, 04 | API-10-004 |
+| FR-10-005 | Lưu trữ và khôi phục dự án | M | MVP | UC-10-01 | UI-10-02, 03 | API-10-005, 006 |
+| FR-10-006 | Liệt kê, tìm kiếm và lọc topic | M | MVP | UC-10-02 | UI-10-05 | API-10-008 |
+| FR-10-007 | Xem chi tiết topic | M | MVP | UC-10-02 | UI-10-06 | API-10-010, 020 |
+| FR-10-008 | Tạo topic và gửi duyệt | M | MVP | UC-10-02 | UI-10-03, 07 | API-10-009, 011, 012 |
+| FR-10-009 | Duyệt tạo topic và cấp phát trên cụm | M | MVP | UC-10-03 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
+| FR-10-010 | Theo dõi cấp phát và xử lý cấp phát thất bại | M | MVP | UC-10-03 | UI-10-06 | API-10-013, 014 |
+| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | M | MVP | UC-10-04 | UI-10-06, 13 | API-10-015 |
+| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | M | MVP | UC-10-04 | UI-10-06 | API-10-015 |
+| FR-10-013 | Chế độ định tuyến và khóa phân vùng | M | MVP | UC-10-02, 04 | UI-10-06 | API-10-015 |
+| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | M | MVP | UC-10-05 | UI-10-06 | API-10-011, 016, 017 |
+| FR-10-015 | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | M | MVP | UC-10-05 | UI-10-06 | API-10-018 |
+| FR-10-016 | Theo dõi chuyển đổi bên nhận sang phiên bản topic mới | S | MVP | UC-10-05 | UI-10-01, 06 | API-10-019 |
+| FR-10-017 | Soạn và kiểm tra lược đồ | M | MVP | UC-10-02, 06 | UI-10-07, 08 | API-10-023, 025, 026 |
+| FR-10-018 | Kiểm tra tương thích với các phiên bản đã có | M | MVP | UC-10-06 | UI-10-08 | API-10-026 |
+| FR-10-019 | Gửi duyệt và duyệt phiên bản lược đồ | M | MVP | UC-10-06 | UI-10-08, 13 | API-10-027, 057, 058, 059, 101, 102 |
+| FR-10-020 | Xem lịch sử phiên bản, so sánh và tải lược đồ | M | MVP | UC-10-06 | UI-10-08 | API-10-021, 022, 024, 030 |
+| FR-10-021 | Đặt mức tương thích của lược đồ | M | MVP | UC-10-04 | UI-10-08 | API-10-015 |
+| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | S | MVP | UC-10-06 | UI-10-08 | API-10-028, 029 |
+| FR-10-023 | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | S | MVP | UC-10-11 | — | API-10-031 |
+| FR-10-024 | Cung cấp tra cứu lược đồ cho bên ngoài | S | MVP | UC-10-10 | UI-10-06 | API-10-020, 084 |
+| FR-10-025 | Liệt kê bên phát và bên nhận | M | MVP | UC-10-07 | UI-10-09, 10 | API-10-032, 034, 037, 039 |
+| FR-10-026 | Đăng ký bên phát | M | MVP | UC-10-07 | UI-10-09 | API-10-033 |
+| FR-10-027 | Đăng ký bên nhận | M | MVP | UC-10-07 | UI-10-10 | API-10-038 |
+| FR-10-028 | Sửa, tạm ngừng, tiếp tục và ngừng dùng bên phát, bên nhận | M | MVP | UC-10-08 | UI-10-09, 10 | API-10-035, 036, 040, 041, 092, 093, 094, 095 |
+| FR-10-029 | Đồng bộ trạng thái với PH-01 và PH-04 | M | MVP | UC-10-08 | — | — |
+| FR-10-030 | Đề nghị publication | M | MVP | UC-10-09 | UI-10-09 | API-10-042, 043, 044 |
+| FR-10-031 | Duyệt publication, cấp scope OAuth và ACL Kafka | M | MVP | UC-10-09 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
+| FR-10-032 | Tạm ngừng, tiếp tục và thu hồi publication | M | MVP | UC-10-11 | UI-10-09 | API-10-045, 096, 097 |
+| FR-10-033 | Phát sự kiện qua API phát | M | MVP | UC-10-10 | — | API-10-079 |
+| FR-10-034 | Phát sự kiện trực tiếp qua Kafka | M | MVP | UC-10-11 | — | API-10-020 |
+| FR-10-035 | Đề nghị subscription | M | MVP | UC-10-12 | UI-10-11 | API-10-046, 047, 048 |
+| FR-10-036 | Xác minh endpoint webhook | M | MVP | UC-10-12 | UI-10-11 | API-10-051, 091 |
+| FR-10-037 | Duyệt subscription và cấp phát nhóm tiêu thụ | M | MVP | UC-10-13 | UI-10-13 | API-10-057, 058, 059, 101, 102, 120 |
+| FR-10-038 | Giao nhận ĐẨY: webhook ký HMAC | M | MVP | UC-10-14 | — | API-10-073 |
+| FR-10-039 | Thử lại giãn dần và chính sách khi thất bại | M | MVP | UC-10-14 | — | API-10-086, 119 |
+| FR-10-040 | Điểm bắt đầu và offset bắt đầu | M | MVP | UC-10-12 | UI-10-11 | — |
+| FR-10-041 | Tạm dừng, tiếp tục subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 098 |
+| FR-10-042 | Xoay khóa ký webhook | M | MVP | UC-10-17 | UI-10-12 | API-10-054, 100, 120 |
+| FR-10-043 | Giao nhận KÉO qua API | M | MVP | UC-10-15 | — | API-10-073, 080, 081, 082 |
+| FR-10-044 | Giao nhận KÉO qua Kafka listener ngoài | S | MVP | UC-10-15 | — | API-10-083 |
+| FR-10-045 | Giao nhận nội bộ cho luồng và DU | M | MVP | UC-10-25 | — | — |
+| FR-10-046 | Sửa tham số subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-049 |
+| FR-10-047 | Thu hồi subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 099 |
+| FR-10-048 | Lọc sự kiện và gộp lô khi đẩy | C | Đợt sau | — | — | — |
+| FR-10-049 | Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện | M | MVP | UC-10-14 | UI-10-15 | — |
+| FR-10-050 | Tra cứu, xem và loại bỏ mục DLQ | M | MVP | UC-10-18 | UI-10-15 | API-10-060, 061, 062, 103 |
+| FR-10-051 | Đề nghị và duyệt phát lại theo khoảng offset hoặc thời gian | M | MVP | UC-10-19 | UI-10-13, 16 | API-10-057, 058, 059, 064, 101, 102 |
+| FR-10-052 | Thực thi, theo dõi và hủy lượt phát lại | M | MVP | UC-10-19 | UI-10-16 | API-10-063, 065, 087, 088, 104 |
+| FR-10-053 | Phát lại mục DLQ | M | MVP | UC-10-18 | UI-10-15 | API-10-064, 088, 089 |
+| FR-10-054 | Thu thập consumer lag | M | MVP | UC-10-20 | UI-10-12, 17 | API-10-055 |
+| FR-10-055 | Cảnh báo lag và nhóm tiêu thụ ngừng tiến | M | MVP | UC-10-20 | UI-10-12, 17 | API-10-056 |
+| FR-10-056 | Thống kê giao nhận và lượt giao gần đây | M | MVP | UC-10-16 | UI-10-12 | API-10-048, 052, 053, 085 |
+| FR-10-057 | Dashboard sự kiện | M | MVP | UC-10-21 | UI-10-01 | API-10-066 |
+| FR-10-058 | Sơ đồ kết nối tương tác | M | MVP | UC-10-21 | UI-10-14 | API-10-007 |
+| FR-10-059 | Xuất số liệu sang PH-13 | M | MVP | UC-10-20 | — | — |
+| FR-10-060 | Danh mục kiểu giao tiếp | M | MVP | UC-10-22 | UI-10-18 | API-10-067, 105 |
+| FR-10-061 | Danh mục chế độ định tuyến | M | MVP | UC-10-22 | UI-10-18 | API-10-068, 106 |
+| FR-10-062 | Hạn mức theo tenant và phân bổ cho bên tham gia | M | MVP | UC-10-22 | UI-10-01, 18 | API-10-069, 107 |
+| FR-10-063 | Tham số phân hệ theo tenant | M | MVP | UC-10-22 | UI-10-18 | API-10-070, 108 |
+| FR-10-064 | Cách ly đa tenant trên trục sự kiện | M | MVP | UC-10-10, 24 | — | — |
+| FR-10-065 | Kiểm toán và lịch sử thay đổi | M | MVP | UC-10-01 | — | — |
+| FR-10-066 | Đăng ký topic hộ PH-05 cho CDC | M | MVP | UC-10-23 | — | API-10-009 |
+| FR-10-067 | Đăng ký topic cho DU nội bộ và topic nền tảng | M | MVP | UC-10-24 | — | API-10-009 |
+| FR-10-068 | Xử lý thông báo thay đổi lược đồ CDC | M | MVP | UC-10-23 | — | API-10-018, 023 |
+| FR-10-069 | Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế | M | MVP | UC-10-25 | — | API-10-008, 071, 072, 109 |
+| FR-10-070 | Xuất khai báo | S | MVP | UC-10-28 | UI-10-02 | API-10-074 |
+| FR-10-071 | Nhập khai báo có xem trước | C | Đợt sau | UC-10-28 | UI-10-19 | API-10-075, 110, 111, 121 |
+| FR-10-072 | Nhập kiểm kê Pulsar và lập ánh xạ | M | MVP | UC-10-26 | UI-10-20 | API-10-075, 076, 110, 111, 112 |
+| FR-10-073 | Cầu nối Pulsar sang Kafka tạm thời | M | MVP | UC-10-27 | UI-10-13, 20 | API-10-077, 090, 113, 114, 115 |
+| FR-10-074 | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | S | MVP | UC-10-27 | UI-10-20 | API-10-077, 090, 113, 114, 115 |
+| FR-10-075 | Đối chiếu, chuyển hẳn và quay lui | M | MVP | UC-10-27 | UI-10-20 | API-10-078, 116, 117 |
+| FR-10-076 | Báo cáo tiến độ di trú | S | MVP | UC-10-27 | UI-10-20 | API-10-078, 118 |
 
 : Danh sách chức năng của PH-10
 
 ## 6. Đặc tả chi tiết chức năng
 
-Chương này viết cho kỹ sư và kiểm thử viên. Mục 6.1 giải thích cách đọc bảng đặc tả và các quy định chung áp dụng cho mọi FR; các mục 6.2…6.12 đặc tả 76 chức năng theo mười một nhóm, mỗi nhóm mở bằng một đoạn giới thiệu và sơ đồ quan hệ chức năng trong nhóm.
+Chương này viết cho kỹ sư và kiểm thử viên. Mục 6.1 giải thích cách đọc bảng đặc tả và các quy định chung áp dụng cho mọi FR; các mục 6.2…6.12 đặc tả 76 chức năng theo mười một nhóm, mỗi nhóm mở bằng một đoạn giới thiệu.
 
 ### 6.1. Cách đọc bảng đặc tả
 
@@ -719,23 +720,11 @@ Các quy định dưới đây áp dụng cho mọi FR và không nhắc lại t
 
 **Kiểm toán và sự kiện.** Mọi thao tác ghi sinh bản ghi kiểm toán theo FR-10-065; mục "Kiểm toán" của từng FR chỉ ghi phần riêng. Sự kiện `EVT-10-nn` ghi outbox cùng giao dịch với thay đổi trạng thái (mục 9.3).
 
-**Lỗi.** Thân lỗi theo RFC 9457 có `code`, `detail`, `errors[]` theo trường và `traceId`; giao diện hiện câu ở mục 9.2 kèm mã lỗi và nút sao chép mã truy vết (FR-00-080).
+**Lỗi.** Thân lỗi theo RFC 9457 có `code`, `detail`, `errors[]` theo trường và `traceId`; giao diện hiện câu thông báo của bảng 9.2 kèm mã lỗi và nút sao chép mã truy vết (FR-00-080).
 
 ### 6.2. Nhóm A · Dự án tích hợp
 
 Nhóm A quản lý dự án tích hợp, đơn vị gom các topic cùng một mục đích trao đổi và có tổ chức chủ quản. Dự án là phạm vi lọc của dashboard và sơ đồ kết nối, kế thừa `project` của Hub cũ (LGC-HUB-008). Dự án không tiêu tốn tài nguyên cụm nên không cần duyệt; thay xóa cứng bằng lưu trữ để giữ truy vết.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm A"}
-flowchart TB
-    F001["FR-10-001 Danh sách dự án"] --> F002["FR-10-002 Chi tiết dự án"]
-    F001 --> F003["FR-10-003 Tạo dự án"]
-    F003 --> F002
-    F002 --> F004["FR-10-004 Sửa dự án"]
-    F002 --> F005["FR-10-005 Lưu trữ, khôi phục"]
-    F002 --> F008["FR-10-008 Tạo topic (nhóm B)"]
-```
-
-Người dùng đi từ danh sách vào chi tiết; từ chi tiết dự án có thể sửa, lưu trữ hoặc tạo topic nhanh (nhóm B). Lưu trữ chỉ được khi dự án không còn topic đang hoạt động.
 
 #### FR-10-001 · Liệt kê, tìm kiếm và lọc dự án tích hợp
 
@@ -929,9 +918,9 @@ Người dùng đi từ danh sách vào chi tiết; từ chi tiết dự án có
 
 **Luồng ngoại lệ.**
 
-- Gửi kèm `projectCode` khác: ERR-10-003 (400). Câu theo `errors[]` của trường.
+- Gửi kèm `projectCode` khác: ERR-10-003 (400). Câu theo `errors[]`, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."
 - Dự án đã lưu trữ: ERR-10-006 (409). "Không thực hiện được khi dự án đang ở trạng thái Đã lưu trữ."
-- Người khác vừa sửa: ERR-10-007 (412). Hộp thoại xung đột phiên bản (ST-13).
+- Người khác vừa sửa: ERR-10-007 (412). ST-13 "Đối tượng đã được {người} cập nhật lúc {giờ}".
 - Không có quyền ở tổ chức cũ hoặc mới: ERR-10-044 (403). "Đối tượng ngoài phạm vi tổ chức của bạn."
 
 **Đầu ra.** `200`, chi tiết dự án; `ETag`.
@@ -1000,22 +989,6 @@ Người dùng đi từ danh sách vào chi tiết; từ chi tiết dự án có
 ### 6.3. Nhóm B · Topic
 
 Nhóm B quản lý topic Kafka trong suốt vòng đời: tạo kèm lược đồ, duyệt và cấp phát qua GitOps, đổi cấu hình có kiểm soát, ngừng khuyến nghị, ngừng dùng và tạo phiên bản chính mới khi thay đổi phá vỡ. Nhóm thay màn quản lý topic của Hub cũ (LGC-HUB-009) và thêm những gì Hub thiếu: quy ước tên có tiền tố tenant, duyệt bốn mắt, cấp phát theo Git, vòng đời có topic kế nhiệm. Máy trạng thái topic ở mục 4.4.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm B"}
-flowchart TB
-    F006["FR-10-006 Danh sách topic"] --> F007["FR-10-007 Chi tiết topic"]
-    F008["FR-10-008 Tạo topic, gửi duyệt"] --> F009["FR-10-009 Duyệt, cấp phát"]
-    F009 --> F010["FR-10-010 Theo dõi cấp phát"]
-    F007 --> F011["FR-10-011 Tăng phân vùng"]
-    F007 --> F012["FR-10-012 Lưu giữ, compaction"]
-    F007 --> F013["FR-10-013 Định tuyến, khóa"]
-    F013 -->|"đổi phá vỡ"| F015["FR-10-015 Phiên bản chính mới"]
-    F007 --> F014["FR-10-014 Ngừng khuyến nghị, ngừng dùng"]
-    F015 --> F014
-    F015 --> F016["FR-10-016 Theo dõi chuyển đổi"]
-```
-
-Một topic đi theo trục tạo → duyệt → cấp phát → hoạt động. Thay đổi trên topic đang hoạt động có hai loại: loại an toàn (tăng lưu giữ) áp dụng ngay, loại có rủi ro (tăng phân vùng, giảm lưu giữ, đổi định tuyến) qua duyệt; loại phá vỡ bên nhận không sửa tại chỗ mà tạo topic `.v{n+1}`.
 
 #### FR-10-006 · Liệt kê, tìm kiếm và lọc topic
 
@@ -1159,7 +1132,7 @@ Một topic đi theo trục tạo → duyệt → cấp phát → hoạt động
 - Thiếu khóa phân vùng hoặc tổ hợp thứ tự sai: ERR-10-046 (422). "Chế độ định tuyến này cần trường khóa phân vùng, hoặc không giữ được thứ tự."
 - Compaction không có khóa: ERR-10-048 (422). "Nén theo khóa cần topic có khóa (chế độ Theo khóa)."
 - Lược đồ sai cú pháp: ERR-10-015 (422). "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}."
-- Lược đồ thiếu trường khóa, có dữ liệu cá nhân bị chặn, sai định dạng: ERR-10-017, 018, 020 (422), câu như FR-10-017.
+- Lược đồ thiếu trường khóa, có dữ liệu cá nhân bị chặn, sai định dạng: ERR-10-017, 018, 020 (422), ví dụ "Định dạng {định dạng} không được phép hoặc khác định dạng đã có của topic."
 
 **Đầu ra.** `201`, thân như FR-10-007 kèm `approvalRequestCode` nếu đã gửi duyệt.
 
@@ -1251,7 +1224,6 @@ Ghi chú: hệ số nhân bản (3) và `min.insync.replicas` (2) là tham số 
 
 ```{.mermaid caption="Trình tự duyệt tạo topic và cấp phát qua GitOps (FR-10-009)"}
 sequenceDiagram
-  autonumber
   actor IA as Người duyệt
   participant CP as dh-integration
   participant AP as Apicurio
@@ -1259,7 +1231,6 @@ sequenceDiagram
   participant S as Argo CD, Strimzi
   participant K as Kafka
   IA->>CP: approve (comment, acknowledgePii)
-  CP->>CP: Bốn mắt, kiểm lại hạn mức và tên
   CP->>AP: Tạo artifact, quy tắc, phiên bản 1 ENABLED
   AP-->>CP: globalId, contentId
   CP->>G: Commit KafkaTopic và topic .dlq
@@ -1267,7 +1238,6 @@ sequenceDiagram
   S->>G: Đồng bộ nhánh môi trường
   S->>K: Tạo topic
   CP->>S: Bộ đối soát đọc trạng thái Ready
-  CP->>CP: Topic ACTIVE, phát EVT-10-01, EVT-10-05
 ```
 
 Hình cho thấy control plane không gọi Admin API để tạo topic mà chỉ commit vào Git; Strimzi tạo topic, bộ đối soát xác nhận rồi mới chuyển `ACTIVE`. Lỗi ở bước 3 hoặc 5 để yêu cầu giữ `PENDING` và xóa bù artifact.
@@ -1372,7 +1342,6 @@ Hình cho thấy control plane không gọi Admin API để tạo topic mà ch�
 
 ```{.mermaid caption="Trình tự đề nghị và duyệt tăng phân vùng (FR-10-011)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -1382,7 +1351,6 @@ sequenceDiagram
   IA->>CP: approve (khác người đề nghị)
   CP->>G: Commit KafkaTopic với số phân vùng mới
   G-->>CP: Ready
-  CP->>CP: Cập nhật topic, phát EVT-10-02
 ```
 
 Hình cho thấy thay đổi chỉ có hiệu lực sau khi người thứ hai duyệt và Strimzi báo sẵn sàng; trước đó topic chạy với số phân vùng cũ.
@@ -1439,17 +1407,14 @@ Hình cho thấy thay đổi chỉ có hiệu lực sau khi người thứ hai d
 
 ```{.mermaid caption="Trình tự giảm lưu giữ có duyệt (FR-10-012)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
   participant G as Git, Strimzi
   IE->>CP: change-requests retentionHours giảm
-  CP->>CP: Tính subscription có lag lớn hơn lưu giữ mới
   CP-->>IE: 202 kèm danh sách bị ảnh hưởng
   IA->>CP: approve, acknowledgeDataLoss
   CP->>G: Commit retention.ms mới
-  CP->>CP: Phát EVT-10-02
 ```
 
 Ghi chú: compaction dùng cho topic trạng thái (ví dụ danh mục hiện hành), không dùng cho topic dòng sự kiện.
@@ -1505,17 +1470,16 @@ Ghi chú: compaction dùng cho topic trạng thái (ví dụ danh mục hiện h
 
 ```{.mermaid caption="Trình tự đổi định tuyến sang KEY_HASH có duyệt (FR-10-013)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
   participant RT as Cổng sự kiện, Kamelet
   IE->>CP: change-requests routingMode KEY_HASH, partitionKeyField
-  CP->>CP: Kiểm tra chiều đổi (ERR-10-047)
   IA->>CP: approve
-  CP->>CP: Lưu cấu hình, phát EVT-10-02
   RT->>CP: Nạp cấu hình topic mới (≤ 60 giây)
 ```
+
+Hình cho thấy đổi sang `KEY_HASH` phải qua người duyệt thứ hai.
 
 #### FR-10-014 · Ngừng khuyến nghị và ngừng dùng topic
 
@@ -1568,7 +1532,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự ngừng dùng topic còn subscription (FR-10-014)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -1579,8 +1542,9 @@ sequenceDiagram
   IA->>CP: approve
   CP->>KC: Gỡ scope, dữ liệu quyền
   CP->>G: Xóa ACL, xếp lịch xóa topic
-  CP->>CP: Topic RETIRED, phát EVT-10-04
 ```
+
+Hình cho thấy topic chỉ sang `RETIRED` sau khi duyệt, gỡ scope và xóa ACL.
 
 #### FR-10-015 · Tạo phiên bản chính mới của topic khi thay đổi phá vỡ
 
@@ -1642,18 +1606,15 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tạo phiên bản chính mới và chuyển topic cũ sang ngừng khuyến nghị (FR-10-015)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
   participant AP as Apicurio
   participant G as Git, Strimzi
   IE->>CP: new-major-version (schema, migrationNote)
-  CP->>CP: Topic .v2 DRAFT, gửi TOPIC_CREATE
   IA->>CP: approve
   CP->>AP: Artifact mới cho .v2
   CP->>G: Commit KafkaTopic .v2
-  CP->>CP: .v2 ACTIVE, .v1 DEPRECATED, EVT-10-01, EVT-10-03
 ```
 
 Ghi chú: thay đổi phá vỡ là thay đổi mà kiểm tra tương thích theo mức đã đặt không đạt (FR-10-018), hoặc đổi chế độ định tuyến, khóa phân vùng theo chiều phá vỡ (FR-10-013). Không có cách nào ghi đè lược đồ của topic đang có bản tin (BR-10-013).
@@ -1706,20 +1667,6 @@ Ghi chú: thay đổi phá vỡ là thay đổi mà kiểm tra tương thích th
 ### 6.4. Nhóm C · Lược đồ sự kiện
 
 Nhóm C biến "cấu trúc" topic của Hub cũ (chỉ là mô tả) thành lược đồ bắt buộc ở Apicurio: soạn, kiểm tra cú pháp và dữ liệu cá nhân, kiểm tra tương thích, duyệt, xem lịch sử, đặt mức tương thích, ngừng phiên bản cũ, giám sát bên phát Kafka trực tiếp và cho HTTT tra cứu lược đồ. Máy trạng thái phiên bản lược đồ ở mục 4.5.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm C"}
-flowchart TB
-    F017["FR-10-017 Soạn, kiểm tra"] --> F018["FR-10-018 Kiểm tra tương thích"]
-    F018 --> F019["FR-10-019 Gửi duyệt, duyệt"]
-    F018 -->|"không đạt"| F015["FR-10-015 Phiên bản topic mới"]
-    F019 --> F020["FR-10-020 Lịch sử, so sánh"]
-    F021["FR-10-021 Mức tương thích"] --> F018
-    F020 --> F022["FR-10-022 Ngừng, vô hiệu phiên bản"]
-    F019 --> F024["FR-10-024 Tra cứu cho bên ngoài"]
-    F019 --> F023["FR-10-023 Giám sát tuân thủ"]
-```
-
-Một phiên bản mới đi qua soạn, kiểm tra tương thích và duyệt; không đạt tương thích thì đường đúng là tạo phiên bản topic mới chứ không nới mức tương thích.
 
 #### FR-10-017 · Soạn và kiểm tra lược đồ
 
@@ -1871,7 +1818,6 @@ Một phiên bản mới đi qua soạn, kiểm tra tương thích và duyệt; 
 
 ```{.mermaid caption="Trình tự gửi duyệt và duyệt phiên bản lược đồ (FR-10-019)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư soạn
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -1883,9 +1829,10 @@ sequenceDiagram
   CP-->>IE: SCHEMA_VERSION PENDING
   IA->>CP: approve
   CP->>AP: Tạo phiên bản n ENABLED
-  CP->>CP: latestVersionNo = n, phát EVT-10-05
   RT->>AP: Nạp phiên bản n vào bộ đệm
 ```
+
+Hình cho thấy phiên bản lược đồ chỉ có hiệu lực sau khi người khác duyệt.
 
 #### FR-10-020 · Xem lịch sử phiên bản, so sánh và tải lược đồ
 
@@ -1983,7 +1930,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự đổi mức tương thích có duyệt (FR-10-021)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -1993,8 +1939,9 @@ sequenceDiagram
   CP-->>IE: 202 TOPIC_CHANGE PENDING
   IA->>CP: approve
   CP->>AP: Cập nhật quy tắc artifact
-  CP->>CP: Phát EVT-10-02
 ```
+
+Hình cho thấy đổi mức tương thích cần duyệt bốn mắt.
 
 #### FR-10-022 · Ngừng khuyến nghị và vô hiệu phiên bản lược đồ
 
@@ -2046,18 +1993,17 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự vô hiệu phiên bản lược đồ có duyệt (FR-10-022)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
   participant AP as Apicurio
   IE->>CP: disable phiên bản n
-  CP->>CP: Kiểm tra bản tin cuối theo n cộng retentionHours
   CP-->>IE: 202 yêu cầu duyệt
   IA->>CP: approve
   CP->>AP: Đặt phiên bản n DISABLED
-  CP->>CP: Phát EVT-10-02
 ```
+
+Hình cho thấy vô hiệu phiên bản cần duyệt và báo bên liên quan.
 
 #### FR-10-023 · Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp
 
@@ -2107,7 +2053,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự giám sát tuân thủ lược đồ (FR-10-023)"}
 sequenceDiagram
-  autonumber
   participant HP as Bên phát Kafka
   participant K as Kafka
   participant CM as Bộ giám sát tuân thủ
@@ -2115,10 +2060,11 @@ sequenceDiagram
   participant OB as PH-13, SO
   HP->>K: Ghi bản tin
   CM->>K: Đọc mẫu (dh-compliance-{tenant})
-  CM->>CM: Kiểm tra định danh lược đồ, CloudEvents, khóa
   CM->>CP: Báo vi phạm theo publication
   CP->>OB: EVT-10-14 khi vượt ngưỡng 15 phút
 ```
+
+Hình cho thấy vi phạm được đếm và báo PH-13, không chặn ghi.
 
 #### FR-10-024 · Cung cấp tra cứu lược đồ cho bên ngoài
 
@@ -2169,7 +2115,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tra cứu lược đồ qua đường chỉ đọc (FR-10-024)"}
 sequenceDiagram
-  autonumber
   participant H as Serde của HTTT
   participant GW as APISIX
   participant P as OPA
@@ -2181,22 +2126,11 @@ sequenceDiagram
   AP-->>H: Lược đồ
 ```
 
+Hình cho thấy HTTT chỉ đọc lược đồ qua APISIX khi token có scope trên topic.
+
 ### 6.5. Nhóm D · Bên phát và bên nhận
 
 Nhóm D đăng ký chủ thể được tham gia trục: HTTT thành viên của PH-01, luồng của PH-04, DU nội bộ và cầu nối di trú. Khác Hub cũ, nơi ai có tài khoản cũng tạo publisher, subscriber tùy ý (LGC-HUB-010, 011), mỗi bên tham gia phải gắn với một đối tượng có thật ở phân hệ nguồn và đi theo trạng thái của đối tượng đó.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm D"}
-flowchart TB
-    F025["FR-10-025 Danh sách bên phát, bên nhận"] --> F026["FR-10-026 Đăng ký bên phát"]
-    F025 --> F027["FR-10-027 Đăng ký bên nhận"]
-    F026 --> F028["FR-10-028 Sửa, tạm ngừng, ngừng dùng"]
-    F027 --> F028
-    F029["FR-10-029 Đồng bộ với PH-01, PH-04"] --> F028
-    F026 --> F030["FR-10-030 Publication (nhóm E)"]
-    F027 --> F035["FR-10-035 Subscription (nhóm F)"]
-```
-
-Bên phát, bên nhận chỉ là danh tính; quyền phát, nhận trên một topic cụ thể đến từ publication, subscription ở nhóm E, F. Tạm ngừng một bên kéo theo tạm ngừng mọi quan hệ của bên đó.
 
 #### FR-10-025 · Liệt kê bên phát và bên nhận
 
@@ -2313,7 +2247,6 @@ Bên phát, bên nhận chỉ là danh tính; quyền phát, nhận trên một 
 
 ```{.mermaid caption="Trình tự đăng ký bên phát gắn HTTT (FR-10-026)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   participant CP as dh-integration
   participant P1 as Bản sao PH-01
@@ -2326,9 +2259,10 @@ sequenceDiagram
     CP->>P4: Luồng tồn tại, chưa RETIRED?
     P4-->>CP: Hợp lệ
   end
-  CP->>CP: Xác định kafkaPrincipal, lưu ACTIVE
   CP-->>IE: 201 bên phát
 ```
+
+Hình cho thấy bên phát luôn gắn với một HTTT đã có ở PH-01.
 
 #### FR-10-027 · Đăng ký bên nhận
 
@@ -2361,7 +2295,7 @@ sequenceDiagram
 **Luồng ngoại lệ.**
 
 - Mã trùng: ERR-10-002 (409). "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác."
-- HTTT, luồng, DU không hợp lệ: ERR-10-021, 022, 023 (422), câu như FR-10-026.
+- HTTT, luồng, DU không hợp lệ: ERR-10-021, 022, 023 (422), ví dụ "HTTT {mã} không tồn tại hoặc chưa ở trạng thái hoạt động ở PH-01."
 - Đã có bên cho cặp: ERR-10-024 (409). "Đã có quan hệ cho cặp này: {mô tả}."
 - Kafka ngoài chưa bật: ERR-10-028 (422). "Tenant chưa bật Kafka ngoài. Đề nghị quản trị nền tảng bật trước khi dùng chế độ này."
 - Ngoài tổ chức: ERR-10-044 (403). "Đối tượng ngoài phạm vi tổ chức của bạn."
@@ -2410,10 +2344,10 @@ sequenceDiagram
 
 **Luồng ngoại lệ.**
 
-- Đổi trường bất biến: ERR-10-003 (400). Câu theo `errors[]` của trường.
+- Đổi trường bất biến: ERR-10-003 (400). Câu theo `errors[]`, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."
 - Thiếu lý do: ERR-10-009 (400). "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
 - Trạng thái không hợp lệ, hoặc SO tiếp tục bên do người khác tạm ngừng: ERR-10-006 (409). "Không thực hiện được khi bên phát đang ở trạng thái {nhãn trạng thái}."
-- Xung đột phiên bản: ERR-10-007 (412). Hộp thoại xung đột (ST-13).
+- Xung đột phiên bản: ERR-10-007 (412). ST-13 "Đối tượng đã được {người} cập nhật lúc {giờ}".
 
 **Đầu ra.** `200`, bên với trạng thái mới và danh sách quan hệ bị ảnh hưởng.
 
@@ -2432,18 +2366,17 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tạm ngừng bên phát khi có sự cố ATTT (FR-10-028)"}
 sequenceDiagram
-  autonumber
   actor SO as Cán bộ ATTT
   participant CP as dh-integration
   participant KC as Keycloak, OPA
   participant G as Git, Strimzi
   SO->>CP: publishers/{mã}:suspend (reason)
-  CP->>CP: Bên SUSPENDED, publication SUSPENDED
   CP->>KC: Gỡ scope, dữ liệu quyền OPA
   CP->>G: Xóa ACL WRITE
-  CP->>CP: Phát EVT-10-07 cho từng publication
   CP-->>SO: 200 kèm quan hệ bị ảnh hưởng
 ```
+
+Hình cho thấy tạm ngừng có hiệu lực ngay ở cổng và ACL.
 
 #### FR-10-029 · Đồng bộ trạng thái với PH-01 và PH-04
 
@@ -2494,32 +2427,21 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tạm ngừng theo PH-01 (FR-10-029)"}
 sequenceDiagram
-  autonumber
   participant P1 as PH-01
   participant K as Kafka
   participant CP as dh-integration
   participant KC as Keycloak, OPA
   P1->>K: system.state-changed (SUSPENDED)
   CP->>K: Tiêu thụ qua inbox
-  CP->>CP: Bên và quan hệ SUSPENDED, lý do Theo PH-01
   CP->>KC: Gỡ scope, dữ liệu quyền
   CP->>K: Phát EVT-10-07, EVT-10-09
 ```
 
+Hình cho thấy trạng thái HTTT ở PH-01 lan sang PH-10 tự động qua inbox.
+
 ### 6.6. Nhóm E · Publication và phát sự kiện
 
 Nhóm E cấp và thu quyền phát: đề nghị publication, duyệt kèm cấp scope OAuth hoặc ACL Kafka, tạm ngừng, thu hồi, và hai đường phát là API phát qua APISIX và Kafka trực tiếp. Nhóm thay màn publication của Hub cũ (LGC-HUB-012) và phủ "event message" của LGC-BUS-039. Máy trạng thái publication ở mục 4.6.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm E"}
-flowchart TB
-    F030["FR-10-030 Đề nghị publication"] --> F031["FR-10-031 Duyệt, cấp scope, ACL"]
-    F031 --> F033["FR-10-033 Phát qua API"]
-    F031 --> F034["FR-10-034 Phát qua Kafka"]
-    F031 --> F032["FR-10-032 Tạm ngừng, tiếp tục, thu hồi"]
-    F034 --> F023["FR-10-023 Giám sát tuân thủ (nhóm C)"]
-```
-
-Quyền phát chỉ có khi publication `ACTIVE`; APISIX kiểm từng lượt với dữ liệu OPA hiện hành nên tạm ngừng có hiệu lực ngay, không chờ token hết hạn.
 
 #### FR-10-030 · Đề nghị publication
 
@@ -2623,21 +2545,20 @@ Quyền phát chỉ có khi publication `ACTIVE`; APISIX kiểm từng lượt v
 
 ```{.mermaid caption="Trình tự duyệt publication và cấp quyền (FR-10-031)"}
 sequenceDiagram
-  autonumber
   actor IA as Người duyệt
   participant CP as dh-integration
   participant KC as Keycloak, OPA
   participant G as Git, Strimzi
   IA->>CP: approve publication
-  CP->>CP: Bốn mắt, cấp độ ATTT, hạn mức
   alt HTTP_PUBLISH
     CP->>KC: Gắn scope topic:{tên}:publish, dữ liệu quyền OPA
   else KAFKA_NATIVE
     CP->>G: Commit KafkaUser với ACL WRITE, producerByteRate
     G-->>CP: Ready
   end
-  CP->>CP: Publication ACTIVE, phát EVT-10-06
 ```
+
+Hình cho thấy scope và ACL chỉ được cấp sau khi duyệt.
 
 #### FR-10-032 · Tạm ngừng, tiếp tục và thu hồi publication
 
@@ -2689,7 +2610,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tạm ngừng publication (FR-10-032)"}
 sequenceDiagram
-  autonumber
   actor TO as Người vận hành
   participant CP as dh-integration
   participant KC as OPA, Keycloak
@@ -2698,10 +2618,11 @@ sequenceDiagram
   TO->>CP: publications/{mã}:suspend (reason)
   CP->>KC: Gỡ dữ liệu quyền, gỡ scope
   CP->>G: Xóa ACL WRITE
-  CP->>CP: SUSPENDED, phát EVT-10-07
   HP->>KC: Lượt phát mới qua APISIX
   KC-->>HP: 403 ERR-10-102
 ```
+
+Hình cho thấy tạm ngừng chặn phát trong 60 giây.
 
 #### FR-10-033 · Phát sự kiện qua API phát
 
@@ -2760,21 +2681,20 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự phát sự kiện qua API phát (FR-10-033)"}
 sequenceDiagram
-  autonumber
   participant HP as HTTT phát
   participant AX as APISIX, OPA
   participant GW as Cổng sự kiện
   participant AP as Bộ đệm lược đồ Apicurio
   participant K as Kafka
   HP->>AX: POST /event/v1/topics/{topicName}/events
-  AX->>AX: Token, scope, hạn mức
   AX->>GW: Chuyển tiếp
   GW->>AP: Phiên bản lược đồ
-  GW->>GW: Phong bì, lược đồ, khóa, chống trùng
   GW->>K: Ghi acks=all
   K-->>GW: partition, offset
   GW-->>HP: 202 results[]
 ```
+
+Hình cho thấy cổng chỉ trả `202` sau khi Kafka xác nhận ghi.
 
 #### FR-10-034 · Phát sự kiện trực tiếp qua Kafka
 
@@ -2805,7 +2725,7 @@ sequenceDiagram
 **Luồng ngoại lệ.**
 
 - Kafka từ chối do ACL, hạn mức: ERR-10-120, trả cho producer bằng mã lỗi Kafka; người vận hành thấy chỉ số theo principal. "Kafka từ chối do ACL, hạn mức. Kiểm tra quyền và hạn mức của principal."
-- Bản tin không có định danh lược đồ: ERR-10-119, phát hiện ở FR-10-023.
+- Bản tin không có định danh lược đồ: ERR-10-119 phát hiện ở FR-10-023. "Bản tin không có định danh lược đồ."
 
 **Đầu ra.** Xác nhận ghi của Kafka cho producer.
 
@@ -2824,7 +2744,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự phát trực tiếp qua Kafka (FR-10-034)"}
 sequenceDiagram
-  autonumber
   participant HP as Producer HTTT
   participant KC as Keycloak
   participant AP as Apicurio (chỉ đọc)
@@ -2832,32 +2751,14 @@ sequenceDiagram
   HP->>KC: Lấy token client credentials
   HP->>AP: Đọc định danh lược đồ
   HP->>K: SASL OAUTHBEARER, ghi acks=all, idempotent
-  K->>K: Kiểm ACL, hạn mức principal
   K-->>HP: Xác nhận offset
 ```
+
+Hình cho thấy bên phát Kafka trực tiếp vẫn bị Kafka kiểm ACL và hạn mức theo principal.
 
 ### 6.7. Nhóm F · Subscription và giao nhận
 
 Nhóm F cấp quyền nhận và vận hành giao nhận theo bốn chế độ: ĐẨY webhook ký HMAC, KÉO qua API, KÉO qua Kafka ngoài, nội bộ cho luồng và DU. Nhóm thay màn subscription của Hub cũ (URI nhận, số worker, số lần thử, thời điểm bắt đầu; LGC-HUB-013) và thêm xác minh endpoint, chữ ký, thử lại giãn dần, ngắt mạch, xoay khóa. Máy trạng thái subscription ở mục 4.7.
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm F"}
-flowchart TB
-    F035["FR-10-035 Đề nghị subscription"] --> F036["FR-10-036 Xác minh endpoint"]
-    F035 --> F040["FR-10-040 Điểm bắt đầu"]
-    F036 --> F037["FR-10-037 Duyệt, cấp nhóm tiêu thụ"]
-    F037 --> F038["FR-10-038 Đẩy webhook"]
-    F038 --> F039["FR-10-039 Thử lại, ngắt mạch"]
-    F037 --> F043["FR-10-043 Kéo qua API"]
-    F037 --> F044["FR-10-044 Kéo qua Kafka"]
-    F037 --> F045["FR-10-045 Nội bộ"]
-    F037 --> F041["FR-10-041 Tạm dừng, tiếp tục"]
-    F037 --> F042["FR-10-042 Xoay khóa ký"]
-    F041 --> F046["FR-10-046 Sửa tham số"]
-    F046 --> F047["FR-10-047 Thu hồi"]
-    F038 --> F048["FR-10-048 Lọc, gộp lô (Đợt sau)"]
-```
-
-Mọi chế độ dùng chung một trục: đề nghị, duyệt bốn mắt, cấp nhóm tiêu thụ có vị trí đọc khởi tạo sẵn, giao ít nhất một lần, lỗi kéo dài thì vào DLQ (nhóm G).
 
 #### FR-10-035 · Đề nghị subscription
 
@@ -2942,18 +2843,18 @@ Mọi chế độ dùng chung một trục: đề nghị, duyệt bốn mắt, c
 
 ```{.mermaid caption="Trình tự đề nghị subscription ĐẨY (FR-10-035)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   participant CP as dh-integration
   participant D as Bộ giao nhận
   participant H as Endpoint HTTT
   IE->>CP: POST /subscriptions (PUSH, endpointUrl)
-  CP->>CP: Kiểm tra cặp, chế độ, tham số, cấp độ ATTT
   CP->>D: Xác minh endpoint (FR-10-036)
   D->>H: OPTIONS bắt tay
   H-->>D: 204 WebHook-Allowed-Origin
   CP-->>IE: 201 PENDING_APPROVAL
 ```
+
+Hình cho thấy endpoint được xác minh trước khi vào hàng duyệt.
 
 #### FR-10-036 · Xác minh endpoint webhook
 
@@ -3004,18 +2905,18 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự xác minh endpoint webhook (FR-10-036)"}
 sequenceDiagram
-  autonumber
   participant CP as dh-integration
   participant D as Bộ giao nhận
   participant EG as Egress gateway
   participant H as Endpoint HTTT
   CP->>D: Xác minh endpointUrl
-  D->>D: Phân giải DNS, chặn địa chỉ riêng
   D->>EG: OPTIONS, WebHook-Request-Origin
   EG->>H: Chuyển tiếp TLS ≥ 1.2
   H-->>D: 204, WebHook-Allowed-Origin
   D-->>CP: lastVerification PASSED, các bước
 ```
+
+Hình cho thấy endpoint phải trả lời bắt tay mới được nhận sự kiện.
 
 #### FR-10-037 · Duyệt subscription và cấp phát nhóm tiêu thụ
 
@@ -3069,7 +2970,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự duyệt subscription ĐẨY và cấp khóa ký (FR-10-037)"}
 sequenceDiagram
-  autonumber
   actor IA as Người duyệt
   participant CP as dh-integration
   participant OB as OpenBao
@@ -3078,10 +2978,11 @@ sequenceDiagram
   IA->>CP: approve subscription
   CP->>OB: Ghi khóa ký whsec_ (chỉ ghi)
   CP->>K: Khởi tạo offset nhóm dh-sub-{tenant}-{mã}
-  CP->>CP: ACTIVE, phát EVT-10-08
   D->>CP: Đọc cấu hình runtime (API-10-073)
   D->>OB: Đọc khóa ký
 ```
+
+Hình cho thấy khóa ký và nhóm tiêu thụ chỉ có sau khi duyệt.
 
 #### FR-10-038 · Giao nhận ĐẨY: webhook ký HMAC
 
@@ -3139,13 +3040,11 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự giao một sự kiện ĐẨY có ký HMAC (FR-10-038)"}
 sequenceDiagram
-  autonumber
   participant K as Kafka
   participant D as Bộ giao nhận
   participant EG as Egress gateway
   participant H as HTTT nhận
   D->>K: poll (dh-sub-{tenant}-{mã})
-  D->>D: Giải tuần tự, ký HMAC, Webhook-Id = ce_id
   D->>EG: POST endpointUrl
   EG->>H: Chuyển tiếp
   H-->>D: 200
@@ -3184,7 +3083,7 @@ Ghi chú: bên nhận phải xác minh chữ ký, từ chối dấu thời gian 
 **Luồng ngoại lệ.**
 
 - Tiếp tục subscription đang `SUSPENDED` do hệ thống mà thiếu lý do: ERR-10-009 (400). "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
-- Lỗi đầu nhận từng lượt: ERR-10-111, 112 ghi ở bảng lượt lỗi, câu như FR-10-038.
+- Lỗi đầu nhận từng lượt: ERR-10-111, 112 ghi ở bảng lượt lỗi, ví dụ "Quá thời gian chờ. Đầu nhận chậm; tăng thời gian chờ hoặc giảm số worker."
 
 **Đầu ra.** Không có phản hồi cho người; trạng thái subscription và lượt lỗi được cập nhật.
 
@@ -3203,18 +3102,18 @@ Ghi chú: bên nhận phải xác minh chữ ký, từ chối dấu thời gian 
 
 ```{.mermaid caption="Trình tự ngắt mạch và tự phục hồi (FR-10-039)"}
 sequenceDiagram
-  autonumber
   participant D as Bộ giao nhận
   participant H as HTTT nhận
   participant CP as dh-integration
   D->>H: POST (lần k)
   H-->>D: 503
   D->>CP: runtime suspend CIRCUIT_BREAKER (API-10-086)
-  CP->>CP: SUSPENDED, phát EVT-10-09
   D->>H: Thăm dò sau 5 phút
   H-->>D: 200
   D->>CP: runtime resume (API-10-119)
 ```
+
+Hình cho thấy ngắt mạch tự thử lại, không cần người can thiệp.
 
 #### FR-10-040 · Điểm bắt đầu và offset bắt đầu
 
@@ -3310,15 +3209,14 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tạm dừng subscription (FR-10-041)"}
 sequenceDiagram
-  autonumber
   actor TO as Người vận hành
   participant CP as dh-integration
   participant D as Bộ giao nhận
   TO->>CP: subscriptions/{mã}:pause (reason)
-  CP->>CP: PAUSED, phát EVT-10-09
   D->>CP: Nhận EVT-10-09
-  D->>D: Dừng poll ≤ 10 giây, giữ offset
 ```
+
+Hình cho thấy tạm dừng giữ nguyên offset để tiếp tục sau.
 
 #### FR-10-042 · Xoay khóa ký webhook
 
@@ -3369,17 +3267,17 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự xoay khóa ký có chồng lấn (FR-10-042)"}
 sequenceDiagram
-  autonumber
   actor TO as Người vận hành
   participant CP as dh-integration
   participant OB as OpenBao
   participant D as Bộ giao nhận
   TO->>CP: signing-keys:rotate
   CP->>OB: Ghi khóa mới
-  CP->>CP: Mới ACTIVE, cũ PREVIOUS, phát EVT-10-13
   D->>OB: Đọc hai khóa, ký hai giá trị v1
   TO->>CP: signing-keys:claim, nhận bí mật một lần
 ```
+
+Hình cho thấy hai khóa cùng hiệu lực trong thời gian chồng lấn.
 
 #### FR-10-043 · Giao nhận KÉO qua API
 
@@ -3436,7 +3334,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự kéo, xác nhận qua API (FR-10-043)"}
 sequenceDiagram
-  autonumber
   participant H as HTTT nhận
   participant AX as APISIX, OPA
   participant GW as Cổng kéo
@@ -3448,6 +3345,8 @@ sequenceDiagram
   H->>GW: POST .../events:ack (cursor)
   GW->>K: commit offset
 ```
+
+Hình cho thấy sự kiện chỉ được commit khi bên nhận xác nhận.
 
 #### FR-10-044 · Giao nhận KÉO qua Kafka listener ngoài
 
@@ -3496,7 +3395,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tiêu thụ qua Kafka listener ngoài (FR-10-044)"}
 sequenceDiagram
-  autonumber
   participant H as Consumer HTTT
   participant KC as Keycloak
   participant K as Kafka external
@@ -3507,6 +3405,8 @@ sequenceDiagram
   H->>K: commit offset
   L->>K: listConsumerGroupOffsets
 ```
+
+Hình cho thấy bên nhận tự commit offset, PH-10 chỉ đọc offset để đo lag.
 
 #### FR-10-045 · Giao nhận nội bộ cho luồng và DU
 
@@ -3555,7 +3455,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự tiêu thụ nội bộ của luồng PH-04 (FR-10-045)"}
 sequenceDiagram
-  autonumber
   participant F as Luồng PH-04
   participant K as Kafka internal
   participant L as Bộ thu lag
@@ -3566,6 +3465,8 @@ sequenceDiagram
   L->>K: Đọc offset nhóm
   L->>CP: Lưu LagSample
 ```
+
+Hình cho thấy luồng PH-04 commit sau khi xử lý, PH-10 chỉ đọc offset để đo lag.
 
 #### FR-10-046 · Sửa tham số subscription
 
@@ -3617,7 +3518,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự đổi endpoint nhận có duyệt lại (FR-10-046)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -3625,9 +3525,10 @@ sequenceDiagram
   IE->>CP: PATCH endpointUrl (đã xác minh)
   CP-->>IE: 202 SUBSCRIPTION PENDING
   IA->>CP: approve
-  CP->>CP: Áp dụng, phát EVT-10-09
   D->>CP: Nạp cấu hình mới ≤ 60 giây
 ```
+
+Hình cho thấy đổi endpoint phải xác minh và duyệt lại.
 
 #### FR-10-047 · Thu hồi subscription
 
@@ -3677,7 +3578,6 @@ sequenceDiagram
 
 ```{.mermaid caption="Trình tự thu hồi subscription (FR-10-047)"}
 sequenceDiagram
-  autonumber
   actor IE as Kỹ sư
   participant CP as dh-integration
   participant KC as Keycloak, OPA
@@ -3685,8 +3585,9 @@ sequenceDiagram
   IE->>CP: subscriptions/{mã}:revoke (reason)
   CP->>KC: Gỡ scope, dữ liệu quyền
   CP->>OB: Xóa khóa ký
-  CP->>CP: REVOKED, hủy phát lại, phát EVT-10-09
 ```
+
+Hình cho thấy thu hồi gỡ quyền và xóa khóa ký trước khi đặt `REVOKED`.
 
 #### FR-10-048 · Lọc sự kiện và gộp lô khi đẩy
 
@@ -3737,17 +3638,6 @@ sequenceDiagram
 
 Nhóm G bảo đảm không sự kiện nào bị bỏ âm thầm: sự kiện giao thất bại vào DLQ bền, người vận hành xem, loại bỏ hoặc phát lại có duyệt; phát lại theo khoảng offset, thời gian hoặc theo mục DLQ. Hub cũ không có DLQ và không phát lại có kiểm soát. Máy trạng thái ở mục 4.8; PH-18 dùng cùng API để gom DLQ của mọi phân hệ.
 
-```{.mermaid caption="Quan hệ chức năng trong nhóm G"}
-flowchart TB
-    F038["FR-10-038, 039, 043 Giao nhận lỗi"] --> F049["FR-10-049 Chuyển vào DLQ"]
-    F049 --> F050["FR-10-050 Tra cứu, loại bỏ"]
-    F050 --> F053["FR-10-053 Phát lại mục DLQ"]
-    F051["FR-10-051 Đề nghị, duyệt phát lại"] --> F052["FR-10-052 Thực thi, hủy"]
-    F053 --> F052
-```
-
-Mọi đường phát lại đều qua duyệt và cùng một bộ phát lại; mục DLQ chỉ rời trạng thái `NEW` khi được phát lại thành công hoặc loại bỏ có lý do.
-
 #### FR-10-049 · Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện
 
 ::: dac-ta
@@ -3796,7 +3686,6 @@ Mọi đường phát lại đều qua duyệt và cùng một bộ phát lại;
 
 ```{.mermaid caption="Trình tự chuyển sự kiện vào DLQ (FR-10-049)"}
 sequenceDiagram
-  autonumber
   participant D as Bộ giao nhận
   participant K as Kafka
   participant W as Bộ ghi DLQ
@@ -3805,7 +3694,6 @@ sequenceDiagram
   K-->>D: Xác nhận
   D->>K: commit offset subscription
   W->>K: Đọc topic DLQ
-  W->>W: Tạo DlqEntry NEW, mã hóa nội dung
   W->>P18: EVT-10-11 gộp 1 phút
 ```
 
@@ -3924,7 +3812,6 @@ Hình cho thấy offset của subscription chỉ tiến sau khi topic DLQ xác n
 
 ```{.mermaid caption="Trình tự đề nghị và duyệt phát lại (FR-10-051)"}
 sequenceDiagram
-  autonumber
   actor TO as Người vận hành
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -3933,7 +3820,6 @@ sequenceDiagram
   CP->>K: offsetsForTimes, khoảng còn giữ
   CP-->>TO: 201 ước lượng, PENDING_APPROVAL
   IA->>CP: approve
-  CP->>CP: ReplayRequest APPROVED
 ```
 
 Hình cho thấy ước lượng và kiểm tra lưu giữ chạy trước khi tạo yêu cầu, nên người duyệt quyết định trên số liệu thật.
@@ -3987,7 +3873,6 @@ Hình cho thấy ước lượng và kiểm tra lưu giữ chạy trước khi t
 
 ```{.mermaid caption="Trình tự thực thi phát lại theo khoảng (FR-10-052)"}
 sequenceDiagram
-  autonumber
   participant CP as dh-integration
   participant R as Bộ phát lại
   participant K as Kafka
@@ -3996,7 +3881,6 @@ sequenceDiagram
   R->>K: assign phân vùng, seek fromOffset
   R->>H: POST, X-Datahub-Replay, cùng Webhook-Id
   R->>CP: Tiến độ mỗi 5 giây (API-10-088)
-  CP->>CP: COMPLETED, phát EVT-10-12
 ```
 
 Hình cho thấy bộ phát lại đọc bằng consumer riêng nên vị trí đọc của subscription không đổi; bên nhận chống trùng nhờ `Webhook-Id` giữ nguyên.
@@ -4051,7 +3935,6 @@ Hình cho thấy bộ phát lại đọc bằng consumer riêng nên vị trí �
 
 ```{.mermaid caption="Trình tự phát lại mục DLQ (FR-10-053)"}
 sequenceDiagram
-  autonumber
   actor TO as Người vận hành
   actor IA as Người duyệt
   participant CP as dh-integration
@@ -4068,19 +3951,7 @@ Hình cho thấy nội dung lấy từ `DlqEntry` chứ không từ topic gốc,
 
 ### 6.9. Nhóm H · Giám sát, dashboard và sơ đồ
 
-Nhóm H cho cán bộ thấy trục sự kiện đang chạy thế nào: độ trễ tiêu thụ theo subscription, cảnh báo, thống kê giao nhận, dashboard và sơ đồ kết nối. Nhóm giữ bốn thẻ đếm và sơ đồ của Hub cũ (LGC-HUB-001…004, 007) và thay biểu đồ CPU, bộ nhớ bằng liên kết sang PH-13 (LGC-HUB-005, 006).
-
-```{.mermaid caption="Quan hệ chức năng trong nhóm H"}
-flowchart TB
-    F054["FR-10-054 Thu lag"] --> F055["FR-10-055 Cảnh báo lag"]
-    F054 --> F057["FR-10-057 Dashboard"]
-    F054 --> F058["FR-10-058 Sơ đồ kết nối"]
-    F056["FR-10-056 Thống kê giao nhận"] --> F057
-    F054 --> F059["FR-10-059 Chỉ số sang PH-13"]
-    F056 --> F059
-```
-
-Bộ thu lag là nguồn số liệu chung cho cảnh báo, dashboard, sơ đồ và chỉ số gửi PH-13.
+Nhóm H cho thấy trục đang chạy thế nào: lag, cảnh báo, thống kê giao nhận, dashboard, sơ đồ. Nhóm giữ bốn thẻ đếm và sơ đồ của Hub cũ (LGC-HUB-001…004, 007), thay biểu đồ CPU, bộ nhớ bằng liên kết PH-13 (LGC-HUB-005, 006).
 
 #### FR-10-054 · Thu thập consumer lag
 
@@ -4130,7 +4001,6 @@ Bộ thu lag là nguồn số liệu chung cho cảnh báo, dashboard, sơ đồ
 
 ```{.mermaid caption="Trình tự thu lag (FR-10-054)"}
 sequenceDiagram
-  autonumber
   participant L as Bộ thu lag
   participant K as Kafka Admin
   participant DB as ph10_event
@@ -4141,7 +4011,7 @@ sequenceDiagram
   L->>OB: Chỉ số lag theo phân vùng
 ```
 
-Hình cho thấy lag giây được đo từ thời điểm của bản tin thật đầu tiên chưa commit, không ước lượng từ tốc độ.
+Hình cho thấy lag giây đo từ bản tin thật đầu tiên chưa commit.
 
 #### FR-10-055 · Cảnh báo lag và nhóm tiêu thụ ngừng tiến
 
@@ -4189,23 +4059,21 @@ Hình cho thấy lag giây được đo từ thời điểm của bản tin th�
 
 ```{.mermaid caption="Trình tự cảnh báo lag (FR-10-055)"}
 sequenceDiagram
-  autonumber
   participant CP as dh-integration
   participant N as Thông báo FR-00-060
   participant K as Kafka
   actor TO as Người vận hành
-  CP->>CP: alertState OK → CRITICAL
   CP->>K: Phát EVT-10-10
   CP->>N: Gửi TO, đầu mối HTTT
   TO->>CP: lag-alerts:acknowledge
 ```
 
-Hình cho thấy xác nhận chỉ tắt thông báo lặp; mức cảnh báo vẫn được đánh giá mỗi chu kỳ.
+Hình cho thấy cảnh báo phát sự kiện và báo cả TO lẫn đầu mối HTTT.
 
 #### FR-10-056 · Thống kê giao nhận và lượt giao gần đây
 
 ::: dac-ta
-**Mục đích.** Cho người vận hành thấy chất lượng giao nhận của một subscription và từng lượt lỗi gần đây để chẩn đoán nhanh.
+**Mục đích.** Cho người vận hành thấy chất lượng giao nhận và lượt lỗi gần đây của một subscription.
 
 **Tác nhân, quyền.** Mọi vai trò có `PERM-10-read`; bộ giao nhận báo qua API-10-085.
 
@@ -4250,7 +4118,6 @@ Hình cho thấy xác nhận chỉ tắt thông báo lặp; mức cảnh báo v�
 
 ```{.mermaid caption="Trình tự báo cáo và xem thống kê giao nhận (FR-10-056)"}
 sequenceDiagram
-  autonumber
   participant D as Bộ giao nhận
   participant CP as dh-integration
   actor TO as Người vận hành
@@ -4264,7 +4131,7 @@ Hình cho thấy thống kê đến từ báo cáo của bộ giao nhận, khôn
 #### FR-10-057 · Dashboard sự kiện
 
 ::: dac-ta
-**Mục đích.** Cho cán bộ một màn tổng quan về số lượng, lưu lượng, lag, DLQ, việc chờ và hạn mức của tenant, kế thừa bốn thẻ đếm của Hub cũ.
+**Mục đích.** Cho cán bộ một màn tổng quan của tenant, kế thừa bốn thẻ đếm của Hub cũ.
 
 **Tác nhân, quyền.** Mọi vai trò có `PERM-10-read`.
 
@@ -4293,7 +4160,7 @@ Hình cho thấy thống kê đến từ báo cáo của bộ giao nhận, khôn
 
 **Đầu ra.** `200`, các khối số liệu.
 
-**Kết quả.** Cán bộ thấy tình hình trục trong một màn và bấm vào từng thẻ để xem chi tiết.
+**Kết quả.** Cán bộ thấy tình hình trục trong một màn.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
@@ -4308,22 +4175,20 @@ Hình cho thấy thống kê đến từ báo cáo của bộ giao nhận, khôn
 
 ```{.mermaid caption="Trình tự dựng dashboard (FR-10-057)"}
 sequenceDiagram
-  autonumber
   participant UI as UI-10-01
   participant CP as dh-integration
   participant PR as Prometheus PH-13
   UI->>CP: GET /dashboard
-  CP->>CP: Đếm ph10_event
   CP->>PR: Lưu lượng
   CP-->>UI: Khối số liệu
 ```
 
-Hình cho thấy số đếm không phụ thuộc PH-13; chỉ khối lưu lượng ẩn khi PH-13 lỗi.
+Hình cho thấy chỉ khối lưu lượng phụ thuộc PH-13.
 
 #### FR-10-058 · Sơ đồ kết nối tương tác
 
 ::: dac-ta
-**Mục đích.** Cho thấy ai phát gì, ai nhận gì trên một đồ thị ba lớp có phủ trạng thái, lag, lưu lượng, DLQ, thay sơ đồ tĩnh của Hub cũ.
+**Mục đích.** Cho thấy ai phát, ai nhận gì trên đồ thị ba lớp có phủ trạng thái, thay sơ đồ tĩnh của Hub cũ.
 
 **Tác nhân, quyền.** Mọi vai trò có `PERM-10-read`.
 
@@ -4352,7 +4217,7 @@ Hình cho thấy số đếm không phụ thuộc PH-13; chỉ khối lưu lư�
 
 **Đầu ra.** `200`: `nodes[]` (`id`, `kind`, `code`, `label`, `status`, chỉ số), `edges[]` (`from`, `to`, `kind`, `code`, `status`, `deliveryMode`, `lagSeconds`, `ratePerMinute`).
 
-**Kết quả.** Người dùng thấy toàn cảnh kết nối và lần ra bên đang chậm hoặc lỗi.
+**Kết quả.** Người dùng lần ra bên đang chậm hoặc lỗi.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
@@ -4377,22 +4242,20 @@ Hình cho thấy số đếm không phụ thuộc PH-13; chỉ khối lưu lư�
 
 ```{.mermaid caption="Trình tự dựng sơ đồ kết nối (FR-10-058)"}
 sequenceDiagram
-  autonumber
   participant UI as UI-10-14
   participant CP as dh-integration
   participant PR as PH-13
   UI->>CP: GET /graph?projectCode&overlay=LAG
-  CP->>CP: Nút, cạnh, lag, DLQ
   CP->>PR: Lưu lượng khi overlay TRAFFIC
   CP-->>UI: nodes[], edges[]
 ```
 
-Hình cho thấy đồ thị dựng ở máy chủ, giao diện chỉ bố cục và tương tác.
+Hình cho thấy đồ thị dựng ở máy chủ.
 
 #### FR-10-059 · Xuất số liệu sang PH-13
 
 ::: dac-ta
-**Mục đích.** Đưa chỉ số của phân hệ vào hệ giám sát chung để cảnh báo và báo cáo theo luật chung, không lộ dữ liệu nghiệp vụ.
+**Mục đích.** Đưa chỉ số phân hệ vào giám sát chung, không lộ dữ liệu nghiệp vụ.
 
 **Tác nhân, quyền.** `dh-integration`, `dh-runtime` (hệ thống); PH-13 đọc (`event:metrics-read`).
 
@@ -4420,7 +4283,7 @@ Hình cho thấy đồ thị dựng ở máy chủ, giao diện chỉ bố cục
 
 **Đầu ra.** Chuỗi chỉ số ở PH-13.
 
-**Kết quả.** Người vận hành PH-13 có bảng và cảnh báo cho trục sự kiện.
+**Kết quả.** PH-13 có bảng và cảnh báo cho trục.
 
 **Hậu điều kiện.** Không đổi dữ liệu PH-10.
 
@@ -4435,7 +4298,6 @@ Hình cho thấy đồ thị dựng ở máy chủ, giao diện chỉ bố cục
 
 ```{.mermaid caption="Trình tự xuất chỉ số sang PH-13 (FR-10-059)"}
 sequenceDiagram
-  autonumber
   participant RT as dh-runtime
   participant CP as dh-integration
   participant OT as OpenTelemetry Collector
@@ -4445,161 +4307,977 @@ sequenceDiagram
   OT->>LG: Ghi chuỗi có nhãn tenant
 ```
 
-Hình cho thấy hai DU cùng đẩy về một bộ thu, PH-13 không đọc trực tiếp CSDL của PH-10.
+Hình cho thấy PH-13 không đọc trực tiếp CSDL của PH-10.
 
 ### 6.10. Nhóm I · Danh mục cấu hình, hạn mức, đa tenant, kiểm toán
 
+Nhóm I là phần nền: hai danh mục kế thừa Hub cũ (`type_of_comm`, `routing_mode`), hạn mức, tham số, cách ly tenant, kiểm toán.
+
 #### FR-10-060 · Danh mục kiểu giao tiếp
 
-FR-10-060 (M · MVP; LGC-HUB-014 `type_of_comm`). Danh mục do nền tảng định nghĩa (phụ lục A.2.8), mỗi mục có `commTypeCode`, tên tiếng Việt, chiều (`PUBLISH`, `SUBSCRIBE`), loại bên tham gia hợp lệ, chế độ giao nhận tương ứng, `legacyCode` (mã của hệ cũ để di trú). TA (`PERM-10-admin`) bật, tắt từng mục cho tenant (ví dụ tắt `KAFKA_NATIVE` khi tenant không mở Kafka ngoài); không tắt được mục đang có bên phát, bên nhận `ACTIVE` dùng (ERR-10-043). Không thêm mã mới ở tenant; mã mới là thay đổi nền tảng (bổ sung FRS). `PERM-10-read` xem. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Giữ danh mục kiểu giao tiếp chung, cho tenant bật, tắt mục.
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`) bật, tắt; mọi vai trò `PERM-10-read` xem.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** LGC-HUB-014 `type_of_comm`; A.2.8.
+
+**Tiền điều kiện.** Danh mục nền tảng đã nạp.
+
+**Kích hoạt.** TA gạt công tắc ở tab Danh mục của UI-10-18.
+
+**Đầu vào.** `commTypeCode`, `enabled`, `reason`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống hiện mỗi mục với `commTypeCode`, tên tiếng Việt, chiều (`PUBLISH`, `SUBSCRIBE`), loại bên tham gia hợp lệ, chế độ giao nhận tương ứng, `legacyCode`.
+2. TA bật hoặc tắt một mục cho tenant (ví dụ tắt `KAFKA_NATIVE` khi tenant không mở Kafka ngoài); hệ thống kiểm tra không có bên phát, bên nhận `ACTIVE` dùng mục (ERR-10-043).
+3. Hệ thống lưu, ghi kiểm toán.
+
+**Luồng thay thế.** Không thêm mã mới ở tenant; mã mới là thay đổi nền tảng (bổ sung FRS).
+
+**Luồng ngoại lệ.**
+
+- Mục đang dùng: ERR-10-043 (422). "Không tắt được mục đang có {n} bên tham gia hoặc topic dùng."
+- Thiếu quyền: ERR-10-054 (403). "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant."
+
+**Đầu ra.** `200`, mục đã cập nhật.
+
+**Kết quả.** Biểu mẫu chỉ còn mục đã bật.
+
+**Hậu điều kiện.** Đối tượng đã có không đổi.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-10-18; API-10-067, 105.
+:::
 
 #### FR-10-061 · Danh mục chế độ định tuyến
 
-FR-10-061 (M · MVP; LGC-HUB-014 `routing_mode`). Như FR-10-060 cho ba chế độ `KEY_HASH`, `ROUND_ROBIN`, `SINGLE_PARTITION` (phụ lục A.2.9) với mô tả, bảo đảm thứ tự, `legacyCode` (`CustomPartition`, `RoundRobinPartition`, `SinglePartition`). TA bật, tắt; không tắt được chế độ đang dùng (ERR-10-043); `KEY_HASH` không tắt được. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Như FR-10-060 cho ba chế độ định tuyến `KEY_HASH`, `ROUND_ROBIN`, `SINGLE_PARTITION` (A.2.9).
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`); xem `PERM-10-read`.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** LGC-HUB-014 `routing_mode`; A.2.9.
+
+**Tiền điều kiện.** Danh mục nền tảng đã nạp.
+
+**Kích hoạt.** TA gạt công tắc ở UI-10-18.
+
+**Đầu vào.** `routingModeCode`, `enabled`, `reason`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống hiện mỗi chế độ với mô tả, mức bảo đảm thứ tự và `legacyCode` (`CustomPartition`, `RoundRobinPartition`, `SinglePartition`).
+2. TA bật hoặc tắt; hệ thống kiểm tra chế độ không đang dùng (ERR-10-043) và không phải `KEY_HASH`.
+3. Hệ thống lưu, ghi kiểm toán.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Chế độ đang dùng hoặc là `KEY_HASH`: ERR-10-043 (422). "Không tắt được mục đang có {n} bên tham gia hoặc topic dùng."
+
+**Đầu ra.** `200`.
+
+**Kết quả.** Biểu mẫu chỉ còn chế độ đã bật.
+
+**Hậu điều kiện.** `KEY_HASH` luôn bật.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-10-18; API-10-068, 106.
+:::
 
 #### FR-10-062 · Hạn mức theo tenant và phân bổ cho bên tham gia
 
-FR-10-062 (M · MVP; REQ-20; D03-10 §5.3; SEC-86). PA (`PERM-10-admin`) đặt trần `TenantEventQuota` theo hợp đồng của tỉnh (mặc định ở phụ lục A.5: 10 MB/s sản xuất, 20 MB/s tiêu thụ theo D03-10); TA xem mức dùng và phân bổ. Thực thi: (a) số topic, tổng phân vùng, số subscription, tổng worker đẩy kiểm ở control plane khi tạo, duyệt (ERR-10-011); (b) thông lượng Kafka: Kafka chỉ hỗ trợ hạn mức theo principal, nên PH-10 chia hạn mức tenant thành hạn mức từng `KafkaUser` (mặc định chia theo `quotaBytesPerSecond` khai báo ở publication, subscription, tối thiểu 256 KiB/s), bảo đảm tổng không vượt trần (BR-10-029); principal nội bộ của tenant giữ phần dự trữ `10.quota.internal-reserve-ratio`; (c) cổng HTTP: giới hạn theo bên phát ở APISIX (`limit-count` theo publication). Mức dùng ≥ 80% trần thì cảnh báo TA; dashboard hiển thị. Kiểm toán: có với đổi trần, phân bổ.
+::: dac-ta
+**Mục đích.** Giữ mức dùng của tenant trong trần hợp đồng, chia trần thông lượng cho từng principal Kafka.
+
+**Tác nhân, quyền.** PA (`PERM-10-admin`) đặt trần; TA xem mức dùng và phân bổ.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-20; D03-10 §5.3; SEC-86.
+
+**Tiền điều kiện.** Tenant `ACTIVE`.
+
+**Kích hoạt.** PA sửa trần ở UI-10-18 tab Hạn mức; mỗi thao tác tạo, duyệt ở control plane.
+
+**Đầu vào.** `TenantEventQuota` (mặc định A.5: 10 MB/s sản xuất, 20 MB/s tiêu thụ theo D03-10); `quotaBytesPerSecond` của publication, subscription; `reason`.
+
+**Luồng xử lý chính.**
+
+1. Control plane kiểm số topic, tổng phân vùng, số subscription, tổng worker đẩy khi tạo, duyệt (ERR-10-011).
+2. Kafka chỉ có hạn mức theo principal, nên hệ thống chia thông lượng tenant thành hạn mức từng `KafkaUser` (theo `quotaBytesPerSecond` khai báo, tối thiểu 256 KiB/s), tổng không vượt trần (BR-10-029); principal nội bộ giữ phần dự trữ `10.quota.internal-reserve-ratio`; ghi vào `dh-config-{tenant}` (ADR-072).
+3. Hệ thống đặt giới hạn theo bên phát ở APISIX (`limit-count` theo publication).
+4. Mức dùng ≥ 80% trần: hệ thống cảnh báo TA; UI-10-01 hiện mức dùng (FR-10-057).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Vượt hạn mức: ERR-10-011 (422). "Vượt hạn mức của tenant: {tên hạn mức} đang dùng {đã dùng}/{trần}."
+- Trần ngoài miền: ERR-10-012 (422). "Giá trị ngoài miền cho phép ({min} đến {max})."
+
+**Đầu ra.** `200`, hạn mức và mức dùng.
+
+**Kết quả.** Không tenant nào chiếm hết cụm dùng chung.
+
+**Hậu điều kiện.** Tổng hạn mức principal ≤ trần tenant.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có với đổi trần, phân bổ.
+
+**Quy tắc nghiệp vụ.** BR-10-029.
+
+**Màn hình, API.** UI-10-01, UI-10-18; API-10-069, 107.
+:::
+
+```{.mermaid caption="Trình tự áp hạn mức ba tầng (FR-10-062)"}
+sequenceDiagram
+  actor PA as Quản trị nền tảng
+  participant CP as dh-integration
+  participant G as dh-config-{tenant}
+  participant K as Kafka KafkaUser quota
+  participant AP as APISIX
+  PA->>CP: PUT quota
+  CP->>G: Commit hạn mức KafkaUser
+  G->>K: Argo CD áp quota
+  CP->>AP: limit-count theo publication
+```
+
+Hình cho thấy trần tenant được thực thi ở control plane, Kafka và APISIX.
 
 #### FR-10-063 · Tham số phân hệ theo tenant
 
-FR-10-063 (M · MVP; REQ-18). TA (`PERM-10-admin`) xem, sửa tham số `10.*` trong miền cho phép (phụ lục A.5), PA đặt trần cho tham số có trần nền tảng và là người duy nhất bật `10.external-kafka.enabled`. Mỗi thay đổi có lý do, áp dụng cho đối tượng tạo mới, không đổi ngược đối tượng đã có trừ khi tham số ghi "áp dụng ngay" (ví dụ ngưỡng lag mặc định). Lưu ở kho tham số chung của PH-18 với tiền tố `10.`. Ngoại lệ: ngoài miền ERR-10-012. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Cho tenant chỉnh tham số `10.*` trong miền cho phép.
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`) sửa; PA đặt trần cho tham số có trần nền tảng và là người duy nhất bật `10.external-kafka.enabled`.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-18; A.5.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** TA sửa ở tab Tham số của UI-10-18.
+
+**Đầu vào.** Khóa tham số, giá trị, `reason` (bắt buộc).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm tra giá trị trong miền và dưới trần (ERR-10-012), lý do có (ERR-10-009).
+2. Hệ thống lưu ở kho tham số chung của PH-18 với tiền tố `10.`.
+3. Giá trị áp dụng cho đối tượng tạo mới; tham số ghi "áp dụng ngay" (ví dụ ngưỡng lag mặc định) áp cả đối tượng đã có.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Ngoài miền: ERR-10-012 (422). "Giá trị ngoài miền cho phép ({min} đến {max})."
+- Thiếu lý do: ERR-10-009 (400). "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
+
+**Đầu ra.** `200`.
+
+**Kết quả.** Tham số mới có hiệu lực theo phạm vi đã nêu.
+
+**Hậu điều kiện.** Đối tượng cũ giữ cấu hình trừ tham số "áp dụng ngay".
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-10-18; API-10-070, 108.
+:::
 
 #### FR-10-064 · Cách ly đa tenant trên trục sự kiện
 
-FR-10-064 (M · MVP; REQ-20; D03-10 §4; SEC-82, SEC-87). Bảo đảm: (a) mọi topic của tenant có tiền tố mã tenant chữ thường, kiểm ở control plane (BR-10-001, 002) và ở chính sách Kyverno cho tài nguyên `KafkaTopic`, `KafkaUser` trong kho của tenant (ADR-072); (b) ACL theo tiền tố tenant cho principal nội bộ của tenant, ACL literal theo topic cho principal HTTT; không principal nào của tenant A có ACL trên tiền tố tenant B; (c) nhóm tiêu thụ có tiền tố chứa tenant; (d) artifact Apicurio theo `groupId = {tenant}`, đường chỉ đọc cho HTTT lọc theo scope; (e) dữ liệu `ph10_event` có RLS theo `tenant_id`; (f) tenant của bản tin luôn lấy từ tiền tố topic, không từ nội dung hay tiêu đề do bên phát gửi (`dhtenant` do nền tảng ghi đè). PH-10 cung cấp bộ kiểm thử rò rỉ chạy định kỳ: dùng principal kiểm thử của tenant T90 thử đọc, ghi, mô tả topic, nhóm, artifact của T91 và phải bị từ chối; kết quả gửi PH-13 (SEC-87). Khi khởi tạo tenant (PH-20), PH-10 tạo khai báo nền: hạn mức mặc định, principal nội bộ và ACL tiền tố, topic hệ thống của tenant (FR-10-067). Kiểm toán: có với khởi tạo.
+::: dac-ta
+**Mục đích.** Bảo đảm không principal nào thấy được tài nguyên của tenant khác.
+
+**Tác nhân, quyền.** Hệ thống; PH-20 gọi khi khởi tạo tenant.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-20; D03-10 §4; SEC-82, SEC-87; ADR-072.
+
+**Tiền điều kiện.** Tenant đã có mã.
+
+**Kích hoạt.** Mọi thao tác tạo, cấp phát; lịch chạy bộ kiểm thử rò rỉ; PH-20 khởi tạo tenant.
+
+**Đầu vào.** Mã tenant, đối tượng cần cấp phát.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống buộc mọi topic có tiền tố mã tenant chữ thường, kiểm ở control plane (BR-10-001, 002) và ở chính sách Kyverno cho `KafkaTopic`, `KafkaUser` trong kho của tenant.
+2. Hệ thống cấp ACL theo tiền tố tenant cho principal nội bộ, ACL literal theo topic cho principal HTTT; nhóm tiêu thụ có tiền tố chứa tenant.
+3. Hệ thống đặt artifact Apicurio theo `groupId = {tenant}`, đường chỉ đọc cho HTTT lọc theo scope; `ph10_event` có RLS theo `tenant_id`.
+4. Tenant của bản tin luôn lấy từ tiền tố topic, không từ nội dung hay tiêu đề (`dhtenant` do nền tảng ghi đè).
+5. Bộ kiểm thử rò rỉ dùng principal kiểm thử của T90 thử đọc, ghi, mô tả topic, nhóm, artifact của T91, phải bị từ chối; kết quả gửi PH-13 (SEC-87).
+6. Khi PH-20 khởi tạo tenant, hệ thống tạo hạn mức mặc định, principal nội bộ, ACL tiền tố và topic hệ thống (FR-10-067).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Tiền tố sai: ERR-10-005 (422). "Tiền tố tenant của topic không khớp tenant đang làm việc."
+- Kiểm thử rò rỉ không bị từ chối: hệ thống báo sự cố an ninh SEV-1 ở PH-13, không hiện cho người dùng tenant.
+
+**Đầu ra.** Không có API riêng.
+
+**Kết quả.** Tenant chỉ thấy tài nguyên của mình.
+
+**Hậu điều kiện.** Không có ACL chéo tenant.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có với khởi tạo.
+
+**Quy tắc nghiệp vụ.** BR-10-001, BR-10-002.
+
+**Màn hình, API.** Không có màn, API riêng.
+:::
+
+```{.mermaid caption="Các lớp cách ly tenant (FR-10-064)"}
+sequenceDiagram
+  participant CP as dh-integration
+  participant KY as Kyverno
+  participant K as Kafka ACL
+  participant AR as Apicurio
+  participant T as Bộ kiểm thử rò rỉ
+  CP->>KY: KafkaTopic có tiền tố tenant
+  KY->>K: Cho áp, ACL tiền tố hoặc literal
+  CP->>AR: Artifact groupId = tenant
+  T->>K: Principal T90 đọc topic T91
+  K-->>T: Từ chối, báo PH-13
+```
+
+Hình cho thấy cách ly được kiểm ở control plane, chính sách cụm và kiểm thử rò rỉ.
 
 #### FR-10-065 · Kiểm toán và lịch sử thay đổi
 
-FR-10-065 (M · MVP; REQ-13; FR-00-040…043). Mọi thao tác ghi ở FR-10-003…053, 060…075 sinh bản ghi kiểm toán theo FR-00-041: chủ thể (người hoặc tài khoản dịch vụ), hành động, loại và mã đối tượng, giá trị trước và sau (đã che: không bao giờ chứa bí mật ký, nội dung sự kiện), lý do, mã yêu cầu duyệt, mã commit cấu hình khi có. Mỗi màn chi tiết có tab Lịch sử (FR-00-043). Thao tác do hệ thống tự thực hiện (tạm ngừng theo PH-01, ngắt mạch, hết hạn khóa) ghi chủ thể `system:dh-integration` kèm nguyên nhân. Xem nội dung mục DLQ của topic `RESTRICTED`, `SENSITIVE` ghi như xem dữ liệu Nhạy cảm. Nhật ký phát lại giữ 3 năm (kế thừa SRS repo §4.3). Kiểm toán gửi PH-13 qua outbox, không ghi trực tiếp.
+::: dac-ta
+**Mục đích.** Ghi ai làm gì, lúc nào, giá trị trước và sau, phục vụ thanh tra.
+
+**Tác nhân, quyền.** Hệ thống ghi; xem tab Lịch sử: `PERM-10-read`.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-13; FR-00-040…043.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** Mọi thao tác ghi ở FR-10-003…053, 060…075.
+
+**Đầu vào.** Ngữ cảnh thao tác.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống dựng bản ghi theo FR-00-041: chủ thể (người hoặc tài khoản dịch vụ), hành động, loại và mã đối tượng, giá trị trước và sau (đã che, không bao giờ chứa bí mật ký, nội dung sự kiện), lý do, mã yêu cầu duyệt, mã commit cấu hình.
+2. Hệ thống ghi vào outbox trong cùng giao dịch, không ghi trực tiếp sang PH-13.
+3. Bộ chuyển outbox gửi PH-13; mỗi màn chi tiết có tab Lịch sử (FR-00-043).
+
+**Luồng thay thế.** Thao tác do hệ thống tự làm (tạm ngừng theo PH-01, ngắt mạch, hết hạn khóa) ghi chủ thể `system:dh-integration` kèm nguyên nhân. Xem nội dung mục DLQ của topic `RESTRICTED`, `SENSITIVE` ghi như xem dữ liệu Nhạy cảm.
+
+**Luồng ngoại lệ.**
+
+- PH-13 không nhận: outbox giữ và gửi lại, thao tác gốc không bị chặn.
+
+**Đầu ra.** Bản ghi kiểm toán ở PH-13.
+
+**Kết quả.** Mọi thay đổi tra được theo đối tượng.
+
+**Hậu điều kiện.** Nhật ký phát lại giữ 3 năm (kế thừa SRS repo §4.3).
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Là chính chức năng này.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** Tab Lịch sử của các màn chi tiết; không có API riêng.
+:::
+
+```{.mermaid caption="Trình tự ghi kiểm toán qua outbox (FR-10-065)"}
+sequenceDiagram
+  participant CP as dh-integration
+  participant DB as ph10_event outbox
+  participant P13 as PH-13
+  CP->>DB: Ghi thay đổi và bản ghi kiểm toán cùng giao dịch
+  DB->>P13: Bộ chuyển outbox gửi
+  P13-->>DB: Xác nhận, đánh dấu đã gửi
+```
+
+Hình cho thấy kiểm toán không mất khi PH-13 chậm.
 
 ### 6.11. Nhóm J · Đăng ký máy với máy
 
+Nhóm J là hợp đồng máy với máy giữa PH-10 với PH-05, PH-04 và DU nội bộ; không có màn riêng.
+
 #### FR-10-066 · Đăng ký topic hộ PH-05 cho CDC
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Cho PH-05 tạo topic CDC thay người khai báo, idempotent và nhanh.
+
+**Tác nhân, quyền.** `dh-integration` (mô-đun PH-05) với scope `event:topic-register`, thay mặt người khai báo (`onBehalfOf`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05, REQ-10; LGC-TOOL-010; hợp đồng PH-05 FR-05-048, 051; ADR-059.
+
+**Tiền điều kiện.** Cấu hình CDC đã lưu ở PH-05.
+
+**Kích hoạt.** PH-05 gọi `POST /api/event/v1/topics` với `topicKind = CDC`.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-10-066 dưới đây.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm scope và tiền tố tenant (ERR-10-005), tên theo quy tắc riêng của topic `CDC` (BR-10-002: 2…4 đoạn giữa, miền `cdc`; ERR-10-004).
+2. Idempotent theo `topicName`: đã có cùng cấu hình thì trả `200` với trạng thái hiện tại.
+3. Hệ thống kiểm lược đồ (FR-10-017; ERR-10-015, 017), dữ liệu cá nhân theo `dataClass` (ERR-10-018), hạn mức (ERR-10-011).
+4. Khi `10.approval.auto-approve-machine` bật (mặc định bật cho `CDC`, BR-10-031): ghi yêu cầu `TOPIC_CREATE` `APPROVED`, người duyệt `system:auto`, người chịu trách nhiệm `onBehalfOf`; ngược lại tạo yêu cầu chờ IA.
+5. Hệ thống cấp phát như FR-10-009; ghi publication `ACTIVE` cho bên phát `INTERNAL_SERVICE` `dh-cdc-{tenant}` (Kafka Connect của tenant).
+6. Hệ thống trả `202` với `PROVISIONING` hoặc `PENDING_APPROVAL` trong ≤ 2 giây (PH-05 chờ tối đa 5 giây); PH-05 theo dõi bằng EVT-10-01 hoặc `GET`.
+
+**Luồng thay thế.** Topic đã có cùng cấu hình: `200`.
+
+**Luồng ngoại lệ.**
+
+- Tên sai, miền sai: ERR-10-004 (422). "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
+- Tiền tố sai: ERR-10-005 (422). "Tiền tố tenant của topic không khớp tenant đang làm việc."
+- Lược đồ sai: ERR-10-015 (422). "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}." Lỗi khóa phân vùng ERR-10-017, dữ liệu cá nhân ERR-10-018 như FR-10-017.
+- Hạn mức: ERR-10-011 (422). "Vượt hạn mức của tenant: {tên hạn mức} đang dùng {đã dùng}/{trần}."
+- Phụ thuộc lỗi: ERR-10-029 (503). "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau."
+
+**Đầu ra.** `202` (mới) hoặc `200` (đã có), thân là topic.
+
+**Kết quả.** PH-05 có topic để bật CDC.
+
+**Hậu điều kiện.** Topic `ACTIVE` sau cấp phát; subscription của luồng, HTTT tới topic này đi theo quy trình bình thường (có duyệt).
+
+**Sự kiện phát ra.** EVT-10-01.
+
+**Kiểm toán.** Có: tài khoản dịch vụ, `onBehalfOf`, `sourceRef`.
+
+**Quy tắc nghiệp vụ.** BR-10-002, BR-10-031.
+
+**Màn hình, API.** Không có màn; API-10-009.
+:::
+
+| Tham số | Ràng buộc |
 |---|---|
-| Mức ưu tiên, đợt | M · MVP |
-| Truy vết | REQ-05, REQ-10; LGC-TOOL-010; hợp đồng PH-05 FR-05-048, 051; ADR-059 |
-| Tác nhân, quyền | `dh-integration` (mô-đun PH-05) với scope `event:topic-register`, thay mặt người khai báo CDC (`onBehalfOf`) |
-| Tiền điều kiện | Cấu hình CDC đã lưu ở PH-05 |
-| Đầu vào | `POST /api/event/v1/topics` với `topicKind = CDC`, `topicName = {topicPrefix}.{schema}.{table}.v{n}` (mặc định `{tenant}.cdc.{adapterCode}.{schema}.{table}.v1`), `projectCode` (mặc định dự án hệ thống `cdc-{adapterCode}`, tự tạo nếu chưa có), `partitions`, `retentionHours` (mặc định 168), `partitionKeyField` (khóa chính), `dataClass` (theo PH-05), lược đồ Avro sinh từ cấu trúc bảng, `onBehalfOf`, `sourceRef` (`adapterCode`, bảng) |
+| `topicKind` | `CDC` |
+| `topicName` | `{topicPrefix}.{schema}.{table}.v{n}`, mặc định `{tenant}.cdc.{adapterCode}.{schema}.{table}.v1` |
+| `projectCode` | Mặc định dự án hệ thống `cdc-{adapterCode}`, tự tạo nếu chưa có |
+| `partitions`, `retentionHours` | `retentionHours` mặc định 168 |
+| `partitionKeyField` | Khóa chính của bảng |
+| `dataClass` | Theo PH-05 |
+| Lược đồ | Avro sinh từ cấu trúc bảng |
+| `onBehalfOf`, `sourceRef` | Người khai báo; `adapterCode`, bảng |
 
-: FR-10-066 · Đăng ký topic hộ PH-05 cho CDC: Trường, Nội dung
+: Dữ liệu vào của FR-10-066
 
-| Trường | Nội dung |
-|---|---|
-| Xử lý | 1. Kiểm tra scope và tiền tố tenant (ERR-10-005). 2. Kiểm tra tên theo quy tắc riêng của topic `CDC` (BR-10-002: 2…4 đoạn giữa, miền `cdc`). 3. Idempotent theo `topicName`: đã tồn tại cùng cấu hình thì trả `200` với trạng thái hiện tại. 4. Kiểm tra lược đồ (FR-10-017), dữ liệu cá nhân theo `dataClass`. 5. Tự duyệt khi `10.approval.auto-approve-machine` bật (mặc định bật cho `CDC`, BR-10-031): ghi yêu cầu duyệt `TOPIC_CREATE` trạng thái `APPROVED` với người duyệt `system:auto` và người chịu trách nhiệm là `onBehalfOf`; ngược lại tạo yêu cầu chờ IA. 6. Cấp phát như FR-10-009; ghi publication `ACTIVE` cho bên phát `INTERNAL_SERVICE` `dh-cdc-{tenant}` (Kafka Connect của tenant). 7. Trả `202` với trạng thái `PROVISIONING` hoặc `PENDING_APPROVAL` trong ≤ 2 giây (PH-05 chờ tối đa 5 giây), PH-05 theo dõi bằng EVT-10-01 hoặc `GET`. |
-| Đầu ra | `202` (mới), `200` (đã có), thân là topic |
-| Ngoại lệ | ERR-10-004, 005, 011, 015, 017, 018, 029 |
-| Hậu điều kiện | Topic CDC `ACTIVE` sau cấp phát; subscription của luồng, HTTT tới topic này đi theo quy trình bình thường (có duyệt) |
-| Sự kiện phát ra | EVT-10-01 |
-| Kiểm toán | Có: tài khoản dịch vụ, `onBehalfOf`, `sourceRef` |
+```{.mermaid caption="Trình tự đăng ký topic CDC (FR-10-066)"}
+sequenceDiagram
+  participant P5 as PH-05
+  participant CP as dh-integration
+  participant AR as Apicurio
+  participant G as dh-config-{tenant}
+  P5->>CP: POST topics topicKind=CDC
+  CP->>AR: Đăng ký lược đồ Avro
+  CP->>G: Commit KafkaTopic, ACL
+  CP-->>P5: 202 PROVISIONING
+  CP->>P5: EVT-10-01 khi ACTIVE
+```
 
-: FR-10-066 · Đăng ký topic hộ PH-05 cho CDC: Trường, Nội dung
-
-PH-10 không khả dụng thì PH-05 không khai báo được CDC mới (ERR-05-029); CDC đang chạy không bị ảnh hưởng vì chỉ phụ thuộc Kafka và Apicurio.
+Hình cho thấy PH-05 nhận trả lời trước khi cấp phát xong và chờ EVT-10-01. PH-10 không khả dụng thì PH-05 không khai báo được CDC mới (ERR-05-029); CDC đang chạy không bị ảnh hưởng vì chỉ phụ thuộc Kafka và Apicurio.
 
 #### FR-10-067 · Đăng ký topic cho DU nội bộ và topic nền tảng
 
-FR-10-067 (M · MVP; REQ-10; LGC-BUS-039). DU nội bộ (`dh-connect`, `dh-data`, `dh-platform`, `dh-payment`, `dh-integration`) đăng ký topic sự kiện miền của mình (`topicKind = SYSTEM`, ví dụ `{tenant}.rdm.catalog.published.v1` của PH-07, `{tenant}.integration.flow.retired.v1` của PH-04, `{tenant}.adapter.cdc.schema-changed.v1` của PH-05, `{tenant}.event.*` của chính PH-10) bằng scope `event:topic-register` theo cùng API như FR-10-066, thường ở bước khởi tạo tenant hoặc khi triển khai phiên bản DU mới (bộ khai báo topic đi cùng gói triển khai, idempotent). Các miền dành riêng (`event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`) chỉ nhận đăng ký máy (BR-10-030). Topic nền tảng có tiền tố `dh.` (ví dụ `dh.integration.runtime.command.v1`) chỉ PA và tài khoản dịch vụ nền tảng đăng ký, thuộc tenant `COMMON` trong `ph10_event`, ACL cấp cho principal của DU nền tảng. Topic `SYSTEM` tự duyệt; người dùng không sửa được cấu hình của topic `SYSTEM`, `CDC` ngoài mô tả (ERR-10-045), nhưng vẫn đề nghị subscription cho HTTT, luồng tới chúng như topic thường. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Cho DU nội bộ khai báo topic miền cùng gói triển khai.
+
+**Tác nhân, quyền.** DU nội bộ (`dh-connect`, `dh-data`, `dh-platform`, `dh-payment`, `dh-integration`) với scope `event:topic-register`; topic nền tảng: PA và tài khoản dịch vụ nền tảng.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-10; LGC-BUS-039.
+
+**Tiền điều kiện.** Tenant đã khởi tạo (FR-10-064) hoặc DU mới được triển khai.
+
+**Kích hoạt.** Bộ khai báo topic đi cùng gói triển khai gọi API-10-009 (idempotent).
+
+**Đầu vào.** Như FR-10-066 với `topicKind = SYSTEM`; ví dụ `{tenant}.rdm.catalog.published.v1` (PH-07), `{tenant}.integration.flow.retired.v1` (PH-04), `{tenant}.adapter.cdc.schema-changed.v1` (PH-05), `{tenant}.event.*` (PH-10).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm miền dành riêng (`event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`) chỉ nhận đăng ký máy (BR-10-030; ERR-10-004).
+2. Topic tiền tố `dh.` (ví dụ `dh.integration.runtime.command.v1`) chỉ PA và tài khoản dịch vụ nền tảng đăng ký, thuộc tenant `COMMON`, ACL cấp cho principal của DU nền tảng.
+3. Hệ thống tự duyệt topic `SYSTEM` và cấp phát như FR-10-009.
+
+**Luồng thay thế.** Đã có cùng cấu hình: `200`.
+
+**Luồng ngoại lệ.**
+
+- Người dùng đăng ký miền dành riêng: ERR-10-004 (422). "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
+- Người dùng sửa cấu hình topic `SYSTEM`, `CDC` ngoài mô tả: ERR-10-045 (422). "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa."
+
+**Đầu ra.** `202` hoặc `200`.
+
+**Kết quả.** DU có topic miền sẵn sàng khi khởi động.
+
+**Hậu điều kiện.** Người dùng vẫn đề nghị subscription cho HTTT, luồng tới topic này như topic thường.
+
+**Sự kiện phát ra.** EVT-10-01.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-030, BR-10-031.
+
+**Màn hình, API.** Không có màn; API-10-009.
+:::
 
 #### FR-10-068 · Xử lý thông báo thay đổi lược đồ CDC
 
-FR-10-068 (M · MVP; hợp đồng EVT-05-11). PH-10 tiêu thụ `{tenant}.adapter.cdc.schema-changed.v1`. Thay đổi `COMPATIBLE`: PH-05 gửi phiên bản lược đồ mới qua `POST /api/event/v1/topics/{topicName}/schema/versions` với scope máy; PH-10 kiểm tra tương thích theo mức của topic (mặc định `BACKWARD`) và tự duyệt khi đạt; không đạt thì trả ERR-10-016 để PH-05 xử lý như thay đổi phá vỡ. Thay đổi `BREAKING` được người xử lý chọn `ACCEPT` ở PH-05: PH-05 gọi tạo phiên bản topic mới `.v{n+1}` (FR-10-015 dạng máy, tự duyệt theo BR-10-031), PH-10 đặt topic cũ `DEPRECATED` và thông báo bên nhận. Mọi trường hợp: ghi sự kiện vào lịch sử topic, thông báo đầu mối của các subscription trên topic (FR-00-060). Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Đưa thay đổi bảng nguồn vào lược đồ CDC mà không làm vỡ bên nhận.
+
+**Tác nhân, quyền.** PH-05 (scope máy); PH-10 tiêu thụ EVT-05-11.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** Hợp đồng EVT-05-11.
+
+**Tiền điều kiện.** Topic CDC `ACTIVE` (FR-10-066).
+
+**Kích hoạt.** Sự kiện trên `{tenant}.adapter.cdc.schema-changed.v1`.
+
+**Đầu vào.** Loại thay đổi (`COMPATIBLE`, `BREAKING`), lược đồ mới, quyết định ở PH-05.
+
+**Luồng xử lý chính.**
+
+1. `COMPATIBLE`: PH-05 gửi phiên bản qua `POST /api/event/v1/topics/{topicName}/schema/versions`; PH-10 kiểm theo mức của topic (mặc định `BACKWARD`), tự duyệt khi đạt.
+2. `BREAKING` và người xử lý chọn `ACCEPT` ở PH-05: PH-05 gọi tạo phiên bản topic `.v{n+1}` (FR-10-015 dạng máy, tự duyệt theo BR-10-031); PH-10 đặt topic cũ `DEPRECATED`.
+3. Mọi trường hợp: hệ thống ghi lịch sử topic, thông báo đầu mối các subscription trên topic (FR-00-060).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Không tương thích: ERR-10-016 (409) trả PH-05 để xử lý như thay đổi phá vỡ. "Lược đồ không tương thích theo mức {mức}."
+
+**Đầu ra.** Phiên bản lược đồ hoặc topic mới.
+
+**Kết quả.** Bên nhận được báo trước khi cấu trúc đổi.
+
+**Hậu điều kiện.** Topic cũ `DEPRECATED` khi có `.v{n+1}`.
+
+**Sự kiện phát ra.** EVT-10-05, EVT-10-02 (phiên bản lược đồ mới); EVT-10-03 (topic cũ `DEPRECATED`).
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-031.
+
+**Màn hình, API.** Không có màn; API-10-018, 023.
+:::
+
+```{.mermaid caption="Trình tự xử lý đổi lược đồ CDC (FR-10-068)"}
+sequenceDiagram
+  participant P5 as PH-05
+  participant CP as dh-integration
+  participant AR as Apicurio
+  participant N as Thông báo FR-00-060
+  P5->>CP: schema/versions
+  CP->>AR: Kiểm tương thích BACKWARD
+  alt Đạt
+    CP->>AR: Ghi phiên bản, tự duyệt
+  else Không đạt
+    CP-->>P5: ERR-10-016
+    P5->>CP: Tạo topic .v{n+1}
+  end
+  CP->>N: Báo đầu mối subscription
+```
+
+Hình cho thấy thay đổi phá vỡ luôn tạo topic mới.
 
 #### FR-10-069 · Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên, đợt | M · MVP |
-| Truy vết | REQ-04, REQ-10; hợp đồng PH-04 VR-10, BR-04-009, API-04-016 |
-| Tác nhân, quyền | `dh-integration` (PH-04) với scope `event:permission-check` |
-| Tiền điều kiện | Không |
-| Đầu vào | (a) `POST /api/event/v1/permissions:check` với danh sách `{flowCode, topicName, action}` (`PUBLISH`, `SUBSCRIBE`), `environment`. (b) `GET /api/event/v1/topics?usableBy=flow:{flowCode}&action=…` cho bảng chọn topic của trình thiết kế. (c) `POST /api/event/v1/flows/{flowCode}:ensure-party` tạo bên phát, bên nhận `FLOW` và đề nghị publication, subscription khi kỹ sư chọn topic trong trình thiết kế |
+::: dac-ta
+**Mục đích.** Cho PH-04 biết luồng có được phát, nhận trên topic trước khi gửi duyệt, và cấp danh sách topic cho trình thiết kế.
 
-: FR-10-069 · Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế: Trường, Nội dung
+**Tác nhân, quyền.** `dh-integration` (PH-04) với scope `event:permission-check`.
 
-| Trường | Nội dung |
-|---|---|
-| Xử lý | 1. Với mỗi bộ: topic tồn tại, `ACTIVE` hoặc `DEPRECATED` (với `SUBSCRIBE` thì `DEPRECATED` chỉ hợp lệ khi subscription đã có); có publication hoặc subscription `ACTIVE` của bên `FLOW` tương ứng. 2. Trả kết quả từng bộ: `ALLOWED`, `PENDING` (có đề nghị chờ duyệt), `DENIED` với lý do (`TOPIC_NOT_FOUND`, `TOPIC_NOT_ACTIVE`, `NO_GRANT`, `GRANT_SUSPENDED`; enum ở A.2.15). PH-04 ánh xạ thành mức WARN hoặc ERROR theo môi trường. 3. Tra cứu trả topic có lược đồ hiện hành (để DataMapper đọc cấu trúc), nhóm tiêu thụ mặc định `dh-flow-{tenant}-{flow}`. 4. `ensure-party` idempotent; đề nghị tạo ra đi qua duyệt như FR-10-030, 035 (trừ tự duyệt theo BR-10-031). 5. API tính phụ thuộc: `GET /api/event/v1/flows/{flowCode}/dependencies` trả subscription có bên nhận là luồng và publication của luồng, cho API-04-016. |
-| Đầu ra | Kết quả kiểm tra; danh sách topic |
-| Ngoại lệ | ERR-10-029 (PH-04 chặn gửi duyệt luồng khi không kiểm được, theo D02-03-PH04 §10) |
-| Hậu điều kiện | Không thay đổi dữ liệu (trừ `ensure-party`) |
-| Sự kiện phát ra | Không |
-| Kiểm toán | Có với `ensure-party` |
+**Mức ưu tiên, đợt.** M · MVP.
 
-: FR-10-069 · Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế: Trường, Nội dung
+**Truy vết.** REQ-04, REQ-10; hợp đồng PH-04 VR-10, BR-04-009, API-04-016.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** PH-04 kiểm luồng, mở bảng chọn topic hoặc kỹ sư chọn topic trong trình thiết kế.
+
+**Đầu vào.** (a) `POST /api/event/v1/permissions:check` với danh sách `{flowCode, topicName, action}` (`PUBLISH`, `SUBSCRIBE`), `environment`; (b) `GET /api/event/v1/topics?usableBy=flow:{flowCode}&action=…`; (c) `POST /api/event/v1/flows/{flowCode}:ensure-party`.
+
+**Luồng xử lý chính.**
+
+1. Với mỗi bộ, hệ thống kiểm topic tồn tại, `ACTIVE` hoặc `DEPRECATED` (`SUBSCRIBE` trên `DEPRECATED` chỉ hợp lệ khi subscription đã có) và có publication hoặc subscription `ACTIVE` của bên `FLOW`.
+2. Hệ thống trả từng bộ `ALLOWED`, `PENDING`, `DENIED` với lý do (`TOPIC_NOT_FOUND`, `TOPIC_NOT_ACTIVE`, `NO_GRANT`, `GRANT_SUSPENDED`; A.2.15); PH-04 ánh xạ thành WARN hoặc ERROR theo môi trường.
+3. Tra cứu trả topic có lược đồ hiện hành (để DataMapper đọc cấu trúc) và nhóm tiêu thụ mặc định `dh-flow-{tenant}-{flow}`.
+4. `ensure-party` idempotent tạo bên `FLOW` và đề nghị publication, subscription qua duyệt như FR-10-030, 035 (trừ tự duyệt theo BR-10-031).
+5. `GET /api/event/v1/flows/{flowCode}/dependencies` trả subscription có bên nhận là luồng và publication của luồng cho API-04-016.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Không kiểm được: ERR-10-029 (503), PH-04 chặn gửi duyệt luồng (D02-03-PH04 §10). "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau."
+
+**Đầu ra.** Kết quả kiểm từng bộ; danh sách topic.
+
+**Kết quả.** Luồng không vào vận hành khi thiếu quyền trên trục.
+
+**Hậu điều kiện.** Không đổi dữ liệu trừ `ensure-party`.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có với `ensure-party`.
+
+**Quy tắc nghiệp vụ.** BR-10-031.
+
+**Màn hình, API.** Không có màn; API-10-008, 071, 072, 109.
+:::
+
+```{.mermaid caption="Trình tự kiểm quyền cho PH-04 (FR-10-069)"}
+sequenceDiagram
+  participant P4 as PH-04
+  participant CP as dh-integration
+  participant DB as ph10_event
+  P4->>CP: permissions:check
+  CP->>DB: Topic, publication, subscription
+  CP-->>P4: ALLOWED, PENDING, DENIED
+  P4->>CP: flows:ensure-party
+  CP->>DB: Bên FLOW, đề nghị chờ duyệt
+```
+
+Hình cho thấy PH-04 chỉ đọc qua API kiểm quyền.
 
 ### 6.12. Nhóm K · Xuất nhập khai báo và di trú từ Pulsar
 
+Nhóm K chuyển khai báo giữa môi trường và di trú Hub Pulsar theo ADR-073: kiểm kê, ánh xạ, cầu nối hai chiều, đối chiếu, chuyển hẳn, quay lui, báo cáo.
+
 #### FR-10-070 · Xuất khai báo
 
-FR-10-070 (S · MVP; REQ-22, FR-00-030). `PERM-10-read` xuất một dự án, một tập topic hoặc toàn tenant ra tệp khai báo YAML (`kind: EventManifest`, `apiVersion: event.datahub.vn/v1`) gồm dự án, topic với cấu hình, lược đồ (mọi phiên bản `ENABLED`, `DEPRECATED`), bên phát, bên nhận, publication, subscription (không có bí mật ký, không có `clientId` nội bộ; endpoint giữ nguyên). Dùng để rà soát, đưa sang môi trường khác (TEST sang STAGING) hoặc lưu hồ sơ. Xuất trên 10.000 đối tượng chạy nền (FR-00-031). Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Xuất khai báo ra tệp để rà soát, đưa sang môi trường khác (TEST sang STAGING) hoặc lưu hồ sơ.
+
+**Tác nhân, quyền.** Mọi vai trò có `PERM-10-read`.
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-22; FR-00-030, 031.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** Người dùng bấm "Xuất khai báo" ở UI-10-02.
+
+**Đầu vào.** Phạm vi (dự án, danh sách topic, toàn tenant).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống gom dự án, topic với cấu hình, lược đồ (mọi phiên bản `ENABLED`, `DEPRECATED`), bên phát, bên nhận, publication, subscription.
+2. Hệ thống loại bí mật ký và `clientId` nội bộ; giữ nguyên endpoint.
+3. Hệ thống ghi tệp YAML `kind: EventManifest`, `apiVersion: event.datahub.vn/v1` và trả về.
+
+**Luồng thay thế.** Trên 10.000 đối tượng: chạy nền và báo khi xong (FR-00-031).
+
+**Luồng ngoại lệ.**
+
+- Phạm vi sai: ERR-10-049 (400). "Điều kiện truy vấn không hợp lệ."
+
+**Đầu ra.** Tệp `EventManifest`.
+
+**Kết quả.** Người dùng có bản khai báo đầy đủ, không chứa bí mật.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-10-02; API-10-074.
+:::
 
 #### FR-10-071 · Nhập khai báo có xem trước
 
-FR-10-071 (C · Đợt sau; REQ-22, FR-00-032). IE, TA (`PERM-10-create`) tải tệp `EventManifest`; hệ thống kiểm tra phiên bản định dạng (ERR-10-040), tham chiếu (HTTT, luồng tồn tại ở tenant đích, ERR-10-050), tiền tố tenant (tên topic được viết lại theo tenant đích nếu tùy chọn `rewriteTenantPrefix`), rồi hiển thị bản xem trước dạng khác biệt (thêm, sửa, không đổi, xung đột). Xác nhận thì tạo các đối tượng ở trạng thái đầu (`DRAFT`, `PENDING_APPROVAL`), không bao giờ tạo thẳng `ACTIVE`: mọi topic, publication, subscription vẫn qua duyệt bốn mắt (BR-10-032). Ghi theo kiểu tất cả hoặc không ở bước tạo đối tượng. Người tạo hủy được tác vụ ở `VALIDATING` hoặc `PREVIEW` (sang `CANCELLED`). Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Nạp tệp `EventManifest` vào tenant đích với bản xem trước khác biệt, không bỏ qua bước duyệt.
+
+**Tác nhân, quyền.** IE, TA (`PERM-10-create`).
+
+**Mức ưu tiên, đợt.** C · Đợt sau.
+
+**Truy vết.** REQ-22; FR-00-032.
+
+**Tiền điều kiện.** Có tệp xuất từ FR-10-070.
+
+**Kích hoạt.** Người dùng tải tệp ở UI-10-19.
+
+**Đầu vào.** Tệp `EventManifest`; tùy chọn `rewriteTenantPrefix`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống tạo `ManifestImportJob` `VALIDATING`, kiểm phiên bản định dạng (ERR-10-040), tham chiếu HTTT, luồng ở tenant đích (ERR-10-050), tiền tố tenant (viết lại khi bật `rewriteTenantPrefix`).
+2. Hệ thống hiện bản xem trước dạng khác biệt (thêm, sửa, không đổi, xung đột), tác vụ sang `PREVIEW`.
+3. Người dùng xác nhận: hệ thống tạo đối tượng ở trạng thái đầu (`DRAFT`, `PENDING_APPROVAL`) theo kiểu tất cả hoặc không, không bao giờ tạo thẳng `ACTIVE` (BR-10-032).
+
+**Luồng thay thế.** Người tạo hủy ở `VALIDATING` hoặc `PREVIEW`: tác vụ sang `CANCELLED`.
+
+**Luồng ngoại lệ.**
+
+- Tệp sai: ERR-10-040 (422). "Tệp sai cấu trúc hoặc phiên bản định dạng."
+- Tham chiếu thiếu: ERR-10-050 (422). "Đối tượng tham chiếu {mã} không có ở tenant đích."
+
+**Đầu ra.** Tác vụ nhập và bản xem trước.
+
+**Kết quả.** Khai báo đích sẵn sàng duyệt.
+
+**Hậu điều kiện.** Mọi topic, publication, subscription vẫn qua duyệt bốn mắt.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-032.
+
+**Màn hình, API.** UI-10-19; API-10-075, 110, 111, 121.
+:::
 
 #### FR-10-072 · Nhập kiểm kê Pulsar và lập ánh xạ
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Dựng đề xuất ánh xạ Hub cũ sang đối tượng mới để sửa và duyệt.
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-22; LGC-HUB-008…014; FR-00-090, 092, 093; ADR-073.
+
+**Tiền điều kiện.** Có bản xuất CSDL cấu hình Hub cũ (bảng project, topic, publisher, subscriber, publication, subscription, `type_of_comm`, `routing_mode`) và danh sách topic Pulsar (`pulsar-admin topics list`, `stats`) theo mẫu tải về (FR-00-033).
+
+**Kích hoạt.** TA tải tệp nén ở UI-10-20.
+
+**Đầu vào.** Tệp nén CSV hoặc JSON theo mẫu; tùy chọn `defaultProjectCode`, quy tắc đổi tên.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống tạo `ManifestImportJob` `sourceKind = PULSAR_HUB`, kiểm cấu trúc tệp (ERR-10-040).
+2. Hệ thống lập `LegacyMapping` theo bảng quy tắc ánh xạ dưới đây.
+3. Hệ thống phát hiện vấn đề: HTTT không tìm thấy, URI không HTTPS, tên trùng, topic không có bản tin trong 90 ngày (đề xuất không di trú).
+4. TA sửa từng ánh xạ, đánh dấu bỏ qua ở màn xem trước (ERR-10-041 khi ánh xạ sai).
+5. TA xác nhận: hệ thống tạo đối tượng đích ở trạng thái đầu, đi qua duyệt (BR-10-032), ánh xạ sang `PLANNED`; thông tin xác thực cũ không được nhập, khóa ký mới được sinh (FR-00-093).
+6. Hệ thống sinh báo cáo đối chiếu số lượng nguồn và đích theo loại (FR-00-092).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Tệp sai: ERR-10-040 (422). "Tệp sai cấu trúc hoặc phiên bản định dạng."
+- Ánh xạ sai: ERR-10-041 (422). "Ánh xạ không hợp lệ: {lý do}."
+- Tham chiếu thiếu: ERR-10-050 (422). "Đối tượng tham chiếu {mã} không có ở tenant đích."
+
+**Đầu ra.** Tác vụ nhập, danh sách ánh xạ, báo cáo.
+
+**Kết quả.** Khai báo đích sẵn sàng duyệt.
+
+**Hậu điều kiện.** Chưa có lưu lượng.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-032.
+
+**Màn hình, API.** UI-10-20; API-10-075, 076, 110, 111, 112.
+:::
+
+| Đối tượng cũ | Đối tượng mới |
 |---|---|
-| Mức ưu tiên, đợt | M · MVP |
-| Truy vết | REQ-22; LGC-HUB-008…014; FR-00-090, 092, 093; ADR-073 |
-| Tác nhân, quyền | TA (`PERM-10-admin`) |
-| Tiền điều kiện | Có bản xuất CSDL cấu hình của Hub cũ (bảng project, topic, publisher, subscriber, publication, subscription, `type_of_comm`, `routing_mode`) và danh sách topic Pulsar (`pulsar-admin topics list`, `stats`) dạng tệp theo mẫu tải về (FR-00-033) |
-| Đầu vào | Tệp nén chứa các bảng CSV hoặc JSON theo mẫu; tùy chọn `defaultProjectCode`, quy tắc đổi tên |
+| project | Dự án, mã chuẩn hóa không dấu, chữ thường |
+| Topic `persistent://{tenant}/{namespace}/{topic}` | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v1`, miền đề xuất từ namespace, thực thể và sự kiện từ tên; phân vùng giữ số cũ (tối thiểu 3); `routing_mode` theo FR-10-013 |
+| "Cấu trúc" cũ | Lược đồ JSON Schema nháp suy ra từ mẫu bản tin, không có thì để trống và đánh dấu bắt buộc bổ sung |
+| publisher, subscriber | HTTT PH-01 theo `referenceKey` hoặc tên (kèm độ tin cậy); subscriber "là luồng" gắn luồng PH-04 đã di trú |
+| `type_of_comm` | Theo `legacyCode` (FR-10-060) |
+| subscription | Giữ URI nhận, số worker, số lần thử, thời điểm bắt đầu; loại `Exclusive`, `Failover`, `Shared`, `Key_Shared` thành `workerCount` và cờ thứ tự (A.2.14) |
 
-: FR-10-072 · Nhập kiểm kê Pulsar và lập ánh xạ: Trường, Nội dung
-
-| Trường | Nội dung |
-|---|---|
-| Xử lý | 1. Tạo `ManifestImportJob` `sourceKind = PULSAR_HUB`, kiểm tra cấu trúc tệp (ERR-10-040). 2. Lập đề xuất ánh xạ (`LegacyMapping`): project cũ thành dự án (mã chuẩn hóa không dấu, chữ thường); topic Pulsar `persistent://{tenant}/{namespace}/{topic}` thành topic `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v1` (đề xuất miền từ namespace, thực thể và sự kiện từ tên; người dùng sửa); "cấu trúc" cũ thành lược đồ JSON Schema nháp suy ra từ mẫu bản tin nếu có, ngược lại để trống và đánh dấu bắt buộc bổ sung; phân vùng giữ số cũ (tối thiểu 3); `routing_mode` theo FR-10-013; publisher, subscriber gắn HTTT PH-01 theo `referenceKey` hoặc tên (đề xuất kèm độ tin cậy), subscriber "là luồng" gắn luồng PH-04 đã di trú theo bảng ánh xạ của PH-04; `type_of_comm` theo `legacyCode` của danh mục (FR-10-060); subscription giữ URI nhận, số worker, số lần thử, thời điểm bắt đầu; loại subscription Pulsar (`Exclusive`, `Failover`, `Shared`, `Key_Shared`) ánh xạ thành `workerCount` và cờ thứ tự (bảng ở phụ lục A.2.14). 3. Phát hiện vấn đề: HTTT không tìm thấy, URI không HTTPS, tên trùng, topic không có bản tin trong 90 ngày (đề xuất không di trú). 4. Màn xem trước cho sửa từng ánh xạ, đánh dấu bỏ qua. 5. Xác nhận: tạo đối tượng đích ở trạng thái đầu, đi qua duyệt như bình thường (BR-10-032); ánh xạ sang `PLANNED`. Thông tin xác thực cũ không được nhập (FR-00-093): khóa ký mới được sinh. 6. Sinh báo cáo đối chiếu số lượng nguồn và đích theo loại (FR-00-092). |
-| Đầu ra | Tác vụ nhập, danh sách ánh xạ, báo cáo |
-| Ngoại lệ | ERR-10-040, 041, 050 |
-| Hậu điều kiện | Khai báo đích sẵn sàng duyệt; chưa có lưu lượng |
-| Sự kiện phát ra | Không |
-| Kiểm toán | Có |
-
-: FR-10-072 · Nhập kiểm kê Pulsar và lập ánh xạ: Trường, Nội dung
+: Quy tắc ánh xạ Hub cũ sang PH-10 của FR-10-072
 
 #### FR-10-073 · Cầu nối Pulsar sang Kafka tạm thời
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Đưa bản tin Pulsar sang Kafka trong giai đoạn song song, trước khi bên phát chuyển.
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`) tạo; PA bật kết nối mạng tới cụm Pulsar cũ; IA duyệt yêu cầu `BRIDGE`.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-22; ADR-004 (hệ quả), ADR-073.
+
+**Tiền điều kiện.** Ánh xạ topic `PLANNED`; topic Kafka đích `ACTIVE`; kết nối nguồn Pulsar khai báo ở PH-05 (bí mật ở OpenBao).
+
+**Kích hoạt.** TA bấm "Tạo cầu nối" ở UI-10-20.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-10-073 dưới đây.
+
+**Luồng xử lý chính.**
+
+1. TA gửi; hệ thống kiểm ánh xạ (ERR-10-041), chưa có cầu nối cho topic (ERR-10-042), tạo yêu cầu `BRIDGE`; IA khác người tạo duyệt (BR-10-010, ERR-10-008).
+2. Hệ thống tạo bên phát `LEGACY_BRIDGE` và publication tự duyệt, sinh luồng cầu nối trên `dh-runtime` (Camel, thành phần `pulsar` với subscription `Failover` riêng, không ảnh hưởng subscriber cũ).
+3. Mỗi bản tin: dựng phong bì CloudEvents (`id` = `messageId` Pulsar đã chuẩn hóa, `source` = `/legacy-hub/{pulsarTopic}`, `type` theo ánh xạ), chuyển nội dung theo lược đồ đích, khóa theo `partitionKeyField` hoặc khóa Pulsar, ghi Kafka `acks=all`, xác nhận Pulsar sau khi Kafka xác nhận (at-least-once).
+4. Chống trùng ở đích theo `id` trong 24 giờ (bộ chống trùng PH-04, FR-04-071).
+5. Hệ thống theo dõi số bản tin, backlog Pulsar, lag giây, lỗi; vượt `10.migration.bridge-max-lag-seconds` thì cảnh báo.
+6. Cầu nối tự dừng ở `expiresAt` trừ khi gia hạn có lý do; mỗi lần đổi trạng thái (`RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`) `dh-runtime` báo qua API-10-090 và control plane phát EVT-10-16 cho PH-13, PH-18.
+
+**Luồng thay thế.** Yêu cầu `BRIDGE` bị từ chối hoặc hết hạn: cầu nối sang `REJECTED`, không chạy, ánh xạ giữ `PLANNED`.
+
+**Luồng ngoại lệ.**
+
+- Ánh xạ sai: ERR-10-041 (422). "Ánh xạ không hợp lệ: {lý do}."
+- Đã có cầu nối: ERR-10-042 (409). "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy."
+- Người tạo tự duyệt: ERR-10-008 (403). "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."
+- Bản tin không chuyển được: ERR-10-118 ghi DLQ `origin = BRIDGE`, `bridgeCode`. "Cầu nối không chuyển được."
+- Phụ thuộc lỗi: ERR-10-029 (503). "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau."
+
+**Đầu ra.** `MigrationBridge` `RUNNING`, ánh xạ `BRIDGING`.
+
+**Kết quả.** Bản tin mới trên Pulsar có trên Kafka trong ≤ 60 giây ở p95 (NFR-10-018).
+
+**Hậu điều kiện.** Subscriber cũ vẫn nhận từ Pulsar.
+
+**Sự kiện phát ra.** EVT-10-16; EVT-10-15 khi chuyển hẳn.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-010.
+
+**Màn hình, API.** UI-10-13, UI-10-20; API-10-077, 090, 113, 114, 115.
+:::
+
+| Tham số | Ràng buộc |
 |---|---|
-| Mức ưu tiên, đợt | M · MVP |
-| Truy vết | REQ-22; ADR-004 (hệ quả), ADR-073 |
-| Tác nhân, quyền | TA (`PERM-10-admin`) tạo, PA bật kết nối mạng tới cụm Pulsar cũ; IA duyệt (yêu cầu `BRIDGE`) |
-| Tiền điều kiện | Ánh xạ topic `PLANNED`; topic Kafka đích `ACTIVE`; có kết nối nguồn tới Pulsar khai báo ở PH-05 (loại kết nối Pulsar, bí mật ở OpenBao) |
-| Đầu vào | `pulsarTopic`, `kafkaTopic`, `startFrom` (`LATEST` mặc định hoặc `EARLIEST` của backlog còn giữ), `pulsarSubscriptionName` (mặc định `dh-bridge`), `expiresAt` (≤ `10.migration.bridge-max-days`) |
+| `pulsarTopic` | Topic nguồn trong ánh xạ `PLANNED` |
+| `kafkaTopic` | Topic đích `ACTIVE` |
+| `startFrom` | `LATEST` (mặc định) hoặc `EARLIEST` của backlog còn giữ |
+| `pulsarSubscriptionName` | Mặc định `dh-bridge` |
+| `expiresAt` | ≤ `10.migration.bridge-max-days` |
 
-: FR-10-073 · Cầu nối Pulsar sang Kafka tạm thời: Trường, Nội dung
+: Dữ liệu vào của FR-10-073
 
-| Trường | Nội dung |
-|---|---|
-| Xử lý | 1. Tạo bên phát `LEGACY_BRIDGE` và publication tự duyệt sau khi cầu nối được duyệt. 2. Sinh luồng cầu nối chạy trên `dh-runtime` (Camel, thành phần `pulsar` tiêu thụ với subscription `Failover` riêng, không ảnh hưởng subscriber cũ), mỗi bản tin: dựng phong bì CloudEvents (`id` = `messageId` Pulsar đã chuẩn hóa, `source` = `/legacy-hub/{pulsarTopic}`, `type` theo ánh xạ), chuyển nội dung theo lược đồ đích (JSON sang lược đồ; không chuyển được thì DLQ của cầu nối với ERR-10-118), khóa theo `partitionKeyField` hoặc khóa bản tin Pulsar, ghi Kafka `acks=all`, xác nhận Pulsar sau khi Kafka xác nhận (at-least-once). 3. Chống trùng ở đích theo `id` trong cửa sổ 24 giờ (bộ chống trùng của luồng PH-04, FR-04-071). 4. Theo dõi: số bản tin chuyển, lag phía Pulsar (backlog), lag giây, lỗi; vượt `10.migration.bridge-max-lag-seconds` thì cảnh báo. 5. Dừng, tiếp tục, hết hạn: cầu nối tự dừng ở `expiresAt` trừ khi gia hạn có lý do. 6. Yêu cầu `BRIDGE` bị từ chối hoặc hết hạn: cầu nối sang `REJECTED`, không bao giờ chạy, ánh xạ giữ `PLANNED`. 7. Mỗi lần cầu nối đổi trạng thái (`RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`), `dh-runtime` báo control plane qua API-10-090 và control plane phát EVT-10-16 cho PH-13, PH-18. Bản tin không chuyển được ghi DLQ với `origin = BRIDGE` và `bridgeCode`. |
-| Đầu ra | `MigrationBridge` `RUNNING`, ánh xạ `BRIDGING` |
-| Ngoại lệ | ERR-10-041 (ánh xạ không hợp lệ), ERR-10-042 (đã có cầu nối cho topic), ERR-10-118 (lỗi chuyển bản tin), ERR-10-029 |
-| Hậu điều kiện | Bản tin mới trên Pulsar xuất hiện trên Kafka trong ≤ 60 giây ở p95 (NFR-10-018) |
-| Sự kiện phát ra | EVT-10-16 khi cầu nối đổi trạng thái; EVT-10-15 khi chuyển hẳn |
-| Kiểm toán | Có |
+```{.mermaid caption="Trình tự duyệt và chạy cầu nối Pulsar sang Kafka (FR-10-073)"}
+sequenceDiagram
+  actor TA as Quản trị tenant
+  actor IA as Người duyệt
+  participant CP as dh-integration
+  participant RT as dh-runtime
+  participant PU as Pulsar cũ
+  participant K as Kafka
+  TA->>CP: POST bridges
+  IA->>CP: Duyệt, khác người tạo
+  CP->>RT: Sinh luồng cầu nối
+  PU->>RT: Bản tin, subscription Failover dh-bridge
+  RT->>K: CloudEvents acks=all
+  RT->>PU: Xác nhận sau khi Kafka ghi
+  RT->>CP: API-10-090 RUNNING
+```
 
-: FR-10-073 · Cầu nối Pulsar sang Kafka tạm thời: Trường, Nội dung
-
-Trong giai đoạn song song, bên phát cũ vẫn phát lên Pulsar; bên nhận mới nhận từ Kafka qua PH-10; bên nhận cũ vẫn nhận từ Pulsar. Khi bên phát đã chuyển sang phát thẳng lên Datahub, cầu nối chiều ngược (FR-10-074) giữ cho bên nhận cũ chưa chuyển tiếp tục nhận.
+Hình cho thấy Pulsar chỉ được xác nhận sau khi Kafka ghi xong, nên lỗi giữa chừng chỉ gây trùng, không mất. Trong giai đoạn song song, bên phát cũ vẫn phát lên Pulsar, bên nhận mới nhận từ Kafka qua PH-10, bên nhận cũ vẫn nhận từ Pulsar. Khi bên phát đã phát thẳng lên Datahub, cầu nối ngược (FR-10-074) giữ cho bên nhận cũ tiếp tục nhận.
 
 #### FR-10-074 · Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển
 
-FR-10-074 (S · MVP; REQ-22; ADR-073). TA tạo cầu nối chiều `KAFKA_TO_PULSAR` cho một topic đã chuyển bên phát: luồng trên `dh-runtime` là một subscription `INTERNAL` (nhóm `dh-bridge-{tenant}-{bridgeCode}`, có duyệt như FR-10-037) đọc topic Kafka và ghi lên topic Pulsar cũ theo định dạng cũ (bỏ phong bì CloudEvents, giữ nội dung), để subscriber cũ không phải sửa. Không cho hai cầu nối ngược chiều trên cùng cặp topic cùng lúc (vòng lặp, ERR-10-042). Có hạn dùng như FR-10-073. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Giữ cho subscriber cũ vẫn nhận sau khi bên phát đã chuyển sang Kafka.
+
+**Tác nhân, quyền.** TA (`PERM-10-admin`) tạo; IA duyệt subscription như FR-10-037.
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-22; ADR-073.
+
+**Tiền điều kiện.** Bên phát của topic đã chuyển sang phát thẳng lên Datahub.
+
+**Kích hoạt.** TA tạo cầu nối chiều `KAFKA_TO_PULSAR` ở UI-10-20.
+
+**Đầu vào.** Như FR-10-073 với chiều `KAFKA_TO_PULSAR`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm không có cầu nối ngược chiều trên cùng cặp topic (vòng lặp, ERR-10-042).
+2. Hệ thống tạo subscription `INTERNAL` nhóm `dh-bridge-{tenant}-{bridgeCode}`, có duyệt như FR-10-037.
+3. Luồng trên `dh-runtime` đọc topic Kafka và ghi lên topic Pulsar cũ theo định dạng cũ (bỏ phong bì CloudEvents, giữ nội dung).
+4. Cầu nối có hạn dùng và báo trạng thái như FR-10-073.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Đã có cầu nối ngược chiều: ERR-10-042 (409). "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy."
+- Tự duyệt: ERR-10-008 (403). "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."
+
+**Đầu ra.** `MigrationBridge` chiều ngược `RUNNING`.
+
+**Kết quả.** Subscriber cũ nhận bản tin như trước.
+
+**Hậu điều kiện.** Không có vòng lặp giữa hai cụm.
+
+**Sự kiện phát ra.** EVT-10-16.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-010.
+
+**Màn hình, API.** UI-10-20; API-10-077, 090, 113, 114, 115.
+:::
+
+```{.mermaid caption="Trình tự cầu nối ngược Kafka sang Pulsar (FR-10-074)"}
+sequenceDiagram
+  participant K as Kafka
+  participant RT as dh-runtime
+  participant PU as Pulsar cũ
+  participant S as Subscriber cũ
+  K->>RT: Nhóm dh-bridge-{tenant}-{bridgeCode}
+  RT->>PU: Nội dung, bỏ phong bì CloudEvents
+  PU->>S: Giao như trước
+```
+
+Hình cho thấy subscriber cũ nhận định dạng cũ.
 
 #### FR-10-075 · Đối chiếu, chuyển hẳn và quay lui
 
-FR-10-075 (M · MVP; REQ-22; FR-00-092; ADR-073). **Đối chiếu** chạy theo lịch mỗi giờ trong giai đoạn song song: so số bản tin theo khoảng thời gian giữa topic Pulsar (từ `stats`) và topic Kafka (số bản tin có `source` cầu nối), so mẫu `id`; chênh lệch khác 0 sau khi trừ lag thì cảnh báo và lưu báo cáo. **Chuyển hẳn** (TA đề nghị, IA duyệt) cho một ánh xạ khi: bên phát đã phát thẳng lên Datahub ít nhất `10.migration.min-parallel-days` ngày, mọi subscriber cũ đã có subscription tương ứng `ACTIVE` không cảnh báo, đối chiếu 72 giờ gần nhất không chênh. Khi chuyển: dừng cầu nối, ánh xạ sang `CUT_OVER`, phát EVT-10-15, thông báo PH-18 để đóng theo dõi. **Quay lui** (TA, trong `10.migration.rollback-window-days`): không qua duyệt vì là thao tác khẩn cấp, nhưng bắt buộc lý do, ghi kiểm toán và thông báo IA; bật lại cầu nối chiều cũ, ánh xạ `ROLLED_BACK`. Khi cầu nối chiều cũ báo `RUNNING` trở lại, ánh xạ sang `BRIDGING` và thời gian song song tối thiểu tính lại từ đầu; chuyển hẳn lần sau cần yêu cầu `CUTOVER` mới. Báo cáo đối chiếu lưu ở kho đối tượng theo A.8 (không có bảng riêng). Ánh xạ `CUT_OVER` hết cửa sổ quay lui thì `CLOSED`. Kiểm toán: có. Sự kiện: EVT-10-15.
+::: dac-ta
+**Mục đích.** Chứng minh hai trục khớp số liệu, chuyển hẳn có duyệt, quay lui nhanh khi có sự cố.
+
+**Tác nhân, quyền.** Hệ thống đối chiếu; TA đề nghị chuyển hẳn, IA duyệt; TA quay lui.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-22; FR-00-092; ADR-073.
+
+**Tiền điều kiện.** Ánh xạ `BRIDGING`.
+
+**Kích hoạt.** Lịch mỗi giờ; TA bấm "Chuyển hẳn" hoặc "Quay lui" ở UI-10-20.
+
+**Đầu vào.** `mappingId`; `reason` (bắt buộc khi quay lui).
+
+**Luồng xử lý chính.**
+
+1. Đối chiếu mỗi giờ: hệ thống so số bản tin theo khoảng thời gian giữa topic Pulsar (`stats`) và topic Kafka (bản tin có `source` cầu nối), so mẫu `id`; chênh khác 0 sau khi trừ lag thì cảnh báo và lưu báo cáo ở kho đối tượng theo A.8.
+2. TA đề nghị chuyển hẳn (yêu cầu `CUTOVER`); hệ thống kiểm bên phát đã phát thẳng ít nhất `10.migration.min-parallel-days` ngày, mọi subscriber cũ có subscription `ACTIVE` không cảnh báo, đối chiếu 72 giờ không chênh.
+3. IA khác người đề nghị duyệt; hệ thống dừng cầu nối, ánh xạ sang `CUT_OVER`, phát EVT-10-15, thông báo PH-18 đóng theo dõi.
+4. Hết `10.migration.rollback-window-days`: ánh xạ `CUT_OVER` sang `CLOSED`.
+
+**Luồng thay thế.** Quay lui trong cửa sổ: không qua duyệt vì là thao tác khẩn cấp, bắt buộc lý do, ghi kiểm toán, thông báo IA; bật lại cầu nối chiều cũ, ánh xạ `ROLLED_BACK`. Khi cầu nối báo `RUNNING`, ánh xạ sang `BRIDGING`, thời gian song song tính lại; chuyển hẳn lần sau cần yêu cầu `CUTOVER` mới.
+
+**Luồng ngoại lệ.**
+
+- Chưa đủ điều kiện chuyển hẳn: ERR-10-006 (409). "Không thực hiện được khi ánh xạ đang ở trạng thái {nhãn trạng thái}."
+- Tự duyệt: ERR-10-008 (403). "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."
+- Quay lui thiếu lý do: ERR-10-009 (400). "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
+
+**Đầu ra.** Báo cáo đối chiếu; ánh xạ `CUT_OVER`, `ROLLED_BACK` hoặc `CLOSED`.
+
+**Kết quả.** Hub cũ được tắt theo từng topic có căn cứ số liệu.
+
+**Hậu điều kiện.** Không có bảng riêng cho báo cáo đối chiếu.
+
+**Sự kiện phát ra.** EVT-10-15.
+
+**Kiểm toán.** Có.
+
+**Quy tắc nghiệp vụ.** BR-10-010.
+
+**Màn hình, API.** UI-10-20; API-10-078, 116, 117.
+:::
+
+```{.mermaid caption="Trình tự chuyển hẳn và quay lui (FR-10-075)"}
+sequenceDiagram
+  actor TA as Quản trị tenant
+  actor IA as Người duyệt
+  participant CP as dh-integration
+  participant RT as dh-runtime
+  participant P18 as PH-18
+  TA->>CP: Đề nghị CUTOVER
+  IA->>CP: Duyệt
+  CP->>RT: Dừng cầu nối
+  CP->>P18: EVT-10-15 CUT_OVER
+  TA->>CP: Quay lui có lý do
+  CP->>RT: Bật lại cầu nối chiều cũ
+```
+
+Hình cho thấy chuyển hẳn cần hai người, quay lui chỉ cần một người có lý do.
 
 #### FR-10-076 · Báo cáo tiến độ di trú
 
-FR-10-076 (S · MVP; REQ-22). TA, PA (`PERM-10-read`) xem bảng tiến độ di trú: số ánh xạ theo trạng thái theo loại đối tượng, danh sách HTTT còn phát hoặc nhận qua Pulsar, cầu nối đang chạy và lag, kết quả đối chiếu gần nhất, ngày dự kiến tắt Hub cũ; xuất Excel (FR-00-030). Đây là căn cứ cho cổng chuyển đổi ở kế hoạch triển khai. Kiểm toán: không.
+::: dac-ta
+**Mục đích.** Cho TA, PA một bảng tiến độ làm căn cứ cho cổng chuyển đổi ở kế hoạch triển khai.
+
+**Tác nhân, quyền.** TA, PA (`PERM-10-read`).
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-22; FR-00-030.
+
+**Tiền điều kiện.** Có ánh xạ di trú.
+
+**Kích hoạt.** Người dùng mở tab Tiến độ ở UI-10-20.
+
+**Đầu vào.** Bộ lọc loại đối tượng.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống đếm ánh xạ theo trạng thái và loại đối tượng.
+2. Hệ thống liệt kê HTTT còn phát hoặc nhận qua Pulsar, cầu nối đang chạy và lag, kết quả đối chiếu gần nhất.
+3. Hệ thống hiện ngày dự kiến tắt Hub cũ và cho xuất Excel (FR-00-030).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Bộ lọc sai: ERR-10-049 (400). "Điều kiện truy vấn không hợp lệ."
+
+**Đầu ra.** Bảng tiến độ, tệp Excel.
+
+**Kết quả.** Thấy được việc còn lại trước khi tắt Hub cũ.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-10-20; API-10-078, 118.
+:::
 
 ## 7. Quy tắc nghiệp vụ
 
@@ -4708,85 +5386,85 @@ Thân lỗi theo RFC 9457, định nghĩa đầy đủ ở D03-04-PH10. Dải 00
 
 ### 9.2. Thông báo hiển thị cho người dùng
 
-Bảng sau là câu thông báo chính thức cho từng mã lỗi. Câu của ERR-10-001…052 chép nguyên từ D03-06-PH10 §5.3; câu của ERR-10-111…120 ghép nhãn và gợi ý ở D03-06-PH10 §18.4; câu của ERR-10-053, 054, 101…110 và 121 viết mới ở bản 0.4 (đánh dấu "mới") và ghi vào đề nghị đồng bộ mục 12.4. Mọi thông báo kèm dòng phụ "Mã lỗi {code} · Mã truy vết {traceId}" và nút sao chép (FR-00-080); `detail` của máy chủ thay câu mặc định khi có tham số cụ thể. Lỗi data plane trả cho HTTT trong thân RFC 9457; người vận hành thấy cùng câu ở bảng lượt lỗi, DLQ hoặc nhật ký APISIX. Mục "Luồng ngoại lệ" ở chương 6 dẫn đúng các câu này.
+Bảng sau là câu thông báo chính thức cho từng mã lỗi. Câu của ERR-10-001…052 chép nguyên từ D03-06-PH10 §5.3; câu của ERR-10-111…120 ghép nhãn và gợi ý ở D03-06-PH10 §18.4; câu của ERR-10-053, 054, 101…110 và 121 viết mới ở bản 0.4 (đánh dấu "mới") và ghi vào đề nghị đồng bộ mục 12.4. Mọi thông báo kèm dòng phụ "Mã lỗi {code} · Mã truy vết {traceId}" và nút sao chép (FR-00-080); `detail` của máy chủ thay câu mặc định khi có tham số cụ thể. Lỗi data plane trả cho HTTT trong thân RFC 9457; người vận hành thấy cùng câu ở bảng lượt lỗi, DLQ hoặc nhật ký APISIX. Mục "Luồng ngoại lệ" ở chương 6 dẫn đúng các câu này. Vị trí hiển thị từng câu theo D03-06-PH10 §5.3, §18.4.
 
-| Mã | HTTP | Ý nghĩa | Câu hiển thị | Nơi hiển thị |
-|---|---|---|---|---|
-| ERR-10-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant khác | "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác." | ST-08 |
-| ERR-10-002 | 409 | Mã hoặc tên đã tồn tại (kể cả đối tượng đã lưu trữ, ngừng dùng) | "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác." | Dưới trường mã |
-| ERR-10-003 | 400 | Dữ liệu yêu cầu không hợp lệ (mẫu mã, từ dành riêng, trường bất biến, tổ hợp không hợp lệ) | Câu theo `errors[]`, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự." hoặc "'{mã}' là từ dành riêng của đường dẫn." | Dưới trường |
-| ERR-10-004 | 422 | Tên topic sai quy ước hoặc dùng miền dành riêng | "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký." | Dưới trường Miền ở UI-10-07 |
-| ERR-10-005 | 422 | Tiền tố tenant của topic không khớp tenant ngữ cảnh | "Tiền tố tenant của topic không khớp tenant đang làm việc." | `CMP-Alert` đầu biểu mẫu |
-| ERR-10-006 | 409 | Chuyển trạng thái không hợp lệ với trạng thái hiện tại | "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}." kèm nút "Tải lại" | `CMP-Alert` trong hộp thao tác |
-| ERR-10-007 | 412 | Xung đột phiên bản (`If-Match`) | ST-13 xung đột phiên bản | `CMP-ConflictDialog` |
-| ERR-10-008 | 403 | Vi phạm bốn mắt | "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác." | `CMP-Alert` trong `CMP-ApprovalPanel` |
-| ERR-10-009 | 400 | Thiếu lý do, ý kiến hoặc xác nhận bắt buộc | "Cần nhập lý do hoặc xác nhận trước khi tiếp tục." | Dưới ô lý do, ô xác nhận |
-| ERR-10-010 | 409 | Còn đối tượng phụ thuộc (topic trong dự án, subscription trên topic) | "Còn {n} đối tượng phụ thuộc." kèm danh sách liên kết (topic của dự án, subscription của topic) | `CMP-Modal` |
-| ERR-10-011 | 422 | Vượt hạn mức tenant | "Vượt hạn mức của tenant: {tên hạn mức} đang dùng {đã dùng}/{trần}." kèm liên kết UI-10-18 tab Hạn mức | `CMP-Alert` |
-| ERR-10-012 | 422 | Tham số vượt trần hoặc ngoài miền | "Giá trị ngoài miền cho phép ({min} đến {max})." | Dưới trường |
-| ERR-10-013 | 422 | Không được giảm số phân vùng | "Không giảm được số phân vùng. Chỉ được tăng." | Dưới trường Phân vùng |
-| ERR-10-014 | 409 | Cần xác nhận tác động thứ tự khi tăng phân vùng | "Tăng phân vùng làm đổi phân vùng của khóa; thứ tự giữa sự kiện cũ và mới của cùng khóa không còn bảo đảm. Đánh dấu xác nhận để tiếp tục." | Ô xác nhận được đánh dấu lỗi |
-| ERR-10-015 | 422 | Lược đồ sai cú pháp | "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}." | Gạch chân trong `CMP-CodeEditor` và bảng Vấn đề |
-| ERR-10-016 | 409 | Lược đồ không tương thích theo mức đã đặt | "Lược đồ không tương thích theo mức {mức}." kèm bảng vi phạm theo đường dẫn trường và nút "Tạo phiên bản topic mới" | Khối kết quả kiểm tra |
-| ERR-10-017 | 422 | Lược đồ thiếu hoặc sai kiểu trường khóa phân vùng | "Lược đồ thiếu trường khóa phân vùng '{trường}' hoặc trường này không phải chuỗi, số, hoặc cho phép null." | Bảng Vấn đề |
-| ERR-10-018 | 422 | Lược đồ có trường nghi dữ liệu cá nhân bị chặn theo chính sách | "Lược đồ có trường nghi dữ liệu cá nhân ({trường}) trên topic {phân loại}; chính sách của tenant đang chặn." | Bảng Vấn đề |
-| ERR-10-019 | 422 | Mức tương thích không được phép | "Mức 'Không kiểm tra' chỉ dùng cho topic chưa từng hoạt động." | Dưới trường Mức tương thích |
-| ERR-10-020 | 422 | Định dạng lược đồ không được phép hoặc khác định dạng đã có | "Định dạng {định dạng} không được phép hoặc khác định dạng đã có của topic." | Dưới trường Định dạng |
-| ERR-10-021 | 422 | HTTT không tồn tại hoặc không `ACTIVE` ở PH-01 | "HTTT {mã} không tồn tại hoặc chưa ở trạng thái hoạt động ở PH-01." | Dưới trường HTTT |
-| ERR-10-022 | 422 | Luồng không tồn tại hoặc không hợp lệ ở PH-04 | "Luồng {mã} không tồn tại hoặc đã ngừng ở PH-04." | Dưới trường Luồng |
-| ERR-10-023 | 422 | DU nội bộ không có trong danh sách | "Dịch vụ nội bộ {mã} không có trong danh sách." | Dưới trường Dịch vụ |
-| ERR-10-024 | 409 | Quan hệ đã tồn tại cho cặp này (bên tham gia, topic) hoặc cặp (HTTT, kiểu giao tiếp) | "Đã có quan hệ cho cặp này: {mô tả}." kèm liên kết mở quan hệ đã có | `CMP-Alert` |
-| ERR-10-025 | 422 | Topic hoặc bên tham gia không ở trạng thái nhận quan hệ mới | "Topic hoặc bên tham gia không ở trạng thái nhận quan hệ mới (topic cần Đang hoạt động, bên tham gia cần Đang hoạt động)." | `CMP-Alert` |
-| ERR-10-026 | 422 | Endpoint webhook không hợp lệ (không HTTPS, địa chỉ riêng, ngoài egress) | "Địa chỉ nhận không hợp lệ: chỉ nhận HTTPS, tên miền trong danh sách egress, không trỏ địa chỉ nội bộ." | Dưới trường URL nhận |
-| ERR-10-027 | 422 | Xác minh endpoint thất bại hoặc đã quá hạn | "Xác minh địa chỉ nhận chưa đạt hoặc đã quá 24 giờ." kèm bảng bước xác minh và hướng dẫn | Khối xác minh |
-| ERR-10-028 | 422 | Kafka ngoài chưa được bật cho tenant | "Tenant chưa bật Kafka ngoài. Đề nghị quản trị nền tảng bật trước khi dùng chế độ này." | Thẻ chế độ bị vô hiệu |
-| ERR-10-029 | 503 | Phụ thuộc không khả dụng (Apicurio, Kafka Admin, Git, Keycloak, OpenBao, PH-01, PH-04) | "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau." | `CMP-Alert` lỗi, giữ dữ liệu đã nhập |
-| ERR-10-030 | 422 | Số worker vượt số phân vùng hoặc trần | "Số worker tối đa {n} (bằng số phân vùng của topic hoặc trần của tenant)." | Dưới trường Số worker |
-| ERR-10-031 | 422 | Thời điểm bắt đầu ngoài khoảng lưu giữ | "Thời điểm bắt đầu phải trong khoảng lưu giữ của topic: từ {thời điểm sớm nhất}." | Dưới trường Thời điểm |
-| ERR-10-032 | 409 | Subscription phải `PAUSED` trước khi đặt lại offset | "Cần tạm dừng đăng ký nhận trước khi đặt lại vị trí đọc." kèm nút "Tạm dừng" | `CMP-Alert` ở UI-10-16 |
-| ERR-10-033 | 422 | Khoảng phát lại không hợp lệ hoặc ngoài lưu giữ | "Khoảng phát lại ngoài dữ liệu còn giữ. Khoảng còn dữ liệu: {từ} đến {đến}." kèm nút "Dùng khoảng này" | Dưới khoảng |
-| ERR-10-034 | 422 | Khoảng phát lại vượt trần số bản ghi | "Khoảng phát lại có khoảng {n} bản tin, vượt trần {trần}. Thu hẹp khoảng." | Dưới khoảng |
-| ERR-10-035 | 409 | Đang có lượt phát lại khác cho subscription | "Đang có lượt phát lại {mã} cho đăng ký nhận này." kèm liên kết | `CMP-Alert` |
-| ERR-10-036 | 409 | Mục DLQ đã được xử lý | "Mục DLQ đã được xử lý bởi {người} lúc {giờ}." | `CMP-Toast` |
-| ERR-10-037 | 422 | Khóa idempotency trùng với thân khác | "Yêu cầu trùng khóa chống gửi lặp nhưng nội dung khác. Tải lại trang rồi thử lại." | `CMP-Alert` |
-| ERR-10-038 | 409 | Cấp phát thất bại hoặc chưa hoàn tất | "Đối tượng đang cấp phát hoặc cấp phát lỗi." kèm liên kết trạng thái cấp phát | `CMP-Alert` |
-| ERR-10-039 | 423 | Tenant đang tạm ngừng hoặc đóng băng thay đổi | "Tenant đang tạm ngừng hoặc đóng băng thay đổi tới {thời điểm}." | `CMP-Banner` |
-| ERR-10-040 | 422 | Tệp nhập sai cấu trúc hoặc phiên bản định dạng | "Tệp sai cấu trúc hoặc phiên bản định dạng." kèm danh sách lỗi dòng | Bước tải tệp UI-10-19, 20 |
-| ERR-10-041 | 422 | Ánh xạ di trú không hợp lệ | "Ánh xạ không hợp lệ: {lý do}." | Ô của dòng ánh xạ |
-| ERR-10-042 | 409 | Đã có cầu nối cho topic hoặc cầu nối ngược chiều | "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy." | `CMP-Alert` |
-| ERR-10-043 | 422 | Không tắt được mục danh mục đang dùng | "Không tắt được mục đang có {n} bên tham gia hoặc topic dùng." | `CMP-Toast` lỗi, công tắc trả về |
-| ERR-10-044 | 403 | Đối tượng ngoài phạm vi tổ chức của người dùng | ST-07 biến thể "Đối tượng ngoài phạm vi tổ chức của bạn." | Trang hoặc `CMP-Alert` |
-| ERR-10-045 | 422 | Topic `CDC`, `SYSTEM` chỉ do tài khoản dịch vụ chủ quản sửa | "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa." | `CMP-Alert` thông tin cố định trên tab Cấu hình |
-| ERR-10-046 | 422 | Thiếu khóa phân vùng hoặc tổ hợp thứ tự, định tuyến không hợp lệ | "Chế độ định tuyến này cần trường khóa phân vùng, hoặc không giữ được thứ tự." | Dưới trường |
-| ERR-10-047 | 409 | Thay đổi cần phiên bản topic mới, hoặc topic kế nhiệm đã tồn tại | "Thay đổi này phá vỡ bên nhận hiện có; cần tạo phiên bản topic mới, hoặc topic kế nhiệm đã tồn tại." | `CMP-Alert` có nút "Tạo phiên bản mới" |
-| ERR-10-048 | 422 | Compaction đòi topic có khóa | "Nén theo khóa cần topic có khóa (chế độ Theo khóa)." | Dưới trường Chính sách dọn |
-| ERR-10-049 | 400 | Tham số truy vấn sai (kích thước trang, khoảng thời gian, quá số nút sơ đồ) | "Điều kiện truy vấn không hợp lệ." Với sơ đồ: "Sơ đồ có hơn {n} nút. Chọn một dự án, một topic hoặc một HTTT để thu hẹp." | ST-05 hoặc thông điệp giữa canvas |
-| ERR-10-050 | 422 | Đối tượng tham chiếu trong tệp nhập không tồn tại ở tenant đích | "Đối tượng tham chiếu {mã} không có ở tenant đích." | Dòng xem trước |
-| ERR-10-051 | 422 | Bên phát, bên nhận chưa đạt cấp độ ATTT yêu cầu cho topic `RESTRICTED`, `SENSITIVE` (BR-10-019) | "Bên {mã} chưa đạt cấp độ ATTT yêu cầu cho topic {phân loại}." | `CMP-Alert` |
-| ERR-10-052 | 422 | Thao tác không áp dụng cho chế độ giao nhận của subscription (tạm dừng, tiếp tục subscription `INTERNAL`) | "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04." kèm liên kết luồng | `CMP-Alert` |
-| ERR-10-053 | 401 | Control plane: token thiếu, không hợp lệ hoặc hết hạn | "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." (mới) | Chuyển về trang đăng nhập, giữ đường dẫn đang mở |
-| ERR-10-054 | 403 | Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm vi tổ chức) | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền." (mới) | ST-07 hoặc `CMP-Alert` trong hộp thao tác |
-| ERR-10-101 | 401 | Data plane: token không hợp lệ hoặc hết hạn | "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-102 | 403 | Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` | "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-103 | 404 | Topic không tồn tại, không `ACTIVE`, `DEPRECATED` hoặc khác tenant | "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-104 | 400 | Sự kiện không phải CloudEvents 1.0 hợp lệ hoặc `source` không thuộc bên phát | "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-105 | 422 | Dữ liệu không khớp lược đồ, thiếu khóa khi bắt buộc | "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc." (mới) | Thân lỗi trả HTTT; nhật ký APISIX; chỉ số từ chối theo publication ở UI-10-06 |
-| ERR-10-106 | 413 | Sự kiện hoặc lô vượt kích thước | "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-107 | 429 | Vượt hạn mức phát hoặc kéo | "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-108 | 503 | Không đủ bản sao đồng bộ, từ chối ghi | "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau." (mới) | Thân lỗi trả HTTT; nhật ký APISIX; cảnh báo SEV-2 ở PH-13 |
-| ERR-10-109 | 409 | Cursor hết hiệu lực hoặc không khớp lease | "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-110 | 409 | Subscription không `ACTIVE` khi kéo | "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
-| ERR-10-111 | — | Đầu nhận quá thời gian chờ (ghi ở lượt lỗi, DLQ) | "Quá thời gian chờ. Đầu nhận chậm; tăng thời gian chờ hoặc giảm số worker." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-112 | — | Đầu nhận trả lỗi `5xx`, `408`, `425`, `429` | "Đầu nhận lỗi tạm thời (5xx, 408, 425, 429). Kiểm tra tình trạng HTTT nhận." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-113 | — | Đầu nhận từ chối vĩnh viễn (`4xx`) hoặc bên nhận nack | "Đầu nhận từ chối. Đầu nhận trả 4xx hoặc bên nhận báo lỗi; xem nội dung phản hồi." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-114 | — | Lỗi TLS hoặc chứng thư đầu nhận | "Lỗi TLS, chứng thư. Chứng thư đầu nhận hết hạn hoặc không tin cậy." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-115 | — | Địa chỉ đích bị chặn (địa chỉ riêng, DNS rebinding, ngoài egress) | "Địa chỉ đích bị chặn. Tên miền phân giải ra địa chỉ bị chặn; kiểm tra DNS." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-116 | — | Không giải tuần tự được bản tin theo lược đồ | "Không giải được bản tin. Bản tin không khớp lược đồ; báo bên phát." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-117 | — | Không đọc được khóa ký từ OpenBao | "Không đọc được khóa ký. Sự cố kho bí mật; giao nhận phân vùng tạm dừng." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-118 | — | Cầu nối di trú không chuyển được bản tin | "Cầu nối không chuyển được." | DLQ của cầu nối (UI-10-20, UI-10-15 lọc `origin = BRIDGE`) |
-| ERR-10-119 | — | Bản tin của bên phát Kafka trực tiếp không có định danh lược đồ hợp lệ | "Bản tin không có định danh lược đồ." | Bảng vi phạm tuân thủ ở UI-10-06; cảnh báo PH-13 |
-| ERR-10-120 | — | Kafka từ chối do ACL hoặc hạn mức (ghi nhận theo principal) | "Kafka từ chối do ACL, hạn mức. Kiểm tra quyền và hạn mức của principal." | Cột "Mã lỗi" ở bảng lượt lỗi UI-10-12 và DLQ UI-10-15 |
-| ERR-10-121 | 503 | Phụ thuộc runtime không khả dụng (Valkey cho lease, Apicurio khi bộ đệm lược đồ rỗng, OpenBao cho khóa cursor); kèm `Retry-After` | "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây." (mới) | Thân lỗi trả HTTT; nhật ký APISIX |
+| Mã | HTTP | Ý nghĩa | Câu hiển thị |
+|---|---|---|---|
+| ERR-10-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant khác | "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác." |
+| ERR-10-002 | 409 | Mã hoặc tên đã tồn tại (kể cả đối tượng đã lưu trữ, ngừng dùng) | "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác." |
+| ERR-10-003 | 400 | Dữ liệu yêu cầu không hợp lệ (mẫu mã, từ dành riêng, trường bất biến, tổ hợp không hợp lệ) | Câu theo `errors[]`, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự." hoặc "'{mã}' là từ dành riêng của đường dẫn." |
+| ERR-10-004 | 422 | Tên topic sai quy ước hoặc dùng miền dành riêng | "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký." |
+| ERR-10-005 | 422 | Tiền tố tenant của topic không khớp tenant ngữ cảnh | "Tiền tố tenant của topic không khớp tenant đang làm việc." |
+| ERR-10-006 | 409 | Chuyển trạng thái không hợp lệ với trạng thái hiện tại | "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}." kèm nút "Tải lại" |
+| ERR-10-007 | 412 | Xung đột phiên bản (`If-Match`) | ST-13 xung đột phiên bản |
+| ERR-10-008 | 403 | Vi phạm bốn mắt | "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác." |
+| ERR-10-009 | 400 | Thiếu lý do, ý kiến hoặc xác nhận bắt buộc | "Cần nhập lý do hoặc xác nhận trước khi tiếp tục." |
+| ERR-10-010 | 409 | Còn đối tượng phụ thuộc (topic trong dự án, subscription trên topic) | "Còn {n} đối tượng phụ thuộc." kèm danh sách liên kết (topic của dự án, subscription của topic) |
+| ERR-10-011 | 422 | Vượt hạn mức tenant | "Vượt hạn mức của tenant: {tên hạn mức} đang dùng {đã dùng}/{trần}." kèm liên kết UI-10-18 tab Hạn mức |
+| ERR-10-012 | 422 | Tham số vượt trần hoặc ngoài miền | "Giá trị ngoài miền cho phép ({min} đến {max})." |
+| ERR-10-013 | 422 | Không được giảm số phân vùng | "Không giảm được số phân vùng. Chỉ được tăng." |
+| ERR-10-014 | 409 | Cần xác nhận tác động thứ tự khi tăng phân vùng | "Tăng phân vùng làm đổi phân vùng của khóa; thứ tự giữa sự kiện cũ và mới của cùng khóa không còn bảo đảm. Đánh dấu xác nhận để tiếp tục." |
+| ERR-10-015 | 422 | Lược đồ sai cú pháp | "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}." |
+| ERR-10-016 | 409 | Lược đồ không tương thích theo mức đã đặt | "Lược đồ không tương thích theo mức {mức}." kèm bảng vi phạm theo đường dẫn trường và nút "Tạo phiên bản topic mới" |
+| ERR-10-017 | 422 | Lược đồ thiếu hoặc sai kiểu trường khóa phân vùng | "Lược đồ thiếu trường khóa phân vùng '{trường}' hoặc trường này không phải chuỗi, số, hoặc cho phép null." |
+| ERR-10-018 | 422 | Lược đồ có trường nghi dữ liệu cá nhân bị chặn theo chính sách | "Lược đồ có trường nghi dữ liệu cá nhân ({trường}) trên topic {phân loại}; chính sách của tenant đang chặn." |
+| ERR-10-019 | 422 | Mức tương thích không được phép | "Mức 'Không kiểm tra' chỉ dùng cho topic chưa từng hoạt động." |
+| ERR-10-020 | 422 | Định dạng lược đồ không được phép hoặc khác định dạng đã có | "Định dạng {định dạng} không được phép hoặc khác định dạng đã có của topic." |
+| ERR-10-021 | 422 | HTTT không tồn tại hoặc không `ACTIVE` ở PH-01 | "HTTT {mã} không tồn tại hoặc chưa ở trạng thái hoạt động ở PH-01." |
+| ERR-10-022 | 422 | Luồng không tồn tại hoặc không hợp lệ ở PH-04 | "Luồng {mã} không tồn tại hoặc đã ngừng ở PH-04." |
+| ERR-10-023 | 422 | DU nội bộ không có trong danh sách | "Dịch vụ nội bộ {mã} không có trong danh sách." |
+| ERR-10-024 | 409 | Quan hệ đã tồn tại cho cặp này (bên tham gia, topic) hoặc cặp (HTTT, kiểu giao tiếp) | "Đã có quan hệ cho cặp này: {mô tả}." kèm liên kết mở quan hệ đã có |
+| ERR-10-025 | 422 | Topic hoặc bên tham gia không ở trạng thái nhận quan hệ mới | "Topic hoặc bên tham gia không ở trạng thái nhận quan hệ mới (topic cần Đang hoạt động, bên tham gia cần Đang hoạt động)." |
+| ERR-10-026 | 422 | Endpoint webhook không hợp lệ (không HTTPS, địa chỉ riêng, ngoài egress) | "Địa chỉ nhận không hợp lệ: chỉ nhận HTTPS, tên miền trong danh sách egress, không trỏ địa chỉ nội bộ." |
+| ERR-10-027 | 422 | Xác minh endpoint thất bại hoặc đã quá hạn | "Xác minh địa chỉ nhận chưa đạt hoặc đã quá 24 giờ." kèm bảng bước xác minh và hướng dẫn |
+| ERR-10-028 | 422 | Kafka ngoài chưa được bật cho tenant | "Tenant chưa bật Kafka ngoài. Đề nghị quản trị nền tảng bật trước khi dùng chế độ này." |
+| ERR-10-029 | 503 | Phụ thuộc không khả dụng (Apicurio, Kafka Admin, Git, Keycloak, OpenBao, PH-01, PH-04) | "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau." |
+| ERR-10-030 | 422 | Số worker vượt số phân vùng hoặc trần | "Số worker tối đa {n} (bằng số phân vùng của topic hoặc trần của tenant)." |
+| ERR-10-031 | 422 | Thời điểm bắt đầu ngoài khoảng lưu giữ | "Thời điểm bắt đầu phải trong khoảng lưu giữ của topic: từ {thời điểm sớm nhất}." |
+| ERR-10-032 | 409 | Subscription phải `PAUSED` trước khi đặt lại offset | "Cần tạm dừng đăng ký nhận trước khi đặt lại vị trí đọc." kèm nút "Tạm dừng" |
+| ERR-10-033 | 422 | Khoảng phát lại không hợp lệ hoặc ngoài lưu giữ | "Khoảng phát lại ngoài dữ liệu còn giữ. Khoảng còn dữ liệu: {từ} đến {đến}." kèm nút "Dùng khoảng này" |
+| ERR-10-034 | 422 | Khoảng phát lại vượt trần số bản ghi | "Khoảng phát lại có khoảng {n} bản tin, vượt trần {trần}. Thu hẹp khoảng." |
+| ERR-10-035 | 409 | Đang có lượt phát lại khác cho subscription | "Đang có lượt phát lại {mã} cho đăng ký nhận này." kèm liên kết |
+| ERR-10-036 | 409 | Mục DLQ đã được xử lý | "Mục DLQ đã được xử lý bởi {người} lúc {giờ}." |
+| ERR-10-037 | 422 | Khóa idempotency trùng với thân khác | "Yêu cầu trùng khóa chống gửi lặp nhưng nội dung khác. Tải lại trang rồi thử lại." |
+| ERR-10-038 | 409 | Cấp phát thất bại hoặc chưa hoàn tất | "Đối tượng đang cấp phát hoặc cấp phát lỗi." kèm liên kết trạng thái cấp phát |
+| ERR-10-039 | 423 | Tenant đang tạm ngừng hoặc đóng băng thay đổi | "Tenant đang tạm ngừng hoặc đóng băng thay đổi tới {thời điểm}." |
+| ERR-10-040 | 422 | Tệp nhập sai cấu trúc hoặc phiên bản định dạng | "Tệp sai cấu trúc hoặc phiên bản định dạng." kèm danh sách lỗi dòng |
+| ERR-10-041 | 422 | Ánh xạ di trú không hợp lệ | "Ánh xạ không hợp lệ: {lý do}." |
+| ERR-10-042 | 409 | Đã có cầu nối cho topic hoặc cầu nối ngược chiều | "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy." |
+| ERR-10-043 | 422 | Không tắt được mục danh mục đang dùng | "Không tắt được mục đang có {n} bên tham gia hoặc topic dùng." |
+| ERR-10-044 | 403 | Đối tượng ngoài phạm vi tổ chức của người dùng | ST-07 biến thể "Đối tượng ngoài phạm vi tổ chức của bạn." |
+| ERR-10-045 | 422 | Topic `CDC`, `SYSTEM` chỉ do tài khoản dịch vụ chủ quản sửa | "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa." |
+| ERR-10-046 | 422 | Thiếu khóa phân vùng hoặc tổ hợp thứ tự, định tuyến không hợp lệ | "Chế độ định tuyến này cần trường khóa phân vùng, hoặc không giữ được thứ tự." |
+| ERR-10-047 | 409 | Thay đổi cần phiên bản topic mới, hoặc topic kế nhiệm đã tồn tại | "Thay đổi này phá vỡ bên nhận hiện có; cần tạo phiên bản topic mới, hoặc topic kế nhiệm đã tồn tại." |
+| ERR-10-048 | 422 | Compaction đòi topic có khóa | "Nén theo khóa cần topic có khóa (chế độ Theo khóa)." |
+| ERR-10-049 | 400 | Tham số truy vấn sai (kích thước trang, khoảng thời gian, quá số nút sơ đồ) | "Điều kiện truy vấn không hợp lệ." Với sơ đồ: "Sơ đồ có hơn {n} nút. Chọn một dự án, một topic hoặc một HTTT để thu hẹp." |
+| ERR-10-050 | 422 | Đối tượng tham chiếu trong tệp nhập không tồn tại ở tenant đích | "Đối tượng tham chiếu {mã} không có ở tenant đích." |
+| ERR-10-051 | 422 | Bên phát, bên nhận chưa đạt cấp độ ATTT yêu cầu cho topic `RESTRICTED`, `SENSITIVE` (BR-10-019) | "Bên {mã} chưa đạt cấp độ ATTT yêu cầu cho topic {phân loại}." |
+| ERR-10-052 | 422 | Thao tác không áp dụng cho chế độ giao nhận của subscription (tạm dừng, tiếp tục subscription `INTERNAL`) | "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04." kèm liên kết luồng |
+| ERR-10-053 | 401 | Control plane: token thiếu, không hợp lệ hoặc hết hạn | "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." (mới) |
+| ERR-10-054 | 403 | Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm vi tổ chức) | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền." (mới) |
+| ERR-10-101 | 401 | Data plane: token không hợp lệ hoặc hết hạn | "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại." (mới) |
+| ERR-10-102 | 403 | Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` | "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động." (mới) |
+| ERR-10-103 | 404 | Topic không tồn tại, không `ACTIVE`, `DEPRECATED` hoặc khác tenant | "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác." (mới) |
+| ERR-10-104 | 400 | Sự kiện không phải CloudEvents 1.0 hợp lệ hoặc `source` không thuộc bên phát | "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token." (mới) |
+| ERR-10-105 | 422 | Dữ liệu không khớp lược đồ, thiếu khóa khi bắt buộc | "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc." (mới) |
+| ERR-10-106 | 413 | Sự kiện hoặc lô vượt kích thước | "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})." (mới) |
+| ERR-10-107 | 429 | Vượt hạn mức phát hoặc kéo | "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây." (mới) |
+| ERR-10-108 | 503 | Không đủ bản sao đồng bộ, từ chối ghi | "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau." (mới) |
+| ERR-10-109 | 409 | Cursor hết hiệu lực hoặc không khớp lease | "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận." (mới) |
+| ERR-10-110 | 409 | Subscription không `ACTIVE` khi kéo | "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện." (mới) |
+| ERR-10-111 | — | Đầu nhận quá thời gian chờ (ghi ở lượt lỗi, DLQ) | "Quá thời gian chờ. Đầu nhận chậm; tăng thời gian chờ hoặc giảm số worker." |
+| ERR-10-112 | — | Đầu nhận trả lỗi `5xx`, `408`, `425`, `429` | "Đầu nhận lỗi tạm thời (5xx, 408, 425, 429). Kiểm tra tình trạng HTTT nhận." |
+| ERR-10-113 | — | Đầu nhận từ chối vĩnh viễn (`4xx`) hoặc bên nhận nack | "Đầu nhận từ chối. Đầu nhận trả 4xx hoặc bên nhận báo lỗi; xem nội dung phản hồi." |
+| ERR-10-114 | — | Lỗi TLS hoặc chứng thư đầu nhận | "Lỗi TLS, chứng thư. Chứng thư đầu nhận hết hạn hoặc không tin cậy." |
+| ERR-10-115 | — | Địa chỉ đích bị chặn (địa chỉ riêng, DNS rebinding, ngoài egress) | "Địa chỉ đích bị chặn. Tên miền phân giải ra địa chỉ bị chặn; kiểm tra DNS." |
+| ERR-10-116 | — | Không giải tuần tự được bản tin theo lược đồ | "Không giải được bản tin. Bản tin không khớp lược đồ; báo bên phát." |
+| ERR-10-117 | — | Không đọc được khóa ký từ OpenBao | "Không đọc được khóa ký. Sự cố kho bí mật; giao nhận phân vùng tạm dừng." |
+| ERR-10-118 | — | Cầu nối di trú không chuyển được bản tin | "Cầu nối không chuyển được." |
+| ERR-10-119 | — | Bản tin của bên phát Kafka trực tiếp không có định danh lược đồ hợp lệ | "Bản tin không có định danh lược đồ." |
+| ERR-10-120 | — | Kafka từ chối do ACL hoặc hạn mức (ghi nhận theo principal) | "Kafka từ chối do ACL, hạn mức. Kiểm tra quyền và hạn mức của principal." |
+| ERR-10-121 | 503 | Phụ thuộc runtime không khả dụng (Valkey cho lease, Apicurio khi bộ đệm lược đồ rỗng, OpenBao cho khóa cursor); kèm `Retry-After` | "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây." (mới) |
 
 : Mã lỗi ERR-10, mã HTTP và câu thông báo hiển thị
 
@@ -5468,7 +6146,7 @@ Chuyển trạng thái bổ sung: `LegacyMapping` từ `ROLLED_BACK` sang `BRIDG
 | `ManifestImportJob` | `manifest_import_job` | `jobCode`, `sourceKind`, `fileRef`, `status`, `validationErrors` (JSON), `preview` (JSON), `appliedAt` |
 | Kiểm toán, outbox, inbox, bảng kỹ thuật | `outbox_event`, `inbox_event`, `lag_sample_5m`, `shedlock` | `outbox_event` theo mẫu chung của DU (SAD §7.3); `inbox_event` chống xử lý trùng sự kiện PH-10 tiêu thụ, khóa (`consumer`, `eventId`); `lag_sample_5m` gộp 5 phút của `LagSample`, giữ 90 ngày (EN-10-14); `shedlock` khóa tác vụ nền |
 
-: A.3. Thực thể, bảng và trường nghiệp vụ chính: Thực thể, Bảng gợi ý
+: Thực thể và bảng gợi ý
 
 Khóa idempotency của lệnh ghi control plane (`Idempotency-Key`, 24 giờ) và chống trùng phát của cổng sự kiện lưu ở Valkey theo A.8, không có bảng PostgreSQL. Báo cáo đối chiếu di trú lưu ở kho đối tượng (A.8); kết quả xác minh endpoint nằm trong `Subscription.push.lastVerification`.
 
@@ -5485,7 +6163,7 @@ Trường đầu vào của thao tác (không lưu thành cột, chỉ ở API v
 | `onBehalfOf` (T-CODE) | FR-10-066 | Người chịu trách nhiệm khi máy đăng ký topic |
 | `rewriteTenantPrefix` (boolean) | FR-10-071 | Viết lại tiền tố tenant của tên topic theo tenant đích |
 
-: A.3. Thực thể, bảng và trường nghiệp vụ chính: Trường, FR
+: Trường nghiệp vụ theo FR
 
 Tham số truy vấn chỉ ở API: `dryRun` (boolean, mặc định `false`) ở API-10-015 (trả `TopicChangeResult` mà không ghi, để xem subscription bị ảnh hưởng trước khi gửi) và API-10-064 (trả `ReplayEstimate`, không tạo lượt phát lại); `window` ở API-10-052, 055 (A.2.15).
 
@@ -5510,7 +6188,7 @@ Trường chỉ ở API (cấu trúc phản hồi, sự kiện; không lưu thà
 | `MigrationProgress`, `MigrationStatusItem`, `Reconciliation` | API-10-078, 117, 118 (FR-10-075, 076) | `legacySystems`, `mappingsByStatus`, `publishesViaPulsar`, `subscribesViaPulsar`, `plannedShutdownAt`, `lastReconciliation`, `successorStatus`, `successorSubscriptionCode`, `kafkaCount`, `pulsarCount`, `difference`, `sampleMismatches`, `reportRef`, `windowEnd` |
 | Payload sự kiện (A.7) | EVT-10-02, 05, 06, 07, 09, 10, 12, 13, 16 | `previousStatus`, `changedFields`, `configVersion`, `enabledVersions`, `previousAlertState`, `previousKeyId`, `errorCodes`, `newEntryCount`, `violationCount`, `windowEnd`, `lastErrorCode`; thuộc tính CloudEvents `datacontenttype` |
 
-: A.3. Thực thể, bảng và trường nghiệp vụ chính: Lược đồ, Nơi dùng
+: Lược đồ API và nơi dùng
 
 Trường để dành cho Đợt sau (FR-10-048, chưa có cột, chưa ở API): `filters` (JSON theo cú pháp lọc CloudEvents Subscriptions API) ở `Subscription`; `push.batchSize`, `push.batchWaitMs` trong `push`. Tập CSDL, API thêm khi FR-10-048 vào kế hoạch.
 
@@ -5684,6 +6362,6 @@ Từ dành riêng trong route không được dùng làm mã dự án: `moi`, `t
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-FRS, sổ tra cứu D00-04, kiểm kê LGC-HUB ở D00-03, SRS-PH-10 của repo, hợp đồng với PH-04, PH-05, PH-07, PH-18; ADR-070…073 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 25 đề nghị của tập UC, SDD, CSDL (§14): ERR-10-051, 052, 121; EVT-10-16; API-10-085…091; enum mới ở A.2.5, A.2.9, A.2.13, A.2.14, A.2.15; trường mới ở A.3; định danh mới ở A.8 |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 21 đề nghị của tập API và màn hình (§14): ERR-10-053, 054 (401, 403 control plane); API-10-121 và chép API-10-092…120 vào §8.3; trường chỉ ở API vào A.3, enum vào A.2.15; chốt `push.lastVerification`; ràng buộc `retryBackoff`, ngưỡng lag, `legalBasis`, `quotaBytesPerSecond` ở FR-10-035; mặc định `BLOCK` cho topic có thứ tự (đóng Q10-15); bỏ `decision`; tab con route ở A.6; đề nghị cho D03-05 ở §10.4 |
-| 0.4 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Sắp lại chương theo K-FRS (Giới thiệu đủ sáu mục, Tổng quan có mục tiêu đo được, kiến trúc thành phần và sơ đồ trình tự luồng chính, danh sách chức năng có UC, UI, API); 76 FR chuyển sang khối đặc tả 17 mục kèm bảng dữ liệu vào, sơ đồ trình tự cho FR có duyệt bốn mắt hoặc từ ba thành phần trở lên; sơ đồ quan hệ chức năng mỗi nhóm; bảng thông báo theo mã lỗi (mục 9.2, viết mới câu cho ERR-10-053, 054, 101…121); giao diện tiêu biểu UI-10-01, 06; chú thích mọi bảng, hình. Không đổi mã, enum, tham số; đề nghị đồng bộ mới ở mục 12.4 |
+| 0.4 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Sắp lại chương theo K-FRS (Giới thiệu đủ sáu mục, Tổng quan có mục tiêu đo được, kiến trúc thành phần và sơ đồ trình tự luồng chính, danh sách chức năng có UC, UI, API); 76 FR chuyển sang khối đặc tả 17 mục kèm bảng dữ liệu vào, sơ đồ trình tự cho FR có duyệt bốn mắt hoặc từ ba thành phần trở lên; bảng thông báo theo mã lỗi (mục 9.2, viết mới câu cho ERR-10-053, 054, 101…110, 121); giao diện tiêu biểu UI-10-01, 06; chú thích mọi bảng, hình. Không đổi mã, enum, tham số; đề nghị đồng bộ mới ở mục 12.4 |
 
 : Lịch sử phiên bản
