@@ -77,7 +77,7 @@ CREATE TABLE ph10_event.routing_mode (
 CREATE TRIGGER tg_routing_mode_touch BEFORE UPDATE ON ph10_event.routing_mode FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_touch();
 CALL ph10_event.p_enable_rls('ph10_event.routing_mode', 'S');
 COMMENT ON TABLE ph10_event.routing_mode IS 'EN-10-16 Chế độ định tuyến (FR-10-061, LGC-HUB-014 routing_mode). Danh mục nền tảng, seed 3 mã phụ lục A.2.9.';
-COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §10).';
+COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §9.2).';
 COMMENT ON COLUMN ph10_event.routing_mode.legacy_code IS 'Chế độ Pulsar tương ứng: CustomPartition, RoundRobinPartition, SinglePartition.';
 --rollback DROP TABLE IF EXISTS ph10_event.routing_mode CASCADE;
 

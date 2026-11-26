@@ -181,7 +181,7 @@ BEGIN
   IF NEW.compatibility = 'NONE' AND EXISTS (
        SELECT 1 FROM ph10_event.topic t
         WHERE t.tenant_id = NEW.tenant_id AND t.topic_name = NEW.topic_name AND t.activated_at IS NOT NULL) THEN
-    RAISE EXCEPTION 'Mức NONE chỉ cho topic chưa từng ACTIVE (BR-10-012, ERR-10-017)' USING ERRCODE = '23514';
+    RAISE EXCEPTION 'Mức NONE chỉ cho topic chưa từng ACTIVE (BR-10-012, ERR-10-019)' USING ERRCODE = '23514';
   END IF;
   RETURN NEW;
 END

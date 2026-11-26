@@ -76,7 +76,7 @@ CREATE TRIGGER tg_legacy_mapping_immutable BEFORE UPDATE ON ph10_event.legacy_ma
 CALL ph10_event.p_enable_rls('ph10_event.legacy_mapping', 'P');
 COMMENT ON TABLE ph10_event.legacy_mapping IS 'EN-10-18 Ánh xạ di trú Hub Pulsar (FR-10-072, 075, 076; ADR-073). Một dòng mỗi đối tượng cũ; nhập lại cập nhật dòng (job_code trỏ lần nhập gần nhất), không tạo trùng. id chính là mappingId. Giữ 5 năm.';
 COMMENT ON COLUMN ph10_event.legacy_mapping.legacy_id IS 'Khóa chính bảng cũ (project.id, publisher.id…) hoặc tên đầy đủ persistent://{tenant}/{namespace}/{topic} với TOPIC.';
-COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §10). Tạm ghi cùng giá trị legacy_type, không CHECK.';
+COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §9.2). Tạm ghi cùng giá trị legacy_type, không CHECK.';
 --rollback DROP TABLE IF EXISTS ph10_event.legacy_mapping CASCADE;
 
 --changeset ph10:ph10-0720-migration-bridge

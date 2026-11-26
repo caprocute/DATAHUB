@@ -120,7 +120,7 @@ CREATE TRIGGER tg_dlq_entry_touch BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH
 CREATE TRIGGER tg_dlq_entry_immutable BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_immutable('tenant_id', 'subscription_code', 'source_topic', 'source_partition', 'source_offset', 'event_id', 'origin', 'first_failed_at');
 CALL ph10_event.p_enable_rls('ph10_event.dlq_entry', 'P');
 COMMENT ON TABLE ph10_event.dlq_entry IS 'EN-10-12 Mục DLQ, nguồn sự thật của DLQ tầng sự kiện (FR-10-049, 050; BR-10-024; ADR-071). DlqWriter tiêu thụ {topicName}.dlq, upsert theo (subscription, topic, partition, offset) nên chạy lại không nhân đôi. id chính là dlqEntryId (UUIDv7). NEW giữ vô thời hạn; siêu dữ liệu giữ 1 năm sau khi xử lý.';
-COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§10).';
+COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§9.2).';
 COMMENT ON COLUMN ph10_event.dlq_entry.payload_ref IS 'pg:dlq_payload/{dlqEntryId}; NULL sau khi dọn nội dung (PURGED).';
 --rollback DROP TABLE IF EXISTS ph10_event.dlq_entry CASCADE;
 
@@ -188,5 +188,5 @@ CREATE TABLE ph10_event.lag_sample_5m (
 ) PARTITION BY RANGE (window_start);
 CALL ph10_event.p_ensure_partitions('ph10_event.lag_sample_5m', current_date, 4, 'month');
 CALL ph10_event.p_enable_rls('ph10_event.lag_sample_5m', 'P');
-COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §10).';
+COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §9.2).';
 --rollback DROP TABLE IF EXISTS ph10_event.lag_sample_5m CASCADE;

@@ -208,7 +208,7 @@ CREATE TABLE ph10_event.routing_mode (
 CREATE TRIGGER tg_routing_mode_touch BEFORE UPDATE ON ph10_event.routing_mode FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_touch();
 CALL ph10_event.p_enable_rls('ph10_event.routing_mode', 'S');
 COMMENT ON TABLE ph10_event.routing_mode IS 'EN-10-16 Chế độ định tuyến (FR-10-061, LGC-HUB-014 routing_mode). Danh mục nền tảng, seed 3 mã phụ lục A.2.9.';
-COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §10).';
+COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §9.2).';
 COMMENT ON COLUMN ph10_event.routing_mode.legacy_code IS 'Chế độ Pulsar tương ứng: CustomPartition, RoundRobinPartition, SinglePartition.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.routing_mode CASCADE;
 
@@ -448,7 +448,7 @@ BEGIN
   IF NEW.compatibility = 'NONE' AND EXISTS (
        SELECT 1 FROM ph10_event.topic t
         WHERE t.tenant_id = NEW.tenant_id AND t.topic_name = NEW.topic_name AND t.activated_at IS NOT NULL) THEN
-    RAISE EXCEPTION 'Mức NONE chỉ cho topic chưa từng ACTIVE (BR-10-012, ERR-10-017)' USING ERRCODE = '23514';
+    RAISE EXCEPTION 'Mức NONE chỉ cho topic chưa từng ACTIVE (BR-10-012, ERR-10-019)' USING ERRCODE = '23514';
   END IF;
   RETURN NEW;
 END
@@ -1072,7 +1072,7 @@ CREATE TRIGGER tg_dlq_entry_touch BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH
 CREATE TRIGGER tg_dlq_entry_immutable BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_immutable('tenant_id', 'subscription_code', 'source_topic', 'source_partition', 'source_offset', 'event_id', 'origin', 'first_failed_at');
 CALL ph10_event.p_enable_rls('ph10_event.dlq_entry', 'P');
 COMMENT ON TABLE ph10_event.dlq_entry IS 'EN-10-12 Mục DLQ, nguồn sự thật của DLQ tầng sự kiện (FR-10-049, 050; BR-10-024; ADR-071). DlqWriter tiêu thụ {topicName}.dlq, upsert theo (subscription, topic, partition, offset) nên chạy lại không nhân đôi. id chính là dlqEntryId (UUIDv7). NEW giữ vô thời hạn; siêu dữ liệu giữ 1 năm sau khi xử lý.';
-COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§10).';
+COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§9.2).';
 COMMENT ON COLUMN ph10_event.dlq_entry.payload_ref IS 'pg:dlq_payload/{dlqEntryId}; NULL sau khi dọn nội dung (PURGED).';
 -- @rollback DROP TABLE IF EXISTS ph10_event.dlq_entry CASCADE;
 
@@ -1140,7 +1140,7 @@ CREATE TABLE ph10_event.lag_sample_5m (
 ) PARTITION BY RANGE (window_start);
 CALL ph10_event.p_ensure_partitions('ph10_event.lag_sample_5m', current_date, 4, 'month');
 CALL ph10_event.p_enable_rls('ph10_event.lag_sample_5m', 'P');
-COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §10).';
+COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §9.2).';
 -- @rollback DROP TABLE IF EXISTS ph10_event.lag_sample_5m CASCADE;
 
 -- @file 10-0070-migration.sql
@@ -1218,7 +1218,7 @@ CREATE TRIGGER tg_legacy_mapping_immutable BEFORE UPDATE ON ph10_event.legacy_ma
 CALL ph10_event.p_enable_rls('ph10_event.legacy_mapping', 'P');
 COMMENT ON TABLE ph10_event.legacy_mapping IS 'EN-10-18 Ánh xạ di trú Hub Pulsar (FR-10-072, 075, 076; ADR-073). Một dòng mỗi đối tượng cũ; nhập lại cập nhật dòng (job_code trỏ lần nhập gần nhất), không tạo trùng. id chính là mappingId. Giữ 5 năm.';
 COMMENT ON COLUMN ph10_event.legacy_mapping.legacy_id IS 'Khóa chính bảng cũ (project.id, publisher.id…) hoặc tên đầy đủ persistent://{tenant}/{namespace}/{topic} với TOPIC.';
-COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §10). Tạm ghi cùng giá trị legacy_type, không CHECK.';
+COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §9.2). Tạm ghi cùng giá trị legacy_type, không CHECK.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.legacy_mapping CASCADE;
 
 -- @changeset ph10-0720-migration-bridge

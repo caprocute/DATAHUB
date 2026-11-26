@@ -3,8 +3,9 @@
 
 Chạy từ thư mục csdl/ph10:  python3 tools/gen_tables_md.py [--write]
 Đọc CREATE TABLE, COMMENT ON TABLE/COLUMN, CHECK có liệt kê giá trị (IN (...)).
-Bảy cột ngữ cảnh chuẩn (id, tenant_id, created_*, updated_*, version) gộp một dòng
-để tài liệu gọn. Với --write thay đoạn giữa <!-- gen:tables:start --> và
+Cột có ghi chú hoặc enum thành dòng bảng; cột còn lại và bảy cột ngữ cảnh chuẩn
+(id, tenant_id, created_*, updated_*, version) gộp một dòng để tài liệu gọn. Kiểu ghi
+NULL khi cột cho phép rỗng. Với --write thay đoạn giữa <!-- gen:tables:start --> và
 <!-- gen:tables:end --> trong ../D03-03-PH10-csdl-su-kien.md; không có thì in ra.
 """
 import os, re, sys
@@ -39,43 +40,53 @@ def parse():
                 d = re.search(r"DEFAULT (.+)$", rest)
                 typ = re.sub(r" (NOT NULL|DEFAULT .+)$", "", rest).replace(" NOT NULL", "")
                 cols.append((col, typ.strip(), nn, d.group(1) if d else ""))
-        for col, vals in re.findall(r"CHECK \(\(?(\w+) IN \(([^)]*)\)", body):
-            enums[col] = re.findall(r"'([A-Z_]+)'", vals)
+        for col, vals in re.findall(r"CHECK \((\w+) IN \(([^)]*)\)", body):
+            enums.setdefault(col, re.findall(r"'([A-Z0-9_]+)'", vals))
         for col, vals in re.findall(r"CHECK \(\w+ IS NULL OR (\w+) IN \(([^)]*)\)", body):
-            enums[col] = re.findall(r"'([A-Za-z_-]+)'", vals)
+            enums.setdefault(col, re.findall(r"'([A-Za-z0-9_-]+)'", vals))
         tables.append((name, cols, enums, part))
     return tables
 
 
 def render(tables):
+    """Gọn: cột có ghi chú hoặc enum thành dòng bảng; cột còn lại liệt kê một dòng."""
     out = []
     for i, (t, cols, enums, part) in enumerate(tables, 1):
         out.append(f"### 3.{i}. `{t}`\n")
         if t in tcomment:
             out.append(tcomment[t].replace("''", "'") + "\n")
-        out.append("| Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |")
-        out.append("|---|---|---|---|---|")
         present = [c for c in STD if any(c == x[0] for x in cols)]
+        rows, plain = [], []
         for c, typ, nn, d in cols:
             if c in STD and len(present) >= 6:
                 continue
             note = ccomment.get((t, c), "").replace("''", "'")
-            if c in enums and not note:
-                note = "Một trong " + ", ".join(f"`{v}`" for v in enums[c])
+            if c in enums and c.endswith("service_code"):
+                note = (note + " " if note else "") + "Mã DU theo A.2.12."
             elif c in enums:
-                note += " Giá trị: " + ", ".join(f"`{v}`" for v in enums[c]) + "."
-            note = note.replace("|", "\\|")
-            dd = f"`{d}`" if d else ""
-            out.append(f"| `{c}` | `{typ}` | {'x' if nn else ''} | {dd} | {note} |")
-        if len(present) >= 6:
-            out.append(f"| {', '.join('`' + c + '`' for c in present)} | | x | | Cột ngữ cảnh chuẩn (§1.3) |")
+                note = (note + " " if note else "") + "Giá trị: " + ", ".join(f"`{v}`" for v in enums[c]) + "."
+            spec = typ + ("" if nn else ", NULL") + (f", mặc định {d}" if d else "")
+            if note:
+                rows.append(f"| `{c}` | `{spec}` | {note.replace('|', chr(92) + '|')} |")
+            else:
+                plain.append(f"`{c}` ({spec})")
+        if rows:
+            out.append("| Cột | Kiểu | Ghi chú |")
+            out.append("|---|---|---|")
+            out.extend(rows)
+            out.append("")
         extra = []
+        if plain:
+            extra.append("Cột khác: " + "; ".join(plain))
+        if len(present) >= 6:
+            extra.append("cột ngữ cảnh chuẩn (§1.3)" if plain else "Cột ngữ cảnh chuẩn (§1.3)")
         if part:
-            extra.append(f"Phân vùng `RANGE ({part})`")
+            extra.append(f"phân vùng `RANGE ({part})`")
         if t in indexes:
-            extra.append("Chỉ mục: " + ", ".join(f"`{x}`" for x in indexes[t]))
+            extra.append(f"{len(indexes[t])} chỉ mục phụ (§3.29, DDL)")
         if extra:
-            out.append("\n" + ". ".join(extra) + ".")
+            line = ", ".join(extra[:2]) + (". " + "; ".join(extra[2:]).capitalize() if extra[2:] else "")
+            out.append(line.rstrip(".") + ".")
         out.append("")
     return "\n".join(out)
 
