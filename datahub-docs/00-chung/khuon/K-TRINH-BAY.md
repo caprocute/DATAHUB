@@ -135,10 +135,18 @@ Ngoài các mục [BB] trong khuôn riêng, mỗi tập phân hệ có:
 | Mục tiêu đo được của phân hệ | ● | | | | | | |
 | Kiến trúc thành phần, sơ đồ trình tự luồng chính | ● | | ● | | ● | | |
 | Bảng danh sách (chức năng, use case, bảng, API, màn hình, ca kiểm thử) trước phần chi tiết | ● | ● | ● | ● | ● | ● | ● |
-| Khối đặc tả hai cột cho từng phần tử | FR | UC | Thành phần | Bảng | Endpoint | Màn hình | Ca |
+| Khối đặc tả hai cột cho từng phần tử | FR (17 mục) | UC (15 mục) | Thành phần (10 mục) | Bảng (10 mục, trích từ DDL) | Endpoint (10 mục, sinh từ OpenAPI) | Màn hình | Ca |
 | Thông báo hiển thị theo mã lỗi | ● | | | | ● | ● | |
 | Giao diện tiêu biểu (ảnh hi-fi có chú thích, thuyết minh) | 2 màn | | | | | mọi màn | |
 | ERD dạng hình | | | | ● | | | |
+
+Mẫu thật cho cả bảy loại: bộ PH-05 bản 0.2 trở lên (FRS 0.3). Công cụ hỗ trợ:
+
+- `build/tools/them_chu_thich.py <tệp>`: thêm chú thích còn thiếu cho bảng và Mermaid (lấy tên mục, nhãn in đậm đứng trước bảng); chạy xong nên đọc lại và sửa chú thích chung chung.
+- `build/tools/sinh_dac_ta_api.py <openapi.yaml> <tệp>`: sinh chương đặc tả từng endpoint từ OpenAPI có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`.
+- Bộ xuất tự thu cỡ chữ khối mã có dòng dài hơn 80 ký tự (wireframe) để không xuống dòng.
+
+Lưu ý metadata: giá trị `mo_ta` không được chứa dấu hai chấm theo sau khoảng trắng (YAML hiểu nhầm), dùng dấu phẩy hoặc "gồm".
 
 ## 6. Tự soát trước khi xuất
 
