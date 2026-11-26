@@ -30,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['packages/api-client/src/**/*.ts'],
+    files: ['packages/api-client/src/**/*.ts', 'apps/*/e2e/**/*.ts'],
     rules: { 'no-restricted-globals': 'off' },
   },
   {

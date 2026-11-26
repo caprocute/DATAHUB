@@ -1,7 +1,7 @@
 import type { CatalogGroup } from '@datahub/api-client';
 import { t } from '@datahub/i18n';
 import { Button, CaretDownOutlined, CaretRightOutlined, Dropdown, EllipsisOutlined, Tag, type MenuProps } from '@datahub/ui';
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { childrenOf, findNode, parentIdOf, visibleIds } from '../tree-model';
 
 export interface CatalogGroupTreeProps {
@@ -20,9 +20,11 @@ export interface CatalogGroupTreeProps {
 
 const idOfLabel = (id: string) => `grp-${id}-label`;
 const idOfCount = (id: string) => `grp-${id}-count`;
+const idOfBadge = (id: string) => `grp-${id}-badge`;
 
 /**
- * Cây nhóm theo mẫu WAI-ARIA `tree` (D03-06-PH07 §7.8): role tree/treeitem/group, aria-level,
+ * Cây nhóm theo mẫu WAI-ARIA `tree` (D03-06-PH07 §7.8), dạng phẳng (treeitem anh em, cấp bằng aria-level,
+ * để tên truy cập của mỗi mục chỉ gồm chữ của chính nó): role tree/treeitem, aria-level,
  * aria-setsize, aria-posinset, aria-expanded, aria-selected; một điểm dừng tab (roving tabindex);
  * mũi tên, Home, End, Enter/Space; Shift+F10 hoặc phím Menu mở thao tác của nút.
  */
@@ -106,8 +108,8 @@ export function CatalogGroupTree({ nodes, selectedId, collapsed, forceExpanded, 
     event.stopPropagation();
   };
 
-  const render = (list: readonly CatalogGroup[], level: number) =>
-    list.map((node, position) => {
+  const render = (list: readonly CatalogGroup[], level: number): ReactNode[] =>
+    list.flatMap((node, position) => {
       const kids = childrenOf(node);
       const hasChildren = kids.length > 0;
       const expanded = hasChildren && !effectiveCollapsed.has(node.id);
@@ -117,7 +119,7 @@ export function CatalogGroupTree({ nodes, selectedId, collapsed, forceExpanded, 
         { key: 'edit', label: t('rdm.groups.menu.edit') },
         { key: 'delete', label: t('rdm.groups.menu.delete'), danger: true },
       ];
-      return (
+      const item = (
         <li
           key={node.id}
           role="treeitem"
@@ -135,7 +137,7 @@ export function CatalogGroupTree({ nodes, selectedId, collapsed, forceExpanded, 
           aria-posinset={position + 1}
           aria-expanded={hasChildren ? expanded : undefined}
           aria-selected={selected}
-          aria-labelledby={`${idOfLabel(node.id)} ${idOfCount(node.id)}`}
+          aria-labelledby={[idOfLabel(node.id), node.tenantId === 'COMMON' ? idOfBadge(node.id) : undefined, idOfCount(node.id)].filter(Boolean).join(' ')}
           tabIndex={node.id === tabStop ? 0 : -1}
           className="rdm-tree__item"
           onFocus={(event) => {
@@ -167,7 +169,13 @@ export function CatalogGroupTree({ nodes, selectedId, collapsed, forceExpanded, 
               <span id={idOfLabel(node.id)} className="rdm-tree__name">
                 {node.name}
               </span>
-              {node.tenantId === 'COMMON' ? <Tag className="rdm-tree__badge">{t('rdm.groups.commonBadge.short')}</Tag> : null}
+              {node.tenantId === 'COMMON' ? ' ' : null}
+              {node.tenantId === 'COMMON' ? (
+                <span id={idOfBadge(node.id)}>
+                  <Tag className="rdm-tree__badge">{t('rdm.groups.commonBadge.short')}</Tag>
+                </span>
+              ) : null}
+              {' '}
               <span id={idOfCount(node.id)} className="rdm-tree__count">
                 {`(${node.catalogCount ?? 0})`}
               </span>
@@ -200,13 +208,9 @@ export function CatalogGroupTree({ nodes, selectedId, collapsed, forceExpanded, 
               </Dropdown>
             ) : null}
           </div>
-          {expanded ? (
-            <ul role="group" className="rdm-tree__group">
-              {render(kids, level + 1)}
-            </ul>
-          ) : null}
         </li>
       );
+      return expanded ? [item, ...render(kids, level + 1)] : [item];
     });
 
   return (

@@ -39,16 +39,18 @@
   }
 }
 
-.rdm-tree,
-.rdm-tree__group {
+.rdm-tree {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.rdm-tree__group {
-  padding-inline-start: var(--dh-space-4);
-}
+/* Cấp lồng nhau thể hiện bằng thụt lề theo aria-level (cây phẳng). */
+.rdm-tree__item[aria-level='2'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + var(--dh-space-4)); }
+.rdm-tree__item[aria-level='3'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 2 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='4'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 3 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='5'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 4 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='6'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 5 * var(--dh-space-4)); }
 
 .rdm-tree__item {
   outline: none;

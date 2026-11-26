@@ -3,8 +3,13 @@
   "private": true,
   "type": "module",
   "description": "Datahub · giao diện web (npm workspaces): @datahub/ui, @datahub/api-client, @datahub/i18n, dh-console",
-  "engines": { "node": ">=22" },
-  "workspaces": ["packages/*", "apps/*"],
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "generate": "npm run generate -w @datahub/api-client",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -32,5 +37,8 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.74.0",
     "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "playwright-core": "1.63.0"
   }
 }
