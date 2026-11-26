@@ -7,6 +7,8 @@ trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện dh-console, thiết kế UX/UI, phân tích nghiệp vụ, kiểm thử, kiến trúc sư
 phan_he: PH-04
 nguoi_lap: Nhóm phân hệ PH-04
+mo_ta: Thiết kế giao diện 21 màn hình của phân hệ Lõi tích hợp và trình thiết kế luồng, gồm bảng đặc tả từng màn, wireframe, thành phần, trạng thái, tương tác chuột và bàn phím, khả năng truy cập và ảnh hi-fi của mọi màn, theo design system Liquid Glass trên antd v6.
+tai_lieu_lien_quan: D03-05 Design system; D03-06-00 IA và mẫu màn; D02-03-PH04 FRS; D02-04-PH04 Use case; D03-04-PH04 API; D03-02-PH04 SDD
 ---
 
 # D03-06-PH04 · Thiết kế giao diện màn hình phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
@@ -15,7 +17,9 @@ nguoi_lap: Nhóm phân hệ PH-04
 
 Tài liệu đặc tả 21 màn hình của PH-04 trên ứng dụng quản trị `dh-console`. Trọng tâm là **trình thiết kế luồng** (UI-04-04) và các lớp nổi gắn với nó: cấu hình chặng, trình soạn biểu thức, trình ánh xạ dữ liệu, Kamelet, Pipe, chạy thử, gửi duyệt. Đây là các màn thay cho "Productivity Tooling" của hệ cũ, nơi kỹ sư tích hợp làm việc nhiều giờ mỗi ngày, nên được đặc tả tới từng vùng, từng nút, từng trạng thái, từng thao tác chuột và bàn phím. Giao diện theo design system Liquid Glass trên antd v6 (D03-05): kính mờ chỉ dùng cho lớp điều hướng và lớp nổi; canvas, bảng, biểu mẫu, khung mã dùng nền đặc để đạt WCAG 2.2 AA. Mục 3 liệt kê từng màn của Bus và Tooling cũ được giữ lại thành màn nào trong Datahub.
 
-## 1. Mục đích, phạm vi và tài liệu liên quan
+## 1. Giới thiệu
+
+Chương này nói tài liệu dùng để làm gì, phủ những màn nào, ai cần đọc phần nào, các thuật ngữ và tài liệu tham chiếu, và cách các chương được sắp xếp. Đây là phần mở đầu chung cho mọi tập màn hình theo K-TRINH-BAY §5.
 
 ### 1.1. Mục đích
 
@@ -25,29 +29,33 @@ Thứ tự ưu tiên khi mâu thuẫn: D02-08 (phân quyền), D03-05 (design sy
 
 ### 1.2. Phạm vi và mức chi tiết
 
-| Mã | Màn hình | Mẫu bố cục (D03-06-00 §4) | Mức chi tiết |
-|---|---|---|---|
-| UI-04-01 | Danh sách luồng | PTN-01 Danh sách | Đầy đủ |
-| UI-04-02 | Chi tiết luồng (11 tab) | PTN-02 Chi tiết | Đầy đủ |
-| UI-04-03 | Tạo luồng (trình hướng dẫn) | PTN-05 Wizard | Đầy đủ |
-| UI-04-04 | **Trình thiết kế luồng** | PTN-07 Designer (canvas) | **Siêu chi tiết** |
-| UI-04-05 | **Cấu hình chặng mở rộng** | Lớp nổi trên UI-04-04 | **Siêu chi tiết** |
-| UI-04-06 | **Trình soạn biểu thức** | Lớp nổi trên UI-04-04, 05 | **Siêu chi tiết** |
-| UI-04-07 | **Trình ánh xạ dữ liệu** | Lớp nổi toàn màn trên UI-04-04 | **Siêu chi tiết** |
-| UI-04-08 | **Trình soạn Kamelet** | Chế độ của UI-04-04 | **Siêu chi tiết** |
-| UI-04-09 | **Trình soạn Pipe** | Chế độ của UI-04-04 | Rất chi tiết |
-| UI-04-10 | Cấu hình cấp tệp và bean | Drawer trên UI-04-04 | Rất chi tiết |
-| UI-04-11 | **Chạy thử** | Drawer trên UI-04-04 và trang riêng | **Siêu chi tiết** |
-| UI-04-12 | Nhật ký chạy thử | PTN-01 + chi tiết | Đầy đủ |
-| UI-04-13 | Ca kiểm thử | Drawer trên UI-04-04 | Rất chi tiết |
-| UI-04-14 | **Hàng đợi duyệt và màn duyệt** | PTN-10 Hộp việc và duyệt | **Siêu chi tiết** |
-| UI-04-15 | **Phát hành, triển khai, quay lui** | Drawer + tab của UI-04-02 | **Siêu chi tiết** |
-| UI-04-16 | So sánh phiên bản | Trang riêng (dùng `CMP-DiffViewer`) | Đầy đủ |
-| UI-04-17 | Danh mục thành phần | PTN-08 Cây + bảng | Đầy đủ |
-| UI-04-18 | Nhập luồng hệ cũ | PTN-09 Nhập dữ liệu có xem trước | Đầy đủ |
-| UI-04-19 | Thư viện khuôn mẫu | PTN-01 dạng lưới thẻ | Đầy đủ |
-| UI-04-20 | Tham số PH-04 | Màn tham số chung PH-18 | Mô tả cách nhúng |
-| UI-04-21 | Không gian làm việc | PTN-01 + PTN-04 | Đầy đủ |
+Bảng dưới liệt kê đủ 21 màn của PH-04 với mẫu bố cục, mức chi tiết và các FR mà màn hiện thực (theo FRS §12). Màn in đậm là màn viết ở mức siêu chi tiết vì kỹ sư tích hợp làm việc lâu nhất ở đó.
+
+| Mã | Màn hình | Mẫu bố cục (D03-06-00 §4) | Mức chi tiết | FR-04 |
+|---|---|---|---|---|
+| UI-04-01 | Danh sách luồng | PTN-01 Danh sách | Đầy đủ | 001 |
+| UI-04-02 | Chi tiết luồng (11 tab) | PTN-02 Chi tiết | Đầy đủ | 002, 004, 006, 033, 043, 050…053, 083 |
+| UI-04-03 | Tạo luồng (trình hướng dẫn) | PTN-05 Wizard | Đầy đủ | 003, 005, 025 |
+| UI-04-04 | **Trình thiết kế luồng** | PTN-07 Designer (canvas) | **Siêu chi tiết** | 010…017, 021…024, 026, 027, 040 |
+| UI-04-05 | **Cấu hình chặng mở rộng** | Lớp nổi trên UI-04-04 | **Siêu chi tiết** | 014, 016, 022 |
+| UI-04-06 | **Trình soạn biểu thức** | Lớp nổi trên UI-04-04, 05 | **Siêu chi tiết** | 015 |
+| UI-04-07 | **Trình ánh xạ dữ liệu** | Lớp nổi toàn màn trên UI-04-04 | **Siêu chi tiết** | 020 |
+| UI-04-08 | **Trình soạn Kamelet** | Chế độ của UI-04-04 | **Siêu chi tiết** | 018 |
+| UI-04-09 | **Trình soạn Pipe** | Chế độ của UI-04-04 | Rất chi tiết | 019 |
+| UI-04-10 | Cấu hình cấp tệp và bean | Drawer trên UI-04-04 | Rất chi tiết | 021, 084 |
+| UI-04-11 | **Chạy thử** | Drawer trên UI-04-04 và trang riêng | **Siêu chi tiết** | 030, 033 |
+| UI-04-12 | Nhật ký chạy thử | PTN-01 + chi tiết | Đầy đủ | 032 |
+| UI-04-13 | Ca kiểm thử | Drawer trên UI-04-04 | Rất chi tiết | 031 |
+| UI-04-14 | **Hàng đợi duyệt và màn duyệt** | PTN-10 Hộp việc và duyệt | **Siêu chi tiết** | 041, 043 |
+| UI-04-15 | **Phát hành, triển khai, quay lui** | Drawer + tab của UI-04-02 | **Siêu chi tiết** | 042, 044, 045, 050, 051 |
+| UI-04-16 | So sánh phiên bản | Trang riêng (dùng `CMP-DiffViewer`) | Đầy đủ | 043 |
+| UI-04-17 | Danh mục thành phần | PTN-08 Cây + bảng | Đầy đủ | 080, 081 |
+| UI-04-18 | Nhập luồng hệ cũ | PTN-09 Nhập dữ liệu có xem trước | Đầy đủ | 082 |
+| UI-04-19 | Thư viện khuôn mẫu | PTN-01 dạng lưới thẻ | Đầy đủ | 025 |
+| UI-04-20 | Tham số PH-04 | Màn tham số chung PH-18 | Mô tả cách nhúng | 084 |
+| UI-04-21 | Không gian làm việc | PTN-01 + PTN-04 | Đầy đủ | 007 |
+
+: Danh sách 21 màn PH-04, mẫu bố cục, mức chi tiết và FR hiện thực
 
 ### 1.3. Tài liệu liên quan
 
@@ -62,6 +70,54 @@ Thứ tự ưu tiên khi mâu thuẫn: D02-08 (phân quyền), D03-05 (design sy
 | D03-06-00 | Kiến trúc thông tin, mẫu màn | Menu, URL, PTN-01…14 |
 | `docs/ui_ux_rule.md`, `docs/07-srs/SRS-PH-04-designer.md` | Quy tắc UX và SRS trình thiết kế của repo | Nguồn tham khảo, số liệu catalog |
 | `apps/console/src/flows/**` | Mã trình thiết kế hiện có | Hiện trạng; mục 30 ghi ánh xạ mã hiện có sang thiết kế |
+
+: Tài liệu tham chiếu của tập màn hình PH-04
+
+### 1.4. Người đọc
+
+Mỗi nhóm người đọc cần một phần khác nhau của tài liệu. Bảng dưới chỉ phần cần đọc trước để không phải đọc hết gần 300 KB nội dung.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Kỹ sư giao diện dh-console | Chương 2, 4…6; bảng đặc tả và mọi mục con của từng màn ở chương 7…26; chương 27 kiến trúc mã |
+| Thiết kế UX/UI | Chương 2, 5; wireframe, giải phẫu phần tử và ảnh hi-fi của từng màn; mục 10 trọn vẹn |
+| Kiểm thử viên | Bảng trạng thái, thông điệp và bàn phím của từng màn; §5.3 câu hiển thị theo mã lỗi; mục 10.23 tiêu chí nghiệm thu; chương 29 |
+| Phân tích nghiệp vụ | Bảng đặc tả đầu mỗi màn (FR, quyền, API); chương 3 màn hệ cũ; chương 28 ma trận vai trò |
+| Kiến trúc sư | Chương 2.1 bản đồ vật liệu, 10.14 đồng bộ YAML, 10.16 lưu và xung đột, 10.22 ngân sách hiệu năng, chương 27 |
+| Hội đồng thẩm định | Tóm tắt, chương 3, ảnh hi-fi của UI-04-04, 07, 11, 14 |
+
+: Người đọc và phần cần đọc
+
+### 1.5. Thuật ngữ và viết tắt
+
+Thuật ngữ nghiệp vụ dùng chung với D02-03-PH04 §1 và §4; cách gọi thống nhất trên giao diện ở mục 2.3. Bảng dưới chỉ gồm các từ và viết tắt riêng của tập màn hình.
+
+| Thuật ngữ, viết tắt | Nghĩa trong tài liệu này |
+|---|---|
+| Màn (`UI-04-nn`) | Một trang hoặc một lớp nổi có đặc tả riêng; lớp nổi không có đường dẫn riêng (mục 4.2) |
+| `PTN-nn` | Mẫu bố cục màn của D03-06-00 §4 (danh sách, chi tiết, wizard, designer…) |
+| `CMP-*` | Thành phần giao diện chuẩn của design system D03-05-03, 04 |
+| `ST-nn` | Trạng thái màn dùng chung (chương 6) |
+| Chặng (node, step) | Một bước của route trên canvas, ứng với một phần tử Camel |
+| Chặng chuẩn | Một trong chín khối `dh-stage-*` bắt buộc với luồng đối ngoại (BR-04-002) |
+| Canvas | Vùng vẽ sơ đồ luồng ④ của trình thiết kế |
+| Inspector | Ngăn thuộc tính ⑤ bên phải trình thiết kế |
+| Thanh thực thể | Dải tab ② chuyển giữa route, `routeConfiguration`, bean, Kamelet, Pipe trong một tệp |
+| Glass (kính mờ) | Vật liệu Liquid Glass (D03-05-01), chỉ dùng cho lớp điều hướng và lớp nổi |
+| Wireframe | Khung bố cục dạng chữ trong khối mã; ảnh hi-fi là bản dựng màu ở cuối mỗi màn |
+| Hi-fi | Bản dựng giao diện độ trung thực cao, chụp 1440 px, dữ liệu minh họa tenant T68 |
+| `VR-nn`, `LINT-04-nn` | Quy tắc kiểm tra hợp lệ của FR-04-023; gợi ý thiết kế không chặn (mục 10.12) |
+| SSE | Server-Sent Events, luồng sự kiện máy chủ đẩy về trình duyệt |
+| a11y | Khả năng truy cập (accessibility), theo WCAG 2.2 AA |
+| IE, IA, TO, TA, SO, PA, VW, AU | Vai trò theo FRS §3.1: kỹ sư tích hợp, người duyệt, vận hành, quản trị tenant, ATTT, quản trị nền tảng, người xem, kiểm toán |
+
+: Thuật ngữ và viết tắt riêng của tập màn hình
+
+### 1.6. Cấu trúc tài liệu
+
+Chương 2…6 là quy ước chung áp cho mọi màn: nguyên tắc thiết kế, màn hệ cũ, điều hướng, nhãn và thông điệp, trạng thái dùng chung. Chương 7…26 đặc tả từng màn theo thứ tự mã; mỗi màn mở bằng một khối đặc tả (mục đích, người dùng, FR, hệ cũ thay thế, đường dẫn, mẫu, quyền, API, trạng thái, thông báo), sau đó là wireframe, thành phần, trường, hành động, trạng thái, bàn phím và cuối cùng là ảnh hi-fi có thuyết minh. Chương 27…31 là kiến trúc mã, ma trận vai trò, kế hoạch kiểm thử, hiện trạng mã và câu hỏi mở. Cuối tài liệu là đề nghị đồng bộ cho tập khác và lịch sử phiên bản.
+
+Ảnh hi-fi sinh bằng `ph04/hifi/gen_hifi.py` (HTML tĩnh dùng `../../ph07/hifi/hifi.css`) và chụp bằng `ph04/hifi/shot.js` (Playwright, 1440 × 900, `deviceScaleFactor` 1). Chạy lại: `python3 gen_hifi.py && node shot.js` trong thư mục `ph04/hifi`.
 
 ## 2. Nguyên tắc thiết kế áp dụng cho PH-04
 
@@ -83,6 +139,8 @@ PH-04 có màn nhiều lớp chồng nhất của console (canvas, ngăn trái, 
 | Drawer chạy thử, ca kiểm thử, cấu hình cấp tệp | `CMP-Drawer` | Khung `glass-modal`; vùng nội dung đặc | | |
 | Khung mã YAML, JQ, JSON | `CMP-CodeEditor`, `CMP-JsonViewer` | **Đặc** `color-surface-solid-2` | | Mã cần tương phản cao |
 | Thanh toàn màn hình nổi (chế độ F) | `CMP-FullscreenBar` | `glass-overlay` | | D03-06-00 §3.9 |
+
+: Bản đồ vật liệu của PH-04
 
 Khi người dùng bật "Giảm trong suốt" hoặc hệ điều hành báo `prefers-reduced-transparency`, hoặc cơ chế tự hạ cấp trên máy yếu kích hoạt (D03-05-01 §7), mọi lớp glass chuyển sang `glass-lite-tint` hoặc `glass-off-tint`. Không màn nào của PH-04 dựa vào hiệu ứng trong suốt để truyền thông tin.
 
@@ -158,14 +216,16 @@ Theo Q4, các màn có giá trị vận hành của hệ cũ được giữ ch�
 | Hộp sửa pom | Tooling | 022 | Loại bỏ | — | Lý do ATTT (D00-03 §6) |
 | Hộp nhập component JAR | Tooling | 027 | Loại bỏ | UI-04-08 Kamelet tự viết; "Đề xuất thành phần mới" ở UI-04-17 | Lý do ATTT; thay bằng quy trình đăng ký Kamelet PH-05 |
 
+: Màn hệ cũ được giữ lại thành gì
+
 Bảng phủ đủ 41 mục LGC-BUS và 29 mục LGC-TOOL của FRS §9. Hai mục bị loại bỏ (LGC-TOOL-022, 027) đúng quyết định ngày 21/11/2026.
 
 ## 4. Điều hướng
 
 ### 4.1. Sơ đồ điều hướng
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Sơ đồ điều hướng giữa các màn PH-04"}
+flowchart TB
     M["Menu Tích hợp › Luồng tích hợp"] --> L["UI-04-01 Danh sách luồng"]
     L -->|"Tạo luồng"| C["UI-04-03 Tạo luồng"]
     C -->|"Tạo"| D["UI-04-04 Trình thiết kế"]
@@ -185,6 +245,8 @@ flowchart LR
     M3["Menu Tích hợp › Khuôn mẫu luồng"] --> TPL["UI-04-19"]
     L -->|"Nhập luồng hệ cũ"| LEG["UI-04-18"]
 ```
+
+Hình cho thấy người dùng luôn vào trình thiết kế UI-04-04 từ danh sách hoặc chi tiết luồng, các lớp nổi (cấu hình chặng, biểu thức, ánh xạ, chạy thử) đều mở từ trình thiết kế, còn chuỗi gửi duyệt, duyệt, phát hành đi qua UI-04-14 tới UI-04-15. Ba mục menu riêng dẫn thẳng tới danh mục thành phần, khuôn mẫu và nhập luồng hệ cũ.
 
 ### 4.2. Bảng đường dẫn React Router
 
@@ -207,6 +269,8 @@ flowchart LR
 | `/tich-hop/khong-gian` | UI-04-21 | | — |
 | `/quan-tri/tham-so?nhom=04` | UI-04-20 | | — |
 
+: Bảng đường dẫn React Router
+
 Lớp nổi (UI-04-05, 06, 07, 10, 11 drawer, 13) không có đường dẫn riêng; chúng được mở lại khi tải lại trang nhờ tham số `chang` và tham số `lop` (`cau-hinh`, `bieu-thuc`, `anh-xa`, `cap-tep`, `chay-thu`, `ca-kiem-thu`) trên URL của UI-04-04.
 
 ### 4.3. Menu và phân quyền hiển thị
@@ -219,6 +283,8 @@ Lớp nổi (UI-04-05, 06, 07, 10, 11 drawer, 13) không có đường dẫn ri�
 | Khuôn mẫu luồng | `PERM-04-create` hoặc `PERM-04-catalog-admin` | — |
 | Không gian làm việc | `PERM-04-admin` | — |
 
+: Menu và phân quyền hiển thị
+
 Trình thiết kế không có mục menu riêng (D03-06-00 §2.3.2): người dùng luôn vào từ danh sách hoặc chi tiết luồng để có ngữ cảnh.
 
 ### 4.4. Breadcrumb và tiêu đề tab trình duyệt
@@ -229,6 +295,8 @@ Trình thiết kế không có mục menu riêng (D03-06-00 §2.3.2): người d
 | UI-04-02 | Tích hợp › Luồng tích hợp › {tên luồng} | {tên luồng} · Luồng · Datahub |
 | UI-04-04 | (không có breadcrumb; thanh công cụ có nút ‹ quay lại và tên luồng) | ✎ {tên luồng} v{n} · Thiết kế · Datahub (dấu ● trước tên khi chưa lưu) |
 | UI-04-14 màn duyệt | Tích hợp › Duyệt luồng › {tên luồng} v{n} | Duyệt {tên luồng} v{n} · Datahub |
+
+: Breadcrumb và tiêu đề tab trình duyệt
 
 ## 5. Quy ước hiển thị dùng chung trong PH-04
 
@@ -272,6 +340,8 @@ Mọi nhãn dùng `CMP-StatusTag` với sắc thái của D03-05-02 §4.4, luôn
 | | `PARTIAL` | Xác nhận một phần ({k}/{n}) | warning | `CircleDashed` |
 | | `REJECTED` | Bị từ chối | error | `ShieldX` |
 
+: Nhãn trạng thái
+
 ### 5.2. Biểu tượng và màu nhóm thành phần
 
 Chặng trên canvas và mục trong bảng thành phần có dải màu nhóm 4 px ở cạnh trái và biểu tượng nhóm. Bảy nhóm đầu từ "Định tuyến" tới "Bảo mật" là bảy nhóm nghiệp vụ của Tooling cũ giữ nguyên theo FR-04-012; ba nhóm "Điểm vào", "Chặng chuẩn Datahub", "Khác" là bổ sung của thiết kế giao diện. Màu nhóm lấy từ bảng màu biểu đồ của D03-05-02 §4.5 (`color-chart-1…8`), không dùng màu trạng thái để tránh nhầm với lỗi, cảnh báo.
@@ -289,6 +359,8 @@ Chặng trên canvas và mục trong bảng thành phần có dải màu nhóm 4
 | Chặng chuẩn Datahub | Kamelet nền `dh-*` | `Hexagon` | `color-accent` |
 | Khác | còn lại | `Box` | `color-neutral-solid` |
 
+: Biểu tượng và màu nhóm thành phần
+
 ### 5.3. Thông điệp lỗi ERR-04 sang câu hiển thị
 
 Giao diện không hiện `detail` thô của máy chủ khi đã có câu dưới đây; câu có tham số trong `{}` lấy từ trường mở rộng của lỗi RFC 9457. Mọi thông điệp lỗi kèm "Mã lỗi {code} · Mã truy vết {traceId}" và nút "Sao chép" (FR-00-080).
@@ -298,8 +370,10 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-001 | Không tìm thấy luồng, hoặc bạn không có quyền xem luồng này. | Nút "Về danh sách luồng" |
 | ERR-04-002 | Mã luồng "{code}" đã được dùng trong tỉnh. | Gợi ý mã khác: "{code}-2" |
 | ERR-04-003 | Bạn chưa có quyền sửa trong không gian làm việc "{workspace}". | "Liên hệ quản trị không gian làm việc: {owner}" |
+| ERR-04-004 | Không tìm thấy phiên bản v{n} của luồng. | "Mở phiên bản mới nhất" |
 | ERR-04-005 | Phiên bản đang ở trạng thái "{status}" nên không thể {action}. | Theo trạng thái |
 | ERR-04-006 | {user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu. | Mở hộp xung đột (mục 10.16.3) |
+| ERR-04-007 | Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại. | "Tải lại"; bản nháp cục bộ giữ nguyên (mục 10.16.2) |
 | ERR-04-008 | YAML có lỗi cú pháp ở dòng {line}, cột {column}: {message} | Nhảy tới dòng |
 | ERR-04-009 | Luồng còn {n} lỗi cần sửa trước khi {action}. | Mở bảng Vấn đề |
 | ERR-04-010 | Phát hiện giá trị giống bí mật ở chặng "{node}", trường "{field}". Không được ghi bí mật vào luồng. | "Chọn kết nối" |
@@ -311,22 +385,38 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-015 | Bạn đã tạo, đóng góp hoặc gửi duyệt phiên bản này nên không thể tự duyệt. Cần một người duyệt khác. | — |
 | ERR-04-016 | Luồng đã có bản nháp v{n} do {user} tạo. | "Mở bản nháp" |
 | ERR-04-017 | Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước. | Danh sách phụ thuộc |
+| ERR-04-018 | Yêu cầu này đã được gửi với nội dung khác. Tải lại trang rồi thử lại. | "Tải lại" |
 | ERR-04-019 | Môi trường chạy thử đang bận hoặc chưa sẵn sàng (tỉnh đang có {n}/{max} lần chạy thử đồng thời). Thử lại sau ít phút. | "Thử lại"; "Xem lần chạy đang chờ" |
 | ERR-04-020 | Lần chạy thử quá {n} giây và đã dừng ở chặng "{node}". | "Mở kết quả" |
 | ERR-04-021 | Bản tin mẫu vượt {limit}. | — |
 | ERR-04-022 | Không ghi được vào kho cấu hình. Luồng chưa được phát hành. | "Thử lại"; mã truy vết để báo hỗ trợ |
 | ERR-04-023 | Phiên bản phải đồng bộ, khỏe ở {previousEnv} (và chạy ổn định đủ {minutes} phút) trước khi lên {env}, hoặc luồng chưa triển khai ở {env}. | — |
 | ERR-04-025 | Vui lòng nhập lý do (ít nhất {min} ký tự). | Focus ô lý do |
+| ERR-04-027 | Không tìm thấy không gian làm việc "{workspace}". | "Chọn không gian khác" |
+| ERR-04-028 | Mã không gian làm việc đã được dùng. | Focus ô mã |
+| ERR-04-026 | Mỗi trang tối đa 100 dòng. | Bộ chọn số dòng |
 | ERR-04-029 | Không hồ sơ runtime nào có đủ thành phần: {components}. | "Đề xuất thành phần" |
+| ERR-04-030 | Không tìm thấy đối tượng được yêu cầu (lần chạy thử, ca kiểm thử, triển khai hoặc lệnh). | Trang lỗi của tài nguyên con |
 | ERR-04-031 | Câu lệnh SQL ở chặng "{node}" không được phép: {reason}. Luồng chỉ được đọc dữ liệu. | Liên kết quy định Q359 |
+| ERR-04-032 | Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt {limit}. | "Chọn tệp khác" (UI-04-18) |
 | ERR-04-033 | Định nghĩa luồng vượt {limit}. Tách thành nhiều luồng hoặc luồng con. | — |
+| ERR-04-034 | Luồng đã gỡ nên chỉ xem được, không sửa được. | "Nhân bản" |
+| ERR-04-035 | Thành phần "{component}" không có trong danh mục của phiên bản runtime này. | "Xem danh mục thành phần" (UI-04-17) |
 | ERR-04-036 | Đã có Kamelet tên "{name}". | — |
 | ERR-04-037 | Biểu thức {language} có lỗi ở vị trí {pos}: {message} | Tô vị trí |
 | ERR-04-038 | Ánh xạ tới trường "{target}" không hợp lệ: {reason} | — |
+| ERR-04-039 | Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh. | "Chọn khuôn khác" (UI-04-19) |
 | ERR-04-040 | Không quay lui được về v{n} vì phiên bản đó dùng thành phần "{component}" nay không còn được phép. | "Xem chính sách thành phần" |
 | ERR-04-041 | Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn. | — |
+| ERR-04-042 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | "Mở trình thiết kế" (mục 10.17) |
+| ERR-04-043 | HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT. | Bảng Vấn đề; "Xem HTTT ở PH-01" |
+| ERR-04-045 | Bạn không có quyền thực hiện thao tác này. | — |
+| ERR-04-047 | Chưa lấy được dữ liệu từ {phân hệ}. Thử lại sau. | Khối dữ liệu phụ thuộc (kết nối, số liệu, lịch sử); "Thử lại" |
+| ERR-04-049 | Giá trị của {tham số} không hợp lệ. | Dưới trường, bộ lọc |
 
-Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi.
+: Câu hiển thị theo mã lỗi ERR-04 (bản 0.2 đồng bộ với D02-03-PH04 §9.2 và D02-04-PH04 §8.4)
+
+Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi. Bản 0.2 bổ sung câu cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049, lấy nguyên văn từ D02-04-PH04 §8.4 và D02-03-PH04 §9.2, để không màn nào phải hiện `title` thô.
 
 ## 6. Trạng thái màn hình dùng chung
 
@@ -345,11 +435,35 @@ Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển 
 | ST-11 | Tác vụ nền | `CMP-JobProgress` trong drawer; khay tác vụ nền trên thanh trên |
 | ST-12 | Phiên sắp hết hạn | `CMP-SessionTimeoutDialog`; trình thiết kế tự lưu trước khi đăng xuất |
 
+: Trạng thái màn hình dùng chung
+
 ## 7. UI-04-01 Danh sách luồng
 
-**Mục đích.** Điểm vào của PH-04: tìm luồng, xem nhanh tình trạng ở từng môi trường, mở chi tiết hoặc trình thiết kế. Thay màn danh sách agent của Bus (LGC-BUS-001…005) và thanh Project của Tooling (LGC-TOOL-001). FR-04-001; vào UI-04-03 (FR-04-003, 005).
-**Đường dẫn.** `/tich-hop/luong`. **Mẫu.** PTN-01. **Quyền.** `PERM-04-read`.
+Màn đầu tiên người dùng thấy khi vào nhóm menu Tích hợp. Khối đặc tả dưới tóm tắt màn; các mục con mô tả bố cục, thành phần, cột, trạng thái và phím tắt.
+
+::: dac-ta
+**Mục đích.** Điểm vào của PH-04: tìm luồng, xem nhanh tình trạng ở từng môi trường, mở chi tiết hoặc trình thiết kế.
+
+**Người dùng chính.** Mọi vai trò có `PERM-04-read` (IE, IA, TO, TA, SO, PA, VW, AU); IE tạo luồng từ đây.
+
+**FR hiện thực.** FR-04-001; vào UI-04-03 (FR-04-003, 005).
+
+**Thay hệ cũ.** Màn danh sách agent của Bus (LGC-BUS-001…005) và thanh Project của Tooling (LGC-TOOL-001).
+
+**Đường dẫn.** `/tich-hop/luong`.
+
+**Mẫu.** PTN-01.
+
+**Quyền.** `PERM-04-read`; nút "Tạo luồng", "Nhập luồng hệ cũ" cần `PERM-04-create`.
+
 **API.** API-04-010 (danh sách luồng, có `facets` đếm theo trạng thái và tình trạng triển khai gộp theo môi trường), API-04-001 (không gian làm việc của tôi).
+
+**Trạng thái đối tượng.** Nhãn luồng Nháp, Chờ duyệt, Đã duyệt, Đang chạy, Tạm dừng, Suy giảm, Đã gỡ; chấm triển khai theo môi trường (mục 5.1).
+
+**Trạng thái màn.** ST-01, ST-02, ST-03, ST-04, ST-05, ST-06 theo mục 7.4.
+
+**Thông báo.** ERR-04-001 khi mở mã luồng không xem được; ERR-04-045 khi thiếu quyền; ERR-04-048 khi làm mới quá dày.
+:::
 
 ### 7.1. Wireframe
 
@@ -393,6 +507,8 @@ Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt
 | 12 | Hàng mở rộng | `CMP-DataTable` expandable | Số route, không gian, nhãn, mô tả 2 dòng, lần chạy thử gần nhất | | Mở bằng mũi tên hoặc phím → |
 | 13 | Thanh hàng loạt | `CMP-BulkActionBar` | | | Mỗi hành động hàng loạt mở hộp xác nhận nêu đúng số dòng |
 
+: UI-04-01 · Thành phần
+
 ### 7.3. Cột bảng
 
 | Cột | Rộng | Sắp xếp | Hiển thị |
@@ -407,6 +523,8 @@ Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt
 | Cập nhật | 140 px | Có (mặc định giảm dần) | Thời gian tương đối, tooltip tuyệt đối và người cập nhật |
 | ⋯ | 48 px, ghim phải | | Menu: "Mở trình thiết kế" (E), "Xem chi tiết", "Chạy thử", "Nhân bản" (FR-04-005), "Tải YAML", "Xem nhật ký trên PH-13", "Gỡ luồng" (nguy hiểm, FR-04-006) — mỗi mục theo `allowedActions` |
 
+: UI-04-01 · Cột bảng
+
 ### 7.4. Trạng thái màn
 
 | Trạng thái | Hiển thị |
@@ -417,15 +535,45 @@ Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt
 | Người chỉ xem, chưa thuộc không gian nào | Bảng hiện luồng công khai trong tỉnh; dải thông tin "Bạn đang xem với quyền chỉ đọc. Để thiết kế luồng, xin quản trị thêm bạn vào một không gian làm việc." |
 | Lỗi tải | ST-05 trong vùng bảng; thanh lọc vẫn dùng được |
 
+: UI-04-01 · Trạng thái màn
+
 ### 7.5. Tương tác và phím tắt
 
 `/` focus ô tìm; `↑`/`↓` chuyển dòng; `Enter` mở chi tiết; `E` mở trình thiết kế của dòng đang focus; `Space` chọn dòng; `Ctrl+A` chọn trang hiện tại. Nhấp giữa hoặc `Ctrl`+nhấp mã luồng mở tab mới. Danh sách tự làm mới tình trạng môi trường mỗi 30 giây khi tab trình duyệt đang hiện (không làm mất dòng đang focus).
 
+### 7.6. Bản hi-fi
+
+![UI-04-01 Danh sách luồng (ảnh hi-fi)](ph04/hifi/ui-04-01.png)
+
+Ảnh cho thấy thanh đếm theo trạng thái ở đầu trang, dải điều kiện đang lọc và cột Test, Stg, Prod với chấm trạng thái triển khai; dòng `ho-tich-ket-hon` có chấm vàng ở PROD (suy giảm), `thue-dat-dong-bo` chấm đỏ (tạm dừng, lỗi). Mọi chấm có nhãn chữ trong chú giải cuối bảng.
+
 ## 8. UI-04-02 Chi tiết luồng
 
-**Mục đích.** Một trang cho mọi thứ về một luồng: thông tin, route, điểm kết nối, thuộc tính, sơ đồ, mã nguồn, phiên bản, triển khai ở từng môi trường, chạy thử, giám sát, lịch sử. Thay màn chi tiết agent và các tab route của Bus (LGC-BUS-006…008, 015–027). FR-04-002, 004, 006, 033, 043, 050…053, 083.
-**Đường dẫn.** `/tich-hop/luong/:ma?tab=`. **Mẫu.** PTN-02. **Quyền.** `PERM-04-read` + quyền xem không gian (khi `04.workspace.enforce` bật).
+Trang chi tiết gom mọi thông tin của một luồng vào một chỗ, thẻ môi trường đặt trên cùng vì đó là câu hỏi đầu tiên của người vận hành.
+
+::: dac-ta
+**Mục đích.** Một trang cho mọi thứ về một luồng: thông tin, route, điểm kết nối, thuộc tính, sơ đồ, mã nguồn, phiên bản, triển khai ở từng môi trường, chạy thử, giám sát, lịch sử.
+
+**Người dùng chính.** Mọi vai trò có `PERM-04-read`; IA, TA, TO, SO dùng thanh hành động phát hành, tạm dừng.
+
+**FR hiện thực.** FR-04-002, 004, 006, 033, 043, 050…053, 083.
+
+**Thay hệ cũ.** Màn chi tiết agent và các tab route của Bus (LGC-BUS-006…008, 015–027).
+
+**Đường dẫn.** `/tich-hop/luong/:ma?tab=`.
+
+**Mẫu.** PTN-02.
+
+**Quyền.** `PERM-04-read` + quyền xem không gian (khi `04.workspace.enforce` bật); từng nút theo mục 8.2.
+
 **API.** API-04-012 (chi tiết luồng), 013 (sửa thông tin), 016 (phụ thuộc), 024 (danh sách phiên bản), 041 (lần chạy thử), 054 (triển khai theo môi trường), 060 (tình trạng runtime), 061 (lệnh điều khiển), 062 (điểm kết nối), 063 (số liệu nhúng PH-13), 091 (lịch sử, lấy từ PH-13).
+
+**Trạng thái đối tượng.** Nhãn luồng, phiên bản, triển khai và lệnh điều khiển (mục 5.1).
+
+**Trạng thái màn.** ST-01, ST-02, ST-05 (ERR-04-001), luồng đã gỡ, lệnh đang xử lý (mục 8.4).
+
+**Thông báo.** ERR-04-001, 017 (gỡ còn phụ thuộc), 023 (thứ tự môi trường), 024 (lệnh chưa xác nhận), 025 (thiếu lý do), 041 (đóng băng).
+:::
 
 ### 8.1. Wireframe
 
@@ -457,6 +605,8 @@ Thẻ môi trường (`CMP-EnvCard`) là thông tin quan trọng nhất của tr
 | Tạm dừng ▾ | `PERM-04-operate` hoặc `PERM-04-emergency-stop` | Có triển khai `SYNCED` ở môi trường chọn | Mục: "Tạm dừng ở {env}…", "Tiếp tục ở {env}…" (`operate`), "Dừng khẩn ở {env}…" (`emergency-stop`, màu nguy hiểm) |
 | ⋯ | | | "Sửa thông tin" (FR-04-004), "Nhân bản", "Tải YAML", "Tải gói luồng", "Lưu làm khuôn mẫu" (TA, PA), "Xem nhật ký trên PH-13", "Gỡ luồng" (`PERM-04-delete`) |
 
+: UI-04-02 · Thanh hành động tiêu đề
+
 ### 8.3. Các tab
 
 | Tab | Nội dung | Thành phần chính | LGC, FR |
@@ -473,15 +623,45 @@ Thẻ môi trường (`CMP-EnvCard`) là thông tin quan trọng nhất của tr
 | Giám sát | Bảng điều khiển PH-13 nhúng, lọc theo luồng: lượng bản tin theo giây, lỗi, độ trễ, CPU, bộ nhớ từng bản sao, biểu đồ theo route | `CMP-EmbeddedDashboard` | BUS-007, 015, 016, 019; FR-04-051, 053 |
 | Lịch sử | Sự kiện thay đổi: tạo, lưu (gộp 10 phút), gửi duyệt, duyệt, phát hành, lệnh; ai, khi nào, lý do | `CMP-AuditTrail` | FR-04-083 |
 
+: UI-04-02 · Các tab
+
 ### 8.4. Trạng thái màn
 
 Không tìm thấy hoặc không có quyền đối tượng: ST-05 với ERR-04-001 (không phân biệt hai trường hợp). Luồng `RETIRED`: banner "Luồng đã gỡ ngày {date} bởi {user}. Lý do: {reason}." và mọi hành động chỉnh sửa ẩn, chỉ còn "Nhân bản". Có lệnh điều khiển đang xử lý: thẻ môi trường hiện "Đang tạm dừng… 2/3 bản sao đã xác nhận" và nút "Tạm dừng", "Tiếp tục" vô hiệu kèm lý do.
 
+### 8.5. Bản hi-fi
+
+![UI-04-02 Chi tiết luồng, tab Tổng quan (ảnh hi-fi)](ph04/hifi/ui-04-02.png)
+
+Ba thẻ môi trường nằm ngay dưới tiêu đề nói phiên bản nào chạy ở đâu và có khỏe không; thanh hành động theo quyền ở góc phải; tab Tổng quan có khối Phụ thuộc liệt kê kết nối, topic `t68.*`, lược đồ, bảng mã và API dùng luồng.
+
 ## 9. UI-04-03 Tạo luồng
 
-**Mục đích.** Tạo luồng mới đủ thông tin quản lý ngay từ đầu, xuất phát từ khuôn mẫu để có sẵn chín chặng chuẩn. Thay hộp thêm project của Tooling (LGC-TOOL-002) và hộp thêm chương trình có kiểm tra kết nối (LGC-BUS-013). FR-04-003, 005, 025.
-**Đường dẫn.** `/tich-hop/luong/moi?buoc=`. **Mẫu.** PTN-05, ba bước. **Quyền.** `PERM-04-create` và mức `EDIT` ở ít nhất một không gian (khi `04.workspace.enforce` bật).
+Trình hướng dẫn ba bước dẫn kỹ sư tích hợp từ chọn điểm xuất phát tới khi luồng mở trong trình thiết kế.
+
+::: dac-ta
+**Mục đích.** Tạo luồng mới đủ thông tin quản lý ngay từ đầu, xuất phát từ khuôn mẫu để có sẵn chín chặng chuẩn.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-003, 005, 025.
+
+**Thay hệ cũ.** Hộp thêm project của Tooling (LGC-TOOL-002) và hộp thêm chương trình có kiểm tra kết nối (LGC-BUS-013).
+
+**Đường dẫn.** `/tich-hop/luong/moi?buoc=`.
+
+**Mẫu.** PTN-05, ba bước.
+
+**Quyền.** `PERM-04-create` và mức `EDIT` ở ít nhất một không gian (khi `04.workspace.enforce` bật).
+
 **API.** API-04-011 (tạo luồng), API-04-080, 081 (khuôn mẫu), API-04-027 (nhập YAML), API-04-014 (nhân bản), API-04-030 (kiểm tra sơ bộ).
+
+**Trạng thái đối tượng.** Luồng mới ở `DRAFT`, phiên bản v1 `DRAFT`.
+
+**Trạng thái màn.** ST-01 khi nạp khuôn; ST-06 khi không có không gian `EDIT`; ST-10 khi rời giữa chừng (mục 9.3).
+
+**Thông báo.** ERR-04-002 (trùng mã), 008 (YAML lỗi cú pháp), 027 (không gian không tồn tại), 033 (YAML quá lớn), 039 (khuôn không dùng được); thành công: "Đã tạo luồng {tên}. Phiên bản v1 sẵn sàng để thiết kế."
+:::
 
 ### 9.1. Wireframe bước 1
 
@@ -521,13 +701,49 @@ Thẻ điểm xuất phát là `CMP-RadioCard` (nhóm radio, mũi tên chuyển 
 | Liên kết tài liệu | Danh sách URL | Không | Tối đa 10 URL `https` | |
 | Tham số khuôn mẫu `${tpl.*}` | Biểu mẫu sinh từ lược đồ JSON của khuôn | Theo khuôn | Theo khuôn | Ví dụ "Đường dẫn nhận", "Kết nối đích" (chọn từ PH-05) |
 
+: UI-04-03 · Trường bước 2
+
 Hồ sơ runtime không chọn ở đây: được gán khi phát hành theo thành phần luồng dùng (ADR-063); trình thiết kế hiện hồ sơ dự kiến. Bước 3 hiện tóm tắt, sơ đồ xem trước (canvas chỉ đọc, thu nhỏ) và kết quả kiểm tra mức `DESIGN`. Nút "Tạo và mở trình thiết kế" (chính) và "Tạo" (phụ). Tạo thành công: thông báo "Đã tạo luồng {tên}. Phiên bản v1 sẵn sàng để thiết kế." và chuyển tới UI-04-04.
 
 ### 9.3. Trạng thái
 
 Không có khuôn mẫu nào ngoài khuôn nền: vùng khuôn mẫu vẫn hiện tám khuôn nền của FR-04-025. Người dùng không có không gian `EDIT`: nút Tạo bị ẩn ở UI-04-01; vào thẳng bằng URL nhận ST-06. Rời trình hướng dẫn giữa chừng: ST-10.
 
+### 9.4. Bản hi-fi
+
+![UI-04-03 Tạo luồng, bước 1 (ảnh hi-fi)](ph04/hifi/ui-04-03.png)
+
+Năm thẻ điểm xuất phát dạng radio, "Từ khuôn mẫu" được chọn sẵn và gắn nhãn khuyên dùng; lưới khuôn mẫu bên dưới có sơ đồ thu nhỏ chín chặng, phạm vi Nền tảng hoặc Của tỉnh T68.
+
 ## 10. UI-04-04 Trình thiết kế luồng
+
+Đây là màn quan trọng nhất của PH-04 và được viết ở mức siêu chi tiết: lưới bố cục, sáu vùng đánh số ①…⑥, giải phẫu từng phần tử, mọi trạng thái, tương tác chuột, bàn phím và trợ năng. Khối đặc tả dưới là bản tóm tắt để tra nhanh; nội dung đầy đủ ở các mục 10.1…10.23.
+
+::: dac-ta
+**Mục đích.** Nơi kỹ sư tích hợp vẽ, cấu hình, kiểm tra, chạy thử và gửi duyệt một phiên bản luồng; sơ đồ và YAML là hai cách nhìn của cùng một mô hình Camel YAML DSL.
+
+**Người dùng chính.** IE (sửa, chạy thử, gửi duyệt); mọi vai trò có `PERM-04-read` (xem chỉ đọc).
+
+**FR hiện thực.** FR-04-010…017, 021…024, 026, 027, 033 (phủ kết quả), 040 (gửi duyệt).
+
+**Thay hệ cũ.** Vùng thiết kế, thanh Component, thanh Properties, tab Source của Tooling (LGC-TOOL-001, 003…026, 029).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/thiet-ke` với `phien-ban`, `thuc-the`, `chang`, `che-do`, `lan-chay`, `lop` (mục 4.2).
+
+**Mẫu.** PTN-07 Designer (canvas), sáu vùng ①…⑥ (mục 10.2, 10.3).
+
+**Quyền.** Xem `PERM-04-read`; sửa và chạy thử `PERM-04-update` + mức `EDIT`; gửi duyệt `PERM-04-submit`.
+
+**API.** API-04-020…027, 030, 032, 034, 040…044, 050, 051, 070, 071; PH-05, PH-06, PH-07, PH-10 (chi tiết mục 10.1).
+
+**Trạng thái đối tượng.** Phiên bản `DRAFT`, `CHANGES_REQUESTED` sửa được; trạng thái khác chỉ đọc (mục 10.15); chỉ báo lưu năm trạng thái (mục 10.4 vị trí 4).
+
+**Trạng thái màn.** ST-01 skeleton ba chặng, ST-07 chỉ đọc, ST-08 xung đột, ST-09 mất kết nối, ST-10 rời trang, ST-12 phiên sắp hết hạn; trạng thái chặng ở mục 10.7.3.
+
+**Thông báo.** ERR-04-006, 008, 009, 010, 011, 012, 013, 014, 016, 031, 033, 034, 037, 042 (mục 5.3); gợi ý LINT-04-01…06 (mục 10.12).
+
+**Bàn phím, trợ năng.** Mọi thao tác làm được bằng bàn phím (mục 10.9.3, 10.13); chế độ danh sách thay canvas cho trình đọc màn hình (mục 10.18); tiêu chí nghiệm thu mục 10.23.
+:::
 
 ### 10.1. Mục đích và phạm vi
 
@@ -587,6 +803,8 @@ Một tệp luồng có thể chứa nhiều thực thể: route, `routeConfigur
 | ⑤ Inspector | rộng 360 px | 300 | 560 | Ẩn khi không chọn chặng nào (hiện thông tin route); `Ctrl+I` bật tắt | `dh.int.designer.inspector.width` |
 | ⑥ Bảng dưới | cao 220 px | 120 | 60 % chiều cao | Thành thanh 32 px hiện số vấn đề (`Ctrl+J`) | `dh.int.designer.bottom.height`, `.tab` |
 
+: UI-04-04 · Lưới bố cục và kích thước
+
 Ngăn đổi kích thước bằng tay nắm `CMP-Splitter` rộng 4 px (vùng nhận 8 px), focus được bằng Tab, đổi bằng phím mũi tên 16 px mỗi lần, `Shift`+mũi tên 64 px, nhấp đúp trả về mặc định. Ở chế độ toàn màn hình (`F11` của trình duyệt hoặc nút ⛶), khung ứng dụng ẩn; ① vẫn hiện; thoát bằng `Esc` hoặc thanh nổi `CMP-FullscreenBar`.
 
 ### 10.4. ① Thanh công cụ
@@ -608,6 +826,8 @@ Ngăn đổi kích thước bằng tay nắm `CMP-Splitter` rộng 4 px (vùng n
 | 13 | Người đang mở | `CMP-AvatarGroup` | Ảnh đại diện người khác đang có phiên soạn trên cùng phiên bản (tối đa 3 + "+n"), tooltip "{tên} mở từ {giờ}"; khi có người khác, cạnh nhóm ảnh hiện chữ "Đang có {n} người khác mở luồng này" (FR-04-010) | | |
 | 14 | Toàn màn hình ⛶ | `Button` icon | | | `Ctrl+Shift+F` |
 
+: UI-04-04 · ① Thanh công cụ
+
 Khi chiều rộng dưới 1280 px, mục 5–7 gộp vào một menu "☰", nhãn "Chạy thử", "Gửi duyệt" chỉ còn biểu tượng có `aria-label`.
 
 ### 10.5. ② Thanh thực thể
@@ -625,6 +845,8 @@ Mỗi thực thể là một tab `CMP-EntityTab` gồm biểu tượng loại, n
 | beans | `Package` | Bảng bean (UI-04-10) | Gộp mọi bean thành một tab |
 | Thuộc tính tệp | `ListTree` | Bảng thuộc tính (UI-04-10) | |
 
+: UI-04-04 · ② Thanh thực thể
+
 "＋ Thêm ▾" mở menu: Route mới, Route từ khuôn mẫu…, REST, routeConfiguration, Bean. Route mới có sẵn điểm vào `direct:{id}` và được chọn ngay. Chuyển qua lại giữa các thực thể giữ nguyên vị trí và mức thu phóng của từng sơ đồ (FR-04-013). Thanh thực thể đặt ngang trên canvas thay cho danh sách dọc bên trái mà FR-04-013 mô tả, để trả chiều rộng cho bảng thành phần; nội dung và hành vi giữ đúng FR.
 
 ### 10.6. ③ Bảng thành phần
@@ -640,6 +862,8 @@ Mỗi thực thể là một tab `CMP-EntityTab` gồm biểu tượng loại, n
 | Nhóm | `Collapse` có số lượng; nhớ trạng thái mở |
 | Chân | "{số} thành phần được phép · catalog {phiên bản}"; liên kết "Danh mục thành phần" (UI-04-17) và "Đề xuất thành phần mới" (FR-04-080) |
 | Lọc theo vị trí chèn | Khi đang chèn chặng đầu của route, chỉ hiện thành phần làm được điểm vào (consumer, Kamelet `source`); khi chèn bước giữa, ẩn thành phần chỉ có chiều vào; khi soạn Pipe, chỉ hiện Kamelet đúng loại của ô (FR-04-012 mục 6). Dòng chú thích đầu danh sách nêu bộ lọc đang áp: "Đang hiện thành phần dùng làm điểm vào" |
+
+: UI-04-04 · Bảng thành phần ③, cấu trúc
 
 #### 10.6.2. Mục thành phần
 
@@ -659,6 +883,8 @@ Mỗi thực thể là một tab `CMP-EntityTab` gồm biểu tượng loại, n
 | Mức hỗ trợ `preview` | Thẻ "Thử nghiệm" | Thêm được |
 | Mức hỗ trợ `deprecated` | Thẻ "Lỗi thời", gợi ý thay thế | Thêm được kèm cảnh báo |
 
+: UI-04-04 · Bảng thành phần ③, trạng thái mục
+
 Tooltip ⓘ (`CMP-Popover` `glass-overlay`, rộng 320): tiêu đề, mô tả catalog (tiếng Việt khi có bản dịch, nếu không tiếng Anh kèm nhãn "EN"), nhãn, có hỗ trợ consumer/producer, mức hỗ trợ, mức native, liên kết "Tài liệu Camel ↗" (mở `camel.apache.org` phiên bản 4.18 ở tab mới).
 
 #### 10.6.3. Ánh xạ "Nghiệp vụ"
@@ -677,6 +903,8 @@ Hai lớp tách bạch:
 |---|---|---|---|
 | Cấu trúc | Thứ tự chặng, nhánh, lồng nhau, tức cây tài nguyên Camel | YAML (định nghĩa đem triển khai) | Chèn, xóa, nối, thả lên cạnh, bọc, `Alt+↑↓`, YAML |
 | Bố cục | Tọa độ chặng, ghim vị trí, ghi chú dán, trạng thái thu gọn nhóm, hướng sơ đồ | Cột `canvas_layout` của phiên bản, **không** vào YAML (BR-04-007, FR-04-017 mục 6) | Kéo chặng tới chỗ trống, "Tự sắp xếp", thu gọn nhóm |
+
+: UI-04-04 · Canvas, hai lớp cấu trúc và bố cục
 
 Cạnh luôn suy ra từ cấu trúc nên sơ đồ không bao giờ vẽ một luồng mà Camel không chạy được (khác Tooling cũ). Vị trí ban đầu do bố cục tự động dagre tính (khoảng cách 48 px giữa chặng, 64 px giữa nhánh). Người dùng kéo một chặng tới chỗ trống thì chặng đó được **ghim** tại vị trí mới (biểu tượng ghim nhỏ ở góc, bỏ ghim bằng menu ngữ cảnh); "Tự sắp xếp" (`Shift+L`) sắp lại mọi chặng chưa ghim và giữ chặng đã ghim. Kéo chặng thả lên một cạnh hoặc cuối nhánh mới là thay đổi cấu trúc (mục 10.9). Repo hiện ghi tọa độ vào chú thích `# @lgsp-canvas-v1:` trong YAML (GAP-04-06); thiết kế đích bỏ cách này, tệp tải về dạng `yaml+layout` dùng chú thích `# @dh-canvas-v1:` chỉ để mở lại trên Datahub (FR-04-027).
 
@@ -702,6 +930,8 @@ Cạnh luôn suy ra từ cấu trúc nên sơ đồ không bao giờ vẽ một 
 | Nút ⋯ | Mở menu ngữ cảnh (mục 10.10) | Hiện khi rê hoặc chọn; luôn focus được |
 | Cổng vào, cổng ra | Chấm tròn 8 px, vùng nhận 24 × 24 | Kéo từ cổng ra tới cổng vào của chặng khác để nối lại theo ngữ nghĩa Camel (chỉ hợp lệ khi không phá cây: một chặng thường có đúng một chặng sau, nhánh chỉ tạo bằng chặng rẽ nhánh); thả dây ra vùng trống mở bảng chọn nhanh để tạo chặng mới tại đó (LGC-TOOL-024 "bắt kết nối khi thả") |
 
+: UI-04-04 · Giải phẫu chặng (CMP-FlowNode)
+
 #### 10.7.3. Trạng thái chặng
 
 | Trạng thái | Viền | Nền | Biểu tượng, chữ | `aria` |
@@ -725,6 +955,8 @@ Cạnh luôn suy ra từ cấu trúc nên sơ đồ không bao giờ vẽ một 
 | Khác biệt: di chuyển | 2 px nét chấm `color-info-text` | | "↕ Di chuyển" | |
 | Không biểu diễn được (FR-04-017 mục 5) | 1 px nét đứt `color-border-control` | `color-fill-control` | `FileCode`, "Chỉ sửa trong YAML" | "…, phần tử chỉ sửa được trong YAML" |
 
+: UI-04-04 · Trạng thái chặng
+
 Khi một chặng vừa lỗi vừa đang chọn: viền chọn 2 px `color-accent` bên ngoài, viền lỗi 2 px bên trong (hai vòng), để không mất thông tin.
 
 #### 10.7.4. Nhóm (container) và nhánh
@@ -736,6 +968,8 @@ Khi một chặng vừa lỗi vừa đang chọn: viền chọn 2 px `color-acce
 | `split`, `loop`, `filter`, `aggregate`, `circuitBreaker`, `saga`, `resequence`, `throttle`, `idempotentConsumer` | Khung có tiêu đề và dòng biểu thức | Một thân `steps` | `circuitBreaker` thêm nhánh `onFallback` |
 | `multicast`, `loadBalance` | Khung, nhánh xếp cạnh nhau | Mỗi chặng con là một nhánh | |
 | Khối chặng chuẩn | Mỗi chặng chuẩn là một nhóm có tiêu đề "⬡ {số}. {tên chặng}" bao các bước con, phần tử đầu mang `id` `dh-stage-{mã}` (FRS §4.6); thu gọn, mở rộng được (FR-04-013) | Các bước con của chặng | "Hiện chặng chuẩn dạng thu gọn" thu cả chín khối, chỉ giữ tiêu đề, để đọc logic nghiệp vụ. Gỡ khung chuẩn được lúc thiết kế (BR-04-002), khi đó VR-05 báo theo mức |
+
+: UI-04-04 · Nhóm (container) và nhánh
 
 Khung thu gọn được bằng nút ⌃ ở tiêu đề; khi thu, khung hiện "◆ Rẽ nhánh · 3 nhánh · 7 chặng" và giữ huy hiệu lỗi tổng. Trạng thái thu gọn lưu cục bộ theo `id` chặng.
 
@@ -753,6 +987,8 @@ Cạnh là đường cong bậc hai 1,5 px `color-border-control`, có đầu m�
 | Số liệu chạy thật (chỉ đọc, từ UI-04-02) | Bộ chọn môi trường | Số bản tin qua mỗi chặng, tỷ lệ lỗi, p95 24 giờ (PH-13) |
 | Khác biệt | Từ UI-04-16 "Mở trên sơ đồ" | Trạng thái khác biệt mục 10.7.3 |
 | Tìm kiếm | `Ctrl+F` | Chặng khớp có viền `color-accent` nét đứt; ô tìm nổi góc trên phải "2/5 ‹ ›" |
+
+: UI-04-04 · Canvas, các lớp phủ
 
 #### 10.7.7. Điều khiển nổi
 
@@ -782,6 +1018,8 @@ Ghi chú dán (FR-04-026, mức C) là khối Markdown giới hạn (đậm, ngh
 | Rê | Huy hiệu ✕/⚠ | Tooltip danh sách vấn đề của chặng |
 | Chạm hai ngón (màn cảm ứng, máy tính bảng) | Nền | Thu phóng; chạm giữ 500 ms trên chặng = nhấp phải |
 
+: UI-04-04 · Tương tác chuột trên canvas
+
 ### 10.9. Kéo thả
 
 #### 10.9.1. Nguồn kéo và vùng thả
@@ -801,6 +1039,8 @@ Ghi chú dán (FR-04-026, mức C) là khối Markdown giới hạn (đậm, ngh
 | Tệp `.yaml` từ máy | Canvas | Hộp "Nhập YAML": thay thế route này, thêm thành route mới, hoặc hủy |
 | Tệp `.json`, `.xml` từ máy | Chặng | Hỏi "Ghim làm bản tin mẫu của chặng này?" (FR-04-022) |
 
+: UI-04-04 · Nguồn kéo và vùng thả
+
 #### 10.9.2. Phản hồi khi kéo
 
 - Bóng kéo: bản thu nhỏ của mục (tên + biểu tượng), mờ 85 %, đi theo con trỏ lệch 12 px.
@@ -819,6 +1059,8 @@ Ghi chú dán (FR-04-026, mức C) là khối Markdown giới hạn (đậm, ngh
 | Di chuyển chặng | `Alt+↑`/`Alt+↓` đổi chỗ với chặng trước, sau trong cùng danh sách; `Ctrl+X` rồi chọn vị trí và `Ctrl+V` để chuyển nhánh |
 | Thay chặng | Menu ngữ cảnh `Shift+F10` → "Thay bằng…" |
 
+: UI-04-04 · Tương đương bàn phím (WCAG 2.5.7)
+
 ### 10.10. Menu ngữ cảnh
 
 `CMP-DropdownMenu` (`glass-overlay`), mở bằng nhấp phải, nút ⋯, `Shift+F10` hoặc phím menu. Mục không áp dụng thì ẩn; mục áp dụng nhưng không được phép (chỉ đọc, chặng chuẩn) thì vô hiệu kèm lý do.
@@ -831,6 +1073,8 @@ Ghi chú dán (FR-04-026, mức C) là khối Markdown giới hạn (đậm, ngh
 | Cạnh | Chèn chặng… · Dán vào đây |
 | Nền | Dán (`Ctrl+V`) · Thêm ghi chú dán (`N`) · Chọn tất cả (`Ctrl+A`) · Tự sắp xếp (`Shift+L`) · Vừa khung · Đổi hướng sơ đồ · Xuất ảnh sơ đồ (SVG, PNG) |
 | Khối chặng chuẩn `dh-stage-*` | Cấu hình… · Thu gọn, mở · Xem trong YAML · Tài liệu chặng chuẩn · Gỡ khối chuẩn… (hộp xác nhận: "Luồng đối ngoại phải có đủ chín chặng chuẩn khi gửi duyệt (BR-04-002). Gỡ khối {mã} sẽ tạo lỗi VR-05 ở mức gửi duyệt.") |
+
+: UI-04-04 · Menu ngữ cảnh
 
 "Tách thành route con" lấy vùng chọn liên tiếp, tạo route mới `id` = `{route}-sub-{n}` có `from: direct:{id}`, thay vùng chọn bằng một chặng `to: direct:{id}`, mở route mới ở tab bên cạnh, hoàn tác được trong một bước.
 
@@ -852,6 +1096,8 @@ Biểu mẫu sinh từ catalog (`properties` của component, `parameters` của
 | Mô tả | `description`, ghi chú thiết kế (Markdown, ≤ 2.000 ký tự, lưu vào `description` dài), nhãn | |
 | Dữ liệu mẫu | Bản tin mẫu ghim cho chặng (FR-04-022) hoặc thừa hưởng từ chặng trước gần nhất; nút "Ghim bản tin mẫu…", "Mở trình ánh xạ" khi chặng là ánh xạ | Cảnh báo khi bản tin có dấu hiệu dữ liệu cá nhân thật |
 
+: UI-04-04 · Inspector, các tab
+
 Trường hiển thị theo kiểu catalog:
 
 | Kiểu catalog | Điều khiển | Kiểm tra trực tuyến |
@@ -869,6 +1115,8 @@ Trường hiển thị theo kiểu catalog:
 | Bảng mã (`codeList`) | `CMP-CodeListSelect` từ PH-07 | |
 | SQL (`query` của `sql`, `dh-sql-ro-source`) | `CMP-CodeEditor` SQL cao 120, tô cú pháp; ô chọn kết nối chỉ hiện kết nối loại "chỉ đọc cho luồng" (FR-04-016 mục 4); dưới ô có kết quả kiểm tra tĩnh: "Chỉ SELECT, WITH · một câu lệnh · không tham chiếu schema control" và dòng "Giới hạn {`04.sql.max-rows`} dòng, chờ tối đa {`04.sql.statement-timeout-seconds`} giây" | VR-13 (Q359, ADR-067); ERR-04-031 |
 | Ánh xạ khóa-giá trị (headers, query params) | `CMP-KeyValueEditor` | Khóa không trùng |
+
+: UI-04-04 · Inspector, điều khiển theo kiểu catalog
 
 Mỗi trường: nhãn tiếng Việt (bản dịch catalog) với tên tham số Camel nhỏ bên cạnh (`connectionTimeout`); dấu * nếu bắt buộc; ⓘ mô tả gốc; cảnh báo `deprecated`; giá trị mặc định hiện dạng chữ mờ trong ô ("mặc định 30000"); lỗi tại chỗ ngay dưới trường, tổng số lỗi ở chân Inspector. Menu ⋯ của trường có ba mục (FR-04-014 mục 6, 7, LGC-TOOL-020): "Khôi phục giá trị khi mở", "Đặt về mặc định" (xóa giá trị để Camel dùng mặc định), "Luôn ghi vào YAML" (giá trị bằng mặc định mặc định không ghi). Menu ⋯ ở đầu Inspector có "Khôi phục chặng về bản đã lưu". Nút ƒx cho trường chấp nhận placeholder mở danh sách biến môi trường `{{dh.env.*}}` và thuộc tính tệp. Thay đổi áp ngay vào mô hình (không có nút "Áp dụng"); các lần gõ liên tiếp trên cùng trường trong 1 giây gộp thành một bước hoàn tác (FR-04-013).
 
@@ -889,6 +1137,8 @@ Khối `dh-stage-*` hiện biểu mẫu tham số Kamelet nền của chặng: v
 | Nhật ký | Log Camel của lần chạy thử gần nhất (đã che), lọc theo mức, theo route, tìm | Tải tệp log |
 | Lịch sử sửa | Các bước trong ngăn hoàn tác với thời điểm và mô tả; người khác lưu (khi chế độ đồng soạn) | Nhấp một bước để hoàn tác tới đó (có xác nhận) |
 
+: UI-04-04 · Bảng dưới ⑥, các tab
+
 Kiểm tra hợp lệ chạy ở hai nơi như FR-04-023. Trình duyệt chạy VR-01…09, 15, 18, 20 sau mỗi thay đổi (trễ 400 ms, Web Worker) để phản hồi tức thì; máy chủ chạy toàn bộ VR-01…20 khi lưu (mức `DESIGN`, API-04-022 trả kết quả), khi người dùng bấm "Kiểm tra mức gửi duyệt" (API-04-030 `level=SUBMIT`) và khi gửi duyệt. Kết quả máy chủ là chốt có hiệu lực, gộp vào cùng bảng với nhãn "Máy chủ · {thời điểm}"; phát hiện trình duyệt có nhãn "Tức thì". Mức của từng VR theo bảng FR-04-023. Ngoài VR, giao diện có các **gợi ý thiết kế** không chặn, mức ⓘ:
 
 | Mã | Gợi ý |
@@ -899,6 +1149,8 @@ Kiểm tra hợp lệ chạy ở hai nơi như FR-04-023. Trình duyệt chạy 
 | LINT-04-04 | Tham số Kamelet khai báo nhưng không dùng trong mẫu |
 | LINT-04-05 | Trường bắt buộc của lược đồ đích chưa được ánh xạ |
 | LINT-04-06 | Bản tin mẫu có dấu hiệu dữ liệu cá nhân thật (FR-04-022) |
+
+: UI-04-04 · Gợi ý thiết kế LINT-04 (không chặn)
 
 ### 10.13. Phím tắt
 
@@ -939,6 +1191,8 @@ Phím tắt chỉ có hiệu lực khi focus trong trình thiết kế và khôn
 | | `Ctrl+Shift+Enter` | Gửi duyệt |
 | Khác | `?` | Bảng phím tắt |
 
+: UI-04-04 · Phím tắt
+
 Trên macOS `Ctrl` đọc là `⌘`. Người dùng không đổi được phím tắt trong bản 1.0.
 
 ### 10.14. Chế độ YAML và Chia đôi
@@ -962,6 +1216,8 @@ Trên macOS `Ctrl` đọc là `⌘`. Người dùng không đổi được phím
 | YAML có phần tử trình thiết kế không biểu diễn được (cú pháp ngắn lạ, khóa không có trong lược đồ) | Phân tích | Chặng "Không biểu diễn được" (mục 10.7.3), chỉ sửa trong YAML, Inspector hiện YAML thô chỉ đọc và nút "Sửa trong YAML"; không bị xóa khi sửa phần khác (FR-04-017 mục 5) |
 | Khác biệt sinh lại | Sơ đồ → YAML làm đổi định dạng ngoài ý (dấu ngoặc, kiểu chuỗi) | Không có: bộ sinh dùng một kiểu chuẩn; lần đầu mở YAML viết tay, trình thiết kế hỏi "Chuẩn hóa định dạng YAML?" (chỉ một lần mỗi phiên bản) và ghi rõ thay đổi chỉ là định dạng |
 
+: UI-04-04 · Đồng bộ hai chiều
+
 Hoàn tác dùng chung một ngăn xếp cho hai chế độ: một lần dừng gõ trong YAML là một bước. Kiểm thử quay vòng: mở rồi lưu không sửa phải cho cùng băm YAML chuẩn hóa (BR-04-006, mục 29).
 
 #### 10.14.3. Chế độ Chia đôi
@@ -976,6 +1232,8 @@ Canvas bên trái, YAML bên phải (tỷ lệ 55/45, kéo được). Chọn ch�
 | Không có quyền sửa | "Bạn chỉ có quyền xem luồng này." | "Xin quyền sửa" (gửi yêu cầu tới chủ không gian, FR-04-007) |
 | Luồng đã gỡ | "Luồng đã gỡ. Bạn đang xem chỉ đọc." | "Nhân bản" |
 | Catalog không tải được | "Không tải được danh mục thành phần. Bạn vẫn xem được luồng, nhưng chưa sửa được." | "Thử lại" |
+
+: UI-04-04 · Chế độ chỉ đọc
 
 Trong chỉ đọc: ③ ẩn, mọi trường Inspector `readOnly` (vẫn chọn, sao chép được), menu ngữ cảnh chỉ còn mục xem, YAML chỉ đọc, phím sửa bị bỏ qua và vùng thông báo đọc "Chỉ đọc". Người khác đang mở cùng phiên bản **không** làm trình thiết kế chuyển chỉ đọc: theo FR-04-010 đó là cảnh báo, xung đột thật bắt bằng ETag (mục 10.16). Trong khoảng đóng băng thay đổi (`04.freeze.windows`) vẫn soạn và lưu nháp được; chỉ phát hành, thăng cấp tới PROD bị chặn (ERR-04-041, BR-04-022).
 
@@ -1033,6 +1291,8 @@ Bật ở "Xem › Chế độ danh sách" hoặc tự gợi ý khi phát hiện
 | 1024–1279 px | Ngăn tự gập (NFR-04-017): ③ thành dải 48 px, mở thành lớp phủ; Inspector thành drawer phải; ⑥ thu gọn |
 | < 1024 px | Chỉ xem YAML (NFR-04-017): banner "Trình thiết kế cần màn hình rộng ít nhất 1024 px để sửa." Hiện YAML chỉ đọc và Chế độ danh sách chỉ đọc; nút "Sao chép đường dẫn" để mở trên máy tính |
 
+: UI-04-04 · Màn nhỏ và thiết bị
+
 Thu phóng trình duyệt 200 % tương đương màn 720 px và rơi vào hàng cuối, vẫn dùng được (WCAG 1.4.10 cho phép ngoại lệ sơ đồ hai chiều nhưng thông tin vẫn đọc được qua chế độ danh sách).
 
 ### 10.20. Hoàn tác, làm lại
@@ -1078,6 +1338,8 @@ Danh sách kiểm tra gọi API-04-030 với `level=SUBMIT`; mỗi dòng ✓ / �
 | Tải catalog lần đầu | ≤ 1,5 MB truyền (nén), cache theo `catalogVersion` | Thiết kế |
 | Bộ nhớ với luồng 500 chặng | ≤ 300 MB | Thiết kế |
 
+: UI-04-04 · Ngân sách hiệu năng
+
 Kỹ thuật bắt buộc: chỉ vẽ chặng trong khung nhìn (`onlyRenderVisibleElements` của XYFlow), bố cục dagre trong Web Worker, memo hóa `CMP-FlowNode` theo băm cấu hình, không dùng `backdrop-filter` trên lớp cuộn, tải lười lược đồ thuộc tính của thành phần (API-04-071) khi chọn chặng.
 
 ### 10.23. Tiêu chí nghiệm thu UI-04-04
@@ -1096,11 +1358,41 @@ Kỹ thuật bắt buộc: chỉ vẽ chặng trong khung nhìn (`onlyRenderVisi
 | AC-UI-04-04-10 | Gửi duyệt không được khi băm định nghĩa khác lần chạy thử đạt gần nhất (ERR-04-014) |
 | AC-UI-04-04-11 | Kéo chặng tới chỗ trống không đổi YAML; "Tự sắp xếp" giữ chặng đã ghim |
 
+: UI-04-04 · Tiêu chí nghiệm thu UI-04-04
+
+### 10.24. Bản hi-fi
+
+![UI-04-04 Trình thiết kế luồng (ảnh hi-fi)](ph04/hifi/ui-04-04.png)
+
+Ảnh dựng đủ sáu vùng của mục 10.2: ① thanh công cụ có chỉ báo lưu, bộ đếm vấn đề, Chạy thử, Gửi duyệt và người đang mở; ② thanh thực thể với huy hiệu lỗi trên route; ③ bảng thành phần theo nhóm nghiệp vụ, mục "Gọi REST" đang focus; ④ canvas với chuỗi chặng chuẩn, nhóm Rẽ nhánh có nhãn `when`, chặng "Gọi hộ tịch" vừa chọn vừa lỗi (viền chọn ngoài, viền lỗi trong), ghi chú dán, điều khiển thu phóng và minimap; ⑤ Inspector tab Cơ bản có lỗi ERR-04-013 tại trường Kết nối và cảnh báo LINT-04-03; ⑥ bảng Vấn đề có nút sửa nhanh.
+
 ## 11. UI-04-05 Cấu hình chặng mở rộng
 
-**Mục đích.** Inspector 360 px đủ cho chỉnh nhanh nhưng chật khi chặng có 60–150 tham số hoặc khi cần nhìn dữ liệu vào, ra để cấu hình đúng. Cửa sổ mở rộng chiếm 75 % màn (theo SRS-PH-04 D-03 của repo), ba cột VÀO · THAM SỐ · RA. FR-04-014, 016, 022. Thay thanh Properties của Tooling (LGC-TOOL-019, 020).
-**Mở bằng.** Nhấp đúp chặng, `Ctrl+Enter`, nút ⤢ ở Inspector. URL thêm `lop=cau-hinh`.
-**Vật liệu.** Khung `glass-modal`, nội dung đặc. Canvas phía sau vẫn thấy mờ để giữ ngữ cảnh; không thao tác được.
+Cửa sổ cấu hình mở rộng là lớp nổi của UI-04-04 dành cho chặng nhiều tham số, đặt dữ liệu vào và ra ngay cạnh biểu mẫu.
+
+::: dac-ta
+**Mục đích.** Inspector 360 px đủ cho chỉnh nhanh nhưng chật khi chặng có 60–150 tham số hoặc khi cần nhìn dữ liệu vào, ra để cấu hình đúng. Cửa sổ mở rộng chiếm 75 % màn (theo SRS-PH-04 D-03 của repo), ba cột VÀO · THAM SỐ · RA.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-014, 016, 022.
+
+**Thay hệ cũ.** Thanh Properties của Tooling (LGC-TOOL-019, 020).
+
+**Đường dẫn.** Không có đường dẫn riêng; URL của UI-04-04 thêm `lop=cau-hinh` và `chang={id}`.
+
+**Mở bằng.** Nhấp đúp chặng, `Ctrl+Enter`, nút ⤢ ở Inspector.
+
+**Mẫu, vật liệu.** Lớp nổi `CMP-Modal`. Khung `glass-modal`, nội dung đặc. Canvas phía sau vẫn thấy mờ để giữ ngữ cảnh; không thao tác được.
+
+**Quyền.** Mở xem với `PERM-04-read`; sửa với `PERM-04-update` + mức `EDIT`, nếu không mọi trường `readOnly`.
+
+**API.** API-04-071 (lược đồ thuộc tính), 042 (dữ liệu lần chạy), 022 (lưu kèm bản tin mẫu); PH-05 (kết nối), PH-06 (lược đồ).
+
+**Trạng thái màn.** Đang tải, chưa có dữ liệu mẫu, lần chạy không đi qua, chỉ đọc, thành phần không còn trong catalog (mục 11.5).
+
+**Thông báo.** ERR-04-010 (bí mật), 013 (kết nối), 021 (bản tin mẫu quá lớn), 031 (SQL), 037 (biểu thức); LINT-04-06 (dữ liệu thật).
+:::
 
 ### 11.1. Wireframe (75 % × 85 % khung nhìn)
 
@@ -1152,11 +1444,41 @@ Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiệ
 | Chỉ đọc | Mọi trường `readOnly`; nút "Hoàn tác phiên" ẩn |
 | Thành phần không còn trong catalog | Cột giữa hiện YAML thô của chặng trong `CMP-CodeEditor`, lỗi VR-02 |
 
+: UI-04-05 · Trạng thái màn
+
+### 11.6. Bản hi-fi
+
+![UI-04-05 Cấu hình chặng mở rộng (ảnh hi-fi)](ph04/hifi/ui-04-05.png)
+
+Cửa sổ ba cột VÀO, THAM SỐ, RA trên nền trình thiết kế làm mờ; cột VÀO và RA lấy dữ liệu lần chạy #41 với giá trị đã che, cột giữa nhóm tham số có số "(tổng · đã đặt)", nhóm có cảnh báo tự mở; chân cửa sổ đếm lỗi và có "Hoàn tác phiên".
+
 ## 12. UI-04-06 Trình soạn biểu thức
 
-**Mục đích.** Viết, kiểm tra biểu thức `simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery` (và `groovy`, `js`, `python` chỉ khi PA cho phép trong chính sách thành phần của tenant) với gợi ý và xem trước trên bản tin mẫu. FR-04-015. **API.** API-04-032.
+Trình soạn biểu thức là lớp nổi nhỏ neo vào trường, cho viết, kiểm tra và xem trước biểu thức mà không rời ngữ cảnh chặng.
+
+::: dac-ta
+**Mục đích.** Viết, kiểm tra biểu thức `simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery` (và `groovy`, `js`, `python` chỉ khi PA cho phép trong chính sách thành phần của tenant) với gợi ý và xem trước trên bản tin mẫu.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-015.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=bieu-thuc`.
+
 **Mở bằng.** Nút ƒx trên trường biểu thức, nhấp đúp nhãn `when`, `Ctrl+E` khi focus trong trường biểu thức.
-**Dạng.** `CMP-Popover` neo vào trường khi đủ chỗ (640 × 420, khung `glass-overlay`, vùng soạn đặc); tự chuyển thành `CMP-Modal` 960 × 640 khi bấm ⤢ hoặc màn hẹp.
+
+**Mẫu, vật liệu.** `CMP-Popover` neo vào trường khi đủ chỗ (640 × 420, khung `glass-overlay`, vùng soạn đặc); tự chuyển thành `CMP-Modal` 960 × 640 khi bấm ⤢ hoặc màn hẹp.
+
+**Quyền.** `PERM-04-update` (gọi API-04-032); người chỉ đọc mở được ở chế độ xem, nút "Áp dụng" ẩn.
+
+**API.** API-04-032.
+
+**Trạng thái màn.** Đang kiểm tra, biên dịch được, lỗi tại vị trí, xem trước mô phỏng, chưa xem trước được (mục 12.2).
+
+**Thông báo.** ERR-04-037 (lỗi biểu thức), 019 (sandbox bận), 021 (dữ liệu thử quá lớn).
+:::
 
 ### 12.1. Wireframe
 
@@ -1189,11 +1511,39 @@ Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiệ
 - "Áp dụng" ghi vào trường và tạo một bước hoàn tác; "Hủy", `Esc` bỏ.
 - Ngôn ngữ kịch bản (`groovy`, `js`, `python`) không có trong danh sách khi chưa được phép (ADR-062). Khi PA cho phép, mục ngôn ngữ có nhãn "Kịch bản" và dải cảnh báo cố định "Biểu thức kịch bản chạy mã tùy ý. Người duyệt sẽ thấy mục này trong phần bằng chứng."
 
+### 12.3. Bản hi-fi
+
+![UI-04-06 Trình soạn biểu thức (ảnh hi-fi)](ph04/hifi/ui-04-06.png)
+
+Popover neo vào trường điều kiện nhánh ở Inspector: chọn ngôn ngữ `simple`, ô soạn tô cú pháp, dòng biên dịch được trên máy chủ, danh sách biến khả dụng và vùng xem trước cho kết quả `true` với bản tin mẫu, `false` với dữ liệu thử.
+
 ## 13. UI-04-07 Trình ánh xạ dữ liệu
 
-**Mục đích.** Ánh xạ trực quan từ cấu trúc nguồn sang cấu trúc đích, sinh JQ (ADR-066), lưu thành tệp `*.dhmap.json` cạnh YAML, dùng trong chặng `dh-stage-transform` hoặc `setBody`. Hỗ trợ chuyển mã qua bảng ánh xạ mã PH-07 bằng hàm `dh_map`. Thay màn Data mapping của Tooling (LGC-TOOL-007, 028; LGC-BUS-036). FR-04-020. **API.** API-04-033 (xem trước JQ trên sandbox).
-**Mở bằng.** Nút "Mở trình ánh xạ" ở Inspector của chặng ánh xạ, `Ctrl+M`, nhấp đúp chặng ánh xạ. URL `lop=anh-xa`.
-**Dạng.** `CMP-Modal` toàn màn (96 % × 94 %), khung `glass-modal`, nội dung đặc.
+Trình ánh xạ là lớp nổi toàn màn ba cột, nơi kỹ sư nối trường nguồn sang trường đích, thêm hàm và chuyển mã mà không viết JQ tay.
+
+::: dac-ta
+**Mục đích.** Ánh xạ trực quan từ cấu trúc nguồn sang cấu trúc đích, sinh JQ (ADR-066), lưu thành tệp `*.dhmap.json` cạnh YAML, dùng trong chặng `dh-stage-transform` hoặc `setBody`. Hỗ trợ chuyển mã qua bảng ánh xạ mã PH-07 bằng hàm `dh_map`.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-020.
+
+**Thay hệ cũ.** Màn Data mapping của Tooling (LGC-TOOL-007, 028; LGC-BUS-036).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=anh-xa`.
+
+**Mở bằng.** Nút "Mở trình ánh xạ" ở Inspector của chặng ánh xạ, `Ctrl+M`, nhấp đúp chặng ánh xạ.
+
+**Mẫu, vật liệu.** `CMP-Modal` toàn màn (96 % × 94 %), khung `glass-modal`, nội dung đặc.
+
+**Quyền.** `PERM-04-update` + mức `EDIT` để sửa; người chỉ đọc xem ánh xạ và JQ.
+
+**API.** API-04-033 (xem trước JQ trên sandbox); PH-06 (lược đồ), PH-07 (bảng ánh xạ mã).
+
+**Trạng thái màn.** Chưa chọn nguồn, đích; lược đồ có phiên bản mới; bảng mã PH-07 không truy cập được; cây quá lớn (mục 13.6).
+
+**Thông báo.** ERR-04-038 (ánh xạ không hợp lệ), 021 (tài liệu mẫu quá 1 MiB), 019 (sandbox); LINT-04-05 (trường bắt buộc chưa ánh xạ).
+:::
 
 ### 13.1. Wireframe
 
@@ -1237,6 +1587,8 @@ Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiệ
 | Xóa ánh xạ | Chọn đường, `Delete` | |
 | Tự ánh xạ theo tên | Nút "Gợi ý ánh xạ" | Khớp tên chính xác, không dấu, đồng nghĩa trong từ điển PH-06; hiện danh sách đề xuất có ô chọn, không tự áp |
 
+: UI-04-07 · Vùng ánh xạ
+
 Thư viện hàm (nhóm, FR-04-020 mục 3): Chuỗi (cắt, hoa, thường, nối, tách, thay thế, chuẩn hóa không dấu), Số (làm tròn, định dạng), Ngày giờ (đổi `dd/MM/yyyy` sang ISO, đổi múi giờ), Logic (nếu–thì, kiểm tra rỗng, mặc định), Mảng (lặp phần tử), **Chuyển mã PH-07**: chọn bảng ánh xạ mã của PH-07 (ví dụ mã dân tộc của HTTT A sang mã chuẩn); giao diện sinh lời gọi `dh_map("<bảng>"; .<trường>)` do runtime cung cấp, tra từ ảnh chụp trong bộ nhớ của PH-07. Mỗi nút hàm hiện tham số dạng biểu mẫu nhỏ, không bắt viết JQ. Ánh xạ một–nhiều (tách một nguồn ra nhiều đích khác cấu trúc) chưa có ở MVP: menu hiện mục mờ "Một–nhiều: viết JQ tay" mở UI-04-06.
 
 ### 13.4. Chế độ JQ và Chia đôi
@@ -1256,11 +1608,41 @@ Thanh dưới chạy JQ thật trên sandbox (API-04-033, có hàm `dh_map`) v�
 | Bảng ánh xạ mã PH-07 không truy cập được | Nút `dh_map` hiện ⚠ "Không tải được bảng {mã}. Ánh xạ vẫn lưu, nhưng chưa xem trước được." |
 | Cây quá lớn (> 5.000 nút) | Hiện cảnh báo hiệu năng, mặc định thu gọn mọi nhánh |
 
+: UI-04-07 · Trạng thái màn
+
+### 13.7. Bản hi-fi
+
+![UI-04-07 Trình ánh xạ dữ liệu (ảnh hi-fi)](ph04/hifi/ui-04-07.png)
+
+Ba cột nguồn, ánh xạ, đích; mỗi đường ánh xạ có nút hàm (ƒ upper, ƒ date, ƒ concat), hàm chuyển mã PH-07 màu xanh lục và khối lặp mảng màu tím; cây đích đánh dấu ✓ trường đã ánh xạ, ⚠ trường có cảnh báo; thanh dưới chạy thử trên lần chạy #41 và kiểm kết quả theo lược đồ đích.
+
 ## 14. UI-04-08 Trình soạn Kamelet
 
-**Mục đích.** Soạn Kamelet tự viết của tỉnh (`source`, `sink`, `action`) để đóng gói một cách kết nối dùng lại, thay việc nhập JAR component của Tooling (LGC-TOOL-027 bị loại vì ATTT). FR-04-018 (mức S).
+Trình soạn Kamelet là một chế độ của UI-04-04 cho tài nguyên loại `KAMELET`, có ba tab cố định thay cho canvas route.
+
+::: dac-ta
+**Mục đích.** Soạn Kamelet tự viết của tỉnh (`source`, `sink`, `action`) để đóng gói một cách kết nối dùng lại.
+
+**Người dùng chính.** IE; PA, SO duyệt khi đề nghị dùng chung toàn quốc.
+
+**FR hiện thực.** FR-04-018 (mức S).
+
+**Thay hệ cũ.** Thay việc nhập JAR component của Tooling (LGC-TOOL-027 bị loại vì ATTT).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/thiet-ke` của luồng loại `KAMELET`.
+
 **Mở bằng.** Tạo luồng loại `KAMELET` (UI-04-03) hoặc mở luồng loại đó. Cùng khung UI-04-04; thanh thực thể có ba tab cố định: **Đặc tả**, **Mẫu (template)**, **Phụ thuộc**.
+
+**Mẫu.** PTN-07, chế độ Kamelet.
+
 **Quyền.** IE (`PERM-04-update`). Kamelet phát hành trong tenant xuất hiện ở đầu cách xem Kamelet của bảng thành phần với huy hiệu "Của tỉnh". Dùng chung toàn quốc phải qua quy trình đăng ký Kamelet của PH-05 (PA và SO duyệt); nút "Đề nghị dùng chung toàn quốc" mở quy trình đó.
+
+**API.** API-04-011, 020, 022 với `resourceKind = KAMELET`; 030 (kiểm tra), 040 (chạy thử bọc).
+
+**Trạng thái màn.** Như UI-04-04 (ST-01, 07, 08, 09); tab Phụ thuộc rỗng khi Kamelet chưa phát hành.
+
+**Thông báo.** ERR-04-036 (trùng tên), 029 (không hồ sơ runtime đủ thành phần); VR-02, VR-15; LINT-04-04.
+:::
 
 ### 14.1. Tab Đặc tả
 
@@ -1276,6 +1658,8 @@ Biểu mẫu hai cột:
 | Kiểu dữ liệu vào, ra (`spec.dataTypes`) | `Select` + lược đồ | |
 | Tham số (`spec.definition.properties`) | `CMP-EditableTable`: tên (`camelCase`), tiêu đề tiếng Việt, mô tả, kiểu (`string`, `boolean`, `integer`, `binary`, `long`; không có `number`, FR-04-018 mục 1), bắt buộc, mặc định, ví dụ, `enum`, ô "Nhạy cảm" | Không trùng tên. Tham số "Nhạy cảm" được đánh dấu `x-descriptors: urn:camel:group:credentials`, không có mặc định, khi dùng chỉ nhận tham chiếu kết nối (VR-15) |
 
+: UI-04-08 · Tab Đặc tả
+
 Bên phải là **xem trước**: Inspector giả lập đúng như người dùng thấy khi thả Kamelet này vào một luồng, cập nhật trực tiếp.
 
 ### 14.2. Tab Mẫu
@@ -1290,17 +1674,158 @@ Thành phần Camel mà mẫu dùng, mức native và hồ sơ runtime tương t
 
 Chạy thử bọc Kamelet trong route thử sinh tự động (`from: direct:test` → Kamelet với tham số người dùng nhập → `log`), dùng cùng UI-04-11.
 
+### 14.5. Bản hi-fi
+
+![UI-04-08 Trình soạn Kamelet, tab Đặc tả (ảnh hi-fi)](ph04/hifi/ui-04-08.png)
+
+Biểu mẫu đặc tả Kamelet `t68-sftp-csv-source` với bảng tham số, tham số `connection` đánh dấu nhạy cảm; cột phải là Inspector giả lập đúng như khi thả Kamelet vào luồng, kèm lối đề nghị dùng chung toàn quốc qua PH-05.
+
 ## 15. UI-04-09 Trình soạn Pipe
 
-**Mục đích.** Nối nhanh source → các action → sink bằng Kamelet, không cần viết route, cho tích hợp một chiều đơn giản (ví dụ đọc tệp SFTP định kỳ rồi đẩy lên Kafka). FR-04-019 (mức S).
+Trình soạn Pipe là chế độ của UI-04-04 cho tài nguyên loại `PIPE`: một dải ô tuyến tính thay cho canvas tự do, để tích hợp một chiều không cần hiểu route Camel.
+
+::: dac-ta
+**Mục đích.** Nối nhanh source → các action → sink bằng Kamelet, không cần viết route, cho tích hợp một chiều đơn giản (ví dụ đọc tệp SFTP định kỳ rồi đẩy lên Kafka).
+
+**Người dùng chính.** IE; TO xem tình trạng như luồng thường.
+
+**FR hiện thực.** FR-04-019 (mức S).
+
+**Thay hệ cũ.** Không có (màn mới); thay một phần routing đơn giản của Bus (LGC-BUS-035).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/thiet-ke` của luồng loại `PIPE`; `chang` nhận `source`, `step-{n}`, `sink`.
+
+**Mẫu.** PTN-07, chế độ Pipe.
+
+**Quyền.** Xem `PERM-04-read`; sửa `PERM-04-update` + mức `EDIT`; gửi duyệt `PERM-04-submit`.
+
+**API.** API-04-011, 020, 022 với `resourceKind = PIPE`; 030 (kiểm tra), 040…043 (chạy thử), 050 (gửi duyệt), 070 (Kamelet được phép); PH-10 (topic).
+
+**Trạng thái đối tượng.** Như phiên bản luồng (mục 5.1).
+
+**Trạng thái màn.** ST-01 (skeleton ba ô), ô rỗng, ô lỗi, ST-05, ST-07 chỉ đọc, ST-08, ST-09 (mục 15.5).
+
+**Thông báo.** VR-15 (Kamelet sai loại), ERR-04-009, 011, 013, 014; câu chặn thả thành phần thô (mục 15.6).
+:::
+
 **Bố cục.** Cùng khung UI-04-04, canvas tuyến tính cố định trái sang phải: Nguồn (một ô: Kamelet `source` hoặc tham chiếu topic), Bước xử lý (danh sách ô Kamelet `action`, kéo đổi thứ tự), Đích (một ô: Kamelet `sink` hoặc topic); dưới là ô `errorHandler` (ghi nhật ký, DLQ tới PH-18, không). Thao tác rẽ nhánh bị khóa.
 **Thả từ bảng thành phần.** Bảng ③ chỉ hiện Kamelet đúng loại cho ô đang chèn. Thả thành phần Camel thô không được: chú thích "Pipe chỉ dùng Kamelet. Muốn dùng thành phần {x}, tạo luồng loại route." Pipe dùng Kamelet sai loại là lỗi VR-15.
 **Inspector.** Tham số Kamelet của ô chọn, sinh từ `spec.definition`, như mục 10.11.
 
+### 15.1. Wireframe
+
+```
+┌① ‹ sftp-bhxh-to-kafka  v3 [Bản nháp] ▾  ✓ Đã lưu 09:41 │ ↶ ↷ │ [Sơ đồ|YAML] │ ✓ Hợp lệ │ ▶ Chạy thử ▾ │ ⇪ Gửi duyệt ┐
+├② [⇄ pipe: sftp-bhxh-to-kafka]                                                                         ┤
+├③ Kamelet (280) ─────┬④ Dải Pipe (đặc solid-2) ───────────────────────────────────┬⑤ Inspector (360) ──┤
+│ 🔍 Tìm Kamelet…     │ ┌ NGUỒN ──────────┐   ┌ BƯỚC 1 ────────┐   ┌ ĐÍCH ─────────┐ │ ⬡ Đọc SFTP định kỳ │
+│ Đang hiện: source   │ │⬡ dh-sftp-source │ → │⬡ dh-csv-to-json│ → │⬡ dh-kafka-sink│ │ Kết nối *          │
+│ ⬡ dh-sftp-source    │ │ bhxh-sftp · 5 ph│   │ phân cách ";"  │   │ t68.bhxh.hs.v1│ │ [bhxh-sftp ▾] PH-05│
+│ ⬡ dh-sql-ro-source  │ └─────────────────┘   └────────────────┘ ⊕ └───────────────┘ │ Thư mục *          │
+│ ⬡ dh-rest-poll-src  │ ┌ Xử lý lỗi (errorHandler) ─────────────────────────────┐  │ [/out/ho-so    ]   │
+│ ⬡ Của tỉnh: …       │ │ (•) DLQ tới PH-18   ( ) Ghi nhật ký   ( ) Không        │  │ Chu kỳ  [5 phút ▾] │
+├⑥ [Vấn đề 0] [Kết quả chạy] [Nhật ký]                                         ⌄ Thu gọn ┤
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 15.2. Thành phần
+
+| # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
+|---|---|---|---|---|
+| 1 | Thanh công cụ ① | `CMP-DesignerToolbar` | Như mục 10.4; menu Xem không có "Hướng sơ đồ", "Tự sắp xếp" | API-04-020 |
+| 2 | Bảng Kamelet ③ | `CMP-NodePalette` | Chỉ Kamelet đúng loại của ô đang chọn (source, action, sink); Kamelet "Của tỉnh" ở đầu | API-04-070 |
+| 3 | Ô Nguồn | `CMP-FlowNode` biến thể `slot` | Đúng một Kamelet `source` hoặc tham chiếu topic PH-10 | `spec.source` |
+| 4 | Ô Bước xử lý | `CMP-FlowNode` biến thể `slot`, kéo đổi thứ tự | 0…20 Kamelet `action` | `spec.steps[]` |
+| 5 | Ô Đích | `CMP-FlowNode` biến thể `slot` | Đúng một Kamelet `sink` hoặc topic | `spec.sink` |
+| 6 | Nút ⊕ giữa các ô | `CMP-QuickInsert` | Chèn Kamelet `action` tại vị trí | API-04-070 |
+| 7 | Khối xử lý lỗi | `CMP-Radio` | DLQ tới PH-18 (mặc định), Ghi nhật ký, Không (cảnh báo VR-11 ở mức gửi duyệt) | `spec.errorHandler` |
+| 8 | Inspector ⑤ | `CMP-Inspector` | Tham số Kamelet của ô chọn (mục 10.11.2) | API-04-071 |
+| 9 | Bảng dưới ⑥ | `CMP-BottomPanel` | Vấn đề, Kết quả chạy, Nhật ký (không có Lịch sử sửa riêng) | API-04-030, 042 |
+
+: UI-04-09 · Thành phần
+
+### 15.3. Trường của ô
+
+| Ô | Nhận | Bắt buộc | Kiểm tra | Ghi vào YAML |
+|---|---|---|---|---|
+| Nguồn | Kamelet `source` hoặc topic `t68.*` | Có | Đúng loại (VR-15); topic tồn tại ở PH-10 | `spec.source.ref` |
+| Bước {n} | Kamelet `action` | Không | Đúng loại; tối đa 20 bước | `spec.steps[n].ref` |
+| Đích | Kamelet `sink` hoặc topic | Có | Đúng loại; topic cho phép ghi | `spec.sink.ref` |
+| Tham số ô | Theo `spec.definition` của Kamelet | Theo Kamelet | Như Inspector; tham số "Nhạy cảm" chỉ nhận tham chiếu kết nối | `…properties` |
+| Xử lý lỗi | Một trong ba giá trị | Có | Không chọn "Không" cho luồng đối ngoại (VR-11) | `spec.errorHandler` |
+
+: UI-04-09 · Trường của ô Pipe
+
+### 15.4. Hành động
+
+| Hành động | Cách làm | Kết quả |
+|---|---|---|
+| Đặt Kamelet vào ô | Kéo từ ③ thả vào ô, hoặc chọn ô rồi `Enter` trên mục ③ | Ô nhận Kamelet, Inspector mở tham số, focus trường bắt buộc đầu |
+| Thêm bước | ⊕ giữa hai ô, hoặc `A` khi chọn ô | Bảng chọn nhanh chỉ có Kamelet `action` |
+| Đổi thứ tự bước | Kéo ô bước, hoặc `Alt+←`, `Alt+→` | Thứ tự `spec.steps` đổi, hoàn tác được |
+| Xóa bước | `Delete` hoặc ⋯ › Xóa | Ô Nguồn, Đích không xóa được, chỉ "Thay bằng…" |
+| Chạy thử | `F5` hoặc "Chạy thử" | Như UI-04-11; nguồn được thay bằng bản tin mẫu |
+| Chuyển thành route | Menu Tệp › "Chuyển thành luồng route…" | Tạo luồng loại `ROUTE` mới tương đương, không sửa Pipe cũ |
+
+: UI-04-09 · Hành động
+
+### 15.5. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton ba ô nối nhau, ③ 8 dòng |
+| Pipe mới | Ba ô rỗng nét đứt: "Chọn nguồn", "Thêm bước (tùy chọn)", "Chọn đích" |
+| Ô lỗi | Viền 2 px `color-error-text`, huy hiệu ✕{n} như mục 10.7.3 |
+| Lỗi tải | ST-05 với ERR-04-001 hoặc 004 |
+| Không có quyền sửa, phiên bản không phải nháp | ST-07, ③ ẩn |
+| Kamelet của ô bị cấm sau đó | Huy hiệu "Không còn được phép", ERR-04-011 |
+
+: UI-04-09 · Trạng thái màn
+
+### 15.6. Thông điệp
+
+- Thả thành phần Camel thô: "Pipe chỉ dùng Kamelet. Muốn dùng thành phần {x}, tạo luồng loại route."
+- Thả Kamelet sai loại: "Ô {Nguồn, Đích} chỉ nhận Kamelet loại {source, sink}." (VR-15).
+- Thêm bước thứ 21: "Pipe có tối đa 20 bước. Tách thành hai Pipe nối qua topic."
+- Chọn "Không" ở xử lý lỗi: cảnh báo "Bản tin lỗi sẽ bị bỏ. Luồng đối ngoại phải có DLQ khi gửi duyệt."
+
+### 15.7. Bàn phím và trợ năng
+
+`←`, `→` chuyển ô; `Enter` mở Inspector ô; `A` thêm bước sau; `Alt+←`, `Alt+→` đổi chỗ bước; `Delete` xóa bước; các phím chung ở mục 10.13. Dải Pipe có `role="list"`, mỗi ô `role="listitem"` với `aria-label` "Bước 1 trên 3, dh-csv-to-json, hợp lệ"; mỗi thay đổi thứ tự đọc qua vùng `aria-live`.
+
+### 15.8. Bản hi-fi
+
+![UI-04-09 Trình soạn Pipe (ảnh hi-fi)](ph04/hifi/ui-04-09.png)
+
+Dải Pipe tuyến tính Nguồn, Bước 1, Bước 2, Đích với ô Nguồn đang chọn; bảng trái chỉ hiện Kamelet loại source và câu chặn thành phần Camel thô; khối xử lý lỗi chọn DLQ tới PH-18; bảng dưới cho thấy lần chạy MOCK bắt lại bản tin gửi topic `t68.bhxh.hs.v1`.
+
 ## 16. UI-04-10 Cấu hình cấp tệp và bean
 
-**Mục đích.** Bean, `routeConfiguration`, metadata cấp tệp và biến môi trường. FR-04-021 (mức S), FR-04-084 (biến môi trường).
+Màn này gom các phần của tệp luồng không vẽ được trên canvas: bean, `routeConfiguration`, metadata và biến môi trường.
+
+::: dac-ta
+**Mục đích.** Bean, `routeConfiguration`, metadata cấp tệp và biến môi trường.
+
+**Người dùng chính.** IE; TA khai báo giá trị biến môi trường ở UI-04-20.
+
+**FR hiện thực.** FR-04-021 (mức S), FR-04-084 (biến môi trường).
+
+**Thay hệ cũ.** Error handling của Bus (LGC-BUS-037) qua `routeConfiguration`.
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=cap-tep` khi mở dạng drawer, `thuc-the` khi mở dạng tab.
+
 **Mở bằng.** Tab "beans", "routeConfiguration", "Thuộc tính tệp" trên thanh thực thể hoặc "Tệp › Thuộc tính tệp". Mở như tab trên vùng canvas, hoặc `CMP-Drawer` phải 640 px khi gọi từ Inspector.
+
+**Mẫu.** Tab trên PTN-07 hoặc drawer.
+
+**Quyền.** `PERM-04-update` + mức `EDIT` để sửa; `dh-default-config` luôn chỉ xem.
+
+**API.** API-04-020, 022 (cùng định nghĩa), 090 (giá trị biến môi trường), 030 (kiểm tra).
+
+**Trạng thái màn.** Rỗng: "Luồng chưa khai bean nào." kèm "Thêm bean"; đang tải và lỗi theo UI-04-04; chỉ đọc theo mục 10.15.
+
+**Thông báo.** ERR-04-010 (bí mật), 011 (lớp bean không được phép); VR-11 (thiếu xử lý lỗi nền); biến chưa khai báo cho môi trường đích ở mức `PUBLISH`.
+:::
 
 ### 16.1. Thuộc tính tệp và biến môi trường
 
@@ -1319,11 +1844,39 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 
 `routeConfiguration` nền `dh-default-config` (chỉ xem, có liên kết tài liệu) hiện các `onException` chuẩn của FR-04-070 và `errorHandler` có DLQ tới PH-18. Người dùng tạo `routeConfiguration` riêng để thêm `errorHandler`, `onException`, `intercept`, `onCompletion` cục bộ. Luồng không có xử lý lỗi nền hoặc `errorHandler` có DLQ là lỗi VR-11 ở mức gửi duyệt (BR-04-008).
 
+### 16.4. Bản hi-fi
+
+![UI-04-10 Cấu hình cấp tệp và bean (ảnh hi-fi)](ph04/hifi/ui-04-10.png)
+
+Drawer 640 px trên trình thiết kế với tab beans: lớp bean chỉ chọn từ danh sách được phép; bảng biến môi trường cho thấy `sla-ms` chưa khai báo cho PROD và cảnh báo lỗi ở mức PUBLISH.
+
 ## 17. UI-04-11 Chạy thử
 
-**Mục đích.** Chạy phiên bản đang soạn trên Camel thật trong `dh-runtime-sandbox` (ADR-064) với bản tin mẫu, đích mô phỏng hoặc hệ thống TEST thật, xem từng chặng đã đi qua, dữ liệu vào ra tại mỗi chặng, log. Lần chạy `PASSED` không mô phỏng gắn với băm định nghĩa để mở khóa gửi duyệt (BR-04-004). Thay chạy thử giả của repo (GAP-04-04: `RoutesService.testRun` tính từ `hashCode`) và "kiểm tra kết nối khi thêm chương trình" của Bus (LGC-BUS-013). FR-04-030, 033.
-**Dạng.** `CMP-Drawer` dưới cao 50 % (mặc định, để thấy canvas phủ kết quả cùng lúc) hoặc trang `/tich-hop/luong/:ma/chay-thu`. URL `lop=chay-thu`.
-**Quyền.** IE (`PERM-04-update`); dùng dữ liệu thật cần `PERM-04-sample-data`. **API.** API-04-040 (bắt đầu, trả `202` với `runId`), 042 (kết quả, SSE), 043 (hủy), 044 (ca kiểm thử).
+Chạy thử là cổng bắt buộc trước khi gửi duyệt; màn được viết siêu chi tiết vì kết quả phải đọc được tới từng chặng.
+
+::: dac-ta
+**Mục đích.** Chạy phiên bản đang soạn trên Camel thật trong `dh-runtime-sandbox` (ADR-064) với bản tin mẫu, đích mô phỏng hoặc hệ thống TEST thật, xem từng chặng đã đi qua, dữ liệu vào ra tại mỗi chặng, log. Lần chạy `PASSED` không mô phỏng gắn với băm định nghĩa để mở khóa gửi duyệt (BR-04-004).
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-030, 033.
+
+**Thay hệ cũ.** Thay chạy thử giả của repo (GAP-04-04: `RoutesService.testRun` tính từ `hashCode`) và "kiểm tra kết nối khi thêm chương trình" của Bus (LGC-BUS-013).
+
+**Đường dẫn.** Drawer: URL của UI-04-04 thêm `lop=chay-thu`; trang riêng `/tich-hop/luong/:ma/chay-thu`.
+
+**Mẫu, vật liệu.** `CMP-Drawer` dưới cao 50 % (mặc định, để thấy canvas phủ kết quả cùng lúc) hoặc trang `/tich-hop/luong/:ma/chay-thu`. Khung `glass-modal`, vùng nội dung đặc.
+
+**Quyền.** IE (`PERM-04-update`); dùng dữ liệu thật cần `PERM-04-sample-data`.
+
+**API.** API-04-040 (bắt đầu, trả `202` với `runId`), 042 (kết quả, SSE), 043 (hủy), 044 (ca kiểm thử).
+
+**Trạng thái đối tượng.** Lần chạy `QUEUED`, `RUNNING`, `PASSED`, `FAILED`, `TIMED_OUT`, `CANCELLED`; chặng `SKIPPED`, `SIMULATED` (mục 5.1).
+
+**Trạng thái màn.** Mục 17.4; đang tải theo ST-01, lỗi tải ST-05, không có quyền thì nút "Chạy thử" ẩn.
+
+**Thông báo.** ERR-04-009, 013, 019 (429, 503), 020, 021; thành công "Chạy thử đạt".
+:::
 
 ### 17.1. Wireframe
 
@@ -1362,6 +1915,8 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 | Thời gian tối đa | 1–120 giây, mặc định 30 |
 | Lưu thân bản tin từng chặng | `captureBodies`: mặc định bật với `MOCK`, tắt với `SANDBOX_LIVE`; tắt thì không lưu thân, tiêu đề, tham số kết nối |
 | Lưu thành ca kiểm thử | Mở thêm phần khẳng định (mục 18.2) |
+
+: UI-04-11 · Thiết lập
 
 ### 17.3. Kết quả
 
@@ -1403,13 +1958,73 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 | Sandbox không sẵn sàng | ERR-04-019 (503) với "Thử lại". Nếu `04.test.allow-simulation` bật (chỉ môi trường phát triển), máy chủ chạy mô phỏng tĩnh và kết quả có nhãn `SIMULATED` "Mô phỏng, không chạy Camel thật, không tính là chạy thử đạt" |
 | Rời trình thiết kế khi đang chạy | Tác vụ vào khay nền; xong thì thông báo có liên kết |
 
+: UI-04-11 · Tiến trình và trạng thái
+
+### 17.5. Bản hi-fi
+
+![UI-04-11 Chạy thử, kết quả (ảnh hi-fi)](ph04/hifi/ui-04-11.png)
+
+Canvas phía trên phủ kết quả lần chạy #42: chặng đạt có huy hiệu thời lượng, cạnh đã đi qua đậm màu xanh, nhánh otherwise mờ "Bỏ qua"; drawer dưới có dòng chảy kèm thanh waterfall, chi tiết chặng "Gọi hộ tịch" tab Vào với dữ liệu đã che, băm khớp nội dung hiện tại và nút "Lưu thành ca kiểm thử".
+
 ## 18. UI-04-12 Nhật ký chạy thử và UI-04-13 Ca kiểm thử
+
+Hai màn của chương này cùng phục vụ bằng chứng chạy thử: UI-04-12 xem lại các lần đã chạy, UI-04-13 soạn bộ ca kiểm thử chạy lặp lại được.
 
 ### 18.1. UI-04-12 Nhật ký chạy thử
 
+::: dac-ta
+**Mục đích.** Xem lại, lọc, so sánh các lần chạy thử của một luồng và mở chi tiết từng lần làm bằng chứng duyệt.
+
+**Người dùng chính.** IE, IA.
+
+**FR hiện thực.** FR-04-032.
+
+**Thay hệ cũ.** Không có; thay `RunLogPage` của repo.
+
+**Đường dẫn.** `/tich-hop/luong/:ma/nhat-ky-chay-thu` với `ket-qua`, `nguoi-chay`, `phien-ban`, `tu`, `den`, `so-sanh`.
+
+**Mẫu.** PTN-01 + trang chi tiết kết quả (mục 17.3).
+
+**Quyền.** `PERM-04-read`; xem thân bản tin `SANDBOX_LIVE` cần `PERM-04-sample-data` (ghi kiểm toán).
+
+**API.** API-04-041 (danh sách), 042 (chi tiết, thân chặng).
+
+**Trạng thái màn.** Đang tải skeleton 8 dòng; rỗng "Luồng chưa có lần chạy thử nào." kèm "Chạy thử"; lọc rỗng ST-04; lỗi ST-05; không có quyền ST-06.
+
+**Thông báo.** ERR-04-030 (lần chạy không tồn tại); "Thân bản tin đã xóa theo thời hạn lưu".
+:::
+
 FR-04-032. PTN-01: bảng các lần chạy của luồng: số, thời điểm, người chạy, phiên bản, băm rút gọn, chế độ (`MOCK`, `SANDBOX_LIVE`, `SIMULATED`), nguồn bản tin (mẫu, nhập tay, ca kiểm thử), kết quả, thời lượng, chặng lỗi, cờ "Dữ liệu thật". Lọc theo phiên bản, kết quả, người chạy, chế độ, khoảng thời gian. Chi tiết một lần chạy là trang kết quả của mục 17.3 với sơ đồ thời gian từng chặng (waterfall) và `traceId` liên kết sang PH-13. Chọn hai dòng → "So sánh" hiện hai dòng chảy cạnh nhau, so thời lượng từng chặng, tô chặng khác kết quả. Xem thân bản tin của lần chạy `SANDBOX_LIVE` cần `PERM-04-sample-data` và được ghi kiểm toán. Metadata giữ `04.test.retention-days` (mặc định 90 ngày), thân giữ `04.test.body-retention-days` (mặc định 7 ngày); quá hạn thì dòng vẫn còn nhưng chi tiết hiện "Thân bản tin đã xóa theo thời hạn lưu". Lần chạy đã được viện dẫn trong một lần duyệt có nhãn "Bằng chứng duyệt v{n}" và được giữ lâu hơn. Thay `RunLogPage` của repo.
 
+#### 18.1.1. Bản hi-fi UI-04-12
+
+![UI-04-12 Nhật ký chạy thử (ảnh hi-fi)](ph04/hifi/ui-04-12.png)
+
+Bảng các lần chạy với chế độ MOCK, SANDBOX_LIVE, SIMULATED, cờ dữ liệu thật, nhãn "Bằng chứng duyệt v8"; hai lần được chọn so sánh thời lượng theo chặng ở khối dưới.
+
 ### 18.2. UI-04-13 Ca kiểm thử
+
+::: dac-ta
+**Mục đích.** Soạn, lưu, chạy bộ ca kiểm thử có khẳng định để mọi phiên bản sau được kiểm lại cùng một cách.
+
+**Người dùng chính.** IE; IA chạy lại ca khi duyệt (cần `PERM-04-update`).
+
+**FR hiện thực.** FR-04-031.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=ca-kiem-thu`.
+
+**Mẫu.** `CMP-Drawer` phải 720 px.
+
+**Quyền.** Xem `PERM-04-read`; soạn, chạy `PERM-04-update` + mức `EDIT`.
+
+**API.** API-04-044 (danh sách, tạo, sửa, xóa), 040 (chạy ca).
+
+**Trạng thái màn.** Rỗng "Chưa có ca kiểm thử. Lưu một lần chạy đạt thành ca để bắt đầu."; đang tải skeleton 4 dòng; lỗi ST-05; chỉ đọc khi không có quyền.
+
+**Thông báo.** VR-20 (ca chưa có khẳng định), ERR-04-014 (còn ca chưa đạt khi gửi duyệt), 021.
+:::
 
 FR-04-031. Drawer phải 720 px từ "Chạy thử ▾ › Ca kiểm thử…" hoặc tab Chạy thử của UI-04-02.
 
@@ -1421,9 +2036,41 @@ FR-04-031. Drawer phải 720 px từ "Chạy thử ▾ › Ca kiểm thử…" h
 | Lưu trữ | Bộ ca lưu thành luồng loại `TEST` gắn với luồng đích, hoặc kèm phiên bản; xuất cùng gói luồng để chạy trong CI của kho cấu hình (cổng CI-5, D04-02) |
 | Quy tắc | Mỗi ca phải có ít nhất một khẳng định (VR-20); "Lưu" vô hiệu khi chưa có. Khi gửi duyệt, mọi ca gắn với luồng phải đạt trên đúng băm (BR-04-004) |
 
+: UI-04-13 · Các phần của drawer ca kiểm thử
+
+#### 18.2.1. Bản hi-fi UI-04-13
+
+![UI-04-13 Ca kiểm thử (ảnh hi-fi)](ph04/hifi/ui-04-13.png)
+
+Drawer 720 px liệt kê ca và kết quả trên băm hiện tại; vùng soạn ca có bản tin vào và bảng khẳng định STATUS, BODY_JQ, STEP_VISITED, DURATION_LT.
+
 ## 19. UI-04-14 Hàng đợi duyệt và màn duyệt
 
-**Mục đích.** Người duyệt xem đủ bằng chứng để quyết định, theo bốn mắt (BR-04-005, ADR-069). Thay `ReviewPage` của repo, nơi bốn mắt chỉ so `created_by` (GAP-04-07). FR-04-041, 043. **Quyền.** IA (`PERM-04-publish`, mức `MAINTAIN` khi giới hạn không gian). **API.** API-04-053 (hàng đợi), 052 (quyết định), 025 (ghi nhận đã xem so sánh), 030 (kiểm tra mức `PUBLISH`), 043, 041 (bằng chứng chạy thử).
+Màn duyệt là nơi áp nguyên tắc bốn mắt; giao diện chỉ bật nút duyệt khi người duyệt đã xem khác biệt và đủ checklist.
+
+::: dac-ta
+**Mục đích.** Người duyệt xem đủ bằng chứng để quyết định, theo bốn mắt (BR-04-005, ADR-069).
+
+**Người dùng chính.** IA.
+
+**FR hiện thực.** FR-04-041, 043.
+
+**Thay hệ cũ.** Không có ở Bus; thay `ReviewPage` của repo, nơi bốn mắt chỉ so `created_by` (GAP-04-07).
+
+**Đường dẫn.** Hàng đợi `/tich-hop/duyet-luong?trang-thai=&khong-gian=&cua-toi=`; màn duyệt `/tich-hop/duyet-luong/:ma/:phienBan?tab=`.
+
+**Mẫu.** PTN-10 Hộp việc và duyệt.
+
+**Quyền.** IA (`PERM-04-publish`, mức `MAINTAIN` khi giới hạn không gian); lên PROD thêm `PERM-04-promote` khi `04.env.prod-requires-promote` bật.
+
+**API.** API-04-053 (hàng đợi), 052 (quyết định), 025 (ghi nhận đã xem so sánh), 030 (kiểm tra mức `PUBLISH`), 043, 041 (bằng chứng chạy thử).
+
+**Trạng thái đối tượng.** Phiên bản `PENDING_REVIEW` → `APPROVED` hoặc `CHANGES_REQUESTED`.
+
+**Trạng thái màn.** Hàng đợi rỗng "Không có phiên bản nào chờ bạn duyệt."; đang tải skeleton; lỗi ST-05; không có quyền ST-06; đã có người duyệt, đã rút lại, ETag đổi (cuối mục 19.2).
+
+**Thông báo.** ERR-04-005, 015, 025, 041, 042; thành công "Đã duyệt v{n}. Đang phát hành lên {env}."
+:::
 
 ### 19.1. Hàng đợi `/tich-hop/duyet-luong`
 
@@ -1450,6 +2097,8 @@ Bảng: luồng, phiên bản, không gian, người gửi, thời điểm gửi
 | Bình luận | Bình luận gắn với chặng hoặc dòng YAML (`CMP-CommentThread`); bình luận mở có huy hiệu trên chặng ở tab sơ đồ; khi phiên bản `CHANGES_REQUESTED`, tác giả thấy bình luận trong tab "Bình luận duyệt" của bảng dưới trình thiết kế |
 | Checklist | Các mục của `04.review.checklist` (mặc định bốn mục FR-04-041: "Đã xem toàn bộ khác biệt", "Không có dữ liệu cá nhân đi ra ngoài mục đích", "Xử lý lỗi và DLQ phù hợp", "Đã kiểm tra kết nối và quyền CSDL mới"); mỗi mục một ô chọn bắt buộc |
 
+: UI-04-14 · Các tab của màn duyệt
+
 Hành động:
 
 | Nút | Điều kiện bật | Hộp |
@@ -1458,11 +2107,43 @@ Hành động:
 | Duyệt, phát hành sau | Như trên trừ quyền phát hành | Ý kiến bắt buộc; phiên bản `APPROVED`, chưa triển khai |
 | Yêu cầu sửa | `PERM-04-publish` | Ý kiến bắt buộc ≥ 10 ký tự; phiên bản sang `CHANGES_REQUESTED`, bình luận mở chuyển tới tác giả (EVT-04-05) |
 
+: UI-04-14 · Hành động duyệt và điều kiện bật
+
 Trạng thái: người khác đã duyệt khi đang xem → banner "Phiên bản đã được {user} duyệt lúc {giờ}" và nút ẩn; người gửi rút lại → banner và nút ẩn; ETag đổi → ERR-04-005 kèm "Tải lại". Người duyệt không có quyền xem chi tiết kết nối ở PH-05 vẫn thấy tên kết nối.
+
+### 19.3. Bản hi-fi
+
+![UI-04-14 Màn duyệt, tab So sánh sơ đồ (ảnh hi-fi)](ph04/hifi/ui-04-14.png)
+
+Hai canvas chỉ đọc v7 và v8 cạnh nhau, chặng sửa viền vàng "~ Sửa", chặng thêm viền xanh "＋ Thêm", bình luận gắn chặng; cột phải gom bằng chứng và checklist; nút "Duyệt và phát hành" còn mờ vì checklist mới đạt 2/4.
 
 ## 20. UI-04-15 Phát hành, triển khai, quay lui
 
-**Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy bằng lệnh có ký (ADR-065), thăng cấp, quay lui. Thay publish của repo vốn cho phép từ `DRAFT` và không nạp vào runtime (GAP-04-02, 03), lưu context XML của Bus (LGC-BUS-033) và Start/Stop qua JMX (LGC-BUS-009, 012, 026). FR-04-042, 044, 045, 050, 051. **API.** API-04-054 (triển khai, SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển).
+Nhóm hộp và drawer của màn này đưa phiên bản vào vận hành thật, nên mọi hành động đều có kiểm tra trước, lý do và theo dõi tới khi runtime xác nhận.
+
+::: dac-ta
+**Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy bằng lệnh có ký (ADR-065), thăng cấp, quay lui.
+
+**Người dùng chính.** IA, TA; TO, SO cho tạm dừng, dừng khẩn.
+
+**FR hiện thực.** FR-04-042, 044, 045, 050, 051.
+
+**Thay hệ cũ.** Thay publish của repo vốn cho phép từ `DRAFT` và không nạp vào runtime (GAP-04-02, 03), lưu context XML của Bus (LGC-BUS-033) và Start/Stop qua JMX (LGC-BUS-009, 012, 026).
+
+**Đường dẫn.** Không có; mở từ UI-04-02 (`tab=trien-khai`) và UI-04-14.
+
+**Mẫu.** `CMP-Modal` 720 px cho hộp phát hành, `CMP-Drawer` phải cho theo dõi, tab Triển khai của UI-04-02.
+
+**Quyền.** Theo mục 20.3 và chương 28 (`publish`, `promote`, `operate`, `emergency-stop`, `delete`).
+
+**API.** API-04-054 (triển khai, SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển).
+
+**Trạng thái đối tượng.** Triển khai `PENDING`, `SYNCING`, `SYNCED`, `OUT_OF_SYNC`, `FAILED`; lệnh `ISSUED`…`RECONCILED`, `PARTIAL`, `REJECTED` (mục 5.1).
+
+**Trạng thái màn.** Đang kiểm tra trước (skeleton danh sách kiểm), một dòng ✕ thì nút chính vô hiệu, mất SSE thì tự nối lại và hiện "Đang nối lại…"; không có quyền thì nút ẩn.
+
+**Thông báo.** ERR-04-017, 022, 023, 024, 025, 029, 040, 041, 042.
+:::
 
 ### 20.1. Hộp phát hành, thăng cấp
 
@@ -1493,6 +2174,8 @@ Sau khi gửi, drawer theo dõi hiện các bước dạng `CMP-Steps` dọc, c�
 | 3. Runtime nạp | "{k}/{n} bản sao đã nạp v{n} (băm khớp)" theo nhịp tim 30 giây | Bản sao báo lỗi nạp route: log lỗi, nút "Quay lui về v{n-1}" |
 | 4. `SYNCED` và sức khỏe | Sức khỏe `HEALTHY`, `DEGRADED`, `DOWN`, `UNKNOWN`; lượng bản tin, tỷ lệ lỗi 5 phút đầu so với phiên bản trước | Tỷ lệ lỗi tăng vượt tham số đề xuất `04.deploy.rollback-suggest-error-ratio` → dải "Tỷ lệ lỗi tăng so với v{n-1}. Cân nhắc quay lui." và nút "Quay lui"; không tự quay lui |
 
+: UI-04-15 · Theo dõi triển khai
+
 Khi PROD `SYNCED`: phiên bản trước chuyển `SUPERSEDED`, luồng `ACTIVE`. Đóng drawer được; tiến trình vẫn ở thẻ môi trường của UI-04-02 và khay tác vụ nền.
 
 ### 20.3. Điều khiển chạy và quay lui
@@ -1505,25 +2188,340 @@ Khi PROD `SYNCED`: phiên bản trước chuyển `SUPERSEDED`, luồng `ACTIVE`
 | Quay lui | Chọn phiên bản đích (`APPROVED` hoặc `SUPERSEDED`, mặc định bản ngay trước), xem khác biệt, lý do bắt buộc; kiểm tra mức `PUBLISH` hiện tại chạy lại (thành phần có thể đã bị cấm: ERR-04-040) | `PERM-04-publish`; không cần duyệt lại; phiên bản đang chạy chuyển `ROLLED_BACK` |
 | Gỡ luồng | Danh sách phụ thuộc (ERR-04-017 nếu còn), gõ lại mã, lý do; gỡ khỏi mọi môi trường | `PERM-04-delete` |
 
+: UI-04-15 · Điều khiển chạy và quay lui
+
 Sau mỗi lệnh, hàng lệnh trong tab Triển khai hiện trạng thái lệnh (mục 5.1): `ISSUED` → `DELIVERED` → "{k}/{n} bản sao đã xác nhận" → `ACKNOWLEDGED` → `RECONCILED` khi Git đã ghi trạng thái mong muốn (BR-04-018, trong 5 phút). Hết 30 giây chưa đủ xác nhận: `PARTIAL` với danh sách bản sao chưa xác nhận và nút "Gửi lại lệnh"; runtime từ chối (chữ ký sai, hết hạn 60 giây): `REJECTED` với ERR-04-024.
+
+### 20.4. Bản hi-fi
+
+![UI-04-15 Theo dõi thăng cấp lên STAGING (ảnh hi-fi)](ph04/hifi/ui-04-15.png)
+
+Drawer theo dõi bốn bước GitOps: ghi kho cấu hình có ký, đồng bộ Argo CD, runtime nạp 1/2 bản sao, chờ SYNCED và sức khỏe; tab Triển khai phía sau có lệnh tạm dừng đã xác nhận và một lệnh xác nhận một phần kèm "Gửi lại lệnh".
 
 ## 21. UI-04-16 So sánh phiên bản
 
+Màn so sánh trả lời câu hỏi "phiên bản này khác phiên bản kia ở đâu" cho người soạn, người duyệt và người vận hành, theo ba cách nhìn.
+
+::: dac-ta
+**Mục đích.** So sánh hai phiên bản bất kỳ của một luồng trên sơ đồ, YAML và bảng tóm tắt; liên kết sâu tới từng thay đổi.
+
+**Người dùng chính.** Mọi vai trò có `PERM-04-read`; IA dùng nhiều nhất trước khi duyệt.
+
+**FR hiện thực.** FR-04-043.
+
+**Thay hệ cũ.** Tab Source của Bus (LGC-BUS-023).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/so-sanh?tu=&den=&che-do=` (`so-do`, `yaml`, `tom-tat`).
+
+**Mẫu.** Trang riêng dùng `CMP-DiffViewer` và hai `CMP-FlowCanvas` chỉ đọc.
+
+**Quyền.** `PERM-04-read` + quyền xem không gian.
+
+**API.** API-04-025 (so sánh), 024 (danh sách phiên bản), 020 (định nghĩa hai phía).
+
+**Trạng thái màn.** Mục 21.4.
+
+**Thông báo.** ERR-04-001, 004; "Hai phiên bản giống hệt nhau."
+:::
+
 FR-04-043. Trang riêng, chọn "Từ" và "Đến" (phiên bản bất kỳ, hoặc "đang chạy ở {env}"). Ba chế độ: Sơ đồ (phủ khác biệt thêm, xóa, đổi, di chuyển; ghép chặng theo `id`, chặng không có `id` ổn định ghép theo vị trí và loại), YAML (`CMP-DiffViewer` unified hoặc hai cột), Tóm tắt (số chặng đổi, thành phần mới, kết nối mới, topic mới, điểm vào mới, bảng tham số đổi theo chặng). Liên kết sâu tới từng thay đổi; nút "Mở trên sơ đồ" từ YAML. Thay tab Source của Bus (LGC-BUS-023) khi cần đối chiếu.
+
+### 21.1. Wireframe
+
+```
+  Tích hợp › Luồng tích hợp › Đồng bộ khai sinh sang NDXP › So sánh
+  Từ [v7 · đang chạy ở PROD ▾]  ⇄  Đến [v8 · Chờ duyệt ▾]      [Sơ đồ | YAML | Tóm tắt]  [⧉ Sao chép liên kết]
+  +2 chặng · ~3 chặng · −0 · ↕1 · 1 kết nối mới · 0 topic mới                   ‹ Thay đổi trước  Thay đổi sau ›
+  ┌ v7 (chỉ đọc) ───────────────────────────┐ ┌ v8 (chỉ đọc) ──────────────────────────────┐
+  │ Nhận yêu cầu → Kiểm lược đồ → Rẽ nhánh   │ │ Nhận yêu cầu → Kiểm lược đồ → Rẽ nhánh      │
+  │                                         │ │   ~ Gọi hộ tịch (timeout)  + Ghi nhật ký    │
+  └─────────────────────────────────────────┘ └────────────────────────────────────────────┘
+  Tham số đổi của chặng chọn: Gọi hộ tịch · connectTimeout 5000 → 10000
+```
+
+### 21.2. Thành phần và trường
+
+| # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
+|---|---|---|---|---|
+| 1 | Chọn "Từ", "Đến" | `CMP-Select` | Phiên bản bất kỳ hoặc "đang chạy ở {env}"; "Đến" mặc định phiên bản mới nhất; hai phía trùng thì báo "Hai phiên bản giống hệt nhau." | API-04-024 |
+| 2 | Nút ⇄ | `CMP-Button` icon | Đổi chiều so sánh | |
+| 3 | Chế độ | `CMP-SegmentedControl` | Sơ đồ, YAML, Tóm tắt; lưu vào `che-do` | |
+| 4 | Dải tổng | `CMP-StatusTag` | Đếm thêm, sửa, xóa, di chuyển, thành phần, kết nối, topic, điểm vào mới | API-04-025 `summary` |
+| 5 | Hai canvas | `CMP-FlowCanvas` readOnly | Đồng bộ thu phóng, cuộn; trạng thái khác biệt mục 10.7.3 | API-04-020 |
+| 6 | Bảng tham số đổi | `CMP-DataTable` | Chặng, tham số, cũ, mới | API-04-025 `params[]` |
+| 7 | Khung YAML | `CMP-DiffViewer` | Unified hoặc hai cột, gộp đoạn không đổi, nút "Mở trên sơ đồ" ở mỗi khối | API-04-025 `yamlDiff` |
+
+: UI-04-16 · Thành phần và trường
+
+### 21.3. Hành động
+
+| Hành động | Kết quả |
+|---|---|
+| "Thay đổi trước", "Thay đổi sau" | Cuộn và chọn thay đổi kế tiếp ở chế độ đang mở |
+| "Mở trên sơ đồ" | Chuyển chế độ Sơ đồ, chọn chặng của khối YAML |
+| "Sao chép liên kết" | Liên kết sâu gồm `tu`, `den`, `che-do` và mã thay đổi |
+| "Mở trình thiết kế" | Mở UI-04-04 ở phiên bản "Đến" với lớp phủ khác biệt |
+
+: UI-04-16 · Hành động
+
+### 21.4. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton hai canvas và dải tổng "—" |
+| Không có khác biệt | `CMP-EmptyState` "Hai phiên bản giống hệt nhau." |
+| Phiên bản không tồn tại | ST-05 với ERR-04-004 |
+| Không có quyền | ST-05 với ERR-04-001 (không phân biệt) |
+| Khác biệt lớn (> 500 dòng YAML) | Mặc định chế độ Tóm tắt, cảnh báo hiệu năng |
+
+: UI-04-16 · Trạng thái màn
+
+### 21.5. Bàn phím
+
+`N`, `P` sang thay đổi sau, trước; `Ctrl+1`, `Ctrl+2`, `Ctrl+3` đổi chế độ; `S` đổi chiều; `Enter` trên khối YAML mở trên sơ đồ. Mỗi thay đổi có `aria-label` "Sửa, chặng Gọi hộ tịch, tham số connectTimeout".
+
+### 21.6. Bản hi-fi
+
+![UI-04-16 So sánh phiên bản, chế độ YAML (ảnh hi-fi)](ph04/hifi/ui-04-16.png)
+
+Dải tổng đếm thêm, sửa, xóa, di chuyển, kết nối mới; hai khung YAML tô dòng xóa đỏ, dòng thêm xanh, có liên kết "Mở trên sơ đồ" và nút chuyển thay đổi trước, sau.
 
 ## 22. UI-04-17 Danh mục thành phần
 
+Danh mục thành phần cho mọi người thấy tỉnh được dùng thành phần Camel nào, và là nơi PA quản lý chính sách cho phép.
+
+::: dac-ta
+**Mục đích.** Duyệt, tìm, xem chi tiết thành phần của catalog đúng phiên bản runtime; quản lý chính sách được phép, bản dịch, nhóm nghiệp vụ, hồ sơ runtime.
+
+**Người dùng chính.** Mọi vai trò; PA quản lý chính sách, SO duyệt.
+
+**FR hiện thực.** FR-04-080, 081.
+
+**Thay hệ cũ.** Quản lý dependency, builder của Bus (LGC-BUS-034); danh mục connector (LGC-BUS-040).
+
+**Đường dẫn.** `/tich-hop/thanh-phan?loai=&nhan=&q=&chinh-sach=&chon=`.
+
+**Mẫu.** PTN-08 Cây + bảng, chi tiết dạng drawer.
+
+**Quyền.** Xem `PERM-04-read`; đổi chính sách, bản dịch, nhóm, hồ sơ `PERM-04-catalog-admin`.
+
+**API.** API-04-070, 071, 072, 073, 074.
+
+**Trạng thái màn.** Mục 22.5.
+
+**Thông báo.** ERR-04-035, 025 (thiếu lý do), 045.
+:::
+
 FR-04-080, 081. PTN-08: cây trái là nhóm nghiệp vụ hoặc loại (component, EIP, Kamelet, dataformat, language, entity, load balancer); bảng phải: tên, tiêu đề, loại, mức hỗ trợ (`stable`, `preview`, `deprecated`), mức native, giấy phép, **được phép ở tỉnh** (Có, Không), số luồng dùng. Chi tiết (drawer): mô tả, tham số (bảng đầy đủ), ví dụ YAML, luồng đang dùng. PA (`PERM-04-catalog-admin`) đổi cờ được phép (lý do bắt buộc; SO duyệt), sửa bản dịch tiếng Việt, sửa ánh xạ nhóm nghiệp vụ, quản lý hồ sơ runtime, xem lịch sử. Người khác có nút "Đề xuất thành phần mới", "Đề xuất cho phép" tạo yêu cầu tới PA. Chân trang: "Catalog Camel {ver} · khớp runtime {ver} ✓" hoặc cảnh báo lệch (ADR-061). Thay `ComponentCatalogPage` của repo và việc quản lý dependency, builder của Bus (LGC-BUS-034).
+
+### 22.1. Wireframe
+
+```
+  Tích hợp › Danh mục thành phần                       [Đề xuất thành phần mới]  [Hồ sơ runtime] (PA)
+  [🔍 Tìm tên, tiêu đề, mô tả…]  [Loại ▾] [Mức hỗ trợ ▾] [Native ▾] [Được phép ở tỉnh ▾]
+  ┌ Nhóm ──────────────┐ ┌───────────────────────────────────────────────────────────────────────┐
+  │ Tất cả        751  │ │ Tên        │ Tiêu đề       │ Loại      │ Hỗ trợ │ Native │ Được phép │ Dùng │
+  │ ▸ Điểm vào      42 │ │ http       │ Gọi HTTP      │ component │ stable │ ✓      │ Có        │ 61   │
+  │ ▾ Mạng          88 │ │ sftp       │ SFTP          │ component │ stable │ ✓      │ Có        │ 9    │
+  │   Kamelet của tỉnh │ │ exec       │ Chạy lệnh     │ component │ stable │ ✕ JVM  │ Không     │ 0    │
+  └────────────────────┘ └───────────────────────────────────────────────────────────────────────┘
+  Catalog Camel 4.18.2 · @kaoto/camel-catalog 3.33.1 · khớp runtime ✓
+```
+
+### 22.2. Thành phần và cột
+
+| Cột, thành phần | `CMP-*` | Nội dung | Ghi chú |
+|---|---|---|---|
+| Cây nhóm | `CMP-Tree` | Nhóm nghiệp vụ (mục 5.2) hoặc loại; số lượng | Chuyển bằng "Xem theo" |
+| Tên | `CMP-CodeText` | `name` catalog, liên kết mở drawer | Ghim trái |
+| Tiêu đề | Chữ | Tiếng Việt, hoặc tiếng Anh kèm nhãn "EN" | |
+| Loại | `CMP-StatusTag` neutral | component, EIP, Kamelet, dataformat, language | |
+| Mức hỗ trợ | `CMP-StatusTag` | Ổn định, Thử nghiệm (warning), Lỗi thời (error) | |
+| Native | Biểu tượng + chữ | ✓ hoặc "JVM" | |
+| Được phép ở tỉnh | `CMP-Switch` (PA) hoặc chữ | Có, Không | Đổi cần lý do, SO duyệt |
+| Số luồng dùng | Số | Liên kết lọc UI-04-01 | |
+| Drawer chi tiết | `CMP-Drawer` 640 px | Mô tả, bảng tham số đầy đủ, ví dụ YAML, luồng đang dùng, lịch sử chính sách | API-04-071 |
+
+: UI-04-17 · Thành phần và cột
+
+### 22.3. Hành động
+
+| Hành động | Ai | Kết quả |
+|---|---|---|
+| Đổi "Được phép" | PA | Hộp lý do ≥ 10 ký tự; tạo yêu cầu SO duyệt; luồng đang dùng thành phần bị cấm nhận ERR-04-011 ở lần kiểm tra sau |
+| Sửa bản dịch, nhóm nghiệp vụ | PA | Ghi `palette-groups.json`, bản dịch; áp ở lần tải catalog sau |
+| "Đề xuất thành phần mới", "Đề xuất cho phép" | Mọi người | Hộp tên, lý do, luồng cần dùng; tạo đề xuất (API-04-074) |
+| Quyết định đề xuất | PA | Chấp nhận hoặc từ chối kèm ý kiến |
+
+: UI-04-17 · Hành động
+
+### 22.4. Thông điệp
+
+- Lệch phiên bản: "Catalog trình thiết kế {ver} khác runtime {ver}. Liên hệ quản trị nền tảng." (dải cảnh báo chân trang, ADR-061).
+- Gửi đề xuất: "Đã gửi đề xuất {tên}. Quản trị nền tảng sẽ phản hồi trong hộp việc của bạn."
+
+### 22.5. Trạng thái màn và bàn phím
+
+Đang tải: skeleton cây 10 dòng, bảng 8 dòng. Lọc rỗng: ST-04. Lỗi tải: ST-05. Không có quyền quản lý: cột "Được phép" là chữ, nút quản lý ẩn. Phím: `/` tìm; `↑`, `↓` chọn dòng; `Enter` mở drawer; `Esc` đóng; `F6` chuyển giữa cây và bảng.
+
+### 22.6. Bản hi-fi
+
+![UI-04-17 Danh mục thành phần (ảnh hi-fi)](ph04/hifi/ui-04-17.png)
+
+Cây nhóm nghiệp vụ bên trái, bảng thành phần nhóm Mạng bên phải với mức hỗ trợ, native, cờ "Được phép ở tỉnh" (`ftp` và `netty-http` không được phép); chân bảng xác nhận catalog khớp runtime.
 
 ## 23. UI-04-18 Nhập luồng hệ cũ
 
+Màn nhập phục vụ di trú từ LGSP cũ: chuyển XML Camel của Bus, Tooling thành bản nháp luồng mà không mang theo bí mật.
+
+::: dac-ta
+**Mục đích.** Chuyển route Camel XML của hệ cũ thành luồng nháp v1 trên Datahub, có báo cáo điểm cần chỉnh.
+
+**Người dùng chính.** IE, đội di trú.
+
+**FR hiện thực.** FR-04-082.
+
+**Thay hệ cũ.** Lưu context XML của Bus (LGC-BUS-033); tải XML của Tooling (LGC-TOOL-015).
+
+**Đường dẫn.** `/tich-hop/luong/nhap-he-cu?buoc=&tac-vu=`.
+
+**Mẫu.** PTN-09 Nhập dữ liệu có xem trước, bốn bước.
+
+**Quyền.** `PERM-04-create` + mức `EDIT` ở không gian đích.
+
+**API.** API-04-028 (tạo tác vụ, đọc kết quả), 011 (tạo luồng), PH-05 (chọn kết nối).
+
+**Trạng thái màn.** Mục 23.4.
+
+**Thông báo.** ERR-04-032, 002, 011, 027; kết quả "Đã tạo {n} luồng nháp. {m} route cần chỉnh."
+:::
+
 FR-04-082. PTN-09, bốn bước: ① Tải tệp (XML Camel Spring, Blueprint xuất từ Tooling cũ, hoặc gói `.zip` nhiều tệp); ② Phân tích: mỗi route một dòng với trạng thái chuyển đổi (Tự động hoàn toàn, Cần chỉnh {n} điểm, Không chuyển được) và danh sách điểm cần chỉnh (thành phần không được phép, bí mật nhúng trong URI được tách ra thành chỗ cần chọn kết nối, bean lớp tùy biến, phụ thuộc `pom`); ③ Ánh xạ: chọn không gian, mã luồng, kết nối PH-05 cho mỗi bí mật được tách, bọc khung chín chặng cho luồng đối ngoại (tùy chọn); ④ Xem trước và tạo: mỗi luồng thành một bản nháp v1, có liên kết mở trình thiết kế. Bí mật tìm thấy trong tệp hệ cũ không bao giờ được lưu; báo cáo nhập liệt kê vị trí để đổi mật khẩu ở hệ nguồn. Tác vụ nền (ST-11). Phục vụ di trú và chạy song song strangler (Q12).
+
+### 23.1. Wireframe bước ②
+
+```
+  Nhập luồng hệ cũ   ① Tải tệp ── ② Phân tích ── ③ Ánh xạ ── ④ Xem trước và tạo            ✕ Hủy
+  Tệp: bus-export-2026-11.zip · 14 route · phân tích xong 09:12
+  [Tất cả 14] [Tự động 9] [Cần chỉnh 4] [Không chuyển được 1]
+  │ Route              │ Tệp                │ Trạng thái            │ Điểm cần chỉnh                     │
+  │ hotich-ks-sync     │ hotich.xml         │ ✓ Tự động hoàn toàn   │ —                                  │
+  │ dkkd-tra-cuu       │ dkkd.xml           │ ⚠ Cần chỉnh 2 điểm    │ Bí mật trong URI · bean tùy biến   │
+  │ thue-ftp-legacy    │ thue.xml           │ ✕ Không chuyển được   │ Thành phần ftp không được phép     │
+                                                             [‹ Quay lại]  [Tiếp tục →]
+```
+
+### 23.2. Trường từng bước
+
+| Bước | Trường | Kiểm tra |
+|---|---|---|
+| ① Tải tệp | `CMP-Upload` dropzone: `.xml`, `.zip` | ≤ 2 MiB; XML Camel Spring hoặc Blueprint hợp lệ (ERR-04-032) |
+| ② Phân tích | Bảng route: tên, tệp, trạng thái, điểm cần chỉnh; lọc theo trạng thái | Chỉ đọc; bỏ chọn route không muốn nhập |
+| ③ Ánh xạ | Không gian, mã luồng (mặc định từ `routeId`), kết nối PH-05 cho mỗi bí mật được tách, ô "Bọc khung chín chặng" | Mã theo mẫu của mục 9.2, không trùng (ERR-04-002); mọi bí mật phải có kết nối |
+| ④ Xem trước | Mỗi luồng: sơ đồ thu nhỏ, YAML, kết quả kiểm tra `DESIGN` | Nút "Tạo {n} luồng nháp" |
+
+: UI-04-18 · Trường từng bước
+
+### 23.3. Hành động và thông điệp
+
+"Tạo" chạy tác vụ nền (ST-11), xong thì báo cáo nhập liệt kê luồng tạo được (liên kết mở UI-04-04), route bỏ qua và **vị trí bí mật đã thấy** kèm câu "Bí mật tìm thấy trong tệp không được lưu. Đổi mật khẩu ở hệ nguồn tại các vị trí sau." Nút "Tải báo cáo" xuất CSV. Route "Không chuyển được" có nút "Xem lý do".
+
+### 23.4. Trạng thái màn và bàn phím
+
+Đang phân tích: `CMP-JobProgress` "Đang phân tích {k}/{n} route". Rỗng: dropzone "Kéo tệp XML hoặc ZIP vào đây". Lỗi: ST-05. Không có quyền: ST-06. Rời giữa chừng: ST-10, tác vụ đã chạy vẫn giữ trong khay nền. Phím: `Enter` tiếp tục, `Alt+←` quay lại, `↑`, `↓` duyệt route, `Space` chọn hoặc bỏ route.
+
+### 23.5. Bản hi-fi
+
+![UI-04-18 Nhập luồng hệ cũ, bước 2 (ảnh hi-fi)](ph04/hifi/ui-04-18.png)
+
+Kết quả phân tích tệp ZIP của Bus: đếm theo trạng thái chuyển đổi, bảng route với điểm cần chỉnh (bí mật trong URI, bean tùy biến, thành phần không được phép) và cảnh báo bí mật không được lưu.
 
 ## 24. UI-04-19 Thư viện khuôn mẫu
 
+Thư viện khuôn mẫu giúp mọi luồng mới bắt đầu từ một khung đã chuẩn hóa thay vì từ trang trắng.
+
+::: dac-ta
+**Mục đích.** Duyệt, xem trước và dùng khuôn mẫu luồng; TA, PA quản lý khuôn của tỉnh và khuôn nền.
+
+**Người dùng chính.** IE; PA, TA quản lý.
+
+**FR hiện thực.** FR-04-025.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** `/tich-hop/khuon-mau?nhom=&loai=&q=`.
+
+**Mẫu.** PTN-01 dạng lưới thẻ, chi tiết dạng drawer.
+
+**Quyền.** Xem `PERM-04-create` hoặc `PERM-04-catalog-admin` (mục 4.3); khuôn nền `PERM-04-catalog-admin`; khuôn tỉnh `PERM-04-admin`.
+
+**API.** API-04-080, 081, 082.
+
+**Trạng thái màn.** Mục 24.3.
+
+**Thông báo.** ERR-04-039, 045; "Đã lưu khuôn {mã}."
+:::
+
 FR-04-025. Lưới thẻ: mã, tên, sơ đồ thu nhỏ (ảnh minh họa của khuôn), mô tả, loại tài nguyên, nhóm, số lần dùng, phạm vi (Nền tảng, Tỉnh). Bộ lọc theo nhóm và loại. Chi tiết khuôn: sơ đồ, lược đồ tham số `${tpl.*}`, YAML, "Dùng khuôn này" (mở UI-04-03 bước 2). Khuôn nền do PA quản lý (`PERM-04-catalog-admin`); khuôn của tenant do TA quản lý, tạo từ một luồng đã duyệt bằng "Lưu làm khuôn mẫu" ở UI-04-02. Tám khuôn nền tối thiểu ở MVP theo FR-04-025: `tpl-standard-9`, `tpl-sync-lookup`, `tpl-soap-to-rest`, `tpl-db-poll-to-kafka`, `tpl-kafka-to-rest`, `tpl-sftp-to-kafka`, `tpl-ndxp-proxy`, `tpl-cdm-normalize`. Khuôn cho các dịch vụ NGSP (Tư pháp, BHXH, ĐKKD, mã ĐVQHNS, DMDC quốc gia, VBQPPL) và PayGov (PH-19) bổ sung ở đợt sau, dùng `tpl-ndxp-proxy` làm gốc.
 
+### 24.1. Wireframe
+
+```
+  Tích hợp › Khuôn mẫu luồng                                              [＋ Khuôn của tỉnh] (TA)
+  [🔍 Tìm khuôn…]  [Tất cả] [Tra cứu đồng bộ] [Đồng bộ định kỳ] [Nhận sự kiện] [Tệp] [Quốc gia]
+  ┌ tpl-standard-9 ──────────┐ ┌ tpl-sync-lookup ─────────┐ ┌ tpl-ndxp-proxy ──────────┐
+  │ Khung chín chặng chuẩn   │ │ Tra cứu đồng bộ REST     │ │ Ủy quyền NDXP            │
+  │ [sơ đồ thu nhỏ]          │ │ [sơ đồ thu nhỏ]          │ │ [sơ đồ thu nhỏ]          │
+  │ Nền tảng · Dùng 58 lần   │ │ Nền tảng · Dùng 34 lần   │ │ Nền tảng · Dùng 21 lần   │
+  └──────────────────────────┘ └──────────────────────────┘ └──────────────────────────┘
+```
+
+### 24.2. Thẻ, chi tiết và hành động
+
+| Phần | Nội dung | Ghi chú |
+|---|---|---|
+| Thẻ khuôn (`CMP-Card`) | Mã `CMP-CodeText`, tên, sơ đồ thu nhỏ, mô tả 2 dòng, loại tài nguyên, nhóm, phạm vi (Nền tảng, Tỉnh), số lần dùng | Thẻ có `role="link"`; khuôn ngừng dùng mờ kèm nhãn |
+| Bộ lọc | Nhóm (`CMP-SegmentedControl`), loại (`ROUTE`, `KAMELET`, `PIPE`), phạm vi, ô tìm | Ghi URL |
+| Drawer chi tiết | Sơ đồ chỉ đọc, bảng tham số `${tpl.*}` (tên, kiểu, bắt buộc, mô tả), YAML, lịch sử phiên bản khuôn | API-04-081 |
+| "Dùng khuôn này" | Mở UI-04-03 bước 2 với `khuon={mã}` | Nút chính |
+| "Ngừng dùng" | TA với khuôn tỉnh; PA với khuôn nền; lý do bắt buộc | API-04-082 `:deprecate` |
+| "Khuôn của tỉnh" | Chọn một phiên bản `APPROVED`, đặt mã `tpl-…`, khai tham số | Hoặc "Lưu làm khuôn mẫu" ở UI-04-02 |
+
+: UI-04-19 · Thẻ, chi tiết và hành động
+
+### 24.3. Trạng thái màn và bàn phím
+
+Đang tải: lưới 6 thẻ skeleton. Không có khuôn của tỉnh: vẫn hiện tám khuôn nền. Lọc rỗng: ST-04. Lỗi: ST-05. Không có quyền: mục menu ẩn, vào bằng URL nhận ST-06. Phím: `/` tìm; mũi tên chuyển thẻ theo lưới; `Enter` mở chi tiết; `U` dùng khuôn đang chọn.
+
+### 24.4. Bản hi-fi
+
+![UI-04-19 Thư viện khuôn mẫu (ảnh hi-fi)](ph04/hifi/ui-04-19.png)
+
+Lưới thẻ tám khuôn: bảy khuôn nền tảng và một khuôn của tỉnh T68, mỗi thẻ có sơ đồ thu nhỏ, loại tài nguyên và số lần dùng; bộ lọc nhóm ở đầu.
+
 ## 25. UI-04-20 Tham số PH-04
+
+::: dac-ta
+**Mục đích.** Đặt tham số `04.*`, biến môi trường và khoảng đóng băng của PH-04 cho tỉnh.
+
+**Người dùng chính.** TA; SO đặt khoảng đóng băng.
+
+**FR hiện thực.** FR-04-084.
+
+**Thay hệ cũ.** Màn cấu hình hệ thống của Bus (LGC-BUS-031).
+
+**Đường dẫn.** `/quan-tri/tham-so?nhom=04`.
+
+**Mẫu.** Màn tham số chung của PH-18.
+
+**Quyền.** Xem `PERM-04-read`; sửa `PERM-04-admin`.
+
+**API.** API-04-090.
+
+**Trạng thái màn.** Theo màn tham số PH-18; giá trị ngoài miền báo tại ô.
+
+**Thông báo.** ERR-04-049 (giá trị sai lược đồ), 025 (thiếu lý do khi đổi khoảng đóng băng).
+:::
 
 FR-04-084. Không có màn riêng: nhóm "04 · Tích hợp" trong màn tham số chung của PH-18 (`/quan-tri/tham-so?nhom=04`), hiện các tham số `04.*` của FRS §7.1 với miền giá trị, mặc định, giá trị tỉnh, người sửa cuối; khai báo biến môi trường `{{dh.env.<tên>}}` với giá trị theo TEST, STAGING, PROD; đặt khoảng đóng băng `04.freeze.windows` (TA, SO). Thay màn cấu hình hệ thống của Bus (LGC-BUS-031).
 
@@ -1537,9 +2535,85 @@ Thiết kế giao diện cần thêm năm tham số; đề nghị bổ sung vào
 | `04.deploy.rollback-suggest-error-ratio` | số | 2,0 | 1,1…10 | UI-04-15: gợi ý quay lui khi tỷ lệ lỗi 5 phút đầu gấp n lần phiên bản trước |
 | `04.mapping.require-all-required` | boolean | `false` | — | UI-04-07: trường bắt buộc chưa ánh xạ thành lỗi ở mức gửi duyệt |
 
+: UI-04-20 · Tham số giao diện đề xuất bổ sung FRS §7.1
+
+### 25.1. Bản hi-fi
+
+![UI-04-20 Tham số PH-04 (ảnh hi-fi)](ph04/hifi/ui-04-20.png)
+
+Nhóm "04 · Tích hợp" trong màn tham số chung với miền, mặc định, giá trị của tỉnh T68 và người sửa cuối; ô `04.review.sla-hours` đang sửa.
+
 ## 26. UI-04-21 Không gian làm việc
 
+Không gian làm việc khoanh vùng ai được sửa, duyệt luồng nào trong cùng một tỉnh, như project và group của Bus cũ.
+
+::: dac-ta
+**Mục đích.** Tạo, sửa, lưu trữ không gian làm việc; quản lý thành viên và mức truy cập; xem kết nối được cấp và luồng.
+
+**Người dùng chính.** TA, PA.
+
+**FR hiện thực.** FR-04-007.
+
+**Thay hệ cũ.** Quản lý project, group của Bus (LGC-BUS-032).
+
+**Đường dẫn.** `/tich-hop/khong-gian`; chi tiết `/tich-hop/khong-gian/:ma?tab=`.
+
+**Mẫu.** PTN-01 + PTN-04.
+
+**Quyền.** `PERM-04-admin`; thành viên mức `MAINTAIN` sửa thành viên của không gian mình.
+
+**API.** API-04-001, 002, 003, 004; PH-05 (kết nối được cấp), PH-12 (người dùng, nhóm).
+
+**Trạng thái màn.** Mục 26.4.
+
+**Thông báo.** ERR-04-027, 028, 017 (lưu trữ khi còn luồng), 025, 045.
+:::
+
 FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không gian: tên, mã, đơn vị chủ quản, số thành viên, số luồng. Chi tiết: thông tin; tab **Thành viên** (người dùng hoặc nhóm PH-12, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực); tab **Kết nối được cấp** (đọc từ PH-05, cấp ở PH-05); tab **Luồng**. Dải thông tin đầu trang nói rõ hiệu lực: "Giới hạn theo không gian làm việc đang {bật, tắt} (`04.workspace.enforce`). Khi bật, chỉ thành viên mức EDIT sửa được luồng, mức MAINTAIN duyệt được luồng của không gian; TA, PA không bị giới hạn." Xóa không gian chỉ khi không còn luồng. Thay quản lý project, group của Bus (LGC-BUS-032).
+
+### 26.1. Wireframe
+
+```
+  Tích hợp › Không gian làm việc                                         [＋ Tạo không gian]
+  ⓘ Giới hạn theo không gian làm việc đang bật (04.workspace.enforce).
+  │ Tên            │ Mã          │ Đơn vị chủ quản      │ Thành viên │ Luồng │ Cập nhật    │ ⋯ │
+  │ Tư pháp        │ tu-phap     │ Sở Tư pháp T68       │ 12         │ 31    │ hôm qua     │ ⋯ │
+  │ Kế hoạch ĐT    │ ke-hoach-dt │ Sở KH-ĐT T68         │ 7          │ 18    │ 3 ngày trước│ ⋯ │
+  Chi tiết › [Thông tin | Thành viên 12 | Kết nối được cấp 6 | Luồng 31]
+```
+
+### 26.2. Trường
+
+| Trường | Kiểu | Bắt buộc | Kiểm tra |
+|---|---|---|---|
+| Tên | `Input` | Có | 3–200 ký tự |
+| Mã | `Input` | Có | `^[a-z][a-z0-9-]{2,62}$`, duy nhất trong tenant (ERR-04-028), không đổi sau khi tạo |
+| Đơn vị chủ quản | `Select` từ PH-12 | Có | |
+| Mô tả | `TextArea` | Không | ≤ 2.000 ký tự |
+| Thành viên | `CMP-EditableTable`: người dùng hoặc nhóm PH-12, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực | Không | Không trùng; hạn ≥ hôm nay; ít nhất một `MAINTAIN` |
+
+: UI-04-21 · Trường không gian làm việc
+
+### 26.3. Hành động và thông điệp
+
+| Hành động | Điều kiện | Kết quả, thông điệp |
+|---|---|---|
+| Tạo, sửa | `PERM-04-admin` | "Đã lưu không gian {tên}." |
+| Lưu thành viên | `PERM-04-admin` hoặc `MAINTAIN` | Thay cả danh sách (API-04-004 `PUT`), ghi kiểm toán |
+| Lưu trữ | Không còn luồng | Hộp xác nhận gõ lại mã; còn luồng thì ERR-04-017 kèm danh sách |
+| Cấp kết nối | Ở PH-05 | Tab chỉ đọc, nút "Mở PH-05" |
+
+: UI-04-21 · Hành động và thông điệp
+
+### 26.4. Trạng thái màn và bàn phím
+
+Đang tải: skeleton 6 dòng. Rỗng: "Tỉnh chưa có không gian làm việc nào. Tạo không gian để giới hạn ai sửa luồng nào." kèm "Tạo không gian". Lỗi: ST-05. Không có quyền: mục menu ẩn, URL nhận ST-06. Phím: `N` tạo; `↑`, `↓`, `Enter` mở chi tiết; trong bảng thành viên `Ctrl+Enter` lưu.
+
+### 26.5. Bản hi-fi
+
+![UI-04-21 Không gian làm việc (ảnh hi-fi)](ph04/hifi/ui-04-21.png)
+
+Dải thông tin nói rõ giới hạn đang bật; bảng không gian bên trái, chi tiết "Tư pháp" tab Thành viên bên phải với mức EDIT, MAINTAIN, VIEW và hạn hiệu lực.
 
 ## 27. Kiến trúc mã giao diện
 
@@ -1561,6 +2635,8 @@ FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không
 | `deploy/` | Hộp phát hành, theo dõi, điều khiển | — |
 | `api/` | Client sinh từ `api/ph04/openapi-integration.yaml` (TanStack Query) | Gọi trực tiếp `/api/admin/v1/routes` → thay bằng `/api/integration/v1/...` |
 | `a11y/` | Chế độ danh sách, thông báo trực tiếp, bảng phím tắt | — |
+
+: Cấu trúc thư mục apps/console/src/features/integration/
 
 ### 27.2. Trạng thái và dữ liệu
 
@@ -1596,6 +2672,8 @@ Vai trò theo FRS §3.1; quyền đề xuất bổ sung theo FRS §3.3. Bảng c
 | Dữ liệu thật làm bản tin mẫu (`sample-data`) | Khi TA cấp theo luồng | | | | | | |
 | Lịch sử, nhật ký kiểm toán | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
+: Ma trận vai trò × hành động trên giao diện
+
 ## 29. Kế hoạch kiểm thử giao diện
 
 | Loại | Công cụ | Phạm vi |
@@ -1607,6 +2685,8 @@ Vai trò theo FRS §3.1; quyền đề xuất bổ sung theo FRS §3.3. Bảng c
 | Hiệu năng | Playwright + trace, luồng mẫu 50, 200, 500 chặng | Ngân sách 10.22 |
 | Khả năng truy cập thủ công | NVDA + Chrome, VoiceOver + Safari | AC-UI-04-04-06, mỗi đợt phát hành |
 | Khả dụng | 5 kỹ sư tích hợp (trong đó 2 người từng dùng Tooling cũ) | Ba nhiệm vụ: tạo luồng tra cứu đối ngoại, sửa ánh xạ có chuyển mã, quay lui; đo thời gian và lỗi |
+
+: Kế hoạch kiểm thử giao diện
 
 ## 30. Hiện trạng mã và việc phải đổi
 
@@ -1621,6 +2701,8 @@ Vai trò theo FRS §3.1; quyền đề xuất bổ sung theo FRS §3.3. Bảng c
 | Kiểm tra chín chặng tìm chuỗi con trong YAML | Có | Đánh dấu bằng `id` `dh-stage-{mã}`, giao diện nhóm thành khối | GAP-04-08 |
 | Đường dẫn `/flows/*`, API `/api/admin/v1/routes` | Có | `/tich-hop/luong/*`, `/api/integration/v1/*`, chuyển hướng một đợt | GAP-04-13 |
 | Giao diện theo antd mặc định | Chưa theo Liquid Glass | Theo D03-05 | — |
+
+: Hiện trạng mã và việc phải đổi
 
 ## 31. Câu hỏi mở và giả định
 
@@ -1638,3 +2720,25 @@ Theo chỉ đạo của người dùng (25/11/2026), các điểm dưới đây 
 | Q04-37 | Năm tham số giao diện mới (mục 25)? | Thêm vào FRS §7.1 với mặc định an toàn |
 | Q04-38 | Bản dịch tiếng Việt của khoảng 750 thành phần? | Dịch tiêu đề, mô tả của khoảng 120 thành phần hay dùng ở bản 1.0; còn lại hiện tiếng Anh có nhãn "EN" |
 | Q04-39 | Có gợi ý quay lui tự động khi tỷ lệ lỗi tăng? | Chỉ gợi ý, không tự quay lui |
+
+: Câu hỏi mở và giả định
+
+## Đề nghị đồng bộ
+
+Bản 0.2 không đổi mã đã có và không tạo mã mới ngoài các mục con của từng màn. Các điểm dưới đây cần tập khác cập nhật trong đợt gom cuối.
+
+| Tập | Đề nghị |
+|---|---|
+| D02-03-PH04 §12 | Cột FR của UI-04-03 thêm 005 (nhân bản), UI-04-10 thêm 084 (biến môi trường), UI-04-15 thêm 050, 051, như bảng mục 1.2 |
+| D02-04-PH04 §8.4 | Mười hai câu đề nghị đã đưa vào §5.3 nguyên văn; riêng ERR-04-043 dùng câu của D02-03-PH04 §9.2 để hai tập thống nhất |
+| D03-05-04 | Biến thể `slot` của `CMP-FlowNode` cho ô Pipe (mục 15.2) |
+| D05-02-PH04 | Ca giao diện cho trạng thái của UI-04-09, 16, 17, 18, 19, 21 (mục trạng thái màn của từng chương) và so khớp ảnh hi-fi `ph04/hifi/ui-04-nn.png` |
+
+: Đề nghị đồng bộ cho tập khác
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 2026-11-25 | Nhóm phân hệ PH-04 | Bản đầu: 21 màn, UI-04-04 siêu chi tiết |
+| 0.2 | 2026-11-26 | Nhóm phân hệ PH-04 | Chuẩn kết hợp: thêm Giới thiệu đủ mục (người đọc, thuật ngữ, cấu trúc); khối đặc tả đầu mỗi màn; viết đủ UI-04-09, 16, 17, 18, 19, 21; §5.3 thêm câu cho 16 mã lỗi; ảnh hi-fi cho cả 21 màn (`ph04/hifi`); giữ nguyên mọi nội dung của bản 0.1, nhất là UI-04-04 |
