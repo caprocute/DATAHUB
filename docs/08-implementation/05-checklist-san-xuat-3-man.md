@@ -14,7 +14,7 @@
 | Hạng mục | Hiện trạng | Bằng chứng |
 |---|---|---|
 | Catalog trong console | **16 component + 36 pattern** | `apps/console/src/designer/catalog/camel-catalog.subset.json` |
-| Catalog nhà sản xuất (Kaoto 0.7.0, nhánh `camel-quarkus/3.35.0`) | **323 component · 74 pattern · 252 kamelet · 48 dataformat · 26 language · 21 entity · 7 loadbalancer** | npm `@kaoto/camel-catalog@0.7.0` |
+| Catalog nhà sản xuất (Kaoto 0.7.0, nhánh `camel-quarkus/3.33.1` — Camel 4.18.2, cùng dòng runtime 3.33.2) | **323 component · 75 pattern · 252 kamelet · 47 dataformat · 26 language · 19 entity · 7 loadbalancer** | npm `@kaoto/camel-catalog@0.7.0` |
 | Palette designer | 6 nhóm **cứng trong mã**, ~30 mục | `catalog.ts` hằng `PALETTE` |
 | Màn Kết nạp | form 3 trường + bảng 5 cột, 1 nút Duyệt | `OnboardingPage.tsx` 119 dòng |
 | Màn Catalog | form đăng ký + bảng, nút Publish | `CatalogPage.tsx` 162 dòng |
@@ -42,7 +42,7 @@
 
 ### A1. Sinh dữ liệu catalog từ nguồn nhà sản xuất
 
-- [x] **A1-1.** Script `apps/console/scripts/build-catalog.mjs`: tải `@kaoto/camel-catalog@0.7.0`, đọc nhánh **`camel-quarkus/3.35.0`** (khớp ADR-002/020 — Camel Quarkus, Camel 4.20.0), không đọc nhánh `camel-main`.
+- [x] **A1-1.** Script `apps/console/scripts/build-catalog.mjs`: tải `@kaoto/camel-catalog@0.7.0`, đọc nhánh `camel-quarkus` **cùng dòng với `camel-quarkus.platform.version` trong `camel/*/pom.xml`** (hiện 3.33.2 → nhánh 3.33.1, Camel 4.18.2 LTS; khớp ADR-002/020), không đọc nhánh `camel-main`. Nâng runtime → `npm run catalog`; CI Gate A chạy `npm run catalog:check` để chặn lệch. *(2026-11-25: hạ từ nhánh 3.35.0/Camel 4.20 EOL.)*
 - [x] **A1-2.** Trích **đủ** 7 loại: `components` (323), `patterns` (74), `kamelets` (252), `dataformats` (48), `languages` (26), `entities` (21), `loadbalancers` (7).
 - [x] **A1-3.** Giữ nguyên trường gốc: `title`, `description`, `label`, `syntax`, `scheme`, `consumerOnly`, `producerOnly`, `supportLevel`, `deprecated`, `propertiesSchema` (JSON Schema draft-07, nhóm ở `$comment: group:xxx (advanced)`).
 - [x] **A1-4.** Ghi `camelVersion`, `runtime`, `source`, `license` (Apache-2.0) + `generatedAt` vào đầu tệp; **không sửa tay** tệp sinh ra.

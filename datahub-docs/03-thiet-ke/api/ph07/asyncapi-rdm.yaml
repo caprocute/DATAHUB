@@ -1,0 +1,909 @@
+# Hợp đồng sự kiện PH-07 (AsyncAPI 3.0). Nguồn sự thật cho EVT-07-01…10; sinh mã và kiểm tra tương thích trong CI (D04-02).
+# Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-07 Danh mục dùng chung — sự kiện
+  version: 0.1.0
+  description: 'Hợp đồng sự kiện EVT-07-01…10 của PH-07 (D03-04-PH07, FR-07-034).
+
+
+    Sự kiện ghi vào outbox trong cùng giao dịch với thay đổi (DD-11, SAD §7.3), Debezium đưa lên Kafka. Bản tin theo CloudEvents 1.0 chế độ nhị phân: thuộc tính CloudEvents
+    nằm ở tiêu đề Kafka `ce_*`, thân là `data`. Khóa bản tin là `aggregate_id = {tenant}:{catalogCode}` để giữ thứ tự theo danh mục. Sự kiện không chứa dữ liệu bản
+    ghi; HTTT lấy dữ liệu qua API có kiểm soát quyền. Consumer chống trùng bằng `ce_id`. Tương thích: chỉ thêm trường tùy chọn trong cùng `v1`; thay đổi phá vỡ phải
+    sang topic `v2` và phát song song tối thiểu 6 tháng (kiểm tra bằng Apicurio, chế độ BACKWARD).'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; HTTT ngoài cụm đăng ký qua PH-10, không kết nối trực tiếp.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  rdmCatalogCreated:
+    address: '{tenant}.rdm.catalog.created.v1'
+    title: EVT-07-01
+    messages:
+      catalogCreated:
+        $ref: '#/components/messages/catalogCreated'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.created.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogUpdated:
+    address: '{tenant}.rdm.catalog.updated.v1'
+    title: EVT-07-02
+    messages:
+      catalogUpdated:
+        $ref: '#/components/messages/catalogUpdated'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.updated.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogRetired:
+    address: '{tenant}.rdm.catalog.retired.v1'
+    title: EVT-07-03
+    messages:
+      catalogRetired:
+        $ref: '#/components/messages/catalogRetired'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.retired.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogSubmitted:
+    address: '{tenant}.rdm.catalog.submitted.v1'
+    title: EVT-07-04
+    messages:
+      catalogSubmitted:
+        $ref: '#/components/messages/catalogSubmitted'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.submitted.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogPublished:
+    address: '{tenant}.rdm.catalog.published.v1'
+    title: EVT-07-05
+    messages:
+      catalogPublished:
+        $ref: '#/components/messages/catalogPublished'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.published.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogRejected:
+    address: '{tenant}.rdm.catalog.rejected.v1'
+    title: EVT-07-06
+    messages:
+      catalogRejected:
+        $ref: '#/components/messages/catalogRejected'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.rejected.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmImportCompleted:
+    address: '{tenant}.rdm.import.completed.v1'
+    title: EVT-07-07
+    messages:
+      importCompleted:
+        $ref: '#/components/messages/importCompleted'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.import.completed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmExportCompleted:
+    address: '{tenant}.rdm.export.completed.v1'
+    title: EVT-07-08
+    messages:
+      exportCompleted:
+        $ref: '#/components/messages/exportCompleted'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.export.completed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmSyncCompleted:
+    address: '{tenant}.rdm.sync.completed.v1'
+    title: EVT-07-09
+    messages:
+      syncCompleted:
+        $ref: '#/components/messages/syncCompleted'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.sync.completed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmAdminunitReorganized:
+    address: common.rdm.adminunit.reorganized.v1
+    title: EVT-07-10
+    messages:
+      adminUnitReorganized:
+        $ref: '#/components/messages/adminUnitReorganized'
+    bindings:
+      kafka:
+        topic: common.rdm.adminunit.reorganized.v1
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+operations:
+  sendRdmCatalogCreated:
+    action: send
+    title: Phát EVT-07-01
+    channel:
+      $ref: '#/channels/rdmCatalogCreated'
+    messages:
+    - $ref: '#/channels/rdmCatalogCreated/messages/catalogCreated'
+  sendRdmCatalogUpdated:
+    action: send
+    title: Phát EVT-07-02
+    channel:
+      $ref: '#/channels/rdmCatalogUpdated'
+    messages:
+    - $ref: '#/channels/rdmCatalogUpdated/messages/catalogUpdated'
+  sendRdmCatalogRetired:
+    action: send
+    title: Phát EVT-07-03
+    channel:
+      $ref: '#/channels/rdmCatalogRetired'
+    messages:
+    - $ref: '#/channels/rdmCatalogRetired/messages/catalogRetired'
+  sendRdmCatalogSubmitted:
+    action: send
+    title: Phát EVT-07-04
+    channel:
+      $ref: '#/channels/rdmCatalogSubmitted'
+    messages:
+    - $ref: '#/channels/rdmCatalogSubmitted/messages/catalogSubmitted'
+  sendRdmCatalogPublished:
+    action: send
+    title: Phát EVT-07-05
+    channel:
+      $ref: '#/channels/rdmCatalogPublished'
+    messages:
+    - $ref: '#/channels/rdmCatalogPublished/messages/catalogPublished'
+  sendRdmCatalogRejected:
+    action: send
+    title: Phát EVT-07-06
+    channel:
+      $ref: '#/channels/rdmCatalogRejected'
+    messages:
+    - $ref: '#/channels/rdmCatalogRejected/messages/catalogRejected'
+  sendRdmImportCompleted:
+    action: send
+    title: Phát EVT-07-07
+    channel:
+      $ref: '#/channels/rdmImportCompleted'
+    messages:
+    - $ref: '#/channels/rdmImportCompleted/messages/importCompleted'
+  sendRdmExportCompleted:
+    action: send
+    title: Phát EVT-07-08
+    channel:
+      $ref: '#/channels/rdmExportCompleted'
+    messages:
+    - $ref: '#/channels/rdmExportCompleted/messages/exportCompleted'
+  sendRdmSyncCompleted:
+    action: send
+    title: Phát EVT-07-09
+    channel:
+      $ref: '#/channels/rdmSyncCompleted'
+    messages:
+    - $ref: '#/channels/rdmSyncCompleted/messages/syncCompleted'
+  sendRdmAdminunitReorganized:
+    action: send
+    title: Phát EVT-07-10
+    channel:
+      $ref: '#/channels/rdmAdminunitReorganized'
+    messages:
+    - $ref: '#/channels/rdmAdminunitReorganized/messages/adminUnitReorganized'
+components:
+  securitySchemes:
+    mtls:
+      type: X509
+      description: mTLS do Strimzi cấp; ACL theo topic do PH-10 quản lý.
+  parameters:
+    tenant:
+      description: Mã tenant viết thường (`t68`), hoặc `common` cho danh mục COMMON.
+      examples:
+      - t68
+      - common
+  messageTraits:
+    cloudEvent:
+      headers:
+        type: object
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_tenantid
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: event_id của outbox, UUID v7; khóa chống trùng.
+          ce_source:
+            type: string
+            description: '`/datahub/{tenant}/rdm`'
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.rdm\.[a-z]+\.[a-z]+\.v1$
+          ce_subject:
+            type: string
+            description: Mã danh mục hoặc mã tác vụ.
+          ce_time:
+            type: string
+            format: date-time
+          ce_tenantid:
+            type: string
+            pattern: ^(T\d{2}|COMMON|PLATFORM)$
+          ce_traceparent:
+            type: string
+            description: W3C traceparent của thao tác gốc.
+          content-type:
+            type: string
+            const: application/json
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: aggregate_id `{tenant}:{catalogCode}`
+            examples:
+            - T68:LOAI_HINH_DN
+  schemas:
+    TCode:
+      type: string
+      pattern: ^[A-Z0-9][A-Z0-9_.-]{0,63}$
+    DiffSummary:
+      type: object
+      properties:
+        added:
+          type: integer
+        changed:
+          type: integer
+        deprecated:
+          type: integer
+        reactivated:
+          type: integer
+        removed:
+          type: integer
+        breaking:
+          type: boolean
+        changeRatio:
+          type: number
+    SuccessionEvent:
+      type: object
+      required:
+      - eventType
+      - toCodes
+      - legalBasis
+      properties:
+        eventType:
+          type: string
+          enum:
+          - MERGE
+          - SPLIT
+          - RENAME
+          - ABOLISH
+          - ESTABLISH
+          - RECODE
+        fromCodes:
+          type: array
+          items:
+            type: string
+        toCodes:
+          type: array
+          items:
+            type: string
+        legalBasis:
+          type: string
+    CatalogCreatedData:
+      type: object
+      required:
+      - catalogCode
+      - name
+      - sourceType
+      - classification
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        name:
+          type: string
+        sourceType:
+          type: string
+          enum:
+          - LOCAL
+          - NATIONAL
+          - HYBRID
+        classification:
+          type: string
+          enum:
+          - PUBLIC
+          - INTERNAL
+          - RESTRICTED
+        ownerOrgId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+      additionalProperties: true
+    CatalogUpdatedData:
+      type: object
+      required:
+      - catalogCode
+      - changedFields
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        changedFields:
+          type: array
+          items:
+            type: string
+      additionalProperties: true
+    CatalogRetiredData:
+      type: object
+      required:
+      - catalogCode
+      - retireDate
+      - reason
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        retireDate:
+          type: string
+          format: date
+        reason:
+          type: string
+        replacementCatalogCode:
+          type:
+          - string
+          - 'null'
+      additionalProperties: true
+    CatalogSubmittedData:
+      type: object
+      required:
+      - catalogCode
+      - versionNo
+      - submittedBy
+      - diffSummary
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        versionNo:
+          type: integer
+        submittedBy:
+          type: string
+        diffSummary:
+          $ref: '#/components/schemas/DiffSummary'
+        ownerOrgId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+      additionalProperties: true
+    CatalogPublishedData:
+      type: object
+      required:
+      - catalogCode
+      - versionNo
+      - effectiveFrom
+      - breaking
+      - schemaHash
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        versionNo:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date
+        stats:
+          $ref: '#/components/schemas/DiffSummary'
+        breaking:
+          type: boolean
+        origin:
+          type: string
+          enum:
+          - MANUAL
+          - IMPORT
+          - API
+          - SYNC
+          - MIGRATION
+        snapshotUri:
+          type:
+          - string
+          - 'null'
+          description: Đường dẫn ảnh chụp trên kho đối tượng; null khi đang sinh.
+        schemaHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      additionalProperties: true
+    CatalogRejectedData:
+      type: object
+      required:
+      - catalogCode
+      - versionNo
+      - action
+      - rejectedBy
+      properties:
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        versionNo:
+          type: integer
+        action:
+          type: string
+          enum:
+          - REJECT
+          - WITHDRAW
+          - REVOKE
+        reason:
+          type: string
+        rejectedBy:
+          type: string
+      additionalProperties: true
+    ImportCompletedData:
+      type: object
+      required:
+      - jobId
+      - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        catalogCode:
+          type:
+          - string
+          - 'null'
+        status:
+          type: string
+          enum:
+          - VALIDATED
+          - COMMITTED
+          - FAILED
+          - CANCELLED
+          - EXPIRED
+        summary:
+          type: object
+          additionalProperties:
+            type: integer
+      additionalProperties: true
+    ExportCompletedData:
+      type: object
+      required:
+      - jobId
+      - catalogCode
+      - status
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        status:
+          type: string
+          enum:
+          - COMPLETED
+          - FAILED
+        rowCount:
+          type:
+          - integer
+          - 'null'
+      additionalProperties: true
+    SyncCompletedData:
+      type: object
+      required:
+      - runId
+      - catalogCode
+      - status
+      - hasBreaking
+      properties:
+        runId:
+          type: string
+          format: uuid
+        catalogCode:
+          $ref: '#/components/schemas/TCode'
+        status:
+          type: string
+          enum:
+          - APPLIED
+          - PENDING_CONFIRMATION
+          - REJECTED
+          - FAILED
+        diffStats:
+          type: object
+          additionalProperties:
+            type: integer
+        hasBreaking:
+          type: boolean
+      additionalProperties: true
+    AdminUnitReorganizedData:
+      type: object
+      required:
+      - versionNo
+      - effectiveFrom
+      - events
+      properties:
+        versionNo:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuccessionEvent'
+      additionalProperties: true
+  messages:
+    catalogCreated:
+      name: catalogCreated
+      title: EVT-07-01 · Danh mục được tạo
+      summary: 'Phát khi: FR-07-003, FR-07-022, FR-07-038.'
+      x-datahub-id: EVT-07-01
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogCreatedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a01-8a1d-000000000001
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.created.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          name: Loại hình doanh nghiệp
+          sourceType: LOCAL
+          classification: PUBLIC
+          ownerOrgId: 0193b6a0-7c2e-7015-8a1d-000000000015
+    catalogUpdated:
+      name: catalogUpdated
+      title: EVT-07-02 · Thông tin danh mục thay đổi
+      summary: 'Phát khi: FR-07-004, FR-07-008.'
+      x-datahub-id: EVT-07-02
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogUpdatedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a02-8a1d-000000000002
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.updated.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          changedFields:
+          - description
+          - groupId
+    catalogRetired:
+      name: catalogRetired
+      title: EVT-07-03 · Danh mục ngừng hiệu lực
+      summary: 'Phát khi: FR-07-009.'
+      x-datahub-id: EVT-07-03
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogRetiredData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a03-8a1d-000000000003
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.retired.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          retireDate: '2027-01-01'
+          reason: Thay bằng danh mục mới theo Luật sửa đổi
+          replacementCatalogCode: LOAI_HINH_DN_2026
+    catalogSubmitted:
+      name: catalogSubmitted
+      title: EVT-07-04 · Bản nháp được trình duyệt
+      summary: 'Phát khi: FR-07-015.'
+      x-datahub-id: EVT-07-04
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogSubmittedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a04-8a1d-000000000004
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.submitted.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          versionNo: 4
+          submittedBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+          diffSummary:
+            added: 1
+            changed: 1
+            deprecated: 1
+            reactivated: 0
+            removed: 0
+            breaking: true
+            changeRatio: 0.33
+          ownerOrgId: null
+    catalogPublished:
+      name: catalogPublished
+      title: EVT-07-05 · Phiên bản được phát hành
+      summary: 'Phát khi: FR-07-016, FR-07-037, FR-07-049.'
+      x-datahub-id: EVT-07-05
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogPublishedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a05-8a1d-000000000005
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.published.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          versionNo: 4
+          effectiveFrom: '2027-01-01'
+          stats:
+            added: 1
+            changed: 1
+            deprecated: 1
+            reactivated: 0
+            removed: 0
+            breaking: true
+            changeRatio: 0.33
+          breaking: true
+          origin: MANUAL
+          snapshotUri: s3://rdm-snapshot/t68/LOAI_HINH_DN/v4.json.zst
+          schemaHash: 9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f
+    catalogRejected:
+      name: catalogRejected
+      title: EVT-07-06 · Bản nháp bị từ chối, rút lại hoặc thu hồi
+      summary: 'Phát khi: FR-07-015.'
+      x-datahub-id: EVT-07-06
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/CatalogRejectedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a06-8a1d-000000000006
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.catalog.rejected.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          catalogCode: LOAI_HINH_DN
+          versionNo: 4
+          action: REJECT
+          reason: Thiếu căn cứ pháp lý cho mã HTX
+          rejectedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+    importCompleted:
+      name: importCompleted
+      title: EVT-07-07 · Tác vụ nhập kết thúc
+      summary: 'Phát khi: FR-07-021, FR-07-022.'
+      x-datahub-id: EVT-07-07
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/ImportCompletedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a07-8a1d-000000000007
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.import.completed.v1
+          ce_subject: LOAI_HINH_DN
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          jobId: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+          catalogCode: LOAI_HINH_DN
+          status: VALIDATED
+          summary:
+            totalRows: 12
+            validRows: 11
+            errorRows: 1
+    exportCompleted:
+      name: exportCompleted
+      title: EVT-07-08 · Tác vụ xuất kết thúc
+      summary: 'Phát khi: FR-07-024.'
+      x-datahub-id: EVT-07-08
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/ExportCompletedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a08-8a1d-000000000008
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.export.completed.v1
+          ce_subject: DVHC
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          jobId: 0193b6a0-7c2e-71f6-8a1d-0000000001f6
+          catalogCode: DVHC
+          status: COMPLETED
+          rowCount: 10612
+    syncCompleted:
+      name: syncCompleted
+      title: EVT-07-09 · Lần đồng bộ quốc gia kết thúc (trừ NO_CHANGE)
+      summary: 'Phát khi: FR-07-036, FR-07-037.'
+      x-datahub-id: EVT-07-09
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/SyncCompletedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a09-8a1d-000000000009
+          ce_source: /datahub/t68/rdm
+          ce_type: vn.datahub.rdm.sync.completed.v1
+          ce_subject: LOAI_HINH_TC_QG
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: T68
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          runId: 0193b6a0-7c2e-7259-8a1d-000000000259
+          catalogCode: LOAI_HINH_TC_QG
+          status: PENDING_CONFIRMATION
+          diffStats:
+            added: 3
+            changed: 2
+            removed: 1
+            invalid: 0
+          hasBreaking: true
+    adminUnitReorganized:
+      name: adminUnitReorganized
+      title: EVT-07-10 · Danh mục ĐVHC phát hành kèm sự kiện sắp xếp
+      summary: 'Phát khi: FR-07-016 (danh mục DVHC), FR-07-045.'
+      x-datahub-id: EVT-07-10
+      traits:
+      - $ref: '#/components/messageTraits/cloudEvent'
+      payload:
+        $ref: '#/components/schemas/AdminUnitReorganizedData'
+      examples:
+      - name: viDu
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193b6a0-7c2e-7a10-8a1d-000000000010
+          ce_source: /datahub/common/rdm
+          ce_type: vn.datahub.rdm.adminunit.reorganized.v1
+          ce_subject: DVHC
+          ce_time: '2026-11-21T08:30:00+07:00'
+          ce_tenantid: COMMON
+          ce_traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          content-type: application/json
+        payload:
+          versionNo: 13
+          effectiveFrom: '2027-01-01'
+          events:
+          - eventType: MERGE
+            fromCodes:
+            - '24811'
+            - '24814'
+            toCodes:
+            - '24811'
+            legalBasis: Nghị quyết số …/NQ-UBTVQH15 ngày … (giả lập)

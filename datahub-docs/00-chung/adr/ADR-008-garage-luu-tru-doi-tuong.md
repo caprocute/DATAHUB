@@ -23,7 +23,7 @@ Datahub cần lưu tệp nhập danh mục, tệp đối soát thanh toán, đ�
 
 ## Quyết định
 
-Chọn **Garage làm mặc định** cho lưu trữ tệp nghiệp vụ. Với bằng chứng kiểm toán cần WORM, dùng **SeaweedFS hoặc Ceph RGW có object lock**, hoặc kho WORM do hạ tầng tỉnh cung cấp. Ứng dụng chỉ dùng API S3 chuẩn để thay được nhà cung cấp. Mỗi tenant một bucket, mã hóa phía máy chủ.
+Chọn **Garage làm mặc định** cho lưu trữ tệp nghiệp vụ. Với bằng chứng kiểm toán cần WORM, dùng **Ceph RGW với Object Lock chế độ compliance** (chốt 25/11/2026, Q306); cùng hệ Ceph RGW đó làm đích sao lưu bất biến nhưng tách bucket, khóa và tài khoản quản trị (Q347). Hồ sơ HT-B có thể dùng dịch vụ Object Lock tương đương của cloud Chính phủ. Ứng dụng chỉ dùng API S3 chuẩn để thay được nhà cung cấp. Mỗi tenant một bucket, mã hóa phía máy chủ.
 
 ## Hệ quả
 

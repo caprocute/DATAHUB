@@ -17,6 +17,7 @@
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.version>3.33.2</quarkus.platform.version>
+    <!-- Đổi bản này phải sinh lại catalog designer: cd apps/console && npm run catalog (CI: catalog:check) -->
     <camel-quarkus.platform.version>3.33.2</camel-quarkus.platform.version>
   </properties>
 

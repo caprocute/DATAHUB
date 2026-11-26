@@ -49,7 +49,7 @@ sequenceDiagram
   G->>G: Xác minh chữ ký, claim tenant = T68
   G->>D: Chuyển tiếp, X-DH-Tenant: T68
   D->>D: TenantContext = T68 (từ token)
-  D->>P: BEGIN; SET LOCAL app.tenant_id = 'T68'
+  D->>P: BEGIN, rồi SET LOCAL app.tenant_id = 'T68'
   D->>P: SELECT ... (RLS tự lọc)
   P-->>D: Chỉ bản ghi của T68
 ```
