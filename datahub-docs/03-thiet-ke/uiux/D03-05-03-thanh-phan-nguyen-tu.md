@@ -20,6 +20,8 @@ Mục tiêu của tài liệu là để kỹ sư giao diện và AI agent sinh m
 
 Ba yêu cầu chi phối toàn bộ tài liệu là NFR-00-045 (100% màn hình dùng thành phần của `@datahub/ui`, không CSS tùy biến ngoài token), NFR-00-040 đến NFR-00-043 (WCAG 2.2 AA, tương phản, bàn phím, giảm chuyển động) và FR-00-053 (nhãn trạng thái vòng đời thống nhất). Ngoài ra một số thành phần hiện thực trực tiếp yêu cầu bảo vệ dữ liệu cá nhân của nguyên tắc NT-10 (D03-01) và FR-00-034, FR-00-040.
 
+> **Ngoại lệ có kiểm soát.** Năm ô nhập ở §7.14–7.18 (`CMP-RadioCard`, `CMP-CronPicker`, `CMP-ExpressionField`, `CMP-SecretRefField`, `CMP-ResourceSelect`) bên trong có dùng nguyên tử khác (ví dụ `CMP-Select`, `CMP-Icon`, `CMP-Tag`). Chúng vẫn được xếp vào tài liệu này vì với biểu mẫu chúng hành xử như **một trường nhập duy nhất**: một giá trị, một nhãn, một thông báo lỗi, tích hợp `Form.Item` như ô nhập thường. Chúng không được chứa thành phần phức hợp của D03-05-04 và không tự gọi API ngoài hook dữ liệu khai báo trong đặc tả của chúng.
+
 ### 1.2. Cách đọc
 
 Tài liệu được chia theo nhóm chức năng để người đọc tìm nhanh. Mục 2 nêu quy tắc chung về trạng thái tương tác áp dụng cho mọi thành phần tương tác, nên phải đọc trước khi đọc từng thành phần. Mục 3 đến mục 8 đặc tả từng thành phần, theo thứ tự: hành động (mục 3), chữ và biểu tượng (mục 4), chỉ báo và nhãn (mục 5), phản hồi tiến trình và gợi ý (mục 6), nhập liệu (mục 7), hiển thị dữ liệu nghiệp vụ (mục 8). Mục 9 là bảng tổng hợp kèm bảng tên gọi khác, mục 10 là checklist nghiệm thu, mục 11 là truy vết và mục 12 là các đề xuất bổ sung.

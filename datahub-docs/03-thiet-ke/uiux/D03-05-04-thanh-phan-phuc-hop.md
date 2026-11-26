@@ -237,18 +237,21 @@ export interface DhSearchFieldProps {
 | Tham số URL | Ý nghĩa | Ví dụ |
 |---|---|---|
 | `q` | Từ khóa, đã trim | `q=da%20nang` |
-| `page` | Trang, bắt đầu từ 1 trên URL (API dùng `page-1`) | `page=3` |
-| `size` | Số dòng mỗi trang, thuộc 10/20/50/100 | `size=50` |
-| `sort` | `{trường},{asc|desc}`; nhiều tiêu chí cách nhau bằng `;` khi bảng hỗ trợ | `sort=createdAt,desc` |
-| `f.{trường}` | Giá trị lọc; nhiều giá trị cách nhau bằng dấu phẩy (FR-00-023) | `f.status=PUBLISHED,SUSPENDED` |
-| `f.{trường}From`, `f.{trường}To` | Khoảng thời gian, dạng `yyyy-MM-dd`, bao gồm hai đầu | `f.createdFrom=2026-11-01` |
-| `adv` | Vùng nâng cao đang mở (`1`) | `adv=1` |
+| `trang` | Trang, bắt đầu từ 1 trên URL (API dùng `page` bắt đầu từ 0); bỏ khi bằng 1 | `trang=3` |
+| `co` | Số dòng mỗi trang, thuộc 10/20/50/100; bỏ khi bằng 20 | `co=50` |
+| `sap-xep` | `{trường}:{tang|giam}`; nhiều tiêu chí nối bằng dấu phẩy khi bảng hỗ trợ | `sap-xep=ngay-tao:giam` |
+| `{tên-trường}` | Giá trị lọc theo mã giá trị `kebab-case`; nhiều giá trị nối bằng dấu phẩy (FR-00-023) | `trang-thai=phat-hanh,tam-dung` |
+| `{tên-trường}-tu`, `{tên-trường}-den` | Khoảng thời gian, dạng `yyyy-MM-dd`, bao gồm hai đầu; với một khoảng duy nhất của màn dùng `tu`, `den` | `ngay-tao-tu=2026-11-01` |
+| `nang-cao` | Vùng nâng cao đang mở (`1`) | `nang-cao=1` |
 
-Thứ ba, "Đặt lại" xóa toàn bộ tham số `q`, `f.*`, giữ `size` và đưa `page` về 1 (CRUD-FLT-05). Thứ tư, "Bộ lọc đã lưu" (FR-00-024) lưu một tên do người dùng đặt cùng chuỗi tham số URL (trừ `page`) qua API tùy chọn người dùng, phạm vi theo tenant và theo màn hình; menu liệt kê bộ lọc đã lưu, cho đặt một bộ lọc làm mặc định khi mở màn hình, đổi tên và xóa. Lưu bộ lọc mở `CMP-Modal` cỡ `sm` với một trường "Tên bộ lọc" (tối đa 64 ký tự, không trùng trong phạm vi màn hình).
+Bảng tham số này là cụ thể hóa của quy tắc URL ở D03-06-00 §2.4 (tài liệu đó thắng khi có khác biệt). Hook `useDhListParams` ánh xạ hai chiều giữa tên tham số tiếng Việt trên URL và tên tham số API (`page`, `size`, `sort`, tên trường camelCase) bằng bảng ánh xạ khai báo cùng `DhFilterDef`, nên mã gọi API không phụ thuộc tên trên URL.
+
+Thứ ba, "Đặt lại" xóa toàn bộ tham số `q` và tham số lọc, giữ `co` và đưa `trang` về 1 (CRUD-FLT-05). Thứ tư, "Bộ lọc đã lưu" (FR-00-024) lưu một tên do người dùng đặt cùng chuỗi tham số URL (trừ `trang`) qua API tùy chọn người dùng, phạm vi theo tenant và theo màn hình; menu liệt kê bộ lọc đã lưu, cho đặt một bộ lọc làm mặc định khi mở màn hình, đổi tên và xóa. Lưu bộ lọc mở `CMP-Modal` cỡ `sm` với một trường "Tên bộ lọc" (tối đa 64 ký tự, không trùng trong phạm vi màn hình).
 
 ```ts
 export interface DhFilterDef {
-  name: string;                         // khóa sau tiền tố f.
+  name: string;                         // tên tham số trên URL, kebab-case tiếng Việt không dấu, ví dụ 'trang-thai'
+  apiName?: string;                     // tên tham số API nếu khác, ví dụ 'status'
   label: string;
   kind: 'select' | 'multiSelect' | 'treeSelect' | 'dateRange' | 'number' | 'text' | 'boolean';
   options?: Array<{ value: string; label: string }> | (() => Promise<Array<{ value: string; label: string }>>);
@@ -267,9 +270,9 @@ export interface DhFilterBarProps {
 ```tsx
 <DhFilterBar screenKey="ph02.services" searchPlaceholder="Tìm theo mã hoặc tên dịch vụ"
   filters={[
-    { name: 'status', label: 'Trạng thái', kind: 'multiSelect', basic: true, options: serviceStatusOptions },
-    { name: 'owner', label: 'Cơ quan chủ quản', kind: 'treeSelect', basic: true, options: loadAgencies },
-    { name: 'created', label: 'Ngày tạo', kind: 'dateRange' },
+    { name: 'trang-thai', apiName: 'status', label: 'Trạng thái', kind: 'multiSelect', basic: true, options: serviceStatusOptions },
+    { name: 'co-quan', apiName: 'owner', label: 'Cơ quan chủ quản', kind: 'treeSelect', basic: true, options: loadAgencies },
+    { name: 'ngay-tao', apiName: 'created', label: 'Ngày tạo', kind: 'dateRange' },
   ]} />
 ```
 
@@ -1168,7 +1171,7 @@ Mỗi cột khai báo `valueType` chuẩn của Datahub; DataTable tự chọn t
 | `tags` | Tối đa 2 `CMP-Tag`, "+3" có Tooltip | Trái | Không |
 | `actions` | Theo `allowedActions` của dòng | Giữa | Không |
 
-Quy tắc sắp xếp: chỉ cột khai báo `sortable` mới có biểu tượng; mỗi thời điểm một tiêu chí chính (CRUD-TBL-05), bấm lần lượt tăng → giảm → bỏ; trạng thái ghi vào tham số `sort` trên URL. Khi người dùng bỏ sắp xếp, bảng trở về thứ tự mặc định do máy chủ quy định và hiển thị biểu tượng mặc định trên cột tương ứng.
+Quy tắc sắp xếp: chỉ cột khai báo `sortable` mới có biểu tượng; mỗi thời điểm một tiêu chí chính (CRUD-TBL-05), bấm lần lượt tăng → giảm → bỏ; trạng thái ghi vào tham số `sap-xep` trên URL. Khi người dùng bỏ sắp xếp, bảng trở về thứ tự mặc định do máy chủ quy định và hiển thị biểu tượng mặc định trên cột tương ứng.
 
 #### 8.1.4. Cột STT theo toàn tập
 
@@ -1176,7 +1179,7 @@ Cột STT tính theo vị trí trong toàn bộ tập kết quả, không bắt 
 
 #### 8.1.5. Trạng thái trên URL và phối hợp với FilterBar
 
-DataTable và FilterBar dùng chung hook `useDhListParams(screenKey)` đọc và ghi tham số theo bảng ở mục 3.4. Đổi trang hoặc số dòng ghi `page`, `size`; đổi sắp xếp ghi `sort` và giữ trang; đổi bộ lọc đưa `page` về 1 và **xóa lựa chọn** (khuyến nghị mặc định của CRUD-SEL-06). Khi người dùng mở chi tiết rồi quay lại, URL còn nguyên nên danh sách hiện đúng trang, bộ lọc, sắp xếp (CRUD-FLT-07, CRUD-C-07). Sau khi xóa bản ghi cuối cùng của trang cuối, bảng tự lùi về trang trước (CRUD-D-08) và cập nhật URL bằng `replace`.
+DataTable và FilterBar dùng chung hook `useDhListParams(screenKey)` đọc và ghi tham số theo bảng ở mục 3.4. Đổi trang hoặc số dòng ghi `trang`, `co`; đổi sắp xếp ghi `sap-xep` và giữ trang; đổi bộ lọc đưa `trang` về 1 và **xóa lựa chọn** (khuyến nghị mặc định của CRUD-SEL-06). Khi người dùng mở chi tiết rồi quay lại, URL còn nguyên nên danh sách hiện đúng trang, bộ lọc, sắp xếp (CRUD-FLT-07, CRUD-C-07). Sau khi xóa bản ghi cuối cùng của trang cuối, bảng tự lùi về trang trước (CRUD-D-08) và cập nhật URL bằng `replace`.
 
 #### 8.1.6. Chọn nhiều và hành động hàng loạt
 
@@ -1188,7 +1191,7 @@ Mỗi dòng dữ liệu từ máy chủ có `allowedActions`. Màn hình khai b�
 
 #### 8.1.8. Xuất dữ liệu
 
-Nút "Xuất" mở menu "Xuất Excel (.xlsx)" và "Xuất CSV (UTF-8)". Yêu cầu xuất gửi **toàn bộ tham số lọc và sắp xếp hiện tại trên URL** (không gửi `page`, `size`) cùng danh sách cột đang hiển thị theo cài đặt cột, để tệp khớp đúng những gì người dùng thấy (FR-00-030). Hệ thống phân nhánh theo số dòng ước tính trả về từ API đếm:
+Nút "Xuất" mở menu "Xuất Excel (.xlsx)" và "Xuất CSV (UTF-8)". Yêu cầu xuất gửi **toàn bộ tham số lọc và sắp xếp hiện tại trên URL** (không gửi `trang`, `co`) cùng danh sách cột đang hiển thị theo cài đặt cột, để tệp khớp đúng những gì người dùng thấy (FR-00-030). Hệ thống phân nhánh theo số dòng ước tính trả về từ API đếm:
 
 1. Tối đa 10.000 dòng: xuất đồng bộ, nút "Xuất" ở trạng thái loading, tệp tải về ngay, Toast "Đã xuất 1.234 dòng".
 2. Trên 10.000 dòng: tạo tác vụ nền (FR-00-031). DataTable hiện `CMP-JobProgress` dạng gọn ngay dưới thanh công cụ, người dùng được rời màn hình; khi xong, `CMP-Notification` và mục trong `CMP-NotificationCenter` chứa liên kết tải có hạn 24 giờ.
@@ -1208,7 +1211,7 @@ Bảng dưới đây liệt kê trạng thái hiển thị của DataTable và �
 |---|---|---|
 | Đang tải lần đầu | Chưa có dữ liệu | Hàng tiêu đề thật và 5 hàng `CMP-Skeleton` theo độ rộng cột; phân trang ẩn |
 | Đang làm mới | Đổi trang, sắp xếp, lọc, tải lại | Giữ dữ liệu cũ, dải tiến độ 2px, `aria-busy="true"`; không nhấp nháy về Skeleton |
-| Rỗng | `total = 0` và không có `q`, `f.*` | `CMP-EmptyState` `no-data`, nút tạo nếu có quyền |
+| Rỗng | `total = 0` và không có `q`, tham số lọc | `CMP-EmptyState` `no-data`, nút tạo nếu có quyền |
 | Không có kết quả | `total = 0` và có bộ lọc | `CMP-EmptyState` `no-result`, nút "Đặt lại bộ lọc" |
 | Lỗi | Truy vấn lỗi | `CMP-Alert` `error` trong thân bảng với mã lỗi, mã truy vết, nút "Thử lại"; giữ FilterBar để người dùng sửa điều kiện |
 | Mất kết nối | Lỗi mạng | Như lỗi, kèm `CMP-Banner` toàn ứng dụng |

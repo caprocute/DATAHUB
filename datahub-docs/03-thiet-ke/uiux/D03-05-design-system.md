@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05
 ten: Design system Datahub (Liquid Glass trên Ant Design v6)
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, Kiến trúc sư, Hội đồng thẩm định, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -48,6 +48,20 @@ Bảng dưới đây liệt kê các tập của design system và tài liệu l
 | [ADR-021](../../00-chung/adr/ADR-021-font-chu-giao-dien.md) | Phông chữ | Vì sao Inter và JetBrains Mono, tự lưu trữ |
 | [ADR-022](../../00-chung/adr/ADR-022-bieu-tuong-lucide.md) | Biểu tượng | Vì sao Lucide |
 | [ADR-023](../../00-chung/adr/ADR-023-bieu-do-echarts.md) | Biểu đồ | Vì sao Apache ECharts |
+| [D03-06-PH04](D03-06-PH04-man-hinh-tich-hop.md), [D03-06-PH07](D03-06-PH07-man-hinh-danh-muc.md) | Tập màn hình phân hệ đã đối chiếu với design system | Dùng design system thế nào trong một phân hệ cụ thể |
+
+### 3.1. Quy mô và thứ tự ưu tiên giữa các tập (bản 0.2)
+
+| Tập | Nội dung | Số lượng |
+|---|---|---|
+| D03-05-02 | Token màu ngữ nghĩa, kính, bo góc, bóng, khoảng cách, chữ, chuyển động, lớp chồng, mật độ; bản 0.2 thêm màu khác biệt và màu nguồn dữ liệu (§4.6) | — |
+| D03-05-03 | Thành phần nguyên tử | 44 thành phần, 49 mã `CMP-` (tính cả biến thể có mã riêng) |
+| D03-05-04 | Thành phần phức hợp và tổ chức, gồm canvas thiết kế (§11), khung ứng dụng (§12), dữ liệu chuyên dụng (§13) | 75 thành phần, 77 mã `CMP-` |
+| D03-06-00 | Kiến trúc thông tin, quy tắc URL, khung bố cục, mẫu màn hình, vi văn bản, checklist nghiệm thu màn hình, danh sách màn hệ cũ được giữ | 14 mẫu PTN-01…14 |
+
+Tổng cộng design system có 121 thành phần: 44 nguyên tử, 75 phức hợp và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`). Hai tập màn hình phân hệ đã đối chiếu với bản 0.2: D03-06-PH04 (bản 0.2) và D03-06-PH07 (bản 0.3); tên cũ của các tập này được ghi trong bảng bí danh ở D03-05-03 §9 và D03-05-04 §14.2.
+
+Khi hai tập mâu thuẫn: **D03-05-02 thắng về giá trị thị giác** (màu, kích thước, độ mờ), **D03-05-01 thắng về chỗ đặt kính**, **D03-05-03/04 thắng về API và hành vi thành phần**, **D03-06-00 thắng về cách dùng trong màn hình** (mẫu bố cục, URL, vi văn bản). Tập màn hình phân hệ không được định nghĩa token hay thành phần dùng chung mới; nhu cầu mới ghi vào mục "Đề xuất bổ sung" của tập đó để Luồng giao diện đưa vào D03-05.
 
 Thứ tự đọc khuyến nghị cho kỹ sư mới: D03-05 → D03-05-01 → D03-05-02 (lướt bảng, đọc kỹ mục 13) → D03-06-00 → tra D03-05-03, D03-05-04 khi dựng thành phần cụ thể.
 

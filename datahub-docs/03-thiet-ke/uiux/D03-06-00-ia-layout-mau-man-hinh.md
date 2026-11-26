@@ -1528,4 +1528,4 @@ Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có m�
 
 1. **D00-01 §9 (quy ước tên file).** Như D03-05 §9: tài liệu chia phần dùng `{mã-tài-liệu}-{nn}-{tên}.md`; tập UI phân hệ dùng `D03-06-PH{nn}-{tên}.md`.
 2. **D05-02.** Mục 6 của tài liệu này là phần chung của mọi ca kiểm thử giao diện; mỗi tập D05-02 phân hệ tham chiếu thay vì chép lại.
-3. **Route của tập PH-07.** Bản 0.2 của D03-06-PH07 đã chuyển route `/rdm/...` và tham số truy vấn tiếng Anh sang quy tắc URL ở §2.4 (đường dẫn `/du-lieu/danh-muc`, tham số `trang`, `co`, `sap-xep`); đường dẫn cũ được chuyển hướng phía client trong một đợt phát hành để liên kết đã chia sẻ không hỏng.
+3. **Route của tập PH-07.** Bản 0.3 của D03-06-PH07 đã chuyển route `/rdm/...` và tham số truy vấn tiếng Anh sang quy tắc URL ở §2.4 (đường dẫn `/du-lieu/danh-muc`, tham số `trang`, `co`, `sap-xep`); đường dẫn cũ được chuyển hướng phía client trong hai đợt phát hành để liên kết đã chia sẻ không hỏng.

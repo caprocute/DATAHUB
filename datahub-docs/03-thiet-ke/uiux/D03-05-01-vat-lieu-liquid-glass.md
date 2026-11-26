@@ -42,10 +42,10 @@ Bảng dưới đây là quy tắc bắt buộc về việc mỗi vùng giao di�
 | Topbar khi nội dung cuộn bên dưới | `glass-chrome-scrolled` + `glass-scroll-edge` | Nội dung tùy ý trượt bên dưới, cần độ đục cao hơn |
 | Khung Modal, Drawer, CommandPalette | `glass-modal` | Lớp nổi lớn; nội dung bên trong đặt trong giếng nền đặc |
 | Popover, Dropdown, danh sách chọn của Select/DatePicker/Cascader, Notification | `glass-overlay` | Lớp nổi nhỏ; vật liệu đạt tương phản mọi nấc chữ trong trường hợp xấu nhất |
-| Thanh thao tác hàng loạt (khi nổi ở đáy bảng) | `glass-overlay` | Nổi trên bảng khi người dùng cuộn |
+| Thanh chọn nhiều nổi trên canvas thiết kế (`CMP-BulkActionBar` biến thể `floating`) | `glass-overlay` | Nổi trên sơ đồ. Thanh thao tác hàng loạt của bảng dính ở đầu thân bảng và là nền đặc (D03-05-04 §8.2) |
 | Thanh công cụ nổi trên canvas thiết kế | `glass-overlay` | Nổi trên sơ đồ |
 | Tooltip, Toast | `color-surface-inverse` đặc | Chữ nhỏ, xuất hiện trên mọi nền, cần tương phản tuyệt đối |
-| Card, bảng, biểu mẫu, mô tả chi tiết, log, khối mã, biểu đồ, nút trên canvas thiết kế | `color-surface-solid` đặc | Lớp nội dung |
+| Card, bảng, biểu mẫu, mô tả chi tiết, log, khối mã, biểu đồ, bề mặt và nút của canvas thiết kế, bảng thành phần, Inspector, thanh công cụ trình thiết kế | `color-surface-solid` hoặc `color-surface-solid-2` đặc | Lớp nội dung (D03-05-04 §11.0) |
 | Vùng nội dung trong Modal, Drawer | `color-surface-solid` đặc (giếng nội dung) | Biểu mẫu và bảng trong lớp nổi vẫn là nội dung |
 
 ### 3.2. Các điều cấm

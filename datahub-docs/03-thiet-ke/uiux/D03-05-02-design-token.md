@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05-02
 ten: Design token và ánh xạ sang Ant Design v6
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -160,6 +160,28 @@ Biểu đồ dùng bảng màu phân loại tám màu. Mỗi màu đạt tối t
 | 6 | `color-chart-6` | `#4D7C0F` 4,99 | `#A3E635` 11,28 |
 | 7 | `color-chart-7` | `#5B6474` 5,97 | `#A1A1AA` 6,64 |
 | 8 | `color-chart-8` | `#B8860B` 3,25 | `#FACC15` 11,11 |
+
+### 4.6. Màu khác biệt và màu nguồn dữ liệu
+
+Hai nhóm token dưới đây được bổ sung ở bản 0.2 theo đề nghị của tập màn hình PH-07 (D03-06-PH07 Phụ lục A-02, A-03) và dùng chung cho mọi màn so sánh phiên bản (`CMP-DiffTable`, `CMP-EditableTable`, `CMP-FlowNode` ở chế độ khác biệt). Mỗi cặp nền nhẹ và chữ trên nền nhẹ đạt 4,5:1, nên nhãn đặt được trên nền đặc và trong `glass-overlay`. Màu luôn đi kèm chữ hoặc ký hiệu ("＋ Thêm", "~ Sửa", "− Ngừng"); không thành phần nào dùng màu khác biệt làm kênh duy nhất.
+
+| Token | `…-bg` (sáng / tối) | `…-text` (sáng / tối) | Tương phản chữ trên nền (sáng / tối) | Ký hiệu đi kèm |
+|---|---|---|---|---|
+| `color-diff-added` | `#E8F5EC` / `#12261A` | `#1A7F37` / `#3FB950` | 4,52 / 6,27 | "＋", chữ "Thêm mới" |
+| `color-diff-changed` | `#FFF4D6` / `#2B2111` | `#8A5A00` / `#E3B341` | 5,41 / 8,12 | "~", chữ "Đã sửa" |
+| `color-diff-removed` | `#FDECEC` / `#2D1517` | `#B4232A` / `#FF6B6B` | 5,72 / 6,15 | "−", chữ gạch ngang, chữ "Ngừng dùng" hoặc "Đã xóa" |
+| `color-diff-moved` | `#E8F1FC` / `#11233A` | `#0A66D8` / `#4C9EFF` | 4,72 / 5,77 | "↕", chữ "Di chuyển" |
+
+Bốn token khác biệt dùng cùng giá trị với token trạng thái tương ứng ở mục 4.4 nhưng tách tên để có thể chỉnh riêng (ví dụ tăng độ đậm nền khác biệt trong lưới dày) mà không đổi nhãn trạng thái.
+
+| Token | `…-bg` (sáng / tối) | `…-text` (sáng / tối) | Tương phản (sáng / tối) | Nghĩa |
+|---|---|---|---|---|
+| `color-source-local` | `#E8F1FC` / `#11233A` | `#0A66D8` / `#4C9EFF` | 4,72 / 5,77 | Dữ liệu do tỉnh tự quản (danh mục địa phương) |
+| `color-source-national` | `#F1EBFE` / `#231B38` | `#6D28D9` / `#B79CFB` | 6,11 / 7,13 | Dữ liệu đồng bộ từ nguồn quốc gia (chỉ đọc) |
+| `color-source-hybrid` | `#E3F4F1` / `#0F2926` | `#0B7268` / `#2DD4BF` | 5,10 / 8,26 | Nguồn quốc gia có mở rộng địa phương |
+| `color-source-common` | `#EEEEF1` / `#2A2A2E` | `#4B4B55` / `#C7C7CC` | 7,44 / 8,49 | Danh mục dùng chung nền tảng (mọi tenant) |
+
+Nhãn nguồn hiển thị bằng `CMP-Tag` có biểu tượng và chữ riêng cho mỗi nguồn (bảng nhãn ở D03-06-PH07 §5.1), nên người mù màu vẫn phân biệt được. Màn PH-07 bản 0.1 đặt tên các token này với tiền tố `TKN-` và hậu tố `-fg`; tên chuẩn là tên ở bảng trên với hậu tố `-text`.
 
 ## 5. Token vật liệu glass
 
