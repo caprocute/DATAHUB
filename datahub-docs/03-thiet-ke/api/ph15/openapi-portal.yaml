@@ -138,6 +138,7 @@ paths:
       summary: Danh mục dịch vụ công khai
       x-datahub-id: API-15-003
       x-datahub-fr:
+      - FR-15-002
       - FR-15-008
       x-datahub-permission:
         permission: Ẩn danh (khách chưa đăng nhập)
@@ -214,6 +215,7 @@ paths:
       summary: Chi tiết dịch vụ công khai
       x-datahub-id: API-15-004
       x-datahub-fr:
+      - FR-15-002
       - FR-15-008
       x-datahub-permission:
         permission: Ẩn danh (khách chưa đăng nhập)
@@ -264,6 +266,7 @@ paths:
       summary: Duyệt, lọc, sắp xếp danh mục dịch vụ
       x-datahub-id: API-15-005
       x-datahub-fr:
+      - FR-15-002
       - FR-15-004
       x-datahub-permission:
         permission: Người dùng đã đăng nhập
@@ -400,6 +403,7 @@ paths:
       summary: 'Chi tiết dịch vụ: phiên bản, gói, SLA'
       x-datahub-id: API-15-007
       x-datahub-fr:
+      - FR-15-002
       - FR-15-006
       x-datahub-permission:
         permission: Người dùng đã đăng nhập
@@ -2258,7 +2262,6 @@ paths:
       summary: Tự đăng ký tài khoản dh-dev
       x-datahub-id: API-15-045
       x-datahub-fr:
-      - FR-15-019
       - FR-15-020
       x-datahub-permission:
         permission: Ẩn danh (khách chưa đăng nhập)
@@ -3438,7 +3441,7 @@ paths:
       x-datahub-fr:
       - FR-15-034
       x-datahub-permission:
-        permission: PERM-15-portal-admin
+        permission: PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)
       security:
       - oauth2User: []
       description: Do TA hoặc đầu mối SV của tổ chức chủ dịch vụ (○) xem và khai báo.
@@ -3483,7 +3486,7 @@ paths:
       x-datahub-fr:
       - FR-15-034
       x-datahub-permission:
-        permission: PERM-15-portal-admin
+        permission: PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)
       security:
       - oauth2User: []
       description: Kiểm backend thử theo allowlist egress, HTTPS (BR-15-018).
@@ -4254,7 +4257,7 @@ paths:
       x-datahub-fr:
       - FR-15-042
       x-datahub-permission:
-        permission: PERM-15-portal-admin
+        permission: PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)
       security:
       - oauth2User: []
       description: Chờ người khác duyệt (BR-15-021); `validDays` ≤ `15.try.prod-max-days`.
@@ -6861,6 +6864,228 @@ paths:
       - ERR-15-022
       - ERR-15-026
       - ERR-15-035
+  /content/attachments/{attachmentId}:
+    get:
+      tags:
+      - Nội dung và hướng dẫn
+      operationId: api15138
+      summary: Đọc ảnh đính kèm của trang
+      x-datahub-id: API-15-138
+      x-datahub-fr:
+      - FR-15-014
+      - FR-15-017
+      x-datahub-permission:
+        permission: Ẩn danh (khách chưa đăng nhập)
+      security: []
+      description: 'Chữ ký `sig` còn hạn 15 phút thay cho phiên (FR-15-017); trả ảnh với `Content-Type` đúng và `X-Content-Type-Options: nosniff`; chữ ký sai hoặc
+        hết hạn trả `404`.'
+      parameters:
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: sig
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Chữ ký của đường dẫn ảnh (hết hạn 15 phút).
+      - name: exp
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Thời điểm hết hạn của chữ ký.
+      - $ref: '#/components/parameters/IfNoneMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: 'Thành công: nội dung ảnh.'
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+              example: PNG, JPEG hoặc WebP nhị phân
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+              example: PNG, JPEG hoặc WebP nhị phân
+            image/webp:
+              schema:
+                type: string
+                format: binary
+              example: PNG, JPEG hoặc WebP nhị phân
+        '304':
+          description: Không đổi (`If-None-Match` khớp `ETag`).
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-15-001
+  /public/branding:
+    get:
+      tags:
+      - Trang chủ, danh mục, tìm kiếm
+      operationId: api15139
+      summary: Nhận diện công khai của cổng
+      x-datahub-id: API-15-139
+      x-datahub-fr:
+      - FR-15-003
+      - FR-15-056
+      x-datahub-permission:
+        permission: Ẩn danh (khách chưa đăng nhập)
+      security: []
+      description: 'Chỉ trả các khóa nhận diện (BR-15-032); `Cache-Control: public, max-age=300`; logo phục vụ qua đường tĩnh của BFF.'
+      parameters:
+      - $ref: '#/components/parameters/IfNoneMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicBranding'
+              examples:
+                vi-du:
+                  $ref: '#/components/examples/PublicBranding'
+        '304':
+          description: Không đổi (`If-None-Match` khớp `ETag`).
+      x-datahub-errors: []
+  /inbox/unread-count:
+    get:
+      tags:
+      - Theo dõi của nhà phát triển
+      operationId: api15140
+      summary: Số thông báo chưa đọc
+      x-datahub-id: API-15-140
+      x-datahub-fr:
+      - FR-15-052
+      x-datahub-permission:
+        permission: Người dùng đã đăng nhập
+      security:
+      - oauth2User: []
+      description: Nhẹ hơn API-15-104 cho chuông thông báo; giao diện hỏi định kỳ 60 giây (FR-15-052).
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCount'
+              examples:
+                vi-du:
+                  $ref: '#/components/examples/UnreadCount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-datahub-errors:
+      - ERR-15-004
+  /apps:check-code:
+    get:
+      tags:
+      - Ứng dụng và thông tin xác thực
+      operationId: api15141
+      summary: Kiểm tra mã ứng dụng đã dùng chưa
+      x-datahub-id: API-15-141
+      x-datahub-fr:
+      - FR-15-025
+      x-datahub-permission:
+        permission: PERM-15-app
+      security:
+      - oauth2User: []
+      description: Chỉ báo gợi ý khi gõ; kiểm tra cuối vẫn ở API-15-056 (ERR-15-002), kể cả mã của ứng dụng đã lưu trữ.
+      parameters:
+      - name: appCode
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/AppCode'
+        description: Mã ứng dụng.
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppCodeCheck'
+              examples:
+                vi-du:
+                  $ref: '#/components/examples/AppCodeCheck'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-15-003
+  /content/pages/{pageCode}/diff:
+    get:
+      tags:
+      - Nội dung và hướng dẫn
+      operationId: api15142
+      summary: So sánh hai phiên bản của trang
+      x-datahub-id: API-15-142
+      x-datahub-fr:
+      - FR-15-016
+      x-datahub-permission:
+        permission: PERM-15-content-write
+      security:
+      - oauth2User: []
+      description: So sánh phía máy chủ theo dòng Markdown nguồn; không trả HTML (FR-15-016).
+      parameters:
+      - name: pageCode
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PageCode'
+      - name: base
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: Số phiên bản trang cơ sở để so sánh.
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+        description: Số phiên bản trang đích; mặc định bản mới nhất.
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDiff'
+              examples:
+                vi-du:
+                  $ref: '#/components/examples/PageDiff'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-15-001
+      - ERR-15-003
 components:
   securitySchemes:
     oauth2User:
@@ -9116,6 +9341,42 @@ components:
         state: APPLYING
         pagesCreated: 0
         createdAt: '2026-11-26T02:00:00Z'
+    PublicBranding:
+      value:
+        portalName: Cổng nhà phát triển Datahub T68
+        tagline: Kết nối dữ liệu liên thông cấp tỉnh
+        logoUrl: /static/branding/t68/logo.png
+        supportEmail: hotro@example.gov.vn
+        supportPhone: 0900000789
+        footerLinks: *id036
+        welcomeText: Chào mừng đến với cổng.
+    UnreadCount:
+      value:
+        unread: 3
+        mandatoryUnread: 1
+    AppCodeCheck:
+      value:
+        appCode: app-tra-cuu-ho-tich
+        available: false
+        reason: IN_USE
+    PageDiff:
+      value:
+        pageCode: bat-dau-nhanh
+        base: 2
+        to: 3
+        added: 1
+        removed: 1
+        hunks:
+        - op: EQ
+          baseLine: 1
+          toLine: 1
+          text: '# Bắt đầu nhanh'
+        - op: DEL
+          baseLine: 2
+          text: Gọi `GET /ho-tich`.
+        - op: ADD
+          toLine: 2
+          text: Gọi `GET /ho-tich/{id}` kèm token.
   schemas:
     ApiCode:
       type: string
@@ -12405,7 +12666,7 @@ components:
         tagline: &id041
           type: string
           maxLength: 160
-        logoUrl:
+        logoUrl: &id046
           type: string
         supportEmail: &id042
           type: string
@@ -12910,3 +13171,89 @@ components:
       required:
       - confirm
       additionalProperties: false
+    PublicBranding:
+      type: object
+      properties:
+        portalName: *id040
+        tagline: *id041
+        logoUrl: *id046
+        supportEmail: *id042
+        supportPhone: *id043
+        footerLinks: *id044
+        welcomeText: *id045
+      required:
+      - portalName
+      additionalProperties: false
+      description: Nhận diện công khai của cổng (BR-15-032); không chứa tham số quản trị.
+    UnreadCount:
+      type: object
+      properties:
+        unread:
+          type: integer
+        mandatoryUnread:
+          type: integer
+      required:
+      - unread
+      additionalProperties: false
+    AppCodeCheck:
+      type: object
+      properties:
+        appCode:
+          $ref: '#/components/schemas/AppCode'
+        available:
+          type: boolean
+        reason:
+          type: string
+          enum:
+          - IN_USE
+          - ARCHIVED
+      required:
+      - appCode
+      - available
+      additionalProperties: false
+      description: '`reason` chỉ có khi `available = false`; `ARCHIVED` là mã của ứng dụng đã lưu trữ (vẫn không dùng lại được).'
+    PageDiffHunk:
+      type: object
+      properties:
+        op:
+          type: string
+          enum:
+          - ADD
+          - DEL
+          - EQ
+        baseLine:
+          type: integer
+        toLine:
+          type: integer
+        text:
+          type: string
+      required:
+      - op
+      - text
+      additionalProperties: false
+    PageDiff:
+      type: object
+      properties:
+        pageCode:
+          $ref: '#/components/schemas/PageCode'
+        base:
+          type: integer
+        to:
+          type: integer
+        added:
+          type: integer
+        removed:
+          type: integer
+        hunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageDiffHunk'
+      required:
+      - pageCode
+      - base
+      - to
+      - added
+      - removed
+      - hunks
+      additionalProperties: false
+      description: Khác biệt theo dòng của Markdown nguồn; `text` là văn bản thuần, không phải HTML.

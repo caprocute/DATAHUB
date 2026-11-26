@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm hợp đồng PH-15: OpenAPI 3.1 hợp lệ; ví dụ khớp lược đồ; mọi API-15-001…137 có đúng phương thức, đường dẫn, FR theo FRS §9.3;
+"""Kiểm hợp đồng PH-15: OpenAPI 3.1 hợp lệ; ví dụ khớp lược đồ; mọi API-15-001…142 có đúng phương thức, đường dẫn, FR theo FRS §9.3;
 mọi ERR-15 của FRS có trong tệp; AsyncAPI 3.0 có đủ EVT-15-01…14 và các EVT-02 tiêu thụ, ví dụ khớp lược đồ.
 Chạy: python3 tools/check_contracts.py  (từ thư mục api/ph15). Cần: openapi-spec-validator, jsonschema ≥ 4.18, PyYAML."""
 import os, re, sys, yaml, jsonschema
@@ -110,8 +110,8 @@ for a_, (m, p, fr) in ROWS.items():
 for a_ in ids:
     if a_ not in ROWS:
         err(f'{a_} có ở OpenAPI nhưng không có ở FRS')
-if len(ROWS) != 137:
-    err(f'FRS có {len(ROWS)} dòng API, cần 137')
+if len(ROWS) != 142:
+    err(f'FRS có {len(ROWS)} dòng API, cần 142')
 chua = sorted(set(ERRS) - used_err)
 for c in chua:
     if not any(c.replace('-', '_') in r.get('content', {}).get('application/problem+json', {}).get('examples', {}) for r in d['components']['responses'].values()):

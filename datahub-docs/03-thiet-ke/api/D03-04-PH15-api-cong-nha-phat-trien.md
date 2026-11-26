@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D03-04-PH15
 ten: Đặc tả API và sự kiện phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect (module portal), dh-portal và BFF; đơn vị kết nối HTTT; ATTT; hội đồng thẩm định
 phan_he: PH-15
-mo_ta: Hợp đồng giao tiếp của PH-15 gồm 137 operation REST của module portal, một cổng nội bộ forward-auth cho gateway sandbox, 14 sự kiện EVT-15 và 10 sự kiện EVT-02 do cổng tiêu thụ, bảng mã lỗi ERR-15, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm.
+mo_ta: Hợp đồng giao tiếp của PH-15 gồm 142 operation REST của module portal, một cổng nội bộ forward-auth cho gateway sandbox, 14 sự kiện EVT-15 và 10 sự kiện EVT-02 do cổng tiêu thụ, bảng mã lỗi ERR-15, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm.
 tai_lieu_lien_quan: D02-03-PH15 FRS; D03-02-PH15 SDD; D03-03-PH15 CSDL; D03-06-PH15 Màn hình; D05-02-PH15 Test case
 ---
 
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D02-03-PH15 FRS; D03-02-PH15 SDD; D03-03-PH15 CSDL; D03-06-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tập này là hợp đồng giao tiếp của PH-15 Cổng nhà phát triển, lớp trình bày và tự phục vụ đặt trên danh mục của PH-02. Phần máy chủ là module `portal` của `dh-connect`; giao diện `dh-portal` và BFF (Backend for Frontend, lớp trung gian giữ phiên đăng nhập) gọi nó qua một đường gốc duy nhất `/api/portal/v1`. PH-15 công bố **137 operation REST** (API-15-001…137, đúng bảng FRS §9.3), chia theo mặt giao tiếp:
+Tập này là hợp đồng giao tiếp của PH-15 Cổng nhà phát triển, lớp trình bày và tự phục vụ đặt trên danh mục của PH-02. Phần máy chủ là module `portal` của `dh-connect`; giao diện `dh-portal` và BFF (Backend for Frontend, lớp trung gian giữ phiên đăng nhập) gọi nó qua một đường gốc duy nhất `/api/portal/v1`. PH-15 công bố **142 operation REST** (API-15-001…142, đúng bảng FRS §9.3 bản 0.2), chia theo mặt giao tiếp:
 
 - **89 operation cho người dùng đăng nhập**: danh mục, tài liệu, nội dung, tài khoản, ứng dụng và thông tin xác thực sandbox, hồ sơ sandbox của dịch vụ, đăng ký và điểm vào nghiệp vụ, theo dõi, hỗ trợ.
 - **8 operation ẩn danh**: 6 dưới `/public` cho cổng công khai (khi tenant bật) và 2 cho tự đăng ký tài khoản `dh-dev`.
@@ -78,14 +78,14 @@ Cổng có ba người gọi: trình duyệt qua BFF, plugin `forward-auth` củ
 
 | Mặt | Bên gọi | Đường vào | Xác thực | Operation |
 |---|---|---|---|---|
-| Người dùng đăng nhập | `dh-portal` qua BFF | `apisix-ext` hoặc `apisix-int` → BFF (Z2) → `portal` (Z3) | OIDC + PKCE ở BFF; trình duyệt chỉ giữ cookie phiên, token không ra trình duyệt (SEC-21) | 100 (89 thường và 11 thử API) |
-| Ẩn danh | Khách | Như trên, chỉ khi tham số công khai của tenant bật (riêng đăng ký `dh-dev` luôn mở nếu tenant cho phép) | Không; giới hạn tần suất theo IP (ERR-15-007, ERR-15-037) | 8 |
+| Người dùng đăng nhập | `dh-portal` qua BFF | `apisix-ext` hoặc `apisix-int` → BFF (Z2) → `portal` (Z3) | OIDC + PKCE ở BFF; trình duyệt chỉ giữ cookie phiên, token không ra trình duyệt (SEC-21) | 103 (92 thường và 11 thử API) |
+| Ẩn danh | Khách | Như trên, chỉ khi tham số công khai của tenant bật (riêng đăng ký `dh-dev` luôn mở nếu tenant cho phép) | Không; giới hạn tần suất theo IP (ERR-15-007, ERR-15-037); API-15-138 kiểm chữ ký đường dẫn thay phiên | 10 |
 | Quản trị | Người có quyền quản trị | Chỉ `apisix-int` (mạng quản trị) | OIDC + PKCE; ngoài mạng quản trị trả ERR-15-036 | 28 |
 | Nội bộ gateway | APISIX `forward-auth` | Trực tiếp tới cổng 8081 trong mesh | mTLS SPIFFE của APISIX; không token | 1 |
 
 : Ba mặt giao tiếp và đường mạng
 
-Tổng 100 + 8 + 28 + 1 = 137. Cột "Quyền" ở §3 phân loại chính xác từng operation.
+Tổng 103 + 10 + 28 + 1 = 142. Cột "Quyền" ở §3 phân loại chính xác từng operation.
 
 ### 1.2. Sơ đồ trình tự thử API qua forward-auth
 
@@ -122,16 +122,16 @@ Quyền kiểm ở API, không ở giao diện; giao diện chỉ ẩn nút. Quy
 
 | Quyền | Vai trò điển hình | Operation (số API-15) |
 |---|---|---|
-| Ẩn danh | Khách (khi tenant bật công khai) | 001, 003, 004, 010, 034, 035, 045, 046 và các mục `/public` |
+| Ẩn danh | Khách (khi tenant bật công khai) | 001, 003, 004, 010, 034, 035, 045, 046, 138, 139 và các mục `/public` |
 | Đăng nhập | Mọi người dùng | danh mục, tài liệu, trang, hồ sơ, điều khoản, theo dõi, hộp thông báo, hỏi đáp, phiếu hỗ trợ của chính mình |
-| `PERM-15-app` | `ROLE-DEVELOPER` (●) | 049…068, 098…100 (theo vai trò `OWNER`, `DEVELOPER`, `VIEWER` trên ứng dụng, BR-15-009) |
+| `PERM-15-app` | `ROLE-DEVELOPER` (●) | 049…068, 098…100, 141 (theo vai trò `OWNER`, `DEVELOPER`, `VIEWER` trên ứng dụng, BR-15-009) |
 | `PERM-15-try` | `ROLE-DEVELOPER` (●) | 071…081 |
-| `PERM-15-content-write` | TA, CA, SV (○) | 022…025, 026, 030…033, 038…040 |
+| `PERM-15-content-write` | TA, CA, SV (○) | 022…025, 026, 030…033, 038…040, 142; SV (○) còn dùng quyền này cho 069, 070, 084 theo FRS 0.2 |
 | `PERM-15-content-publish` | TA, CA | 027, 028, 029 (khác người soạn, người gửi: ERR-15-023) |
 | `PERM-15-support` | TA, CA, SV (○) | 114, 115 |
 | `PERM-15-dev-approve` | TA, SO, PA | 121…127 |
 | `PERM-15-audit-read` | TA, SO, AU, PA | 128…130 |
-| `PERM-15-portal-admin` | TA, CA | 009, 069, 070, 083…086, 116…120, 131…137 |
+| `PERM-15-portal-admin` | TA, CA | 009, 069, 070, 083…086, 116…120, 131…137 (đầu mối SV ○ vào 069, 070, 084 qua `PERM-15-content-write`, theo đối tượng) |
 | `PERM-02-subscribe`, `PERM-02-create`, `PERM-01-submit` | OR, SV, đầu mối (○) | 087…096: cổng kiểm lại, PH-02 và PH-01 quyết định cuối (BR-15-014) |
 
 : Quyền người dùng theo operation
@@ -163,11 +163,11 @@ Mỗi operation có một mã `API-15-nnn` duy nhất, đúng phương thức, �
 |---|---|---|---|---|---|
 | API-15-001 | `GET /public/home` | 003 | Ẩn danh |  |  |
 | API-15-002 | `GET /home` | 003 | Đăng nhập |  |  |
-| API-15-003 | `GET /public/catalog/apis` | 008 | Ẩn danh |  |  |
-| API-15-004 | `GET /public/catalog/apis/{apiCode}` | 008 | Ẩn danh |  |  |
-| API-15-005 | `GET /catalog/apis` | 004 | Đăng nhập |  |  |
+| API-15-003 | `GET /public/catalog/apis` | 002, 008 | Ẩn danh |  |  |
+| API-15-004 | `GET /public/catalog/apis/{apiCode}` | 002, 008 | Ẩn danh |  |  |
+| API-15-005 | `GET /catalog/apis` | 002, 004 | Đăng nhập |  |  |
 | API-15-006 | `GET /catalog/facets` | 004 | Đăng nhập |  |  |
-| API-15-007 | `GET /catalog/apis/{apiCode}` | 006 | Đăng nhập |  |  |
+| API-15-007 | `GET /catalog/apis/{apiCode}` | 002, 006 | Đăng nhập |  |  |
 | API-15-008 | `GET /catalog/apis/{apiCode}/usage` | 006 | Đăng nhập |  |  |
 | API-15-009 | `GET /catalog/sync-status` | 001 | portal-admin |  |  |
 | API-15-010 | `GET /public/search` | 005, 008 | Ẩn danh |  |  |
@@ -205,7 +205,7 @@ Mỗi operation có một mã `API-15-nnn` duy nhất, đúng phương thức, �
 | API-15-042 | `PUT /me` | 021 | Đăng nhập |  | x |
 | API-15-043 | `GET /me/sessions` | 021 | Đăng nhập |  |  |
 | API-15-044 | `DELETE /me/sessions/{sessionId}` | 021 | Đăng nhập |  |  |
-| API-15-045 | `POST /developer-registrations` | 019, 020 | Ẩn danh | x |  |
+| API-15-045 | `POST /developer-registrations` | 020 | Ẩn danh | x |  |
 | API-15-046 | `POST /developer-registrations:verify-email` | 020 | Ẩn danh | x |  |
 | API-15-047 | `GET /terms/current` | 023 | Đăng nhập |  |  |
 | API-15-048 | `POST /terms/acceptances` | 023 | Đăng nhập | x |  |
@@ -229,8 +229,8 @@ Mỗi operation có một mã `API-15-nnn` duy nhất, đúng phương thức, �
 | API-15-066 | `GET /apps/{appCode}/members` | 033 | app |  |  |
 | API-15-067 | `PUT /apps/{appCode}/members/{userId}` | 033 | app |  | x |
 | API-15-068 | `DELETE /apps/{appCode}/members/{userId}` | 033 | app |  |  |
-| API-15-069 | `GET /catalog/apis/{apiCode}/sandbox` | 034 | portal-admin |  |  |
-| API-15-070 | `PUT /catalog/apis/{apiCode}/sandbox` | 034 | portal-admin |  | x |
+| API-15-069 | `GET /catalog/apis/{apiCode}/sandbox` | 034 | portal-admin hoặc content-write (SV ○ theo đối tượng) |  |  |
+| API-15-070 | `PUT /catalog/apis/{apiCode}/sandbox` | 034 | portal-admin hoặc content-write (SV ○ theo đối tượng) |  | x |
 | API-15-071 | `POST /try/requests:validate` | 038 | try |  | x |
 | API-15-072 | `POST /try/requests` | 035, 036, 037, 043 | try | x |  |
 | API-15-073 | `GET /try/requests/{tryId}` | 035 | try |  |  |
@@ -244,7 +244,7 @@ Mỗi operation có một mã `API-15-nnn` duy nhất, đúng phương thức, �
 | API-15-081 | `GET /try/collections/{collectionId}/export` | 041 | try |  |  |
 | API-15-082 | `POST /internal/v1/sandbox/authorize` | 035, 039 | mTLS mesh |  |  |
 | API-15-083 | `GET /admin/try-production` | 042 | portal-admin |  |  |
-| API-15-084 | `PUT /admin/try-production/{apiCode}` | 042 | portal-admin |  | x |
+| API-15-084 | `PUT /admin/try-production/{apiCode}` | 042 | portal-admin hoặc content-write (SV ○ theo đối tượng) |  | x |
 | API-15-085 | `POST /admin/try-production/{apiCode}:approve` | 042 | portal-admin | x | x |
 | API-15-086 | `POST /admin/try-production/{apiCode}:disable` | 042 | portal-admin | x | x |
 | API-15-087 | `POST /subscriptions` | 044 | PERM-02-subscribe | x |  |
@@ -298,6 +298,11 @@ Mỗi operation có một mã `API-15-nnn` duy nhất, đúng phương thức, �
 | API-15-135 | `POST /admin/migrations` | 062 | portal-admin | x |  |
 | API-15-136 | `GET /admin/migrations/{migrationId}` | 062 | portal-admin |  |  |
 | API-15-137 | `POST /admin/migrations/{migrationId}:confirm` | 062 | portal-admin | x |  |
+| API-15-138 | `GET /content/attachments/{attachmentId}` | 014, 017 | Ẩn danh |  |  |
+| API-15-139 | `GET /public/branding` | 003, 056 | Ẩn danh |  |  |
+| API-15-140 | `GET /inbox/unread-count` | 052 | Đăng nhập |  |  |
+| API-15-141 | `GET /apps:check-code` | 025 | app |  |  |
+| API-15-142 | `GET /content/pages/{pageCode}/diff` | 016 | content-write |  |  |
 
 : Danh mục endpoint API-15 (FR: số FR-15-; Quyền: bỏ tiền tố `PERM-15-`; I: nhận `Idempotency-Key`; M: nhận `If-Match`; mã thành công ở chương 11)
 
@@ -309,7 +314,7 @@ Mỗi FR của PH-15 có ít nhất một API hoặc được ghi rõ ngoại l�
 
 <!-- gen:cover:start -->
 
-Bảng §3.1 có cột FR; đối chiếu ngược cho thấy 61 trên 62 FR của FRS có ít nhất một API trong cột đó (script `check_contracts.py` kiểm mã, phương thức, đường dẫn, FR của từng dòng). Ngoại lệ: FR-15-002 (áp mức hiển thị theo người xem) không có dòng riêng vì thực hiện bên trong mọi API danh mục (API-15-003…008); đề nghị FRS bổ sung ở §10.
+Bảng §3.1 có cột FR; đối chiếu ngược cho thấy 61 trên 62 FR của FRS có ít nhất một API trong cột đó (script `check_contracts.py` kiểm mã, phương thức, đường dẫn, FR của từng dòng). Ngoại lệ: FR-15-019 (đăng nhập SSO realm tenant) không có operation REST riêng vì thực hiện ở BFF và Keycloak (OIDC Code + PKCE, `/bff/dang-nhap`); hồ sơ sau đăng nhập đọc qua API-15-041. FR-15-002 (áp mức hiển thị theo người xem) đã có ở cột FR của API-15-003, 004, 005, 007 từ FRS 0.2.
 
 <!-- gen:cover:end -->
 
@@ -501,7 +506,7 @@ Hợp đồng được kiểm tự động để tệp YAML, bảng trong tài l
 
 | Kiểm | Công cụ | Cổng |
 |---|---|---|
-| OpenAPI 3.1 hợp lệ; mọi ví dụ yêu cầu, phản hồi, lỗi khớp lược đồ; mỗi operation có `x-datahub-id` duy nhất, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors`; mã, phương thức, đường dẫn, FR của 137 operation trùng FRS §9.3; mọi ERR-15 của FRS có trong tệp; lệnh tạo có `Idempotency-Key`; không trường bí mật ngoài `CredentialIssued`, `GitSourceInput` | [`check_contracts.py`](ph15/tools/check_contracts.py) (`openapi-spec-validator`, `jsonschema` 2020-12) | CI-5 |
+| OpenAPI 3.1 hợp lệ; mọi ví dụ yêu cầu, phản hồi, lỗi khớp lược đồ; mỗi operation có `x-datahub-id` duy nhất, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors`; mã, phương thức, đường dẫn, FR của 142 operation trùng FRS §9.3; mọi ERR-15 của FRS có trong tệp; lệnh tạo có `Idempotency-Key`; không trường bí mật ngoài `CredentialIssued`, `GitSourceInput` | [`check_contracts.py`](ph15/tools/check_contracts.py) (`openapi-spec-validator`, `jsonschema` 2020-12) | CI-5 |
 | AsyncAPI 3.0: đủ EVT-15-01…14 và EVT-02 tiêu thụ; kênh, thông điệp tham chiếu đúng; ví dụ khớp payload và tiêu đề | `check_contracts.py` | CI-5 |
 | Lint quy ước | `@redocly/cli lint`; Spectral với bộ luật dự án | CI-5 |
 | Thay đổi phá vỡ trong `v1` | oasdiff `breaking` so với `main` | CI-5 |
@@ -510,7 +515,7 @@ Hợp đồng được kiểm tự động để tệp YAML, bảng trong tài l
 
 : Các kiểm tra hợp đồng chạy trong CI
 
-Kết quả chạy ngày 26/11/2026: OpenAPI hợp lệ, 137 operation, 137 mã API, 191 ví dụ khớp; AsyncAPI 24 kênh, 24 thông điệp, 48 ví dụ khớp; không lỗi. Lệnh chạy lại:
+Kết quả chạy ngày 26/11/2026 (sau FRS 0.2): OpenAPI hợp lệ, 142 operation, 142 mã API, 195 ví dụ khớp; AsyncAPI 24 kênh, 24 thông điệp, 48 ví dụ khớp; không lỗi. Lệnh chạy lại:
 
 ```bash
 cd datahub-docs/03-thiet-ke/api/ph15
@@ -542,7 +547,7 @@ Hệ cũ có Gravitee Portal (LGC-APIM-006, 007, 017 và phần nhà phát tri�
 
 : Ánh xạ từ hệ cũ sang API-15
 
-Hệ cũ không có hợp đồng REST công bố ngoài giao diện Gravitee, nên không có tương thích ngược cần giữ; di trú nội dung đi qua API-15-135…137.
+Hệ cũ không có hợp đồng REST công bố ngoài Gravitee nên không có tương thích ngược cần giữ; di trú nội dung đi qua API-15-135…137.
 
 ## 9. Câu hỏi mở
 
@@ -560,19 +565,20 @@ Mỗi câu nêu phương án ngầm định tập này đang dùng để không 
 
 ## 10. Đề nghị đồng bộ
 
-Tập này chỉ sửa tệp PH-15. Các điểm dưới đây cần chủ FRS hoặc tài liệu dùng chung quyết định; hợp đồng giữ như trong tệp YAML cho tới khi có phản hồi.
+Tập này chỉ sửa tệp PH-15. FRS PH-15 bản 0.2 đã hấp thụ các đề nghị gửi FRS (FRS mục 15.3); hợp đồng nay khớp FRS 0.2.
 
-| Tài liệu | Đề nghị | Lý do |
-|---|---|---|
-| FRS PH-15 §9.3 | Ghi rõ API-15-082 có đường dẫn gốc `/internal/v1/sandbox/authorize` (cổng 8081), không có tiền tố `/api/portal/v1` | Câu "mọi đường dẫn có tiền tố" mâu thuẫn dòng này; khớp SDD §4.10 |
-| FRS PH-15 §9.3 | Thêm hai operation cần cho giao diện: `GET /content/attachments/{attachmentId}` (SDD §4.6 đã dùng) và `GET /public/branding` (nhận diện, logo cho khách ẩn danh); đề nghị mã API-15-138 và 139. Hiện logo phục vụ ở đường tĩnh của BFF | Không có API đọc ảnh đính kèm, logo |
-| FRS PH-15 §9.3 | Thêm FR-15-002 vào cột FR của API-15-003, 004, 005, 007 (FRS FR-15-002 đã nêu các API này nhưng bảng chưa ghi) cùng quyết định Q15-55 | Truy vết đủ FR |
-| FRS PH-15 FR-15-035, ERR-15-123 | Giữ ERR-15-123 chỉ làm cảnh báo trong `warnings[]` (HTTP 200, cắt 1 MB) hay trả `413`; hợp đồng hiện khai báo cả `413` ở API-15-072 để khớp bảng §9.1 | FR nói cảnh báo, bảng nói 413 |
-| FRS PH-15 FR-15-034, FR-15-042 | Quyền của đầu mối SV (○) với API-15-069, 070, 084: hợp đồng ghi `PERM-15-portal-admin` cộng quy tắc theo đối tượng (đầu mối của tổ chức chủ dịch vụ); đề nghị thêm quyền riêng nếu cần | FRS ghi "SV (○), TA" nhưng chỉ có một PERM |
-| FRS PH-15 Phụ lục A | Hấp thụ các trường chỉ có ở API: `viewerClass`, `termsUpToDate` (hồ sơ); `retryAfterSeconds` (lỗi); `partial[]` (bảng điều khiển); `appCode` tùy chọn của API-15-074; `bodyTruncated`, `result` của `TryResponse`; `change` của EVT-15-13 | Tránh trường ngoài phụ lục |
-| FRS PH-15 §9.2 | EVT-15-04 cần thêm `appCode`; EVT-15-05 liệt kê `reason`: `REVOKED_BY_OWNER`, `EXPIRED`, `APP_ARCHIVED`, `ADMIN_LOCK`; EVT-15-13 thêm `change` | Bên nhận cần khóa phân vùng và lý do |
-| D02-08 | Năm quyền `PERM-15-content-write`, `content-publish`, `support`, `dev-approve`, `audit-read` (đã đề nghị ở FRS); scope `metrics:portal-read`, `sandbox:call` | Đang thiếu, tập này dùng |
-| D03-04-PH02, D03-04-PH10 | PH-02 chốt tên trường EVT-02 (Q15-59), xác nhận API-02-081, 006; PH-10 chấp nhận chủ đề `{tenant}.portal.support.ticket-opened.v1` (Q15-58) | Giữ khớp hợp đồng |
+| Tài liệu | Đề nghị | Lý do | Tình trạng |
+|---|---|---|---|
+| FRS PH-15 §9.3 | Ghi rõ API-15-082 có đường dẫn gốc `/internal/v1/sandbox/authorize` (cổng 8081), không có tiền tố `/api/portal/v1` | Khớp SDD §4.10 | Đã hấp thụ ở FRS 0.2 |
+| FRS PH-15 §9.3 | Thêm hai operation: `GET /content/attachments/{attachmentId}` và `GET /public/branding`; mã API-15-138 và 139 | Thiếu API đọc ảnh, logo | Đã hấp thụ: API-15-138, 139 |
+| FRS PH-15 §9.3 | Thêm FR-15-002 vào cột FR của API-15-003, 004, 005, 007 cùng quyết định Q15-55 | Truy vết đủ FR | Đã hấp thụ; Q15-55 còn mở |
+| FRS PH-15 FR-15-035, ERR-15-123 | Cảnh báo trong `warnings[]` hay `413` | FR và bảng lệch | Đã hấp thụ: gần ngưỡng `warnings[]`, vượt cứng `413` kèm `bodyTruncated` |
+| FRS PH-15 FR-15-034, FR-15-042 | Quyền của đầu mối SV (○) với API-15-069, 070, 084 | FRS ghi "SV (○), TA" nhưng chỉ có một PERM | Đã hấp thụ: `portal-admin` (TA, CA) hoặc `content-write` (SV ○); hợp đồng đã đổi |
+| FRS PH-15 Phụ lục A | Hấp thụ các trường chỉ có ở API: `viewerClass`, `termsUpToDate`, `retryAfterSeconds`, `partial[]`, `appCode` của API-15-074, `bodyTruncated`, `result`, `change` | Tránh trường ngoài | Đã hấp thụ: FRS A.9, §9.2 |
+| FRS PH-15 §9.2 | EVT-15-04 thêm `appCode`; EVT-15-05 liệt kê `reason`; EVT-15-13 thêm `change` | Khóa phân vùng, lý do | Đã hấp thụ ở FRS 0.2 |
+| Tập màn hình D03-06-PH15 Phụ lục B | Ba API: `GET /inbox/unread-count`, `GET /apps:check-code`, `GET /content/pages/{pageCode}/diff` | Giao diện nhẹ và đúng hơn | Đã chấp nhận: API-15-140, 141, 142 |
+| D02-08 | Năm quyền `PERM-15-content-write`, `content-publish`, `support`, `dev-approve`, `audit-read`; scope `metrics:portal-read`, `sandbox:call` | Tập này dùng | Năm quyền đã có ở D02-08; hai scope máy còn chờ D02-08 |
+| D03-04-PH02, D03-04-PH10 | PH-02 chốt tên trường EVT-02 (Q15-59), xác nhận API-02-081, 006; PH-10 chấp nhận chủ đề `{tenant}.portal.support.ticket-opened.v1` (Q15-58) | Khớp hợp đồng | Còn chờ |
 
 : Đề nghị đồng bộ của tập API PH-15
 
@@ -641,7 +647,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Quyền.** Ẩn danh (khách chưa đăng nhập).
 
-**FR hiện thực.** FR-15-008.
+**FR hiện thực.** FR-15-002, FR-15-008.
 
 **Tham số.** `q` (query, string, tùy chọn); `linh-vuc` (query, string, tùy chọn); `chu-quan` (query, string, tùy chọn); `xac-thuc` (query, AuthKind, tùy chọn); `loai` (query, string, tùy chọn); `trang-thai` (query, string, tùy chọn); `da-ngung` (query, boolean, tùy chọn); `sap-xep` (query, string, tùy chọn); `trang` (query, integer, tùy chọn); `co` (query, integer, tùy chọn); `If-None-Match` (header, string, tùy chọn).
 
@@ -665,7 +671,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Quyền.** Ẩn danh (khách chưa đăng nhập).
 
-**FR hiện thực.** FR-15-008.
+**FR hiện thực.** FR-15-002, FR-15-008.
 
 **Tham số.** `apiCode` (path, ApiCode, bắt buộc); `phien-ban` (query, SemVer, tùy chọn); `If-None-Match` (header, string, tùy chọn).
 
@@ -689,7 +695,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Quyền.** Người dùng đã đăng nhập.
 
-**FR hiện thực.** FR-15-004.
+**FR hiện thực.** FR-15-002, FR-15-004.
 
 **Tham số.** `q` (query, string, tùy chọn); `linh-vuc` (query, string, tùy chọn); `chu-quan` (query, string, tùy chọn); `xac-thuc` (query, AuthKind, tùy chọn); `loai` (query, string, tùy chọn); `trang-thai` (query, string, tùy chọn); `da-ngung` (query, boolean, tùy chọn); `sap-xep` (query, string, tùy chọn); `trang` (query, integer, tùy chọn); `co` (query, integer, tùy chọn).
 
@@ -737,7 +743,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Quyền.** Người dùng đã đăng nhập.
 
-**FR hiện thực.** FR-15-006.
+**FR hiện thực.** FR-15-002, FR-15-006.
 
 **Tham số.** `apiCode` (path, ApiCode, bắt buộc); `phien-ban` (query, SemVer, tùy chọn).
 
@@ -918,6 +924,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Lỗi.** HTTP `401`, `404`, `422`; mã lỗi của thao tác: ERR-15-001, ERR-15-009 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
+:::
+
+#### API-15-139 · Nhận diện công khai của cổng
+
+::: dac-ta
+**Mục đích.** Nhận diện công khai của cổng.
+
+**Phương thức, đường dẫn.** `GET /public/branding`.
+
+**Quyền.** Ẩn danh (khách chưa đăng nhập).
+
+**FR hiện thực.** FR-15-003, FR-15-056.
+
+**Tham số.** `If-None-Match` (header, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PublicBranding`; trường bắt buộc: `portalName`; `304` không đổi.
+
+**Lỗi.** Không.
+
+**Ghi chú.** Chỉ trả các khóa nhận diện (BR-15-032); `Cache-Control: public, max-age=300`; logo phục vụ qua đường tĩnh của BFF.
 :::
 
 ### Tài liệu API
@@ -1548,6 +1578,54 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Tạo `DRAFT` cho tệp đổi, không bao giờ tự đăng (BR-15-012).
 :::
 
+#### API-15-138 · Đọc ảnh đính kèm của trang
+
+::: dac-ta
+**Mục đích.** Đọc ảnh đính kèm của trang.
+
+**Phương thức, đường dẫn.** `GET /content/attachments/{attachmentId}`.
+
+**Quyền.** Ẩn danh (khách chưa đăng nhập).
+
+**FR hiện thực.** FR-15-014, FR-15-017.
+
+**Tham số.** `attachmentId` (path, Uuid, bắt buộc); `sig` (query, string, bắt buộc); `exp` (query, string, bắt buộc); `If-None-Match` (header, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, string; `304` không đổi.
+
+**Lỗi.** HTTP `404`; mã lỗi của thao tác: ERR-15-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chữ ký `sig` còn hạn 15 phút thay cho phiên (FR-15-017); trả ảnh với `Content-Type` đúng và `X-Content-Type-Options: nosniff`; chữ ký sai hoặc hết hạn trả `404`.
+:::
+
+#### API-15-142 · So sánh hai phiên bản của trang
+
+::: dac-ta
+**Mục đích.** So sánh hai phiên bản của trang.
+
+**Phương thức, đường dẫn.** `GET /content/pages/{pageCode}/diff`.
+
+**Quyền.** `PERM-15-content-write`.
+
+**FR hiện thực.** FR-15-016.
+
+**Tham số.** `pageCode` (path, PageCode, bắt buộc); `base` (query, integer, bắt buộc); `to` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PageDiff`; trường bắt buộc: `pageCode`, `base`, `to`, `added`, `removed`, `hunks`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-15-001, ERR-15-003 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** So sánh phía máy chủ theo dòng Markdown nguồn; không trả HTML (FR-15-016).
+:::
+
 ### Tài khoản nhà phát triển
 
 #### API-15-041 · Hồ sơ người dùng hiện tại
@@ -1655,7 +1733,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Quyền.** Ẩn danh (khách chưa đăng nhập).
 
-**FR hiện thực.** FR-15-019, FR-15-020.
+**FR hiện thực.** FR-15-020.
 
 **Tham số.** `Idempotency-Key` (header, string, bắt buộc).
 
@@ -2224,6 +2302,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Không.
 :::
 
+#### API-15-141 · Kiểm tra mã ứng dụng đã dùng chưa
+
+::: dac-ta
+**Mục đích.** Kiểm tra mã ứng dụng đã dùng chưa.
+
+**Phương thức, đường dẫn.** `GET /apps:check-code`.
+
+**Quyền.** `PERM-15-app`.
+
+**FR hiện thực.** FR-15-025.
+
+**Tham số.** `appCode` (query, AppCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AppCodeCheck`; trường bắt buộc: `appCode`, `available`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-15-003 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ báo gợi ý khi gõ; kiểm tra cuối vẫn ở API-15-056 (ERR-15-002), kể cả mã của ứng dụng đã lưu trữ.
+:::
+
 ### Sandbox và thử API
 
 #### API-15-069 · Xem hồ sơ sandbox của dịch vụ
@@ -2233,7 +2335,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `GET /catalog/apis/{apiCode}/sandbox`.
 
-**Quyền.** `PERM-15-portal-admin`.
+**Quyền.** `PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)`.
 
 **FR hiện thực.** FR-15-034.
 
@@ -2257,7 +2359,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `PUT /catalog/apis/{apiCode}/sandbox`.
 
-**Quyền.** `PERM-15-portal-admin`.
+**Quyền.** `PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)`.
 
 **FR hiện thực.** FR-15-034.
 
@@ -2597,7 +2699,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `PUT /admin/try-production/{apiCode}`.
 
-**Quyền.** `PERM-15-portal-admin`.
+**Quyền.** `PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)`.
 
 **FR hiện thực.** FR-15-042.
 
@@ -3144,6 +3246,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Lỗi.** HTTP `401`; mã lỗi của thao tác: ERR-15-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
+:::
+
+#### API-15-140 · Số thông báo chưa đọc
+
+::: dac-ta
+**Mục đích.** Số thông báo chưa đọc.
+
+**Phương thức, đường dẫn.** `GET /inbox/unread-count`.
+
+**Quyền.** Người dùng đã đăng nhập.
+
+**FR hiện thực.** FR-15-052.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `UnreadCount`; trường bắt buộc: `unread`.
+
+**Lỗi.** HTTP `401`; mã lỗi của thao tác: ERR-15-004 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Nhẹ hơn API-15-104 cho chuông thông báo; giao diện hỏi định kỳ 60 giây (FR-15-052).
 :::
 
 ### Hỗ trợ và phản hồi
@@ -3901,3 +4027,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm PH-15 | Bản đầu: 137 operation, EVT-15-01…14 và 10 EVT-02 tiêu thụ, ERR-15, OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm |
+| 0.2 | 2026-11-26 | Nhóm PH-15 | Đồng bộ FRS 0.2: thêm API-15-138…142 (142 operation); quyền theo đối tượng của API-15-069, 070, 084; mục 10 ghi đề nghị đã hấp thụ; sinh lại và kiểm |

@@ -45,7 +45,7 @@ def cover():
     frs = [f for f, gp, t in FRS_FR]
     n_cov = sum(1 for f in frs if f in api_of)
     L = ['Bảng §3.1 có cột FR; đối chiếu ngược cho thấy %d trên %d FR của FRS có ít nhất một API trong cột đó (script `check_contracts.py` kiểm mã, phương thức, đường dẫn, FR của từng dòng). %s' % (
-        n_cov, len(frs), ('Ngoại lệ: ' + ', '.join(no_api) + ' (áp mức hiển thị theo người xem) không có dòng riêng vì thực hiện bên trong mọi API danh mục (API-15-003…008); đề nghị FRS bổ sung ở §10.') if no_api else 'Không có ngoại lệ.')]
+        n_cov, len(frs), ('Ngoại lệ: ' + ', '.join(no_api) + ' (đăng nhập SSO realm tenant) không có operation REST riêng vì thực hiện ở BFF và Keycloak (OIDC Code + PKCE, `/bff/dang-nhap`); hồ sơ sau đăng nhập đọc qua API-15-041. FR-15-002 (áp mức hiển thị theo người xem) đã có ở cột FR của API-15-003, 004, 005, 007 từ FRS 0.2.') if no_api else 'Không có ngoại lệ.')]
     return '\n'.join(L), no_api
 
 

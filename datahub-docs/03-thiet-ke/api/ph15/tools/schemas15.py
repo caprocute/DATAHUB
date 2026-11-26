@@ -601,3 +601,17 @@ EX['MigrationConfirmed'] = {'migrationId': U3, 'state': 'APPLYING', 'pagesCreate
 SCH['Migration']['properties']['preview']  # giữ
 
 # lược đồ kiểm: dùng tại gen
+
+# ---- Bổ sung 0.2: API-15-138…142 (đề nghị của tập màn hình và API, FRS 0.2)
+d('PublicBranding', {k: v for k, v in SCH['Branding']['properties'].items() if k not in ('publicEnabled',)}, ['portalName'],
+  desc='Nhận diện công khai của cổng (BR-15-032); không chứa tham số quản trị.')
+EX['PublicBranding'] = {k: v for k, v in BR1.items() if k != 'publicEnabled'}
+d('UnreadCount', {'unread': 'i', 'mandatoryUnread': 'i'}, ['unread'], ex={'unread': 3, 'mandatoryUnread': 1})
+d('AppCodeCheck', {'appCode': '#AppCode', 'available': 'b', 'reason': ['IN_USE', 'ARCHIVED']}, ['appCode', 'available'],
+  ex={'appCode': 'app-tra-cuu-ho-tich', 'available': False, 'reason': 'IN_USE'},
+  desc='`reason` chỉ có khi `available = false`; `ARCHIVED` là mã của ứng dụng đã lưu trữ (vẫn không dùng lại được).')
+d('PageDiffHunk', {'op': ['ADD', 'DEL', 'EQ'], 'baseLine': 'i', 'toLine': 'i', 'text': 's'}, ['op', 'text'])
+d('PageDiff', {'pageCode': '#PageCode', 'base': 'i', 'to': 'i', 'added': 'i', 'removed': 'i', 'hunks': '[#PageDiffHunk]'}, ['pageCode', 'base', 'to', 'added', 'removed', 'hunks'],
+  ex={'pageCode': 'bat-dau-nhanh', 'base': 2, 'to': 3, 'added': 1, 'removed': 1,
+      'hunks': [{'op': 'EQ', 'baseLine': 1, 'toLine': 1, 'text': '# Bắt đầu nhanh'}, {'op': 'DEL', 'baseLine': 2, 'text': 'Gọi `GET /ho-tich`.'}, {'op': 'ADD', 'toLine': 2, 'text': 'Gọi `GET /ho-tich/{id}` kèm token.'}]},
+  desc='Khác biệt theo dòng của Markdown nguồn; `text` là văn bản thuần, không phải HTML.')

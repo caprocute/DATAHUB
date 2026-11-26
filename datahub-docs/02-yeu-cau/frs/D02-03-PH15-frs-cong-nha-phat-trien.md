@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH15
 ten: Đặc tả yêu cầu chức năng phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-portal và dh-connect, kiểm thử viên, chủ dịch vụ, quản trị tỉnh
@@ -31,7 +31,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH15 Use case; D03-02-PH15 Thiết kế c
 | Yêu cầu phi chức năng | 22 (NFR-15-001…022) |
 | Mã lỗi | 63 (ERR-15-001…040 control plane, ERR-15-101…123 sandbox và thử API) |
 | Sự kiện | 14 (EVT-15-01…14) |
-| API | 137 operation (API-15-001…137) |
+| API | 142 operation (API-15-001…142) |
 | Màn hình | 28 (UI-15-01…28) |
 | Chức năng hệ cũ được phủ | 5 mục `LGC` chính (APIM-006, 007, 017, IAM-006, phần nhà phát triển của APIM-022), 2 mục liên quan; 16 FR của SRS cũ đều có chỗ trong tập mới |
 | Câu hỏi mở | 19 (Q15-01…19) |
@@ -198,7 +198,7 @@ flowchart TB
     CON["portal-content trang nội dung"]
     DEVM["portal-dev tài khoản ứng dụng"]
     TRY["portal-try thử API"]
-    MOCK["portal-mock sinh phản hồi"]
+    MOCK["portal-sandbox MOCK và BACKEND"]
     SUP["portal-support hỗ trợ"]
   end
   subgraph LIEN["Phân hệ và hạ tầng liền kề"]
@@ -243,7 +243,7 @@ Hình cho thấy ba điều. Thứ nhất, mọi đường vào đều qua `apis
 
 ### 2.4. Kiến trúc thành phần và công nghệ
 
-Bảng dưới liệt kê các thành phần của PH-15. Các module `portal-*` là module Spring Modulith trong cùng DU `dh-connect` (ADR-001), package `vn.datahub.connect.portal`; việc đặt `portal-mock` trong DU hay thành plugin APISIX do SDD chốt (Q15-07).
+Bảng dưới liệt kê các thành phần của PH-15. Các module `portal-*` là module Spring Modulith trong cùng DU `dh-connect` (ADR-001), package `vn.datahub.connect.portal`; SDD đã chốt `portal-mock` chạy trong DU `dh-connect` ở vai trò triển khai riêng `portal-sandbox` (QĐ-15-01), không làm plugin APISIX. Thiết kế tách thêm ba module `delegate`, `insight`, `admin` để mỗi module có một đầu mối trách nhiệm; chúng vẫn thuộc các nhóm chức năng của FRS này.
 
 | Thành phần | Công nghệ | Vùng | Trách nhiệm |
 |---|---|---|---|
@@ -252,11 +252,14 @@ Bảng dưới liệt kê các thành phần của PH-15. Các module `portal-*`
 | `portal-catalog` | Spring Boot, PostgreSQL, OpenSearch tùy chọn (PostgreSQL FTS và `unaccent` dự phòng) | Z3 | Bản sao danh mục từ PH-02, chỉ mục tìm kiếm, đặc tả đã phân tích |
 | `portal-content` | Markdown (CommonMark), bộ lọc HTML an toàn, Garage | Z3 | Trang nội dung, phiên bản, duyệt bốn mắt, nhập Git |
 | `portal-dev` | Spring Boot, Keycloak Admin API giới hạn realm `dh-dev` | Z3 | Tài khoản `dh-dev`, nhóm, ứng dụng, thông tin xác thực sandbox |
-| `portal-try` | Spring Boot, WebClient, token exchange RFC 8693 | Z3 | Chuyển lời gọi thử tới APISIX, hạn mức, ghi vết, kiểm tra PII |
-| `portal-mock` | Trình sinh phản hồi từ OpenAPI (ví dụ, schema) | Z3 hoặc plugin APISIX | Chế độ `MOCK` |
+| `portal-try` | Spring Boot, WebClient, token exchange RFC 8693 (dự phòng: xác nhận JWS ký bằng khóa `transit` của OpenBao nếu Keycloak không đủ, QĐ-15-03) | Z3 | Chuyển lời gọi thử tới APISIX, đếm hạn mức theo người, ghi vết, kiểm tra PII |
+| `portal-mock` (vai trò `portal-sandbox`) | Trình sinh phản hồi từ OpenAPI (ví dụ, schema); chuyển tiếp có allowlist và ngắt mạch | Z3 | Chế độ `MOCK` và chuyển tiếp `BACKEND`; không ghi CSDL |
+| `portal-delegate` | Spring Boot | Z3 | Ủy thác đăng ký sử dụng, kết nạp, công bố sang PH-02, PH-01 (FR-15-044…047) |
+| `portal-insight` | Spring Boot | Z3 | Bảng điều khiển, thống kê, nhật ký ứng dụng, thông báo từ PH-13, PH-02 (FR-15-048…052) |
+| `portal-admin` | Spring Boot | Z3 | Quản trị cổng: nhận diện, tham số, duyệt tài khoản, nhật ký, đồng bộ, di trú (FR-15-056…062) |
 | `portal-support` | Spring Boot | Z3 | Hỏi đáp, phiếu hỗ trợ, đánh giá |
 | Keycloak | Realm `dh-{tenant}` (cán bộ) và `dh-dev` (nhà thầu, client sandbox) | Z6 | Đăng nhập, client sandbox |
-| APISIX | Tuyến sandbox `sandbox-api.{tenant}.datahub.gov.vn` (giả định) kèm `forward-auth` | Z1, Z2 | Thực thi lời gọi sandbox |
+| APISIX | Tuyến sandbox tĩnh `sandbox-api.{tenant}.datahub.gov.vn` (giả định) kèm `forward-auth` | Z1, Z2 | Chuyển lời gọi sandbox tới `portal-sandbox` sau khi `forward-auth` cho phép; không chuyển tiếp tới backend thử |
 
 : Thành phần của PH-15
 
@@ -270,7 +273,7 @@ sequenceDiagram
   participant T as portal-try
   participant K as Keycloak PH-12
   participant G as APISIX sandbox
-  participant M as portal-mock hoặc backend thử
+  participant M as portal-sandbox (MOCK) hoặc backend thử qua portal-sandbox
   participant A as PH-13 kiểm toán
   D->>B: Bấm Gửi trên khung thử
   B->>T: POST /try/requests kèm cookie phiên
@@ -280,7 +283,7 @@ sequenceDiagram
   T->>G: Gọi tuyến sandbox kèm token và X-DH-Try-Id
   G->>T: forward-auth hỏi API-15-082
   T-->>G: Cho phép kèm hạn mức còn lại
-  G->>M: Chuyển lời gọi theo chế độ MOCK hoặc BACKEND
+  G->>M: Chuyển lời gọi tới portal-sandbox, chạy MOCK hoặc chuyển tiếp BACKEND
   M-->>G: Phản hồi
   G-->>T: Phản hồi
   T->>A: Ghi vết lượt thử
@@ -345,6 +348,7 @@ Nhà phát triển ở cổng là hai nhóm người dùng khác nhau về ngu�
 | Nhà thầu (DEV, tài khoản `dh-dev`) | Người | Người của đơn vị thầu, tự đăng ký và được duyệt | Như trên, chỉ sandbox, thấy ít API hơn (BR-15-004) |
 | Cán bộ đầu mối (OR, `ROLE-ORG_REQUESTER`) | Người | Đại diện tổ chức ở tenant | Gửi đăng ký sử dụng, hồ sơ kết nạp từ cổng |
 | Chủ dịch vụ (SV, `ROLE-SERVICE_OWNER`) | Người | Chủ API của tổ chức mình | Khai báo sandbox, viết hướng dẫn, xử lý hỗ trợ, đề xuất thử production |
+| Biên tập viên nội dung | Người | Người giữ `PERM-15-content-write`: TA, CA, và SV (○, chỉ trang gắn API của tổ chức mình) | Soạn, sửa, gửi duyệt trang nội dung, nhập từ Git; không tự duyệt (BR-15-012) |
 | Người duyệt dịch vụ (CA, `ROLE-CATALOG_APPROVER`) | Người | Người duyệt công bố ở PH-02 | Duyệt nội dung cổng, duyệt thử production |
 | Quản trị tỉnh (TA, `ROLE-TENANT_ADMIN`) | Người | Quản trị Datahub của tỉnh | Quản trị cổng, duyệt tài khoản `dh-dev`, tham số |
 | Cán bộ ATTT (SO, `ROLE-SECURITY_OFFICER`) | Người | Chuyên trách an toàn thông tin | Xem nhật ký truy cập và thử, khóa khi có sự cố |
@@ -358,14 +362,14 @@ Nhà phát triển ở cổng là hai nhóm người dùng khác nhau về ngu�
 
 ### 3.2. Ma trận quyền
 
-Ma trận dùng ký hiệu của D02-08 §3 (● có quyền, ○ chỉ đối tượng thuộc tổ chức của mình, — không có). `PERM-15-app`, `PERM-15-try`, `PERM-15-portal-admin` đã có ở D02-08; năm quyền còn lại là đề xuất mới và được ghi vào mục Đề nghị đồng bộ. Hai quyền của DEV chỉ áp dụng cho ứng dụng được giao cho họ (BR-15-009). Xem danh mục, hướng dẫn, hỏi đáp, thông báo cá nhân dùng `PERM-02-read` và quyền tự phục vụ của người đã đăng nhập, không cần quyền riêng.
+Ma trận dùng ký hiệu của D02-08 §3 (● có quyền, ○ chỉ đối tượng thuộc tổ chức của mình, — không có). Cả tám quyền `PERM-15-*` đã có ở D02-08 (năm quyền `content-write`, `content-publish`, `support`, `dev-approve`, `audit-read` được D02-08 bổ sung theo đề nghị của bản 0.1). Chỉ DEV (`ROLE-DEVELOPER`) giữ `PERM-15-try`: cán bộ đầu mối (OR, `ROLE-ORG_REQUESTER`) không thử API, chỉ gửi đăng ký sử dụng, kết nạp, công bố (FR-15-044…047). Hai quyền của DEV chỉ áp dụng cho ứng dụng được giao cho họ (BR-15-009). Xem danh mục, hướng dẫn, hỏi đáp, thông báo cá nhân dùng `PERM-02-read` và quyền tự phục vụ của người đã đăng nhập, không cần quyền riêng.
 
 | Quyền | Ý nghĩa | DEV | OR | SV | CA | TA | SO | AU | PA |
 |---|---|---|---|---|---|---|---|---|---|
 | PERM-15-app | Tạo, quản lý ứng dụng sandbox, cấp, xoay, thu hồi thông tin xác thực sandbox, xem tham chiếu production của ứng dụng được giao | ● | — | — | — | — | — | — | — |
 | PERM-15-try | Thử API trên sandbox; trên production khi dịch vụ đã bật và có đăng ký ACTIVE | ● | — | — | — | — | — | — | — |
 | PERM-15-portal-admin | Quản trị nội dung cổng: nhận diện, tham số, đề xuất và duyệt thử production, đồng bộ lại, đối soát, di trú | — | — | — | ● | ● | — | — | — |
-| PERM-15-content-write | Soạn, sửa, gửi duyệt trang nội dung; nhập từ Git | — | — | ○ | ● | ● | — | — | — |
+| PERM-15-content-write | Soạn, sửa, gửi duyệt trang nội dung; nhập từ Git; SV (○) còn dùng quyền này để xem, khai báo sandbox và đề xuất thử production của API thuộc tổ chức mình (FR-15-034, 042) | — | — | ○ | ● | ● | — | — | — |
 | PERM-15-content-publish | Duyệt, đăng, gỡ trang nội dung | — | — | — | ● | ● | — | — | — |
 | PERM-15-support | Xử lý hỏi đáp, phiếu hỗ trợ của dịch vụ | — | — | ○ | ● | ● | — | — | — |
 | PERM-15-dev-approve | Duyệt, từ chối, khóa, mở khóa tài khoản `dh-dev` và ứng dụng sandbox | — | — | — | — | ● | ● | — | ● |
@@ -406,14 +410,14 @@ Bảng dưới liệt kê các thực thể mức logic; thuộc tính đầy đ
 
 | Mã | Thực thể | Thuộc tính chính | Quan hệ |
 |---|---|---|---|
-| EN-15-01 | Mục danh mục | `apiCode`, tên, chủ quản, HTTT cung cấp, `dataClass`, `visibility`, `portalPublished`, trạng thái, `sourceVersion`, `syncedAt` | Có nhiều phiên bản đặc tả; nguồn PH-02 |
+| EN-15-01 | Mục danh mục | `apiCode`, `originTenantId` (tenant sở hữu API; khác tenant của cổng khi mục đến từ danh mục quốc gia, mức `NATIONAL`), tên, chủ quản, HTTT cung cấp, `dataClass`, `visibility`, `portalPublished`, trạng thái, `sourceVersion`, `syncedAt` | Có nhiều phiên bản đặc tả; nguồn PH-02 |
 | EN-15-02 | Đặc tả đã nạp | `apiCode`, `versionNo`, loại (`OPENAPI`, `ASYNCAPI`), `contentHash`, mô hình đã phân tích, kích thước | Thuộc mục danh mục |
 | EN-15-03 | Hồ sơ sandbox dịch vụ | `apiCode`, `versionNo`, `mode`, `backendUrl`, `examplePolicy`, `tryProduction` | Một cho mỗi phiên bản |
 | EN-15-04 | Trang nội dung | `pageCode`, loại, ngôn ngữ, tiêu đề, trạng thái, phiên bản đang đăng, `apiCode` tùy chọn, thẻ | Có nhiều phiên bản trang |
 | EN-15-05 | Phiên bản trang | `versionNo`, nội dung Markdown, trạng thái, người soạn, người gửi, người duyệt | Thuộc trang |
 | EN-15-06 | Tài khoản nhà phát triển | `userId`, nguồn (`TENANT_SSO`, `DH_DEV`), thư, họ tên, tổ chức, số hợp đồng, trạng thái | Thuộc nhiều nhóm |
 | EN-15-07 | Nhóm phát triển, thành viên | `teamCode`, tên, `userId`, vai trò nhóm | Sở hữu ứng dụng |
-| EN-15-08 | Ứng dụng sandbox | `appCode`, tên, loại chủ (`USER`, `TEAM`), trạng thái, hạn mức riêng | Có thông tin xác thực, thành viên |
+| EN-15-08 | Ứng dụng sandbox | `appCode`, tên, loại chủ (`USER`, `TEAM`), `linkedSystemCode` (mã HTTT ở PH-01 để xem tham chiếu production, FR-15-032; trống với nhà thầu), trạng thái, hạn mức riêng | Có thông tin xác thực, thành viên |
 | EN-15-09 | Thông tin xác thực sandbox | `credentialId`, loại, tiền tố bí mật, trạng thái, hạn, `clientId` | Thuộc ứng dụng |
 | EN-15-10 | Tham chiếu xác thực production | `systemCode`, `clientId`, phương thức, dấu vân tay, hạn, trạng thái | Chỉ đọc, bản sao từ PH-01 |
 | EN-15-11 | Lượt thử | `tryId`, ứng dụng, người dùng, `apiCode`, `versionNo`, thao tác, môi trường, kết quả, độ trễ, `traceId` | Ghi vết sang PH-13 |
@@ -683,7 +687,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 **Luồng ngoại lệ.**
 
 - PH-02 lỗi `5xx` hoặc quá thời gian: giữ bản sao, thử lại lùi mũ 5, 30, 120 giây; quá `15.sync.stale-seconds` thì trạng thái `STALE` và hiện banner "Danh mục có thể chưa phản ánh thay đổi mới nhất."
-- Chưa từng nạp xong: ERR-15-008 (503); "Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút."
+- Chưa từng nạp xong: ERR-15-008 (503); "Danh mục dịch vụ chưa sẵn sàng. Thử lại sau ít phút." (chi tiết riêng ở `detail`: Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút)
 - Đặc tả hỏng: ERR-15-009 (chỉ ghi nhật ký); trang tài liệu hiện "Đặc tả của phiên bản này tạm thời chưa hiển thị được."
 
 **Đầu ra.** Nội bộ; API-15-009 trả `state`, `lastSyncAt`, `lagSeconds`, `itemCount`.
@@ -730,7 +734,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- API ngoài tầm nhìn: ERR-15-001 (404); "Không tìm thấy dịch vụ."
+- API ngoài tầm nhìn: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
 - Tenant chưa bật chế độ công khai mà khách ẩn danh vào trang danh mục: chuyển tới trang đăng nhập, không hiện lỗi.
 
 **Đầu ra.** Tập mục danh mục đã lọc; `404` cho mục ngoài tầm.
@@ -786,7 +790,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- Bản sao danh mục chưa sẵn sàng: ERR-15-008 (503); "Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút." Các khối nội dung vẫn hiển thị.
+- Bản sao danh mục chưa sẵn sàng: ERR-15-008 (503); "Danh mục dịch vụ chưa sẵn sàng. Thử lại sau ít phút." (chi tiết riêng ở `detail`: Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút) Các khối nội dung vẫn hiển thị.
 
 **Đầu ra.** `200`; `featured[]`, `quickstart`, `announcements[]`, `myWork` (nếu đăng nhập); `Cache-Control: public, max-age=300` cho khách ẩn danh.
 
@@ -800,7 +804,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Quy tắc nghiệp vụ.** BR-15-002; BR-15-005; BR-15-032.
 
-**Màn hình, API.** UI-15-01; API-15-001, API-15-002.
+**Màn hình, API.** UI-15-01; API-15-001, API-15-002, API-15-139.
 :::
 
 #### FR-15-004 · Duyệt, lọc, sắp xếp danh mục dịch vụ
@@ -822,7 +826,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm tra tham số theo miền ở Phụ lục A.5; sai thì ERR-15-003.
+1. Hệ thống kiểm tra tham số theo miền ở Phụ lục A.4; sai thì ERR-15-003.
 2. Hệ thống truy vấn bản sao theo bộ lọc, áp mức hiển thị (FR-15-002), mặc định ẩn mục `RETIRED` và `SUSPENDED`; bật `da-ngung` thì hiện thêm mục đã ngừng.
 3. Hệ thống tính số lượng theo từng nhóm lọc (facet) trên tập đã được phép thấy.
 4. Hệ thống trả danh sách phân trang gồm mã, tên, chủ quản, phiên bản mới nhất, trạng thái, kiểu xác thực, SLA tóm tắt, nhãn dữ liệu.
@@ -832,7 +836,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- Giá trị lọc sai miền: ERR-15-003 (400); "Bộ lọc {tên} không hợp lệ."
+- Giá trị lọc sai miền: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Bộ lọc {tên} không hợp lệ)
 - Không có kết quả: không phải lỗi; "Không có dịch vụ nào khớp. Thử bỏ bớt bộ lọc."
 - `co` ngoài 10, 20, 50, 100: ERR-15-003.
 
@@ -880,8 +884,8 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- `q` dài quá 200 ký tự hoặc rỗng khi `Enter`: ERR-15-003 (400); "Từ khóa cần từ 1 đến 200 ký tự."
-- Vượt tần suất: ERR-15-007 (429); "Bạn thao tác quá nhanh. Thử lại sau {giây} giây."
+- `q` dài quá 200 ký tự hoặc rỗng khi `Enter`: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Từ khóa cần từ 1 đến 200 ký tự)
+- Vượt tần suất: ERR-15-007 (429); "Thao tác quá nhanh. Thử lại sau {n} giây."
 
 **Đầu ra.** `200`; `results[]` (loại, mã, tiêu đề, đoạn trích), `page`, `size`, `totalElements`; gợi ý: `suggestions[]`.
 
@@ -928,8 +932,8 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- Không thấy hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy dịch vụ."
-- Phiên bản đã ngừng hẳn: ERR-15-038 (410); "Phiên bản này đã ngừng hoạt động. Xem phiên bản mới hơn."
+- Không thấy hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
+- Phiên bản đã ngừng hẳn: ERR-15-038 (410); "Phiên bản này đã ngừng cung cấp." (chi tiết riêng ở `detail`: Phiên bản này đã ngừng hoạt động. Xem phiên bản mới hơn)
 - PH-02 không trả được mẫu gọi: khối "Cách gọi API" hiện "Chưa tải được mẫu gọi. Thử lại." Phần còn lại vẫn hiển thị.
 
 **Đầu ra.** `200`; mục chi tiết, `versions[]`, `plans[]`, `sla`, `usage` (`baseUrl`, `tokenUrl`, `scopes[]`, `samples[]`).
@@ -975,7 +979,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- Topic ngoài tầm: ERR-15-001 (404); "Không tìm thấy dịch vụ."
+- Topic ngoài tầm: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
 - Chưa tải được lược đồ: ERR-15-009 ghi nhật ký; "Lược đồ sự kiện tạm thời chưa hiển thị được."
 
 **Đầu ra.** `200`; mục sự kiện gồm `topicName`, mô tả, `dataClass`, HTTT phát, liên kết PH-10.
@@ -1022,8 +1026,8 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 **Luồng ngoại lệ.**
 
-- Vượt tần suất: ERR-15-007 (429); "Bạn thao tác quá nhanh. Thử lại sau {giây} giây."
-- API không `PUBLIC`: ERR-15-001 (404); "Không tìm thấy dịch vụ."
+- Vượt tần suất: ERR-15-007 (429); "Thao tác quá nhanh. Thử lại sau {n} giây."
+- API không `PUBLIC`: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
 
 **Đầu ra.** `200` hoặc `304`; như FR-15-004, FR-15-006 nhưng rút gọn.
 
@@ -1073,7 +1077,7 @@ Nhóm B hiển thị đặc tả đã công bố thành tài liệu đọc đư�
 
 **Luồng ngoại lệ.**
 
-- Chưa có đặc tả đã nạp hoặc không phân tích được: ERR-15-009 (422); "Đặc tả của phiên bản này tạm thời chưa hiển thị được. Báo lỗi cho chủ dịch vụ."
+- Chưa có đặc tả đã nạp hoặc không phân tích được: ERR-15-009 (422); "Đặc tả của dịch vụ này chưa đọc được. Liên hệ đầu mối của dịch vụ." (chi tiết riêng ở `detail`: Đặc tả của phiên bản này tạm thời chưa hiển thị được. Báo lỗi cho chủ dịch vụ)
 - Thao tác không có trong đặc tả: bỏ neo, hiển thị đầu trang.
 - Phiên bản đã ngừng hẳn: ERR-15-038 (410).
 
@@ -1120,7 +1124,7 @@ Nhóm B hiển thị đặc tả đã công bố thành tài liệu đọc đư�
 
 **Luồng ngoại lệ.**
 
-- Lược đồ không phân tích được: ERR-15-009 (422); "Lược đồ sự kiện tạm thời chưa hiển thị được."
+- Lược đồ không phân tích được: ERR-15-009 (422); "Đặc tả của dịch vụ này chưa đọc được. Liên hệ đầu mối của dịch vụ." (chi tiết riêng ở `detail`: Lược đồ sự kiện tạm thời chưa hiển thị được)
 - Ngoài tầm: ERR-15-001 (404).
 
 **Đầu ra.** `200`; `channels[]`, `messages[]`, `schemas`.
@@ -1167,8 +1171,8 @@ Nhóm B hiển thị đặc tả đã công bố thành tài liệu đọc đư�
 
 **Luồng ngoại lệ.**
 
-- Phiên bản không tồn tại hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy phiên bản."
-- Phiên bản đã ngừng hẳn: ERR-15-038 (410); "Phiên bản này đã ngừng hoạt động. Xem phiên bản mới hơn."
+- Phiên bản không tồn tại hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
+- Phiên bản đã ngừng hẳn: ERR-15-038 (410); "Phiên bản này đã ngừng cung cấp." (chi tiết riêng ở `detail`: Phiên bản này đã ngừng hoạt động. Xem phiên bản mới hơn)
 - Hai phiên bản khác API: ERR-15-003 (400).
 
 **Đầu ra.** `200`; tệp đặc tả với `Content-Disposition`; hoặc `diff` gồm `added[]`, `removed[]`, `changed[]`.
@@ -1215,7 +1219,7 @@ Nhóm B hiển thị đặc tả đã công bố thành tài liệu đọc đư�
 
 **Luồng ngoại lệ.**
 
-- Ngôn ngữ không hỗ trợ: ERR-15-003 (400); "Chưa có mẫu cho ngôn ngữ này."
+- Ngôn ngữ không hỗ trợ: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Chưa có mẫu cho ngôn ngữ này)
 - Thao tác không có: ERR-15-001 (404).
 
 **Đầu ra.** `200`; `samples[]` (`lang`, `title`, `code`).
@@ -1315,7 +1319,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Tiền điều kiện.** Người dùng đã chấp nhận điều khoản nội bộ (nếu có); với trang gắn API, API thuộc tổ chức của người soạn (SV).
 
-**Kích hoạt.** Bấm "+ Trang mới" hoặc "Sửa" ở UI-15-21; hoặc "Tạo từ mẫu".
+**Kích hoạt.** Ở UI-15-22 bấm "+ Trang mới": hộp nhập mã trang (đúng mẫu `pageCode`) rồi mở `/quan-tri-cong/noi-dung/{ma-trang}`, không có đường dẫn `/moi`; hoặc "Sửa" một trang có sẵn; hoặc "Tạo từ mẫu".
 
 **Đầu vào.** Theo bảng dữ liệu vào của FR-15-014 dưới đây; `Idempotency-Key`; `If-Match` khi sửa.
 
@@ -1331,10 +1335,10 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Luồng ngoại lệ.**
 
-- Mã đã dùng: ERR-15-002 (409); "Mã trang {mã} đã được dùng. Chọn mã khác."
-- Nội dung không hợp lệ: ERR-15-021 (422); "Nội dung chứa phần không được phép: {chi tiết}."
-- Tệp đính kèm không hợp lệ: ERR-15-024 (422); "Tệp không đúng định dạng hoặc vượt 5 MB."
-- Hai người sửa cùng lúc: ERR-15-006 (412); "Trang đã được người khác sửa. Tải lại để xem thay đổi."
+- Mã đã dùng: ERR-15-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Nội dung không hợp lệ: ERR-15-021 (422); "Nội dung có phần không được phép: {chi tiết}."
+- Tệp đính kèm không hợp lệ: ERR-15-024 (422); "Tệp không hợp lệ: chỉ nhận PNG, JPEG, WebP tối đa 5 MB và không có mã độc." (chi tiết riêng ở `detail`: Tệp không đúng định dạng hoặc vượt 5 MB)
+- Hai người sửa cùng lúc: ERR-15-006 (412); "Nội dung đã được người khác thay đổi. Tải lại rồi sửa tiếp."
 
 **Đầu ra.** `201` (tạo) hoặc `200` (sửa), `ETag`; trang với `versionNo`, `status`.
 
@@ -1348,7 +1352,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Quy tắc nghiệp vụ.** BR-15-007; BR-15-012; BR-15-013; BR-15-034.
 
-**Màn hình, API.** UI-15-21; API-15-022, API-15-023, API-15-024, API-15-025, API-15-033.
+**Màn hình, API.** UI-15-21; API-15-022, API-15-023, API-15-024, API-15-025, API-15-033, API-15-138 (đọc lại ảnh đính kèm khi xem trước).
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -1395,9 +1399,9 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Luồng ngoại lệ.**
 
-- Người duyệt là người soạn hoặc gửi: ERR-15-023 (403); "Bạn đã soạn hoặc gửi nội dung này nên không tự duyệt được."
-- Trang không ở `IN_REVIEW`: ERR-15-022 (409); "Trang không ở trạng thái chờ duyệt."
-- Thiếu lý do khi từ chối: ERR-15-003 (400); "Cần nêu lý do từ chối."
+- Người duyệt là người soạn hoặc gửi: ERR-15-023 (403); "Người duyệt phải khác người soạn và người gửi duyệt." (chi tiết riêng ở `detail`: Bạn đã soạn hoặc gửi nội dung này nên không tự duyệt được)
+- Trang không ở `IN_REVIEW`: ERR-15-022 (409); "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này." (chi tiết riêng ở `detail`: Trang không ở trạng thái chờ duyệt)
+- Thiếu lý do khi từ chối: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Cần nêu lý do từ chối)
 
 **Đầu ra.** `200`; trang với `status`, `publishedVersionNo`.
 
@@ -1433,7 +1437,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Luồng xử lý chính.**
 
-1. Hệ thống liệt kê các phiên bản kèm trạng thái, người soạn, người duyệt, thời điểm.
+1. Hệ thống liệt kê các phiên bản kèm trạng thái, người soạn, người duyệt, thời điểm. So sánh hai phiên bản do máy chủ thực hiện (API-15-142, tham số `base`, `to`) để dùng chung bộ lọc an toàn và không phải tải hai bản đầy đủ về trình duyệt.
 2. Người dùng chọn hai phiên bản; hệ thống hiển thị khác biệt theo dòng.
 3. Khôi phục: hệ thống tạo phiên bản `DRAFT` mới có nội dung của bản chọn; vẫn phải qua FR-15-015 để đăng.
 4. Gỡ đăng: người có quyền đăng nêu lý do; hệ thống chuyển trang `UNPUBLISHED` ngay (không cần người thứ hai, vì gỡ chỉ giảm hiển thị), xóa khỏi chỉ mục, phát EVT-15-09.
@@ -1444,8 +1448,8 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 **Luồng ngoại lệ.**
 
 - Phiên bản không có: ERR-15-001 (404).
-- Gỡ khi trang không `PUBLISHED`: ERR-15-022 (409); "Trang không ở trạng thái đang đăng."
-- Gỡ điều khoản duy nhất: ERR-15-022 (409); "Không thể gỡ điều khoản đang có hiệu lực."
+- Gỡ khi trang không `PUBLISHED`: ERR-15-022 (409); "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này." (chi tiết riêng ở `detail`: Trang không ở trạng thái đang đăng)
+- Gỡ điều khoản duy nhất: ERR-15-022 (409); "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này." (chi tiết riêng ở `detail`: Không thể gỡ điều khoản đang có hiệu lực)
 
 **Đầu ra.** `200`; danh sách phiên bản hoặc trang sau khi đổi trạng thái.
 
@@ -1459,7 +1463,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Quy tắc nghiệp vụ.** BR-15-012; BR-15-034.
 
-**Màn hình, API.** UI-15-22; API-15-029, API-15-030, API-15-031, API-15-032.
+**Màn hình, API.** UI-15-22; API-15-029, API-15-030, API-15-031, API-15-032, API-15-142.
 :::
 
 #### FR-15-017 · Hiển thị trang nội dung
@@ -1484,7 +1488,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 1. Hệ thống kiểm tra `audience` so với hạng người xem; ngoài tầm thì trả như không tồn tại.
 2. Hệ thống dựng HTML từ Markdown qua bộ lọc cho phép (tiêu đề, danh sách, bảng, khối mã, liên kết, ảnh trong kho); liên kết ngoài có `rel="noopener nofollow"`.
 3. Hệ thống dựng mục lục từ tiêu đề, hiển thị ngày cập nhật, phiên bản, tác giả hiển thị (tên cổng, không tên cá nhân).
-4. Ảnh đính kèm phục vụ qua đường dẫn có chữ ký, hết hạn 15 phút; tệp trả với `Content-Type` đúng và `X-Content-Type-Options: nosniff`.
+4. Ảnh đính kèm phục vụ qua API-15-138 bằng đường dẫn có chữ ký, hết hạn 15 phút; tệp trả với `Content-Type` đúng và `X-Content-Type-Options: nosniff`.
 5. Với `ANNOUNCEMENT`, chỉ hiện trong khoảng `validFrom` đến `validTo`; với `TERMS`, hiện kèm nút chấp nhận (FR-15-023).
 6. Trang có ô "Trang này có hữu ích không" (FR-15-053).
 
@@ -1492,7 +1496,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Luồng ngoại lệ.**
 
-- Trang không có hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy trang."
+- Trang không có hoặc ngoài tầm: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
 - Ảnh hết hạn chữ ký: tải lại trang tự cấp chữ ký mới; không hiện lỗi.
 
 **Đầu ra.** `200`; `html`, `toc[]`, `updatedAt`, `versionNo`.
@@ -1507,7 +1511,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Quy tắc nghiệp vụ.** BR-15-005; BR-15-013; BR-15-006.
 
-**Màn hình, API.** UI-15-07; API-15-034, API-15-035, API-15-036, API-15-037.
+**Màn hình, API.** UI-15-07; API-15-034, API-15-035, API-15-036, API-15-037, API-15-138.
 :::
 
 #### FR-15-018 · Nhập nội dung từ kho Git
@@ -1539,8 +1543,8 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 
 **Luồng ngoại lệ.**
 
-- Kho không đọc được: ERR-15-025 (502); "Không đọc được kho Git. Kiểm tra địa chỉ và quyền truy cập."
-- Thiếu `portal.yaml`: ERR-15-026 (422); "Kho thiếu tệp portal.yaml hoặc sai cấu trúc."
+- Kho không đọc được: ERR-15-025 (502); "Chưa kết nối được kho Git. Thử lại sau." (chi tiết riêng ở `detail`: Không đọc được kho Git. Kiểm tra địa chỉ và quyền truy cập)
+- Thiếu `portal.yaml`: ERR-15-026 (422); "Gói di trú sai cấu trúc hoặc có tệp không được phép." (chi tiết riêng ở `detail`: Kho thiếu tệp portal.yaml hoặc sai cấu trúc)
 
 **Đầu ra.** `202`; `runId`, số tệp mới, đổi, bị bỏ qua.
 
@@ -1591,10 +1595,10 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Keycloak lỗi: ERR-15-020 (503); "Dịch vụ đăng nhập tạm gián đoạn. Các trang công khai vẫn xem được."
-- Tài khoản `dh-dev` chưa xác minh hoặc chưa duyệt: ERR-15-011 (422); "Tài khoản chưa được xác minh thư hoặc chưa được duyệt."
-- Tài khoản khóa hoặc vô hiệu: ERR-15-014 (403); "Tài khoản đã bị khóa. Liên hệ quản trị cổng."
-- Phiên hết hạn: ERR-15-004 (401); "Phiên đăng nhập đã hết hạn. Đăng nhập lại."
+- Keycloak lỗi: ERR-15-020 (503); "Dịch vụ định danh tạm thời chưa phản hồi. Thử lại sau." (chi tiết riêng ở `detail`: Dịch vụ đăng nhập tạm gián đoạn. Các trang công khai vẫn xem được)
+- Tài khoản `dh-dev` chưa xác minh hoặc chưa duyệt: ERR-15-011 (422); "Tài khoản chưa được xác minh hoặc chưa được duyệt."
+- Tài khoản khóa hoặc vô hiệu: ERR-15-014 (403); "Tài khoản đang bị khóa. Liên hệ quản trị cổng."
+- Phiên hết hạn: ERR-15-004 (401); "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục."
 
 **Đầu ra.** Chuyển hướng `302`; cookie phiên; hồ sơ `GET /me` (API-15-041).
 
@@ -1640,9 +1644,9 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Thư đã đăng ký: ERR-15-012 (409); "Thư điện tử này đã có tài khoản. Đăng nhập hoặc đặt lại mật khẩu."
-- Mã sai hoặc hết hạn: ERR-15-013 (400); "Liên kết xác minh không đúng hoặc đã hết hạn. Yêu cầu gửi lại."
-- Đăng ký quá nhiều: ERR-15-037 (429); "Bạn đã gửi quá nhiều yêu cầu. Thử lại sau."
+- Thư đã đăng ký: ERR-15-012 (409); "Thư điện tử này đã được đăng ký." (chi tiết riêng ở `detail`: Thư điện tử này đã có tài khoản. Đăng nhập hoặc đặt lại mật khẩu)
+- Mã sai hoặc hết hạn: ERR-15-013 (400); "Mã xác minh không đúng hoặc đã hết hạn."
+- Đăng ký quá nhiều: ERR-15-037 (429); "Bạn gửi quá nhiều. Thử lại sau {n} phút."
 - Dữ liệu sai: ERR-15-003 (400); lỗi theo trường.
 
 **Đầu ra.** `202`; `registrationId`, `status = PENDING_EMAIL`.
@@ -1702,7 +1706,7 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Hồ sơ bị sửa bởi nơi khác: ERR-15-006 (412); "Hồ sơ đã thay đổi. Tải lại rồi sửa."
+- Hồ sơ bị sửa bởi nơi khác: ERR-15-006 (412); "Nội dung đã được người khác thay đổi. Tải lại rồi sửa tiếp."
 - Giá trị sai: ERR-15-003 (400).
 - Thu hồi phiên không phải của mình: ERR-15-005 (403).
 
@@ -1750,9 +1754,9 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Mã nhóm trùng: ERR-15-002 (409); "Mã nhóm {mã} đã được dùng."
-- Đã là thành viên, hoặc đã có lời mời: ERR-15-027 (409); "Người này đã là thành viên hoặc đã được mời."
-- Chủ nhóm duy nhất rời hoặc xóa nhóm: ERR-15-028 (422); "Cần chuyển quyền chủ nhóm cho người khác trước."
+- Mã nhóm trùng: ERR-15-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Đã là thành viên, hoặc đã có lời mời: ERR-15-027 (409); "Người này đã là thành viên hoặc đã có lời mời."
+- Chủ nhóm duy nhất rời hoặc xóa nhóm: ERR-15-028 (422); "Phải còn ít nhất một chủ sở hữu." (chi tiết riêng ở `detail`: Cần chuyển quyền chủ nhóm cho người khác trước)
 
 **Đầu ra.** `201` hoặc `200`; nhóm, thành viên, lời mời.
 
@@ -1797,7 +1801,7 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Chưa chấp nhận khi thao tác: ERR-15-010 (409); "Cần đồng ý điều khoản sử dụng phiên bản {v} trước khi tiếp tục."
+- Chưa chấp nhận khi thao tác: ERR-15-010 (409); "Cần chấp nhận điều khoản sử dụng hiện hành trước khi tiếp tục."
 - Phiên bản gửi lên không phải hiện hành: ERR-15-003 (400).
 
 **Đầu ra.** `200`; `termsVersion`, `acceptedAt`.
@@ -1845,8 +1849,8 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 
 **Luồng ngoại lệ.**
 
-- Xác nhận xóa sai: ERR-15-003 (400); "Cụm từ xác nhận chưa đúng."
-- Là chủ duy nhất của nhóm còn thành viên: ERR-15-028 (422); "Cần chuyển quyền chủ nhóm trước khi xóa tài khoản."
+- Xác nhận xóa sai: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Cụm từ xác nhận chưa đúng)
+- Là chủ duy nhất của nhóm còn thành viên: ERR-15-028 (422); "Phải còn ít nhất một chủ sở hữu." (chi tiết riêng ở `detail`: Cần chuyển quyền chủ nhóm trước khi xóa tài khoản)
 
 **Đầu ra.** `202`; `status = ERASED`.
 
@@ -1908,7 +1912,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 **Luồng xử lý chính.**
 
 1. Người dùng nhập tên, mã, mô tả, chọn chủ là cá nhân hoặc một nhóm của mình.
-2. Hệ thống kiểm tra mã theo mẫu và chưa dùng, kể cả ứng dụng đã lưu trữ (sai mẫu: ERR-15-003; trùng: ERR-15-002).
+2. Hệ thống kiểm tra mã theo mẫu và chưa dùng, kể cả ứng dụng đã lưu trữ (sai mẫu: ERR-15-003; trùng: ERR-15-002). Giao diện báo trùng ngay khi gõ bằng API-15-141 (`appCode`), việc kiểm tra cuối vẫn ở bước tạo.
 3. Hệ thống kiểm tra giới hạn số ứng dụng đang hoạt động của người hoặc nhóm (`15.app.max-per-user`, `15.app.max-per-team`; vượt: ERR-15-015).
 4. Cán bộ CQNN có thể liên kết ứng dụng với một HTTT của tổ chức mình (`systemCode`) để xem tham chiếu production (FR-15-032); nhà thầu `dh-dev` không có trường này.
 5. Hệ thống tạo ứng dụng `ACTIVE` và đặt người tạo là `OWNER`; chưa có thông tin xác thực; ghi kiểm toán.
@@ -1917,10 +1921,10 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Mã đã dùng: ERR-15-002 (409); "Mã ứng dụng {mã} đã được dùng. Chọn mã khác."
-- Vượt giới hạn: ERR-15-015 (422); "Bạn đã đạt số ứng dụng tối đa ({n}). Lưu trữ ứng dụng không dùng để tạo mới."
+- Mã đã dùng: ERR-15-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Vượt giới hạn: ERR-15-015 (422); "Đã đạt số ứng dụng tối đa ({n}). Lưu trữ ứng dụng không dùng để tạo mới."
 - Chưa chấp nhận điều khoản: ERR-15-010 (409).
-- HTTT không thuộc tổ chức người dùng: ERR-15-032 (422); "HTTT này không thuộc đơn vị của bạn."
+- HTTT không thuộc tổ chức người dùng: ERR-15-032 (422); "Chỉ cán bộ đầu mối có hệ thống thông tin đang hoạt động mới thực hiện được thao tác này." (chi tiết riêng ở `detail`: HTTT này không thuộc đơn vị của bạn)
 
 **Đầu ra.** `201`, `Location`, `ETag`; ứng dụng với `appCode`, `status`, `ownerType`.
 
@@ -1934,7 +1938,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Quy tắc nghiệp vụ.** BR-15-007; BR-15-008; BR-15-009; BR-15-010.
 
-**Màn hình, API.** UI-15-10, UI-15-11; API-15-056.
+**Màn hình, API.** UI-15-10, UI-15-11; API-15-056, API-15-141.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -1978,7 +1982,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Không phải thành viên hoặc không đủ vai trò: ERR-15-005 (403); "Bạn không có quyền với ứng dụng này."
+- Không phải thành viên hoặc không đủ vai trò: ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này."
 - Ứng dụng không ở trạng thái cho phép: ERR-15-017 (409); "Ứng dụng đang {trạng thái} nên không thực hiện được thao tác này."
 - Xung đột sửa: ERR-15-006 (412).
 
@@ -2027,9 +2031,9 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Vượt giới hạn: ERR-15-016 (422); "Ứng dụng đã đạt số thông tin xác thực tối đa ({n}). Thu hồi bớt rồi cấp mới."
+- Vượt giới hạn: ERR-15-016 (422); "Ứng dụng đã đạt số thông tin xác thực tối đa ({n})."
 - Ứng dụng không `ACTIVE`: ERR-15-017 (409).
-- Keycloak lỗi: ERR-15-020 (503); "Chưa cấp được thông tin xác thực do dịch vụ định danh tạm gián đoạn. Thử lại sau."
+- Keycloak lỗi: ERR-15-020 (503); "Dịch vụ định danh tạm thời chưa phản hồi. Thử lại sau." (chi tiết riêng ở `detail`: Chưa cấp được thông tin xác thực do dịch vụ định danh tạm gián đoạn. Thử lại sau)
 - Thiếu quyền: ERR-15-005 (403).
 
 **Đầu ra.** `201`, `Cache-Control: no-store`; `credentialId`, `clientId`, `clientSecret` (chỉ lần này), `tokenUrl`, `expiresAt`.
@@ -2124,7 +2128,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Phát lại yêu cầu cấp: ERR-15-019 (410); "Bí mật đã được hiển thị một lần và không xem lại được. Hãy xoay vòng để nhận bí mật mới."
+- Phát lại yêu cầu cấp: ERR-15-019 (410); "Bí mật chỉ hiện một lần và không xem lại được. Tạo thông tin xác thực mới nếu đã mất."
 
 **Đầu ra.** Như FR-15-027, 028.
 
@@ -2170,7 +2174,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Thông tin xác thực không `ACTIVE`: ERR-15-018 (409); "Thông tin xác thực đang {trạng thái} nên không xoay vòng được."
+- Thông tin xác thực không `ACTIVE`: ERR-15-018 (409); "Thông tin xác thực đang {trạng thái} nên không thực hiện được thao tác này."
 - Keycloak lỗi: ERR-15-020 (503); giữ nguyên bản cũ.
 
 **Đầu ra.** `201`; bản mới (kèm bí mật một lần), bản cũ `ROTATING` kèm `rotatingUntil`.
@@ -2216,7 +2220,7 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Đã thu hồi hoặc hết hạn: ERR-15-018 (409); "Thông tin xác thực đã {trạng thái}."
+- Đã thu hồi hoặc hết hạn: ERR-15-018 (409); "Thông tin xác thực đang {trạng thái} nên không thực hiện được thao tác này." (chi tiết riêng ở `detail`: Thông tin xác thực đã {trạng thái})
 - Keycloak lỗi khi thu hồi: ERR-15-020 (503); bản ghi vẫn đánh dấu `REVOKED` ở cổng để `forward-auth` chặn, hệ thống thử lại việc xóa client.
 
 **Đầu ra.** `200`; thông tin xác thực với `status`.
@@ -2263,8 +2267,8 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Không thuộc tổ chức hoặc nhà thầu: ERR-15-005 (403); "Bạn không có quyền xem thông tin xác thực của hệ thống này."
-- PH-01 lỗi: ERR-15-031 (502); "Chưa tải được thông tin xác thực production. Thử lại sau."
+- Không thuộc tổ chức hoặc nhà thầu: ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này."
+- PH-01 lỗi: ERR-15-031 (502); "Chưa kết nối được dịch vụ kết nạp. Thử lại sau." (chi tiết riêng ở `detail`: Chưa tải được thông tin xác thực production. Thử lại sau)
 
 **Đầu ra.** `200`; `items[]` (`clientId`, `method`, `certThumbprintPrefix`, `expiresAt`, `status`, `lastUsedAt`).
 
@@ -2310,8 +2314,8 @@ Sơ đồ cho thấy bí mật đi từ Keycloak tới trình duyệt qua đư�
 
 **Luồng ngoại lệ.**
 
-- Đã là thành viên: ERR-15-027 (409); "Người này đã là thành viên của ứng dụng."
-- Xóa chủ duy nhất: ERR-15-028 (422); "Ứng dụng cần ít nhất một chủ."
+- Đã là thành viên: ERR-15-027 (409); "Người này đã là thành viên hoặc đã có lời mời."
+- Xóa chủ duy nhất: ERR-15-028 (422); "Phải còn ít nhất một chủ sở hữu."
 - Không đủ quyền: ERR-15-005 (403).
 
 **Đầu ra.** `200`; danh sách thành viên.
@@ -2338,7 +2342,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 ::: dac-ta
 **Mục đích.** Cho chủ dịch vụ chọn cách sandbox phục vụ API của mình: mô phỏng từ ví dụ, hay trỏ tới backend thử riêng.
 
-**Tác nhân, quyền.** SV (○, API của tổ chức mình), TA (`PERM-15-portal-admin`).
+**Tác nhân, quyền.** SV (○, API của tổ chức mình, theo đối tượng qua `PERM-15-content-write` của D02-08), TA, CA (`PERM-15-portal-admin`).
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -2362,9 +2366,9 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- Backend ngoài danh sách cho phép: ERR-15-119 (422); "Địa chỉ backend thử chưa nằm trong danh sách được phép. Liên hệ quản trị."
-- Thiếu cấu hình cho chế độ: ERR-15-120 (409); "Chế độ {chế độ} cần khai báo {trường}."
-- Dịch vụ không đủ điều kiện (phiên bản đã ngừng): ERR-15-040 (422); "Phiên bản này không cấu hình sandbox được."
+- Backend ngoài danh sách cho phép: ERR-15-119 (422); "Địa chỉ hệ thống thử không nằm trong danh sách cho phép."
+- Thiếu cấu hình cho chế độ: ERR-15-120 (409); "Dịch vụ thiếu cấu hình cho chế độ {chế độ}." (chi tiết riêng ở `detail`: Chế độ {chế độ} cần khai báo {trường})
+- Dịch vụ không đủ điều kiện (phiên bản đã ngừng): ERR-15-040 (422); "Dịch vụ này chưa đủ điều kiện cho thao tác này." (chi tiết riêng ở `detail`: Phiên bản này không cấu hình sandbox được)
 
 **Đầu ra.** `200`, `ETag`; hồ sơ sandbox với `mode`, `lastHealthCheck`.
 
@@ -2416,17 +2420,17 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 2. Hệ thống kiểm tra yêu cầu khớp đặc tả: thao tác, tham số, schema thân (ERR-15-107), cỡ thân (ERR-15-105), bỏ tiêu đề cấm `Authorization`, `Cookie`, `Host` do người dùng gửi (ERR-15-121).
 3. Hệ thống áp hạn mức (FR-15-039) và quét dữ liệu cá nhân thật (FR-15-038).
 4. Hệ thống xin token ngắn hạn cho ứng dụng bằng trao đổi token ở Keycloak, gọi tuyến sandbox kèm `X-DH-Try-Id` và `traceparent`; `forward-auth` kiểm tra lại ứng dụng và hạn mức (API-15-082).
-5. Hệ thống nhận phản hồi, cắt ở 1 MB (ERR-15-123 là cảnh báo), che trường nhạy cảm theo SEC-32, trả cho giao diện kèm trạng thái, độ trễ, tiêu đề.
+5. Hệ thống nhận phản hồi, cắt ở 1 MB: gần ngưỡng thì chỉ thêm cảnh báo vào `warnings[]` (HTTP 200); vượt cứng thì `bodyTruncated = true` và trả ERR-15-123 (413), khớp hợp đồng API-15-072, che trường nhạy cảm theo SEC-32, trả cho giao diện kèm trạng thái, độ trễ, tiêu đề.
 6. Hệ thống ghi vết lượt thử (BR-15-023) và phát EVT-15-11.
 
 **Luồng thay thế.** Gọi ngoài cổng bằng `curl` với thông tin xác thực đã cấp: đi thẳng vào tuyến sandbox, vẫn qua `forward-auth` và hạn mức, không ghi lịch sử trên giao diện.
 
 **Luồng ngoại lệ.**
 
-- Gateway sandbox lỗi: ERR-15-111 (503); "Sandbox tạm thời không phản hồi. Thử lại sau."
+- Gateway sandbox lỗi: ERR-15-111 (503); "Cổng thử đang bảo trì. Thử lại sau." (chi tiết riêng ở `detail`: Sandbox tạm thời không phản hồi. Thử lại sau)
 - Backend thử lỗi, quá hạn: ERR-15-109, ERR-15-108 (xem FR-15-037).
 - Vượt hạn mức: ERR-15-103, ERR-15-104 (429).
-- PH-13 không ghi được với API `RESTRICTED`, `SENSITIVE`: ERR-15-115 (503); "Hệ thống kiểm toán chưa sẵn sàng nên chưa thể thử API này."
+- PH-13 không ghi được với API `RESTRICTED`, `SENSITIVE`: ERR-15-115 (503); "Chưa ghi được nhật ký nên không thử được lúc này." (chi tiết riêng ở `detail`: Hệ thống kiểm toán chưa sẵn sàng nên chưa thể thử API này)
 
 **Đầu ra.** `200`; `tryId`, `status`, `latencyMs`, `headers`, `body` (đã che), `mode`, `warnings[]`.
 
@@ -2460,7 +2464,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 ::: dac-ta
 **Mục đích.** Cho API chưa có backend thử vẫn thử được: cổng tự sinh phản hồi đúng hình dạng từ đặc tả.
 
-**Tác nhân, quyền.** Hệ thống (`portal-mock`) khi lượt thử tới API ở chế độ `MOCK`.
+**Tác nhân, quyền.** Hệ thống (`portal-mock`, vai trò `portal-sandbox`) khi lượt thử tới API ở chế độ `MOCK`.
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -2483,8 +2487,8 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- Không sinh được phản hồi: ERR-15-110 (422); "Đặc tả thiếu ví dụ và lược đồ nên chưa mô phỏng được thao tác này."
-- Yêu cầu không khớp đặc tả: ERR-15-107 (422); "Yêu cầu không đúng với đặc tả: {chi tiết}."
+- Không sinh được phản hồi: ERR-15-110 (422); "Chưa sinh được phản hồi mẫu. Dịch vụ thiếu ví dụ hoặc lược đồ." (chi tiết riêng ở `detail`: Đặc tả thiếu ví dụ và lược đồ nên chưa mô phỏng được thao tác này)
+- Yêu cầu không khớp đặc tả: ERR-15-107 (422); "Yêu cầu không khớp đặc tả: {chi tiết}."
 
 **Đầu ra.** Phản hồi mô phỏng, tiêu đề `X-DH-Sandbox: mock`.
 
@@ -2506,7 +2510,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 ::: dac-ta
 **Mục đích.** Cho API có backend thử thật (không phải production) cho nhà phát triển thử với hành vi sát thực tế, như lỗi nghiệp vụ, trạng thái.
 
-**Tác nhân, quyền.** Hệ thống (`portal-try`, APISIX sandbox).
+**Tác nhân, quyền.** Hệ thống (`portal-sandbox`: module `portal.mock` của `dh-connect` chuyển tiếp tới backend thử; APISIX chỉ giữ tuyến tĩnh và `forward-auth`, không chuyển tiếp tới backend).
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -2521,7 +2525,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm tra lại `backendUrl` còn nằm trong danh sách egress cho phép ở thời điểm gọi (ERR-15-119).
-2. Hệ thống chuyển tiếp yêu cầu tới backend thử kèm `X-DH-Sandbox: backend`, `X-DH-App`, `X-DH-Try-Id`, `traceparent`; bỏ tiêu đề người dùng không được phép.
+2. `portal-sandbox` (không phải APISIX) chuyển tiếp yêu cầu tới backend thử qua egress gateway kèm `X-DH-Sandbox: backend`, `X-DH-App`, `X-DH-Try-Id`, `traceparent`; bỏ tiêu đề người dùng không được phép.
 3. Hệ thống áp thời gian chờ `15.try.timeout-seconds` (mặc định 15 giây) và cỡ phản hồi tối đa.
 4. Hệ thống đếm lỗi liên tiếp của backend: 5 lỗi trong 30 giây thì ngắt mạch 60 giây, các lượt thử trả ngay ERR-15-109 để không dồn tải.
 5. Phản hồi được che trường nhạy cảm và trả về giao diện.
@@ -2530,8 +2534,8 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- Backend quá hạn: ERR-15-108 (504); "Backend thử không phản hồi kịp. Thử lại hoặc báo chủ dịch vụ."
-- Backend không với tới: ERR-15-109 (502); "Không kết nối được backend thử của dịch vụ."
+- Backend quá hạn: ERR-15-108 (504); "Hệ thống thử không phản hồi trong {n} giây." (chi tiết riêng ở `detail`: Backend thử không phản hồi kịp. Thử lại hoặc báo chủ dịch vụ)
+- Backend không với tới: ERR-15-109 (502); "Hệ thống thử trả lỗi." (chi tiết riêng ở `detail`: Không kết nối được backend thử của dịch vụ)
 - Địa chỉ ngoài danh sách: ERR-15-119 (422).
 
 **Đầu ra.** Phản hồi của backend (đã che), tiêu đề `X-DH-Sandbox: backend`.
@@ -2568,7 +2572,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng xử lý chính.**
 
-1. Hệ thống quét giá trị chuỗi của yêu cầu theo bộ luật `PII-15-01…06` ở Phụ lục A.8 (căn cước 12 số, CMND 9 số, mã số thuế, số điện thoại, thư điện tử, số hộ chiếu), bỏ qua dải giả quy ước.
+1. Hệ thống quét giá trị chuỗi của yêu cầu theo bộ luật `PII-15-01…06` ở Phụ lục A.7 (căn cước 12 số, CMND 9 số, mã số thuế, số điện thoại, thư điện tử, số hộ chiếu), bỏ qua dải giả quy ước.
 2. Nút "Điền dữ liệu mẫu" sinh giá trị tổng hợp theo kiểu và định dạng của trường (họ tên bộ tên giả, căn cước dải `000…`, điện thoại `0900000xxx`, thư `@example.gov.vn`).
 3. Ở chế độ `BACKEND`, gặp mẫu nhận dạng thì hệ thống từ chối yêu cầu và chỉ ra trường (ERR-15-106); ở chế độ `MOCK`, hệ thống cảnh báo và vẫn cho gửi vì không có hệ thống nào nhận.
 4. Hệ thống không lưu giá trị đã khớp mẫu vào lịch sử, bộ sưu tập hay nhật ký.
@@ -2577,7 +2581,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- Có dữ liệu cá nhân thật: ERR-15-106 (422); "Trường {tên} có vẻ chứa dữ liệu cá nhân thật. Hãy dùng dữ liệu mẫu."
+- Có dữ liệu cá nhân thật: ERR-15-106 (422); "Nội dung có vẻ chứa dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả."
 
 **Đầu ra.** Cảnh báo `warnings[]` hoặc lỗi `422` kèm tên trường (không kèm giá trị).
 
@@ -2613,18 +2617,18 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng xử lý chính.**
 
-1. Hệ thống đếm trong Valkey theo cửa sổ trượt: mỗi người `15.try.rate-per-user-min` (mặc định 30) lượt mỗi phút; mỗi ứng dụng `15.try.rate-per-app-day` (mặc định 3.000) lượt mỗi ngày; toàn tenant `15.try.rate-tenant-rps` (mặc định 100).
+1. Hệ thống đếm trong Valkey theo cửa sổ trượt (script Lua nguyên tử; hạn mức theo người đếm ở `portal.try` khi gửi từ khung thử, hạn mức theo ứng dụng và theo tenant đếm ở API-15-082 nên áp cả lời gọi ngoài cổng): mỗi người `15.try.rate-per-user-min` (mặc định 30) lượt mỗi phút; mỗi ứng dụng `15.try.rate-per-app-day` (mặc định 3.000) lượt mỗi ngày; toàn tenant `15.try.rate-tenant-rps` (mặc định 100).
 2. Hệ thống áp thêm cỡ thân tối đa `15.try.max-body-kb` (256) và thời gian chờ.
 3. `forward-auth` áp cùng bộ đếm cho cả lời gọi ngoài cổng bằng thông tin xác thực.
 4. Vượt thì trả `429` kèm `Retry-After`; mọi phản hồi có `X-RateLimit-Limit`, `X-RateLimit-Remaining`.
-5. Khung thử hiện số lượt còn lại (API-15-074).
+5. Khung thử hiện số lượt còn lại (API-15-074; tham số tùy chọn `appCode` chọn ứng dụng cần xem, mặc định ứng dụng đang chọn ở khung thử).
 
 **Luồng thay thế.** TA nâng hạn mức riêng cho một ứng dụng trong biên của tham số trần (FR-15-057).
 
 **Luồng ngoại lệ.**
 
-- Vượt hạn mức người: ERR-15-103 (429); "Bạn thử quá nhanh. Thử lại sau {giây} giây."
-- Vượt hạn mức ứng dụng: ERR-15-104 (429); "Ứng dụng đã dùng hết lượt thử hôm nay. Hạn mức làm mới lúc 00:00."
+- Vượt hạn mức người: ERR-15-103 (429); "Bạn đã vượt hạn mức thử mỗi phút. Thử lại sau {n} giây."
+- Vượt hạn mức ứng dụng: ERR-15-104 (429); "Ứng dụng đã vượt hạn mức thử trong ngày." (chi tiết riêng ở `detail`: Ứng dụng đã dùng hết lượt thử hôm nay. Hạn mức làm mới lúc 00:00)
 - Thân quá lớn: ERR-15-105 (413); "Nội dung gửi vượt {n} KB."
 
 **Đầu ra.** `429` hoặc `413`; `Retry-After`; `GET /try/quota` trả số còn lại.
@@ -2672,7 +2676,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 **Luồng ngoại lệ.**
 
 - Bộ sưu tập không phải của mình: ERR-15-001 (404).
-- Vượt số bộ sưu tập: ERR-15-003 (400); "Đã đạt số bộ sưu tập tối đa."
+- Vượt số bộ sưu tập: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Đã đạt số bộ sưu tập tối đa)
 
 **Đầu ra.** `200`; `items[]`, bộ sưu tập.
 
@@ -2740,7 +2744,7 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 ::: dac-ta
 **Mục đích.** Cho phép, có kiểm soát và có thời hạn, nhà phát triển thử một API ở production, mặc định tắt vì mỗi lượt thử chạm hệ thống thật.
 
-**Tác nhân, quyền.** Đề xuất: SV (○ API của mình) hoặc TA; duyệt: CA hoặc TA khác người đề xuất (`PERM-15-portal-admin`).
+**Tác nhân, quyền.** Đề xuất: SV (○ API của mình, theo đối tượng qua `PERM-15-content-write`) hoặc TA, CA (`PERM-15-portal-admin`); duyệt: CA hoặc TA khác người đề xuất (`PERM-15-portal-admin`).
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -2764,8 +2768,8 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- API `RESTRICTED`, `SENSITIVE` hoặc tenant tắt: ERR-15-040 (422); "Dịch vụ này không đủ điều kiện bật thử trên production."
-- Người duyệt là người đề xuất: ERR-15-023 (403); "Bạn đã đề xuất nên không tự duyệt được."
+- API `RESTRICTED`, `SENSITIVE` hoặc tenant tắt: ERR-15-040 (422); "Dịch vụ này chưa đủ điều kiện cho thao tác này."
+- Người duyệt là người đề xuất: ERR-15-023 (403); "Người duyệt phải khác người soạn và người gửi duyệt." (chi tiết riêng ở `detail`: Bạn đã đề xuất nên không tự duyệt được)
 - Thiếu lý do: ERR-15-003 (400).
 
 **Đầu ra.** `200` hoặc `202` khi chờ duyệt; trạng thái `OFF`, `PENDING`, `ENABLED`, `validUntil`.
@@ -2813,11 +2817,11 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 **Luồng ngoại lệ.**
 
-- Dịch vụ chưa bật: ERR-15-112 (403); "Thử trên production chưa được bật cho dịch vụ này."
-- Không có đăng ký sử dụng: ERR-15-113 (403); "Đơn vị của bạn chưa có đăng ký sử dụng hoạt động cho dịch vụ này."
-- Dữ liệu nhạy cảm: ERR-15-114 (403); "Dịch vụ này chứa dữ liệu nhạy cảm nên cấm thử trên production."
-- Kiểm toán lỗi: ERR-15-115 (503); "Hệ thống kiểm toán chưa sẵn sàng nên chưa thể thử trên production."
-- Phương thức bị chặn: ERR-15-116 (422); "Chỉ được thử phương thức GET và HEAD trên production."
+- Dịch vụ chưa bật: ERR-15-112 (403); "Dịch vụ này chưa bật thử trên môi trường thật." (chi tiết riêng ở `detail`: Thử trên production chưa được bật cho dịch vụ này)
+- Không có đăng ký sử dụng: ERR-15-113 (403); "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."
+- Dữ liệu nhạy cảm: ERR-15-114 (403); "Dịch vụ có dữ liệu nhạy cảm không cho thử trên môi trường thật."
+- Kiểm toán lỗi: ERR-15-115 (503); "Chưa ghi được nhật ký nên không thử được lúc này." (chi tiết riêng ở `detail`: Hệ thống kiểm toán chưa sẵn sàng nên chưa thể thử trên production)
+- Phương thức bị chặn: ERR-15-116 (422); "Phương thức {phương thức} không được phép ở môi trường này." (chi tiết riêng ở `detail`: Chỉ được thử phương thức GET và HEAD trên production)
 
 **Đầu ra.** `200`; như FR-15-035, thêm `environment = PRODUCTION`.
 
@@ -2867,8 +2871,8 @@ Nhóm G nối cổng với ba nghiệp vụ thật: đăng ký sử dụng API p
 
 **Luồng ngoại lệ.**
 
-- Không có quyền đăng ký hoặc không có HTTT hoạt động: ERR-15-032 (422); "Chỉ cán bộ đầu mối của đơn vị có hệ thống đã kết nạp mới đăng ký sử dụng được."
-- PH-02 không khả dụng: ERR-15-030 (502); "Chưa gửi được đăng ký vì dịch vụ danh mục tạm gián đoạn. Thử lại sau."
+- Không có quyền đăng ký hoặc không có HTTT hoạt động: ERR-15-032 (422); "Chỉ cán bộ đầu mối có hệ thống thông tin đang hoạt động mới thực hiện được thao tác này." (chi tiết riêng ở `detail`: Chỉ cán bộ đầu mối của đơn vị có hệ thống đã kết nạp mới đăng ký sử dụng được)
+- PH-02 không khả dụng: ERR-15-030 (502); "Chưa kết nối được dịch vụ danh mục." (chi tiết riêng ở `detail`: Chưa gửi được đăng ký vì dịch vụ danh mục tạm gián đoạn. Thử lại sau)
 - Lỗi nghiệp vụ của PH-02: chuyển nguyên mã `ERR-02-*` và câu của PH-02.
 
 **Đầu ra.** `201` hoặc mã của PH-02; đăng ký với `status`, `reviewRequestId`, `warnings[]`.
@@ -2916,7 +2920,7 @@ Nhóm G nối cổng với ba nghiệp vụ thật: đăng ký sử dụng API p
 **Luồng ngoại lệ.**
 
 - Đăng ký ngoài tổ chức: ERR-15-001 (404).
-- PH-02 lỗi: ERR-15-030 (502); "Chưa tải được danh sách đăng ký. Thử lại sau."
+- PH-02 lỗi: ERR-15-030 (502); "Chưa kết nối được dịch vụ danh mục." (chi tiết riêng ở `detail`: Chưa tải được danh sách đăng ký. Thử lại sau)
 - Hủy khi không còn `PENDING`: lỗi của PH-02 chuyển nguyên văn.
 
 **Đầu ra.** `200`; `items[]`, chi tiết dòng thời gian.
@@ -2963,8 +2967,8 @@ Nhóm G nối cổng với ba nghiệp vụ thật: đăng ký sử dụng API p
 
 **Luồng ngoại lệ.**
 
-- PH-01 không khả dụng: ERR-15-031 (502); "Dịch vụ kết nạp tạm gián đoạn. Hồ sơ nháp của bạn vẫn được giữ, thử lại sau."
-- Không phải đầu mối: ERR-15-032 (422); "Chỉ cán bộ đầu mối của đơn vị mới nộp hồ sơ kết nạp."
+- PH-01 không khả dụng: ERR-15-031 (502); "Chưa kết nối được dịch vụ kết nạp. Thử lại sau." (chi tiết riêng ở `detail`: Dịch vụ kết nạp tạm gián đoạn. Hồ sơ nháp của bạn vẫn được giữ, thử lại sau)
+- Không phải đầu mối: ERR-15-032 (422); "Chỉ cán bộ đầu mối có hệ thống thông tin đang hoạt động mới thực hiện được thao tác này." (chi tiết riêng ở `detail`: Chỉ cán bộ đầu mối của đơn vị mới nộp hồ sơ kết nạp)
 - Lỗi theo trường của PH-01: hiển thị dưới từng trường.
 
 **Đầu ra.** `201`; `applicationId`, `status`.
@@ -3011,7 +3015,7 @@ Nhóm G nối cổng với ba nghiệp vụ thật: đăng ký sử dụng API p
 
 **Luồng ngoại lệ.**
 
-- Không phải chủ dịch vụ: ERR-15-005 (403); "Chỉ chủ dịch vụ của đơn vị mới công bố được API."
+- Không phải chủ dịch vụ: ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này." (chi tiết riêng ở `detail`: Chỉ chủ dịch vụ của đơn vị mới công bố được API)
 - Đặc tả không hợp lệ: lỗi từng dòng của PH-02 hiển thị tại chỗ.
 - PH-02 không khả dụng: ERR-15-030 (502).
 
@@ -3108,8 +3112,8 @@ Nhóm H cho nhà phát triển thấy ứng dụng của mình hoạt động ra
 
 **Luồng ngoại lệ.**
 
-- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được thống kê. Thử lại sau."
-- Không phải thành viên: ERR-15-005 (403); "Bạn không có quyền với ứng dụng này."
+- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được nhật ký hoặc số liệu. Thử lại sau."
+- Không phải thành viên: ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này."
 
 **Đầu ra.** `200`; `series[]`, `totals`, `byApi[]`.
 
@@ -3155,7 +3159,7 @@ Nhóm H cho nhà phát triển thấy ứng dụng của mình hoạt động ra
 
 **Luồng ngoại lệ.**
 
-- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được nhật ký. Thử lại sau."
+- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được nhật ký hoặc số liệu. Thử lại sau."
 - Bản ghi không thuộc ứng dụng: ERR-15-001 (404).
 
 **Đầu ra.** `200`; `items[]`, `page`, `size`; chi tiết bản ghi.
@@ -3203,7 +3207,7 @@ Nhóm H cho nhà phát triển thấy ứng dụng của mình hoạt động ra
 **Luồng ngoại lệ.**
 
 - API ngoài tầm: ERR-15-001 (404).
-- Tắt loại bắt buộc: ERR-15-003 (400); "Loại thông báo này là bắt buộc nên không tắt được."
+- Tắt loại bắt buộc: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Loại thông báo này là bắt buộc nên không tắt được)
 
 **Đầu ra.** `200`; cấu hình theo dõi.
 
@@ -3240,7 +3244,7 @@ Nhóm H cho nhà phát triển thấy ứng dụng của mình hoạt động ra
 **Luồng xử lý chính.**
 
 1. Hệ thống tạo thông báo từ các nguồn: EVT-02-10, 11, 12; lời mời nhóm; nhắc hạn thông tin xác thực; trả lời phiếu hỗ trợ; kết quả duyệt tài khoản.
-2. Hệ thống hiển thị số chưa đọc ở thanh trên và danh sách có phân trang, mới nhất trước.
+2. Hệ thống hiển thị số chưa đọc ở thanh trên (API-15-140, nhẹ hơn tải danh sách) và danh sách có phân trang, mới nhất trước.
 3. Người dùng đánh dấu đã đọc từng thông báo hoặc tất cả; bấm vào để tới nơi xử lý.
 4. Thông báo bắt buộc (hạn thông tin xác thực, điều khoản mới, ngừng dịch vụ) có nhãn và không tắt được.
 5. Thông báo lưu 90 ngày rồi xóa; số chưa đọc cập nhật bằng truy vấn định kỳ 60 giây.
@@ -3263,7 +3267,7 @@ Nhóm H cho nhà phát triển thấy ứng dụng của mình hoạt động ra
 
 **Quy tắc nghiệp vụ.** BR-15-027.
 
-**Màn hình, API.** UI-15-19; API-15-104, API-15-105, API-15-106.
+**Màn hình, API.** UI-15-19; API-15-104, API-15-105, API-15-106, API-15-140.
 :::
 
 ### 6.10. Nhóm I · Hỗ trợ và phản hồi
@@ -3299,7 +3303,7 @@ Nhóm I thay kênh hỗ trợ qua điện thoại và thư bằng kênh có hồ
 
 **Luồng ngoại lệ.**
 
-- Vượt tần suất: ERR-15-037 (429); "Bạn đã gửi quá nhiều trong ngày. Thử lại sau."
+- Vượt tần suất: ERR-15-037 (429); "Bạn gửi quá nhiều. Thử lại sau {n} phút."
 - Nội dung trống hoặc quá dài: ERR-15-003 (400).
 
 **Đầu ra.** `201`; bài hỏi, phiếu hoặc đánh giá.
@@ -3346,7 +3350,7 @@ Nhóm I thay kênh hỗ trợ qua điện thoại và thư bằng kênh có hồ
 
 **Luồng ngoại lệ.**
 
-- Phiếu đã đóng: ERR-15-029 (409); "Yêu cầu đã đóng. Tạo yêu cầu mới nếu cần."
+- Phiếu đã đóng: ERR-15-029 (409); "Phiếu đã đóng. Tạo phiếu mới nếu cần."
 - Gửi quá nhiều: ERR-15-037 (429).
 - Phiếu không phải của mình: ERR-15-001 (404).
 
@@ -3436,7 +3440,7 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng xử lý chính.**
 
-1. Hệ thống hiển thị cấu hình hiện hành và bản xem trước.
+1. Hệ thống hiển thị cấu hình hiện hành và bản xem trước. Tên cổng, logo và chân trang cho khách ẩn danh đọc qua API-15-139 (chỉ các khóa nhận diện, không lộ tham số quản trị).
 2. Người dùng sửa; hệ thống kiểm tra miền giá trị và logo (kiểu theo nội dung, quét mã độc, SEC-45); SVG không được nhận.
 3. Hệ thống lưu với `If-Match`, vô hiệu bộ đệm trang chủ.
 4. Màu, phông, token, vật liệu kính không cấu hình được (BR-15-032).
@@ -3446,8 +3450,8 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng ngoại lệ.**
 
-- Logo sai định dạng, quá cỡ: ERR-15-033 (422); "Logo cần là PNG hoặc WebP, tối đa 512 KB và từ 128 px."
-- Liên kết không HTTPS: ERR-15-033 (422); "Liên kết chân trang cần dùng HTTPS."
+- Logo sai định dạng, quá cỡ: ERR-15-033 (422); "Thông tin nhận diện chưa hợp lệ." (chi tiết riêng ở `detail`: Logo cần là PNG hoặc WebP, tối đa 512 KB và từ 128 px)
+- Liên kết không HTTPS: ERR-15-033 (422); "Thông tin nhận diện chưa hợp lệ." (chi tiết riêng ở `detail`: Liên kết chân trang cần dùng HTTPS)
 - Xung đột sửa: ERR-15-006 (412).
 
 **Đầu ra.** `200`, `ETag`; cấu hình.
@@ -3462,7 +3466,7 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Quy tắc nghiệp vụ.** BR-15-031; BR-15-032; BR-15-034.
 
-**Màn hình, API.** UI-15-25; API-15-116, API-15-117, API-15-118.
+**Màn hình, API.** UI-15-25; API-15-116, API-15-117, API-15-118, API-15-139.
 :::
 
 #### FR-15-057 · Tham số cổng
@@ -3495,7 +3499,7 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 **Luồng ngoại lệ.**
 
 - Giá trị ngoài miền: ERR-15-034 (422); "Giá trị của {khóa} phải trong khoảng {tối thiểu} đến {tối đa}."
-- Vượt trần của nền tảng: ERR-15-034 (422); "Giá trị vượt trần cho phép của nền tảng."
+- Vượt trần của nền tảng: ERR-15-034 (422); "Giá trị của {khóa} phải trong khoảng {tối thiểu} đến {tối đa}." (chi tiết riêng ở `detail`: Giá trị vượt trần cho phép của nền tảng)
 - Xung đột sửa: ERR-15-006 (412).
 
 **Đầu ra.** `200`; danh sách tham số.
@@ -3542,8 +3546,8 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng ngoại lệ.**
 
-- Tài khoản không ở `PENDING_APPROVAL`: ERR-15-022 (409); "Tài khoản không ở trạng thái chờ duyệt."
-- Thiếu lý do khi từ chối: ERR-15-003 (400); "Cần nêu lý do từ chối."
+- Tài khoản không ở `PENDING_APPROVAL`: ERR-15-022 (409); "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này." (chi tiết riêng ở `detail`: Tài khoản không ở trạng thái chờ duyệt)
+- Thiếu lý do khi từ chối: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Cần nêu lý do từ chối)
 - Keycloak lỗi: ERR-15-020 (503); giữ `PENDING_APPROVAL`.
 
 **Đầu ra.** `200`; tài khoản với `status`.
@@ -3590,7 +3594,7 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng ngoại lệ.**
 
-- Đối tượng không ở trạng thái cho phép: ERR-15-017 (409) hoặc ERR-15-022 (409); "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này."
+- Đối tượng không ở trạng thái cho phép: ERR-15-017 (409) với ứng dụng, "Ứng dụng đang {trạng thái} nên không thực hiện được thao tác này."; ERR-15-022 (409) với tài khoản, "Đối tượng đang {trạng thái} nên không thực hiện được thao tác này."
 - Thiếu lý do: ERR-15-003 (400).
 
 **Đầu ra.** `200`; đối tượng với `status`.
@@ -3637,8 +3641,8 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng ngoại lệ.**
 
-- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được nhật ký. Thử lại sau."
-- Khoảng thời gian quá 12 tháng cho truy vấn trực tuyến: ERR-15-003 (400); "Khoảng thời gian vượt 12 tháng. Chọn khoảng ngắn hơn hoặc yêu cầu truy xuất từ kho lưu trữ."
+- PH-13 lỗi: ERR-15-039 (502); "Chưa tải được nhật ký hoặc số liệu. Thử lại sau."
+- Khoảng thời gian quá 12 tháng cho truy vấn trực tuyến: ERR-15-003 (400); "Dữ liệu chưa hợp lệ. Kiểm tra các trường được đánh dấu." (chi tiết riêng ở `detail`: Khoảng thời gian vượt 12 tháng. Chọn khoảng ngắn hơn hoặc yêu cầu truy xuất từ kho lưu trữ)
 - Thiếu quyền: ERR-15-005 (403).
 
 **Đầu ra.** `200`; `items[]`, `page`, `size`; `202` với xuất nền; báo cáo `summary`.
@@ -3684,7 +3688,7 @@ Nhóm J gom việc của quản trị viên: nhận diện cổng theo tỉnh, t
 
 **Luồng ngoại lệ.**
 
-- Đang đồng bộ: ERR-15-035 (409); "Đang có lần đồng bộ chạy. Đợi hoàn tất rồi thử lại."
+- Đang đồng bộ: ERR-15-035 (409); "Đang có lần chạy khác. Đợi hoàn tất rồi thử lại."
 - PH-02 lỗi: ERR-15-030 (502); "Chưa kết nối được dịch vụ danh mục."
 
 **Đầu ra.** `202`; `runId`; báo cáo đối soát `missing[]`, `extra[]`, `stale[]`.
@@ -3777,7 +3781,7 @@ Các quy tắc dưới đây áp dụng xuyên chức năng. Quy tắc dạng "l
 | BR-15-019 | Thử production mặc định tắt; bật theo từng dịch vụ, có thời hạn ≤ `15.try.prod-max-days`, và chỉ khi `15.try.prod-enabled` của tenant bật | 042, 043 |
 | BR-15-020 | Thử production chỉ với API `dataClass` `PUBLIC` hoặc `INTERNAL` và phương thức `GET`, `HEAD`; cấm `RESTRICTED`, `SENSITIVE` | 042, 043 |
 | BR-15-021 | Bật thử production theo bốn mắt: người đề xuất khác người duyệt; tắt chỉ cần một người có quyền | 042 |
-| BR-15-022 | Thử production chỉ cho cán bộ thuộc tổ chức có HTTT với đăng ký sử dụng `ACTIVE` của API; token trao đổi 5 phút, thu hẹp vào phạm vi của đăng ký, đánh dấu `act` | 043 |
+| BR-15-022 | Thử production chỉ cho cán bộ giữ `PERM-15-try` (`ROLE-DEVELOPER` đăng nhập SSO; `ROLE-ORG_REQUESTER` không thử, chỉ đăng ký) thuộc tổ chức có HTTT với đăng ký sử dụng `ACTIVE` của API; token trao đổi 5 phút, thu hẹp vào phạm vi của đăng ký, đánh dấu `act` | 043 |
 | BR-15-023 | An toàn khi lỗi: không ghi được kiểm toán thì từ chối thử, với production luôn, với sandbox khi API `RESTRICTED`, `SENSITIVE`; sandbox còn lại ghi qua outbox | 035, 043, 060 |
 | BR-15-024 | Thân yêu cầu, phản hồi, tiêu đề xác thực không vào lịch sử, nhật ký, kiểm toán; phản hồi che theo SEC-32; không lưu thân phản hồi production | 035…043, 049, 050 |
 | BR-15-025 | Hạn mức sandbox theo người, ứng dụng, tenant, cỡ thân, thời gian chờ; vượt thì `429` hoặc `413` kèm `Retry-After`; cùng bộ đếm cho lời gọi ngoài cổng | 035, 039 |
@@ -3946,8 +3950,8 @@ PH-15 phát mười bốn sự kiện nghiệp vụ lên Kafka qua outbox, theo 
 | EVT-15-01 | `app.created` | 025 | `appCode`, `ownerType`, `ownerId` | PH-13 |
 | EVT-15-02 | `app.state-changed` | 026, 059 | `appCode`, `from`, `to`, `reason` | PH-13, PH-03 |
 | EVT-15-03 | `credential.issued` | 027, 028 | `appCode`, `credentialId`, `kind`, `expiresAt` | PH-13 |
-| EVT-15-04 | `credential.rotated` | 030 | `credentialId`, `newCredentialId`, `graceUntil` | PH-13 |
-| EVT-15-05 | `credential.revoked` | 031 | `credentialId`, `reason` (gồm hết hạn) | PH-03, PH-13 |
+| EVT-15-04 | `credential.rotated` | 030 | `appCode`, `credentialId`, `newCredentialId`, `graceUntil` | PH-13 |
+| EVT-15-05 | `credential.revoked` | 031 | `appCode`, `credentialId`, `reason`: `REVOKED_BY_OWNER`, `EXPIRED`, `APP_ARCHIVED`, `ADMIN_LOCK` | PH-03, PH-13 |
 | EVT-15-06 | `devaccount.registered` | 020 | `userId`, `organization` | PH-13 |
 | EVT-15-07 | `devaccount.state-changed` | 024, 058, 059 | `userId`, `from`, `to` | PH-13 |
 | EVT-15-08 | `content.published` | 015 | `pageCode`, `versionNo`, `audience` | PH-13 |
@@ -3955,7 +3959,7 @@ PH-15 phát mười bốn sự kiện nghiệp vụ lên Kafka qua outbox, theo 
 | EVT-15-10 | `try.production-state-changed` | 042 | `apiCode`, `from`, `to`, `expiresAt` | PH-13 |
 | EVT-15-11 | `try.executed` | 035, 043 | `tryId`, `env`, `apiCode`, `result`, `latencyMs` (không thân) | PH-13 |
 | EVT-15-12 | `support.ticket-opened` | 053, 054, 055 | `ticketCode`, `kind`, `status` | PH-13, PH-10 |
-| EVT-15-13 | `team.member-changed` | 022, 033 | `teamCode` hoặc `appCode`, `userId`, `role` | PH-13 |
+| EVT-15-13 | `team.member-changed` | 022, 033 | `teamCode` hoặc `appCode`, `userId`, `role`, `change`: `ADDED`, `ROLE_CHANGED`, `REMOVED` | PH-13 |
 | EVT-15-14 | `sync.state-changed` | 001, 061 | `from`, `to`, `lagSeconds` | PH-13 |
 
 : Sự kiện do PH-15 phát
@@ -3964,17 +3968,17 @@ Cổng tiêu thụ các sự kiện do PH-02 phát để cập nhật bản sao 
 
 ### 9.3. Tóm lược API
 
-Mọi đường dẫn dưới đây có tiền tố `/api/portal/v1`; phần `/public` là ẩn danh, `/try` là thử, `/admin` là quản trị, `/internal/v1` là đường nội bộ giữa gateway sandbox và cổng. Đặc tả đầy đủ (lược đồ, mã trả về) sinh từ OpenAPI của module `portal` ở D03-06-00 §4.17.
+Mọi đường dẫn dưới đây có tiền tố `/api/portal/v1`, trừ API-15-082 có đường dẫn gốc `/internal/v1/sandbox/authorize` (cổng 8081, mTLS mesh, không qua BFF, không có tiền tố này); phần `/public` là ẩn danh, `/try` là thử, `/admin` là quản trị, `/internal/v1` là đường nội bộ giữa gateway sandbox và cổng. Đặc tả đầy đủ (lược đồ, mã trả về) sinh từ OpenAPI của module `portal` ở D03-06-00 §4.17.
 
 | Mã | Phương thức | Đường dẫn | FR-15 |
 |---|---|---|---|
 | API-15-001 | GET | `/public/home` | 003 |
 | API-15-002 | GET | `/home` | 003 |
-| API-15-003 | GET | `/public/catalog/apis` | 008 |
-| API-15-004 | GET | `/public/catalog/apis/{apiCode}` | 008 |
-| API-15-005 | GET | `/catalog/apis` | 004 |
+| API-15-003 | GET | `/public/catalog/apis` | 002, 008 |
+| API-15-004 | GET | `/public/catalog/apis/{apiCode}` | 002, 008 |
+| API-15-005 | GET | `/catalog/apis` | 002, 004 |
 | API-15-006 | GET | `/catalog/facets` | 004 |
-| API-15-007 | GET | `/catalog/apis/{apiCode}` | 006 |
+| API-15-007 | GET | `/catalog/apis/{apiCode}` | 002, 006 |
 | API-15-008 | GET | `/catalog/apis/{apiCode}/usage` | 006 |
 | API-15-009 | GET | `/catalog/sync-status` | 001 |
 | API-15-010 | GET | `/public/search` | 005, 008 |
@@ -4012,7 +4016,7 @@ Mọi đường dẫn dưới đây có tiền tố `/api/portal/v1`; phần `/p
 | API-15-042 | PUT | `/me` | 021 |
 | API-15-043 | GET | `/me/sessions` | 021 |
 | API-15-044 | DELETE | `/me/sessions/{sessionId}` | 021 |
-| API-15-045 | POST | `/developer-registrations` | 019, 020 |
+| API-15-045 | POST | `/developer-registrations` | 020 |
 | API-15-046 | POST | `/developer-registrations:verify-email` | 020 |
 | API-15-047 | GET | `/terms/current` | 023 |
 | API-15-048 | POST | `/terms/acceptances` | 023 |
@@ -4105,10 +4109,15 @@ Mọi đường dẫn dưới đây có tiền tố `/api/portal/v1`; phần `/p
 | API-15-135 | POST | `/admin/migrations` | 062 |
 | API-15-136 | GET | `/admin/migrations/{migrationId}` | 062 |
 | API-15-137 | POST | `/admin/migrations/{migrationId}:confirm` | 062 |
+| API-15-138 | GET | `/content/attachments/{attachmentId}` | 014, 017 |
+| API-15-139 | GET | `/public/branding` | 003, 056 |
+| API-15-140 | GET | `/inbox/unread-count` | 052 |
+| API-15-141 | GET | `/apps:check-code` | 025 |
+| API-15-142 | GET | `/content/pages/{pageCode}/diff` | 016 |
 
 : Bảng tóm lược API-15
 
-Danh mục trên có 137 operation; mọi thao tác ghi dùng `Idempotency-Key` và `If-Match` theo BR-15-034, mọi danh sách dùng `trang`, `co`, `sap-xep` theo Phụ lục A.4.
+Danh mục trên có 142 operation (API-15-138…142 thêm ở bản 0.2 theo đề nghị của tập thiết kế API và màn hình); mọi thao tác ghi dùng `Idempotency-Key` và `If-Match` theo BR-15-034, mọi danh sách dùng `trang`, `co`, `sap-xep` theo Phụ lục A.4.
 
 ## 10. Danh sách màn hình UI-15
 
@@ -4264,13 +4273,13 @@ Các câu hỏi dưới đây cần quyết định của chủ đầu tư, ATTT
 
 > **Câu hỏi mở Q15-05:** Thử production có cho phương thức ghi và mức `dataClass` nào (ý kiến ATTT)? Ngầm định: chỉ `GET`, `HEAD`, chỉ `PUBLIC`, `INTERNAL`.
 
-> **Câu hỏi mở Q15-06:** Keycloak 26 có hỗ trợ token exchange theo RFC 8693 đủ cho `portal-try` không (PH-12 xác nhận)? Ngầm định: có, ở dạng tính năng chuẩn đã bật.
+> **Câu hỏi mở Q15-06:** Keycloak 26 có hỗ trợ token exchange theo RFC 8693 đủ cho `portal-try` không (PH-12 xác nhận)? Ngầm định: có, ở dạng tính năng chuẩn đã bật. Cập nhật 0.2: SDD QĐ-15-03 giữ phương án này, kèm dự phòng xác nhận JWS ký bằng khóa `transit` của OpenBao (Q15-20 của SDD).
 
-> **Câu hỏi mở Q15-07:** Bộ sinh MOCK đặt trong DU `dh-connect` hay làm plugin APISIX (SDD chốt)? Ngầm định: trong `portal-mock` của `dh-connect`.
+> **Câu hỏi mở Q15-07:** Bộ sinh MOCK đặt trong DU `dh-connect` hay làm plugin APISIX (SDD chốt)? Ngầm định: trong `portal-mock` của `dh-connect`. Cập nhật 0.2: SDD QĐ-15-01 đã chốt phương án này với vai trò triển khai `portal-sandbox`.
 
 > **Câu hỏi mở Q15-08:** Tên miền sandbox và chứng thư do ai cấp, theo mẫu nào? Ngầm định: `sandbox-api.{tenant}.datahub.gov.vn`, chứng thư của hạ tầng.
 
-> **Câu hỏi mở Q15-09:** Dải dữ liệu giả quy ước và bộ luật PII-15 có đủ không? Ngầm định: dải ở Phụ lục A.8, ATTT bổ sung.
+> **Câu hỏi mở Q15-09:** Dải dữ liệu giả quy ước và bộ luật PII-15 có đủ không? Ngầm định: dải ở Phụ lục A.7, ATTT bổ sung.
 
 > **Câu hỏi mở Q15-10:** Hạ tầng và mạng của backend thử ở đâu, allowlist egress do ai quản? Ngầm định: PH-18 quản allowlist theo tenant.
 
@@ -4313,19 +4322,19 @@ PH-15 được nghiệm thu khi mười tiêu chí dưới đây đạt trên m�
 
 ## 15. Đề nghị đồng bộ
 
-FRS này chỉ sửa tệp PH-15. Các thay đổi cần ở tài liệu dùng chung hoặc phân hệ khác được nêu thành đề nghị để chủ các tài liệu đó quyết định; PH-15 giữ nguyên bản FRS cho tới khi có phản hồi.
+FRS này chỉ sửa tệp PH-15. Các thay đổi cần ở tài liệu dùng chung hoặc phân hệ khác được nêu thành đề nghị để chủ các tài liệu đó quyết định; PH-15 giữ nguyên bản FRS cho tới khi có phản hồi. Các đề nghị đến từ các tập thiết kế của chính PH-15 được hấp thụ ở bản 0.2 và ghi ở mục 15.3.
 
 ### 15.1. Đề nghị cho tài liệu dùng chung
 
-Bảng dưới liệt kê đề nghị cho D02-08, ADR, D03-06-00 và D00-04. Quyền mới `PERM-15-*` chưa có trong D02-08 nên công cụ kiểm tra mã sẽ báo thiếu cho tới khi D02-08 bổ sung.
+Bảng dưới liệt kê đề nghị cho D02-08, ADR, D03-06-00 và D00-04. Cập nhật 0.2: năm quyền `PERM-15-*` mới đã được thêm vào D02-08 nên dòng đầu đã xử lý.
 
 | Tài liệu | Đề nghị | Lý do |
 |---|---|---|
-| D02-08 | Thêm năm quyền `PERM-15-content-write`, `PERM-15-content-publish`, `PERM-15-support`, `PERM-15-dev-approve`, `PERM-15-audit-read` kèm ma trận vai trò ở mục 3.2 | Tách soạn, duyệt, hỗ trợ, duyệt tài khoản, xem nhật ký |
+| D02-08 | Đã xử lý: năm quyền `PERM-15-content-write`, `PERM-15-content-publish`, `PERM-15-support`, `PERM-15-dev-approve`, `PERM-15-audit-read` đã được thêm vào D02-08 (TA, CA, SV ○, SO, AU, PA theo từng quyền); mục 3.2 đã khớp | Tách soạn, duyệt, hỗ trợ, duyệt tài khoản, xem nhật ký |
 | D02-08 | Thêm scope máy `metrics:portal-read`, `sandbox:call`; cho `ROLE-DEVELOPER` tự gán với cán bộ đăng nhập SSO | Cổng đọc chỉ số và `forward-auth` kiểm quyền |
 | ADR | Đề xuất ADR số 075: Cổng nhà phát triển tự xây trên `@datahub/ui` thay Backstage; dành dải 075 đến 079 cho PH-15. Không nhầm với ADR cũ về Backstage ở repo cũ | Quyết định công nghệ cổng |
 | D03-06-00 §2.14, §2.3 | Đổi route `/api` thành `/dich-vu`, bỏ `/sandbox`, và chốt vị trí giao diện quản trị theo Q15-16 | Khớp Phụ lục A.4 |
-| D00-04 | Ghi nhận dải mã `ERR-15-001…040`, `101…123`, `API-15-001…137`, `UI-15-01…28`, `EVT-15-01…14` | Tránh trùng mã |
+| D00-04 | Ghi nhận dải mã `ERR-15-001…040`, `101…123`, `API-15-001…142`, `UI-15-01…28`, `EVT-15-01…14` | Tránh trùng mã |
 | D03-05 | Không cần thành phần giao diện mới ngoài `@datahub/ui` | Giữ nhất quán |
 
 : Đề nghị đồng bộ tài liệu dùng chung
@@ -4345,6 +4354,37 @@ Mỗi dòng là một việc cụ thể cho chủ phân hệ, kèm FR của PH-1
 | PH-10 | Chấp nhận chủ đề `{tenant}.portal.*` và định tuyến thông báo | 051, 052 |
 
 : Đề nghị đồng bộ cho các phân hệ
+
+### 15.3. Nhật ký hấp thụ đề nghị
+
+Bản 0.2 hấp thụ đề nghị từ sáu tập đã viết sau bản 0.1. Mỗi dòng nêu nguồn, đề nghị và cách xử lý; số mã sẵn có không đổi, chỉ thêm API-15-138…142.
+
+| Nguồn tập | Đề nghị | Xử lý |
+|---|---|---|
+| Use case | FR-15-004 dẫn Phụ lục A.5 cho tham số truy vấn | Đã sửa: dẫn A.4 (FR-15-004, bước 1) |
+| Use case | FR-15-038 và Q15-09 dẫn A.8 cho bộ luật PII-15 | Đã sửa: dẫn A.7; giữ A.8 ở FR-15-060 vì đó là hành động kiểm toán |
+| Use case | API-15-045 gắn FR-15-019 trong khi là đăng ký nhà thầu | Đã sửa: bỏ FR-15-019, chỉ còn FR-15-020 ở §9.3 |
+| Use case | Câu thông báo trong thân FR khác §9.1 | Đã sửa 95 chỗ: thông báo theo đúng §9.1; câu riêng theo ngữ cảnh chuyển thành "chi tiết riêng ở `detail`"; tách ERR-15-017 và 022 ở FR-15-059 |
+| Use case | BR-15-022: ROLE-ORG_REQUESTER không thử production | Đã sửa BR-15-022 và mục 3.2: chỉ `ROLE-DEVELOPER` giữ `PERM-15-try`, đầu mối chỉ đăng ký |
+| Use case | Thiếu tác nhân biên tập viên cho PERM-15-content-write | Đã thêm dòng "Biên tập viên nội dung" ở 3.1 (TA, CA, SV ○); mục 3.2 ghi D02-08 đã có đủ tám quyền |
+| Thiết kế chi tiết | FR-15-037: `portal-sandbox` làm cả MOCK lẫn chuyển tiếp BACKEND | Đã sửa FR-15-036, 037, bảng 2.4, hình trình tự và hình kiến trúc; APISIX chỉ giữ tuyến tĩnh và `forward-auth`; Q15-07 ghi đã chốt |
+| Thiết kế chi tiết | FR-15-039: nơi đếm hạn mức | Đã ghi: theo người ở `portal.try`, theo ứng dụng và tenant ở API-15-082 |
+| Thiết kế chi tiết | FR-15-035, 043: token exchange RFC 8693 và dự phòng JWS ở OpenBao transit | Đã ghi ở bảng 2.4 (`portal-try`) và Q15-06; FR-15-035, 043 giữ nguyên luồng trao đổi token |
+| Thiết kế chi tiết | §2.4 thêm module delegate, insight, admin | Đã thêm ba dòng vào bảng 2.4 kèm dải FR |
+| CSDL | Phụ lục A.3 thêm enum (sync_run, lô di trú, tệp đính kèm, provisioning_state, thông báo, author_side) | Đã thêm sáu dòng vào A.3, giá trị đối chiếu `ph15_portal.sql` (CHECK) |
+| CSDL | §4.2 thêm `app.linked_system_code`, `catalog_api.origin_tenant_id` | Đã thêm vào EN-15-08 và EN-15-01 |
+| Màn hình | UI-15-14 không có route riêng; UI-15-27 hai route; tạo trang dùng hộp nhập mã, không dùng /moi | Bảng §10 đã đúng từ 0.1; thêm quy ước vào A.4 và sửa kích hoạt của FR-15-014 |
+| Màn hình | Phụ lục B của tập màn hình: ba API B1 `GET /inbox/unread-count`, B2 `GET /apps:check-code`, B3 `GET /content/pages/{pageCode}/diff` | Chấp nhận: API-15-140, 141, 142; gắn FR-15-052, 025, 016 và UI liên quan |
+| API | API-15-082 có đường dẫn gốc `/internal/v1/...`, không có tiền tố `/api/portal/v1` | Đã ghi ở đầu §9.3 |
+| API | Thêm API-15-138 (`/content/attachments/{attachmentId}`) và API-15-139 (`/public/branding`) | Chấp nhận: gắn FR-15-014, 017 và FR-15-003, 056; thêm vào bảng §9.3 và tổng 142 ở Tóm tắt |
+| API | Thêm FR-15-002 vào API-15-003, 004, 005, 007 | Đã sửa cột FR của §9.3 |
+| API | ERR-15-123: cảnh báo hay 413 | Thống nhất: gần ngưỡng thì `warnings[]` (200), vượt cứng thì 413 kèm `bodyTruncated`; ghi ở FR-15-035 |
+| API | Quyền SV (○) với API-15-069, 070, 084 | Ghi quyền theo đối tượng qua `PERM-15-content-write` (cùng tập TA, CA, SV ○); TA, CA giữ `PERM-15-portal-admin`; sửa FR-15-034, 042 và mục 3.2 |
+| API | Hấp thụ trường `viewerClass`, `termsUpToDate`, `retryAfterSeconds`, `partial[]`, `appCode` (API-15-074), `TryResponse.result`, `bodyTruncated` | Đã thêm Phụ lục A.9; `appCode` còn ghi ở FR-15-039 |
+| API | EVT-15-04 thêm `appCode`; EVT-15-05, 13 thêm `reason`, `change` | Đã sửa bảng §9.2 với enum cụ thể |
+| Chung | Năm quyền PERM-15 chưa có ở D02-08 | Đã xử lý: D02-08 đã có; sửa §15.1 và 3.2 |
+
+: Nhật ký hấp thụ đề nghị của bản 0.2
 
 ## Phụ lục A. Nguồn chuẩn enum, trạng thái, route và tham số
 
@@ -4396,7 +4436,12 @@ Bảng gom toàn bộ trạng thái của các đối tượng PH-15; sơ đồ 
 | Sandbox | Chế độ: `MOCK`, `BACKEND`, `OFF`. `examplePolicy`: `FIRST`, `RANDOM`. Môi trường thử: `SANDBOX`, `PRODUCTION`. Thử production: `OFF`, `PENDING`, `ENABLED`, `EXPIRED` |
 | Kết quả thử | `OK`, `UPSTREAM_ERROR`, `DENIED`, `THROTTLED`, `TIMEOUT` |
 | Phiếu hỗ trợ | `kind`: `QUESTION`, `DOC_ERROR`, `SUPPORT_REQUEST`, `ACCESS_REQUEST`, `FEEDBACK`. Trạng thái: `OPEN`, `ANSWERED`, `RESOLVED`, `CLOSED` |
-| Đồng bộ | `IDLE`, `RUNNING`, `FAILED`, `STALE` |
+| Đồng bộ | Trạng thái chung: `IDLE`, `RUNNING`, `FAILED`, `STALE`. Lần chạy (`sync_run`): `kind`: `INCREMENTAL`, `FULL`, `RECONCILE`, `GIT`; trạng thái: `RUNNING`, `SUCCEEDED`, `FAILED` |
+| Lô di trú nội dung | `RUNNING`, `PREVIEW`, `APPLIED`, `FAILED` |
+| Tệp đính kèm | `purpose`: `PAGE_IMAGE`, `LOGO`, `MIGRATION_PACKAGE`. `scan_status`: `PENDING`, `CLEAN`, `INFECTED` |
+| Cấp thông tin xác thực ở Keycloak | `provisioning_state`: `PENDING`, `PROVISIONED`, `FAILED`, `DEPROVISIONING` (không hiển thị cho người dùng, chỉ để dọn client mồ côi) |
+| Loại thông báo | `kind` của đăng ký theo dõi và của thông báo: `MANDATORY` (bắt buộc, không tắt được), `INFO` |
+| Tin nhắn phiếu hỗ trợ | `author_side`: `REQUESTER` (người gửi), `HANDLER` (người xử lý) |
 | Thông báo và lời mời | Kênh: `IN_APP`, `EMAIL`. Lời mời: `PENDING`, `ACCEPTED`, `DECLINED`, `EXPIRED` |
 | Mẫu mã và xuất | Ngôn ngữ: `curl`, `java`, `python`, `javascript`, `csharp`, `go`. Xuất bộ sưu tập: `postman`, `bruno`, `http` |
 
@@ -4418,6 +4463,8 @@ Bảng gom toàn bộ trạng thái của các đối tượng PH-15; sơ đồ 
 | BFF | `/bff/dang-nhap`, `/bff/dang-xuat` |
 
 : Đường dẫn giao diện của PH-15
+
+Quy ước route đã chốt cùng tập màn hình: UI-15-14 không có route riêng mà là tab `bo-suu-tap` của `/ung-dung/{ma-ung-dung}`; UI-15-27 có hai route `/quan-tri-cong/dong-bo` và `/quan-tri-cong/di-tru`; tạo trang nội dung mới dùng hộp nhập mã trang ở UI-15-22 rồi mở `/quan-tri-cong/noi-dung/{ma-trang}`, không có `/quan-tri-cong/noi-dung/moi`.
 
 Tham số truy vấn chung: `q`, `trang`, `co` (10, 20, 50, 100), `sap-xep`, `linh-vuc`, `chu-quan`, `xac-thuc`, `loai`, `trang-thai`, `da-ngung`, `tu`, `den`, `khoang`.
 
@@ -4487,6 +4534,22 @@ Các hành động dưới đây ghi vào nhật ký kiểm toán ở PH-13 vớ
 
 : Hành động kiểm toán của PH-15
 
+### A.9. Trường chỉ có ở phản hồi API
+
+Các trường dưới đây do tập API (D03-04-PH15) khai báo và được bản 0.2 ghi nhận để phụ lục này vẫn là nguồn chuẩn; tên viết đúng như ở hợp đồng.
+
+| Trường | Thuộc | Ý nghĩa |
+|---|---|---|
+| `viewerClass` | Hồ sơ cá nhân (API-15-041) | Một trong bốn hạng người xem ở A.2, suy từ phiên BFF, không nhận từ tham số |
+| `termsUpToDate` | Hồ sơ cá nhân | `true` khi người dùng đã chấp nhận phiên bản điều khoản hiện hành (FR-15-023) |
+| `retryAfterSeconds` | Phản hồi lỗi RFC 9457 | Số giây nên chờ với ERR-15-007, ERR-15-037, ERR-15-103, ERR-15-104, ERR-15-118; trùng tiêu đề `Retry-After` |
+| `partial[]` | Bảng điều khiển (API-15-097) | Danh sách thẻ lỗi một phần; trang vẫn hiện các thẻ còn lại (FR-15-048) |
+| `appCode` | Tham số truy vấn tùy chọn của API-15-074 | Chọn ứng dụng cần xem hạn mức (FR-15-039) |
+| `result` | `TryResponse` (API-15-072, 073) | Kết quả lượt thử, một trong `OK`, `UPSTREAM_ERROR`, `DENIED`, `THROTTLED`, `TIMEOUT` (A.3) |
+| `bodyTruncated` | `TryResponse` | `true` khi thân phản hồi bị cắt ở 1 MB; xem ERR-15-123 (FR-15-035) |
+
+: Trường chỉ có ở phản hồi API
+
 ## Lịch sử phiên bản
 
 Mục này ghi các lần sửa tài liệu để hội đồng thẩm định theo dõi.
@@ -4494,5 +4557,6 @@ Mục này ghi các lần sửa tài liệu để hội đồng thẩm định t
 | Phiên bản | Ngày | Người thực hiện | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm yêu cầu PH-15 | Bản đầu: 62 FR, 34 BR, 22 NFR, 63 ERR, 14 EVT, 137 API, 28 UI, 19 câu hỏi mở |
+| 0.2 | 26/11/2026 | Nhóm yêu cầu PH-15 | Hấp thụ đề nghị đồng bộ từ tập use case, thiết kế chi tiết, CSDL, màn hình và API (chi tiết ở mục 15.3): thêm API-15-138…142 (142 API); sửa tham chiếu phụ lục, câu thông báo theo §9.1, enum và thực thể theo CSDL, kiến trúc theo SDD; thêm Phụ lục A.9; năm quyền PERM-15 đã có ở D02-08 |
 
 : Lịch sử phiên bản D02-03-PH15

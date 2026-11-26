@@ -10,7 +10,7 @@ FRS = os.path.join(HERE, '..', '..', '..', '..', '02-yeu-cau', 'frs', 'D02-03-PH
 frs = open(FRS, encoding='utf-8').read()
 ROWS = re.findall(r'^\| (API-15-\d{3}) \| (GET|POST|PUT|PATCH|DELETE) \| `([^`]+)` \| ([0-9, ]+) \|$', frs, re.M)
 ERRS = {c: (int(h), t.strip()) for c, h, t in re.findall(r'^\| (ERR-15-\d{3}) \| (\d{3}) \| ([^|]+?) \|', frs, re.M)}
-assert len(ROWS) == 137, len(ROWS)
+assert len(ROWS) == 142, len(ROWS)
 
 # ---- tham số
 PATHP = {'ApiCode': ('apiCode', '#ApiCode'), 'VersionNo': ('versionNo', '#SemVer'), 'TopicCode': ('topicCode', '#TopicCode'), 'PageCode': ('pageCode', '#PageCode'),
@@ -18,7 +18,7 @@ PATHP = {'ApiCode': ('apiCode', '#ApiCode'), 'VersionNo': ('versionNo', '#SemVer
          'InvitationId': ('invitationId', '#Uuid'), 'UserId': ('userId', '#Uuid'), 'AppCode': ('appCode', '#AppCode'), 'CredentialId': ('credentialId', '#Uuid'),
          'TryId': ('tryId', 's'), 'CollectionId': ('collectionId', '#Uuid'), 'SubscriptionId': ('subscriptionId', '#Uuid'), 'ApplicationId': ('applicationId', '#Uuid'),
          'PublicationId': ('publicationId', '#Uuid'), 'MessageId': ('messageId', '#Uuid'), 'TicketCode': ('ticketCode', '#TicketCode'), 'MigrationId': ('migrationId', '#Uuid'),
-         'LogId': ('logId', 's')}
+         'LogId': ('logId', 's'), 'AttachmentId': ('attachmentId', '#Uuid')}
 PATH_FOR = {}  # tên tham số đường dẫn -> khóa PATHP (theo thứ tự xuất hiện không đủ, nên map theo tên)
 for k, (n, _) in PATHP.items():
     PATH_FOR.setdefault(n, k)
@@ -39,6 +39,8 @@ QUERY = {  # tên -> (lược đồ, mô tả)
     'hanh-dong': ('s', 'Hành động kiểm toán (Phụ lục A.8).'), 'nguoi-dung': ('s', 'Tên đăng nhập người thực hiện.'),
     'thao-tac': ('s', 'Neo theo `operationId`.'), 'format': ('s', 'Định dạng.'), 'lang_s': (['curl', 'java', 'python', 'javascript', 'csharp', 'go'], 'Ngôn ngữ mẫu mã.'),
     'env': ('#TryEnv', 'Môi trường mẫu.'), 'authKind': ('#AuthKind', 'Kiểu xác thực của mẫu.'), 'operationId': ('s', '`operationId` trong đặc tả.'),
+    'basePage': ({'type': 'integer', 'minimum': 1}, 'Số phiên bản trang cơ sở để so sánh.'), 'toPage': ({'type': 'integer', 'minimum': 1}, 'Số phiên bản trang đích; mặc định bản mới nhất.'),
+    'sig': ('s', 'Chữ ký của đường dẫn ảnh (hết hạn 15 phút).'), 'exp': ('ts', 'Thời điểm hết hạn của chữ ký.'),
     'base': ('#SemVer', 'Phiên bản cơ sở để so sánh.'), 'target': ('#SemVer', 'Phiên bản đích; mặc định phiên bản mới nhất.'),
     'appCode': ('#AppCode', 'Mã ứng dụng.'), 'versionNo': ('#SemVer', 'Phiên bản API.'), 'apiCode': ('#ApiCode', 'Mã API.'),
     'collectionId': ('#Uuid', 'Mã bộ sưu tập.'),
@@ -124,8 +126,8 @@ x(65, 'Tham chiếu thông tin xác thực production của ứng dụng', 'PERM
 x(66, 'Danh sách thành viên ứng dụng', 'PERM-15-app', 'AppCode', None, (200, 'MemberList'), '001', '')
 x(67, 'Giao hoặc đổi vai trò thành viên ứng dụng', 'PERM-15-app', 'AppCode UserId', 'MemberInput', (200, 'Member'), '003 027 028', 'Chỉ `OWNER` của ứng dụng; phát EVT-15-13.')
 x(68, 'Gỡ thành viên khỏi ứng dụng', 'PERM-15-app', 'AppCode UserId', None, (204, None), '001 028', '')
-x(69, 'Xem hồ sơ sandbox của dịch vụ', 'PERM-15-portal-admin', 'ApiCode phien-ban', None, (200, 'SandboxProfile'), '001', 'Do TA hoặc đầu mối SV của tổ chức chủ dịch vụ (○) xem và khai báo.')
-x(70, 'Khai báo hồ sơ sandbox của dịch vụ', 'PERM-15-portal-admin', 'ApiCode', 'SandboxProfileInput', (200, 'SandboxProfile', ['SandboxProfileBackend']), '003 006 040 110 119 120', 'Kiểm backend thử theo allowlist egress, HTTPS (BR-15-018).')
+x(69, 'Xem hồ sơ sandbox của dịch vụ', 'PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)', 'ApiCode phien-ban', None, (200, 'SandboxProfile'), '001', 'Do TA hoặc đầu mối SV của tổ chức chủ dịch vụ (○) xem và khai báo.')
+x(70, 'Khai báo hồ sơ sandbox của dịch vụ', 'PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)', 'ApiCode', 'SandboxProfileInput', (200, 'SandboxProfile', ['SandboxProfileBackend']), '003 006 040 110 119 120', 'Kiểm backend thử theo allowlist egress, HTTPS (BR-15-018).')
 x(71, 'Kiểm tra yêu cầu thử trước khi gửi', 'PERM-15-try', '', 'TryRequestInput', (200, 'TryValidation'), '003 105 106 107 121', 'Không gọi hệ thống nào; trả cảnh báo dữ liệu cá nhân giống thật (PII-15).')
 x(72, 'Thử API (sandbox hoặc production)', 'PERM-15-try', '', ('TryRequestInput', ['TryRequestInput', 'TryRequestMock', 'TryRequestProd']),
   (200, 'TryResponse', ['TryResponse', 'TryResponseProd']), '010 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123',
@@ -142,7 +144,7 @@ x(81, 'Xuất bộ sưu tập (Postman, Bruno, HTTP)', 'PERM-15-try', 'Collectio
 x(82, 'forward-auth: kiểm tra ứng dụng và hạn mức của lời gọi sandbox', 'mesh', 'X-Forwarded-Method! X-Forwarded-Uri! X-Forwarded-Host! X-DH-Try-Id', None, (200, 'AuthorizeDecision'), '001 004 005 101 102 103 104 111 122',
   'Chỉ APISIX gọi, danh tính SPIFFE, cổng 8081; thời gian chờ 300 ms, `allow_degradation: false`; trả `X-DH-App`, `X-DH-Tenant`, `X-DH-Sandbox-Mode`, `X-DH-Profile-Ver`, `X-RateLimit-*`.')
 x(83, 'Danh sách trạng thái thử production theo dịch vụ', 'PERM-15-portal-admin', 'trang-thai trang co', None, (200, 'TryProdPage'), '003', '')
-x(84, 'Đề xuất bật thử production cho dịch vụ', 'PERM-15-portal-admin', 'ApiCode', 'TryProdInput', (202, 'TryProdItem', ['TryProdPending']), '003 006 023 040', 'Chờ người khác duyệt (BR-15-021); `validDays` ≤ `15.try.prod-max-days`.')
+x(84, 'Đề xuất bật thử production cho dịch vụ', 'PERM-15-portal-admin hoặc PERM-15-content-write (SV ○ theo đối tượng)', 'ApiCode', 'TryProdInput', (202, 'TryProdItem', ['TryProdPending']), '003 006 023 040', 'Chờ người khác duyệt (BR-15-021); `validDays` ≤ `15.try.prod-max-days`.')
 x(85, 'Duyệt bật thử production', 'PERM-15-portal-admin', 'ApiCode', 'TryProdDecision', (200, 'TryProdItem'), '006 023 040', 'Người duyệt khác người đề xuất; phát EVT-15-10.')
 x(86, 'Tắt thử production', 'PERM-15-portal-admin', 'ApiCode', 'TryProdDisable', (200, 'TryProdItem', ['TryProdOff']), '003 006', 'Chỉ cần một người có quyền; hiệu lực ngay.')
 x(87, 'Gửi đăng ký sử dụng API production', 'PERM-02-subscribe', '', 'SubscriptionInput', (201, 'Subscription'), '003 030 032', 'Ủy thác PH-02 (FR-02-046) theo danh tính người dùng; cổng không tự duyệt (BR-15-014).')
@@ -197,14 +199,25 @@ x(135, 'Tải gói di trú nội dung portal hệ cũ', 'PERM-15-portal-admin', 
 x(136, 'Xem tiến độ và báo cáo xem trước di trú', 'PERM-15-portal-admin', 'MigrationId', None, (200, 'Migration'), '001', '')
 x(137, 'Xác nhận áp dụng gói di trú', 'PERM-15-portal-admin', 'MigrationId', 'MigrationConfirm', (200, 'Migration', ['MigrationConfirmed']), '022 026 035', 'Chỉ ghi `DRAFT` sau xác nhận (BR-15-012).')
 
-assert sorted(X) == list(range(1, 138)), [i for i in range(1, 138) if i not in X]
+x(138, 'Đọc ảnh đính kèm của trang', 'pub', 'AttachmentId sig! exp!', None, (200, None), '001', 'Chữ ký `sig` còn hạn 15 phút thay cho phiên (FR-15-017); trả ảnh với `Content-Type` đúng và `X-Content-Type-Options: nosniff`; chữ ký sai hoặc hết hạn trả `404`.')
+x(139, 'Nhận diện công khai của cổng', 'pub', '', None, (200, 'PublicBranding'), '', 'Chỉ trả các khóa nhận diện (BR-15-032); `Cache-Control: public, max-age=300`; logo phục vụ qua đường tĩnh của BFF.')
+x(140, 'Số thông báo chưa đọc', 'login', '', None, (200, 'UnreadCount'), '', 'Nhẹ hơn API-15-104 cho chuông thông báo; giao diện hỏi định kỳ 60 giây (FR-15-052).')
+x(141, 'Kiểm tra mã ứng dụng đã dùng chưa', 'PERM-15-app', 'appCode!', None, (200, 'AppCodeCheck'), '003', 'Chỉ báo gợi ý khi gõ; kiểm tra cuối vẫn ở API-15-056 (ERR-15-002), kể cả mã của ứng dụng đã lưu trữ.')
+x(142, 'So sánh hai phiên bản của trang', 'PERM-15-content-write', 'PageCode basePage! toPage', None, (200, 'PageDiff'), '001 003', 'So sánh phía máy chủ theo dòng Markdown nguồn; không trả HTML (FR-15-016).')
+
+assert sorted(X) == list(range(1, 143)), [i for i in range(1, 143) if i not in X]
 
 TAGS = [(1, 14, 'Trang chủ, danh mục, tìm kiếm'), (15, 21, 'Tài liệu API'), (22, 40, 'Nội dung và hướng dẫn'), (41, 54, 'Tài khoản nhà phát triển'),
         (55, 68, 'Ứng dụng và thông tin xác thực'), (69, 81, 'Sandbox và thử API'), (82, 82, 'Nội bộ gateway sandbox'), (83, 86, 'Thử production (quản trị)'),
         (87, 96, 'Đăng ký và điểm vào nghiệp vụ'), (97, 106, 'Theo dõi của nhà phát triển'), (107, 115, 'Hỗ trợ và phản hồi'), (116, 137, 'Quản trị cổng')]
 
 
+TAG_OF = {138: 'Nội dung và hướng dẫn', 139: 'Trang chủ, danh mục, tìm kiếm', 140: 'Theo dõi của nhà phát triển', 141: 'Ứng dụng và thông tin xác thực', 142: 'Nội dung và hướng dẫn'}
+
+
 def tag_of(n):
+    if n in TAG_OF:
+        return TAG_OF[n]
     return next(t for a, b, t in TAGS if a <= n <= b)
 
 
@@ -288,7 +301,7 @@ def build():
                     p = {'name': 'q', 'in': 'query', 'required': True, 'schema': {'type': 'string', 'minLength': 1, 'maxLength': 200}, 'description': ds}
                 ps.append(p)
                 continue
-            pn = 'lang' if nm == 'lang_s' else nm
+            pn = {'lang_s': 'lang', 'basePage': 'base', 'toPage': 'to'}.get(nm, nm)
             ps.append({'name': pn, 'in': 'query', 'required': req, 'schema': S.T(sc), 'description': ds})
         # ví dụ `format` cho 16, 81
         for p in ps:
@@ -344,6 +357,9 @@ def build():
             if hd:
                 r['headers'] = hd
             resp[str(code)] = r
+        if n == 138:
+            resp['200']['description'] = 'Thành công: nội dung ảnh.'
+            resp['200']['content'] = {ct: {'schema': {'type': 'string', 'format': 'binary'}, 'example': 'PNG, JPEG hoặc WebP nhị phân'} for ct in ('image/png', 'image/jpeg', 'image/webp')}
         if anon and m == 'get':
             resp['304'] = {'description': 'Không đổi (`If-None-Match` khớp `ETag`).'}
         for c in errs + extra:
