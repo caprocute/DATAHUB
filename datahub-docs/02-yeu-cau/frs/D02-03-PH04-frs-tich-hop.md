@@ -2660,7 +2660,7 @@ sequenceDiagram
   R->>R: FlowLoader nạp route, không khởi động lại pod
   R->>K: Nhịp tim EVT-04-12 (băm mới)
   K->>I: Nhịp tim
-  I->>I: So băm, SYNCED; bản cũ SUPERSEDED
+  I->>I: So băm, SYNCED, bản cũ SUPERSEDED
   I->>K: EVT-04-07 deployment.status-changed
 ```
 
@@ -2898,7 +2898,7 @@ sequenceDiagram
   I->>K: EVT-04-11 lệnh có ký, hết hạn 60 giây
   I->>G: Ghi trạng thái mong muốn PAUSED
   K->>R: Lệnh
-  R->>R: Kiểm chữ ký, hạn, tenant; xả bản tin (drain)
+  R->>R: Kiểm chữ ký, hạn, tenant, xả bản tin (drain)
   R->>K: EVT-04-13 xác nhận từng bản sao
   K->>I: Xác nhận
   I->>I: Đủ xác nhận: ACKNOWLEDGED, RECONCILED
@@ -3177,7 +3177,7 @@ sequenceDiagram
   H->>AP: POST /ho-tich/khai-sinh (token)
   AP->>AP: Xác thực, kiểm tra đăng ký sử dụng
   AP->>R: Chuyển kèm X-Dh-Tenant, X-Dh-Consumer
-  R->>R: receive: đặt dh-*, khóa tenant; schema
+  R->>R: receive: đặt dh-*, khóa tenant, schema
   R->>O: authz (200 ms)
   O-->>R: allow, obligations
   R->>R: transform, enrich, route
@@ -3739,7 +3739,7 @@ sequenceDiagram
   L->>P: Câu lệnh đã qua VR-13, tham số ràng buộc
   P->>B: Lấy tài khoản flow-t68-{flow} (TTL 1 giờ)
   B-->>P: Tài khoản chỉ đọc
-  P->>D: BEGIN READ ONLY; SET LOCAL statement_timeout
+  P->>D: BEGIN READ ONLY, SET LOCAL statement_timeout
   P->>D: set_config('app.tenant_id', tenant khóa)
   P->>D: SELECT … (tối đa max-rows + 1)
   D-->>P: Dòng kết quả (pgaudit ghi READ)
@@ -4386,19 +4386,19 @@ Bố cục, trường, trạng thái và thông điệp chi tiết ở D03-06-PH
 |---|---|---|---|---|---|
 | UI-04-01 | Danh sách luồng | Mọi vai trò có `PERM-04-read` | Lọc, tìm theo tên, endpoint, nguồn, môi trường; đếm theo trạng thái; mở thiết kế, chạy thử, nhật ký, tạo luồng | 001 | Giữ: danh sách agent của Bus và thanh Project của Tooling |
 | UI-04-02 | Chi tiết luồng | Mọi vai trò có `PERM-04-read` | Tab Tổng quan, Sơ đồ, Route, Điểm kết nối, Thuộc tính, Mã nguồn, Phiên bản, Triển khai, Chạy thử, Giám sát, Lịch sử; tạm dừng, tiếp tục, gỡ | 002, 004, 006, 033, 043, 050…053, 083 | Giữ và gộp: chi tiết agent, chi tiết route (6 tab) |
-| UI-04-03 | Tạo luồng | IE | Chọn loại tài nguyên, điểm xuất phát (trống, khuôn mẫu, API, tệp), nhập thông tin | 003, 025 | Giữ: thêm project, thêm chương trình tích hợp |
+| UI-04-03 | Tạo luồng | IE | Chọn loại tài nguyên, điểm xuất phát (trống, khuôn mẫu, API, tệp), nhập thông tin | 003, 005, 025 | Giữ: thêm project, thêm chương trình tích hợp |
 | UI-04-04 | Trình thiết kế luồng | IE (sửa), mọi vai trò (xem) | Canvas, bảng thành phần, Inspector, thanh thực thể, YAML hai chiều, bảng Vấn đề, lưu, gửi duyệt | 010…017, 021…024, 026, 027, 040 | Giữ và thiết kế lại: vùng thiết kế, thanh Component, thanh Properties, tab Source của Tooling |
 | UI-04-05 | Cấu hình chặng mở rộng | IE | Cửa sổ ba cột Vào, Tham số, Ra; nhóm thuộc tính; chọn kết nối; ghim bản tin mẫu | 014, 016, 022 | Thiết kế lại: thanh Properties |
 | UI-04-06 | Trình soạn biểu thức | IE | Soạn, gợi ý, kiểm tra, xem trước biểu thức | 015 | Mới |
 | UI-04-07 | Trình ánh xạ dữ liệu | IE | Ba cột nguồn, ánh xạ, đích; hàm; chuyển mã PH-07; xem trước | 020 | Thiết kế lại: data mapping của Tooling |
 | UI-04-08 | Trình soạn Kamelet | IE | Định nghĩa tham số, template, kiểu dữ liệu | 018 | Mới (thay nhập JAR) |
 | UI-04-09 | Trình soạn Pipe | IE | Nguồn, các bước, đích tuyến tính | 019 | Mới |
-| UI-04-10 | Cấu hình cấp tệp, bean | IE | `routeConfiguration`, xử lý lỗi, bean, metadata | 021 | Mới |
+| UI-04-10 | Cấu hình cấp tệp, bean | IE | `routeConfiguration`, xử lý lỗi, bean, metadata | 021, 084 | Mới |
 | UI-04-11 | Chạy thử | IE | Nhập bản tin, mô phỏng đích, chạy, đọc kết quả theo chặng | 030, 033 | Mới (thay kiểm tra kết nối) |
 | UI-04-12 | Nhật ký chạy thử | IE, IA | Lọc, xem lại, so sánh hai lần chạy | 032 | Mới |
 | UI-04-13 | Ca kiểm thử | IE | Soạn ca, khẳng định, chạy bộ ca | 031 | Mới |
 | UI-04-14 | Hàng đợi duyệt và màn duyệt | IA | So sánh YAML và sơ đồ, bằng chứng, checklist, duyệt, yêu cầu sửa | 041, 043 | Mới |
-| UI-04-15 | Phát hành, triển khai, quay lui | IA, TA | Chọn môi trường, theo dõi đồng bộ GitOps, quay lui | 042, 044, 045 | Mới (thay nạp context XML) |
+| UI-04-15 | Phát hành, triển khai, quay lui | IA, TA | Chọn môi trường, theo dõi đồng bộ GitOps, quay lui | 042, 044, 045, 050, 051 | Mới (thay nạp context XML) |
 | UI-04-16 | So sánh phiên bản | Mọi vai trò có `PERM-04-read` | So sánh hai phiên bản bất kỳ | 043 | Nâng cấp: tab mã nguồn |
 | UI-04-17 | Danh mục thành phần | Mọi vai trò; PA quản lý chính sách | Duyệt, tìm, xem chi tiết thành phần, chính sách được phép | 080, 081 | Mới (thay quản lý dependency) |
 | UI-04-18 | Nhập luồng hệ cũ | IE, đội di trú | Tải XML, xem báo cáo chuyển đổi, gán kết nối, tạo luồng nháp | 082 | Mới |
