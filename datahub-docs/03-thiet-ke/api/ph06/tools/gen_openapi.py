@@ -34,6 +34,14 @@ NOTE = {
     "076": "Liên kết ký có hạn; hết hạn trả `410` (ERR-06-042). Tệp có thủy vân.",
     "012": "Gói nền cài với phiên bản `ACTIVE` không qua duyệt bốn mắt (cột người gửi bỏ trống), có đề nghị bổ sung cho FRS.",
     "052": "Bản nháp cấu hình sống sót; cần duyệt bốn mắt trước khi `ACTIVE` (BR-06-019).",
+    "121": "Trong `06.queue.reopen-hours` (24 giờ) và chưa có thao tác phụ thuộc; quá hạn ERR-06-053. Hoàn tác thay đổi bản ghi vàng của quyết định cũ rồi đưa mục về `ASSIGNED`.",
+    "122": "Thao tác chờ duyệt và thao tác hoàn tác được của một bản ghi vàng; dùng cho tab Thao tác.",
+    "123": "Khóa rồi không mở lại; thêm cặp sau đó tạo tập nhãn phiên bản mới. Ghi kiểm toán.",
+    "124": "Một lệnh nguyên tử (`SKIP LOCKED`); hết mục phù hợp trả `204`, không lỗi. Mục gán `ASSIGNED` giữ `06.queue.hold-minutes`.",
+    "125": "Bỏ cờ `restricted`, bản ghi `LOCKED` về `ACTIVE`; yêu cầu `RESTRICTION` giữ `COMPLETED`; phát EVT-06-02.",
+    "106": "Thân có `decision` (`ApprovalDecision`): `REJECT` chuyển job `AWAITING_CONFIRMATION` sang `CANCELLED`, không áp cặp nào.",
+    "118": "Bắt buộc `cause` (nguyên nhân đã điều tra, từ 20 ký tự), lưu ở `national_sync_state`, kiểm toán và đưa vào EVT-06-13.",
+    "045": "Lọc `partition`: `mine`, `unclaimed`, `overdue`, `pending-approval`.",
     "096": "Mỗi khóa theo miền ở FRS 8.2; ngoài miền ERR-06-047.",
 }
 ACT_NOTE = {"suspend": "Tạm ngừng", "resume": "Tiếp tục", "retire": "Ngừng", "approve": "Duyệt", "reject": "Từ chối"}
@@ -156,7 +164,7 @@ def build():
             rs[str(ok)]["headers"] = hdr
         for f in fl:
             if f.startswith("also:"):
-                rs[f[5:]] = {"description": "Thành công một phần hoặc chờ xử lý.", "content": okc}
+                rs[f[5:]] = {"description": "Không có mục phù hợp, không phải lỗi."} if f == "also:204" else {"description": "Thành công một phần hoặc chờ xử lý.", "content": okc}
         for st in sorted(stat):
             if st == 428:
                 rs["428"] = {"$ref": "#/components/responses/PreconditionRequired"}

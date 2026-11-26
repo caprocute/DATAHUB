@@ -22,7 +22,7 @@ Tính năng: TS-06-21 · Tra cứu, tra ID nguồn và tìm kiếm có che dữ 
     Khi `lookup` khóa không tồn tại.
     Và `lookup` bằng S-T90-NOPURPOSE.
     Và `lookup` bằng token không scope.
-    Thì bước 1 `404` ERR-06-050. Bước 2 `403` ERR-06-037. Bước 3 403-PQ. Không dòng `access_log` trả dữ liệu cho bước 2, 3.
+    Thì bước 1 `404` ERR-06-050. Bước 2 `403` ERR-06-037. Bước 3 ERR-00-403. Không dòng `access_log` trả dữ liệu cho bước 2, 3.
     # Hậu điều kiện: Không đổi.
 
   @TC-06-091 @P1 @Dương @Âm
@@ -32,8 +32,8 @@ Tính năng: TS-06-21 · Tra cứu, tra ID nguồn và tìm kiếm có che dữ 
     Biết bản ghi vàng Bình có xref `HT-YTE`/`YT-0001`.
     Khi `GET .../xrefs/HT-YTE/YT-0001`.
     Và `POST .../xrefs:batch-lookup` 100 cặp, 5 cặp không có.
-    Và `batch-lookup` 1.001 cặp.
-    Thì bước 1 `goldenId` đúng. Bước 2 95 kết quả, 5 `NOT_FOUND`. Bước 3 `400` ERR-06-003 (quá giới hạn lô).
+    Và `batch-lookup` 501 cặp (giới hạn `06.xref.batch-max` mặc định 500).
+    Thì bước 1 `goldenId` đúng. Bước 2 95 kết quả, 5 `NOT_FOUND`. Bước 3 `400` ERR-06-003 (quá giới hạn lô 500); đặt `06.xref.batch-max = 50` thì lô 51 cặp bị từ chối, lô 50 cặp nhận.
     # Hậu điều kiện: Không đổi.
 
   @TC-06-092 @P2 @Dương
@@ -54,7 +54,7 @@ Tính năng: TS-06-21 · Tra cứu, tra ID nguồn và tìm kiếm có che dữ 
     Khi tìm chỉ họ tên.
     Và tìm lần lượt 12 trang × 10 bản ghi khác nhau trong 10 phút.
     Và tìm bằng token thiếu `mdm:search`.
-    Thì bước 1 `422` ERR-06-040. Bước 2 từ bản ghi thứ 101 `403` ERR-06-038, ghi vết đặc biệt, cảnh báo quét bất thường. Bước 3 403-PQ.
+    Thì bước 1 `422` ERR-06-040. Bước 2 từ bản ghi thứ 101 `403` ERR-06-038, ghi vết đặc biệt, cảnh báo quét bất thường. Bước 3 ERR-00-403.
     # Hậu điều kiện: Một vết đặc biệt.
 
   @TC-06-094 @P1 @Dương @Bảo @mật

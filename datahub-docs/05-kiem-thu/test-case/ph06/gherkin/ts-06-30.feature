@@ -10,7 +10,7 @@ Tính năng: TS-06-30 · Phân quyền theo ma trận PERM-06 và bốn mắt
     Biết 10 vai trò PA, TA, TO, SO, DS, DA, DO, VW, AU cùng token máy.
     Khi chạy bảng tham số 12 × 10 gọi API đại diện (ví dụ `PERM-06-merge`: `POST …:merge`).
     Và với ô `○`, gọi trên đối tượng trong và ngoài tổ chức.
-    Thì Ô ● trả 2xx, ô — trả 403-PQ; ô ○ chỉ đối tượng thuộc tổ chức, ngoài tổ chức `403` ERR-06-028. DS không có `approve`; DA không có `update`.
+    Thì Ô ● trả 2xx, ô — trả ERR-00-403; ô ○ chỉ đối tượng thuộc tổ chức, ngoài tổ chức `403` ERR-06-028. DS không có `approve`; DA không có `update`.
     # Hậu điều kiện: Không đổi.
 
   @TC-06-127 @P1 @Âm @Bảo @mật
@@ -30,5 +30,5 @@ Tính năng: TS-06-30 · Phân quyền theo ma trận PERM-06 và bốn mắt
     Biết bốn token, mỗi token một scope.
     Khi mỗi token gọi API của scope khác.
     Và token `mdm:search` khi PH-09 chưa chấp thuận mục đích.
-    Thì gọi sai scope 403-PQ; `mdm:ingest` chỉ cho nguồn đã đăng ký (ERR-06-014); bước 2 `403` ERR-06-037 và không cấp được `mdm:search`.
+    Thì gọi sai scope ERR-00-403; `mdm:ingest` chỉ cho nguồn đã đăng ký (ERR-06-014); bước 2 `403` ERR-06-037 và không cấp được `mdm:search`.
     # Hậu điều kiện: Không đổi.

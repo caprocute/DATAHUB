@@ -153,7 +153,7 @@ G_MODEL = [
       ccomment={"system_code": "Mã HTTT ở PH-01 (không khóa ngoại, khác schema); HTTT phải ACTIVE khi đăng ký (ERR-06-012).",
                 "domains": "Mã domain ACTIVE được phép gửi; kiểm ở dịch vụ."}),
     T("source_priority_proposal",
-      "EN-06-04 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).",
+      "EN-06-04, EN-06-22 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).",
       ["domain_code varchar(32) NOT NULL", "entries jsonb NOT NULL", "approval_ref varchar(255) NOT NULL", "justification varchar(2000) NOT NULL",
        "status varchar(20) NOT NULL DEFAULT 'PENDING_APPROVAL'", "proposed_by varchar(64) NOT NULL", "decided_by varchar(64)",
        "decided_at timestamptz", "decision_comment varchar(2000)"],
@@ -184,7 +184,7 @@ G_MODEL = [
 # ---------------------------------------------------------------------------------------------
 G_INGEST = [
     T("candidate_file",
-      "FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.",
+      "EN-06-25 FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.",
       ["domain_code varchar(32) NOT NULL", "source_code varchar(32) NOT NULL", "file_name varchar(255) NOT NULL", "size_bytes bigint NOT NULL",
        "row_count integer", "object_ref varchar(512) NOT NULL", "sha256 char(64) NOT NULL", "column_mapping jsonb NOT NULL DEFAULT '{}'",
        "preview jsonb", "previewed_at timestamptz", "confirmed_by varchar(64)", "confirmed_at timestamptz", "job_id uuid", "expires_at timestamptz NOT NULL"],
@@ -196,7 +196,7 @@ G_INGEST = [
       idx=[f"CREATE INDEX ix_candidate_file_domain ON {S}.candidate_file (tenant_id, domain_code, created_at DESC);"],
       trig=[("immutable", ["domain_code", "source_code", "sha256"])]),
     T("source_record_head",
-      "FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.",
+      "EN-06-26 FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.",
       ["domain_code varchar(32) NOT NULL", "source_code varchar(32) NOT NULL", "source_key varchar(120) NOT NULL",
        "last_version bigint NOT NULL", "last_candidate_id uuid NOT NULL", "last_source_updated_at timestamptz NOT NULL",
        "deleted boolean NOT NULL DEFAULT false", "golden_id uuid"],
@@ -246,7 +246,7 @@ G_INGEST = [
 # ---------------------------------------------------------------------------------------------
 G_MATCH = [
     T("evaluation_report",
-      "FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.",
+      "EN-06-23 FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.",
       ["domain_code varchar(32) NOT NULL", "rule_set_version integer NOT NULL", "label_set_code varchar(63) NOT NULL", "pair_count integer NOT NULL",
        "precision_pct numeric(6,3) NOT NULL", "recall_pct numeric(6,3) NOT NULL", "verdict varchar(8) NOT NULL", "job_id uuid",
        "confusion jsonb NOT NULL DEFAULT '{}'", "evaluated_at timestamptz NOT NULL DEFAULT now()"],
@@ -310,7 +310,7 @@ G_MATCH = [
       ccomment={"confirmed_by": "DA xác nhận job vượt ngưỡng an toàn, khác người yêu cầu.",
                 "counts": "input, pairs, match, possible, noMatch, applied, skipped (FR-06-022)."}),
     T("job_schedule",
-      "FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.",
+      "EN-06-24 FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.",
       ["job_type varchar(24) NOT NULL", "cron varchar(64) NOT NULL", "enabled boolean NOT NULL DEFAULT true", "params jsonb NOT NULL DEFAULT '{}'",
        "max_duration_minutes integer NOT NULL DEFAULT 240", "next_run_at timestamptz", "last_run_at timestamptz", "last_job_id uuid"],
       [("uq_job_schedule_type", "UNIQUE (tenant_id, job_type)"),
@@ -319,7 +319,7 @@ G_MATCH = [
        chk("job_schedule", "cron", "cron ~ '^[0-9*/,-]+( [0-9*/,?LW#-]+){4,5}$'")],
       trig=[("immutable", ["job_type"])]),
     T("match_staging",
-      "FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_readonly, ghi kết quả qua dh-data, không ghi thẳng vào bản ghi vàng.",
+      "EN-06-27 FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_splink (chỉ SELECT match_staging, chỉ INSERT match_result), không ghi thẳng vào bản ghi vàng.",
       ["job_id uuid NOT NULL", "candidate_id uuid", "golden_id uuid", "source_version bigint", "fields jsonb NOT NULL",
        "block_keys varchar(72)[] NOT NULL DEFAULT '{}'", "exported_at timestamptz NOT NULL DEFAULT now()"],
       [("fk_match_staging_job", f"FOREIGN KEY (tenant_id, job_id) REFERENCES {S}.match_job (tenant_id, id) ON DELETE CASCADE"),
@@ -345,12 +345,13 @@ G_MATCH = [
     T("label_set",
       "EN-06-15 Tập nhãn kiểm chứng (FR-06-025): EVALUATION để đo precision, recall; TRAINING để huấn luyện Splink. Nghiệm thu cần ≥ 10.000 cặp (NFR-06-008).",
       ["label_set_code varchar(63) NOT NULL", "domain_code varchar(32) NOT NULL", "purpose varchar(16) NOT NULL", "description varchar(2000)",
-       "pair_count integer NOT NULL DEFAULT 0"],
+       "pair_count integer NOT NULL DEFAULT 0", "locked boolean NOT NULL DEFAULT false", "locked_at timestamptz", "locked_by varchar(64)"],
       [("uq_label_set_code", "UNIQUE (tenant_id, label_set_code)"),
        ("fk_label_set_domain", f"FOREIGN KEY (tenant_id, domain_code) REFERENCES {S}.mdm_domain (tenant_id, domain_code)"),
        chk("label_set", "code", f"label_set_code ~ '{CODE_RE}'"),
        chk("label_set", "purpose", f"purpose IN {E('LabelSetPurpose')}"),
-       chk("label_set", "count", "pair_count >= 0")],
+       chk("label_set", "count", "pair_count >= 0"),
+       chk("label_set", "locked", "locked = (locked_at IS NOT NULL AND locked_by IS NOT NULL)")],
       tid=True, trig=[("immutable", ["label_set_code", "domain_code", "purpose"])]),
     T("label_pair",
       "EN-06-15 Cặp có nhãn MATCH, NO_MATCH của tập nhãn (FR-06-025, 030 addToLabelSet). Hai đầu theo thứ tự chuẩn left_id < right_id; ảnh chụp thuộc tính hai bên mã hóa để đánh giá lặp lại ổn định.",
@@ -376,7 +377,8 @@ G_STEWARD = [
        "source_codes varchar(32)[] NOT NULL DEFAULT '{}'", "assignee varchar(64)", "claimed_at timestamptz", "hold_until timestamptz",
        "due_at timestamptz NOT NULL", "escalated_at timestamptz", "defer_until timestamptz", "decision varchar(8)", "decision_reason varchar(2000)",
        "decided_by varchar(64)", "decided_at timestamptz", "survivor_id uuid", "approval_decision varchar(8)", "approved_by varchar(64)",
-       "approved_at timestamptz", "approval_comment varchar(2000)", "operation_id uuid", "cancel_reason varchar(500)"],
+       "approved_at timestamptz", "approval_comment varchar(2000)", "operation_id uuid", "cancel_reason varchar(500)",
+       "reopen_count smallint NOT NULL DEFAULT 0", "reopened_at timestamptz", "reopened_by varchar(64)", "reopen_reason varchar(2000)", "decision_history jsonb NOT NULL DEFAULT '[]'"],
       [("fk_steward_item_domain", f"FOREIGN KEY (tenant_id, domain_code) REFERENCES {S}.mdm_domain (tenant_id, domain_code)"),
        chk("steward_item", "reason", f"reason IN {E('QueueReason')}"),
        chk("steward_item", "status", f"status IN {E('QueueItemStatus')}"),
@@ -408,7 +410,7 @@ G_GOLDEN = [
       "EN-06-01 Bản ghi vàng (FR-06-034…042). goldenId là id (UUIDv7); version bắt đầu 1 và tăng mỗi thay đổi, là số phiên bản trong lịch sử. Không xóa (BR-06-007): chỉ MERGED hoặc RETIRED. Cột display_name, name_norm, birth_year, admin_unit_code là bản sao có chỉ mục để tìm nhanh bằng pg_trgm.",
       ["domain_code varchar(32) NOT NULL", "model_version integer NOT NULL", "status varchar(8) NOT NULL DEFAULT 'ACTIVE'", "merged_into uuid",
        "confidence numeric(5,4)", "display_name varchar(255)", "name_norm varchar(255)", "birth_year smallint", "admin_unit_code varchar(16)",
-       "link_count integer NOT NULL DEFAULT 0", "lock_reason varchar(500)", "retire_reason varchar(16)", "retire_note varchar(2000)",
+       "link_count integer NOT NULL DEFAULT 0", "block_keys varchar(72)[] NOT NULL DEFAULT '{}'", "restricted boolean NOT NULL DEFAULT false", "lock_reason varchar(500)", "retire_reason varchar(16)", "retire_note varchar(2000)",
        "retired_at timestamptz", "retired_by varchar(64)", "national_synced_at timestamptz"],
       [("fk_golden_record_domain", f"FOREIGN KEY (tenant_id, domain_code) REFERENCES {S}.mdm_domain (tenant_id, domain_code)"),
        ("fk_golden_record_merged", f"FOREIGN KEY (tenant_id, merged_into) REFERENCES {S}.golden_record (tenant_id, id)"),
@@ -417,10 +419,12 @@ G_GOLDEN = [
        chk("golden_record", "retired", "(status = 'RETIRED') = (retire_reason IS NOT NULL)"),
        chk("golden_record", "retire", f"retire_reason IS NULL OR retire_reason IN {E('RetireReason')}"),
        chk("golden_record", "locked", "status <> 'LOCKED' OR lock_reason IS NOT NULL"),
+       chk("golden_record", "restricted", "NOT restricted OR status = 'LOCKED'"),
        chk("golden_record", "confidence", "confidence IS NULL OR confidence BETWEEN 0 AND 1"),
        chk("golden_record", "birth", "birth_year IS NULL OR birth_year BETWEEN 1850 AND 2100")],
       idx=[f"CREATE INDEX ix_golden_record_domain ON {S}.golden_record (tenant_id, domain_code, status);",
            f"CREATE INDEX ix_golden_record_name_trgm ON {S}.golden_record USING gin (domain_code, name_norm gin_trgm_ops);",
+           f"CREATE INDEX ix_golden_record_blocks ON {S}.golden_record USING gin (block_keys);",
            f"CREATE INDEX ix_golden_record_area ON {S}.golden_record (tenant_id, domain_code, admin_unit_code, birth_year) WHERE status = 'ACTIVE';",
            f"CREATE INDEX ix_golden_record_merged ON {S}.golden_record (tenant_id, merged_into) WHERE merged_into IS NOT NULL;"],
       tid=True, trig=[("immutable", ["domain_code"])], version_start=1,
@@ -449,7 +453,7 @@ G_GOLDEN = [
                 "manual_valid_until": "Sửa tay có hạn ≤ 90 ngày, mặc định 30 (FR-06-036).",
                 "national_authority": "Thuộc tính thẩm quyền quốc gia: không sửa tay (BR-06-025)."}),
     T("golden_identifier",
-      "EN-06-02 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.",
+      "EN-06-02, EN-06-28 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.",
       ["golden_id uuid NOT NULL", "domain_code varchar(32) NOT NULL", "identifier_type varchar(16) NOT NULL", "value_hash bytea NOT NULL",
        "value_enc bytea NOT NULL", "value_kid varchar(64) NOT NULL", "active boolean NOT NULL DEFAULT true"],
       [("fk_golden_identifier_golden", f"FOREIGN KEY (tenant_id, golden_id) REFERENCES {S}.golden_record (tenant_id, id)"),
@@ -589,7 +593,7 @@ G_SERVE = [
       tid=True, trig=[("immutable", ["domain_code", "filter", "fields", "format", "purpose_code", "requested_by"])],
       ccomment={"expires_at": "ready_at + 24 giờ (BR-06-027); sau đó EXPIRED, ERR-06-042."}),
     T("national_sync_state",
-      "FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.",
+      "EN-06-29 FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.",
       ["domain_code varchar(32) NOT NULL", "state varchar(8) NOT NULL DEFAULT 'RUNNING'", "paused_reason varchar(2000)", "paused_at timestamptz",
        "paused_by varchar(64)", "last_run_id uuid", "last_ratio numeric(6,5)"],
       [("uq_national_sync_state_domain", "UNIQUE (tenant_id, domain_code)"),
@@ -611,7 +615,7 @@ G_SERVE = [
        chk("national_sync_run", "ratio", "ratio IS NULL OR ratio BETWEEN 0 AND 1")],
       idx=[f"CREATE INDEX ix_national_sync_run_domain ON {S}.national_sync_run (tenant_id, domain_code, started_at DESC);"], tid=True),
     T("national_discrepancy",
-      "FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).",
+      "EN-06-30 FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).",
       ["run_id uuid NOT NULL", "domain_code varchar(32) NOT NULL", "golden_id uuid NOT NULL", "attribute_name varchar(63) NOT NULL",
        "severity varchar(8) NOT NULL", "status varchar(24) NOT NULL DEFAULT 'OPEN'", "local_enc bytea", "national_enc bytea", "value_kid varchar(64)",
        "local_hash bytea", "national_hash bytea", "resolution varchar(24)", "resolved_by varchar(64)", "resolved_at timestamptz", "resolve_reason varchar(2000)"],
@@ -627,7 +631,7 @@ G_SERVE = [
            f"CREATE INDEX ix_national_discrepancy_run ON {S}.national_discrepancy (tenant_id, run_id, severity);"],
       trig=[("immutable", ["run_id", "golden_id", "attribute_name"])]),
     T("source_correction",
-      "BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.",
+      "EN-06-31 BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.",
       ["domain_code varchar(32) NOT NULL", "golden_id uuid NOT NULL", "attribute_name varchar(63) NOT NULL", "source_code varchar(32) NOT NULL",
        "source_key varchar(120)", "origin varchar(24) NOT NULL", "origin_ref uuid", "due_at timestamptz NOT NULL", "closed_at timestamptz",
        "closed_by varchar(64)", "close_note varchar(2000)"],
@@ -647,7 +651,8 @@ G_OPS = [
       ["request_type varchar(16) NOT NULL", "status varchar(24) NOT NULL DEFAULT 'RECEIVED'", "identifier_type varchar(16) NOT NULL",
        "subject_enc bytea NOT NULL", "subject_kid varchar(64) NOT NULL", "subject_hash bytea NOT NULL", "verification_ref varchar(255) NOT NULL",
        "details_enc bytea", "channel varchar(32) NOT NULL", "received_at timestamptz NOT NULL", "due_at timestamptz NOT NULL", "golden_id uuid",
-       "forwarded_source_code varchar(32)", "handled_by varchar(64)", "completed_at timestamptz", "result_ref varchar(512)", "reject_reason varchar(2000)"],
+       "forwarded_source_code varchar(32)", "handled_by varchar(64)", "completed_at timestamptz", "result_ref varchar(512)", "reject_reason varchar(2000)",
+       "lifted_at timestamptz", "lifted_by varchar(64)", "lift_reason varchar(2000)"],
       [chk("subject_request", "type", f"request_type IN {E('DsrType')}"),
        chk("subject_request", "status", f"status IN {E('DsrStatus')}"),
        chk("subject_request", "idtype", f"identifier_type IN {E('IdentifierType')}"),
@@ -655,6 +660,7 @@ G_OPS = [
        chk("subject_request", "due", "due_at >= received_at"),
        chk("subject_request", "completed", "status NOT IN ('COMPLETED', 'REJECTED') OR completed_at IS NOT NULL"),
        chk("subject_request", "rejected", "status <> 'REJECTED' OR reject_reason IS NOT NULL"),
+       chk("subject_request", "lifted", "(lifted_at IS NULL) = (lifted_by IS NULL) AND (lifted_at IS NULL) = (lift_reason IS NULL) AND (lifted_at IS NULL OR (request_type = 'RESTRICTION' AND status = 'COMPLETED' AND char_length(lift_reason) >= 20))"),
        chk("subject_request", "forward", "status <> 'FORWARDED_TO_SOURCE' OR forwarded_source_code IS NOT NULL")],
       idx=[f"CREATE INDEX ix_subject_request_status ON {S}.subject_request (tenant_id, status, due_at);",
            f"CREATE INDEX ix_subject_request_subject ON {S}.subject_request (tenant_id, subject_hash);"],
@@ -677,7 +683,7 @@ G_OPS = [
       ccomment={"gateway_request_id": "Mã yêu cầu của APISIX để đối chiếu số lượt (NFR-06-015).",
                 "criteria_hash": "HMAC tiêu chí tìm kiếm; không lưu tiêu chí rõ."}),
     T("processing_log",
-      "FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.",
+      "EN-06-32 FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.",
       ["logged_at timestamptz NOT NULL DEFAULT now()", "level varchar(5) NOT NULL", "component varchar(32) NOT NULL", "job_id uuid", "candidate_id uuid",
        "domain_code varchar(32)", "code varchar(16)", "message varchar(1000) NOT NULL", "details jsonb", "trace_id char(32)"],
       [chk("processing_log", "level", "level IN ('INFO', 'WARN', 'ERROR')"),
@@ -687,7 +693,7 @@ G_OPS = [
            f"CREATE INDEX ix_processing_log_level ON {S}.processing_log (tenant_id, level, logged_at DESC);"],
       part=("logged_at", "month", 3), pk=("id", "logged_at"), std=False, trig=[("append_only", [])]),
     T("retention_policy",
-      "FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.",
+      "EN-06-33 FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.",
       ["object_type varchar(24) NOT NULL", "retention_days integer NOT NULL", "action varchar(16) NOT NULL", "legal_hold boolean NOT NULL DEFAULT false",
        "hold_reason varchar(2000)", "last_purge_at timestamptz"],
       [("uq_retention_policy_type", "UNIQUE (tenant_id, object_type)"),
@@ -697,10 +703,10 @@ G_OPS = [
        chk("retention_policy", "hold", "NOT legal_hold OR hold_reason IS NOT NULL")],
       trig=[("immutable", ["object_type"])]),
     T("tenant_setting",
-      "FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.",
+      "EN-06-34 FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.",
       ["setting_key varchar(48) NOT NULL", "value jsonb NOT NULL"],
       [("uq_tenant_setting_key", "UNIQUE (tenant_id, setting_key)"),
-       chk("tenant_setting", "key", "setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days')")],
+       chk("tenant_setting", "key", "setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days', '06.mask.reveal-seconds', '06.ingest.max-file-mb', '06.ingest.max-rows', '06.batch.max-hours', '06.match.timeout-ms', '06.sync.reconcile-batch-size', '06.xref.batch-max', '06.queue.reopen-hours', '06.queue.reason-templates')")],
       trig=[("immutable", ["setting_key"])]),
 ]
 
@@ -773,6 +779,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph06_readonly') THEN
     CREATE ROLE ph06_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph06_splink') THEN
+    CREATE ROLE ph06_splink NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
 END
 $roles$;
 -- @rollback -- Không xóa vai trò khi rollback.
@@ -782,7 +791,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 CREATE SCHEMA IF NOT EXISTS ph06_mdm AUTHORIZATION ph06_owner;
 COMMENT ON SCHEMA ph06_mdm IS 'PH-06 Dữ liệu chủ (dh-data, package vn.datahub.data.mdm): domain, nguồn, ứng viên, đối sánh, hàng đợi, bản ghi vàng, liên kết chéo, lịch sử, nguồn gốc, đồng bộ quốc gia, yêu cầu chủ thể, nhật ký truy cập. Số định danh và giá trị SENSITIVE chỉ ở dạng mã hóa envelope và HMAC.';
-GRANT USAGE ON SCHEMA ph06_mdm TO ph06_app, ph06_readonly;
+GRANT USAGE ON SCHEMA ph06_mdm TO ph06_app, ph06_readonly, ph06_splink;
 -- @rollback DROP SCHEMA IF EXISTS ph06_mdm CASCADE;
 
 SET ROLE ph06_owner;
@@ -933,7 +942,8 @@ BEGIN
   FROM (VALUES ('06.queue.sla-days', '7'), ('06.queue.max-open', '500'), ('06.queue.escalate-after-days', '14'), ('06.queue.hold-minutes', '30'),
                ('06.match.auto-disable-on-fail', 'true'), ('06.batch.safety-ratio', '0.05'), ('06.undo.window-days', '90'),
                ('06.export.max-rows', '100000'), ('06.access.bulk-threshold', '100'), ('06.ingest.rate-per-source', '6000'),
-               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10')) AS s(k, v)
+               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10'),
+               ('06.mask.reveal-seconds', '60'), ('06.ingest.max-file-mb', '50'), ('06.ingest.max-rows', '200000'), ('06.batch.max-hours', '4'), ('06.match.timeout-ms', '800'), ('06.sync.reconcile-batch-size', '1000'), ('06.xref.batch-max', '500'), ('06.queue.reopen-hours', '24')) AS s(k, v)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph06_mdm.retention_policy (id, tenant_id, object_type, retention_days, action, created_by, updated_by)
   SELECT md5('ph06-retention:' || p_tenant || ':' || r.t)::uuid, p_tenant, r.t, r.d, r.a, 'system:seed', 'system:seed'
@@ -1042,6 +1052,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA ph06_mdm TO ph06_readonly;
 REVOKE SELECT ON ph06_mdm.access_log, ph06_mdm.golden_history, ph06_mdm.subject_request, ph06_mdm.golden_identifier FROM ph06_readonly;
 GRANT SELECT (id, tenant_id, accessed_at, actor, system_code, domain_code, golden_id, api_code, purpose_code, result_count, bulk_flag, trace_id)
   ON ph06_mdm.access_log TO ph06_readonly;
+-- Vai Job Splink (FR-06-022): chỉ đọc match_staging, chỉ thêm match_result; không đọc bảng nào khác.
+GRANT SELECT ON ph06_mdm.match_staging TO ph06_splink;
+GRANT INSERT ON ph06_mdm.match_result TO ph06_splink;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_ensure_partitions(regclass, date, integer) TO ph06_app;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_seed_tenant(text) TO ph06_app;
 -- @rollback -- Không thu hồi tự động.

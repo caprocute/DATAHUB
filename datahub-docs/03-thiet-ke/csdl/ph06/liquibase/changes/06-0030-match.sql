@@ -32,7 +32,7 @@ CREATE TABLE ph06_mdm.evaluation_report (
 CREATE INDEX ix_evaluation_report_rule ON ph06_mdm.evaluation_report (tenant_id, domain_code, rule_set_version, evaluated_at DESC);
 CREATE TRIGGER tg_evaluation_report_touch BEFORE UPDATE ON ph06_mdm.evaluation_report FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.evaluation_report');
-COMMENT ON TABLE ph06_mdm.evaluation_report IS 'FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.';
+COMMENT ON TABLE ph06_mdm.evaluation_report IS 'EN-06-23 FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.';
 COMMENT ON COLUMN ph06_mdm.evaluation_report.verdict IS 'PASSED chỉ khi ≥ 1.000 cặp, precision ≥ 99,9%, recall ≥ 98% (BR-06-021).';
 --rollback DROP TABLE IF EXISTS ph06_mdm.evaluation_report CASCADE;
 
@@ -197,7 +197,7 @@ CREATE TABLE ph06_mdm.job_schedule (
 CREATE TRIGGER tg_job_schedule_touch BEFORE UPDATE ON ph06_mdm.job_schedule FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_job_schedule_immutable BEFORE UPDATE ON ph06_mdm.job_schedule FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('job_type');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.job_schedule');
-COMMENT ON TABLE ph06_mdm.job_schedule IS 'FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.';
+COMMENT ON TABLE ph06_mdm.job_schedule IS 'EN-06-24 FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.job_schedule CASCADE;
 
 --changeset ph06:ph06-0250-match-staging
@@ -218,7 +218,7 @@ CREATE TABLE ph06_mdm.match_staging (
 );
 CREATE INDEX ix_match_staging_job ON ph06_mdm.match_staging (tenant_id, job_id);
 CALL ph06_mdm.p_enable_rls('ph06_mdm.match_staging');
-COMMENT ON TABLE ph06_mdm.match_staging IS 'FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_readonly, ghi kết quả qua dh-data, không ghi thẳng vào bản ghi vàng.';
+COMMENT ON TABLE ph06_mdm.match_staging IS 'EN-06-27 FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_splink (chỉ SELECT match_staging, chỉ INSERT match_result), không ghi thẳng vào bản ghi vàng.';
 COMMENT ON COLUMN ph06_mdm.match_staging.fields IS 'Thuộc tính chuẩn hóa; trường SENSITIVE chỉ dạng HMAC, không bao giờ bản rõ (BR-06-016).';
 --rollback DROP TABLE IF EXISTS ph06_mdm.match_staging CASCADE;
 
@@ -267,6 +267,9 @@ CREATE TABLE ph06_mdm.label_set (
   purpose        varchar(16) NOT NULL,
   description    varchar(2000),
   pair_count     integer NOT NULL DEFAULT 0,
+  locked         boolean NOT NULL DEFAULT false,
+  locked_at      timestamptz,
+  locked_by      varchar(64),
   created_at     timestamptz NOT NULL DEFAULT now(),
   created_by     varchar(64) NOT NULL,
   updated_at     timestamptz NOT NULL DEFAULT now(),
@@ -279,7 +282,8 @@ CREATE TABLE ph06_mdm.label_set (
   CONSTRAINT fk_label_set_domain FOREIGN KEY (tenant_id, domain_code) REFERENCES ph06_mdm.mdm_domain (tenant_id, domain_code),
   CONSTRAINT ck_label_set_code CHECK (label_set_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_label_set_purpose CHECK (purpose IN ('EVALUATION', 'TRAINING')),
-  CONSTRAINT ck_label_set_count CHECK (pair_count >= 0)
+  CONSTRAINT ck_label_set_count CHECK (pair_count >= 0),
+  CONSTRAINT ck_label_set_locked CHECK (locked = (locked_at IS NOT NULL AND locked_by IS NOT NULL))
 );
 CREATE TRIGGER tg_label_set_touch BEFORE UPDATE ON ph06_mdm.label_set FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_label_set_immutable BEFORE UPDATE ON ph06_mdm.label_set FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('label_set_code', 'domain_code', 'purpose');

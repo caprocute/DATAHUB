@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH06
 ten: Thiết kế giao diện màn hình phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, người quản lý dữ liệu, kiểm thử viên, hội đồng thẩm định
@@ -313,47 +313,50 @@ Màu nhãn nguồn dùng lại `color-source-*` với ánh xạ đề nghị: `N
 
 ### 5.3. Thông điệp lỗi ERR-06 sang câu hiển thị
 
-Bảng dưới lấy nguyên câu của FRS §9.2 và bổ sung câu cho các mã FRS chưa có (đánh dấu "mới", ghi ở Phụ lục C). Vị trí là nơi câu xuất hiện; mọi lỗi kèm mã và nút "Sao chép mã truy vết" (FR-00-080). Lỗi `ERR-06-101…114` không trả cho người dùng; chúng hiện ở UI-06-12, 14, 18 và Thông báo của người vận hành.
+Bảng dưới lấy nguyên câu của FRS §9.2 (bản 0.2 đã đủ câu cho mọi mã trả cho người dùng, kể cả ERR-06-051…053). Vị trí là nơi câu xuất hiện; mọi lỗi kèm mã và nút "Sao chép mã truy vết" (FR-00-080). Lỗi `ERR-06-101…114` không trả cho người dùng; chúng hiện ở UI-06-12, 14, 18 và Thông báo của người vận hành.
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
-| ERR-06-001 | "Không tìm thấy bản ghi vàng {id}." (410: "Bản ghi vàng {id} đã ngừng: {lý do}.") — mới | `ST-08` UI-06-03 |
-| ERR-06-004 | "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." — mới | `CMP-ConflictDialog` (`ST-13`) |
+| ERR-06-001 | "Không tìm thấy bản ghi vàng {id}." (410: "Bản ghi vàng {id} đã ngừng: {lý do}.") | `ST-08` UI-06-03 |
+| ERR-06-004 | "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." | `CMP-ConflictDialog` (`ST-13`) |
 | ERR-06-005 | "Anh/chị là người đề nghị nên không được tự duyệt." | Hộp cảnh báo trên nút Duyệt |
 | ERR-06-006 | "Bản ghi {id} đang ở trạng thái {trạng thái}." | Băng cảnh báo trên màn |
 | ERR-06-007 | "Nhập lý do (tối thiểu 20 ký tự)." | Dưới ô lý do |
-| ERR-06-009 | "Mô hình cần ít nhất một khóa định danh và một tổ hợp đối sánh." — mới | Băng đầu UI-06-07 |
+| ERR-06-009 | "Mô hình cần ít nhất một khóa định danh và một tổ hợp đối sánh." | Băng đầu UI-06-07 |
 | ERR-06-010 | "Thuộc tính {tên} là dữ liệu cá nhân nhưng chưa có phân loại được PH-09 xác nhận." | Dòng thuộc tính, UI-06-07 |
-| ERR-06-011 | "Domain còn {n} bản ghi vàng hoạt động nên chưa ngừng được." — mới | Hộp thoại ngừng domain |
+| ERR-06-011 | "Domain còn {n} bản ghi vàng hoạt động nên chưa ngừng được." | Hộp thoại ngừng domain |
 | ERR-06-013 | "Nhập số, ngày văn bản phê duyệt thứ tự ưu tiên nguồn." | Dưới ô căn cứ, UI-06-08 |
 | ERR-06-014 | "Hệ thống {mã} chưa được đăng ký làm nguồn cho domain {domain}." | Phản hồi API; UI-06-08 hiển thị khi đăng ký |
 | ERR-06-017 | "Bản ghi không đúng mô hình {domain} phiên bản {n}: {danh sách trường}." | Báo cáo lỗi, UI-06-11 |
-| ERR-06-018 | "Tệp vượt giới hạn {n} dòng hoặc {m} MB." — mới | Vùng thả tệp, UI-06-11 |
-| ERR-06-019 | "Tệp có công thức hoặc macro nên không nhập được." — mới | Báo cáo lỗi nhập tệp |
+| ERR-06-018 | "Tệp vượt giới hạn {n} dòng hoặc {m} MB." | Vùng thả tệp, UI-06-11 |
+| ERR-06-019 | "Tệp có công thức hoặc macro nên không nhập được." | Báo cáo lỗi nhập tệp |
 | ERR-06-023 | "Ngưỡng tự hợp nhất phải từ 0,90 trở lên và cao hơn ngưỡng xem xét ít nhất 0,10." | Dưới thanh trượt, UI-06-09 |
 | ERR-06-024 | "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." | Hộp cảnh báo đầu UI-06-09 |
-| ERR-06-025 | "Đã có job {loại} đang chạy cho {domain}." — mới | Thông báo nổi, UI-06-12 |
-| ERR-06-026 | "Tập nhãn còn {n} cặp, cần ít nhất {m} để đánh giá." — mới | Dưới nút Đánh giá, UI-06-13 |
+| ERR-06-025 | "Đã có job {loại} đang chạy cho {domain}." | Thông báo nổi, UI-06-12 |
+| ERR-06-026 | "Tập nhãn còn {n} cặp, cần ít nhất {m} để đánh giá." | Dưới nút Đánh giá, UI-06-13 |
 | ERR-06-027 | "Mục này vừa được {người} nhận. Hệ thống chuyển anh/chị sang mục kế tiếp." | Thông báo nổi, UI-06-05 |
 | ERR-06-029 | "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn." | Chú thích cạnh nút bị vô hiệu |
 | ERR-06-030 | "Dữ liệu của cặp đã thay đổi. Xem lại trước khi quyết định." | Băng cảnh báo, UI-06-05 |
 | ERR-06-031 | "Bản ghi vàng {id} đang có thao tác chờ duyệt." | Băng cảnh báo, UI-06-03 |
 | ERR-06-032 | "Mỗi bản ghi nguồn phải thuộc đúng một nhóm sau khi tách." | Đầu bước phân bổ, UI-06-06 |
 | ERR-06-033 | "Có {n} thao tác sau phụ thuộc vào thao tác này. Xem danh sách và xác nhận để hoàn tác cả chuỗi." | Hộp thoại hoàn tác |
-| ERR-06-034 | "Đã quá {n} ngày, thao tác hoàn tác cần người duyệt dữ liệu chấp thuận." — mới | Hộp thoại hoàn tác |
+| ERR-06-034 | "Đã quá {n} ngày, thao tác hoàn tác cần người duyệt dữ liệu chấp thuận." | Hộp thoại hoàn tác |
 | ERR-06-035 | "Thuộc tính {tên} chỉ được sửa tại CSDL quốc gia. Hướng dẫn công dân liên hệ cơ quan đăng ký." | Hộp thoại sửa; UI-06-14 |
-| ERR-06-036 | "Bản ghi còn {n} liên kết hiệu lực nên chưa ngừng được." — mới | Hộp thoại ngừng |
-| ERR-06-037 | "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này." — mới | `ST-07` / băng đầu trang |
+| ERR-06-036 | "Bản ghi còn {n} liên kết hiệu lực nên chưa ngừng được." | Hộp thoại ngừng |
+| ERR-06-037 | "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này." | `ST-07` / băng đầu trang |
 | ERR-06-038 | "Anh/chị đã xem quá {n} bản ghi trong {phút} phút. Truy cập hàng loạt cần phê duyệt." | Trang kết quả tìm kiếm |
 | ERR-06-039 | "Chưa ghi được nhật ký truy cập nên không hiển thị dữ liệu. Thử lại sau ít phút." | Thay nội dung chi tiết |
 | ERR-06-040 | "Nhập thêm tiêu chí: họ tên cần đi kèm ngày sinh, năm sinh hoặc xã." | Dưới ô tìm, UI-06-02 |
-| ERR-06-041 | "Số bản ghi {n} vượt giới hạn {m} một lần xuất. Thu hẹp bộ lọc." — mới | Dưới ô bộ lọc, UI-06-15 |
-| ERR-06-042 | "Tệp xuất đã hết hạn tải. Gửi đề nghị mới." — mới | Dòng đề nghị, UI-06-15 |
-| ERR-06-043 | "Hệ thống {mã} chưa có mục đích khai thác được chấp thuận nên chưa đăng ký nhận cập nhật được." — mới | Dưới ô mục đích, UI-06-15 |
+| ERR-06-041 | "Số bản ghi {n} vượt giới hạn {m} một lần xuất. Thu hẹp bộ lọc." | Dưới ô bộ lọc, UI-06-15 |
+| ERR-06-042 | "Tệp xuất đã hết hạn tải. Gửi đề nghị mới." | Dòng đề nghị, UI-06-15 |
+| ERR-06-043 | "Hệ thống {mã} chưa có mục đích khai thác được chấp thuận nên chưa đăng ký nhận cập nhật được." | Dưới ô mục đích, UI-06-15 |
 | ERR-06-044 | "Đồng bộ quốc gia đang tạm dừng do lệch vượt ngưỡng." | Băng đỏ, UI-06-14 |
-| ERR-06-046 | "Chưa xác minh danh tính chủ thể nên chưa tiếp nhận được yêu cầu." — mới | Dưới ô xác minh, UI-06-16 |
-| ERR-06-047 | "Giá trị ngoài miền cho phép {min}…{max}." — mới | Dưới ô tham số, UI-06-17 |
-| ERR-06-049 | "Thời hạn lưu giữ thấp hơn mức tối thiểu {n} ngày." — mới | Dưới ô lưu giữ, UI-06-17 |
+| ERR-06-046 | "Chưa xác minh danh tính chủ thể nên chưa tiếp nhận được yêu cầu." | Dưới ô xác minh, UI-06-16 |
+| ERR-06-047 | "Giá trị ngoài miền cho phép {min}…{max}." | Dưới ô tham số, UI-06-17 |
+| ERR-06-049 | "Thời hạn lưu giữ thấp hơn mức tối thiểu {n} ngày." | Dưới ô lưu giữ, UI-06-17 |
+| ERR-06-051 | "Cặp nhãn thứ {n} không hợp lệ: {lý do}." | Báo cáo nhập cặp, UI-06-13 |
+| ERR-06-052 | "Số CMND 9 chữ số chỉ dùng để so sánh, không dùng làm khóa xác định." | Dòng khóa, UI-06-07 |
+| ERR-06-053 | "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác." | Hộp thoại sửa quyết định, UI-06-05 |
 | ERR-06-107 | "Đồng bộ tự động đã tạm dừng: tỷ lệ lệch {x}% vượt 5%. Điều tra trước khi tiếp tục." | Băng đỏ, UI-06-14, UI-06-01 |
 | ERR-06-112 | "Phát hiện {n} bản ghi vàng cùng số định danh. Cần xử lý ngay." | Băng đỏ, UI-06-01 |
 
@@ -596,7 +599,7 @@ Thứ tự focus: băng cảnh báo, bộ lọc, thẻ trái sang phải, biểu
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/{ma-domain}/ban-ghi/{id}` (tab con `/nguon-lien-ket`, `/nguon-goc`, `/lich-su`, `/thao-tac`; `thuoc-tinh`, `phien-ban`, `so-sanh`); PTN-02 Chi tiết.
 
-**API.** API-06-056 (`GET …/golden-records/{goldenId}`, `ETag`); API-06-065 (lineage); API-06-066, 067 (xref, gỡ); API-06-063, 064 (lịch sử); API-06-057 (sửa tay); API-06-060, 061 (hoàn tác, duyệt); API-06-062 (ngừng, khôi phục).
+**API.** API-06-056 (`GET …/golden-records/{goldenId}`, `ETag`); API-06-065 (lineage); API-06-066, 067 (xref, gỡ); API-06-063, 064 (lịch sử); API-06-057 (sửa tay); API-06-060, 061 (hoàn tác, duyệt); API-06-062 (ngừng, khôi phục); API-06-122 (`GET …/golden-records/{goldenId}/operations`, danh sách tab Thao tác).
 
 **Điều hướng vào.** Từ UI-06-02, UI-06-05, UI-06-06, UI-06-14, UI-06-16; liên kết "Mở bản ghi sống sót" khi `MERGED`.
 
@@ -685,7 +688,7 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 |---|---|---|
 | Nguồn liên kết | Bảng xref: nguồn, khóa nguồn che một phần, `XrefStatus`, cách khớp (`MatchMethod`), điểm, ngày liên kết, người xác nhận | "Gỡ liên kết…" (`PERM-06-update`): hộp thoại chọn `RelinkMode` (`NEW_GOLDEN` tạo bản ghi vàng mới, `REMATCH` đối sánh lại) và lý do ≥ 20 ký tự; liên kết do người xác nhận hiện nhãn "đã xác nhận bởi người" (BR-06-023) |
 | Lịch sử | `CMP-VersionTimeline` phiên bản, loại thay đổi `GoldenChangeType`, người, thời điểm, tóm tắt thuộc tính đổi | Chọn hai phiên bản để "So sánh" (`CMP-DiffViewer`, ô đổi dùng `color-diff-changed`, thêm `color-diff-added`, bớt `color-diff-removed`); không có nút xóa phiên bản |
-| Thao tác | Thao tác `golden_operation` chờ duyệt và hoàn tác được: loại, người đề nghị, trạng thái `OperationStatus`, hạn hoàn tác | "Hoàn tác", "Duyệt", "Từ chối" (DA khác người đề nghị) bằng `CMP-ApprovalPanel` |
+| Thao tác | Thao tác `golden_operation` chờ duyệt và hoàn tác được, lấy từ API-06-122 (lọc `status`, `changeType`, `undoable`): loại, người đề nghị, trạng thái `OperationStatus`, hạn hoàn tác | "Hoàn tác", "Duyệt", "Từ chối" (DA khác người đề nghị) bằng `CMP-ApprovalPanel` |
 
 : UI-06-03 Các tab Nguồn liên kết, Lịch sử, Thao tác
 
@@ -753,13 +756,13 @@ Biến thể thứ hai là tab "Nguồn gốc" mở rộng: danh sách thuộc t
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/hang-doi` (`domain`, `ly-do`, `rui-ro`, `trang-thai`, `phan-vung`, `sap-xep`); PTN-10 Hộp việc và duyệt (mật độ gọn).
 
-**API.** API-06-045 (`GET /stewardship/items`); API-06-047 (`:claim`, `:release`, `:assign`); API-06-050 (thống kê).
+**API.** API-06-045 (`GET /stewardship/items`, lọc `partition`); API-06-047 (`:claim`, `:release`, `:assign`); API-06-124 (`POST /stewardship/items:claim-next`, "Nhận việc tiếp theo"); API-06-050 (thống kê).
 
 **Điều hướng vào.** Tab "Hàng đợi", thẻ ở UI-06-01, thông báo "Việc của tôi".
 
 **Thành phần chính.** Bốn thẻ chỉ số, phân vùng, bộ lọc, bảng mục, thao tác nhận và phân công (mục 10.1).
 
-**Hành động.** "Nhận việc tiếp theo" (mục ưu tiên cao nhất chưa nhận); nhận mục đã chọn; trả lại; phân công (DA); mở so sánh; lọc, sắp xếp.
+**Hành động.** "Nhận việc tiếp theo" (API-06-124: mục ưu tiên cao nhất chưa nhận, một lệnh nguyên tử; hết mục thì `204` và màn hiện trạng thái rỗng); nhận mục đã chọn; "Mở lại" mục `RESOLVED` trong hạn (API-06-121); trả lại; phân công (DA); mở so sánh; lọc, sắp xếp.
 
 **Trạng thái.** Đang tải; rỗng "Không còn mục nào cần xử lý"; không kết quả; mục vừa bị người khác nhận; quá tải; không quyền.
 
@@ -786,6 +789,8 @@ Biến thể thứ hai là tab "Nguồn gốc" mở rộng: danh sách thuộc t
 | 3 | Bộ lọc | `CMP-FilterBar` | Domain, `QueueReason`, `RiskLevel`, khoảng ngày, người nhận (DA) |
 | 4 | Bảng mục | `CMP-DataTable` gọn | Cột dưới; phím `J`, `K` đổi dòng, `Enter` mở UI-06-05, `N` nhận mục tiếp theo |
 | 5 | Thanh hàng loạt | `CMP-BulkActionBar` | "Nhận" (DS), "Phân công…" (DA, `CMP-Select` người xử lý), "Trả lại" |
+| 6 | Nút "Nhận việc tiếp theo" | `CMP-Button` chính | Gọi API-06-124 theo bộ lọc đang chọn; trả `204` thì hiện "Không còn mục nào cần xử lý"; hai người bấm cùng lúc nhận hai mục khác nhau |
+| 7 | Nút "Mở lại" | `CMP-Button` phụ ở dòng `RESOLVED` | Chỉ hiện cho người đã quyết hoặc DA trong `06.queue.reopen-hours` (24 giờ); mở hộp thoại ở UI-06-05 |
 
 : UI-06-04 Hàng đợi, thành phần
 
@@ -830,7 +835,7 @@ Bàn phím: `J`, `K`, `Enter`, `N`, `Space` chọn dòng, `?` mở `CMP-Shortcut
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/hang-doi/{id}` (`?tiep=1`); PTN-10, vùng chi tiết toàn trang.
 
-**API.** API-06-046 (`GET /stewardship/items/{itemId}`); API-06-047 (`:claim`, `:release`); API-06-048 (`:decide`); API-06-049 (`:approve`, `:reject`).
+**API.** API-06-046 (`GET /stewardship/items/{itemId}`); API-06-047 (`:claim`, `:release`); API-06-048 (`:decide`); API-06-049 (`:approve`, `:reject`); API-06-121 (`:reopen`, sửa quyết định); API-06-124 (`?tiep=1` nhận mục kế tiếp).
 
 **Điều hướng vào.** Từ UI-06-04 (Enter hoặc "Nhận việc tiếp theo"); liên kết "Mở bản ghi" sang UI-06-03.
 
@@ -890,7 +895,8 @@ Màn dùng khung toàn trang (không Drawer), ba vùng: thanh điểm tổng (ca
 | "Cùng một thực thể" (`MATCH`) | Nút xanh `color-success`. Vô hiệu khi số định danh hai bên khác nhau: chú thích bằng chữ cạnh nút "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn." (ERR-06-029, BR-06-006). Rủi ro cao (BR-06-019): sau bấm, hộp xác nhận "Hợp nhất này cần người duyệt dữ liệu chấp thuận" rồi mục chuyển `PENDING_APPROVAL` |
 | "Khác nhau" (`NO_MATCH`) | Ghi `negativeLink` để cặp không bị đề xuất lại (BR-06-023); hộp xác nhận một dòng |
 | "Hoãn" (`DEFER`) | Chọn lý do hoãn và số ngày giữ (mặc định 3); mục sang `DEFERRED` |
-| Sau quyết định | Thông báo `ST-10` rồi tự chuyển mục kế tiếp của tôi; hết mục thì về UI-06-04 |
+| Sau quyết định | Thông báo `ST-10` rồi tự chuyển mục kế tiếp của tôi (API-06-124); hết mục thì về UI-06-04 |
+| "Sửa quyết định" (mục `RESOLVED`) | Hộp thoại `CMP-ReasonDialog` gọi API-06-121 `:reopen` kèm lý do ≥ 20 ký tự và `If-Match`; thành công đưa mục về `ASSIGNED` để quyết định lại. Quá hạn hoặc đã có thao tác phụ thuộc: "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác." (ERR-06-053) kèm liên kết tab Thao tác |
 | Chế độ duyệt (DA) | Khi `PENDING_APPROVAL`, thanh quyết định đổi thành "Duyệt", "Từ chối" kèm ô lý do; nút "Duyệt" vô hiệu cho người đã quyết: "Anh/chị là người đề nghị nên không được tự duyệt." (ERR-06-005) |
 
 : UI-06-05 Hành vi thanh quyết định
@@ -1057,7 +1063,7 @@ Biến thể thứ hai là bước phân bổ của tách: nhóm 1 ở lại b�
 |---|---|---|---|
 | 1 | Cây domain, phiên bản | `CMP-TreeView` | Domain với `DomainStatus`; con là phiên bản với `VersionStatus` |
 | 2 | Bảng thuộc tính | `CMP-EditableTable` (chỉ bản nháp) | Mã, nhãn, kiểu, bắt buộc, khóa, phân loại, chuẩn hóa; thuộc tính thêm, đổi, bỏ so với phiên bản `ACTIVE` có nhãn "+ Mới", "~ Đổi", "− Bỏ" |
-| 3 | Tab khóa định danh | `CMP-Form` | `IdentifierType`, thuộc tính khóa, `deterministic`, kiểm tra định dạng; "Thử" gọi API-06-013 với chuỗi mẫu |
+| 3 | Tab khóa định danh | `CMP-Form` | `IdentifierType`, thuộc tính khóa, `deterministic`, kiểm tra định dạng; "Thử" gọi API-06-013 với chuỗi mẫu; chọn `CMND_9` thì khóa `deterministic` bị vô hiệu kèm câu ERR-06-052 "Số CMND 9 chữ số chỉ dùng để so sánh, không dùng làm khóa xác định." |
 | 4 | Tab phiên bản | `CMP-VersionTimeline` | Danh sách phiên bản, người gửi, người duyệt, `CompatLevel` |
 | 5 | Tab so sánh | `CMP-DiffViewer` | Thêm `color-diff-added`, đổi `color-diff-changed`, bỏ `color-diff-removed`; chữ + / ~ / − |
 | 6 | Băng chờ duyệt | `CMP-ApprovalPanel` | Người gửi, nút "Duyệt", "Từ chối" (DA); vô hiệu cho người gửi kèm câu ERR-06-005 |
@@ -1309,7 +1315,7 @@ Trạng thái: rỗng "Chưa có ứng viên nào. Ứng viên xuất hiện khi
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/job` (`loai`, `trang-thai`, `domain`, `/lich`, `chon`); PTN-11.
 
-**API.** API-06-041 (danh sách); API-06-042 (tạo job lô); API-06-043 (chi tiết); API-06-044 (`:cancel`, `:rerun`, `:confirm`); API-06-086, 087 (lịch).
+**API.** API-06-041 (danh sách); API-06-042 (tạo job lô); API-06-043 (chi tiết); API-06-044 (`:cancel`), API-06-105 (`:rerun`), API-06-106 (`:confirm` với `decision` `APPROVE` hoặc `REJECT`; `REJECT` đưa job `AWAITING_CONFIRMATION` sang `CANCELLED`); API-06-086, 087 (lịch).
 
 **Điều hướng vào.** Tab "Job"; thông báo job lỗi; thẻ ở UI-06-01.
 
@@ -1353,7 +1359,7 @@ Cột "Kết quả" của job lỗi hiện câu theo mã: 101 "Job đọc dữ l
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/do-chinh-xac` (`domain`, `phien-ban`, `/tap-nhan`, `/gan-nhan`); PTN-06.
 
-**API.** API-06-037, 038, 039 (tập nhãn, thêm cặp); API-06-034 (đánh giá); API-06-040 (báo cáo).
+**API.** API-06-037, 038, 039 (tập nhãn, thêm cặp); API-06-123 (`:lock`, khóa tập); API-06-034 (đánh giá); API-06-040 (báo cáo).
 
 **Điều hướng vào.** Tab "Độ chính xác"; thẻ ở UI-06-01; liên kết "Xem cặp FP, FN" ở UI-06-09.
 
@@ -1375,7 +1381,7 @@ Cột "Kết quả" của job lỗi hiện câu theo mã: 101 "Job đọc dữ l
 | 1 | Thẻ chỉ số | `CMP-KpiCard` ×4 | Precision, recall (kèm "đạt" hoặc "chưa đạt" và ngưỡng 99,9%, 98%), tập nhãn, kết luận `EvaluationVerdict` |
 | 2 | Biểu đồ theo tháng | `CMP-Chart` đường | Precision `color-chart-1`, recall `color-chart-3` nét đứt; bảng thay thế |
 | 3 | Bảng cặp nhầm | `CMP-DataTable` | Loại FP hoặc FN, tên rút gọn hai bên, điểm, nhãn thật; "Xem so sánh" mở khung so sánh chỉ đọc giống UI-06-05 |
-| 4 | Danh sách tập nhãn | `CMP-DataTable` | Mã, `LabelSetPurpose`, số cặp, trạng thái; tạo mới cần ≥ 1.000 cặp để đánh giá (BR-06-021) |
+| 4 | Danh sách tập nhãn | `CMP-DataTable` | Mã, `LabelSetPurpose`, số cặp, trạng thái; tạo mới cần ≥ 1.000 cặp để đánh giá (BR-06-021); nút "Khóa tập" (API-06-123, `PERM-06-steward`, hộp xác nhận "khóa rồi không mở lại"); tập khóa vô hiệu nút thêm cặp, báo "Cặp nhãn thứ {n} không hợp lệ: {lý do}." (ERR-06-051) ở báo cáo nhập cặp |
 | 5 | Khối gán nhãn | `CMP-DecisionPanel` | Cặp tiếp theo; ba nút Khớp, Khác nhau, Bỏ qua; phím `M`, `K`, `B`; tiến độ "3.200/10.000" |
 
 : UI-06-13 Độ chính xác, thành phần
@@ -1397,7 +1403,7 @@ Tập `EVALUATION` và `TRAINING` tách bạch; một cặp không nằm ở c�
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/dong-bo-quoc-gia` (`muc-do`, `thuoc-tinh`, `luot`, `trang-thai`); PTN-11 giám sát.
 
-**API.** API-06-080 (trạng thái); API-06-081 (chạy); API-06-082 (`:pause`, `:resume`); API-06-083 (danh sách lệch); API-06-084 (xử lý lệch).
+**API.** API-06-080 (trạng thái); API-06-081 (chạy); API-06-082 (`:pause`), API-06-118 (`:resume` kèm `cause`); API-06-083 (danh sách lệch); API-06-084 (xử lý lệch).
 
 **Điều hướng vào.** Tab "Đồng bộ QG"; băng đỏ ở UI-06-01.
 
@@ -1422,7 +1428,7 @@ Tập `EVALUATION` và `TRAINING` tách bạch; một cặp không nằm ở c�
 | 4 | Bảng chiều đồng bộ | `CMP-DataTable` | `SyncDirection` (`DOWN`, `RECONCILE`, `UP`), trạng thái, lần gần nhất; chiều lên tắt khi `06.sync.up-attributes` rỗng (Q06-02) |
 | 5 | Bảng lệch | `CMP-DataTable` + `CMP-BulkActionBar` | Bản ghi vàng, thuộc tính, giá trị địa phương và quốc gia (che), nguồn địa phương, mức, đề xuất, `DiscrepancyStatus` |
 | 6 | Hộp xử lý lệch | `CMP-ReasonDialog` | `DiscrepancyResolution`; tối đa 1.000 lệch một lần; "Bỏ qua" cần lý do; "Giữ địa phương" vô hiệu cho thuộc tính thẩm quyền quốc gia (ERR-06-035) |
-| 7 | Hộp tiếp tục | `CMP-ConfirmDialog` | Người dùng ghi nguyên nhân đã điều tra và xác nhận; DA duyệt |
+| 7 | Hộp tiếp tục | `CMP-ConfirmDialog` | Người dùng ghi nguyên nhân đã điều tra (`cause`, ≥ 20 ký tự, thiếu thì ERR-06-007) và xác nhận qua API-06-118; DA duyệt |
 
 : UI-06-14 Đồng bộ quốc gia, thành phần
 
@@ -1500,7 +1506,7 @@ Trạng thái: rỗng "Chưa có đề nghị xuất nào."; tệp `EXPIRED` ẩ
 
 **Đường dẫn, mẫu.** `/du-lieu/du-lieu-chu/yeu-cau-chu-the` (`loai`, `trang-thai`, `phan-vung`, `chon`); PTN-10.
 
-**API.** API-06-090 (tiếp nhận); API-06-091 (chi tiết); API-06-092 (`:complete`, `:forward`, `:reject`).
+**API.** API-06-090 (tiếp nhận); API-06-091 (chi tiết); API-06-092 (`:complete`), API-06-119 (`:forward`), API-06-120 (`:reject`); API-06-125 (`:lift-restriction`, gỡ hạn chế).
 
 **Điều hướng vào.** Tab "Yêu cầu chủ thể"; "Việc của tôi".
 
@@ -1524,6 +1530,7 @@ Trạng thái: rỗng "Chưa có đề nghị xuất nào."; tệp `EXPIRED` ẩ
 | 3 | Khung chi tiết | `CMP-DescriptionList`, `CMP-AuditTimeline` | Xác minh danh tính, bản ghi vàng liên quan (liên kết UI-06-03), báo cáo, dòng thời gian xử lý |
 | 4 | Báo cáo truy cập | `CMP-DataTable` | Thuộc tính đang giữ, nguồn từng thuộc tính, HTTT và mục đích đã truy cập 12 tháng |
 | 5 | Hộp tiếp nhận | `CMP-Modal` + `CMP-Form` | Xem bảng trường |
+| 6 | Nút "Gỡ hạn chế" | `CMP-ReasonDialog` | Hiện ở yêu cầu `RESTRICTION` đã `COMPLETED` (DS, SO, TA, `PERM-06-dsr`); gọi API-06-125 kèm căn cứ ≥ 20 ký tự; bản ghi về `ACTIVE`; lỗi "Bản ghi {id} không ở trạng thái hạn chế xử lý." (ERR-06-006) |
 
 : UI-06-16 Yêu cầu của chủ thể, thành phần
 
@@ -1772,33 +1779,37 @@ Tài liệu này dùng tạm các tổ hợp có sẵn cho A1 đến A4 để kh
 
 ## Phụ lục B. Đề nghị bổ sung API
 
-| # | Đề nghị | Cho màn |
-|---|---|---|
-| B1 | `GET /stewardship/items` hỗ trợ `partition=mine,unclaimed,overdue,pending-approval` và trả số đếm từng phân vùng | UI-06-04 |
-| B2 | `POST /stewardship/items:claim-next` trả mục ưu tiên cao nhất chưa nhận (một lệnh, tránh tranh chấp) | UI-06-04, UI-06-05 phím `N` |
-| B3 | `GET /stewardship/items/{itemId}` trả sẵn `thresholds`, `holdUntil`, `similarDecisions`, `mergeAllowed`, `riskLevel` và danh sách mục kế tiếp của tôi | UI-06-05 |
-| B4 | `GET /domains/{domainCode}/golden-records/{goldenId}` trả `lineageHint` (số giá trị khác nhau từng thuộc tính) để hiện chỉ báo "có khác nhau" ở bảng thuộc tính | UI-06-03 |
-| B5 | `GET /dashboard/metrics` trả `criticalAlerts`, `queueByReason`, `bySource[]` có tỷ lệ định danh sai, trùng | UI-06-01 |
-| B6 | `POST …:evaluate` và `:dry-run` trả phân bố điểm 100 khoảng | UI-06-09 |
-| B7 | API đề nghị truy cập hàng loạt có phê duyệt (cho ERR-06-038) | UI-06-02 |
-| B8 | `POST /national-sync:resume` nhận `cause` (nguyên nhân đã điều tra) | UI-06-14 |
-| B9 | Danh sách mẫu câu lý do cấu hình được (`reason-templates`) | UI-06-05, UI-06-17 |
+FRS 0.2 (§15) đã xử lý từng đề nghị; cột cuối ghi kết quả.
+
+| # | Đề nghị | Cho màn | Xử lý ở FRS 0.2 |
+|---|---|---|---|
+| B1 | `GET /stewardship/items` hỗ trợ `partition=mine,unclaimed,overdue,pending-approval` và trả số đếm từng phân vùng | UI-06-04 | Đã áp: lọc `partition` ở API-06-045; số đếm từng phân vùng ở D03-04 |
+| B2 | `POST /stewardship/items:claim-next` trả mục ưu tiên cao nhất chưa nhận (một lệnh, tránh tranh chấp) | UI-06-04, UI-06-05 phím `N` | Đã áp: API-06-124 |
+| B3 | `GET /stewardship/items/{itemId}` trả sẵn `thresholds`, `holdUntil`, `similarDecisions`, `mergeAllowed`, `riskLevel` và danh sách mục kế tiếp của tôi | UI-06-05 | Không áp vào FRS: trường phản hồi do D03-04 định nghĩa |
+| B4 | `GET /domains/{domainCode}/golden-records/{goldenId}` trả `lineageHint` (số giá trị khác nhau từng thuộc tính) để hiện chỉ báo "có khác nhau" ở bảng thuộc tính | UI-06-03 | Không áp vào FRS: trường phản hồi do D03-04 định nghĩa |
+| B5 | `GET /dashboard/metrics` trả `criticalAlerts`, `queueByReason`, `bySource[]` có tỷ lệ định danh sai, trùng | UI-06-01 | Không áp vào FRS: trường phản hồi do D03-04 định nghĩa |
+| B6 | `POST …:evaluate` và `:dry-run` trả phân bố điểm 100 khoảng | UI-06-09 | Không áp vào FRS: trường phản hồi do D03-04 định nghĩa |
+| B7 | API đề nghị truy cập hàng loạt có phê duyệt (cho ERR-06-038) | UI-06-02 | Chuyển câu hỏi mở Q06-10 |
+| B8 | `POST /national-sync:resume` nhận `cause` (nguyên nhân đã điều tra) | UI-06-14 | Đã áp: API-06-118 nhận `cause` |
+| B9 | Danh sách mẫu câu lý do cấu hình được (`reason-templates`) | UI-06-05, UI-06-17 | Chuyển câu hỏi mở Q06-11; tạm dùng `06.queue.reason-templates` |
 
 : Đề nghị bổ sung API cho D03-04-PH06
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS D02-03-PH06
 
-| # | Đề nghị | Cơ sở |
-|---|---|---|
-| C1 | Bổ sung câu hiển thị vào §9.2 cho các mã: ERR-06-001, 004, 009, 011, 012, 018, 019, 025, 026, 034, 036, 037, 041, 042, 043, 046, 047, 049 theo câu ở mục 5.3 | FRS §9.2 mới có 19 mã |
-| C2 | Ghi quy ước tab con và query của route (mục 4.2) vào §10 hoặc Phụ lục A | D03-06-00 §2.4 |
-| C3 | Thêm vào FR-06-029 mẫu câu lý do nhanh và phím tắt (mục 11.3, 11.4), cùng thời gian giữ mục hiển thị | FRS §10.2 nêu mẫu câu nhưng FR chưa có |
-| C4 | FR-06-027 hoặc FR-06-028: định nghĩa "Nhận việc tiếp theo" (mục ưu tiên cao nhất chưa nhận trong phạm vi) | UI-06-04 |
-| C5 | FR-06-035: nêu bỏ che tự che lại sau 60 giây (tham số, đề nghị thêm `06.mask.reveal-seconds`, mặc định 60, miền 15…300) | Mục 2.5 |
-| C6 | FRS §3.2: `PERM-06-read` cho VW chỉ số tổng hợp và AU xem nhật ký truy cập: làm rõ AU thuộc `PERM-06-audit-read` | Ma trận mục 26 |
-| C7 | UI-06-11 gồm hai mẫu (PTN-01, PTN-09) và hai route: tách thành UI-06-11 và UI-06-11b hoặc ghi rõ trong §10.1 | Mục 17 |
-| C8 | Ghi giới hạn kích thước, số dòng tệp nhập vào tham số `06.ingest.max-file-mb`, `06.ingest.max-rows` | ERR-06-018 |
-| C9 | FR-06-053: thêm yêu cầu ghi nguyên nhân đã điều tra khi tiếp tục đồng bộ sau tạm dừng | UI-06-14 hộp tiếp tục |
+FRS 0.2 đã áp toàn bộ chín đề nghị; bảng giữ để truy vết.
+
+| # | Đề nghị | Cơ sở | Xử lý ở FRS 0.2 |
+|---|---|---|---|
+| C1 | Bổ sung câu hiển thị vào §9.2 cho các mã: ERR-06-001, 004, 009, 011, 012, 018, 019, 025, 026, 034, 036, 037, 041, 042, 043, 046, 047, 049 theo câu ở mục 5.3 | FRS §9.2 mới có 19 mã | Đã áp: §9.2, thêm câu cho ERR-06-051…053 |
+| C2 | Ghi quy ước tab con và query của route (mục 4.2) vào §10 hoặc Phụ lục A | D03-06-00 §2.4 | Đã áp: §10.3 |
+| C3 | Thêm vào FR-06-029 mẫu câu lý do nhanh và phím tắt (mục 11.3, 11.4), cùng thời gian giữ mục hiển thị | FRS §10.2 nêu mẫu câu nhưng FR chưa có | Đã áp: FR-06-029, 030; `06.queue.reason-templates` |
+| C4 | FR-06-027 hoặc FR-06-028: định nghĩa "Nhận việc tiếp theo" (mục ưu tiên cao nhất chưa nhận trong phạm vi) | UI-06-04 | Đã áp: FR-06-028 bước 2, API-06-124 |
+| C5 | FR-06-035: nêu bỏ che tự che lại sau 60 giây (tham số, đề nghị thêm `06.mask.reveal-seconds`, mặc định 60, miền 15…300) | Mục 2.5 | Đã áp: `06.mask.reveal-seconds` |
+| C6 | FRS §3.2: `PERM-06-read` cho VW chỉ số tổng hợp và AU xem nhật ký truy cập: làm rõ AU thuộc `PERM-06-audit-read` | Ma trận mục 26 | Đã áp: ghi chú dưới ma trận §3.2 |
+| C7 | UI-06-11 gồm hai mẫu (PTN-01, PTN-09) và hai route: tách thành UI-06-11 và UI-06-11b hoặc ghi rõ trong §10.1 | Mục 17 | Đã áp: §10.1 ghi hai route, không thêm UI-06-11b |
+| C8 | Ghi giới hạn kích thước, số dòng tệp nhập vào tham số `06.ingest.max-file-mb`, `06.ingest.max-rows` | ERR-06-018 | Đã áp: `06.ingest.max-file-mb`, `06.ingest.max-rows` |
+| C9 | FR-06-053: thêm yêu cầu ghi nguyên nhân đã điều tra khi tiếp tục đồng bộ sau tạm dừng | UI-06-14 hộp tiếp tục | Đã áp: FR-06-053, API-06-118 nhận `cause` |
 
 : Đề nghị đồng bộ cho FRS và tài liệu liên quan
 
@@ -1829,5 +1840,6 @@ Tài liệu này dùng tạm các tổ hợp có sẵn cho A1 đến A4 để kh
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-06 | Bản đầu: 18 màn UI-06-01…18 kèm 22 ảnh hi-fi (18 màn và 4 biến thể), ma trận vai trò, kiểm thử, phụ lục đề nghị |
+| 0.2 | 26/11/2026 | Nhóm phân hệ PH-06 | Đồng bộ FRS 0.2: Phụ lục B, C đánh dấu đã áp; dùng API-06-121…125 (Nhận việc tiếp theo, Mở lại, tab Thao tác, khóa tập nhãn, gỡ hạn chế), `decision` ở API-06-106, `cause` ở API-06-118, `partition` ở API-06-045; thêm câu ERR-06-051…053 ở mục 5.3 |
 
 : Lịch sử phiên bản D03-06-PH06

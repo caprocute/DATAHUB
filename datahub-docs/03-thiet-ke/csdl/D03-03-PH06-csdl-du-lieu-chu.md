@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH06
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -14,14 +14,14 @@ tai_lieu_lien_quan: D02-03-PH06 FRS; D03-02-PH06 SDD; D03-04-PH06 API; D03-10 Th
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Schema `ph06_mdm` trên cụm `pg-core` có 43 bảng cho 21 thực thể của [D02-03-PH06](../../02-yeu-cau/frs/D02-03-PH06-frs-du-lieu-chu.md) §4.2 và 13 bảng bổ sung, phục vụ module `mdm` của `dh-data`. Phân hệ giữ bản ghi vàng (golden record) của công dân, tổ chức, địa chỉ cùng liên kết chéo tới bản ghi của từng hệ thống nguồn; đây là dữ liệu cá nhân nên thiết kế đặt an toàn lên trước. Bốn điểm chính:
+Schema `ph06_mdm` trên cụm `pg-core` có 43 bảng cho 21 thực thể của [D02-03-PH06](../../02-yeu-cau/frs/D02-03-PH06-frs-du-lieu-chu.md) §4.2 và 13 thực thể bổ sung EN-06-22…34 (FRS 0.2), cộng các bảng con và hạ tầng, phục vụ module `mdm` của `dh-data`. Phân hệ giữ bản ghi vàng (golden record) của công dân, tổ chức, địa chỉ cùng liên kết chéo tới bản ghi của từng hệ thống nguồn; đây là dữ liệu cá nhân nên thiết kế đặt an toàn lên trước. Bốn điểm chính:
 
 1. **Số định danh không bao giờ lưu dạng rõ.** CCCD, mã số thuế và mọi thuộc tính `SENSITIVE` chỉ nằm ở cột `*_enc` (mã hóa envelope bằng OpenBao transit, ADR-032), kèm cột `*_hash` (HMAC-SHA256 theo khóa riêng từng tenant) để đối sánh bằng nhau mà không giải mã. `CHECK` buộc giá trị `SENSITIVE` không được vào cột rõ (NFR-06-016); lịch sử, ứng viên và nhật ký cũng theo quy tắc này.
 2. **Quy tắc nghiệp vụ khóa ở CSDL**, không chỉ ở dịch vụ: một số định danh hiệu lực chỉ thuộc một bản ghi vàng (BR-06-001, 006), một bản ghi nguồn chỉ liên kết hiệu lực một lần (BR-06-018), ngưỡng đối sánh ≥ 0,90 và cách ≥ 0,10 (BR-06-020), bộ quy tắc ACTIVE phải có đánh giá đạt (BR-06-021), phiên bản ACTIVE bất biến (BR-06-017), lý do ≥ 20 ký tự (BR-06-008), bốn mắt, bản ghi vàng không bị xóa (BR-06-007).
 3. **Cô lập tenant bằng `FORCE ROW LEVEL SECURITY`** trên 42 bảng (bảng kỹ thuật `shedlock` không có `tenant_id`), kể cả sáu bảng phân vùng theo tháng; khóa ngoại luôn kèm `tenant_id`. Nhật ký truy cập, lịch sử, truy nguồn gốc chỉ thêm, không sửa (trigger và quyền).
 4. **Đối sánh dùng chính PostgreSQL.** Tra gần đúng bằng `pg_trgm` trên tên chuẩn hóa; đối sánh theo lô do Job Splink đọc bảng `match_staging`, không đọc thẳng bảng nghiệp vụ.
 
-DDL [`ph06/ddl/ph06_mdm.sql`](ph06/ddl/ph06_mdm.sql) đã chạy thử trên PostgreSQL 16.15 sạch; bài kiểm [`ph06/test/ph06_isolation_test.sql`](ph06/test/ph06_isolation_test.sql) đạt 90 khối PASS (§4.2); đối chiếu Phụ lục A của FRS sạch (§4.3). Mục 8 ánh xạ thực thể và chức năng sang bảng; mục 9 nêu năm câu hỏi mở Q06-50…54 và đề nghị bổ sung cho FRS.
+DDL [`ph06/ddl/ph06_mdm.sql`](ph06/ddl/ph06_mdm.sql) đã chạy thử trên PostgreSQL 16.15 sạch; bài kiểm [`ph06/test/ph06_isolation_test.sql`](ph06/test/ph06_isolation_test.sql) đạt 95 khối PASS (§4.2); đối chiếu Phụ lục A của FRS sạch (§4.3). Mục 8 ánh xạ thực thể và chức năng sang bảng; mục 9 nêu năm câu hỏi mở Q06-50…54 và đề nghị bổ sung cho FRS.
 
 ## 0. Giới thiệu
 
@@ -77,7 +77,7 @@ Chương 1 chiến lược, 2 sơ đồ, 3 đặc tả bảng, 4 DDL, 5 dữ li�
 
 ### 1.1. Schema, vai trò và kết nối
 
-Schema `ph06_mdm` do `ph06_owner` (NOLOGIN) sở hữu. Module `mdm` của `dh-data` (package `vn.datahub.data.mdm`) kết nối bằng `dh_data_app`, thành viên `ph06_app`: chỉ DML, không `BYPASSRLS`, không `DELETE` trên bảng nghiệp vụ (BR-06-007), không `UPDATE`, `DELETE` trên bốn bảng chỉ thêm. Liquibase chạy bằng `dh_data_migrator` (thành viên `ph06_owner`). Báo cáo và Job Splink đọc bằng `ph06_readonly`, bị thu hồi quyền đọc `access_log` (trừ cột an toàn), `golden_history`, `subject_request`, `golden_identifier`.
+Schema `ph06_mdm` do `ph06_owner` (NOLOGIN) sở hữu. Module `mdm` của `dh-data` (package `vn.datahub.data.mdm`) kết nối bằng `dh_data_app`, thành viên `ph06_app`: chỉ DML, không `BYPASSRLS`, không `DELETE` trên bảng nghiệp vụ (BR-06-007), không `UPDATE`, `DELETE` trên bốn bảng chỉ thêm. Liquibase chạy bằng `dh_data_migrator` (thành viên `ph06_owner`). Báo cáo đọc bằng `ph06_readonly`, bị thu hồi quyền đọc `access_log` (trừ cột an toàn), `golden_history`, `subject_request`, `golden_identifier`. Job Splink chạy bằng vai riêng `ph06_splink` (FRS 0.2, FR-06-022): chỉ `SELECT` bảng `match_staging`, chỉ `INSERT` bảng `match_result`, không đọc bảng nào khác.
 
 `dh-data` không có khóa ngoại sang schema khác. Mã HTTT (`system_code`, PH-01), mã ĐVHC (`admin_unit_code`, PH-07), mã mục đích (`purpose_code`, PH-09) là chuỗi kiểm ở dịch vụ qua giao diện module (Modulith), bộ đệm 5 phút khi phân hệ kia ngừng (FRS 12.1). Job Splink không ghi vào PostgreSQL: nó đọc `match_staging` rồi ghi cặp kết quả ra Parquet trên Ceph RGW; bước `APPLYING` của `dh-data` đọc tệp đó, ghi `match_result` và áp từng cặp trong giao dịch riêng (FRS 4.5).
 
@@ -124,7 +124,7 @@ Các quy tắc sau do CSDL tự bảo đảm, bằng ràng buộc, chỉ mục d
 | `tg_*_append_only`, `REVOKE UPDATE, DELETE` | Lịch sử, truy nguồn gốc, nhật ký truy cập, nhật ký xử lý chỉ thêm | BR-06-005, 010; RB-06-04 |
 | `ck_export_request_ready`, `ck_export_request_owner` | Tệp xuất `READY` có thủy vân, hạn tải; DO chấp thuận khác người đề nghị | BR-06-027 |
 | `ck_outbox_event_no_value`, `ck_outbox_event_topic` | Sự kiện không chứa khóa giá trị thuộc tính; đúng 15 topic EVT-06 và kiểm toán | BR-06-012; FR-06-050 |
-| `ck_retention_policy_days`, `ck_tenant_setting_key` | Nhật ký truy cập ≥ 365 ngày; chỉ 13 khóa tham số 06.* | FR-06-059, 060; ERR-06-049 |
+| `ck_retention_policy_days`, `ck_tenant_setting_key` | Nhật ký truy cập ≥ 365 ngày; chỉ 22 khóa tham số 06.* | FR-06-059, 060; ERR-06-049 |
 
 : Quy tắc nghiệp vụ chốt ở CSDL
 
@@ -158,24 +158,24 @@ Bảng dưới liệt kê 43 bảng theo thứ tự đặc tả ở chương 3, 
 | 3.3 | `model_attribute` | EN-06-07 | Không | 002, 004, 052 |
 | 3.4 | `identifier_rule` | EN-06-07 | Không | 003 |
 | 3.5 | `mdm_source` | EN-06-08 | Không | 008 |
-| 3.6 | `source_priority_proposal` | EN-06-04 | Không | 009 |
+| 3.6 | `source_priority_proposal` | EN-06-04, EN-06-22 | Không | 009 |
 | 3.7 | `source_priority` | EN-06-04 | Không | 009, 033 |
-| 3.8 | `candidate_file` | Bổ sung | Không | 013 |
-| 3.9 | `source_record_head` | Bổ sung | Không | 016 |
+| 3.8 | `candidate_file` | EN-06-25 | Không | 013 |
+| 3.9 | `source_record_head` | EN-06-26 | Không | 016 |
 | 3.10 | `candidate_record` | EN-06-09 | Không | 010, 011, 012, 013, 014… |
-| 3.11 | `evaluation_report` | Bổ sung | Tháng, scored_at | 026 |
+| 3.11 | `evaluation_report` | EN-06-23 | Tháng, scored_at | 026 |
 | 3.12 | `match_rule_set` | EN-06-10 | Không | 018, 019, 023, 024 |
 | 3.13 | `match_rule` | EN-06-10 | Không | 018 |
 | 3.14 | `match_job` | EN-06-12 | Không | 022, 024, 055, 056 |
-| 3.15 | `job_schedule` | Bổ sung | Không | 056 |
-| 3.16 | `match_staging` | Bổ sung | Không | 022 |
+| 3.15 | `job_schedule` | EN-06-24 | Không | 056 |
+| 3.16 | `match_staging` | EN-06-27 | Không | 022 |
 | 3.17 | `match_result` | EN-06-11 | Không | 020, 021, 022, 023, 024… |
 | 3.18 | `label_set` | EN-06-15 | Tháng, changed_at | 008, 025 |
 | 3.19 | `label_pair` | EN-06-15 | Không | 025, 030 |
 | 3.20 | `steward_item` | EN-06-05 | Không | 027, 028, 029, 030, 031… |
 | 3.21 | `golden_record` | EN-06-01 | Không | 034, 035, 036, 037, 038… |
 | 3.22 | `golden_attribute` | EN-06-02 | Không | 016, 034, 035, 052 |
-| 3.23 | `golden_identifier` | EN-06-02 | Không | 020, 046, 047 |
+| 3.23 | `golden_identifier` | EN-06-02, EN-06-28 | Không | 020, 046, 047 |
 | 3.24 | `source_xref` | EN-06-03 | Không | 044, 045 |
 | 3.25 | `golden_operation` | EN-06-13 | Không | 036, 037, 038, 039, 040… |
 | 3.26 | `golden_history` | EN-06-06 | Không | Hạ tầng |
@@ -184,15 +184,15 @@ Bảng dưới liệt kê 43 bảng theo thứ tự đặc tả ở chương 3, 
 | 3.29 | `survivorship_rule` | EN-06-17 | Không | 033 |
 | 3.30 | `update_subscription` | EN-06-18 | Không | 051 |
 | 3.31 | `export_request` | EN-06-19 | Không | 049 |
-| 3.32 | `national_sync_state` | Bổ sung | Không | 053, 054 |
+| 3.32 | `national_sync_state` | EN-06-29 | Không | 053, 054 |
 | 3.33 | `national_sync_run` | EN-06-16 | Không | 053 |
-| 3.34 | `national_discrepancy` | Bổ sung | Không | 053, 054, 055 |
-| 3.35 | `source_correction` | Bổ sung | Không | 036, 054, 058 |
+| 3.34 | `national_discrepancy` | EN-06-30 | Không | 053, 054, 055 |
+| 3.35 | `source_correction` | EN-06-31 | Không | 036, 054, 058 |
 | 3.36 | `subject_request` | EN-06-20 | Không | 058 |
 | 3.37 | `access_log` | EN-06-21 | Không | 015, 047, 048, 052, 055… |
-| 3.38 | `processing_log` | Bổ sung | Tháng, logged_at | 057 |
-| 3.39 | `retention_policy` | Bổ sung | Không | 059 |
-| 3.40 | `tenant_setting` | Bổ sung | Không | 060 |
+| 3.38 | `processing_log` | EN-06-32 | Tháng, logged_at | 057 |
+| 3.39 | `retention_policy` | EN-06-33 | Không | 059 |
+| 3.40 | `tenant_setting` | EN-06-34 | Không | 060 |
 | 3.41 | `outbox_event` | Bổ sung | Không | 050 |
 | 3.42 | `inbox_event` | Bổ sung | Không | 008, 012, 053 |
 | 3.43 | `shedlock` | Bổ sung | Không | Hạ tầng |
@@ -448,9 +448,9 @@ Cột khác: `source_code` v(32); `name` v(255); `channels` v(16)[]; `attribute_
 ### 3.6. `source_priority_proposal`
 
 ::: dac-ta
-**Mục đích.** EN-06-04 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).
+**Mục đích.** EN-06-04, EN-06-22 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).
 
-**FR phục vụ.** FR-06-009; EN-06-04.
+**FR phục vụ.** FR-06-009; EN-06-04, EN-06-22.
 
 **Khóa chính.** (id).
 
@@ -513,9 +513,9 @@ Cột khác: `domain_code` v(32); `source_code` v(32); `attribute_name` v(63); `
 ### 3.8. `candidate_file`
 
 ::: dac-ta
-**Mục đích.** FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.
+**Mục đích.** EN-06-25 FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.
 
-**FR phục vụ.** FR-06-013.
+**FR phục vụ.** FR-06-013; EN-06-25.
 
 **Khóa chính.** (id).
 
@@ -539,9 +539,9 @@ Cột khác: `domain_code` v(32); `source_code` v(32); `file_name` v(255); `size
 ### 3.9. `source_record_head`
 
 ::: dac-ta
-**Mục đích.** FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.
+**Mục đích.** EN-06-26 FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.
 
-**FR phục vụ.** FR-06-016.
+**FR phục vụ.** FR-06-016; EN-06-26.
 
 **Khóa chính.** (id).
 
@@ -613,9 +613,9 @@ Cột khác: `id` uuid; `tenant_id` v(16); `received_at` tstz; `domain_code` v(3
 ### 3.11. `evaluation_report`
 
 ::: dac-ta
-**Mục đích.** FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.
+**Mục đích.** EN-06-23 FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.
 
-**FR phục vụ.** FR-06-026.
+**FR phục vụ.** FR-06-026; EN-06-23.
 
 **Khóa chính.** (id).
 
@@ -749,9 +749,9 @@ Cột khác: `domain_code` v(32); `since` tstz; `train_only` bool; `dry_run` boo
 ### 3.15. `job_schedule`
 
 ::: dac-ta
-**Mục đích.** FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.
+**Mục đích.** EN-06-24 FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.
 
-**FR phục vụ.** FR-06-056.
+**FR phục vụ.** FR-06-056; EN-06-24.
 
 **Khóa chính.** (id).
 
@@ -781,9 +781,9 @@ Cột khác: `cron` v(64); `enabled` bool; `params` jsonb; `max_duration_minutes
 ### 3.16. `match_staging`
 
 ::: dac-ta
-**Mục đích.** FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_readonly, ghi kết quả qua dh-data, không ghi thẳng vào bản ghi vàng.
+**Mục đích.** EN-06-27 FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_splink (chỉ SELECT match_staging, chỉ INSERT match_result), không ghi thẳng vào bản ghi vàng.
 
-**FR phục vụ.** FR-06-022.
+**FR phục vụ.** FR-06-022; EN-06-27.
 
 **Khóa chính.** (id).
 
@@ -856,7 +856,7 @@ Cột khác: `id` uuid; `tenant_id` v(16); `scored_at` tstz; `domain_code` v(32)
 
 **Khóa ngoại.** (tenant_id, domain_code) → `mdm_domain`.
 
-**Ràng buộc CHECK.** `ck_label_set_` + `tenant`, `code`, `purpose`, `count`.
+**Ràng buộc CHECK.** `ck_label_set_` + `tenant`, `code`, `purpose`, `count`, `locked`.
 
 **Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
 
@@ -873,7 +873,7 @@ Cột khác: `id` uuid; `tenant_id` v(16); `scored_at` tstz; `domain_code` v(32)
 
 : Cột của bảng `label_set`
 
-Cột khác: `label_set_code` v(63); `domain_code` v(32); `description` v(2000); `pair_count` int.
+Cột khác: `label_set_code` v(63); `domain_code` v(32); `description` v(2000); `pair_count` int; `locked` bool; `locked_at` tstz; `locked_by` v(64).
 
 ### 3.19. `label_pair`
 
@@ -943,7 +943,7 @@ Cột khác: `label_set_id` uuid; `left_id` uuid; `right_id` uuid; `labeled_by` 
 
 : Cột của bảng `steward_item`
 
-Cột khác: `domain_code` v(32); `priority` smallint; `left_candidate_id` uuid; `right_golden_id` uuid; `match_result_id` uuid; `score` numeric(5,4); `attribute_scores` jsonb; `source_codes` v(32)[]; `assignee` v(64); `claimed_at` tstz; `due_at` tstz; `escalated_at` tstz; `defer_until` tstz; `decision_reason` v(2000); `decided_by` v(64); `decided_at` tstz; `survivor_id` uuid; `approved_by` v(64); `approved_at` tstz; `approval_comment` v(2000); `operation_id` uuid; `cancel_reason` v(500).
+Cột khác: `domain_code` v(32); `priority` smallint; `left_candidate_id` uuid; `right_golden_id` uuid; `match_result_id` uuid; `score` numeric(5,4); `attribute_scores` jsonb; `source_codes` v(32)[]; `assignee` v(64); `claimed_at` tstz; `due_at` tstz; `escalated_at` tstz; `defer_until` tstz; `decision_reason` v(2000); `decided_by` v(64); `decided_at` tstz; `survivor_id` uuid; `approved_by` v(64); `approved_at` tstz; `approval_comment` v(2000); `operation_id` uuid; `cancel_reason` v(500); `reopen_count` smallint; `reopened_at` tstz; `reopened_by` v(64); `reopen_reason` v(2000); `decision_history` jsonb.
 
 ### 3.21. `golden_record`
 
@@ -958,9 +958,9 @@ Cột khác: `domain_code` v(32); `priority` smallint; `left_candidate_id` uuid;
 
 **Khóa ngoại.** (tenant_id, domain_code) → `mdm_domain`, (tenant_id, merged_into) → `golden_record`.
 
-**Ràng buộc CHECK.** `ck_golden_record_` + `tenant`, `status`, `merged`, `retired`, `retire`, `locked`, `confidence`, `birth`.
+**Ràng buộc CHECK.** `ck_golden_record_` + `tenant`, `status`, `merged`, `retired`, `retire`, `locked`, `restricted`, `confidence`, `birth`.
 
-**Chỉ mục.** `ix_golden_record_domain`, `ix_golden_record_name_trgm`, `ix_golden_record_area`, `ix_golden_record_merged`.
+**Chỉ mục.** `ix_golden_record_domain`, `ix_golden_record_name_trgm`, `ix_golden_record_blocks`, `ix_golden_record_area`, `ix_golden_record_merged`.
 
 **Cách ly tenant.** RLS FORCE.
 
@@ -978,7 +978,7 @@ Cột khác: `domain_code` v(32); `priority` smallint; `left_candidate_id` uuid;
 
 : Cột của bảng `golden_record`
 
-Cột khác: `domain_code` v(32); `merged_into` uuid; `confidence` numeric(5,4); `display_name` v(255); `birth_year` smallint; `admin_unit_code` v(16); `link_count` int; `lock_reason` v(500); `retire_note` v(2000); `retired_at` tstz; `retired_by` v(64); `national_synced_at` tstz.
+Cột khác: `domain_code` v(32); `merged_into` uuid; `confidence` numeric(5,4); `display_name` v(255); `birth_year` smallint; `admin_unit_code` v(16); `link_count` int; `block_keys` v(72)[]; `restricted` bool; `lock_reason` v(500); `retire_note` v(2000); `retired_at` tstz; `retired_by` v(64); `national_synced_at` tstz.
 
 ### 3.22. `golden_attribute`
 
@@ -1019,9 +1019,9 @@ Cột khác: `golden_id` uuid; `attribute_name` v(63); `seq` smallint; `value_js
 ### 3.23. `golden_identifier`
 
 ::: dac-ta
-**Mục đích.** EN-06-02 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.
+**Mục đích.** EN-06-02, EN-06-28 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.
 
-**FR phục vụ.** FR-06-020, 046; EN-06-02.
+**FR phục vụ.** FR-06-020, 046; EN-06-02, EN-06-28.
 
 **Khóa chính.** (id).
 
@@ -1313,9 +1313,9 @@ Cột khác: `domain_code` v(32); `filter` jsonb; `fields` v(63)[]; `purpose_cod
 ### 3.32. `national_sync_state`
 
 ::: dac-ta
-**Mục đích.** FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.
+**Mục đích.** EN-06-29 FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.
 
-**FR phục vụ.** FR-06-053, 054.
+**FR phục vụ.** FR-06-053, 054; EN-06-29.
 
 **Khóa chính.** (id).
 
@@ -1377,9 +1377,9 @@ Cột khác: `domain_code` v(32); `job_id` uuid; `scope` jsonb; `checked_count` 
 ### 3.34. `national_discrepancy`
 
 ::: dac-ta
-**Mục đích.** FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).
+**Mục đích.** EN-06-30 FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).
 
-**FR phục vụ.** FR-06-053, 054.
+**FR phục vụ.** FR-06-053, 054; EN-06-30.
 
 **Khóa chính.** (id).
 
@@ -1411,9 +1411,9 @@ Cột khác: `run_id` uuid; `domain_code` v(32); `golden_id` uuid; `attribute_na
 ### 3.35. `source_correction`
 
 ::: dac-ta
-**Mục đích.** BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.
+**Mục đích.** EN-06-31 BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.
 
-**FR phục vụ.** FR-06-036, 054, 058.
+**FR phục vụ.** FR-06-036, 054, 058; EN-06-31.
 
 **Khóa chính.** (id).
 
@@ -1453,7 +1453,7 @@ Cột khác: `domain_code` v(32); `golden_id` uuid; `attribute_name` v(63); `sou
 
 **Khóa ngoại.** Không.
 
-**Ràng buộc CHECK.** `ck_subject_request_` + `tenant`, `type`, `status`, `idtype`, `hash`, `due`, `completed`, `rejected`, `forward`.
+**Ràng buộc CHECK.** `ck_subject_request_` + `tenant`, `type`, `status`, `idtype`, `hash`, `due`, `completed`, `rejected`, `lifted`, `forward`.
 
 **Chỉ mục.** `ix_subject_request_status`, `ix_subject_request_subject`.
 
@@ -1472,7 +1472,7 @@ Cột khác: `domain_code` v(32); `golden_id` uuid; `attribute_name` v(63); `sou
 
 : Cột của bảng `subject_request`
 
-Cột khác: `subject_enc` bytea; `subject_kid` v(64); `subject_hash` bytea; `verification_ref` v(255); `details_enc` bytea; `channel` v(32); `received_at` tstz; `due_at` tstz; `golden_id` uuid; `forwarded_source_code` v(32); `handled_by` v(64); `completed_at` tstz; `result_ref` v(512); `reject_reason` v(2000).
+Cột khác: `subject_enc` bytea; `subject_kid` v(64); `subject_hash` bytea; `verification_ref` v(255); `details_enc` bytea; `channel` v(32); `received_at` tstz; `due_at` tstz; `golden_id` uuid; `forwarded_source_code` v(32); `handled_by` v(64); `completed_at` tstz; `result_ref` v(512); `reject_reason` v(2000); `lifted_at` tstz; `lifted_by` v(64); `lift_reason` v(2000).
 
 ### 3.37. `access_log`
 
@@ -1510,9 +1510,9 @@ Cột khác: `id` uuid; `tenant_id` v(16); `accessed_at` tstz; `actor` v(64); `s
 ### 3.38. `processing_log`
 
 ::: dac-ta
-**Mục đích.** FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.
+**Mục đích.** EN-06-32 FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.
 
-**FR phục vụ.** FR-06-057.
+**FR phục vụ.** FR-06-057; EN-06-32.
 
 **Khóa chính.** (id, logged_at).
 
@@ -1542,9 +1542,9 @@ Cột khác: `id` uuid; `tenant_id` v(16); `logged_at` tstz; `component` v(32); 
 ### 3.39. `retention_policy`
 
 ::: dac-ta
-**Mục đích.** FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.
+**Mục đích.** EN-06-33 FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.
 
-**FR phục vụ.** FR-06-059.
+**FR phục vụ.** FR-06-059; EN-06-33.
 
 **Khóa chính.** (id).
 
@@ -1575,9 +1575,9 @@ Cột khác: `retention_days` int; `legal_hold` bool; `hold_reason` v(2000); `la
 ### 3.40. `tenant_setting`
 
 ::: dac-ta
-**Mục đích.** FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.
+**Mục đích.** EN-06-34 FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.
 
-**FR phục vụ.** FR-06-060.
+**FR phục vụ.** FR-06-060; EN-06-34.
 
 **Khóa chính.** (id).
 
@@ -1725,7 +1725,7 @@ Sáu bảng phân vùng theo tháng, bảo trì bằng tác vụ định kỳ.
 
 | Tệp | Nội dung |
 |---|---|
-| `06-0000-bootstrap.sql` | Vai trò `ph06_owner`, `ph06_app`, `ph06_readonly`; `pg_trgm`, `btree_gin`; schema; biến phiên |
+| `06-0000-bootstrap.sql` | Vai trò `ph06_owner`, `ph06_app`, `ph06_readonly`, `ph06_splink`; `pg_trgm`, `btree_gin`; schema; biến phiên |
 | `06-0001-functions.sql` | `tg_touch`, `tg_immutable`, `tg_append_only`, `tg_frozen`, `tg_child_frozen`, `p_enable_rls`, `p_ensure_partitions`, `p_seed_tenant` |
 | `06-0010-model.sql` | `mdm_domain`, `domain_model`, `model_attribute`, `identifier_rule`, `mdm_source`, `source_priority_proposal`, `source_priority` |
 | `06-0020-ingest.sql` | `candidate_file`, `source_record_head`, `candidate_record` |
@@ -1745,9 +1745,9 @@ Không có changeset di trú dữ liệu: repo chưa có bảng PH-06 nào chạ
 
 Chạy ngày 26/11/2026 trên PostgreSQL 16.15 (Ubuntu 24.04) cài sạch, dữ liệu giả, tenant kiểm thử T90, T91:
 
-- DDL chạy không lỗi trên CSDL trống với `ON_ERROR_STOP`: 43 bảng gốc, 18 phân vùng, 244 `CHECK`, 37 khóa ngoại, 66 trigger, 168 chính sách RLS (42 bảng × 4).
+- DDL chạy không lỗi trên CSDL trống với `ON_ERROR_STOP`: 43 bảng gốc, 18 phân vùng, 247 `CHECK`, 37 khóa ngoại, 66 trigger, 168 chính sách RLS (42 bảng × 4).
 - Ghép 11 tệp changelog sinh ra rồi chạy bằng psql theo thứ tự trên CSDL trống khác: không lỗi, cùng số bảng. Chưa chạy bằng Liquibase CLI (không có trong máy); CI chạy `liquibase update` trên Testcontainers.
-- [`ph06_isolation_test.sql`](ph06/test/ph06_isolation_test.sql) dưới `dh_data_app` (nhóm 26 dưới vai trò báo cáo `dh_report_ro`) đạt 90 khối PASS, chia sáu nhóm: cô lập tenant (T91 không đọc, chèn, sửa, xóa dòng T90 trên 18 bảng, kể cả phân vùng; không có dòng `COMMON`); bất biến và vòng đời phiên bản; định danh duy nhất, `SENSITIVE` không bản rõ, ngưỡng và đánh giá; bốn mắt và lý do ≥ 20 ký tự; bảng chỉ thêm, không xóa bản ghi vàng, outbox không chứa giá trị, `p_seed_tenant` (13, 10, 5 dòng, chạy lại không nhân bản), `pg_trgm`; vai trò chỉ đọc không đọc định danh mã hóa, ảnh chụp, băm tiêu chí.
+- [`ph06_isolation_test.sql`](ph06/test/ph06_isolation_test.sql) dưới `dh_data_app` (nhóm 26 dưới vai trò báo cáo `dh_report_ro`) đạt 95 khối PASS, chia bảy nhóm: cô lập tenant (T91 không đọc, chèn, sửa, xóa dòng T90 trên 18 bảng, kể cả phân vùng; không có dòng `COMMON`); bất biến và vòng đời phiên bản; định danh duy nhất, `SENSITIVE` không bản rõ, ngưỡng và đánh giá; bốn mắt và lý do ≥ 20 ký tự; bảng chỉ thêm, không xóa bản ghi vàng, outbox không chứa giá trị, `p_seed_tenant` (21, 10, 5 dòng, chạy lại không nhân bản), `pg_trgm`; vai trò chỉ đọc không đọc định danh mã hóa, ảnh chụp, băm tiêu chí; nhóm 27 của FRS 0.2: cờ `restricted`, khóa tập nhãn, gỡ hạn chế, chỉ mục GIN `block_keys`, quyền `ph06_splink`.
 
 Bài kiểm `TenantIsolationIT` (D03-02-PH06) tự động hóa các khối này trong CI bằng Testcontainers PostgreSQL 16.
 
@@ -1761,7 +1761,7 @@ Không có dữ liệu dùng chung tenant. Khi PH-20 khởi tạo tenant, `dh-da
 
 | Dữ liệu | Nội dung | Nguồn |
 |---|---|---|
-| Tham số `06.*` | 13 dòng `tenant_setting` theo FRS 8.2 (`06.queue.sla-days` 7, `06.batch.safety-ratio` 0,05, `06.undo.window-days` 90, `06.export.max-rows` 100.000…) | FR-06-060 |
+| Tham số `06.*` | 21 dòng `tenant_setting` theo FRS 8.2 (13 gốc và 8 tham số mới của bản 0.2; `06.queue.reason-templates` có mặc định ở ứng dụng, không seed) (`06.queue.sla-days` 7, `06.batch.safety-ratio` 0,05, `06.undo.window-days` 90, `06.export.max-rows` 100.000…) | FR-06-060 |
 | Chính sách lưu giữ | 10 dòng `retention_policy` (mục 7) | FR-06-059 |
 | Lịch job | 5 dòng `job_schedule`: `BATCH_MATCH` 02:00 hằng ngày, `ACCURACY_EVAL` ngày 1 hằng tháng, `NATIONAL_SYNC_DOWN` mỗi 15 phút, `NATIONAL_RECONCILE` Chủ nhật 01:00, `RETENTION_PURGE` 03:30 | FR-06-056 |
 | Domain `CITIZEN`, `ORGANIZATION`, `ADDRESS` | Do ứng dụng nạp từ gói nền có phiên bản (mô hình, bộ quy tắc, sống sót mặc định); `baseline = true`, phiên bản `ACTIVE` không có người gửi duyệt (hai cột bốn mắt bỏ trống cho gói của PA) | FR-06-007 |
@@ -1790,7 +1790,7 @@ Tệp lô nạp ứng viên (`candidate_file.object_ref`, mã hóa phía máy ch
 
 ### 6.5. Job Splink trên Kubernetes
 
-Job Python (Splink, DuckDB) chạy trong namespace riêng, dùng `ph06_readonly` với `app.tenant_id` của job, chỉ thấy `match_staging` của tenant mình (SEC-15). Không có ClickHouse cho PH-06.
+Job Python (Splink, DuckDB) chạy trong namespace riêng, dùng vai `ph06_splink` với `app.tenant_id` của job, chỉ thấy `match_staging` của tenant mình (SEC-15). Không có ClickHouse cho PH-06.
 
 ## 7. Sao lưu, khôi phục, mã hóa và lưu giữ
 
@@ -1844,10 +1844,23 @@ Bảng nêu thời hạn lưu giữ và cách dọn từng nhóm dữ liệu; ph
 | EN-06-19 | `export_request` | `export_request` |
 | EN-06-20 | `subject_request` | `subject_request` |
 | EN-06-21 | `access_log` | `access_log` |
+| EN-06-22 | `source_priority_proposal` | `source_priority_proposal` |
+| EN-06-23 | `evaluation_report` | `evaluation_report` |
+| EN-06-24 | `job_schedule` | `job_schedule` |
+| EN-06-25 | `candidate_file` | `candidate_file` |
+| EN-06-26 | `source_record_head` | `source_record_head` |
+| EN-06-27 | `match_staging` | `match_staging` |
+| EN-06-28 | `golden_identifier` | `golden_identifier` |
+| EN-06-29 | `national_sync_state` | `national_sync_state` |
+| EN-06-30 | `national_discrepancy` | `national_discrepancy` |
+| EN-06-31 | `source_correction` | `source_correction` |
+| EN-06-32 | `processing_log` | `processing_log` |
+| EN-06-33 | `retention_policy` | `retention_policy` |
+| EN-06-34 | `tenant_setting` | `tenant_setting` |
 
 : Ánh xạ thực thể EN-06 sang bảng
 
-Bảng không có mã EN ở FRS 4.2 (bổ sung để hiện thực chức năng): `candidate_file`, `source_record_head`, `evaluation_report`, `job_schedule`, `match_staging`, `national_sync_state`, `national_discrepancy`, `source_correction`, `processing_log`, `retention_policy`, `tenant_setting`, `outbox_event`, `inbox_event`, `shedlock`.
+Bảng không có mã EN ở FRS 4.2 (bổ sung để hiện thực chức năng): `outbox_event`, `inbox_event`, `shedlock`.
 <!-- gen:en:end -->
 
 ### 8.2. Chức năng FR-06 → bảng
@@ -1957,21 +1970,25 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 
 ### 9.2. Đề nghị bổ sung cho FRS
 
-Các điểm FRS chưa nêu mà DDL phải chọn giá trị tạm.
+FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; bảng dưới ghi cách tập CSDL đã áp.
 
-| Số | Nội dung | CSDL đang làm |
+| Số | Nội dung | Xử lý ở FRS 0.2 và CSDL 0.2 |
 |---|---|---|
-| 1 | FRS 4.2 chưa có thực thể cho 13 bảng bổ sung: `source_priority_proposal`, `evaluation_report`, `job_schedule`, `candidate_file`, `source_record_head`, `match_staging`, `golden_identifier`, `national_sync_state`, `national_discrepancy`, `source_correction`, `processing_log`, `retention_policy`, `tenant_setting` | Đề nghị thêm mã thực thể vào 4.2; DDL ghi "bổ sung" ở cột thực thể |
-| 2 | Phụ lục A chưa có enum cho `identifier_rule.validator` (`CCCD_12`, `CMND_9`, `MST_10_13`, `MSDN`, `MA_BHXH_10`, `DVHC_CODE`, `REGEX`, chỉ có ở đầu vào FR-06-003) | `CHECK` theo danh sách FR-06-003; đề nghị thêm `IdentifierValidator` |
-| 3 | Chưa có enum cho `update_subscription.delivery` (`PUSH`, `PULL`) và loại đối tượng của `retention_policy.object_type` (10 loại) | `CHECK` theo FR-06-051, 059; đề nghị thêm `DeliveryMode06`, `RetentionObjectType` |
-| 4 | Giá trị lưu giữ mặc định chưa có ở FRS (BR-06-031 chỉ nêu nhật ký truy cập) | Lấy theo SRS cũ 4.3: ứng viên 365 ngày, kết quả đối sánh 2 năm, lịch sử không xóa; đề nghị ghi vào 8.2 |
-| 5 | Mức nhật ký xử lý `INFO`, `WARN`, `ERROR` chưa có enum | `CHECK` theo ba mức chuẩn, ngoại lệ của `check_frs.py` |
-| 6 | `golden_record.display_name`, `name_norm` là bản sao rõ có chỉ mục để tra gần đúng; phụ thuộc phân loại họ tên của PH-09 (Q06-53) | Đề nghị FRS 8.1 ghi điều kiện này vào phụ thuộc PH-09 |
+| 1 | 13 bảng bổ sung chưa có mã thực thể | Đã áp: EN-06-22…34 ở FRS 4.2; `COMMENT ON TABLE` ghi mã, mục 8.1 ánh xạ đủ 34 EN, chỉ còn `outbox_event`, `inbox_event`, `shedlock` là bảng hạ tầng không có mã EN |
+| 2 | Enum `IdentifierValidator` | Đã áp ở Phụ lục A; `check_frs.py` kiểm khớp `CHECK` |
+| 3 | Enum `DeliveryMode`, `RetentionObjectType` | Đã áp ở Phụ lục A |
+| 4 | Giá trị lưu giữ mặc định | Đã áp: dẫn chiếu ở FRS 8.1 và bảng FR-06-059; `p_seed_tenant` giữ nguyên |
+| 5 | Enum mức nhật ký `LogLevel`, pha tệp `FilePhase` | Đã áp ở Phụ lục A |
+| 6 | `display_name`, `name_norm` phụ thuộc phân loại họ tên PH-09 | Chuyển câu hỏi mở: Q06-53 của tập này |
+| 7 | `golden_record.block_keys` cộng chỉ mục GIN; vai `ph06_splink` | Đã áp ở FR-06-019, 022: cột `block_keys varchar(72)[]`, `ix_golden_record_blocks` (GIN), vai `ph06_splink` |
+| 8 | Chín tham số mới ở FRS 8.2 | Đã áp: `ck_tenant_setting_key` có 22 khóa, `p_seed_tenant` seed 21 dòng (trừ `06.queue.reason-templates`) |
+| 9 | Khóa tập nhãn (API-06-123), mở lại quyết định (API-06-121), gỡ hạn chế (API-06-125) | Đã áp: `label_set.locked`, `locked_at`, `locked_by`; `steward_item.reopen_count`, `reopened_at`, `reopened_by`, `reopen_reason`, `decision_history`; `golden_record.restricted`; `subject_request.lifted_at`, `lifted_by`, `lift_reason`; ba `CHECK` mới |
 
-: Đề nghị bổ sung cho FRS
+: Đề nghị bổ sung cho FRS, trạng thái ở bản 0.2
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-CSDL và K-TRINH-BAY: 43 bảng, DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 90 khối PASS, đối chiếu Phụ lục A sạch; ERD bốn nhóm; mã hóa envelope và HMAC; ánh xạ EN, FR sang bảng; năm câu hỏi mở Q06-50…54 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: ánh xạ EN-06-22…34 cho 13 bảng bổ sung; thêm `golden_record.block_keys` cộng GIN và `restricted`, khóa ở `label_set`, mở lại ở `steward_item`, gỡ hạn chế ở `subject_request`; vai `ph06_splink`; chín tham số mới vào `tenant_setting` và `p_seed_tenant`; kiểm cô lập 95 khối PASS trên PostgreSQL 16.15; mục 9.2 ghi các đề nghị đã áp |

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH06
 ten: Kịch bản và test case phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -23,7 +23,7 @@ Phần này viết cho hội đồng thẩm định: tài liệu chứng minh đ
 - Không có đường nào để tenant này đọc dữ liệu chủ của tenant khác, để số định danh và thuộc tính `SENSITIVE` lộ dạng rõ ở CSDL, log, topic, tệp xuất, hay để một lượt trả dữ liệu không có nhật ký truy cập.
 - Hợp nhất, tách, hoàn tác luôn khôi phục đúng trạng thái trước, có người duyệt khác người đề nghị với thao tác rủi ro cao, và đồng bộ quốc gia tự dừng khi lệch quá 5 %.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->151 (TC-06-001…151; 118 ca P1)<!--/gen--> test case và 8 kịch bản nghiệm thu người dùng (UAT-01…08). Mọi FR có ít nhất một ca dương và một ca âm; ma trận mục 8 sinh bằng `ph06/tools/gen_matrix.py`. PH-06 là phân hệ mới của Đợt 3, hệ cũ không có chức năng dữ liệu chủ (D02-02 ghi LGC "—") nên mục 7 là nghiệm thu theo vai trò thay cho nghiệm thu tương đương hệ cũ.
+**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->158 (TC-06-001…158; 123 ca P1)<!--/gen--> test case và 8 kịch bản nghiệm thu người dùng (UAT-01…08). Mọi FR có ít nhất một ca dương và một ca âm; ma trận mục 8 sinh bằng `ph06/tools/gen_matrix.py`. PH-06 là phân hệ mới của Đợt 3, hệ cũ không có chức năng dữ liệu chủ (D02-02 ghi LGC "—") nên mục 7 là nghiệm thu theo vai trò thay cho nghiệm thu tương đương hệ cũ.
 
 **Căn cứ.** FRS D02-03-PH06, use case D02-04-PH06, màn hình D03-06-PH06, ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01 (cổng `RG-1…5`); Luật Dữ liệu, Luật BVDLCN 91/2025, Nghị định 278/2025/NĐ-CP, Nghị định 356/2025/NĐ-CP, Nghị định 331/2026/NĐ-CP, TCVN 14423:2026; cấu trúc theo ISO/IEC/IEEE 29119-3.
 
@@ -120,12 +120,13 @@ Kịch bản có mã `TS-06-nn`, test case `TC-06-nnn`; mã không tái sử d�
 
 : Các trường của khối đặc tả test case
 
-Mã lỗi nền tảng chưa có ở FRS PH-06 (thiếu quyền, chưa xác thực) dùng ký hiệu 403-PQ, 401-XT; đề nghị bổ sung ở mục 10.1. Trong kết quả mong đợi dùng các ký hiệu sau.
+Lỗi thiếu quyền, chưa xác thực và thiếu `If-Match` dùng mã nền tảng ERR-00-403, ERR-00-401, ERR-00-428 theo FRS 0.2 (9.1), không có mã ERR-06 riêng. Trong kết quả mong đợi dùng các ký hiệu sau.
 
 | Ký hiệu | Nghĩa |
 |---|---|
-| 403-PQ | `403` do thiếu quyền `PERM-06-*` hoặc scope `mdm:*`; thân RFC 9457 có `code`, `traceId` |
-| 401-XT | `401` thiếu hoặc sai token |
+| ERR-00-403 | `403` do thiếu quyền chức năng `PERM-06-*` hoặc scope `mdm:*`; thân RFC 9457 có `code`, `traceId` (`403` do phạm vi dữ liệu hoặc nghiệp vụ giữ mã ERR-06-005, 014, 028, 034, 037, 038) |
+| ERR-00-401 | `401` thiếu hoặc sai token |
+| ERR-00-428 | `428` thiếu tiêu đề `If-Match` ở thao tác ghi |
 | 404-ẩn | `404` ERR-06-001; thân giống hệt "không tồn tại" và "thuộc tenant khác" trừ `traceId` |
 | KT: có (hành động) | Có bản ghi kiểm toán tới PH-13 với hành động đó, đủ trường FR-00-041, không chứa giá trị thuộc tính DLCN |
 | NK: có | Có đúng một dòng `access_log` cho lượt trả dữ liệu (BR-06-010) |
@@ -245,14 +246,14 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5.
 | TS-06-06 | Nạp tệp lô có xem trước | UC-06-06 | 2 |
 | TS-06-07 | Chuẩn hóa ứng viên và xử lý ứng viên lỗi | UC-06-07 | 6 |
 | TS-06-08 | Bộ quy tắc đối sánh, khóa gom nhóm và ngưỡng | UC-06-08 | 4 |
-| TS-06-09 | Tập nhãn, chạy thử, đánh giá và kích hoạt bộ quy tắc | UC-06-09 | 4 |
+| TS-06-09 | Tập nhãn, chạy thử, đánh giá và kích hoạt bộ quy tắc | UC-06-09 | 6 |
 | TS-06-10 | Đối sánh tự động và tạo, cập nhật bản ghi vàng | UC-06-10 | 10 |
 | TS-06-11 | Job đối sánh theo lô bằng Splink | UC-06-11 | 6 |
-| TS-06-12 | Hàng đợi người quản lý dữ liệu | UC-06-12 | 4 |
+| TS-06-12 | Hàng đợi người quản lý dữ liệu | UC-06-12 | 7 |
 | TS-06-13 | So sánh cạnh nhau và quyết định | UC-06-13 | 4 |
 | TS-06-14 | Duyệt bốn mắt hợp nhất rủi ro cao | UC-06-14 | 3 |
 | TS-06-15 | Quy tắc sống sót, xem trước tác động và áp lại | UC-06-15 | 4 |
-| TS-06-16 | Chi tiết bản ghi vàng, lịch sử và nguồn gốc | UC-06-16 | 4 |
+| TS-06-16 | Chi tiết bản ghi vàng, lịch sử và nguồn gốc | UC-06-16 | 5 |
 | TS-06-17 | Sửa tay, ngừng và khôi phục bản ghi vàng | UC-06-17 | 4 |
 | TS-06-18 | Hợp nhất bản ghi vàng thủ công | UC-06-18 | 3 |
 | TS-06-19 | Tách bản ghi vàng và gỡ liên kết chéo nguồn | UC-06-19 | 3 |
@@ -263,7 +264,7 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5.
 | TS-06-24 | Phát sự kiện thay đổi và đăng ký nhận cập nhật | UC-06-24 | 3 |
 | TS-06-25 | Đồng bộ CSDL tổng hợp quốc gia và xử lý lệch | UC-06-25 | 6 |
 | TS-06-26 | Vận hành: dashboard, lịch job và nhật ký | UC-06-26 | 3 |
-| TS-06-27 | Yêu cầu của chủ thể dữ liệu | UC-06-27 | 4 |
+| TS-06-27 | Yêu cầu của chủ thể dữ liệu | UC-06-27 | 5 |
 | TS-06-28 | Chính sách lưu giữ và tham số theo tenant | UC-06-28 | 2 |
 | TS-06-29 | Cô lập tenant: API, RLS, Kafka, kho tệp | — | 5 |
 | TS-06-30 | Phân quyền theo ma trận PERM-06 và bốn mắt | — | 3 |
@@ -272,7 +273,7 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5.
 | TS-06-33 | Độ chính xác đối sánh | — | 5 |
 | TS-06-34 | Chịu lỗi, khôi phục và quan sát | — | 4 |
 | TS-06-35 | Truy cập và giao diện | — | 3 |
-| **Tổng** | | | **151** (118 ca P1) |
+| **Tổng** | | | **158** (123 ca P1) |
 
 : Danh sách 35 kịch bản kèm use case và số ca
 <!--/gen-->
@@ -374,7 +375,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. DS1 gọi `POST /domains:install-baseline`.
 3. TA gọi ở T90 khi CITIZEN đã có phiên bản 2 do tỉnh sửa.
 
-**Kết quả mong đợi.** Bước 1 `409` ERR-06-002, không tạo thêm. Bước 2 403-PQ. Bước 3 không ghi đè phiên bản 2, các domain thiếu mới được bổ sung, phản hồi liệt kê "đã có, bỏ qua".
+**Kết quả mong đợi.** Bước 1 `409` ERR-06-002, không tạo thêm. Bước 2 ERR-00-403. Bước 3 không ghi đè phiên bản 2, các domain thiếu mới được bổ sung, phản hồi liệt kê "đã có, bỏ qua".
 
 **Hậu điều kiện.** Không domain nào bị đổi ngoài domain thiếu.
 :::
@@ -476,7 +477,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, ZAP.
 
-**Truy vết.** FR-06-003 · BR-06-001 · API-06-006, 013 · ERR-06-002, 003, 009.
+**Truy vết.** FR-06-003 · BR-06-001 · API-06-006, 013 · ERR-06-002, 003, 009, 052.
 
 **Tiền điều kiện, dữ liệu.** DEMO-CANBO DRAFT.
 
@@ -487,7 +488,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Khai hai khóa `CCCD_12` trong một domain.
 4. Khai `CMND_9` với `deterministic = true`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-06-009. Bước 2 `400` ERR-06-003 trong ≤ 1 s, không treo CPU. Bước 3 `409` ERR-06-002. Bước 4 `422` ERR-06-003 (CMND_9 bắt buộc `deterministic = false`).
+**Kết quả mong đợi.** Bước 1 `422` ERR-06-009. Bước 2 `400` ERR-06-003 trong ≤ 1 s, không treo CPU. Bước 3 `409` ERR-06-002. Bước 4 `422` ERR-06-052 (CMND_9 chỉ để so sánh, không làm khóa xác định); API-06-013 kiểm thử khóa trả cùng mã.
+
+**Thông báo hiển thị.** ERR-06-052 "Số CMND 9 chữ số chỉ dùng để so sánh, không dùng làm khóa xác định." ở dòng khóa UI-06-07.
 
 **Hậu điều kiện.** Không khóa nào được lưu.
 :::
@@ -787,7 +790,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. DS1 `approve` đề xuất do chính DS1 gửi.
 3. `propose` đặt `HT-YTE` mức 1 cho `dateOfBirth` (thuộc tính thẩm quyền).
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-06-013. Bước 2 `403` ERR-06-005 (và 403-PQ vì DS không có `approve`). Bước 3 `422` ERR-06-022 (vi phạm BR-06-003).
+**Kết quả mong đợi.** Bước 1 `422` ERR-06-013. Bước 2 `403` ERR-06-005 (và ERR-00-403 vì DS không có `approve`). Bước 3 `422` ERR-06-022 (vi phạm BR-06-003).
 
 **Thông báo hiển thị.** ERR-06-013 "Nhập số, ngày văn bản phê duyệt thứ tự ưu tiên nguồn." dưới ô căn cứ, UI-06-08.
 
@@ -1293,7 +1296,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận bộ quy tắc chỉ kích hoạt khi đánh giá đạt precision ≥ 99,9 % và recall ≥ 98 % trên tập nhãn ≥ 1.000 cặp.
 
-**Phủ.** FR-06-024, 025, 026; UC-06-09; API-06-033…035, 037…040; UI-06-09, 13; BR-06-021; NFR-06-008, 009; EVT-06-11; ERR-06-024, 026.
+**Phủ.** FR-06-024, 025, 026; UC-06-09; API-06-033…035, 037…040, 123; UI-06-09, 13; BR-06-021; NFR-06-008, 009; EVT-06-11; ERR-06-024, 026, 051.
 
 #### TC-06-037 · Tập nhãn: tạo, thêm cặp, khóa; tập quá nhỏ <!--k:label-sets-->
 
@@ -1306,7 +1309,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-025 · API-06-037, 038, 039 · UI-06-13 · ERR-06-002, 003, 006, 026 · PERM-06-steward.
+**Truy vết.** FR-06-025 · API-06-037, 038, 039, 123 · UI-06-13 · ERR-06-002, 003, 006, 026, 051 · PERM-06-steward.
 
 **Tiền điều kiện, dữ liệu.** T96; DS1, DS2.
 
@@ -1315,9 +1318,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. Tạo tập `NHAN-A`, thêm 200 cặp `PairLabel` `MATCH`, `NO_MATCH`; thêm nhãn `MAYBE`.
 2. Tạo tập `NHAN-A` lần hai.
 3. Chạy đánh giá trên `NHAN-A`.
-4. Thêm cặp vào tập đã khóa.
+4. Khóa tập bằng `POST /label-sets/NHAN-A:lock` rồi thêm cặp vào tập đã khóa.
 
-**Kết quả mong đợi.** Bước 1 nhận 200 cặp, nhãn `MAYBE` `400` ERR-06-003. Bước 2 `409` ERR-06-002. Bước 3 `422` ERR-06-026. Bước 4 `409` ERR-06-006.
+**Kết quả mong đợi.** Bước 1 nhận 200 cặp, nhãn `MAYBE` `422` ERR-06-051 (cặp thứ 201 không hợp lệ). Bước 2 `409` ERR-06-002. Bước 3 `422` ERR-06-026. Bước 4 khóa thành công, thêm cặp `409` ERR-06-006; KT: có (label-lock).
+
+**Thông báo hiển thị.** ERR-06-051 "Cặp nhãn thứ {n} không hợp lệ: {lý do}." ở báo cáo nhập cặp UI-06-13.
 
 **Hậu điều kiện.** Tập `NHAN-A` 200 cặp; F-LBL đã nạp thành `NHAN-12K`.
 :::
@@ -1384,7 +1389,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** ACC, API.
 
-**Truy vết.** FR-06-026 · BR-06-021 · API-06-034, 035 · ERR-06-024, 005.
+**Truy vết.** FR-06-026 · BR-06-021 · API-06-034, 035 · ERR-06-024, 005 · `06.match.auto-disable-on-fail`.
 
 **Tiền điều kiện, dữ liệu.** Bộ quy tắc v3 cố ý nới (trọng số tên thấp); `06.match.auto-disable-on-fail = true`.
 
@@ -1399,6 +1404,63 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Thông báo hiển thị.** ERR-06-024 "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." hộp cảnh báo đầu UI-06-09.
 
 **Hậu điều kiện.** v3 không ACTIVE.
+:::
+
+#### TC-06-152 · Khóa tập nhãn và chặn sửa tập đã khóa <!--k:label-lock-->
+
+::: dac-ta
+**Mục đích.** Chứng minh khóa tập nhãn dùng cho đánh giá chính thức, khóa rồi không mở lại, theo FR-06-025 (API-06-123).
+
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-06-025 · API-06-123, 039 · ERR-06-006, 051 · ERR-00-403, ERR-00-428 · PERM-06-steward.
+
+**Tiền điều kiện, dữ liệu.** T96; tập `NHAN-B` 300 cặp chưa khóa; DS1 (`PERM-06-steward`), VW1 (chỉ `PERM-06-read`).
+
+**Các bước.**
+
+1. VW1 `POST /label-sets/NHAN-B:lock`.
+2. DS1 `POST /label-sets/NHAN-B:lock` không có `If-Match`.
+3. DS1 `:lock` kèm `If-Match` đúng.
+4. DS1 `:lock` lần hai rồi `POST /label-sets/NHAN-B/pairs` thêm một cặp.
+5. Thêm một cặp có `leftRef` trùng `rightRef` vào tập `NHAN-C` chưa khóa.
+
+**Kết quả mong đợi.** Bước 1 `403` ERR-00-403. Bước 2 `428` ERR-00-428. Bước 3 `200`, `locked = true`, người khóa và thời điểm; KT: có (label-lock). Bước 4 `409` ERR-06-006, thêm cặp `409` ERR-06-006; muốn thêm cặp phải tạo tập phiên bản mới. Bước 5 `422` ERR-06-051 (hai tham chiếu trùng nhau).
+
+**Thông báo hiển thị.** ERR-06-051 "Cặp nhãn thứ {n} không hợp lệ: {lý do}."
+
+**Hậu điều kiện.** `NHAN-B` khóa, 300 cặp.
+:::
+
+#### TC-06-153 · Đánh giá tháng không đạt: tự tắt tự hợp nhất và bật lại <!--k:eval-auto-disable-->
+
+::: dac-ta
+**Mục đích.** Chứng minh tham số `06.match.auto-disable-on-fail` điều khiển việc tắt tự hợp nhất khi đánh giá tháng không đạt, theo FR-06-026 bước 5.
+
+**Loại.** Âm, Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** ACC, API.
+
+**Truy vết.** FR-06-026 · BR-06-021 · API-06-034, 087 · ERR-06-024 · EVT-06-11 · `06.match.auto-disable-on-fail` · PERM-06-config.
+
+**Tiền điều kiện, dữ liệu.** T96; bộ quy tắc `ACTIVE` v2 bị làm nhiễu (precision 99,4 %); tenant T96 đặt `true`, tenant T97 đặt `false`.
+
+**Các bước.**
+
+1. Chạy đánh giá định kỳ tháng trên T96.
+2. Nạp ứng viên có điểm vùng `MATCH` ở T96.
+3. Chạy đánh giá định kỳ tháng trên T97.
+4. Ở T96, kích hoạt phiên bản bộ quy tắc mới đạt chuẩn qua bốn mắt.
+
+**Kết quả mong đợi.** Bước 1 `FAILED`, tự hợp nhất bị tắt ở T96, kiểm toán và cảnh báo PH-13 nêu hệ quả. Bước 2 mọi `MATCH` trực tuyến thành `POSSIBLE_MATCH` vào hàng đợi, không hợp nhất tự động. Bước 3 T97 giữ tự hợp nhất, chỉ cảnh báo. Bước 4 tự hợp nhất bật lại ở phiên bản mới, KT: có.
+
+**Hậu điều kiện.** T96 bật lại tự hợp nhất bằng phiên bản đạt chuẩn.
 :::
 
 ### TS-06-10 · Đối sánh tự động và tạo, cập nhật bản ghi vàng
@@ -1723,16 +1785,16 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** JOB.
 
-**Truy vết.** FR-06-022 · BR-06-022 · API-06-044 · ERR-06-105 · PERM-06-approve.
+**Truy vết.** FR-06-022 · BR-06-022 · API-06-044, 106 · ERR-06-105 · PERM-06-approve.
 
 **Tiền điều kiện, dữ liệu.** Tập T99 dựng 30 % bản ghi trùng chủ ý; `06.batch.safety-ratio = 0,05`.
 
 **Các bước.**
 
 1. Chạy job, chờ trạng thái.
-2. DA1 `:confirm` một job; với job khác DA1 từ chối.
+2. DA1 `:confirm` một job với `decision = APPROVE`; với job khác DA1 `:confirm` với `decision = REJECT`.
 
-**Kết quả mong đợi.** Bước 1 `AWAITING_CONFIRMATION`, ERR-06-105 ở UI-06-12, không bản ghi vàng nào đổi. Bước 2 xác nhận thì `APPLYING` → `SUCCEEDED`; từ chối thì `CANCELLED`, không đổi (ĐN-UC-04).
+**Kết quả mong đợi.** Bước 1 `AWAITING_CONFIRMATION`, ERR-06-105 ở UI-06-12, không bản ghi vàng nào đổi. Bước 2 xác nhận thì `APPLYING` → `SUCCEEDED`; `decision = REJECT` thì `CANCELLED`, không cặp nào được áp (API-06-106).
 
 **Hậu điều kiện.** Hai job ở trạng thái cuối.
 :::
@@ -1815,7 +1877,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận tạo mục không trùng, tính ưu tiên đúng, nhận việc không xung đột, SLA và cảnh báo quá tải.
 
-**Phủ.** FR-06-027, 028, 032; UC-06-12; API-06-045, 047, 050; UI-06-04, 01; BR-06-002, 015, 019; ERR-06-027, 028; EVT-06-08.
+**Phủ.** FR-06-027, 028, 032; UC-06-12; API-06-045, 047, 050, 124; UI-06-04, 01; BR-06-002, 015, 019; ERR-06-027, 028; EVT-06-08.
 
 #### TC-06-057 · Tạo mục hàng đợi, ưu tiên và SLA <!--k:q-create-->
 
@@ -1921,11 +1983,93 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Hậu điều kiện.** 101 mục mở.
 :::
 
+#### TC-06-154 · Nhận việc tiếp theo <!--k:q-claim-next-->
+
+::: dac-ta
+**Mục đích.** Chứng minh "Nhận việc tiếp theo" nhận nguyên tử mục ưu tiên cao nhất và trả `204` khi hết việc, theo FR-06-028 (API-06-124).
+
+**Loại.** Dương, Biên.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API, E2E.
+
+**Truy vết.** FR-06-028 · API-06-124, 045 · UI-06-04 · ERR-06-027, 028 · PERM-06-steward.
+
+**Tiền điều kiện, dữ liệu.** Bảy mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
+
+**Các bước.**
+
+1. DS1 và DS2 đồng thời `POST /stewardship/items:claim-next`.
+2. DS1 `claim-next` kèm bộ lọc `riskLevel = HIGH`.
+3. Nhận hết mục, rồi DS1 `claim-next` lần nữa.
+4. DS1 `GET /stewardship/items?partition=mine`; DS3 `claim-next`.
+
+**Kết quả mong đợi.** Bước 1 hai mục khác nhau (`SKIP LOCKED`), mục có `priority` cao nhất, hạn SLA sớm nhất thuộc người nhận trước, cả hai `ASSIGNED` giữ 30 phút (`06.queue.hold-minutes`). Bước 2 chỉ trả mục rủi ro cao. Bước 3 `204`, không lỗi. Bước 4 `partition=mine` chỉ có mục của DS1; DS3 không nhận mục tổ chức khác (ERR-06-028 nếu chỉ định trực tiếp).
+
+**Hậu điều kiện.** Các mục đã nhận ở `ASSIGNED`.
+:::
+
+#### TC-06-155 · Sửa quyết định trong hạn bằng mở lại <!--k:q-reopen-->
+
+::: dac-ta
+**Mục đích.** Chứng minh người đã quyết hoặc DA mở lại quyết định hàng đợi trong `06.queue.reopen-hours` và quyết định lại, theo FR-06-030 luồng thay thế (API-06-121).
+
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API, E2E.
+
+**Truy vết.** FR-06-030 · FR-06-039 · API-06-121, 048 · UI-06-05 · EVT-06-04 · `06.queue.reopen-hours`.
+
+**Tiền điều kiện, dữ liệu.** Mục M3 vừa `RESOLVED` với `MATCH` rủi ro thấp (hợp nhất tự động); DS1 là người quyết; DS2 người khác.
+
+**Các bước.**
+
+1. DS2 `:reopen` M3.
+2. DS1 `:reopen` M3 với lý do 10 ký tự.
+3. DS1 `:reopen` M3 với lý do đủ 20 ký tự và `If-Match` đúng.
+4. DS1 `decide` `NO_MATCH` cho M3.
+
+**Kết quả mong đợi.** Bước 1 `403` ERR-00-403 (không phải người quyết, không phải DA). Bước 2 `422` ERR-06-007. Bước 3 `200`, M3 `ASSIGNED` cho DS1, hợp nhất cũ được hoàn tác theo FR-06-039, quyết định cũ còn trong lịch sử; KT: có (q-reopen). Bước 4 M3 `RESOLVED` `NO_MATCH`, cặp nhãn cập nhật, hai bản ghi vàng tách lại.
+
+**Hậu điều kiện.** M3 `NO_MATCH`, lịch sử có hai quyết định.
+:::
+
+#### TC-06-156 · Mở lại quá hạn hoặc đã có thao tác phụ thuộc <!--k:q-reopen-neg-->
+
+::: dac-ta
+**Mục đích.** Chứng minh chặn mở lại khi quá hạn hoặc đã có thao tác phụ thuộc, theo FR-06-030 (ERR-06-053).
+
+**Loại.** Âm, Biên.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-06-030 · API-06-121 · ERR-06-053 · `06.queue.reopen-hours`.
+
+**Tiền điều kiện, dữ liệu.** Hai mục `RESOLVED`: M4 quyết cách đây 25 giờ (đồng hồ giả lập), M5 quyết 2 giờ trước nhưng bản ghi vàng đã sửa tay thêm.
+
+**Các bước.**
+
+1. DA1 `:reopen` M4.
+2. DA1 `:reopen` M5.
+3. Đặt `06.queue.reopen-hours = 48` rồi `:reopen` M4.
+
+**Kết quả mong đợi.** Bước 1 `409` ERR-06-053. Bước 2 `409` ERR-06-053 (có thao tác phụ thuộc), hướng dẫn dùng hoàn tác (FR-06-039). Bước 3 `200` vì còn trong hạn 48 giờ, chưa có thao tác phụ thuộc ở M4.
+
+**Thông báo hiển thị.** ERR-06-053 "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác." ở hộp thoại sửa quyết định UI-06-05.
+
+**Hậu điều kiện.** M5 vẫn `RESOLVED`.
+:::
+
 ### TS-06-13 · So sánh cạnh nhau và quyết định
 
 **Mục tiêu.** Xác nhận so sánh đúng, quyết định có lý do, cấm hợp nhất khác định danh, mục lỗi thời.
 
-**Phủ.** FR-06-029, 030; UC-06-13; API-06-046, 048; UI-06-05; BR-06-006, 008, 010, 023; ERR-06-007, 029, 030.
+**Phủ.** FR-06-029, 030; UC-06-13; API-06-046, 048, 121; UI-06-05; BR-06-006, 008, 010, 023; ERR-06-007, 029, 030, 053.
 
 #### TC-06-061 · So sánh cạnh nhau hai bản ghi <!--k:cmp-view-->
 
@@ -2223,7 +2367,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận xem bản ghi vàng có che, lịch sử đủ, so sánh hai phiên bản, nguồn gốc từng thuộc tính.
 
-**Phủ.** FR-06-035, 041, 043; UC-06-16; API-06-056, 063, 064, 065; UI-06-03; BR-06-005, 009, 010, 026; ERR-06-001, 039.
+**Phủ.** FR-06-035, 041, 043; UC-06-16; API-06-056, 063, 064, 065, 122; UI-06-03; BR-06-005, 009, 010, 026; ERR-06-001, 039.
 
 #### TC-06-072 · Xem chi tiết bản ghi vàng đã che <!--k:gold-view-->
 
@@ -2325,6 +2469,32 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `GET .../lineage?attribute=khongco`.
 
 **Kết quả mong đợi.** Bước 1 mỗi thuộc tính `sourceCode`, `sourceKey`, `strategy`, thời điểm; thuộc tính sửa tay nguồn `MANUAL` kèm hạn và yêu cầu sửa tại nguồn. Bước 2 `400` ERR-06-003.
+
+**Hậu điều kiện.** Không đổi.
+:::
+
+#### TC-06-157 · Danh sách thao tác của bản ghi vàng <!--k:golden-ops-->
+
+::: dac-ta
+**Mục đích.** Chứng minh tab Thao tác liệt kê thao tác chờ duyệt và thao tác hoàn tác được của một bản ghi vàng, theo FR-06-035, 039 (API-06-122).
+
+**Loại.** Dương.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API, E2E.
+
+**Truy vết.** FR-06-035 · FR-06-039 · API-06-122 · UI-06-03 · PERM-06-read.
+
+**Tiền điều kiện, dữ liệu.** Bản ghi vàng Bình có một hợp nhất `APPLIED` (trong hạn hoàn tác), một tách `PENDING_APPROVAL`, một hoàn tác `UNDONE`; VW1.
+
+**Các bước.**
+
+1. VW1 `GET /domains/CITIZEN/golden-records/{id}/operations`.
+2. Lọc `status=PENDING_APPROVAL` rồi `undoable=true`.
+3. `GET` operations của bản ghi thuộc tenant khác (T91 vào dữ liệu T90).
+
+**Kết quả mong đợi.** Bước 1 ba thao tác kèm `changeType`, `status`, người yêu cầu, thời điểm. Bước 2 lọc đúng, `undoable` chỉ ở hợp nhất còn trong hạn `06.undo.window-days`. Bước 3 `404` ERR-06-001, thân giống "không tồn tại". NK: có.
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -2752,7 +2922,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `lookup` bằng S-T90-NOPURPOSE.
 3. `lookup` bằng token không scope.
 
-**Kết quả mong đợi.** Bước 1 `404` ERR-06-050. Bước 2 `403` ERR-06-037. Bước 3 403-PQ. Không dòng `access_log` trả dữ liệu cho bước 2, 3.
+**Kết quả mong đợi.** Bước 1 `404` ERR-06-050. Bước 2 `403` ERR-06-037. Bước 3 ERR-00-403. Không dòng `access_log` trả dữ liệu cho bước 2, 3.
 
 **Thông báo hiển thị.** ERR-06-037 "Yêu cầu thiếu mục đích khai thác được chấp thuận cho dữ liệu này."
 
@@ -2778,9 +2948,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. `GET .../xrefs/HT-YTE/YT-0001`.
 2. `POST .../xrefs:batch-lookup` 100 cặp, 5 cặp không có.
-3. `batch-lookup` 1.001 cặp.
+3. `batch-lookup` 501 cặp (giới hạn `06.xref.batch-max` mặc định 500).
 
-**Kết quả mong đợi.** Bước 1 `goldenId` đúng. Bước 2 95 kết quả, 5 `NOT_FOUND`. Bước 3 `400` ERR-06-003 (quá giới hạn lô).
+**Kết quả mong đợi.** Bước 1 `goldenId` đúng. Bước 2 95 kết quả, 5 `NOT_FOUND`. Bước 3 `400` ERR-06-003 (quá giới hạn lô 500); đặt `06.xref.batch-max = 50` thì lô 51 cặp bị từ chối, lô 50 cặp nhận.
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -2831,7 +3001,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Tìm lần lượt 12 trang × 10 bản ghi khác nhau trong 10 phút.
 3. Tìm bằng token thiếu `mdm:search`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-06-040. Bước 2 từ bản ghi thứ 101 `403` ERR-06-038, ghi vết đặc biệt, cảnh báo quét bất thường. Bước 3 403-PQ.
+**Kết quả mong đợi.** Bước 1 `422` ERR-06-040. Bước 2 từ bản ghi thứ 101 `403` ERR-06-038, ghi vết đặc biệt, cảnh báo quét bất thường. Bước 3 ERR-00-403.
 
 **Thông báo hiển thị.** ERR-06-040 "Nhập thêm tiêu chí: họ tên cần đi kèm ngày sinh, năm sinh hoặc xã."
 
@@ -3230,7 +3400,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** IT.
 
-**Truy vết.** FR-06-053 · BR-06-011 · ERR-06-044, 107 · EVT-06-13 · UI-06-14.
+**Truy vết.** FR-06-053 · BR-06-011 · API-06-118 · ERR-06-007, 044, 107 · EVT-06-13 · UI-06-14.
 
 **Tiền điều kiện, dữ liệu.** T94 F-SYNC lệch 8 % (80/1.000); `06.sync.pause-ratio = 0,05`.
 
@@ -3238,9 +3408,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Chạy `RECONCILE`.
 2. Chạy lại `POST /national-sync/runs`.
-3. DA1 điều tra và `POST /national-sync:resume`, chọn bỏ các lệch.
+3. DA1 `POST /national-sync:resume` không kèm `cause`; rồi kèm `cause` (nguyên nhân đã điều tra, ≥ 20 ký tự), chọn bỏ các lệch.
 
-**Kết quả mong đợi.** Bước 1 đồng bộ `PAUSED`, không bản ghi vàng nào đổi, ERR-06-107 "tỷ lệ lệch 8% vượt 5%", EVT-06-13, cảnh báo DA, TA, băng đỏ UI-06-14. Bước 2 `409` ERR-06-044. Bước 3 `RUNNING`, EVT-06-13 (tiếp tục). KT: có (sync-pause, sync-resume).
+**Kết quả mong đợi.** Bước 1 đồng bộ `PAUSED`, không bản ghi vàng nào đổi, ERR-06-107 "tỷ lệ lệch 8% vượt 5%", EVT-06-13, cảnh báo DA, TA, băng đỏ UI-06-14. Bước 2 `409` ERR-06-044. Bước 3 lần đầu `422` ERR-06-007; lần hai `RUNNING`, `cause` lưu ở trạng thái đồng bộ và kiểm toán, EVT-06-13 (tiếp tục) mang `cause`. KT: có (sync-pause, sync-resume).
 
 **Thông báo hiển thị.** ERR-06-107 "Đồng bộ tự động đã tạm dừng: tỷ lệ lệch {x}% vượt 5%. Điều tra trước khi tiếp tục."
 
@@ -3376,7 +3546,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `:cancel` job `RUNNING`; `:rerun` job `FAILED`.
 3. `:cancel` job `SUCCEEDED`; DS1 `:cancel`.
 
-**Kết quả mong đợi.** Bước 1 lịch lưu. Bước 2 `CANCELLED`, rồi job mới `QUEUED`. Bước 3 `409` ERR-06-006; DS1 403-PQ. KT: có (job-cancel, job-rerun).
+**Kết quả mong đợi.** Bước 1 lịch lưu. Bước 2 `CANCELLED`, rồi job mới `QUEUED`. Bước 3 `409` ERR-06-006; DS1 ERR-00-403. KT: có (job-cancel, job-rerun).
 
 **Hậu điều kiện.** Lịch tuần 02:00.
 :::
@@ -3402,7 +3572,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. DS1 `GET /access-logs`.
 3. `GET /processing-logs` với DS1.
 
-**Kết quả mong đợi.** Bước 1 mỗi dòng có người hoặc HTTT, mục đích, `goldenId`, số bản ghi, thời điểm, không có giá trị thuộc tính; lượt vượt ngưỡng hàng loạt gắn "vết đặc biệt". Bước 2 403-PQ. Bước 3 `200`. Cấu hình lưu giữ `access_log` 12 tháng và bản sao WORM 5 năm (kiểm cấu hình, không chờ thời gian).
+**Kết quả mong đợi.** Bước 1 mỗi dòng có người hoặc HTTT, mục đích, `goldenId`, số bản ghi, thời điểm, không có giá trị thuộc tính; lượt vượt ngưỡng hàng loạt gắn "vết đặc biệt". Bước 2 ERR-00-403. Bước 3 `200`. Cấu hình lưu giữ `access_log` 12 tháng và bản sao WORM 5 năm (kiểm cấu hình, không chờ thời gian).
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -3411,7 +3581,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận tiếp nhận, xử lý ba loại yêu cầu của chủ thể theo hạn, sửa tại nguồn, hạn chế xử lý.
 
-**Phủ.** FR-06-058; UC-06-27; API-06-090, 091, 092; UI-06-16; BR-06-014, 030; ERR-06-007, 046; EVT-06-15.
+**Phủ.** FR-06-058; UC-06-27; API-06-090, 091, 092, 125; UI-06-16; BR-06-014, 030; ERR-06-007, 046; EVT-06-15.
 
 #### TC-06-115 · Yêu cầu biết (ACCESS) <!--k:dsr-access-->
 
@@ -3483,7 +3653,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. `POST` `RESTRICTION`; `:complete`.
 2. Gọi `lookup` mục đích tra cứu thường.
 
-**Kết quả mong đợi.** Bản ghi `LOCKED` `restricted`, PH-09 nhận cập nhật chính sách; tra cứu mục đích không bắt buộc theo luật bị từ chối. Việc gỡ hạn chế chưa có API (ĐN-UC-05).
+**Kết quả mong đợi.** Bản ghi `LOCKED` `restricted`, PH-09 nhận cập nhật chính sách; tra cứu mục đích không bắt buộc theo luật bị từ chối. Gỡ hạn chế kiểm ở ca dsr-lift (API-06-125).
 
 **Hậu điều kiện.** Bình LOCKED restricted.
 :::
@@ -3515,6 +3685,36 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Thông báo hiển thị.** ERR-06-046 "Yêu cầu của chủ thể chưa xác minh danh tính."
 
 **Hậu điều kiện.** Ba yêu cầu ở trạng thái cuối.
+:::
+
+#### TC-06-158 · Gỡ hạn chế xử lý dữ liệu <!--k:dsr-lift-->
+
+::: dac-ta
+**Mục đích.** Chứng minh gỡ hạn chế đưa bản ghi `LOCKED` có cờ `restricted` về `ACTIVE` và PH-09 khôi phục chính sách, theo FR-06-058 bước 5a (API-06-125).
+
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API.
+
+**Truy vết.** FR-06-058 · BR-06-026 · API-06-125, 092 · ERR-06-006, 007 · EVT-06-02 · PERM-06-dsr.
+
+**Tiền điều kiện, dữ liệu.** Ca dsr-restrict đã xong: Bình `LOCKED` `restricted`; bản ghi Hòa `LOCKED` do thao tác chờ duyệt, không `restricted`; DS1, VW1.
+
+**Các bước.**
+
+1. VW1 `POST /subject-requests/{id}:lift-restriction`.
+2. DS1 gỡ với lý do 10 ký tự.
+3. DS1 gỡ đúng với `reason` nêu căn cứ (≥ 20 ký tự) và `If-Match`.
+4. DS1 gỡ lại lần hai.
+5. DS1 gỡ hạn chế cho yêu cầu của Hòa (không `restricted`).
+
+**Kết quả mong đợi.** Bước 1 `403` ERR-00-403. Bước 2 `422` ERR-06-007. Bước 3 `200`, bỏ cờ `restricted`, Bình `ACTIVE`, PH-09 khôi phục chính sách, EVT-06-02, KT: có (người gỡ, căn cứ, thời điểm); yêu cầu `RESTRICTION` giữ `COMPLETED`. Bước 4 `409` ERR-06-006. Bước 5 `409` ERR-06-006 "Bản ghi {id} không ở trạng thái hạn chế xử lý."; bản ghi Hòa giữ `LOCKED`.
+
+**Thông báo hiển thị.** ERR-06-006 "Bản ghi {id} không ở trạng thái hạn chế xử lý."
+
+**Hậu điều kiện.** Bình `ACTIVE`.
 :::
 
 ### TS-06-28 · Chính sách lưu giữ và tham số theo tenant
@@ -3570,7 +3770,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. TA đặt `06.batch.safety-ratio = 0,5`; `06.export.max-rows = 5.000.000`.
 3. DS1 `PUT /settings`.
 
-**Kết quả mong đợi.** Bước 1 `200`, tạo mục hàng đợi mới có SLA 5 ngày, job lô dùng 8 %. Bước 2 `422` ERR-06-047 nêu miền. Bước 3 403-PQ. KT: có (settings-update) ghi giá trị cũ, mới.
+**Kết quả mong đợi.** Bước 1 `200`, tạo mục hàng đợi mới có SLA 5 ngày, job lô dùng 8 %. Bước 2 `422` ERR-06-047 nêu miền. Bước 3 ERR-00-403. KT: có (settings-update) ghi giá trị cũ, mới.
 
 **Hậu điều kiện.** Hai tham số đã đổi.
 :::
@@ -3735,7 +3935,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. Chạy bảng tham số 12 × 10 gọi API đại diện (ví dụ `PERM-06-merge`: `POST …:merge`).
 2. Với ô `○`, gọi trên đối tượng trong và ngoài tổ chức.
 
-**Kết quả mong đợi.** Ô ● trả 2xx, ô — trả 403-PQ; ô ○ chỉ đối tượng thuộc tổ chức, ngoài tổ chức `403` ERR-06-028. DS không có `approve`; DA không có `update`.
+**Kết quả mong đợi.** Ô ● trả 2xx, ô — trả ERR-00-403; ô ○ chỉ đối tượng thuộc tổ chức, ngoài tổ chức `403` ERR-06-028. DS không có `approve`; DA không có `update`.
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -3785,7 +3985,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. Mỗi token gọi API của scope khác.
 2. Token `mdm:search` khi PH-09 chưa chấp thuận mục đích.
 
-**Kết quả mong đợi.** Gọi sai scope 403-PQ; `mdm:ingest` chỉ cho nguồn đã đăng ký (ERR-06-014); bước 2 `403` ERR-06-037 và không cấp được `mdm:search`.
+**Kết quả mong đợi.** Gọi sai scope ERR-00-403; `mdm:ingest` chỉ cho nguồn đã đăng ký (ERR-06-014); bước 2 `403` ERR-06-037 và không cấp được `mdm:search`.
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -4455,21 +4655,21 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-06. FR mức
 | FR-06-022 | Chạy job đối sánh theo lô bằng Splink | M | 051, 052, 053, 055 | 052, 053, 054, 081, 126 | 056, 138, 141 | Có |
 | FR-06-023 | Cấu hình ngưỡng tự hợp nhất, xem xét, khác biệt | M | 036 | 036, 126 | — | Có |
 | FR-06-024 | Chạy thử bộ quy tắc trên mẫu | S | 038 | 126 | — | Có |
-| FR-06-025 | Quản lý tập nhãn kiểm chứng | M | 037 | 037, 121, 126 | — | Có |
-| FR-06-026 | Đo precision, recall và chặn kích hoạt quy tắc kém | M | 039 | 040, 126 | 140 | Có |
+| FR-06-025 | Quản lý tập nhãn kiểm chứng | M | 037, 152 | 037, 121, 126, 152 | — | Có |
+| FR-06-026 | Đo precision, recall và chặn kích hoạt quy tắc kém | M | 039, 153 | 040, 126, 153 | 140 | Có |
 | FR-06-027 | Tạo mục hàng đợi và tính mức ưu tiên | M | 057, 065 | 126 | 143 | Có |
-| FR-06-028 | Liệt kê, nhận việc và phân công mục hàng đợi | M | 058, 149 | 059, 122, 126 | — | Có |
+| FR-06-028 | Liệt kê, nhận việc và phân công mục hàng đợi | M | 058, 149, 154 | 059, 122, 126 | — | Có |
 | FR-06-029 | So sánh cạnh nhau hai bản ghi | M | 061, 149 | 064, 126 | 150 | Có |
-| FR-06-030 | Quyết định khớp, không khớp, hoãn | M | 062, 063, 149 | 064, 081, 126 | 132 | Có |
+| FR-06-030 | Quyết định khớp, không khớp, hoãn | M | 062, 063, 149, 155 | 064, 081, 126, 156 | 132 | Có |
 | FR-06-031 | Duyệt bốn mắt hợp nhất rủi ro cao | M | 065, 066, 082 | 067, 082, 126, 127 | — | Có |
 | FR-06-032 | Theo dõi SLA, nâng ưu tiên và cảnh báo quá tải | M | 060 | 126 | — | Có |
 | FR-06-033 | Cấu hình quy tắc sống sót thuộc tính | M | 068, 069 | 068, 121, 126, 127 | — | Có |
 | FR-06-034 | Tạo và cập nhật bản ghi vàng tự động | M | 047, 048, 069 | 049, 126 | 129 | Có |
-| FR-06-035 | Xem chi tiết bản ghi vàng | M | 072 | 073, 122, 126 | — | Có |
+| FR-06-035 | Xem chi tiết bản ghi vàng | M | 072, 157 | 073, 122, 126 | — | Có |
 | FR-06-036 | Sửa tay thuộc tính có lý do | S | 076 | 077, 126 | 132 | Có |
 | FR-06-037 | Hợp nhất bản ghi vàng thủ công | M | 080, 082, 149 | 081, 082, 126 | 132 | Có |
 | FR-06-038 | Tách bản ghi vàng | M | 083 | 084, 126 | 132 | Có |
-| FR-06-039 | Hoàn tác thao tác trên bản ghi vàng | M | 086 | 087, 088, 126, 127 | 132 | Có |
+| FR-06-039 | Hoàn tác thao tác trên bản ghi vàng | M | 086, 155, 157 | 087, 088, 126, 127 | 132 | Có |
 | FR-06-040 | Ngừng và khôi phục bản ghi vàng | M | 078 | 079, 126 | — | Có |
 | FR-06-041 | Xem lịch sử phiên bản và so sánh hai phiên bản | M | 074 | 074, 122, 126 | — | Có |
 | FR-06-042 | Xem trước tác động và áp lại sống sót hàng loạt | S | 070 | 071, 126, 127 | — | Có |
@@ -4488,7 +4688,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-06. FR mức
 | FR-06-055 | Dashboard chỉ số dữ liệu chủ | M | 112, 148 | 126 | — | Có |
 | FR-06-056 | Lịch job, chạy lại và hủy job | M | 113 | 113, 126, 130 | — | Có |
 | FR-06-057 | Nhật ký xử lý và nhật ký truy cập | M | 114 | 123, 126 | 131 | Có |
-| FR-06-058 | Tiếp nhận và xử lý yêu cầu của chủ thể dữ liệu | M | 115, 116, 117 | 118, 123, 126 | — | Có |
+| FR-06-058 | Tiếp nhận và xử lý yêu cầu của chủ thể dữ liệu | M | 115, 116, 117, 158 | 118, 123, 126, 158 | — | Có |
 | FR-06-059 | Chính sách lưu giữ và dọn dữ liệu | M | 119 | 119, 121, 126 | — | Có |
 | FR-06-060 | Tham số phân hệ theo tenant | M | 120 | 120, 121, 126 | — | Có |
 
@@ -4533,12 +4733,12 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ quy tắ
 | BR-06-018 | 031, 047, 085, 124 |
 | BR-06-019 | 057, 062, 065, 066, 082, 127 |
 | BR-06-020 | 036, 120 |
-| BR-06-021 | 039, 040, 140 |
+| BR-06-021 | 039, 040, 140, 153 |
 | BR-06-022 | 053, 120 |
 | BR-06-023 | 050, 054, 055, 056, 063, 083, 085 |
 | BR-06-024 | 086, 088, 127 |
 | BR-06-025 | 077, 109, 110, 116 |
-| BR-06-026 | 061, 072, 089, 090, 094, 102, 104, 117 |
+| BR-06-026 | 061, 072, 089, 090, 094, 102, 104, 117, 158 |
 | BR-06-027 | 100, 101, 127 |
 | BR-06-028 | 020, 022, 030 |
 | BR-06-029 | 022, 030, 069 |
@@ -4557,13 +4757,13 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ mã lỗ
 
 | Mã | Test case |
 |---|---|
-| ERR-06-001 | 073, 074, 075, 121, 122, 123 |
+| ERR-06-001 | 073, 074, 075, 121, 122, 123, 157 |
 | ERR-06-002 | 003, 005, 007, 016, 037 |
 | ERR-06-003 | 005, 007, 016, 034, 037, 075, 091, 099 |
 | ERR-06-004 | 005, 011, 077 |
 | ERR-06-005 | 013, 018, 040, 067, 068, 071, 088, 101, 105, 127 (+1) |
-| ERR-06-006 | 003, 014, 037, 079, 085, 105, 113 |
-| ERR-06-007 | 013, 032, 064, 077, 079, 081, 084, 118, 151 |
+| ERR-06-006 | 003, 014, 037, 079, 085, 105, 113, 152, 158 |
+| ERR-06-007 | 013, 032, 064, 077, 079, 081, 084, 108, 118, 151 (+2) |
 | ERR-06-008 | 011, 036 |
 | ERR-06-009 | 007 |
 | ERR-06-010 | 009, 151 |
@@ -4580,11 +4780,11 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ mã lỗ
 | ERR-06-021 | 009, 029, 145 |
 | ERR-06-022 | 018, 034, 068 |
 | ERR-06-023 | 036, 151 |
-| ERR-06-024 | 040, 151 |
+| ERR-06-024 | 040, 151, 153 |
 | ERR-06-025 | 052, 071 |
 | ERR-06-026 | 037 |
-| ERR-06-027 | 059, 151 |
-| ERR-06-028 | 059, 126 |
+| ERR-06-027 | 059, 151, 154 |
+| ERR-06-028 | 059, 126, 154 |
 | ERR-06-029 | 043, 064, 081, 151 |
 | ERR-06-030 | 064, 151 |
 | ERR-06-031 | 067, 077, 082, 085, 151 |
@@ -4607,6 +4807,9 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ mã lỗ
 | ERR-06-048 | 021, 099 |
 | ERR-06-049 | 119 |
 | ERR-06-050 | 090, 091, 098, 123 |
+| ERR-06-051 | 037, 152 |
+| ERR-06-052 | 007 |
+| ERR-06-053 | 156 |
 | ERR-06-101 | 054 |
 | ERR-06-102 | 054 |
 | ERR-06-103 | 054, 056 |
@@ -4660,16 +4863,16 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ sự ki�
 | Mã | Test case |
 |---|---|
 | EVT-06-01 | 047, 103, 125 |
-| EVT-06-02 | 031, 047, 048, 076, 103, 125, 139 |
+| EVT-06-02 | 031, 047, 048, 076, 103, 125, 139, 158 |
 | EVT-06-03 | 062, 066, 080, 086, 103, 125 |
-| EVT-06-04 | 083, 086, 103, 125 |
+| EVT-06-04 | 083, 086, 103, 125, 155 |
 | EVT-06-05 | 078, 103, 125 |
 | EVT-06-06 | 078, 103, 125 |
 | EVT-06-07 | 020, 024, 125 |
 | EVT-06-08 | 057, 097, 125 |
 | EVT-06-09 | 051, 125 |
 | EVT-06-10 | 012, 125 |
-| EVT-06-11 | 039, 125 |
+| EVT-06-11 | 039, 125, 153 |
 | EVT-06-12 | 107, 125 |
 | EVT-06-13 | 108, 125 |
 | EVT-06-14 | 085, 125 |
@@ -4716,21 +4919,21 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ api này
 | API-06-031 | 033, 133 |
 | API-06-032 | 033, 034, 036, 133 |
 | API-06-033 | 038, 133 |
-| API-06-034 | 039, 040, 133 |
+| API-06-034 | 039, 040, 133, 153 |
 | API-06-035 | 039, 040, 133 |
 | API-06-036 | 035, 133 |
 | API-06-037 | 037, 121, 133 |
 | API-06-038 | 037, 133 |
-| API-06-039 | 037, 133 |
+| API-06-039 | 037, 133, 152 |
 | API-06-040 | 133 |
 | API-06-041 | 113, 133 |
 | API-06-042 | 051, 052, 133 |
 | API-06-043 | 051, 133 |
 | API-06-044 | 053, 113, 133 |
-| API-06-045 | 057, 058, 122, 133 |
+| API-06-045 | 057, 058, 122, 133, 154 |
 | API-06-046 | 061, 122, 133 |
 | API-06-047 | 058, 059, 133 |
-| API-06-048 | 062, 063, 064, 133 |
+| API-06-048 | 062, 063, 064, 133, 155 |
 | API-06-049 | 066, 067, 133 |
 | API-06-050 | 060, 133 |
 | API-06-051 | 068, 121, 133 |
@@ -4769,16 +4972,45 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ api này
 | API-06-084 | 110, 133 |
 | API-06-085 | 112, 133 |
 | API-06-086 | 113, 133 |
-| API-06-087 | 113, 133 |
+| API-06-087 | 113, 133, 153 |
 | API-06-088 | 114, 123, 133 |
 | API-06-089 | 114, 123, 133 |
 | API-06-090 | 115, 118, 133 |
 | API-06-091 | 115, 123, 133 |
-| API-06-092 | 115, 116, 117, 118, 133 |
+| API-06-092 | 115, 116, 117, 118, 133, 158 |
 | API-06-093 | 119, 121, 133 |
 | API-06-094 | 119, 133 |
 | API-06-095 | 120, 121, 133 |
 | API-06-096 | 120, 133 |
+| API-06-097 | — |
+| API-06-098 | — |
+| API-06-099 | — |
+| API-06-100 | — |
+| API-06-101 | — |
+| API-06-102 | — |
+| API-06-103 | — |
+| API-06-104 | — |
+| API-06-105 | — |
+| API-06-106 | 053 |
+| API-06-107 | — |
+| API-06-108 | — |
+| API-06-109 | — |
+| API-06-110 | — |
+| API-06-111 | — |
+| API-06-112 | — |
+| API-06-113 | — |
+| API-06-114 | — |
+| API-06-115 | — |
+| API-06-116 | — |
+| API-06-117 | — |
+| API-06-118 | 108 |
+| API-06-119 | — |
+| API-06-120 | — |
+| API-06-121 | 155, 156 |
+| API-06-122 | 157 |
+| API-06-123 | 037, 152 |
+| API-06-124 | 154 |
+| API-06-125 | 158 |
 
 : API tới test case
 
@@ -4790,9 +5022,9 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ màn hì
 |---|---|
 | UI-06-01 | 060, 112, 147, 150 |
 | UI-06-02 | 092, 150, 151 |
-| UI-06-03 | 072, 075, 094, 150, 151 |
-| UI-06-04 | 058, 060, 149, 150 |
-| UI-06-05 | 043, 059, 061, 067, 149, 150, 151 |
+| UI-06-03 | 072, 075, 094, 150, 151, 157 |
+| UI-06-04 | 058, 060, 149, 150, 154 |
+| UI-06-05 | 043, 059, 061, 067, 149, 150, 151, 155 |
 | UI-06-06 | 080, 083, 149, 150 |
 | UI-06-07 | 001, 002, 004, 006, 008, 010, 150, 151 |
 | UI-06-08 | 015, 017, 150, 151 |
@@ -4885,19 +5117,19 @@ Bảng nối 12 tiêu chí ở FRS §14 với ca chứng minh.
 
 ### 10.1. Đề nghị bổ sung cho FRS
 
-Những chỗ tập kiểm thử cần mà FRS chưa có.
+FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; bảng ghi cách tập kiểm thử đã áp.
 
-| Mã | Đề nghị |
-|---|---|
-| ĐN-TC-01 | Bổ sung mã lỗi nền cho thiếu quyền và chưa xác thực (hiện ca dùng 403-PQ, 401-XT) và thêm mã cho "nhãn không hợp lệ" thay vì dùng ERR-06-003 |
-| ĐN-TC-02 | FR-06-003: nêu cách xử lý `CMND_9` khi `deterministic = true` (ca idkey-neg giả định ERR-06-003) |
-| ĐN-TC-03 | FR-06-030: chốt "sửa quyết định trong 24 giờ" (ĐN-UC-01); chưa có ca |
-| ĐN-TC-04 | FR-06-026: nêu luồng tự tắt tự hợp nhất khi đánh giá tháng không đạt (ĐN-UC-07), ca eval-fail giả định |
-| ĐN-TC-05 | FR-06-045: nêu giới hạn tra lô (ca xref-lookup giả định 1.000 cặp) |
-| ĐN-TC-06 | FR-06-058: thêm gỡ hạn chế xử lý (ĐN-UC-05) |
-| ĐN-TC-07 | §8.1: thêm NFR đo thời gian sửa quyết định hàng đợi và định nghĩa vùng "MATCH" cho precision (ca acc-pr-online) |
+| Mã | Đề nghị | Xử lý ở bản 0.2 |
+|---|---|---|
+| ĐN-TC-01 | Mã nền cho thiếu quyền, chưa xác thực; mã cho nhãn không hợp lệ | Đã áp: ERR-00-403, ERR-00-401, ERR-00-428 thay ký hiệu cũ; ERR-06-051 ở ca label-sets, label-lock |
+| ĐN-TC-02 | `CMND_9` với `deterministic = true` | Đã áp: ERR-06-052 ở ca idkey-neg |
+| ĐN-TC-03 | Sửa quyết định trong 24 giờ | Đã áp: ca q-reopen, q-reopen-neg (API-06-121, ERR-06-053) |
+| ĐN-TC-04 | Tự tắt tự hợp nhất khi đánh giá tháng không đạt | Đã áp: ca eval-auto-disable (FR-06-026 bước 5) |
+| ĐN-TC-05 | Giới hạn tra lô | Không áp 1.000: FRS chốt 500 (`06.xref.batch-max`); ca xref-lookup dùng 501 cặp |
+| ĐN-TC-06 | Gỡ hạn chế xử lý | Đã áp: ca dsr-lift (API-06-125) |
+| ĐN-TC-07 | NFR thời gian sửa quyết định; vùng `MATCH` cho precision | Đã áp: ghi chú đo ở FRS 8.1; ca acc-pr-online giữ |
 
-: Đề nghị bổ sung cho FRS
+: Đề nghị bổ sung cho FRS, trạng thái ở bản 0.2
 
 ### 10.2. Câu hỏi mở
 
@@ -4916,5 +5148,6 @@ Những chỗ tập kiểm thử cần mà FRS chưa có.
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-06-01…35, test case TC-06, ma trận truy vết, Gherkin, bảng tính |
+| 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: ERR-00-401, 403, 428 thay ký hiệu 401-XT, 403-PQ; ERR-06-051…053; giới hạn tra lô 500 (`06.xref.batch-max`); thêm ca cho API-06-121…125, FR-06-030 mở lại, FR-06-026 tự tắt tự hợp nhất, FR-06-058 gỡ hạn chế; `decision` ở API-06-106, `cause` ở API-06-118 |
 
 : Lịch sử phiên bản

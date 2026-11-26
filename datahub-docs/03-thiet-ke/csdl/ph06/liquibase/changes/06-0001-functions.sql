@@ -143,7 +143,8 @@ BEGIN
   FROM (VALUES ('06.queue.sla-days', '7'), ('06.queue.max-open', '500'), ('06.queue.escalate-after-days', '14'), ('06.queue.hold-minutes', '30'),
                ('06.match.auto-disable-on-fail', 'true'), ('06.batch.safety-ratio', '0.05'), ('06.undo.window-days', '90'),
                ('06.export.max-rows', '100000'), ('06.access.bulk-threshold', '100'), ('06.ingest.rate-per-source', '6000'),
-               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10')) AS s(k, v)
+               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10'),
+               ('06.mask.reveal-seconds', '60'), ('06.ingest.max-file-mb', '50'), ('06.ingest.max-rows', '200000'), ('06.batch.max-hours', '4'), ('06.match.timeout-ms', '800'), ('06.sync.reconcile-batch-size', '1000'), ('06.xref.batch-max', '500'), ('06.queue.reopen-hours', '24')) AS s(k, v)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph06_mdm.retention_policy (id, tenant_id, object_type, retention_days, action, created_by, updated_by)
   SELECT md5('ph06-retention:' || p_tenant || ':' || r.t)::uuid, p_tenant, r.t, r.d, r.a, 'system:seed', 'system:seed'

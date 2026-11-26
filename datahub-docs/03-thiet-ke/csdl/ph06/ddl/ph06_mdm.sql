@@ -27,6 +27,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph06_readonly') THEN
     CREATE ROLE ph06_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph06_splink') THEN
+    CREATE ROLE ph06_splink NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
 END
 $roles$;
 -- @rollback -- Không xóa vai trò khi rollback.
@@ -36,7 +39,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 CREATE SCHEMA IF NOT EXISTS ph06_mdm AUTHORIZATION ph06_owner;
 COMMENT ON SCHEMA ph06_mdm IS 'PH-06 Dữ liệu chủ (dh-data, package vn.datahub.data.mdm): domain, nguồn, ứng viên, đối sánh, hàng đợi, bản ghi vàng, liên kết chéo, lịch sử, nguồn gốc, đồng bộ quốc gia, yêu cầu chủ thể, nhật ký truy cập. Số định danh và giá trị SENSITIVE chỉ ở dạng mã hóa envelope và HMAC.';
-GRANT USAGE ON SCHEMA ph06_mdm TO ph06_app, ph06_readonly;
+GRANT USAGE ON SCHEMA ph06_mdm TO ph06_app, ph06_readonly, ph06_splink;
 -- @rollback DROP SCHEMA IF EXISTS ph06_mdm CASCADE;
 
 SET ROLE ph06_owner;
@@ -187,7 +190,8 @@ BEGIN
   FROM (VALUES ('06.queue.sla-days', '7'), ('06.queue.max-open', '500'), ('06.queue.escalate-after-days', '14'), ('06.queue.hold-minutes', '30'),
                ('06.match.auto-disable-on-fail', 'true'), ('06.batch.safety-ratio', '0.05'), ('06.undo.window-days', '90'),
                ('06.export.max-rows', '100000'), ('06.access.bulk-threshold', '100'), ('06.ingest.rate-per-source', '6000'),
-               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10')) AS s(k, v)
+               ('06.sync.pause-ratio', '0.05'), ('06.sync.up-attributes', '[]'), ('06.dsr.sla-days', '10'),
+               ('06.mask.reveal-seconds', '60'), ('06.ingest.max-file-mb', '50'), ('06.ingest.max-rows', '200000'), ('06.batch.max-hours', '4'), ('06.match.timeout-ms', '800'), ('06.sync.reconcile-batch-size', '1000'), ('06.xref.batch-max', '500'), ('06.queue.reopen-hours', '24')) AS s(k, v)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph06_mdm.retention_policy (id, tenant_id, object_type, retention_days, action, created_by, updated_by)
   SELECT md5('ph06-retention:' || p_tenant || ':' || r.t)::uuid, p_tenant, r.t, r.d, r.a, 'system:seed', 'system:seed'
@@ -430,7 +434,7 @@ CREATE TABLE ph06_mdm.source_priority_proposal (
 CREATE TRIGGER tg_source_priority_proposal_touch BEFORE UPDATE ON ph06_mdm.source_priority_proposal FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_source_priority_proposal_immutable BEFORE UPDATE ON ph06_mdm.source_priority_proposal FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code', 'entries', 'approval_ref', 'proposed_by');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_priority_proposal');
-COMMENT ON TABLE ph06_mdm.source_priority_proposal IS 'EN-06-04 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).';
+COMMENT ON TABLE ph06_mdm.source_priority_proposal IS 'EN-06-04, EN-06-22 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).';
 COMMENT ON COLUMN ph06_mdm.source_priority_proposal.entries IS 'Mảng {sourceCode, attribute, priority} theo FR-06-009; áp vào source_priority khi duyệt.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.source_priority_proposal CASCADE;
 
@@ -504,7 +508,7 @@ CREATE INDEX ix_candidate_file_domain ON ph06_mdm.candidate_file (tenant_id, dom
 CREATE TRIGGER tg_candidate_file_touch BEFORE UPDATE ON ph06_mdm.candidate_file FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_candidate_file_immutable BEFORE UPDATE ON ph06_mdm.candidate_file FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code', 'source_code', 'sha256');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.candidate_file');
-COMMENT ON TABLE ph06_mdm.candidate_file IS 'FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.';
+COMMENT ON TABLE ph06_mdm.candidate_file IS 'EN-06-25 FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.candidate_file CASCADE;
 
 -- @changeset ph06-0180-source-record-head
@@ -533,7 +537,7 @@ CREATE TABLE ph06_mdm.source_record_head (
 CREATE INDEX ix_source_record_head_golden ON ph06_mdm.source_record_head (tenant_id, golden_id) WHERE golden_id IS NOT NULL;
 CREATE TRIGGER tg_source_record_head_touch BEFORE UPDATE ON ph06_mdm.source_record_head FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_record_head');
-COMMENT ON TABLE ph06_mdm.source_record_head IS 'FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.';
+COMMENT ON TABLE ph06_mdm.source_record_head IS 'EN-06-26 FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.';
 COMMENT ON COLUMN ph06_mdm.source_record_head.golden_id IS 'Bản ghi vàng đang liên kết; tham chiếu logic để không khóa chéo khi hợp nhất.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.source_record_head CASCADE;
 
@@ -635,7 +639,7 @@ CREATE TABLE ph06_mdm.evaluation_report (
 CREATE INDEX ix_evaluation_report_rule ON ph06_mdm.evaluation_report (tenant_id, domain_code, rule_set_version, evaluated_at DESC);
 CREATE TRIGGER tg_evaluation_report_touch BEFORE UPDATE ON ph06_mdm.evaluation_report FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.evaluation_report');
-COMMENT ON TABLE ph06_mdm.evaluation_report IS 'FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.';
+COMMENT ON TABLE ph06_mdm.evaluation_report IS 'EN-06-23 FR-06-026 Báo cáo đánh giá chính xác (precision, recall) của một phiên bản bộ quy tắc trên tập nhãn (BR-06-021). Là căn cứ kích hoạt bộ quy tắc; tham chiếu bộ quy tắc theo (domain_code, rule_set_version) để tránh vòng khóa ngoại.';
 COMMENT ON COLUMN ph06_mdm.evaluation_report.verdict IS 'PASSED chỉ khi ≥ 1.000 cặp, precision ≥ 99,9%, recall ≥ 98% (BR-06-021).';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.evaluation_report CASCADE;
 
@@ -800,7 +804,7 @@ CREATE TABLE ph06_mdm.job_schedule (
 CREATE TRIGGER tg_job_schedule_touch BEFORE UPDATE ON ph06_mdm.job_schedule FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_job_schedule_immutable BEFORE UPDATE ON ph06_mdm.job_schedule FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('job_type');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.job_schedule');
-COMMENT ON TABLE ph06_mdm.job_schedule IS 'FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.';
+COMMENT ON TABLE ph06_mdm.job_schedule IS 'EN-06-24 FR-06-056 Lịch job tự động theo loại (cron giờ Việt Nam). Mỗi tenant một dòng cho mỗi JobType; ScheduleJob (ShedLock) đọc next_run_at.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.job_schedule CASCADE;
 
 -- @changeset ph06-0250-match-staging
@@ -821,7 +825,7 @@ CREATE TABLE ph06_mdm.match_staging (
 );
 CREATE INDEX ix_match_staging_job ON ph06_mdm.match_staging (tenant_id, job_id);
 CALL ph06_mdm.p_enable_rls('ph06_mdm.match_staging');
-COMMENT ON TABLE ph06_mdm.match_staging IS 'FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_readonly, ghi kết quả qua dh-data, không ghi thẳng vào bản ghi vàng.';
+COMMENT ON TABLE ph06_mdm.match_staging IS 'EN-06-27 FR-06-022 Bảng trung gian xuất cho Job K8s Splink đọc (SAD: đối sánh lô qua staging). Chỉ chứa trường chuẩn hóa không SENSITIVE và HMAC; xóa sau job (retention 7 ngày, BR-06-031). Job Splink đọc bằng vai trò ph06_splink (chỉ SELECT match_staging, chỉ INSERT match_result), không ghi thẳng vào bản ghi vàng.';
 COMMENT ON COLUMN ph06_mdm.match_staging.fields IS 'Thuộc tính chuẩn hóa; trường SENSITIVE chỉ dạng HMAC, không bao giờ bản rõ (BR-06-016).';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.match_staging CASCADE;
 
@@ -870,6 +874,9 @@ CREATE TABLE ph06_mdm.label_set (
   purpose        varchar(16) NOT NULL,
   description    varchar(2000),
   pair_count     integer NOT NULL DEFAULT 0,
+  locked         boolean NOT NULL DEFAULT false,
+  locked_at      timestamptz,
+  locked_by      varchar(64),
   created_at     timestamptz NOT NULL DEFAULT now(),
   created_by     varchar(64) NOT NULL,
   updated_at     timestamptz NOT NULL DEFAULT now(),
@@ -882,7 +889,8 @@ CREATE TABLE ph06_mdm.label_set (
   CONSTRAINT fk_label_set_domain FOREIGN KEY (tenant_id, domain_code) REFERENCES ph06_mdm.mdm_domain (tenant_id, domain_code),
   CONSTRAINT ck_label_set_code CHECK (label_set_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_label_set_purpose CHECK (purpose IN ('EVALUATION', 'TRAINING')),
-  CONSTRAINT ck_label_set_count CHECK (pair_count >= 0)
+  CONSTRAINT ck_label_set_count CHECK (pair_count >= 0),
+  CONSTRAINT ck_label_set_locked CHECK (locked = (locked_at IS NOT NULL AND locked_by IS NOT NULL))
 );
 CREATE TRIGGER tg_label_set_touch BEFORE UPDATE ON ph06_mdm.label_set FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_label_set_immutable BEFORE UPDATE ON ph06_mdm.label_set FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('label_set_code', 'domain_code', 'purpose');
@@ -956,6 +964,11 @@ CREATE TABLE ph06_mdm.steward_item (
   approval_comment  varchar(2000),
   operation_id      uuid,
   cancel_reason     varchar(500),
+  reopen_count      smallint NOT NULL DEFAULT 0,
+  reopened_at       timestamptz,
+  reopened_by       varchar(64),
+  reopen_reason     varchar(2000),
+  decision_history  jsonb NOT NULL DEFAULT '[]',
   created_at        timestamptz NOT NULL DEFAULT now(),
   created_by        varchar(64) NOT NULL,
   updated_at        timestamptz NOT NULL DEFAULT now(),
@@ -1007,6 +1020,8 @@ CREATE TABLE ph06_mdm.golden_record (
   birth_year         smallint,
   admin_unit_code    varchar(16),
   link_count         integer NOT NULL DEFAULT 0,
+  block_keys         varchar(72)[] NOT NULL DEFAULT '{}',
+  restricted         boolean NOT NULL DEFAULT false,
   lock_reason        varchar(500),
   retire_reason      varchar(16),
   retire_note        varchar(2000),
@@ -1028,11 +1043,13 @@ CREATE TABLE ph06_mdm.golden_record (
   CONSTRAINT ck_golden_record_retired CHECK ((status = 'RETIRED') = (retire_reason IS NOT NULL)),
   CONSTRAINT ck_golden_record_retire CHECK (retire_reason IS NULL OR retire_reason IN ('ORPHANED', 'DISSOLVED', 'DECEASED', 'TEST_DATA', 'OTHER')),
   CONSTRAINT ck_golden_record_locked CHECK (status <> 'LOCKED' OR lock_reason IS NOT NULL),
+  CONSTRAINT ck_golden_record_restricted CHECK (NOT restricted OR status = 'LOCKED'),
   CONSTRAINT ck_golden_record_confidence CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
   CONSTRAINT ck_golden_record_birth CHECK (birth_year IS NULL OR birth_year BETWEEN 1850 AND 2100)
 );
 CREATE INDEX ix_golden_record_domain ON ph06_mdm.golden_record (tenant_id, domain_code, status);
 CREATE INDEX ix_golden_record_name_trgm ON ph06_mdm.golden_record USING gin (domain_code, name_norm gin_trgm_ops);
+CREATE INDEX ix_golden_record_blocks ON ph06_mdm.golden_record USING gin (block_keys);
 CREATE INDEX ix_golden_record_area ON ph06_mdm.golden_record (tenant_id, domain_code, admin_unit_code, birth_year) WHERE status = 'ACTIVE';
 CREATE INDEX ix_golden_record_merged ON ph06_mdm.golden_record (tenant_id, merged_into) WHERE merged_into IS NOT NULL;
 CREATE TRIGGER tg_golden_record_touch BEFORE UPDATE ON ph06_mdm.golden_record FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
@@ -1117,7 +1134,7 @@ CREATE INDEX ix_golden_identifier_golden ON ph06_mdm.golden_identifier (tenant_i
 CREATE TRIGGER tg_golden_identifier_touch BEFORE UPDATE ON ph06_mdm.golden_identifier FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_golden_identifier_immutable BEFORE UPDATE ON ph06_mdm.golden_identifier FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('golden_id', 'domain_code', 'identifier_type', 'value_hash');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.golden_identifier');
-COMMENT ON TABLE ph06_mdm.golden_identifier IS 'EN-06-02 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.';
+COMMENT ON TABLE ph06_mdm.golden_identifier IS 'EN-06-02, EN-06-28 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.golden_identifier CASCADE;
 
 -- @changeset ph06-0330-source-xref
@@ -1470,7 +1487,7 @@ CREATE TABLE ph06_mdm.national_sync_state (
 CREATE TRIGGER tg_national_sync_state_touch BEFORE UPDATE ON ph06_mdm.national_sync_state FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_national_sync_state_immutable BEFORE UPDATE ON ph06_mdm.national_sync_state FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.national_sync_state');
-COMMENT ON TABLE ph06_mdm.national_sync_state IS 'FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.';
+COMMENT ON TABLE ph06_mdm.national_sync_state IS 'EN-06-29 FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.national_sync_state CASCADE;
 
 -- @changeset ph06-0420-national-sync-run
@@ -1551,7 +1568,7 @@ CREATE INDEX ix_national_discrepancy_run ON ph06_mdm.national_discrepancy (tenan
 CREATE TRIGGER tg_national_discrepancy_touch BEFORE UPDATE ON ph06_mdm.national_discrepancy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_national_discrepancy_immutable BEFORE UPDATE ON ph06_mdm.national_discrepancy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('run_id', 'golden_id', 'attribute_name');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.national_discrepancy');
-COMMENT ON TABLE ph06_mdm.national_discrepancy IS 'FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).';
+COMMENT ON TABLE ph06_mdm.national_discrepancy IS 'EN-06-30 FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.national_discrepancy CASCADE;
 
 -- @changeset ph06-0440-source-correction
@@ -1584,7 +1601,7 @@ CREATE TABLE ph06_mdm.source_correction (
 CREATE INDEX ix_source_correction_open ON ph06_mdm.source_correction (tenant_id, source_code, due_at) WHERE closed_at IS NULL;
 CREATE TRIGGER tg_source_correction_touch BEFORE UPDATE ON ph06_mdm.source_correction FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_correction');
-COMMENT ON TABLE ph06_mdm.source_correction IS 'BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.';
+COMMENT ON TABLE ph06_mdm.source_correction IS 'EN-06-31 BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.source_correction CASCADE;
 
 
@@ -1610,6 +1627,9 @@ CREATE TABLE ph06_mdm.subject_request (
   completed_at          timestamptz,
   result_ref            varchar(512),
   reject_reason         varchar(2000),
+  lifted_at             timestamptz,
+  lifted_by             varchar(64),
+  lift_reason           varchar(2000),
   created_at            timestamptz NOT NULL DEFAULT now(),
   created_by            varchar(64) NOT NULL,
   updated_at            timestamptz NOT NULL DEFAULT now(),
@@ -1624,6 +1644,7 @@ CREATE TABLE ph06_mdm.subject_request (
   CONSTRAINT ck_subject_request_due CHECK (due_at >= received_at),
   CONSTRAINT ck_subject_request_completed CHECK (status NOT IN ('COMPLETED', 'REJECTED') OR completed_at IS NOT NULL),
   CONSTRAINT ck_subject_request_rejected CHECK (status <> 'REJECTED' OR reject_reason IS NOT NULL),
+  CONSTRAINT ck_subject_request_lifted CHECK ((lifted_at IS NULL) = (lifted_by IS NULL) AND (lifted_at IS NULL) = (lift_reason IS NULL) AND (lifted_at IS NULL OR (request_type = 'RESTRICTION' AND status = 'COMPLETED' AND char_length(lift_reason) >= 20))),
   CONSTRAINT ck_subject_request_forward CHECK (status <> 'FORWARDED_TO_SOURCE' OR forwarded_source_code IS NOT NULL)
 );
 CREATE INDEX ix_subject_request_status ON ph06_mdm.subject_request (tenant_id, status, due_at);
@@ -1697,7 +1718,7 @@ CREATE INDEX ix_processing_log_job ON ph06_mdm.processing_log (tenant_id, job_id
 CREATE INDEX ix_processing_log_level ON ph06_mdm.processing_log (tenant_id, level, logged_at DESC);
 CREATE TRIGGER tg_processing_log_append_only BEFORE UPDATE OR DELETE ON ph06_mdm.processing_log FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_append_only();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.processing_log');
-COMMENT ON TABLE ph06_mdm.processing_log IS 'FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.';
+COMMENT ON TABLE ph06_mdm.processing_log IS 'EN-06-32 FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.processing_log CASCADE;
 
 -- @changeset ph06-0480-retention-policy
@@ -1726,7 +1747,7 @@ CREATE TABLE ph06_mdm.retention_policy (
 CREATE TRIGGER tg_retention_policy_touch BEFORE UPDATE ON ph06_mdm.retention_policy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_retention_policy_immutable BEFORE UPDATE ON ph06_mdm.retention_policy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('object_type');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.retention_policy');
-COMMENT ON TABLE ph06_mdm.retention_policy IS 'FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.';
+COMMENT ON TABLE ph06_mdm.retention_policy IS 'EN-06-33 FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.retention_policy CASCADE;
 
 -- @changeset ph06-0490-tenant-setting
@@ -1743,12 +1764,12 @@ CREATE TABLE ph06_mdm.tenant_setting (
   CONSTRAINT pk_tenant_setting PRIMARY KEY (id),
   CONSTRAINT ck_tenant_setting_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_tenant_setting_key UNIQUE (tenant_id, setting_key),
-  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days'))
+  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days', '06.mask.reveal-seconds', '06.ingest.max-file-mb', '06.ingest.max-rows', '06.batch.max-hours', '06.match.timeout-ms', '06.sync.reconcile-batch-size', '06.xref.batch-max', '06.queue.reopen-hours', '06.queue.reason-templates'))
 );
 CREATE TRIGGER tg_tenant_setting_touch BEFORE UPDATE ON ph06_mdm.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_tenant_setting_immutable BEFORE UPDATE ON ph06_mdm.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('setting_key');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.tenant_setting');
-COMMENT ON TABLE ph06_mdm.tenant_setting IS 'FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.';
+COMMENT ON TABLE ph06_mdm.tenant_setting IS 'EN-06-34 FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.';
 -- @rollback DROP TABLE IF EXISTS ph06_mdm.tenant_setting CASCADE;
 
 
@@ -1826,6 +1847,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA ph06_mdm TO ph06_readonly;
 REVOKE SELECT ON ph06_mdm.access_log, ph06_mdm.golden_history, ph06_mdm.subject_request, ph06_mdm.golden_identifier FROM ph06_readonly;
 GRANT SELECT (id, tenant_id, accessed_at, actor, system_code, domain_code, golden_id, api_code, purpose_code, result_count, bulk_flag, trace_id)
   ON ph06_mdm.access_log TO ph06_readonly;
+-- Vai Job Splink (FR-06-022): chỉ đọc match_staging, chỉ thêm match_result; không đọc bảng nào khác.
+GRANT SELECT ON ph06_mdm.match_staging TO ph06_splink;
+GRANT INSERT ON ph06_mdm.match_result TO ph06_splink;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_ensure_partitions(regclass, date, integer) TO ph06_app;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_seed_tenant(text) TO ph06_app;
 -- @rollback -- Không thu hồi tự động.

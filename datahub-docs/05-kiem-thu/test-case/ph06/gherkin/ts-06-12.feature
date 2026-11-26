@@ -44,3 +44,38 @@ Tính năng: TS-06-12 · Hàng đợi người quản lý dữ liệu
     Và tạo 101 mục mở.
     Thì bước 1 mục `overdue`, điểm +20 (trần 100), thông báo người nhận và DA. Bước 2 giao DA phân công lại. Bước 3 cảnh báo quá tải tới PH-13 có phân tích theo nguồn và lý do; mọi cặp vẫn `OPEN`, không cặp nào tự động hợp nhất (BR-06-002). `mdm_queue_open`, `overdue`, `age_seconds` đúng.
     # Hậu điều kiện: 101 mục mở.
+
+  @TC-06-154 @P1 @Dương @Biên
+  Kịch bản: TC-06-154 Nhận việc tiếp theo
+    # Truy vết: FR-06-028 · API-06-124, 045 · UI-06-04 · ERR-06-027, 028 · PERM-06-steward
+    # Mục đích: Chứng minh "Nhận việc tiếp theo" nhận nguyên tử mục ưu tiên cao nhất và trả `204` khi hết việc, theo FR-06-028 (API-06-124).
+    Biết bảy mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
+    Khi DS1 và DS2 đồng thời `POST /stewardship/items:claim-next`.
+    Và DS1 `claim-next` kèm bộ lọc `riskLevel = HIGH`.
+    Và nhận hết mục, rồi DS1 `claim-next` lần nữa.
+    Và DS1 `GET /stewardship/items?partition=mine`; DS3 `claim-next`.
+    Thì bước 1 hai mục khác nhau (`SKIP LOCKED`), mục có `priority` cao nhất, hạn SLA sớm nhất thuộc người nhận trước, cả hai `ASSIGNED` giữ 30 phút (`06.queue.hold-minutes`). Bước 2 chỉ trả mục rủi ro cao. Bước 3 `204`, không lỗi. Bước 4 `partition=mine` chỉ có mục của DS1; DS3 không nhận mục tổ chức khác (ERR-06-028 nếu chỉ định trực tiếp).
+    # Hậu điều kiện: Các mục đã nhận ở `ASSIGNED`.
+
+  @TC-06-155 @P1 @Dương
+  Kịch bản: TC-06-155 Sửa quyết định trong hạn bằng mở lại
+    # Truy vết: FR-06-030 · FR-06-039 · API-06-121, 048 · UI-06-05 · EVT-06-04 · `06.queue.reopen-hours`
+    # Mục đích: Chứng minh người đã quyết hoặc DA mở lại quyết định hàng đợi trong `06.queue.reopen-hours` và quyết định lại, theo FR-06-030 luồng thay thế (API-06-121).
+    Biết mục M3 vừa `RESOLVED` với `MATCH` rủi ro thấp (hợp nhất tự động); DS1 là người quyết; DS2 người khác.
+    Khi DS2 `:reopen` M3.
+    Và DS1 `:reopen` M3 với lý do 10 ký tự.
+    Và DS1 `:reopen` M3 với lý do đủ 20 ký tự và `If-Match` đúng.
+    Và DS1 `decide` `NO_MATCH` cho M3.
+    Thì bước 1 `403` ERR-00-403 (không phải người quyết, không phải DA). Bước 2 `422` ERR-06-007. Bước 3 `200`, M3 `ASSIGNED` cho DS1, hợp nhất cũ được hoàn tác theo FR-06-039, quyết định cũ còn trong lịch sử; KT: có (q-reopen). Bước 4 M3 `RESOLVED` `NO_MATCH`, cặp nhãn cập nhật, hai bản ghi vàng tách lại.
+    # Hậu điều kiện: M3 `NO_MATCH`, lịch sử có hai quyết định.
+
+  @TC-06-156 @P1 @Âm @Biên
+  Kịch bản: TC-06-156 Mở lại quá hạn hoặc đã có thao tác phụ thuộc
+    # Truy vết: FR-06-030 · API-06-121 · ERR-06-053 · `06.queue.reopen-hours`
+    # Mục đích: Chứng minh chặn mở lại khi quá hạn hoặc đã có thao tác phụ thuộc, theo FR-06-030 (ERR-06-053).
+    Biết hai mục `RESOLVED`: M4 quyết cách đây 25 giờ (đồng hồ giả lập), M5 quyết 2 giờ trước nhưng bản ghi vàng đã sửa tay thêm.
+    Khi DA1 `:reopen` M4.
+    Và DA1 `:reopen` M5.
+    Và đặt `06.queue.reopen-hours = 48` rồi `:reopen` M4.
+    Thì bước 1 `409` ERR-06-053. Bước 2 `409` ERR-06-053 (có thao tác phụ thuộc), hướng dẫn dùng hoàn tác (FR-06-039). Bước 3 `200` vì còn trong hạn 48 giờ, chưa có thao tác phụ thuộc ở M4.
+    # Hậu điều kiện: M5 vẫn `RESOLVED`.

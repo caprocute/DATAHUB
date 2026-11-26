@@ -224,7 +224,7 @@ CREATE TABLE ph06_mdm.source_priority_proposal (
 CREATE TRIGGER tg_source_priority_proposal_touch BEFORE UPDATE ON ph06_mdm.source_priority_proposal FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_source_priority_proposal_immutable BEFORE UPDATE ON ph06_mdm.source_priority_proposal FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code', 'entries', 'approval_ref', 'proposed_by');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_priority_proposal');
-COMMENT ON TABLE ph06_mdm.source_priority_proposal IS 'EN-06-04 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).';
+COMMENT ON TABLE ph06_mdm.source_priority_proposal IS 'EN-06-04, EN-06-22 Đề nghị thứ tự ưu tiên nguồn chờ duyệt (FR-06-009, BR-06-004). Cần căn cứ văn bản approval_ref; DA duyệt khác người đề nghị (ERR-06-005, 013).';
 COMMENT ON COLUMN ph06_mdm.source_priority_proposal.entries IS 'Mảng {sourceCode, attribute, priority} theo FR-06-009; áp vào source_priority khi duyệt.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.source_priority_proposal CASCADE;
 

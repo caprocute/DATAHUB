@@ -37,7 +37,7 @@ CREATE INDEX ix_candidate_file_domain ON ph06_mdm.candidate_file (tenant_id, dom
 CREATE TRIGGER tg_candidate_file_touch BEFORE UPDATE ON ph06_mdm.candidate_file FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_candidate_file_immutable BEFORE UPDATE ON ph06_mdm.candidate_file FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code', 'source_code', 'sha256');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.candidate_file');
-COMMENT ON TABLE ph06_mdm.candidate_file IS 'FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.';
+COMMENT ON TABLE ph06_mdm.candidate_file IS 'EN-06-25 FR-06-013 Tệp lô nạp ứng viên: tải lên, xem trước, xác nhận. Tệp ≤ 50 MB, ≤ 200.000 dòng (ERR-06-018, 019). Nội dung tệp nằm ở Ceph RGW (object_ref), không trong PostgreSQL; báo cáo xem trước ở preview jsonb, không chứa giá trị SENSITIVE.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.candidate_file CASCADE;
 
 --changeset ph06:ph06-0180-source-record-head
@@ -66,7 +66,7 @@ CREATE TABLE ph06_mdm.source_record_head (
 CREATE INDEX ix_source_record_head_golden ON ph06_mdm.source_record_head (tenant_id, golden_id) WHERE golden_id IS NOT NULL;
 CREATE TRIGGER tg_source_record_head_touch BEFORE UPDATE ON ph06_mdm.source_record_head FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_record_head');
-COMMENT ON TABLE ph06_mdm.source_record_head IS 'FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.';
+COMMENT ON TABLE ph06_mdm.source_record_head IS 'EN-06-26 FR-06-016 Trạng thái mới nhất của mỗi bản ghi nguồn (sourceCode, sourceKey): phiên bản cao nhất đã nhận, ứng viên cuối, bản ghi vàng đang liên kết. Thực thi BR-06-028 (xử lý một lần theo sourceVersion) và BR-06-029 (bản đến trễ không ghi đè); là bảng nhỏ, khóa duy nhất không phải phân vùng.';
 COMMENT ON COLUMN ph06_mdm.source_record_head.golden_id IS 'Bản ghi vàng đang liên kết; tham chiếu logic để không khóa chéo khi hợp nhất.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.source_record_head CASCADE;
 

@@ -44,7 +44,7 @@ Tính năng: TS-06-04 · Nguồn và ưu tiên nguồn
     Khi `propose` không có số, ngày văn bản.
     Và DS1 `approve` đề xuất do chính DS1 gửi.
     Và `propose` đặt `HT-YTE` mức 1 cho `dateOfBirth` (thuộc tính thẩm quyền).
-    Thì bước 1 `422` ERR-06-013. Bước 2 `403` ERR-06-005 (và 403-PQ vì DS không có `approve`). Bước 3 `422` ERR-06-022 (vi phạm BR-06-003).
+    Thì bước 1 `422` ERR-06-013. Bước 2 `403` ERR-06-005 (và ERR-00-403 vì DS không có `approve`). Bước 3 `422` ERR-06-022 (vi phạm BR-06-003).
     # Hậu điều kiện: Bảng ưu tiên không đổi.
 
   @TC-06-019 @P2 @Dương @Âm

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH06
 ten: Đặc tả use case phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -273,25 +273,25 @@ Mỗi use case có ít nhất một màn hình hoặc API; UC-06-10 và UC-06-22
 | UC-06-06 | UI-06-11 | API-06-023-025 |
 | UC-06-07 | UI-06-11 | API-06-026-029 |
 | UC-06-08 | UI-06-09 | API-06-030-032, 036 |
-| UC-06-09 | UI-06-09, 13 | API-06-033-035, 037-040 |
+| UC-06-09 | UI-06-09, 13 | API-06-033-035, 037-040, 123 |
 | UC-06-10 | Không | API-06-071 (dùng chung logic) |
-| UC-06-11 | UI-06-12 | API-06-041-044 |
-| UC-06-12 | UI-06-04, 01 | API-06-045, 047, 050 |
-| UC-06-13 | UI-06-05 | API-06-046, 048 |
+| UC-06-11 | UI-06-12 | API-06-041-044, 106 |
+| UC-06-12 | UI-06-04, 01 | API-06-045, 047, 050, 124 |
+| UC-06-13 | UI-06-05 | API-06-046, 048, 121 |
 | UC-06-14 | UI-06-05 | API-06-049, 061 |
 | UC-06-15 | UI-06-10, 08 | API-06-051-055 |
 | UC-06-16 | UI-06-03 | API-06-056, 063-065 |
 | UC-06-17 | UI-06-03 | API-06-057, 062 |
 | UC-06-18 | UI-06-06, 02 | API-06-058, 061 |
 | UC-06-19 | UI-06-06, 03 | API-06-059, 061, 066, 067 |
-| UC-06-20 | UI-06-03, 06 | API-06-060, 061 |
+| UC-06-20 | UI-06-03, 06 | API-06-060, 061, 122 |
 | UC-06-21 | UI-06-02, 03 | API-06-056, 068-070, 072 |
 | UC-06-22 | Không | API-06-071 |
 | UC-06-23 | UI-06-15 | API-06-073-076 |
 | UC-06-24 | UI-06-15, 18 | API-06-077-079 |
 | UC-06-25 | UI-06-14 | API-06-080-084 |
 | UC-06-26 | UI-06-01, 12, 18 | API-06-041, 044, 085-089 |
-| UC-06-27 | UI-06-16 | API-06-090-092 |
+| UC-06-27 | UI-06-16 | API-06-090-092, 125 |
 | UC-06-28 | UI-06-17, 12 | API-06-093-096 |
 
 : Use case, màn hình và API
@@ -818,7 +818,7 @@ Bộ quy tắc chỉ kích hoạt khi đánh giá trên tập nhãn khóa ≥ 1.
 **Đảm bảo thành công.** Bản đạt chuẩn sang `ACTIVE`, bản cũ `SUPERSEDED`, phát EVT-06-11; bản không đạt bị chặn gửi duyệt.
 
 **Luồng chính.**
-1. Lan tạo tập nhãn `EVALUATION` (API-06-038) và thêm cặp `MATCH`, `NO_MATCH` do người gán (API-06-039); khóa tập khi đủ 1.000 cặp.
+1. Lan tạo tập nhãn `EVALUATION` (API-06-038) và thêm cặp `MATCH`, `NO_MATCH` do người gán (API-06-039); khóa tập khi đủ 1.000 cặp bằng API-06-123 `:lock` (khóa rồi không mở lại, thêm cặp tạo tập mới).
 2. Lan bấm "Chạy thử" với mẫu 10.000 (API-06-033); hệ thống chạy job `RULE_DRY_RUN`, báo số cặp mỗi vùng, mẫu cặp đổi kết luận so với bản `ACTIVE`.
 3. Lan bấm "Đánh giá" (API-06-034); job `ACCURACY_EVAL` tính precision, recall, danh sách FP, FN (API-06-040).
 4. Bản đạt: Lan bấm "Gửi duyệt" (API-06-035); bộ quy tắc sang `PENDING_APPROVAL`.
@@ -826,11 +826,12 @@ Bộ quy tắc chỉ kích hoạt khi đánh giá trên tập nhãn khóa ≥ 1.
 
 **Luồng thay thế.**
 - **2a. Mẫu `QUEUE_HISTORY`.** Dùng cặp đã có quyết định thủ công, cho biết bộ mới đồng ý với người bao nhiêu phần trăm.
-- **4a. Đánh giá hằng tháng không đạt.** Với `06.match.auto-disable-on-fail = true` hệ thống tắt tự hợp nhất, cảnh báo ở UI-06-01.
+- **4a. Đánh giá hằng tháng không đạt.** Với `06.match.auto-disable-on-fail = true` hệ thống tắt tự hợp nhất, mọi `MATCH` xác suất thành `POSSIBLE_MATCH`, ghi kiểm toán và cảnh báo ở UI-06-01 (FR-06-026 bước 5); bật lại bằng cách kích hoạt phiên bản bộ quy tắc đạt chuẩn.
 - **5a. Từ chối.** Hùng từ chối kèm lý do; bộ về `DRAFT`.
 
 **Luồng ngoại lệ.**
 - **E1. Tập nhãn nhỏ (bước 3).** ERR-06-026 (422): "Tập nhãn cần tối thiểu 1.000 cặp, hiện có {n}."
+- **E1a. Cặp nhãn không hợp lệ (bước 1).** ERR-06-051 (422): "Cặp nhãn thứ {n} không hợp lệ: {lý do}."
 - **E2. Gửi duyệt khi chưa đạt (bước 4).** ERR-06-024 (422): "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%."
 - **E3. Mẫu ngoài miền (bước 2).** ERR-06-047 (422): "Cỡ mẫu phải từ 1.000 đến 100.000."
 - **E4. Đang có job cùng loại (bước 2, 3).** ERR-06-025 (409): "Domain {mã} đang có job {jobId} chạy."
@@ -839,7 +840,7 @@ Bộ quy tắc chỉ kích hoạt khi đánh giá trên tập nhãn khóa ≥ 1.
 
 **Quy tắc áp dụng.** BR-06-004, BR-06-021.
 
-**Màn hình, API.** UI-06-09, UI-06-13; API-06-033, 034, 035, 037, 038, 039, 040; kịch bản TS-06-09.
+**Màn hình, API.** UI-06-09, UI-06-13; API-06-033, 034, 035, 037, 038, 039, 040, 123; kịch bản TS-06-09.
 :::
 
 ### 6.10. UC-06-10 · Đối sánh tự động và tạo, cập nhật bản ghi vàng
@@ -945,7 +946,7 @@ Việc trực tuyến không so được mọi cặp trong khối, nên nạp ba
 **Luồng thay thế.**
 - **1a. `dryRun = true`.** Dừng sau bước 3, báo số cặp theo vùng và mẫu 100 cặp, không áp.
 - **1b. `trainOnly = true`.** Ước lượng m, u bằng EM, lưu vào bộ quy tắc nháp mới.
-- **4a. Vượt ngưỡng an toàn.** `AWAITING_CONFIRMATION`, giao việc DA; Hùng xác nhận (API-06-044 `:confirm`) thì tiếp `APPLYING`, từ chối thì `CANCELLED`.
+- **4a. Vượt ngưỡng an toàn.** `AWAITING_CONFIRMATION`, giao việc DA; Hùng gọi API-06-106 `:confirm` với `decision`: `APPROVE` thì tiếp `APPLYING`, `REJECT` thì `CANCELLED`, không cặp nào được áp.
 - **5a. Bản ghi đổi sau thời điểm xuất.** Bỏ qua cặp (ERR-06-104), job `PARTIALLY_SUCCEEDED`.
 
 **Luồng ngoại lệ.**
@@ -957,7 +958,7 @@ Việc trực tuyến không so được mọi cặp trong khối, nên nạp ba
 
 **Quy tắc áp dụng.** BR-06-022, BR-06-023.
 
-**Màn hình, API.** UI-06-12; API-06-041, 042, 043, 044; kịch bản TS-06-11.
+**Màn hình, API.** UI-06-12; API-06-041, 042, 043, 044, 106; kịch bản TS-06-11.
 :::
 
 ```{.mermaid caption="Trình tự job đối sánh theo lô bằng Splink"}
@@ -1010,7 +1011,7 @@ Mỗi kết luận không chắc chắn thành một việc rõ ràng, xếp the
 **Luồng chính.**
 1. Hệ thống tạo mục từ `POSSIBLE_MATCH`, `CONFLICT`, xung đột thuộc tính quan trọng, bản ghi mồ côi; tính ưu tiên (`IDENTIFIER_CONFLICT` cao nhất, nguồn nhiều, `RiskLevel`); phát EVT-06-08.
 2. Lan mở UI-06-04, lọc theo domain, lý do (`QueueReason`), quá hạn (API-06-045).
-3. Lan bấm "Nhận việc tiếp theo" (API-06-047 `:claim`); mục `ASSIGNED`, giữ trong `06.queue.hold-minutes` = 30 phút.
+3. Lan bấm "Nhận việc tiếp theo" (API-06-124 `claim-next`, một lệnh nguyên tử; chọn mục `OPEN` ưu tiên cao nhất, hạn sớm nhất); mục `ASSIGNED`, giữ trong `06.queue.hold-minutes` = 30 phút. Hết mục thì trả `204`, không lỗi. Nhận một mục cụ thể dùng API-06-047 `:claim`.
 4. Lan chuyển sang UC-06-13 để quyết định.
 5. Mỗi 15 phút hệ thống kiểm SLA `06.queue.sla-days` = 7: quá hạn thì nâng ưu tiên; quá `06.queue.escalate-after-days` = 14 thì giao DA phân công lại; số mục mở > `06.queue.max-open` = 500 thì cảnh báo PH-13 (API-06-050).
 
@@ -1026,7 +1027,7 @@ Mỗi kết luận không chắc chắn thành một việc rõ ràng, xếp the
 
 **Quy tắc áp dụng.** BR-06-002, BR-06-015, BR-06-019.
 
-**Màn hình, API.** UI-06-04, UI-06-01; API-06-045, 047, 050; kịch bản TS-06-12.
+**Màn hình, API.** UI-06-04, UI-06-01; API-06-045 (lọc `partition`), 047, 050, 124; kịch bản TS-06-12.
 :::
 
 ### 6.13. UC-06-13 · So sánh cạnh nhau và quyết định khớp, không khớp, hoãn
@@ -1065,7 +1066,7 @@ Màn hình quan trọng nhất của phân hệ: hai bản ghi cạnh nhau, đi�
 - **3a. "Khác nhau" (N).** Hệ thống ghi `negativeLink` giữa hai bản ghi, mục `RESOLVED`, thêm nhãn `NO_MATCH`.
 - **3b. "Hoãn" (H).** Mục `DEFERRED` kèm ghi chú cần thêm thông tin.
 - **3c. Bỏ che `SENSITIVE`.** Lan có `PERM-09-unmask` nhập lý do; PH-09 trả giá trị rõ cho phiên, nhật ký đánh dấu.
-- **3d. Sửa quyết định trong 24 giờ.** Mở lại mục từ lịch sử khi chưa có thao tác phụ thuộc; sau đó dùng UC-06-20.
+- **3d. Sửa quyết định trong 24 giờ.** Người đã quyết hoặc DA gọi API-06-121 `:reopen` kèm lý do ≥ 20 ký tự trong `06.queue.reopen-hours` (24 giờ) khi chưa có thao tác phụ thuộc; hệ thống hoàn tác thay đổi bản ghi vàng theo FR-06-039, đưa mục về `ASSIGNED` để quyết định lại, quyết định cũ giữ ở lịch sử. Quá hạn hoặc đã có thao tác phụ thuộc thì dùng UC-06-20.
 - **4a. `HIGH`.** Chuyển UC-06-14.
 
 **Luồng ngoại lệ.**
@@ -1074,10 +1075,11 @@ Màn hình quan trọng nhất của phân hệ: hai bản ghi cạnh nhau, đi�
 - **E3. Hai số định danh khác nhau (bước 4).** ERR-06-029 (422): "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn."
 - **E4. Bản ghi vàng đang khóa (bước 4).** ERR-06-031 (409): "Bản ghi vàng {id} đang có thao tác chờ duyệt."
 - **E5. Không ghi được nhật ký truy cập (bước 2).** ERR-06-039 (503): "Chưa ghi được nhật ký truy cập nên không hiển thị dữ liệu. Thử lại sau ít phút."
+- **E6. Mở lại quá hạn hoặc có thao tác phụ thuộc (nhánh 3d).** ERR-06-053 (409): "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác."
 
 **Quy tắc áp dụng.** BR-06-006, BR-06-008, BR-06-010, BR-06-019, BR-06-023, BR-06-026.
 
-**Màn hình, API.** UI-06-05; API-06-046, 048; kịch bản TS-06-13.
+**Màn hình, API.** UI-06-05; API-06-046, 048, 121; kịch bản TS-06-13.
 :::
 
 ### 6.14. UC-06-14 · Duyệt bốn mắt hợp nhất rủi ro cao
@@ -1426,7 +1428,7 @@ Hoàn tác là thao tác mới, không xóa lịch sử (BR-06-024); là biện 
 **Đảm bảo thành công.** Thao tác gốc `UNDONE`; thao tác `UNDO` mới trỏ gốc; bản ghi trở về như trước, cập nhật nguồn đến sau được áp lại.
 
 **Luồng chính.**
-1. Lan mở tab "Thao tác" của `G-10234`, chọn hợp nhất ngày 20/11/2026, bấm "Hoàn tác", nhập lý do.
+1. Lan mở tab "Thao tác" của `G-10234` (danh sách thao tác theo bản ghi từ API-06-122), chọn hợp nhất ngày 20/11/2026, bấm "Hoàn tác", nhập lý do.
 2. Hệ thống tải thao tác và ảnh chụp trước thao tác (API-06-060).
 3. Hệ thống tìm thao tác thủ công phụ thuộc sau đó; có thì yêu cầu xác nhận (`confirmDependents`).
 4. Hệ thống khôi phục trạng thái, liên kết theo ảnh chụp, áp lại các cập nhật nguồn đến sau, ghi `UNDO`.
@@ -1446,7 +1448,7 @@ Hoàn tác là thao tác mới, không xóa lịch sử (BR-06-024); là biện 
 
 **Quy tắc áp dụng.** BR-06-005, BR-06-024.
 
-**Màn hình, API.** UI-06-03, UI-06-06; API-06-060, 061; kịch bản TS-06-20.
+**Màn hình, API.** UI-06-03, UI-06-06; API-06-060, 061, 122; kịch bản TS-06-20.
 :::
 
 ```{.mermaid caption="Hoạt động hoàn tác một thao tác"}
@@ -1823,17 +1825,18 @@ Hình cho thấy quyết định tạm dừng nằm ở `dh-data` sau khi so sá
 
 **Luồng thay thế.**
 - **1a. `RECTIFICATION`.** Hệ thống xác định nguồn qua lineage; thuộc tính thẩm quyền quốc gia thì hướng dẫn tới cơ quan đăng ký; thuộc tính khác thì chuyển nguồn (`:forward`, `FORWARDED_TO_SOURCE`), phát EVT-06-15, có thể sửa tay tạm (UC-06-17).
-- **1b. `RESTRICTION`.** Bản ghi `LOCKED` cờ `restricted`; PH-09 chỉ cho mục đích bắt buộc theo luật.
+- **1b. `RESTRICTION`.** Bản ghi `LOCKED` cờ `restricted`; PH-09 chỉ cho mục đích bắt buộc theo luật. Hết hạn, chủ thể rút yêu cầu hoặc cơ quan có thẩm quyền cho phép thì DS, SO, TA gọi API-06-125 `:lift-restriction` kèm căn cứ (≥ 20 ký tự): bỏ cờ `restricted`, bản ghi về `ACTIVE` (còn thao tác chờ duyệt thì giữ `LOCKED`), PH-09 khôi phục chính sách, phát EVT-06-02, kiểm toán.
 - **1c. Yêu cầu xóa.** PH-06 không xóa dữ liệu chủ có nguồn thẩm quyền; trả lời căn cứ pháp lý, chuyển PH-09 xử lý.
 - **2a. Không có bản ghi.** Trả lời "không xử lý dữ liệu chủ về chủ thể", `COMPLETED`.
 
 **Luồng ngoại lệ.**
 - **E1. Chưa xác minh danh tính (bước 1).** ERR-06-046 (422): "Yêu cầu chưa có thông tin xác minh danh tính của chủ thể dữ liệu."
-- **E2. Thiếu lý do từ chối (`:reject`).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
+- **E2. Thiếu lý do từ chối (`:reject`) hoặc căn cứ gỡ hạn chế.** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
+- **E3. Gỡ hạn chế khi bản ghi không ở trạng thái hạn chế (nhánh 1b).** ERR-06-006 (409): "Bản ghi {id} không ở trạng thái hạn chế xử lý."
 
 **Quy tắc áp dụng.** BR-06-014, BR-06-030.
 
-**Màn hình, API.** UI-06-16; API-06-090, 091, 092; kịch bản TS-06-27.
+**Màn hình, API.** UI-06-16; API-06-090, 091, 092, 125; kịch bản TS-06-27.
 :::
 
 ### 6.28. UC-06-28 · Chính sách lưu giữ, dọn dữ liệu và tham số theo tenant
@@ -1899,25 +1902,27 @@ Năm luồng phụ dưới đây lặp lại ở nhiều use case nên đặc t�
 
 ### 8.1. Mã mới và độ phủ
 
-Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-06-01…28, LP-06-01…05, câu hỏi mở Q06-45…49; đề nghị kịch bản kiểm thử TS-06-01…28 ứng với UC-06-01…28 (1 − 1) cho D05-02-PH06. Cả 60 FR thuộc ít nhất một use case (§5.4). FR-06-052 là yêu cầu xuyên suốt, hiện thực ở UC-06-21 và LP-06-04, áp dụng cho mọi đường ra của UC-06-13, 16, 22, 23, 24. Mọi mã ERR, EVT, API, UI, PERM, enum và tham số `06.*` trong tập lấy đúng FRS §8.2, §9, §10.1 và Phụ lục A; câu thông báo lấy nguyên văn từ khối FR hoặc FRS §9.2.
+Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới; ở bản 0.2 dùng thêm API-06-121…125 và ERR-06-051…053 của FRS 0.2. Mã của tập: UC-06-01…28, LP-06-01…05, câu hỏi mở Q06-45…49; đề nghị kịch bản kiểm thử TS-06-01…28 ứng với UC-06-01…28 (1 − 1) cho D05-02-PH06. Cả 60 FR thuộc ít nhất một use case (§5.4). FR-06-052 là yêu cầu xuyên suốt, hiện thực ở UC-06-21 và LP-06-04, áp dụng cho mọi đường ra của UC-06-13, 16, 22, 23, 24. Mọi mã ERR, EVT, API, UI, PERM, enum và tham số `06.*` trong tập lấy đúng FRS §8.2, §9, §10.1 và Phụ lục A; câu thông báo lấy nguyên văn từ khối FR hoặc FRS §9.2.
 
 ### 8.2. Đề nghị cho FRS
 
-| Mã | Nội dung | Nơi dùng |
-|---|---|---|
-| ĐN-UC-01 | FR-06-030 cho "sửa quyết định trong 24 giờ" nhưng §9.4 chỉ có `:decide`; đề nghị nêu `:reopen` hoặc quy định `:decide` ghi đè trong 24 giờ | UC-06-13 nhánh 3d |
-| ĐN-UC-02 | Tab "Thao tác" của UI-06-03 chưa có API liệt kê thao tác theo bản ghi; đề nghị thêm `GET /domains/{domainCode}/golden-records/{goldenId}/operations` | UC-06-20 bước 1 |
-| ĐN-UC-03 | FR-06-025 khóa tập nhãn (`locked`) nhưng chưa có API; đề nghị `POST /label-sets/{labelSetCode}:lock` | UC-06-09 bước 1 |
-| ĐN-UC-04 | API-06-044 `:confirm` chưa nêu từ chối (`ApprovalDecision`) khi job `AWAITING_CONFIRMATION`; đề nghị tham số `decision` | UC-06-11 nhánh 4a |
-| ĐN-UC-05 | FR-06-058 chưa có chức năng và API gỡ hạn chế xử lý (bản ghi `LOCKED` cờ `restricted` về `ACTIVE`) khi hết hạn chế | UC-06-27 nhánh 1b |
-| ĐN-UC-06 | ERR-06-005 có bốn biến thể câu (người gửi duyệt, người đề nghị, người đề nghị hợp nhất, tự chấp thuận); đề nghị một câu tham số hóa hành động ở §9.2 | UC-06-03, 04, 14, 23 |
-| ĐN-UC-07 | FR-06-026 chưa nêu bước tự tắt tự hợp nhất khi đánh giá tháng không đạt dù có tham số `06.match.auto-disable-on-fail`; đề nghị bổ sung luồng | UC-06-09 nhánh 4a |
+FRS 0.2 (D02-03-PH06 §15) đã hấp thụ cả bảy đề nghị; cột "Xử lý" ghi nơi áp.
+
+| Mã | Nội dung | Nơi dùng | Xử lý |
+|---|---|---|---|
+| ĐN-UC-01 | FR-06-030 cho "sửa quyết định trong 24 giờ" nhưng §9.4 chỉ có `:decide`; đề nghị nêu `:reopen` hoặc quy định `:decide` ghi đè trong 24 giờ | UC-06-13 nhánh 3d | Đã áp ở FRS 0.2: FR-06-030, API-06-121, ERR-06-053 |
+| ĐN-UC-02 | Tab "Thao tác" của UI-06-03 chưa có API liệt kê thao tác theo bản ghi; đề nghị thêm `GET /domains/{domainCode}/golden-records/{goldenId}/operations` | UC-06-20 bước 1 | Đã áp ở FRS 0.2: API-06-122 |
+| ĐN-UC-03 | FR-06-025 khóa tập nhãn (`locked`) nhưng chưa có API; đề nghị `POST /label-sets/{labelSetCode}:lock` | UC-06-09 bước 1 | Đã áp ở FRS 0.2: API-06-123 |
+| ĐN-UC-04 | API-06-044 `:confirm` chưa nêu từ chối (`ApprovalDecision`) khi job `AWAITING_CONFIRMATION`; đề nghị tham số `decision` | UC-06-11 nhánh 4a | Đã áp ở FRS 0.2: API-06-106 nhận `decision` |
+| ĐN-UC-05 | FR-06-058 chưa có chức năng và API gỡ hạn chế xử lý (bản ghi `LOCKED` cờ `restricted` về `ACTIVE`) khi hết hạn chế | UC-06-27 nhánh 1b | Đã áp ở FRS 0.2: FR-06-058 bước 5a, API-06-125 |
+| ĐN-UC-06 | ERR-06-005 có bốn biến thể câu (người gửi duyệt, người đề nghị, người đề nghị hợp nhất, tự chấp thuận); đề nghị một câu tham số hóa hành động ở §9.2 | UC-06-03, 04, 14, 23 | Đã áp ở FRS 0.2: câu tham số hóa ở §9.2 |
+| ĐN-UC-07 | FR-06-026 chưa nêu bước tự tắt tự hợp nhất khi đánh giá tháng không đạt dù có tham số `06.match.auto-disable-on-fail`; đề nghị bổ sung luồng | UC-06-09 nhánh 4a | Đã áp ở FRS 0.2: FR-06-026 bước 5 |
 
 : Đề nghị bổ sung cho FRS
 
 ### 8.3. Đề nghị đồng bộ cho tập khác
 
-D03-06-PH06 lấy câu thông báo từ chương 6 và thêm câu cho ERR-06-003, 006 theo từng ngữ cảnh; D03-04-PH06 thêm ba API ở ĐN-UC-02, 03, 04; D05-02-PH06 dựng TS-06-nn ứng với UC-06-nn, luồng Splink và đồng bộ quốc gia dùng dữ liệu `T90…T99`; D02-08 xác nhận chín quyền mới và cặp loại trừ DS, DA.
+D03-06-PH06 lấy câu thông báo từ chương 6 và thêm câu cho ERR-06-003, 006 theo từng ngữ cảnh; D03-04-PH06 đã thêm API-06-121…125 ở bản 0.2 (ĐN-UC-01, 02, 03, 05); D05-02-PH06 dựng TS-06-nn ứng với UC-06-nn, luồng Splink và đồng bộ quốc gia dùng dữ liệu `T90…T99`; D02-08 xác nhận chín quyền mới và cặp loại trừ DS, DA.
 
 ## 9. Câu hỏi mở
 
@@ -1936,3 +1941,4 @@ D03-06-PH06 lấy câu thông báo từ chương 6 và thêm câu cho ERR-06-003
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 28 use case phủ 60 FR, năm sơ đồ use case, sơ đồ trình tự cho bốn mắt, tách, resolve, đồng bộ quốc gia, job Splink, sơ đồ hoạt động cho đối sánh và hoàn tác; ma trận truy vết FR cũ, REQ, LGC |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: đánh dấu ĐN-UC-01…07 đã áp; UC-06-09 dùng khóa tập nhãn (API-06-123), tự tắt tự hợp nhất, ERR-06-051; UC-06-11 `decision` (API-06-106); UC-06-12 nhận việc tiếp theo (API-06-124); UC-06-13 mở lại quyết định (API-06-121, ERR-06-053); UC-06-20 danh sách thao tác (API-06-122); UC-06-27 gỡ hạn chế (API-06-125) |

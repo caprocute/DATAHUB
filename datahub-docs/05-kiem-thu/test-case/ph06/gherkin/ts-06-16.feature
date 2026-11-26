@@ -44,3 +44,14 @@ Tính năng: TS-06-16 · Chi tiết bản ghi vàng, lịch sử và nguồn g�
     Và `GET .../lineage?attribute=khongco`.
     Thì bước 1 mỗi thuộc tính `sourceCode`, `sourceKey`, `strategy`, thời điểm; thuộc tính sửa tay nguồn `MANUAL` kèm hạn và yêu cầu sửa tại nguồn. Bước 2 `400` ERR-06-003.
     # Hậu điều kiện: Không đổi.
+
+  @TC-06-157 @P2 @Dương
+  Kịch bản: TC-06-157 Danh sách thao tác của bản ghi vàng
+    # Truy vết: FR-06-035 · FR-06-039 · API-06-122 · UI-06-03 · PERM-06-read
+    # Mục đích: Chứng minh tab Thao tác liệt kê thao tác chờ duyệt và thao tác hoàn tác được của một bản ghi vàng, theo FR-06-035, 039 (API-06-122).
+    Biết bản ghi vàng Bình có một hợp nhất `APPLIED` (trong hạn hoàn tác), một tách `PENDING_APPROVAL`, một hoàn tác `UNDONE`; VW1.
+    Khi VW1 `GET /domains/CITIZEN/golden-records/{id}/operations`.
+    Và lọc `status=PENDING_APPROVAL` rồi `undoable=true`.
+    Và `GET` operations của bản ghi thuộc tenant khác (T91 vào dữ liệu T90).
+    Thì bước 1 ba thao tác kèm `changeType`, `status`, người yêu cầu, thời điểm. Bước 2 lọc đúng, `undoable` chỉ ở hợp nhất còn trong hạn `06.undo.window-days`. Bước 3 `404` ERR-06-001, thân giống "không tồn tại". NK: có.
+    # Hậu điều kiện: Không đổi.

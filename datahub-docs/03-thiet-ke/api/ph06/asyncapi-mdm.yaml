@@ -2091,6 +2091,13 @@ components:
           $ref: '#/components/schemas/LabelSetPurpose'
         stats:
           type: object
+        locked:
+          type: boolean
+        lockedAt:
+          type: string
+          format: date-time
+        lockedBy:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -2103,6 +2110,7 @@ components:
       - labelSetCode
       - domainCode
       - purpose
+      - locked
     LabelSetPage:
       type: object
       description: Trang kết quả.
@@ -2227,6 +2235,47 @@ components:
       required:
       - domainCode
       - scope
+    JobConfirmRequest:
+      type: object
+      description: Quyết định của người duyệt với job vượt ngưỡng an toàn (FR-06-022 bước 5).
+      properties:
+        decision:
+          $ref: '#/components/schemas/ApprovalDecision'
+        comment:
+          type: string
+          maxLength: 2000
+      required:
+      - decision
+    SyncResumeRequest:
+      type: object
+      description: Tiếp tục đồng bộ quốc gia sau tạm dừng (FR-06-053).
+      properties:
+        cause:
+          type: string
+          minLength: 20
+          maxLength: 2000
+        applyDiscrepancies:
+          type: boolean
+      required:
+      - cause
+    ClaimNextRequest:
+      type: object
+      description: Bộ lọc khi nhận mục tiếp theo (FR-06-028); thân rỗng nghĩa là không lọc.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueReason'
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        sourceCode:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z][A-Z0-9-]{2,31}$
     RerunRequest:
       type: object
       description: Chạy lại job từ bước.
@@ -2608,6 +2657,55 @@ components:
       - operationId
       - changeType
       - status
+    GoldenOperationItem:
+      type: object
+      description: Một thao tác trên bản ghi vàng (FR-06-035, FR-06-039).
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        changeType:
+          $ref: '#/components/schemas/GoldenChangeType'
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        requestedBy:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+        undoable:
+          type: boolean
+        undoDeadline:
+          type: string
+          format: date-time
+      required:
+      - operationId
+      - changeType
+      - status
+      - undoable
+    GoldenOperationPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoldenOperationItem'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
     MergeRequest:
       type: object
       description: Hợp nhất thủ công (FR-06-037).
@@ -3674,6 +3772,11 @@ components:
             $ref: '#/components/schemas/Setting'
       required:
       - items
+    ApprovalDecision:
+      type: string
+      enum:
+      - APPROVE
+      - REJECT
     AttributeType:
       type: string
       enum:

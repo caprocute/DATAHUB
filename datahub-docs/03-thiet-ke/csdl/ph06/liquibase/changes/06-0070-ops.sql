@@ -23,6 +23,9 @@ CREATE TABLE ph06_mdm.subject_request (
   completed_at          timestamptz,
   result_ref            varchar(512),
   reject_reason         varchar(2000),
+  lifted_at             timestamptz,
+  lifted_by             varchar(64),
+  lift_reason           varchar(2000),
   created_at            timestamptz NOT NULL DEFAULT now(),
   created_by            varchar(64) NOT NULL,
   updated_at            timestamptz NOT NULL DEFAULT now(),
@@ -37,6 +40,7 @@ CREATE TABLE ph06_mdm.subject_request (
   CONSTRAINT ck_subject_request_due CHECK (due_at >= received_at),
   CONSTRAINT ck_subject_request_completed CHECK (status NOT IN ('COMPLETED', 'REJECTED') OR completed_at IS NOT NULL),
   CONSTRAINT ck_subject_request_rejected CHECK (status <> 'REJECTED' OR reject_reason IS NOT NULL),
+  CONSTRAINT ck_subject_request_lifted CHECK ((lifted_at IS NULL) = (lifted_by IS NULL) AND (lifted_at IS NULL) = (lift_reason IS NULL) AND (lifted_at IS NULL OR (request_type = 'RESTRICTION' AND status = 'COMPLETED' AND char_length(lift_reason) >= 20))),
   CONSTRAINT ck_subject_request_forward CHECK (status <> 'FORWARDED_TO_SOURCE' OR forwarded_source_code IS NOT NULL)
 );
 CREATE INDEX ix_subject_request_status ON ph06_mdm.subject_request (tenant_id, status, due_at);
@@ -110,7 +114,7 @@ CREATE INDEX ix_processing_log_job ON ph06_mdm.processing_log (tenant_id, job_id
 CREATE INDEX ix_processing_log_level ON ph06_mdm.processing_log (tenant_id, level, logged_at DESC);
 CREATE TRIGGER tg_processing_log_append_only BEFORE UPDATE OR DELETE ON ph06_mdm.processing_log FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_append_only();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.processing_log');
-COMMENT ON TABLE ph06_mdm.processing_log IS 'FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.';
+COMMENT ON TABLE ph06_mdm.processing_log IS 'EN-06-32 FR-06-057 Nhật ký xử lý (job, ứng viên, đồng bộ, dọn lưu giữ) cho vận hành: mức, mã lỗi ERR-06-1nn, thông điệp ngắn, chi tiết đã che DLCN. Chỉ thêm; phân vùng tháng theo logged_at; giữ 90 ngày.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.processing_log CASCADE;
 
 --changeset ph06:ph06-0480-retention-policy
@@ -139,7 +143,7 @@ CREATE TABLE ph06_mdm.retention_policy (
 CREATE TRIGGER tg_retention_policy_touch BEFORE UPDATE ON ph06_mdm.retention_policy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_retention_policy_immutable BEFORE UPDATE ON ph06_mdm.retention_policy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('object_type');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.retention_policy');
-COMMENT ON TABLE ph06_mdm.retention_policy IS 'FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.';
+COMMENT ON TABLE ph06_mdm.retention_policy IS 'EN-06-33 FR-06-059 Chính sách lưu giữ theo loại đối tượng (BR-06-031). Nhật ký truy cập tối thiểu 365 ngày trực tuyến (ERR-06-049); legal_hold chặn dọn (ERR-06-114). retention_days = 0 không cho phép.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.retention_policy CASCADE;
 
 --changeset ph06:ph06-0490-tenant-setting
@@ -156,10 +160,10 @@ CREATE TABLE ph06_mdm.tenant_setting (
   CONSTRAINT pk_tenant_setting PRIMARY KEY (id),
   CONSTRAINT ck_tenant_setting_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_tenant_setting_key UNIQUE (tenant_id, setting_key),
-  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days'))
+  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('06.queue.sla-days', '06.queue.max-open', '06.queue.escalate-after-days', '06.queue.hold-minutes', '06.match.auto-disable-on-fail', '06.batch.safety-ratio', '06.undo.window-days', '06.export.max-rows', '06.access.bulk-threshold', '06.ingest.rate-per-source', '06.sync.pause-ratio', '06.sync.up-attributes', '06.dsr.sla-days', '06.mask.reveal-seconds', '06.ingest.max-file-mb', '06.ingest.max-rows', '06.batch.max-hours', '06.match.timeout-ms', '06.sync.reconcile-batch-size', '06.xref.batch-max', '06.queue.reopen-hours', '06.queue.reason-templates'))
 );
 CREATE TRIGGER tg_tenant_setting_touch BEFORE UPDATE ON ph06_mdm.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_tenant_setting_immutable BEFORE UPDATE ON ph06_mdm.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('setting_key');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.tenant_setting');
-COMMENT ON TABLE ph06_mdm.tenant_setting IS 'FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.';
+COMMENT ON TABLE ph06_mdm.tenant_setting IS 'EN-06-34 FR-06-060 Tham số phân hệ theo tenant (FRS 8.2, khóa 06.*). Giá trị jsonb; miền kiểm ở dịch vụ (ERR-06-047), CHECK chỉ giữ danh sách khóa hợp lệ. Khóa thiếu thì dùng mặc định của FRS.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.tenant_setting CASCADE;

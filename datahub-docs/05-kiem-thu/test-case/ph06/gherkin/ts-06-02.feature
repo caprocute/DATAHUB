@@ -38,14 +38,14 @@ Tính năng: TS-06-02 · Soạn mô hình domain, khóa định danh và phân l
 
   @TC-06-007 @P1 @Âm @Bảo @mật
   Kịch bản: TC-06-007 Khóa sai kiểu, biểu thức ReDoS, trùng loại, CMND xác định
-    # Truy vết: FR-06-003 · BR-06-001 · API-06-006, 013 · ERR-06-002, 003, 009
+    # Truy vết: FR-06-003 · BR-06-001 · API-06-006, 013 · ERR-06-002, 003, 009, 052
     # Mục đích: Chứng minh khóa chỉ khai được trên thuộc tính `IDENTIFIER` và biểu thức không gây quá tải, theo FR-06-003.
     Biết DEMO-CANBO DRAFT.
     Khi gắn khóa `CCCD_12` vào thuộc tính `STRING`.
     Và khai `REGEX` `^(a+)+$`; đo thời gian trả lời.
     Và khai hai khóa `CCCD_12` trong một domain.
     Và khai `CMND_9` với `deterministic = true`.
-    Thì bước 1 `422` ERR-06-009. Bước 2 `400` ERR-06-003 trong ≤ 1 s, không treo CPU. Bước 3 `409` ERR-06-002. Bước 4 `422` ERR-06-003 (CMND_9 bắt buộc `deterministic = false`).
+    Thì bước 1 `422` ERR-06-009. Bước 2 `400` ERR-06-003 trong ≤ 1 s, không treo CPU. Bước 3 `409` ERR-06-002. Bước 4 `422` ERR-06-052 (CMND_9 chỉ để so sánh, không làm khóa xác định); API-06-013 kiểm thử khóa trả cùng mã.
     # Hậu điều kiện: Không khóa nào được lưu.
 
   @TC-06-008 @P1 @Dương

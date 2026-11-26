@@ -531,6 +531,7 @@ paths:
       - ERR-06-004
       - ERR-06-006
       - ERR-06-009
+      - ERR-06-052
       - ERR-06-010
       - ERR-06-021
       - ERR-06-001
@@ -1141,6 +1142,7 @@ paths:
       - ERR-06-002
       - ERR-06-003
       - ERR-06-009
+      - ERR-06-052
       requestBody:
         required: true
         content:
@@ -3123,6 +3125,7 @@ paths:
       x-datahub-errors:
       - ERR-06-002
       - ERR-06-006
+      - ERR-06-051
       - ERR-06-001
       responses:
         '200':
@@ -3142,6 +3145,9 @@ paths:
                         pairs: 1200
                         match: 600
                         noMatch: 600
+                      locked: false
+                      lockedAt: '2026-11-20T08:00:00+07:00'
+                      lockedBy: ds.pham
                       createdAt: '2026-11-20T08:00:00+07:00'
                       updatedAt: '2026-11-20T08:00:00+07:00'
                       version: 3
@@ -3156,6 +3162,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
     post:
       tags:
       - Quy tắc đối sánh
@@ -3178,6 +3186,7 @@ paths:
       x-datahub-errors:
       - ERR-06-002
       - ERR-06-006
+      - ERR-06-051
       - ERR-06-003
       - ERR-06-015
       - ERR-06-001
@@ -3210,6 +3219,9 @@ paths:
                       pairs: 1200
                       match: 600
                       noMatch: 600
+                    locked: false
+                    lockedAt: '2026-11-20T08:00:00+07:00'
+                    lockedBy: ds.pham
                     createdAt: '2026-11-20T08:00:00+07:00'
                     updatedAt: '2026-11-20T08:00:00+07:00'
                     version: 3
@@ -3232,6 +3244,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
   /label-sets/{labelSetCode}/pairs:
     post:
       tags:
@@ -3255,6 +3269,7 @@ paths:
       x-datahub-errors:
       - ERR-06-002
       - ERR-06-006
+      - ERR-06-051
       - ERR-06-003
       - ERR-06-015
       - ERR-06-001
@@ -3288,6 +3303,9 @@ paths:
                       pairs: 1200
                       match: 600
                       noMatch: 600
+                    locked: false
+                    lockedAt: '2026-11-20T08:00:00+07:00'
+                    lockedBy: ds.pham
                     createdAt: '2026-11-20T08:00:00+07:00'
                     updatedAt: '2026-11-20T08:00:00+07:00'
                     version: 3
@@ -3310,6 +3328,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
   /domains/{domainCode}/accuracy-reports:
     get:
       tags:
@@ -3705,7 +3725,7 @@ paths:
         permission: PERM-06-steward
       security:
       - oauth2User: []
-      description: Theo FRS 9.4.
+      description: 'Lọc `partition`: `mine`, `unclaimed`, `overdue`, `pending-approval`.'
       parameters:
       - name: domainCode
         in: query
@@ -3737,6 +3757,10 @@ paths:
         schema:
           type: string
           pattern: ^[A-Z][A-Z0-9-]{2,31}$
+      - name: partition
+        in: query
+        schema:
+          type: string
       - name: page
         in: query
         schema:
@@ -3962,6 +3986,7 @@ paths:
       - ERR-06-029
       - ERR-06-030
       - ERR-06-031
+      - ERR-06-053
       - ERR-06-003
       - ERR-06-004
       - ERR-06-001
@@ -7041,6 +7066,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-06-006
       - ERR-06-046
       - ERR-06-003
       - ERR-06-015
@@ -7115,6 +7141,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-06-006
       - ERR-06-046
       - ERR-06-001
       responses:
@@ -7146,6 +7173,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
   /subject-requests/{requestId}:complete:
@@ -7169,6 +7198,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-06-006
       - ERR-06-046
       - ERR-06-003
       - ERR-06-004
@@ -7465,7 +7495,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `resume` tách từ dòng gộp API-06-011 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/DomainCode'
@@ -7542,7 +7572,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `retire` tách từ dòng gộp API-06-011 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/DomainCode'
@@ -7619,7 +7649,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `resume` tách từ dòng gộp API-06-017 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/SourceCode'
@@ -7702,7 +7732,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `retire` tách từ dòng gộp API-06-017 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/SourceCode'
@@ -7785,7 +7815,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-020 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ProposalId'
@@ -7862,7 +7892,7 @@ paths:
         permission: PERM-06-ingest
       security:
       - oauth2User: []
-      description: Hành động `discard` tách từ dòng gộp API-06-028 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/DomainCode'
       - $ref: '#/components/parameters/Traceparent'
@@ -7929,7 +7959,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `approve` tách từ dòng gộp API-06-035 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/DomainCode'
@@ -8033,7 +8063,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-035 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/DomainCode'
@@ -8138,7 +8168,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `rerun` tách từ dòng gộp API-06-044 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/JobId'
@@ -8209,7 +8239,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `confirm` tách từ dòng gộp API-06-044 của FRS 9.4.
+      description: 'Thân có `decision` (`ApprovalDecision`): `REJECT` chuyển job `AWAITING_CONFIRMATION` sang `CANCELLED`, không áp cặp nào.'
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/JobId'
@@ -8227,11 +8257,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CommentBody'
+              $ref: '#/components/schemas/JobConfirmRequest'
             examples:
               vi-du:
                 value:
-                  comment: Đồng ý theo biên bản họp ngày 20/11/2026.
+                  decision: APPROVE
+                  comment: Đồng ý áp kết quả theo biên bản họp ngày 20/11/2026.
       responses:
         '200':
           description: Thành công.
@@ -8294,7 +8325,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `release` tách từ dòng gộp API-06-047 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ItemId'
@@ -8357,7 +8388,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `assign` tách từ dòng gộp API-06-047 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ItemId'
@@ -8433,7 +8464,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-049 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ItemId'
@@ -8511,7 +8542,7 @@ paths:
         permission: PERM-06-approve
       security:
       - oauth2User: []
-      description: Hành động `approve` tách từ dòng gộp API-06-053 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/DomainCode'
       - $ref: '#/components/parameters/Traceparent'
@@ -8582,7 +8613,7 @@ paths:
         permission: PERM-06-approve
       security:
       - oauth2User: []
-      description: Hành động `reject` tách từ dòng gộp API-06-053 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/DomainCode'
       - $ref: '#/components/parameters/Traceparent'
@@ -8657,7 +8688,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-061 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/OperationId'
@@ -8739,7 +8770,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `restore` tách từ dòng gộp API-06-062 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/DomainCode'
@@ -8822,7 +8853,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-075 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ExportId'
@@ -8899,7 +8930,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `suspend` tách từ dòng gộp API-06-079 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/SubscriptionId'
@@ -8973,7 +9004,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `resume` tách từ dòng gộp API-06-079 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/SubscriptionId'
@@ -9047,7 +9078,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `revoke` tách từ dòng gộp API-06-079 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/SubscriptionId'
@@ -9121,7 +9152,7 @@ paths:
         permission: PERM-06-sync
       security:
       - oauth2User: []
-      description: Hành động `resume` tách từ dòng gộp API-06-082 của FRS 9.4.
+      description: Bắt buộc `cause` (nguyên nhân đã điều tra, từ 20 ký tự), lưu ở `national_sync_state`, kiểm toán và đưa vào EVT-06-13.
       parameters:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -9136,11 +9167,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReasonBody'
+              $ref: '#/components/schemas/SyncResumeRequest'
             examples:
               vi-du:
                 value:
-                  reason: Nguồn dữ liệu đã ngừng cung cấp theo công văn số 123.
+                  cause: Đã điều tra, lệch do đợt cập nhật danh mục ngày 20/11, áp bản quốc gia.
+                  applyDiscrepancies: true
       responses:
         '200':
           description: Thành công.
@@ -9187,13 +9219,14 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `forward` tách từ dòng gộp API-06-092 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/RequestId'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-06-006
       - ERR-06-046
       - ERR-06-003
       - ERR-06-004
@@ -9262,13 +9295,14 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Hành động `reject` tách từ dòng gộp API-06-092 của FRS 9.4.
+      description: Theo FRS 9.4.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/RequestId'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-06-006
       - ERR-06-046
       - ERR-06-003
       - ERR-06-004
@@ -9283,6 +9317,385 @@ paths:
               vi-du:
                 value:
                   comment: Thiếu căn cứ văn bản phê duyệt, đề nghị bổ sung.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dsr'
+              examples:
+                vi-du:
+                  value:
+                    requestId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    requestType: ACCESS
+                    status: RECEIVED
+                    dueAt: '2026-11-20T08:00:00+07:00'
+                    reportUrl: https://console.t68.datahub.example.vn/api/mdm/v1/subject-requests/0193/report
+                    createdAt: '2026-11-20T08:00:00+07:00'
+                    updatedAt: '2026-11-20T08:00:00+07:00'
+                    version: 3
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /stewardship/items/{itemId}:reopen:
+    post:
+      tags:
+      - Hàng đợi người quản lý
+      operationId: postStewardshipItems121
+      summary: Mở lại quyết định hàng đợi
+      x-datahub-id: API-06-121
+      x-datahub-fr:
+      - FR-06-030
+      x-datahub-permission:
+        permission: PERM-06-steward
+      security:
+      - oauth2User: []
+      x-datahub-if-match: required
+      description: Trong `06.queue.reopen-hours` (24 giờ) và chưa có thao tác phụ thuộc; quá hạn ERR-06-053. Hoàn tác thay đổi bản ghi vàng của quyết định cũ rồi
+        đưa mục về `ASSIGNED`.
+      parameters:
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/ItemId'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-007
+      - ERR-06-029
+      - ERR-06-030
+      - ERR-06-031
+      - ERR-06-053
+      - ERR-06-003
+      - ERR-06-004
+      - ERR-06-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonBody'
+            examples:
+              vi-du:
+                value:
+                  reason: Nguồn dữ liệu đã ngừng cung cấp theo công văn số 123.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StewardItem'
+              examples:
+                vi-du:
+                  value:
+                    itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    domainCode: CITIZEN
+                    reason: POSSIBLE_MATCH
+                    status: OPEN
+                    riskLevel: LOW
+                    score: 0.87
+                    priority: 40
+                    assignee: ds.pham
+                    dueAt: '2026-11-20T08:00:00+07:00'
+                    operationId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    createdAt: '2026-11-20T08:00:00+07:00'
+                    updatedAt: '2026-11-20T08:00:00+07:00'
+                    version: 3
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /domains/{domainCode}/golden-records/{goldenId}/operations:
+    get:
+      tags:
+      - Bản ghi vàng
+      operationId: getDomainsGoldenRecordsOperations122
+      summary: Danh sách thao tác của bản ghi vàng
+      x-datahub-id: API-06-122
+      x-datahub-fr:
+      - FR-06-035
+      - FR-06-039
+      x-datahub-permission:
+        permission: PERM-06-read
+      security:
+      - oauth2User: []
+      description: Thao tác chờ duyệt và thao tác hoàn tác được của một bản ghi vàng; dùng cho tab Thao tác.
+      parameters:
+      - $ref: '#/components/parameters/DomainCode'
+      - $ref: '#/components/parameters/GoldenId'
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/OperationStatus'
+      - name: changeType
+        in: query
+        schema:
+          $ref: '#/components/schemas/GoldenChangeType'
+      - name: undoable
+        in: query
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-001
+      - ERR-06-039
+      - ERR-06-006
+      - ERR-06-033
+      - ERR-06-034
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoldenOperationPage'
+              examples:
+                vi-du:
+                  value:
+                    items:
+                    - operationId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                      changeType: MERGE
+                      status: PENDING_APPROVAL
+                      riskLevel: HIGH
+                      requestedBy: ds.pham
+                      requestedAt: '2026-11-20T08:00:00+07:00'
+                      approvedBy: da.tran
+                      undoable: true
+                      undoDeadline: '2026-11-20T08:00:00+07:00'
+                    page: 0
+                    size: 20
+                    totalElements: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /label-sets/{labelSetCode}:lock:
+    post:
+      tags:
+      - Quy tắc đối sánh
+      operationId: postLabelSets123
+      summary: Khóa tập nhãn kiểm chứng
+      x-datahub-id: API-06-123
+      x-datahub-fr:
+      - FR-06-025
+      x-datahub-permission:
+        permission: PERM-06-steward
+      security:
+      - oauth2User: []
+      x-datahub-if-match: required
+      description: Khóa rồi không mở lại; thêm cặp sau đó tạo tập nhãn phiên bản mới. Ghi kiểm toán.
+      parameters:
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/LabelSetCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-002
+      - ERR-06-006
+      - ERR-06-051
+      - ERR-06-004
+      - ERR-06-001
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelSet'
+              examples:
+                vi-du:
+                  value:
+                    labelSetCode: nhan-2026-q4
+                    domainCode: CITIZEN
+                    purpose: EVALUATION
+                    stats:
+                      pairs: 1200
+                      match: 600
+                      noMatch: 600
+                    locked: false
+                    lockedAt: '2026-11-20T08:00:00+07:00'
+                    lockedBy: ds.pham
+                    createdAt: '2026-11-20T08:00:00+07:00'
+                    updatedAt: '2026-11-20T08:00:00+07:00'
+                    version: 3
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /stewardship/items:claim-next:
+    post:
+      tags:
+      - Hàng đợi người quản lý
+      operationId: postStewardshipItemsClaimNext124
+      summary: Nhận mục hàng đợi tiếp theo
+      x-datahub-id: API-06-124
+      x-datahub-fr:
+      - FR-06-028
+      x-datahub-permission:
+        permission: PERM-06-steward
+      security:
+      - oauth2User: []
+      description: Một lệnh nguyên tử (`SKIP LOCKED`); hết mục phù hợp trả `204`, không lỗi. Mục gán `ASSIGNED` giữ `06.queue.hold-minutes`.
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-027
+      - ERR-06-028
+      - ERR-06-003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimNextRequest'
+            examples:
+              vi-du:
+                value:
+                  domainCode: CITIZEN
+                  reason:
+                  - POSSIBLE_MATCH
+                  riskLevel: LOW
+                  sourceCode:
+                  - HT-YTE
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StewardItem'
+              examples:
+                vi-du:
+                  value:
+                    itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    domainCode: CITIZEN
+                    reason: POSSIBLE_MATCH
+                    status: OPEN
+                    riskLevel: LOW
+                    score: 0.87
+                    priority: 40
+                    assignee: ds.pham
+                    dueAt: '2026-11-20T08:00:00+07:00'
+                    operationId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    createdAt: '2026-11-20T08:00:00+07:00'
+                    updatedAt: '2026-11-20T08:00:00+07:00'
+                    version: 3
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+        '204':
+          description: Không có mục phù hợp, không phải lỗi.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /subject-requests/{requestId}:lift-restriction:
+    post:
+      tags:
+      - Chủ thể dữ liệu và lưu giữ
+      operationId: postSubjectRequests125
+      summary: Gỡ hạn chế xử lý dữ liệu
+      x-datahub-id: API-06-125
+      x-datahub-fr:
+      - FR-06-058
+      x-datahub-permission:
+        permission: PERM-06-dsr
+      security:
+      - oauth2User: []
+      x-datahub-if-match: required
+      description: Bỏ cờ `restricted`, bản ghi `LOCKED` về `ACTIVE`; yêu cầu `RESTRICTION` giữ `COMPLETED`; phát EVT-06-02.
+      parameters:
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-006
+      - ERR-06-046
+      - ERR-06-003
+      - ERR-06-004
+      - ERR-06-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonBody'
+            examples:
+              vi-du:
+                value:
+                  reason: Nguồn dữ liệu đã ngừng cung cấp theo công văn số 123.
       responses:
         '200':
           description: Thành công.
@@ -10893,6 +11306,13 @@ components:
           $ref: '#/components/schemas/LabelSetPurpose'
         stats:
           type: object
+        locked:
+          type: boolean
+        lockedAt:
+          type: string
+          format: date-time
+        lockedBy:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -10905,6 +11325,7 @@ components:
       - labelSetCode
       - domainCode
       - purpose
+      - locked
     LabelSetPage:
       type: object
       description: Trang kết quả.
@@ -11029,6 +11450,47 @@ components:
       required:
       - domainCode
       - scope
+    JobConfirmRequest:
+      type: object
+      description: Quyết định của người duyệt với job vượt ngưỡng an toàn (FR-06-022 bước 5).
+      properties:
+        decision:
+          $ref: '#/components/schemas/ApprovalDecision'
+        comment:
+          type: string
+          maxLength: 2000
+      required:
+      - decision
+    SyncResumeRequest:
+      type: object
+      description: Tiếp tục đồng bộ quốc gia sau tạm dừng (FR-06-053).
+      properties:
+        cause:
+          type: string
+          minLength: 20
+          maxLength: 2000
+        applyDiscrepancies:
+          type: boolean
+      required:
+      - cause
+    ClaimNextRequest:
+      type: object
+      description: Bộ lọc khi nhận mục tiếp theo (FR-06-028); thân rỗng nghĩa là không lọc.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueReason'
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        sourceCode:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z][A-Z0-9-]{2,31}$
     RerunRequest:
       type: object
       description: Chạy lại job từ bước.
@@ -11410,6 +11872,55 @@ components:
       - operationId
       - changeType
       - status
+    GoldenOperationItem:
+      type: object
+      description: Một thao tác trên bản ghi vàng (FR-06-035, FR-06-039).
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        changeType:
+          $ref: '#/components/schemas/GoldenChangeType'
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        requestedBy:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+        undoable:
+          type: boolean
+        undoDeadline:
+          type: string
+          format: date-time
+      required:
+      - operationId
+      - changeType
+      - status
+      - undoable
+    GoldenOperationPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoldenOperationItem'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
     MergeRequest:
       type: object
       description: Hợp nhất thủ công (FR-06-037).
@@ -12476,6 +12987,11 @@ components:
             $ref: '#/components/schemas/Setting'
       required:
       - items
+    ApprovalDecision:
+      type: string
+      enum:
+      - APPROVE
+      - REJECT
     AttributeType:
       type: string
       enum:

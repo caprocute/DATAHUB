@@ -19,6 +19,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA ph06_mdm TO ph06_readonly;
 REVOKE SELECT ON ph06_mdm.access_log, ph06_mdm.golden_history, ph06_mdm.subject_request, ph06_mdm.golden_identifier FROM ph06_readonly;
 GRANT SELECT (id, tenant_id, accessed_at, actor, system_code, domain_code, golden_id, api_code, purpose_code, result_count, bulk_flag, trace_id)
   ON ph06_mdm.access_log TO ph06_readonly;
+-- Vai Job Splink (FR-06-022): chỉ đọc match_staging, chỉ thêm match_result; không đọc bảng nào khác.
+GRANT SELECT ON ph06_mdm.match_staging TO ph06_splink;
+GRANT INSERT ON ph06_mdm.match_result TO ph06_splink;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_ensure_partitions(regclass, date, integer) TO ph06_app;
 GRANT EXECUTE ON PROCEDURE ph06_mdm.p_seed_tenant(text) TO ph06_app;
 --rollback empty

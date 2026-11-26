@@ -58,7 +58,7 @@ for m in re.finditer(r"^\| API-06-(\d{3}) \| `([A-Z]+) ([^`]+)` \| ([^|]+) \|", 
     else:
         ROWS.append((code, meth, path, None, frs_, code))
 ROWS.sort(key=lambda r: r[0])
-assert len(ROWS) == 120, len(ROWS)
+assert len(ROWS) == 125, len(ROWS)
 SPLIT = [(r[5], r[0]) for r in ROWS if r[0] > "096"]
 
 # ---------------------------------------------------------------- bảng operation
@@ -118,8 +118,8 @@ OPS_TXT = """
 043|Chi tiết job|Job đối sánh|operate|-|MatchJob|200|-|
 044|Hủy job|Job đối sánh|operate|ReasonBody|MatchJob|200|-|
 105|Chạy lại job|Job đối sánh|operate|RerunRequest|JobAccepted|202|-|
-106|Xác nhận job vượt ngưỡng an toàn|Job đối sánh|approve|CommentBody|MatchJob|200|-|
-045|Danh sách mục hàng đợi|Hàng đợi người quản lý|steward|-|StewardItemPage|200|domainCode:dcode,reason:E:QueueReason,status:E:QueueItemStatus,assignee:str,riskLevel:E:RiskLevel,overdue:bool,sourceCode:scode,page,size|
+106|Xác nhận job vượt ngưỡng an toàn|Job đối sánh|approve|JobConfirmRequest|MatchJob|200|-|
+045|Danh sách mục hàng đợi|Hàng đợi người quản lý|steward|-|StewardItemPage|200|domainCode:dcode,reason:E:QueueReason,status:E:QueueItemStatus,assignee:str,riskLevel:E:RiskLevel,overdue:bool,sourceCode:scode,partition:str,page,size|
 046|So sánh cạnh nhau hai bản ghi|Hàng đợi người quản lý|steward|-|StewardItemDetail|200|unmask:str,unmaskReason:str|
 047|Nhận mục hàng đợi|Hàng đợi người quản lý|steward|-|StewardItem|200|-|
 107|Trả mục hàng đợi|Hàng đợi người quản lý|steward|-|StewardItem|200|-|
@@ -168,7 +168,7 @@ OPS_TXT = """
 080|Trạng thái đồng bộ quốc gia|Đồng bộ quốc gia|read|-|SyncStatus|200|domainCode:dcode|
 081|Chạy đồng bộ quốc gia thủ công|Đồng bộ quốc gia|sync|SyncRunRequest|SyncRunAccepted|202|-|idem m:mdm:national-sync
 082|Tạm dừng đồng bộ quốc gia|Đồng bộ quốc gia|sync|ReasonBody|SyncStatus|200|-|noifm
-118|Tiếp tục đồng bộ quốc gia|Đồng bộ quốc gia|sync|ReasonBody|SyncStatus|200|-|noifm
+118|Tiếp tục đồng bộ quốc gia|Đồng bộ quốc gia|sync|SyncResumeRequest|SyncStatus|200|-|noifm
 083|Danh sách lệch đồng bộ quốc gia|Đồng bộ quốc gia|sync|-|DiscrepancyPage|200|runId:uuid,attribute:acode,severity:E:DiscrepancySeverity,status:E:DiscrepancyStatus,page,size|
 084|Xử lý lệch đồng bộ quốc gia|Đồng bộ quốc gia|sync|DiscrepancyResolveRequest|DiscrepancyResolveResult|200|-|noifm
 085|Chỉ số dashboard dữ liệu chủ|Vận hành|read|-|DashboardMetrics|200|domainCode:dcode,khoang:str|
@@ -185,6 +185,11 @@ OPS_TXT = """
 094|Sửa chính sách lưu giữ|Chủ thể dữ liệu và lưu giữ|config|RetentionPolicyPut|RetentionPolicy|200|-|
 095|Danh sách tham số phân hệ|Chủ thể dữ liệu và lưu giữ|config|-|SettingsDoc|200|-|
 096|Sửa tham số phân hệ|Chủ thể dữ liệu và lưu giữ|config|SettingsPut|SettingsDoc|200|-|
+121|Mở lại quyết định hàng đợi|Hàng đợi người quản lý|steward|ReasonBody|StewardItem|200|-|
+122|Danh sách thao tác của bản ghi vàng|Bản ghi vàng|read|-|GoldenOperationPage|200|status:E:OperationStatus,changeType:E:GoldenChangeType,undoable:bool,page,size|
+123|Khóa tập nhãn kiểm chứng|Quy tắc đối sánh|steward|-|LabelSet|200|-|
+124|Nhận mục hàng đợi tiếp theo|Hàng đợi người quản lý|steward|ClaimNextRequest|StewardItem|200|-|noifm also:204
+125|Gỡ hạn chế xử lý dữ liệu|Chủ thể dữ liệu và lưu giữ|dsr|ReasonBody|Dsr|200|-|
 """
 OPS = {}
 for ln in OPS_TXT.strip().splitlines():
@@ -363,7 +368,7 @@ obj("BlockingStats", "Hiệu quả khóa gom nhóm (FR-06-019).", ("keys!", "[$B
 obj("BlockingKeyStat", "Thống kê một khóa.", ("expression!", "str", "adminUnitCode+year(dateOfBirth)"), ("avgBlockSize", "num", 12.4), ("p99BlockSize", "int", 310), ("oversizedBlocks", "int", 2), ("pairCoverage", "num", 0.97))
 obj("LabelPair", "Cặp có nhãn.", ("leftRef!", "str", "gold:0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01"), ("rightRef!", "str", "gold:0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f02"), ("label!", "E:PairLabel", "MATCH"))
 obj("LabelSet", "Tập nhãn kiểm chứng.", ("labelSetCode!", "code", "nhan-2026-q4"), ("domainCode!", "dcode"), ("purpose!", "E:LabelSetPurpose", "EVALUATION"),
-    ("stats", "obj", {"pairs": 1200, "match": 600, "noMatch": 600}), *AUD)
+    ("stats", "obj", {"pairs": 1200, "match": 600, "noMatch": 600}), ("locked!", "bool", False), ("lockedAt", "ts"), ("lockedBy", "str", "ds.pham"), *AUD)
 page("LabelSetPage", "LabelSet")
 obj("LabelSetCreate", "Tạo tập nhãn.", ("labelSetCode!", "code", "nhan-2026-q4"), ("purpose!", "E:LabelSetPurpose", "EVALUATION"), ("description", "str", "Tập nhãn quý 4/2026"))
 obj("LabelPairsRequest", "Thêm cặp nhãn.", ("pairs!", "[$LabelPair]", None, {"minItems": 1, "maxItems": 5000}))
@@ -373,6 +378,9 @@ obj("MatchJob", "Job đối sánh, đánh giá, áp lại, đồng bộ.", ("job
     ("startedAt", "ts"), ("finishedAt", "ts"), ("requestedBy", "str", "to.le"), *AUD)
 page("MatchJobPage", "MatchJob")
 obj("MatchJobCreate", "Tạo job đối sánh lô (FR-06-022).", ("domainCode!", "dcode"), ("scope!", "E:BatchScope", "CANDIDATES_SINCE"), ("since", "ts"), ("trainOnly", "bool", False), ("dryRun", "bool", False), ("ruleSetVersion", "int", 2))
+obj("JobConfirmRequest", "Quyết định của người duyệt với job vượt ngưỡng an toàn (FR-06-022 bước 5).", ("decision!", "E:ApprovalDecision", "APPROVE"), ("comment", "str", "Đồng ý áp kết quả theo biên bản họp ngày 20/11/2026.", {"maxLength": 2000}))
+obj("SyncResumeRequest", "Tiếp tục đồng bộ quốc gia sau tạm dừng (FR-06-053).", ("cause!", "str", "Đã điều tra, lệch do đợt cập nhật danh mục ngày 20/11, áp bản quốc gia.", R20), ("applyDiscrepancies", "bool", True))
+obj("ClaimNextRequest", "Bộ lọc khi nhận mục tiếp theo (FR-06-028); thân rỗng nghĩa là không lọc.", ("domainCode", "dcode"), ("reason", "[E:QueueReason]", ["POSSIBLE_MATCH"]), ("riskLevel", "E:RiskLevel", "LOW"), ("sourceCode", "[scode]"))
 obj("RerunRequest", "Chạy lại job từ bước.", ("fromStep!", "str", "APPLYING", {"enum": ["PREPARING", "APPLYING"]}), ("reason!", "str", "Chạy lại sau khi khắc phục lỗi đọc staging.", R20))
 # --- hàng đợi
 obj("StewardItem", "Mục hàng đợi.", ("itemId!", "uuid"), ("domainCode!", "dcode"), ("reason!", "E:QueueReason", "POSSIBLE_MATCH"), ("status!", "E:QueueItemStatus", "OPEN"), ("riskLevel!", "E:RiskLevel", "LOW"),
@@ -401,6 +409,9 @@ obj("AttributePatchRequest", "Sửa tay thuộc tính (FR-06-036).", ("attribute
     ("evidenceRef!", "str", "BB-2026-114"), ("validUntil", "ts"))
 obj("GoldenOperationResult", "Kết quả thao tác trên bản ghi vàng.", ("operationId!", "uuid"), ("changeType!", "E:GoldenChangeType", "MERGE"), ("status!", "E:OperationStatus", "APPLIED"), ("riskLevel", "E:RiskLevel", "LOW"),
     ("goldenId", "uuid"), ("survivorId", "uuid"), ("resultGoldenIds", "[uuid]"), ("sourceCorrectionRequestId", "uuid"), ("version", "int", 6))
+obj("GoldenOperationItem", "Một thao tác trên bản ghi vàng (FR-06-035, FR-06-039).", ("operationId!", "uuid"), ("changeType!", "E:GoldenChangeType", "MERGE"), ("status!", "E:OperationStatus", "PENDING_APPROVAL"), ("riskLevel", "E:RiskLevel", "HIGH"),
+    ("requestedBy", "str", "ds.pham"), ("requestedAt", "ts"), ("approvedBy", "str", "da.tran"), ("undoable!", "bool", True), ("undoDeadline", "ts"))
+page("GoldenOperationPage", "GoldenOperationItem")
 obj("MergeRequest", "Hợp nhất thủ công (FR-06-037).", ("goldenIds!", "[uuid]", ["0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01", "0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f02"], {"minItems": 2, "maxItems": 10}),
     ("survivorId", "uuid"), ("reason!", "str", "Hai bản ghi cùng một người theo hồ sơ hộ tịch.", R20), ("attributeOverrides", "obj", {}))
 obj("SplitGroup", "Nhóm liên kết tách.", ("xrefIds!", "[uuid]", None, {"minItems": 1}))

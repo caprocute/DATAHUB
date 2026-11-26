@@ -26,12 +26,12 @@ Tính năng: TS-06-11 · Job đối sánh theo lô bằng Splink
 
   @TC-06-053 @P1 @Dương @Âm
   Kịch bản: TC-06-053 Vượt ngưỡng an toàn 5 % chờ xác nhận
-    # Truy vết: FR-06-022 · BR-06-022 · API-06-044 · ERR-06-105 · PERM-06-approve
+    # Truy vết: FR-06-022 · BR-06-022 · API-06-044, 106 · ERR-06-105 · PERM-06-approve
     # Mục đích: Chứng minh job có số cặp `MATCH` > 5 % số bản ghi vào dừng ở `AWAITING_CONFIRMATION`, theo BR-06-022.
     Biết tập T99 dựng 30 % bản ghi trùng chủ ý; `06.batch.safety-ratio = 0,05`.
     Khi chạy job, chờ trạng thái.
-    Và DA1 `:confirm` một job; với job khác DA1 từ chối.
-    Thì bước 1 `AWAITING_CONFIRMATION`, ERR-06-105 ở UI-06-12, không bản ghi vàng nào đổi. Bước 2 xác nhận thì `APPLYING` → `SUCCEEDED`; từ chối thì `CANCELLED`, không đổi (ĐN-UC-04).
+    Và DA1 `:confirm` một job với `decision = APPROVE`; với job khác DA1 `:confirm` với `decision = REJECT`.
+    Thì bước 1 `AWAITING_CONFIRMATION`, ERR-06-105 ở UI-06-12, không bản ghi vàng nào đổi. Bước 2 xác nhận thì `APPLYING` → `SUCCEEDED`; `decision = REJECT` thì `CANCELLED`, không cặp nào được áp (API-06-106).
     # Hậu điều kiện: Hai job ở trạng thái cuối.
 
   @TC-06-054 @P1 @Âm @Chịu @lỗi

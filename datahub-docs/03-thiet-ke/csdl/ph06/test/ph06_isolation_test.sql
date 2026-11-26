@@ -279,12 +279,12 @@ SELECT pg_temp.expect($q$UPDATE ph06_mdm.retention_policy SET retention_days = 9
 SELECT pg_temp.expect($q$UPDATE ph06_mdm.retention_policy SET legal_hold = true WHERE object_type = 'candidate_record'$q$, '23514', '18b giữ pháp lý cần lý do (ERR-06-114)');
 SELECT pg_temp.expect($q$INSERT INTO ph06_mdm.tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '06.khong-co', '1', 'x', 'x')$q$, '23514', '18c khóa tham số ngoài FRS 8.2');
 
--- 19. Khởi tạo tenant: đủ 13 tham số, 10 chính sách, 5 lịch; chạy lại không nhân bản
+-- 19. Khởi tạo tenant: đủ 21 tham số (13 gốc và 8 tham số FRS 0.2), 10 chính sách, 5 lịch; chạy lại không nhân bản
 CALL ph06_mdm.p_seed_tenant('T90');
 DO $$ DECLARE a int; b int; c int; BEGIN
   SELECT count(*) INTO a FROM ph06_mdm.tenant_setting; SELECT count(*) INTO b FROM ph06_mdm.retention_policy; SELECT count(*) INTO c FROM ph06_mdm.job_schedule;
-  IF a <> 13 OR b <> 10 OR c <> 5 THEN RAISE 'FAIL 19: % tham số, % chính sách, % lịch', a, b, c; END IF;
-  RAISE NOTICE 'PASS 19 p_seed_tenant: 13 tham số, 10 chính sách lưu giữ, 5 lịch job, chạy lại không nhân bản';
+  IF a <> 21 OR b <> 10 OR c <> 5 THEN RAISE 'FAIL 19: % tham số, % chính sách, % lịch', a, b, c; END IF;
+  RAISE NOTICE 'PASS 19 p_seed_tenant: 21 tham số, 10 chính sách lưu giữ, 5 lịch job, chạy lại không nhân bản';
 END $$;
 
 -- 20. Ứng viên: dedup theo nguồn, chỉ mục pg_trgm, độ dài băm
@@ -340,4 +340,22 @@ SELECT pg_temp.expect($q$SELECT snapshot_enc FROM ph06_mdm.golden_history$q$, '4
 SELECT pg_temp.expect($q$SELECT criteria_hash FROM ph06_mdm.access_log$q$, '42501', '26d vai trò chỉ đọc không đọc cột băm tiêu chí của nhật ký truy cập');
 SELECT pg_temp.expect($q$UPDATE ph06_mdm.golden_record SET status = 'LOCKED'$q$, '42501', '26e vai trò chỉ đọc không ghi');
 RESET ROLE;
+
+-- 27. FRS 0.2: cờ restricted, khóa gom nhóm, khóa tập nhãn, gỡ hạn chế, mở lại quyết định
+SET ROLE dh_data_app;
+SELECT pg_temp.expect($q$UPDATE ph06_mdm.golden_record SET restricted = true WHERE status = 'ACTIVE'$q$, '23514', '27 cờ restricted chỉ khi bản ghi LOCKED');
+SELECT pg_temp.expect($q$INSERT INTO ph06_mdm.label_set (id, tenant_id, label_set_code, domain_code, purpose, locked, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'nhan-khoa', 'CITIZEN', 'EVALUATION', true, 'x', 'x')$q$, '23514', '27b khóa tập nhãn cần người khóa và thời điểm (API-06-123)');
+SELECT pg_temp.expect($q$UPDATE ph06_mdm.subject_request SET lifted_at = now(), lifted_by = 'x', lift_reason = 'ngắn' WHERE request_type <> 'RESTRICTION'$q$, '23514', '27c gỡ hạn chế chỉ cho yêu cầu RESTRICTION đã COMPLETED, lý do từ 20 ký tự (API-06-125)');
+DO $$ DECLARE n int; BEGIN
+  SELECT count(*) INTO n FROM pg_indexes WHERE schemaname = 'ph06_mdm' AND indexname = 'ix_golden_record_blocks' AND indexdef LIKE '%gin%';
+  IF n <> 1 THEN RAISE 'FAIL 27d chỉ mục GIN block_keys'; END IF;
+  RAISE NOTICE 'PASS 27d golden_record.block_keys có chỉ mục GIN';
+END $$;
+RESET ROLE;
+DO $$ BEGIN
+  IF NOT has_table_privilege('ph06_splink', 'ph06_mdm.match_staging', 'SELECT') OR has_table_privilege('ph06_splink', 'ph06_mdm.match_staging', 'INSERT')
+     OR NOT has_table_privilege('ph06_splink', 'ph06_mdm.match_result', 'INSERT') OR has_table_privilege('ph06_splink', 'ph06_mdm.match_result', 'SELECT')
+     OR has_table_privilege('ph06_splink', 'ph06_mdm.golden_record', 'SELECT') THEN RAISE 'FAIL 27e quyền vai ph06_splink'; END IF;
+  RAISE NOTICE 'PASS 27e ph06_splink chỉ SELECT match_staging, chỉ INSERT match_result';
+END $$;
 DO $$ BEGIN RAISE NOTICE 'Hoàn tất: mọi khối PASS'; END $$;

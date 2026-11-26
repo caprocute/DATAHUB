@@ -32,5 +32,5 @@ Tính năng: TS-06-01 · Gói domain nền và xem domain
     Khi TA gọi lại `POST /domains:install-baseline` ở T93.
     Và DS1 gọi `POST /domains:install-baseline`.
     Và TA gọi ở T90 khi CITIZEN đã có phiên bản 2 do tỉnh sửa.
-    Thì bước 1 `409` ERR-06-002, không tạo thêm. Bước 2 403-PQ. Bước 3 không ghi đè phiên bản 2, các domain thiếu mới được bổ sung, phản hồi liệt kê "đã có, bỏ qua".
+    Thì bước 1 `409` ERR-06-002, không tạo thêm. Bước 2 ERR-00-403. Bước 3 không ghi đè phiên bản 2, các domain thiếu mới được bổ sung, phản hồi liệt kê "đã có, bỏ qua".
     # Hậu điều kiện: Không domain nào bị đổi ngoài domain thiếu.

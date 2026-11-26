@@ -30,7 +30,7 @@ Tính năng: TS-06-27 · Yêu cầu của chủ thể dữ liệu
     Biết bản ghi vàng Bình; DS1.
     Khi `POST` `RESTRICTION`; `:complete`.
     Và gọi `lookup` mục đích tra cứu thường.
-    Thì bản ghi `LOCKED` `restricted`, PH-09 nhận cập nhật chính sách; tra cứu mục đích không bắt buộc theo luật bị từ chối. Việc gỡ hạn chế chưa có API (ĐN-UC-05).
+    Thì bản ghi `LOCKED` `restricted`, PH-09 nhận cập nhật chính sách; tra cứu mục đích không bắt buộc theo luật bị từ chối. Gỡ hạn chế kiểm ở ca dsr-lift (API-06-125).
     # Hậu điều kiện: Bình LOCKED restricted.
 
   @TC-06-118 @P1 @Âm
@@ -44,3 +44,16 @@ Tính năng: TS-06-27 · Yêu cầu của chủ thể dữ liệu
     Và tiến 8 rồi 11 ngày làm việc.
     Thì bước 1 `422` ERR-06-046. Bước 2 từ chối có căn cứ pháp lý giữ dữ liệu có nguồn thẩm quyền, chuyển PH-09. Bước 3 `422` ERR-06-007. Bước 4 cảnh báo SO trước hạn 2 ngày, đánh dấu quá hạn.
     # Hậu điều kiện: Ba yêu cầu ở trạng thái cuối.
+
+  @TC-06-158 @P2 @Dương @Âm
+  Kịch bản: TC-06-158 Gỡ hạn chế xử lý dữ liệu
+    # Truy vết: FR-06-058 · BR-06-026 · API-06-125, 092 · ERR-06-006, 007 · EVT-06-02 · PERM-06-dsr
+    # Mục đích: Chứng minh gỡ hạn chế đưa bản ghi `LOCKED` có cờ `restricted` về `ACTIVE` và PH-09 khôi phục chính sách, theo FR-06-058 bước 5a (API-06-125).
+    Biết ca dsr-restrict đã xong: Bình `LOCKED` `restricted`; bản ghi Hòa `LOCKED` do thao tác chờ duyệt, không `restricted`; DS1, VW1.
+    Khi VW1 `POST /subject-requests/{id}:lift-restriction`.
+    Và DS1 gỡ với lý do 10 ký tự.
+    Và DS1 gỡ đúng với `reason` nêu căn cứ (≥ 20 ký tự) và `If-Match`.
+    Và DS1 gỡ lại lần hai.
+    Và DS1 gỡ hạn chế cho yêu cầu của Hòa (không `restricted`).
+    Thì bước 1 `403` ERR-00-403. Bước 2 `422` ERR-06-007. Bước 3 `200`, bỏ cờ `restricted`, Bình `ACTIVE`, PH-09 khôi phục chính sách, EVT-06-02, KT: có (người gỡ, căn cứ, thời điểm); yêu cầu `RESTRICTION` giữ `COMPLETED`. Bước 4 `409` ERR-06-006. Bước 5 `409` ERR-06-006 "Bản ghi {id} không ở trạng thái hạn chế xử lý."; bản ghi Hòa giữ `LOCKED`.
+    # Hậu điều kiện: Bình `ACTIVE`.

@@ -21,7 +21,7 @@ Tính năng: TS-06-26 · Vận hành: dashboard, lịch job và nhật ký
     Khi `PUT /job-schedules/BATCH_MATCH` cron `0 2 * * 0`.
     Và `:cancel` job `RUNNING`; `:rerun` job `FAILED`.
     Và `:cancel` job `SUCCEEDED`; DS1 `:cancel`.
-    Thì bước 1 lịch lưu. Bước 2 `CANCELLED`, rồi job mới `QUEUED`. Bước 3 `409` ERR-06-006; DS1 403-PQ. KT: có (job-cancel, job-rerun).
+    Thì bước 1 lịch lưu. Bước 2 `CANCELLED`, rồi job mới `QUEUED`. Bước 3 `409` ERR-06-006; DS1 ERR-00-403. KT: có (job-cancel, job-rerun).
     # Hậu điều kiện: Lịch tuần 02:00.
 
   @TC-06-114 @P1 @Dương @Bảo @mật
@@ -32,5 +32,5 @@ Tính năng: TS-06-26 · Vận hành: dashboard, lịch job và nhật ký
     Khi AU `GET /access-logs` lọc theo người, mục đích, khoảng ngày.
     Và DS1 `GET /access-logs`.
     Và `GET /processing-logs` với DS1.
-    Thì bước 1 mỗi dòng có người hoặc HTTT, mục đích, `goldenId`, số bản ghi, thời điểm, không có giá trị thuộc tính; lượt vượt ngưỡng hàng loạt gắn "vết đặc biệt". Bước 2 403-PQ. Bước 3 `200`. Cấu hình lưu giữ `access_log` 12 tháng và bản sao WORM 5 năm (kiểm cấu hình, không chờ thời gian).
+    Thì bước 1 mỗi dòng có người hoặc HTTT, mục đích, `goldenId`, số bản ghi, thời điểm, không có giá trị thuộc tính; lượt vượt ngưỡng hàng loạt gắn "vết đặc biệt". Bước 2 ERR-00-403. Bước 3 `200`. Cấu hình lưu giữ `access_log` 12 tháng và bản sao WORM 5 năm (kiểm cấu hình, không chờ thời gian).
     # Hậu điều kiện: Không đổi.

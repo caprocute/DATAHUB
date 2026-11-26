@@ -119,7 +119,7 @@ CREATE TABLE ph06_mdm.national_sync_state (
 CREATE TRIGGER tg_national_sync_state_touch BEFORE UPDATE ON ph06_mdm.national_sync_state FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_national_sync_state_immutable BEFORE UPDATE ON ph06_mdm.national_sync_state FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('domain_code');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.national_sync_state');
-COMMENT ON TABLE ph06_mdm.national_sync_state IS 'FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.';
+COMMENT ON TABLE ph06_mdm.national_sync_state IS 'EN-06-29 FR-06-053, 054 Trạng thái đồng bộ quốc gia mỗi domain: RUNNING hoặc PAUSED. Lệch > 06.sync.pause-ratio tạm dừng tự động (BR-06-011, ERR-06-107); tiếp tục cần người có PERM-06-sync.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.national_sync_state CASCADE;
 
 --changeset ph06:ph06-0420-national-sync-run
@@ -200,7 +200,7 @@ CREATE INDEX ix_national_discrepancy_run ON ph06_mdm.national_discrepancy (tenan
 CREATE TRIGGER tg_national_discrepancy_touch BEFORE UPDATE ON ph06_mdm.national_discrepancy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_national_discrepancy_immutable BEFORE UPDATE ON ph06_mdm.national_discrepancy FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('run_id', 'golden_id', 'attribute_name');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.national_discrepancy');
-COMMENT ON TABLE ph06_mdm.national_discrepancy IS 'FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).';
+COMMENT ON TABLE ph06_mdm.national_discrepancy IS 'EN-06-30 FR-06-053, 054 Lệch giữa bản ghi vàng và CSDL quốc gia trên thuộc tính đồng bộ. Giá trị hai phía mã hóa envelope kèm HMAC. Một lệch OPEN mỗi (bản ghi vàng, thuộc tính). Thuộc tính thẩm quyền quốc gia không giữ giá trị địa phương khi lệch (BR-06-025).';
 --rollback DROP TABLE IF EXISTS ph06_mdm.national_discrepancy CASCADE;
 
 --changeset ph06:ph06-0440-source-correction
@@ -233,5 +233,5 @@ CREATE TABLE ph06_mdm.source_correction (
 CREATE INDEX ix_source_correction_open ON ph06_mdm.source_correction (tenant_id, source_code, due_at) WHERE closed_at IS NULL;
 CREATE TRIGGER tg_source_correction_touch BEFORE UPDATE ON ph06_mdm.source_correction FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CALL ph06_mdm.p_enable_rls('ph06_mdm.source_correction');
-COMMENT ON TABLE ph06_mdm.source_correction IS 'BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.';
+COMMENT ON TABLE ph06_mdm.source_correction IS 'EN-06-31 BR-06-014, EVT-06-15 Yêu cầu sửa tại nguồn: phát sinh khi sửa tay bản ghi vàng (FR-06-036), yêu cầu sửa của chủ thể (FR-06-058) hoặc lệch quốc gia (FR-06-054). Dữ liệu sai phải sửa ở nguồn; sửa tay ở bản ghi vàng chỉ tạm thời.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.source_correction CASCADE;

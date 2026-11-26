@@ -16,6 +16,8 @@ CREATE TABLE ph06_mdm.golden_record (
   birth_year         smallint,
   admin_unit_code    varchar(16),
   link_count         integer NOT NULL DEFAULT 0,
+  block_keys         varchar(72)[] NOT NULL DEFAULT '{}',
+  restricted         boolean NOT NULL DEFAULT false,
   lock_reason        varchar(500),
   retire_reason      varchar(16),
   retire_note        varchar(2000),
@@ -37,11 +39,13 @@ CREATE TABLE ph06_mdm.golden_record (
   CONSTRAINT ck_golden_record_retired CHECK ((status = 'RETIRED') = (retire_reason IS NOT NULL)),
   CONSTRAINT ck_golden_record_retire CHECK (retire_reason IS NULL OR retire_reason IN ('ORPHANED', 'DISSOLVED', 'DECEASED', 'TEST_DATA', 'OTHER')),
   CONSTRAINT ck_golden_record_locked CHECK (status <> 'LOCKED' OR lock_reason IS NOT NULL),
+  CONSTRAINT ck_golden_record_restricted CHECK (NOT restricted OR status = 'LOCKED'),
   CONSTRAINT ck_golden_record_confidence CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
   CONSTRAINT ck_golden_record_birth CHECK (birth_year IS NULL OR birth_year BETWEEN 1850 AND 2100)
 );
 CREATE INDEX ix_golden_record_domain ON ph06_mdm.golden_record (tenant_id, domain_code, status);
 CREATE INDEX ix_golden_record_name_trgm ON ph06_mdm.golden_record USING gin (domain_code, name_norm gin_trgm_ops);
+CREATE INDEX ix_golden_record_blocks ON ph06_mdm.golden_record USING gin (block_keys);
 CREATE INDEX ix_golden_record_area ON ph06_mdm.golden_record (tenant_id, domain_code, admin_unit_code, birth_year) WHERE status = 'ACTIVE';
 CREATE INDEX ix_golden_record_merged ON ph06_mdm.golden_record (tenant_id, merged_into) WHERE merged_into IS NOT NULL;
 CREATE TRIGGER tg_golden_record_touch BEFORE UPDATE ON ph06_mdm.golden_record FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
@@ -126,7 +130,7 @@ CREATE INDEX ix_golden_identifier_golden ON ph06_mdm.golden_identifier (tenant_i
 CREATE TRIGGER tg_golden_identifier_touch BEFORE UPDATE ON ph06_mdm.golden_identifier FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_touch();
 CREATE TRIGGER tg_golden_identifier_immutable BEFORE UPDATE ON ph06_mdm.golden_identifier FOR EACH ROW EXECUTE FUNCTION ph06_mdm.tg_immutable('golden_id', 'domain_code', 'identifier_type', 'value_hash');
 CALL ph06_mdm.p_enable_rls('ph06_mdm.golden_identifier');
-COMMENT ON TABLE ph06_mdm.golden_identifier IS 'EN-06-02 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.';
+COMMENT ON TABLE ph06_mdm.golden_identifier IS 'EN-06-02, EN-06-28 Chỉ mục số định danh của bản ghi vàng (FR-06-020, 046, BR-06-001, 006). Một giá trị định danh hiệu lực chỉ thuộc một bản ghi vàng trong domain (chỉ mục duy nhất một phần), nên hai bản ghi vàng cùng CCCD không tồn tại (ERR-06-112 là lỗi bất biến). Giá trị rõ không lưu; value_enc mã hóa envelope, value_hash HMAC.';
 --rollback DROP TABLE IF EXISTS ph06_mdm.golden_identifier CASCADE;
 
 --changeset ph06:ph06-0330-source-xref

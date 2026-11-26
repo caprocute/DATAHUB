@@ -25,13 +25,13 @@ Tính năng: TS-06-25 · Đồng bộ CSDL tổng hợp quốc gia và xử lý 
 
   @TC-06-108 @P1 @Âm
   Kịch bản: TC-06-108 Lệch 8 % tạm dừng đồng bộ tự động
-    # Truy vết: FR-06-053 · BR-06-011 · ERR-06-044, 107 · EVT-06-13 · UI-06-14
+    # Truy vết: FR-06-053 · BR-06-011 · API-06-118 · ERR-06-007, 044, 107 · EVT-06-13 · UI-06-14
     # Mục đích: Chứng minh tiêu chí chấp nhận 8: lệch > 5 % thì không áp lệch nào và cảnh báo.
     Biết T94 F-SYNC lệch 8 % (80/1.000); `06.sync.pause-ratio = 0,05`.
     Khi chạy `RECONCILE`.
     Và chạy lại `POST /national-sync/runs`.
-    Và DA1 điều tra và `POST /national-sync:resume`, chọn bỏ các lệch.
-    Thì bước 1 đồng bộ `PAUSED`, không bản ghi vàng nào đổi, ERR-06-107 "tỷ lệ lệch 8% vượt 5%", EVT-06-13, cảnh báo DA, TA, băng đỏ UI-06-14. Bước 2 `409` ERR-06-044. Bước 3 `RUNNING`, EVT-06-13 (tiếp tục). KT: có (sync-pause, sync-resume).
+    Và DA1 `POST /national-sync:resume` không kèm `cause`; rồi kèm `cause` (nguyên nhân đã điều tra, ≥ 20 ký tự), chọn bỏ các lệch.
+    Thì bước 1 đồng bộ `PAUSED`, không bản ghi vàng nào đổi, ERR-06-107 "tỷ lệ lệch 8% vượt 5%", EVT-06-13, cảnh báo DA, TA, băng đỏ UI-06-14. Bước 2 `409` ERR-06-044. Bước 3 lần đầu `422` ERR-06-007; lần hai `RUNNING`, `cause` lưu ở trạng thái đồng bộ và kiểm toán, EVT-06-13 (tiếp tục) mang `cause`. KT: có (sync-pause, sync-resume).
     # Hậu điều kiện: Đồng bộ RUNNING; 80 lệch đã xử lý.
 
   @TC-06-109 @P2 @Dương @Âm

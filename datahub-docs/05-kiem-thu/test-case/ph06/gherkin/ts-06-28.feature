@@ -22,5 +22,5 @@ Tính năng: TS-06-28 · Chính sách lưu giữ và tham số theo tenant
     Khi TA `PUT /settings` `06.queue.sla-days = 5`, `06.batch.safety-ratio = 0,08`.
     Và TA đặt `06.batch.safety-ratio = 0,5`; `06.export.max-rows = 5.000.000`.
     Và DS1 `PUT /settings`.
-    Thì bước 1 `200`, tạo mục hàng đợi mới có SLA 5 ngày, job lô dùng 8 %. Bước 2 `422` ERR-06-047 nêu miền. Bước 3 403-PQ. KT: có (settings-update) ghi giá trị cũ, mới.
+    Thì bước 1 `200`, tạo mục hàng đợi mới có SLA 5 ngày, job lô dùng 8 %. Bước 2 `422` ERR-06-047 nêu miền. Bước 3 ERR-00-403. KT: có (settings-update) ghi giá trị cũ, mới.
     # Hậu điều kiện: Hai tham số đã đổi.
