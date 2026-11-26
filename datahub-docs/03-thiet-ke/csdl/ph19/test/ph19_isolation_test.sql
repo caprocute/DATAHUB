@@ -33,6 +33,8 @@ INSERT INTO ph19_payment.transaction_order_guard VALUES ('T68', pg_temp.id('par6
 INSERT INTO ph19_payment.transaction_event (id, tenant_id, transaction_id, sequence, to_status, source, trace_id)
 VALUES (gen_random_uuid(), 'T68', pg_temp.id('txn68'), 1, 'CREATED', 'PARTNER_API', repeat('0', 32));
 
+INSERT INTO ph19_payment.callback_route (connection_key_hash, tenant_id, provider_id, adapter_type) VALUES (repeat('a', 64), 'T68', pg_temp.id('prov68'), 'PAYGOV');
+
 -- ---------- Dữ liệu T01 ----------
 SET app.tenant_id = 'T01';
 INSERT INTO ph19_payment.payment_provider (id, tenant_id, code, name, adapter_type, connection_key_hash, created_by, updated_by)
@@ -204,10 +206,26 @@ DO $$ BEGIN
   RAISE NOTICE 'PASS 13b/c quyền chỉ đọc và cấu hình bất biến';
 END $$;
 
--- 14. Bảng có tenant_id đều bật FORCE RLS
+-- 15. callback_route: tra được trước khi biết tenant, không trỏ được NCC của tenant khác
+SET ROLE dh_payment_app;
+RESET app.tenant_id;
+DO $$ DECLARE t text; BEGIN
+  SELECT tenant_id INTO t FROM ph19_payment.callback_route WHERE connection_key_hash = repeat('a', 64);
+  IF t IS DISTINCT FROM 'T68' THEN RAISE EXCEPTION 'FAIL 15a'; END IF;
+  RAISE NOTICE 'PASS 15a định tuyến callback không cần tenant';
+END $$;
+DO $$ BEGIN
+  INSERT INTO ph19_payment.callback_route (connection_key_hash, tenant_id, provider_id, adapter_type) VALUES (repeat('d', 64), 'T01', pg_temp.id('prov68'), 'PAYGOV');
+  RAISE EXCEPTION 'FAIL 15b';
+EXCEPTION WHEN foreign_key_violation THEN RAISE NOTICE 'PASS 15b định tuyến không trỏ chéo tenant';
+END $$;
+RESET ROLE;
+
+-- 14. Bảng có tenant_id đều bật FORCE RLS (trừ callback_route có chủ đích)
 DO $$ DECLARE r record; n int := 0; BEGIN
   FOR r IN SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
            WHERE s.nspname = 'ph19_payment' AND c.relkind IN ('r', 'p') AND NOT c.relispartition
+             AND c.relname <> 'callback_route'
              AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'tenant_id') LOOP
     n := n + 1;
     IF NOT (r.relrowsecurity AND r.relforcerowsecurity) THEN RAISE EXCEPTION 'FAIL 14: % chưa bật FORCE RLS', r.relname; END IF;

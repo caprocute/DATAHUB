@@ -154,10 +154,26 @@ CREATE TABLE ph19_payment.payment_provider (
 CREATE TRIGGER tg_payment_provider_touch BEFORE UPDATE ON ph19_payment.payment_provider FOR EACH ROW EXECUTE FUNCTION ph19_payment.tg_touch();
 CALL ph19_payment.p_enable_rls('ph19_payment.payment_provider');
 COMMENT ON TABLE ph19_payment.payment_provider IS 'EN-19-01 Nhà cung cấp thanh toán (FR-19-001…011). Hệ cũ: payment_provider.';
-COMMENT ON COLUMN ph19_payment.payment_provider.connection_key_hash IS 'SHA-256 hex của connectionKey (32 ký tự Base32 Crockford, 160 bit) trong đường dẫn callback; nguyên văn ở OpenBao (ADR-045). Khung gọi cột này connection_key.';
+COMMENT ON COLUMN ph19_payment.payment_provider.connection_key_hash IS 'SHA-256 hex của connectionKey hiện hành (32 ký tự Base32 Crockford, 160 bit) trong đường dẫn callback; nguyên văn ở OpenBao (ADR-045). Khung gọi cột này connection_key. Tra cứu khi nhận callback đi qua callback_route.';
 COMMENT ON COLUMN ph19_payment.payment_provider.result_mapping_version IS 'Phiên bản bảng ánh xạ mã kết quả hiện hành (FR-19-069); 0 = chưa có.';
 COMMENT ON COLUMN ph19_payment.payment_provider.capabilities IS 'ProviderCapabilities của adapter: cancel, refund, partialRefund, refundIpn, reconSource, returnSigned, mtls, queryRatePerSecond.';
 -- @rollback DROP TABLE IF EXISTS ph19_payment.payment_provider CASCADE;
+
+-- @changeset ph19-0105-callback-route
+CREATE TABLE ph19_payment.callback_route (
+  connection_key_hash  varchar(64)   NOT NULL,
+  tenant_id            varchar(16)   NOT NULL,
+  provider_id          uuid          NOT NULL,
+  adapter_type         varchar(16)   NOT NULL,
+  valid_until          timestamptz,
+  created_at           timestamptz   NOT NULL DEFAULT now(),
+  CONSTRAINT pk_callback_route PRIMARY KEY (connection_key_hash),
+  CONSTRAINT fk_callback_route_provider FOREIGN KEY (provider_id, tenant_id) REFERENCES ph19_payment.payment_provider (id, tenant_id) ON DELETE CASCADE,
+  CONSTRAINT ck_callback_route_hash CHECK (connection_key_hash ~ '^[0-9a-f]{64}$')
+);
+CREATE INDEX ix_callback_route_provider ON ph19_payment.callback_route (tenant_id, provider_id);
+COMMENT ON TABLE ph19_payment.callback_route IS 'Bảng định tuyến callback (ADR-045): sha256(connectionKey) → tenant, NCC. KHÔNG bật RLS vì phải tra trước khi biết tenant; chỉ chứa băm, không chứa dữ liệu nghiệp vụ. Xoay khóa: khóa cũ có valid_until = lúc xoay + 7 ngày.';
+-- @rollback DROP TABLE IF EXISTS ph19_payment.callback_route;
 
 -- @changeset ph19-0110-provider-credential
 CREATE TABLE ph19_payment.provider_credential (
@@ -1425,7 +1441,7 @@ REVOKE UPDATE, DELETE ON ph19_payment.transaction_event, ph19_payment.integratio
 REVOKE DELETE ON ph19_payment.callback_inbox, ph19_payment.discrepancy, ph19_payment.legacy_mapping, ph19_payment.approval_request,
   ph19_payment.refund_request, ph19_payment.payment_transaction, ph19_payment.payment_provider, ph19_payment.payment_partner FROM ph19_app;
 GRANT SELECT ON ALL TABLES IN SCHEMA ph19_payment TO ph19_readonly;
-REVOKE SELECT ON ph19_payment.provider_credential, ph19_payment.idempotency_record, ph19_payment.shedlock FROM ph19_readonly;
+REVOKE SELECT ON ph19_payment.provider_credential, ph19_payment.idempotency_record, ph19_payment.shedlock, ph19_payment.callback_route FROM ph19_readonly;
 GRANT EXECUTE ON FUNCTION ph19_payment.append_discrepancy_note(uuid, varchar, varchar, uuid[]), ph19_payment.seed_paygov_mapping(uuid, varchar) TO ph19_app;
 -- @rollback REVOKE ALL ON ALL TABLES IN SCHEMA ph19_payment FROM ph19_app, ph19_readonly;
 

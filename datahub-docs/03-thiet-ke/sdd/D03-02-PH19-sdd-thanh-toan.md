@@ -297,6 +297,8 @@ Phần giao diện nằm ở `apps/console/src/features/payment/` theo kiến tr
 - Mỗi giao dịch CSDL mở bằng `TenantSession.run(tenantId, () -> …)` đặt `SET LOCAL app.tenant_id` trước câu lệnh đầu tiên (mẫu D03-02-PH07); tài khoản ứng dụng `ph19_app` không có `BYPASSRLS`; bảng có `FORCE ROW LEVEL SECURITY`.
 - Khóa lạc quan bằng cột `version` (ETag) cho thao tác quản trị; khóa bi quan `SELECT … FOR UPDATE` trên hàng giao dịch cho mọi chuyển trạng thái (IPN, truy vấn, hoàn, chênh lệch) để tuần tự hóa theo giao dịch.
 - Liquibase quản lý schema (`db/changelog/ph19/`), DDL nguồn ở D03-03-PH19.
+- Đầu nhận callback tra `callback_route` (bảng duy nhất không có RLS, chỉ chứa `sha256(connectionKey)` → tenant, NCC) trước khi mở `TenantSession` (D03-03-PH19 §1.2).
+- Tác vụ bảo trì dữ liệu ở vai trò `worker`: `PartitionMaintenanceJob` (01:00, tạo phân vùng 3 tháng tới, tách và lưu trữ phân vùng hết hạn, chạy bằng tài khoản `dh_payment_maint`), `RetentionCleanupJob` (02:00, dọn bảng tạm thời theo D03-03-PH19 §8.2), `DataIntegrityJob` (03:30, đối chiếu toàn vẹn chỉ đọc), `CredentialExpiryJob` (07:00, cảnh báo chứng thư, bí mật sắp hết hạn, FR-19-012), `DiscrepancyEscalator` (mỗi giờ, nhắc và chuyển cấp chênh lệch quá hạn, BR-19-028).
 
 ## 4. Cổng nhà cung cấp và adapter PayGov
 
@@ -409,7 +411,7 @@ Giao dịch CSDL thứ nhất (tx1) cam kết **trước** khi gọi PayGov, đ�
 ### 5.2. Idempotency hai tầng (ADR-041)
 
 1. **Tầng nhanh, Valkey:** `SET {tenant}:payment:idem:{clientId}:{sha256(key)} {requestHash}|IN_PROGRESS NX PX 86400000`. Không đặt được thì đọc giá trị: cùng `requestHash` và `IN_PROGRESS` → ERR-19-004; cùng hash và đã có phản hồi → trả phản hồi; khác hash → ERR-19-003.
-2. **Tầng chuẩn, PostgreSQL:** `idempotency_record` (khóa duy nhất `tenant_id, client_id, method, path, key`) ghi trong tx1 với `request_hash`, `status = IN_PROGRESS`; tx2 cập nhật `COMPLETED` kèm `response_status`, `response_body` (đã loại dữ liệu cá nhân). Khi Valkey mất dữ liệu, ràng buộc duy nhất của PostgreSQL vẫn chặn bản trùng.
+2. **Tầng chuẩn, PostgreSQL:** `idempotency_record` (khóa duy nhất `tenant_id, client_id, method, path, key`) ghi trong tx1 với `request_hash`, `state = IN_PROGRESS`; tx2 cập nhật `state = COMPLETED` kèm `response_status`, `response_body` (đã loại dữ liệu cá nhân). Khi Valkey mất dữ liệu, ràng buộc duy nhất của PostgreSQL vẫn chặn bản trùng.
 3. `requestHash` = SHA-256 của thân yêu cầu chuẩn hóa JCS (RFC 8785) cộng `method` và `path` (BR-19-006). Bản ghi hết hạn sau 24 giờ; tác vụ dọn xóa theo lô.
 4. Yêu cầu `IN_PROGRESS` quá 60 giây (pod chết) được coi là bỏ dở: lần gửi lại tiếp tục từ bản ghi `CREATED` đã có (không tạo giao dịch mới) và trả kết quả hiện tại.
 
@@ -480,7 +482,7 @@ class CallbackController {
 
 - `connectionKey` là 32 ký tự Base32 Crockford sinh từ 160 bit ngẫu nhiên; CSDL lưu `sha256(connectionKey)` để tra, không lưu nguyên văn ngoài OpenBao; đổi `connectionKey` là thao tác xoay có chuyển tiếp 7 ngày (hai khóa cùng hợp lệ).
 - Sau khi xác định NCC, `CallbackVerifier` kiểm tra mã đơn vị kết nối trong nội dung đã ký khớp `merchant_ref` của NCC; không khớp thì `REJECTED` lý do `TENANT_MISMATCH` và cảnh báo khẩn (dấu hiệu cấu hình sai hoặc tấn công).
-- Nonce: `SET {tenant}:payment:nonce:{providerId}:{nonce} {sha256(body)} NX EX 86400`; trùng nonce cùng băm → `DUPLICATE` (trả xác nhận thành công); trùng nonce khác băm → `REJECTED` ERR-19-026. Ràng buộc duy nhất (`provider_id`, `nonce`) trên `callback_inbox` là lớp thứ hai.
+- Nonce: `SET {tenant}:payment:nonce:{providerId}:{nonce} {sha256(body)} NX EX 86400`; trùng nonce cùng băm → `DUPLICATE` (trả xác nhận thành công); trùng nonce khác băm → `REJECTED` ERR-19-026. Khóa chính (`tenant_id`, `provider_id`, `nonce`) của bảng không phân vùng `callback_nonce` (giữ 7 ngày, D03-03-PH19 §3) là lớp thứ hai, vì bảng phân vùng `callback_inbox` không đặt được ràng buộc duy nhất thiếu khóa phân vùng.
 - `inboxWriter.write` ghi một dòng trong giao dịch CSDL ngắn (chỉ `INSERT`), không khóa hàng giao dịch, để giữ p95 ≤ 200 ms (NFR-19-003).
 
 ### 6.3. Xử lý inbox
