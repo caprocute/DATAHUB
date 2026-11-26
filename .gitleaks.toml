@@ -10,7 +10,10 @@ paths = [
   '''\.env\.example''',
   '''deploy/compose/garage/garage\.toml''',
 ]
+regexTarget = "line"
 regexes = [
+  # Ví dụ khóa idempotency (UUID) trong tài liệu API, không phải bí mật
+  '''Idempotency-Key: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
   '''lgsp_dev_change_me''',
   '''admin_dev_change_me''',
   '''control-dev-secret-change-me''',

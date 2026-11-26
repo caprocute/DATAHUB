@@ -46,7 +46,7 @@ Số liệu máy đọc của PH-05 ở [`PH05.json`](PH05.json), nhật ký m�
 | Tệp kèm (số tệp, KB) | 96, 1.528 | 46, 506 | 55, 808 | 57, 666 | +11 tệp (công cụ sinh, gherkin) |
 | Ngữ cảnh nạp trước khi viết (~k token) | ~566 (cận trên) | ~566 (cận trên) | ~566 (cận trên) | ~13 khuôn và D00-04, cộng ~35 tài liệu gốc mở thêm (SRS-PH-05 69 KB, đoạn D02-08, ADR-067, đoạn SDD PH-04) | khoảng −90% |
 | Số phiên viết | nhiều, qua 2 tài khoản | nhiều | nhiều | 1 phiên cho cả bảy tập, ghi và commit theo từng tập, có một lần nén ngữ cảnh | Quy tắc "một phiên mỗi tập" chưa làm đúng |
-| Thời lượng luồng (giờ) | nhiều ngày | ~1,7 cho 0.1 | | ~1,6 (02:29–04:05 UTC, gồm rà chéo và sửa gộp) | ngang PH-04, nhưng đã gồm rà chéo |
+| Thời lượng luồng (giờ) | nhiều ngày | ~1,7 cho 0.1 | | ~1,4 (02:29–03:52 UTC, gồm rà chéo và sửa gộp) | nhanh hơn PH-04 khoảng 18%, đã gồm rà chéo |
 | Commit chạm bộ tài liệu | 16 | 32 | 27 | 16 | −50% |
 | Lần cạn hạn mức | ≥ 1 | 0 | | 0 | ngang |
 | Lỗi soát tự động khi mở PR (`kiem_tra_ma.py`, lỗi mới) | | | | 0 | |
