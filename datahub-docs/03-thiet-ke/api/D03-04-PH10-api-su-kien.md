@@ -923,6 +923,69 @@ Mã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có 
 
 Thông điệp không bao giờ lặp lại nội dung sự kiện, giá trị khóa ký hay thân phản hồi của đầu nhận; `responseSnippet` ở lượt lỗi đã cắt 512 byte và che theo SEC-32.
 
+### 6.4. Thông báo hiển thị theo mã lỗi
+
+Bảng dưới cho biết người dùng console nhìn thấy câu gì khi API control plane trả từng mã lỗi; câu lấy nguyên văn từ D03-06-PH10 §5.3 (nguồn chuẩn của câu hiển thị), cột HTTP lấy từ §6.1. Trường `detail` của phản hồi lỗi có thể thay `{…}` bằng giá trị cụ thể nhưng không chứa dữ liệu cá nhân hay bí mật. Mã data plane ERR-10-101…121 không hiện cho người dùng console mà trả cho HTTT hoặc ghi ở số liệu; nơi người vận hành xem các mã này ghi ở D03-06-PH10 §5.3, bảng "Mã lỗi data plane".
+
+| Mã | HTTP | Câu hiển thị | Vị trí trên màn hình |
+|---|---|---|---|
+| ERR-10-001 | 404 | "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác." | ST-08 |
+| ERR-10-002 | 409 | "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác." | Dưới trường mã |
+| ERR-10-003 | 400 | Câu theo `errors[]`, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự." hoặc "'{mã}' là từ dành riêng của đường dẫn." | Dưới trường |
+| ERR-10-004 | 422 | "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký." | Dưới trường Miền ở UI-10-07 |
+| ERR-10-005 | 422 | "Tiền tố tenant của topic không khớp tenant đang làm việc." | `CMP-Alert` đầu biểu mẫu |
+| ERR-10-006 | 409 | "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}." kèm nút "Tải lại" | `CMP-Alert` trong hộp thao tác |
+| ERR-10-007 | 412 | ST-13 xung đột phiên bản | `CMP-ConflictDialog` |
+| ERR-10-008 | 403 | "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác." | `CMP-Alert` trong `CMP-ApprovalPanel` |
+| ERR-10-009 | 400 | "Cần nhập lý do hoặc xác nhận trước khi tiếp tục." | Dưới ô lý do, ô xác nhận |
+| ERR-10-010 | 409 | "Còn {n} đối tượng phụ thuộc." kèm danh sách liên kết (topic của dự án, subscription của topic) | `CMP-Modal` |
+| ERR-10-011 | 422 | "Vượt hạn mức của tenant: {tên hạn mức} đang dùng {đã dùng}/{trần}." kèm liên kết UI-10-18 tab Hạn mức | `CMP-Alert` |
+| ERR-10-012 | 422 | "Giá trị ngoài miền cho phép ({min} đến {max})." | Dưới trường |
+| ERR-10-013 | 422 | "Không giảm được số phân vùng. Chỉ được tăng." | Dưới trường Phân vùng |
+| ERR-10-014 | 409 | "Tăng phân vùng làm đổi phân vùng của khóa; thứ tự giữa sự kiện cũ và mới của cùng khóa không còn bảo đảm. Đánh dấu xác nhận để tiếp tục." | Ô xác nhận được đánh dấu lỗi |
+| ERR-10-015 | 422 | "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}." | Gạch chân trong `CMP-CodeEditor` và bảng Vấn đề |
+| ERR-10-016 | 409 | "Lược đồ không tương thích theo mức {mức}." kèm bảng vi phạm theo đường dẫn trường và nút "Tạo phiên bản topic mới" | Khối kết quả kiểm tra |
+| ERR-10-017 | 422 | "Lược đồ thiếu trường khóa phân vùng '{trường}' hoặc trường này không phải chuỗi, số, hoặc cho phép null." | Bảng Vấn đề |
+| ERR-10-018 | 422 | "Lược đồ có trường nghi dữ liệu cá nhân ({trường}) trên topic {phân loại}; chính sách của tenant đang chặn." | Bảng Vấn đề |
+| ERR-10-019 | 422 | "Mức 'Không kiểm tra' chỉ dùng cho topic chưa từng hoạt động." | Dưới trường Mức tương thích |
+| ERR-10-020 | 422 | "Định dạng {định dạng} không được phép hoặc khác định dạng đã có của topic." | Dưới trường Định dạng |
+| ERR-10-021 | 422 | "HTTT {mã} không tồn tại hoặc chưa ở trạng thái hoạt động ở PH-01." | Dưới trường HTTT |
+| ERR-10-022 | 422 | "Luồng {mã} không tồn tại hoặc đã ngừng ở PH-04." | Dưới trường Luồng |
+| ERR-10-023 | 422 | "Dịch vụ nội bộ {mã} không có trong danh sách." | Dưới trường Dịch vụ |
+| ERR-10-024 | 409 | "Đã có quan hệ cho cặp này: {mô tả}." kèm liên kết mở quan hệ đã có | `CMP-Alert` |
+| ERR-10-025 | 422 | "Topic hoặc bên tham gia không ở trạng thái nhận quan hệ mới (topic cần Đang hoạt động, bên tham gia cần Đang hoạt động)." | `CMP-Alert` |
+| ERR-10-026 | 422 | "Địa chỉ nhận không hợp lệ: chỉ nhận HTTPS, tên miền trong danh sách egress, không trỏ địa chỉ nội bộ." | Dưới trường URL nhận |
+| ERR-10-027 | 422 | "Xác minh địa chỉ nhận chưa đạt hoặc đã quá 24 giờ." kèm bảng bước xác minh và hướng dẫn | Khối xác minh |
+| ERR-10-028 | 422 | "Tenant chưa bật Kafka ngoài. Đề nghị quản trị nền tảng bật trước khi dùng chế độ này." | Thẻ chế độ bị vô hiệu |
+| ERR-10-029 | 503 | "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau." | `CMP-Alert` lỗi, giữ dữ liệu đã nhập |
+| ERR-10-030 | 422 | "Số worker tối đa {n} (bằng số phân vùng của topic hoặc trần của tenant)." | Dưới trường Số worker |
+| ERR-10-031 | 422 | "Thời điểm bắt đầu phải trong khoảng lưu giữ của topic: từ {thời điểm sớm nhất}." | Dưới trường Thời điểm |
+| ERR-10-032 | 409 | "Cần tạm dừng đăng ký nhận trước khi đặt lại vị trí đọc." kèm nút "Tạm dừng" | `CMP-Alert` ở UI-10-16 |
+| ERR-10-033 | 422 | "Khoảng phát lại ngoài dữ liệu còn giữ. Khoảng còn dữ liệu: {từ} đến {đến}." kèm nút "Dùng khoảng này" | Dưới khoảng |
+| ERR-10-034 | 422 | "Khoảng phát lại có khoảng {n} bản tin, vượt trần {trần}. Thu hẹp khoảng." | Dưới khoảng |
+| ERR-10-035 | 409 | "Đang có lượt phát lại {mã} cho đăng ký nhận này." kèm liên kết | `CMP-Alert` |
+| ERR-10-036 | 409 | "Mục DLQ đã được xử lý bởi {người} lúc {giờ}." | `CMP-Toast` |
+| ERR-10-037 | 422 | "Yêu cầu trùng khóa chống gửi lặp nhưng nội dung khác. Tải lại trang rồi thử lại." | `CMP-Alert` |
+| ERR-10-038 | 409 | "Đối tượng đang cấp phát hoặc cấp phát lỗi." kèm liên kết trạng thái cấp phát | `CMP-Alert` |
+| ERR-10-039 | 423 | "Tenant đang tạm ngừng hoặc đóng băng thay đổi tới {thời điểm}." | `CMP-Banner` |
+| ERR-10-040 | 422 | "Tệp sai cấu trúc hoặc phiên bản định dạng." kèm danh sách lỗi dòng | Bước tải tệp UI-10-19, 20 |
+| ERR-10-041 | 422 | "Ánh xạ không hợp lệ: {lý do}." | Ô của dòng ánh xạ |
+| ERR-10-042 | 409 | "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy." | `CMP-Alert` |
+| ERR-10-043 | 422 | "Không tắt được mục đang có {n} bên tham gia hoặc topic dùng." | `CMP-Toast` lỗi, công tắc trả về |
+| ERR-10-044 | 403 | ST-07 biến thể "Đối tượng ngoài phạm vi tổ chức của bạn." | Trang hoặc `CMP-Alert` |
+| ERR-10-045 | 422 | "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa." | `CMP-Alert` thông tin cố định trên tab Cấu hình |
+| ERR-10-046 | 422 | "Chế độ định tuyến này cần trường khóa phân vùng, hoặc không giữ được thứ tự." | Dưới trường |
+| ERR-10-047 | 409 | "Thay đổi này phá vỡ bên nhận hiện có; cần tạo phiên bản topic mới, hoặc topic kế nhiệm đã tồn tại." | `CMP-Alert` có nút "Tạo phiên bản mới" |
+| ERR-10-048 | 422 | "Nén theo khóa cần topic có khóa (chế độ Theo khóa)." | Dưới trường Chính sách dọn |
+| ERR-10-049 | 400 | "Điều kiện truy vấn không hợp lệ." Với sơ đồ: "Sơ đồ có hơn {n} nút. Chọn một dự án, một topic hoặc một HTTT để thu hẹp." | ST-05 hoặc thông điệp giữa canvas |
+| ERR-10-050 | 422 | "Đối tượng tham chiếu {mã} không có ở tenant đích." | Dòng xem trước |
+| ERR-10-051 | 422 | "Bên {mã} chưa đạt cấp độ ATTT yêu cầu cho topic {phân loại}." | `CMP-Alert` |
+| ERR-10-052 | 422 | "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04." kèm liên kết luồng | `CMP-Alert` |
+| ERR-10-053 | 401 | "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục; dữ liệu chưa lưu được giữ ở bản nháp." | ST-14 `CMP-SessionTimeoutDialog` |
+| ERR-10-054 | 403 | "Bạn không có quyền {thao tác} trên {đối tượng}. Liên hệ quản trị tỉnh nếu cần cấp quyền." | ST-07 khi tải trang; `CMP-Alert` trong hộp thao tác khi ghi |
+
+: Thông báo hiển thị cho người dùng theo mã lỗi ERR-10 control plane
+
 ## 7. Kiểm tra hợp đồng trong CI
 
 | Kiểm | Công cụ | Cổng |
@@ -4097,3 +4160,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API trên FRS 0.2: 120 operation (API-10-001…091 theo FRS, 092…119 tách dòng gộp, 120 theo đề nghị của tập màn hình), EVT-10-01…16, kênh webhook PUSH ký HMAC, kênh mẫu topic nghiệp vụ và DLQ; OpenAPI 3.1, AsyncAPI 3.0 sinh từ bảng mã, đã kiểm hợp đồng và đối chiếu FRS | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Theo FRS 0.3: ERR-10-053, 054 cho 401, 403 control plane (data plane giữ 101, 102); API-10-121 `POST /imports/{jobCode}:cancel`; `legalBasis` 10…1.000 ký tự, `multiplier` 1…5, mặc định `failurePolicy` theo `orderingRequired`, ràng buộc ngưỡng lag; §10.1 trống vì FRS đã hấp thụ 91 trường, 6 enum; sinh lại OpenAPI, AsyncAPI và bảng, kiểm hợp đồng và đối chiếu FRS sạch | Nhóm viết tài liệu (Claude) |
+| 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): chương 0 Giới thiệu đủ mục; §1.2 kiến trúc thành phần, §1.3 trình tự luồng chính; §6.4 thông báo hiển thị theo mã lỗi; chương 12 đặc tả 121 endpoint bằng khối 10 mục sinh từ OpenAPI; chú thích bảng và hình. Không đổi OpenAPI, AsyncAPI | Nhóm viết tài liệu (Claude) |
