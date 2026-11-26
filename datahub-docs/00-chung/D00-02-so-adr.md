@@ -79,6 +79,7 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-056](adr/ADR-056-nhap-tep-hai-pha.md) | Nhập tệp danh mục bằng tác vụ nền hai pha, đọc luồng và quét mã độc trước khi phân tích | Đề xuất | PH-07 |
 | [ADR-057](adr/ADR-057-dong-bo-quoc-gia-qua-ph14.md) | Đồng bộ danh mục quốc gia qua adapter PH-14, đối chiếu khác biệt và tự áp dụng có điều kiện | Đề xuất | PH-07 |
 | [ADR-058](adr/ADR-058-may-trang-thai-duyet-noi-bo.md) | Luồng duyệt phiên bản danh mục dùng máy trạng thái nội bộ thay cho Flowable | Đề xuất | PH-07 |
+| [ADR-059](adr/ADR-059-cdc-debezium-tren-kafka-connect.md) | CDC cho HTTT di sản bằng Debezium trên Kafka Connect (Strimzi), connector quản lý qua GitOps | Đề xuất | PH-05 |
 | [ADR-060](adr/ADR-060-trinh-thiet-ke-tu-lam-mo-hinh-kaoto.md) | Trình thiết kế tự làm lại mô hình Kaoto bằng React 19 và XYFlow, dùng catalog Kaoto vendor | Đề xuất | PH-04 |
 | [ADR-061](adr/ADR-061-catalog-khop-phien-ban-runtime.md) | Catalog trình thiết kế khớp đúng phiên bản runtime, CI chặn khi lệch | Chấp nhận (25/11/2026) | PH-04 |
 | [ADR-062](adr/ADR-062-luong-nghiep-vu-yaml-dsl-java-cho-thu-vien-nen.md) | Luồng nghiệp vụ bằng YAML DSL; Java chỉ cho thư viện nền | Đề xuất | PH-04 |
