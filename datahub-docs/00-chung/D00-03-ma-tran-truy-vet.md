@@ -218,7 +218,7 @@ Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá 
 
 ### 4.6. PAY — thanh toán (`LGC-PAY`)
 
-Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh thanh toán, trong đó kênh mặc định là PayGov. Dữ liệu gồm đối tác (`payment_partner`), nhà cung cấp (`payment_provider`), nhóm dịch vụ, dịch vụ và giao dịch. Tài liệu hệ cũ không mô tả nghiệp vụ đối soát, hoàn tiền hay bảo mật callback. Theo quyết định Q3, Datahub bổ sung đầy đủ các nghiệp vụ này ở PH-19.
+Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh thanh toán, trong đó kênh mặc định là PayGov. Dữ liệu gồm đối tác (`payment_partner`), nhà cung cấp (`payment_provider`), nhóm dịch vụ, dịch vụ và giao dịch. Tài liệu hệ cũ không mô tả nghiệp vụ đối soát, hoàn tiền hay bảo mật callback. Theo quyết định Q3, Datahub bổ sung đầy đủ các nghiệp vụ này ở PH-19. Ba mục LGC-PAY-024…026 do luồng PH-19 rà lại tài liệu hệ cũ đề xuất và được thêm ngày 26/11/2026 (khung D02-03-PH19-00 §2).
 
 | Mã | Chức năng hệ cũ | Kết luận | PH đích | Màn hình vận hành | Ghi chú chuyển hóa |
 |---|---|---|---|---|---|
@@ -245,6 +245,9 @@ Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh
 | LGC-PAY-021 | Danh sách, lọc, sắp xếp, xem chi tiết nhật ký giao dịch | Giữ nguyên | PH-19, PH-13 | — | |
 | LGC-PAY-022 | Quản lý đối tác, nhóm dịch vụ và dịch vụ thanh toán | Giữ nguyên | PH-19 | — | |
 | LGC-PAY-023 | Giám sát nhiều nhà cung cấp; tài liệu cũ chỉ hiện thực một nhà cung cấp mặc định (PayGov) | Nâng cấp | PH-19 | — | Kiến trúc đa kênh, PayGov là kênh đầu tiên |
+| LGC-PAY-024 | Nhận yêu cầu thanh toán của HTTT, gửi yêu cầu sang NCC, xử lý quá trình thanh toán (HDSD mục 3, dòng 9–11) | Nâng cấp | PH-19 | — | API thu thống nhất có idempotency, kiểm tra hợp lệ 15 bước, trang kết quả không đổi trạng thái (FR-19-022…025, 033, 034; ADR-041) |
+| LGC-PAY-025 | Ba trạng thái hoàn trả `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` chỉ có trong bộ trạng thái, không có chức năng (TKCT 3.4) | Nâng cấp | PH-19 | Có | Nghiệp vụ hoàn tiền đầy đủ: lập, duyệt một hoặc hai cấp, thực thi qua NCC hoặc thủ công có chứng từ (FR-19-038…041; ADR-043, ADR-046) |
+| LGC-PAY-026 | Số liệu tổng trên dashboard được đệm 10 phút (TKCT 3.1) | Nâng cấp | PH-19 | Có | Số liệu trễ tối đa 60 giây (FR-19-056, NFR-19-006) |
 
 ### 4.7. NGSP — kết nối quốc gia (`LGC-NGSP`)
 
@@ -316,6 +319,8 @@ Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đ
 
 Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp đồng chứ không phải yêu cầu kỹ thuật.
 
+Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 §9.1](../02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md), chiều LGC → FR → test case và nghiệm thu ở [D05-02-PH04 §7, §8.2](../05-kiem-thu/test-case/D05-02-PH04-test-case.md). Khối DMDC tương ứng ở D02-03-PH07 và D05-02-PH07.
+
 > Bảng trên được đếm bằng script từ chính các bảng ở mục 4. Khi RTM được xuất ra tệp .xlsx ở đợt 1, script này chạy lại mỗi lần build.
 
 ### 5.1. Các mục loại bỏ (chủ đầu tư đã chấp thuận ngày 21/11/2026)
@@ -328,8 +333,8 @@ Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp �
 
 ## 6. Câu hỏi mở
 
-> **Câu hỏi mở Q01:** Phụ lục `PTYC_Toolings.xlsx` của hệ cũ không có trong thư mục. Nếu chủ đầu tư còn giữ tệp này, cần bổ sung để kiểm kê đủ các chức năng chi tiết của công cụ thiết kế.
+> **Giả định GĐ-01 (thay Q01, 25/11/2026).** Phụ lục `PTYC_Toolings.xlsx` không có. Giả định 29 mục `LGC-TOOL` ở mục 4.2, lập từ tài liệu thiết kế chính của hệ cũ, đã phủ đủ chức năng của công cụ thiết kế. *Cơ sở:* tài liệu chính mô tả đủ các nhóm thao tác (kéo thả, cấu hình component, sinh luồng, triển khai). *Cách cập nhật:* chức năng nào người dùng hệ cũ chỉ ra trong khảo sát hoặc UAT mà chưa có mã thì thêm mục `LGC-TOOL` mới, gắn nhãn "phát hiện muộn", rồi chạy lại script đếm ở mục 5.
 
-> **Câu hỏi mở Q02:** Danh sách dịch vụ NGSP ở mục 4.7 lấy từ phụ lục cũ. Cần danh mục dịch vụ hiện hành của NDXP để xác nhận dịch vụ nào vẫn còn và địa chỉ, cách xác thực hiện tại.
+> **Giả định GĐ-02 (thay Q02, 25/11/2026).** Bảy nhóm dịch vụ quốc gia ở mục 4.7 vẫn còn nhu cầu. Từ nay chúng được kết nối qua Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo NĐ 278/2025 (thay trục NGSP cũ), xác thực OAuth 2.1 `client_credentials`, không dùng Consumer Key/Secret tĩnh. Địa chỉ, mã dịch vụ và cách xác thực cụ thể là **cấu hình theo tenant** của PH-14, không ghi cứng trong tài liệu hay mã. *Cơ sở:* phụ lục NGSP của hệ cũ; CMP-LAW-03/19. *Cách cập nhật:* khi nhận được danh mục dịch vụ hiện hành, đối chiếu từng dịch vụ, đánh dấu "Còn", "Đổi đặc tả" hoặc "Ngừng" trong bảng 4.7; dịch vụ đổi đặc tả chỉ sửa adapter PH-14.
 
-> **Câu hỏi mở Q03:** Tài liệu hệ cũ không nói rõ các trạng thái giao dịch thanh toán. Cần bảng trạng thái và mã kết quả mà PayGov đang trả về để đặc tả máy trạng thái ở PH-19.
+> **Giả định GĐ-03 (thay Q03, 25/11/2026).** Máy trạng thái giao dịch PH-19 dùng bộ trạng thái **nội bộ** của Datahub: `KHOI_TAO`, `CHO_THANH_TOAN`, `THANH_CONG`, `THAT_BAI`, `HET_HAN`, `DA_HUY`, `HOAN_TIEN_MOT_PHAN`, `HOAN_TIEN_TOAN_PHAN`; cờ đối soát tách riêng: `CHUA_DOI_SOAT`, `KHOP`, `LECH`. Mã kết quả của PayGov **không** được dùng trực tiếp mà ánh xạ sang trạng thái nội bộ qua bảng cấu hình; mã chưa biết luôn rơi về "chờ xác minh", không tự coi là thành công. *Cơ sở:* mô hình phổ biến của cổng thanh toán trung gian; tài liệu hệ cũ có giao dịch, đối soát, tra cứu nhưng không liệt kê trạng thái. *Cách cập nhật:* khi có tài liệu PayGov, chỉ điền bảng ánh xạ; máy trạng thái chỉ đổi nếu PayGov có trạng thái không quy được về bộ trên.

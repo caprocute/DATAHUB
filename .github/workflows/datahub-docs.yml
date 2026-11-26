@@ -1,0 +1,27 @@
+name: datahub-docs
+
+# Soát bộ tài liệu SDLC: mã trùng, mã thiếu, liên kết hỏng (D00-04 §6).
+# Chỉ đỏ khi có lỗi MỚI so với build/tools/kiem_tra_ngoai_le.txt.
+on:
+  push:
+    branches: [main]
+    paths: ['datahub-docs/**', '.github/workflows/datahub-docs.yml']
+  pull_request:
+    paths: ['datahub-docs/**', '.github/workflows/datahub-docs.yml']
+
+jobs:
+  kiem-tra-ma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Mã trùng, mã thiếu, liên kết hỏng
+        run: python3 datahub-docs/build/tools/kiem_tra_ma.py
+      # Chỉ cảnh báo, không chặn: bảng dải mã được làm mới khi tiện.
+      - name: Bảng dải mã trong D00-04 còn mới
+        run: |
+          python3 datahub-docs/build/tools/kiem_tra_ma.py --cap-nhat-so-tra-cuu
+          git diff --quiet -- datahub-docs/00-chung/D00-04-so-tra-cuu-gon.md || \
+            echo "::warning::Bảng dải mã D00-04 §3.2 cũ. Chạy: python3 datahub-docs/build/tools/kiem_tra_ma.py --cap-nhat-so-tra-cuu"

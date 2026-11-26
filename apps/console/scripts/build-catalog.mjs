@@ -4,7 +4,11 @@
  *
  * Nguồn: gói npm `@kaoto/camel-catalog` (Apache-2.0) — đúng dữ liệu Kaoto dùng cho
  * trình thiết kế của họ. Chỉ đọc nhánh runtime `camel-quarkus` để khớp ADR-002/020
- * (Camel Quarkus native, Camel 4.20.0); nhánh `camel-main` / `camel-springboot` bỏ qua.
+ * (Camel Quarkus native, Camel 4.18 LTS); nhánh `camel-main` / `camel-springboot` bỏ qua.
+ *
+ * **Phiên bản runtime không ghim ở đây** mà đọc từ `camel/<du>/pom.xml`
+ * (`camel-quarkus.platform.version`, xem `runtime-version.mjs`). Nâng runtime ở pom →
+ * `npm run catalog:check` trong CI đỏ → chạy lại script này và commit đầu ra.
  *
  * Đầu ra hai tầng để không phình bundle:
  *   catalog/catalog-index.json          — siêu dữ liệu cho palette + tìm kiếm (nạp đồng bộ)
@@ -12,7 +16,8 @@
  *
  * Dùng:
  *   node scripts/build-catalog.mjs                 # tải gói theo phiên bản ghim rồi sinh
- *   node scripts/build-catalog.mjs --from <thumuc> # dùng thư mục đã giải nén sẵn
+ *   node scripts/build-catalog.mjs --from <thumuc> # dùng nhánh runtime đã giải nén sẵn
+ *   node scripts/build-catalog.mjs --check         # chỉ so catalog đã commit với pom (CI)
  */
 
 import { createHash } from 'node:crypto';
@@ -20,17 +25,19 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { minorOf, pickCatalogBranch, readRuntimeVersion } from './runtime-version.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CONSOLE_ROOT = path.resolve(HERE, '..');
+const REPO_ROOT = path.resolve(CONSOLE_ROOT, '../..');
 const OUT_ROOT = path.join(CONSOLE_ROOT, 'src/flows/core/generated');
 
 /** Phiên bản gói catalog được ghim — đổi phải kèm chạy lại script và commit đầu ra. */
 const CATALOG_PKG = '@kaoto/camel-catalog';
 const CATALOG_PKG_VERSION = '0.7.0';
-/** Runtime + phiên bản đích. Khớp Camel Quarkus của `camel/*` trong repo. */
+/** Runtime đích; phiên bản lấy từ pom của `camel/*` lúc chạy. */
 const RUNTIME = 'camel-quarkus';
-const RUNTIME_VERSION = '3.35.0';
+const CATALOG_DIST = 'package/dist/camel-catalog';
 
 /**
  * Bảy loại nút của catalog Camel, đúng cách Kaoto chia.
@@ -61,8 +68,19 @@ function fail(msg) {
   process.exit(1);
 }
 
-/** Tải và giải nén gói catalog vào thư mục tạm; trả về thư mục nhánh runtime. */
-function fetchCatalog() {
+/** Các định nghĩa catalog Quarkus trong `index.json` của gói (phiên bản → siêu dữ liệu). */
+function quarkusDefinitions(indexFile) {
+  const idx = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
+  return Object.fromEntries(
+    (idx.definitions ?? []).filter((d) => d.runtime === 'Quarkus').map((d) => [d.version, d]),
+  );
+}
+
+/**
+ * Tải và giải nén gói catalog vào thư mục tạm, chọn nhánh khớp runtime đích.
+ * Trả về thư mục nhánh và siêu dữ liệu của nhánh (phiên bản Camel đi kèm).
+ */
+function fetchCatalog(target) {
   const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR ?? '/tmp', 'lgsp-catalog-'));
   log(`tải ${CATALOG_PKG}@${CATALOG_PKG_VERSION} …`);
   execFileSync('npm', ['pack', `${CATALOG_PKG}@${CATALOG_PKG_VERSION}`, '--silent'], {
@@ -71,9 +89,22 @@ function fetchCatalog() {
   });
   const tgz = fs.readdirSync(tmp).find((f) => f.endsWith('.tgz'));
   if (!tgz) fail('npm pack không tạo ra tệp .tgz');
-  const branch = `package/dist/camel-catalog/${RUNTIME}/${RUNTIME_VERSION}`;
+  execFileSync('tar', ['xzf', tgz, '-C', tmp, `${CATALOG_DIST}/index.json`], { cwd: tmp, stdio: 'inherit' });
+  const defs = quarkusDefinitions(path.join(tmp, CATALOG_DIST, 'index.json'));
+  let picked;
+  try {
+    picked = pickCatalogBranch(Object.keys(defs), target);
+  } catch (e) {
+    fail(e.message);
+  }
+  if (!picked.exact)
+    log(
+      `gói không có đúng nhánh ${target}; dùng ${picked.branch} cùng dòng ${minorOf(target)}.x ` +
+        `(Camel ${defs[picked.branch].camelCatalogVersion})`,
+    );
+  const branch = `${CATALOG_DIST}/${RUNTIME}/${picked.branch}`;
   execFileSync('tar', ['xzf', tgz, '-C', tmp, branch], { cwd: tmp, stdio: 'inherit' });
-  return path.join(tmp, branch);
+  return { dir: path.join(tmp, branch), branch: picked.branch, camelVersion: defs[picked.branch].camelCatalogVersion };
 }
 
 function readAggregate(dir, pattern) {
@@ -119,7 +150,7 @@ function writeJson(file, value) {
   fs.writeFileSync(file, JSON.stringify(value));
 }
 
-function build(dir) {
+function build(dir, target, branch, camelVersion) {
   const index = [];
   let schemaCount = 0;
 
@@ -214,7 +245,11 @@ function build(dir) {
     source: `${CATALOG_PKG} ${CATALOG_PKG_VERSION}`,
     license: 'Apache-2.0',
     runtime: RUNTIME,
-    runtimeVersion: RUNTIME_VERSION,
+    // Nhánh catalog thực đọc; có thể là bản vá kề bên khi gói không phát hành đúng bản.
+    runtimeVersion: branch,
+    // Phiên bản `camel/*` đang chạy lúc sinh — `--check` so trường này với pom.
+    targetRuntimeVersion: target,
+    camelVersion: camelVersion ?? undefined,
     generatedAt: new Date().toISOString().slice(0, 10),
     counts: index.reduce((acc, e) => ({ ...acc, [e.kind]: (acc[e.kind] ?? 0) + 1 }), {}),
     labels: Object.fromEntries(Object.entries(labelCount).sort((a, b) => b[1] - a[1])),
@@ -267,9 +302,54 @@ function build(dir) {
   return payload;
 }
 
-const fromArg = process.argv.indexOf('--from');
-const dir = fromArg > -1 ? path.resolve(process.argv[fromArg + 1]) : fetchCatalog();
-if (!fs.existsSync(dir)) fail(`không có thư mục catalog: ${dir}`);
-fs.rmSync(OUT_ROOT, { recursive: true, force: true });
-build(dir);
-log(`đã ghi vào ${path.relative(CONSOLE_ROOT, OUT_ROOT)}`);
+/**
+ * `--check`: catalog đã commit có còn khớp runtime trong pom không. Không cần mạng —
+ * chạy trong CI để nâng `camel/*` mà quên sinh lại catalog thì đỏ ngay.
+ */
+function check(target) {
+  const file = path.join(OUT_ROOT, 'catalog-index.json');
+  if (!fs.existsSync(file)) fail(`chưa có ${path.relative(CONSOLE_ROOT, file)} — chạy npm run catalog`);
+  const idx = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const problems = [];
+  if (idx.runtime !== RUNTIME) problems.push(`runtime catalog là '${idx.runtime}', cần '${RUNTIME}'`);
+  if (minorOf(idx.runtimeVersion) !== minorOf(target))
+    problems.push(`nhánh catalog ${idx.runtimeVersion} khác dòng ${minorOf(target)}.x của runtime`);
+  if (idx.targetRuntimeVersion !== target)
+    problems.push(`catalog sinh cho runtime ${idx.targetRuntimeVersion ?? '(không rõ)'}, pom đang là ${target}`);
+  if (idx.source !== `${CATALOG_PKG} ${CATALOG_PKG_VERSION}`)
+    problems.push(`catalog sinh từ '${idx.source}', script ghim '${CATALOG_PKG} ${CATALOG_PKG_VERSION}'`);
+  if (problems.length)
+    fail(`catalog designer lệch runtime Camel:\n  - ${problems.join('\n  - ')}\n  → chạy: npm run catalog (trong apps/console) rồi commit src/flows/core/generated`);
+  log(`khớp: runtime ${target} ↔ nhánh catalog ${idx.runtimeVersion} (Camel ${idx.camelVersion ?? '?'})`);
+}
+
+let target;
+try {
+  target = readRuntimeVersion(REPO_ROOT).version;
+} catch (e) {
+  fail(e.message);
+}
+
+if (process.argv.includes('--check')) {
+  check(target);
+} else {
+  const fromArg = process.argv.indexOf('--from');
+  let src;
+  if (fromArg > -1) {
+    // Thư mục nhánh đã giải nén: tên thư mục chính là phiên bản nhánh.
+    const dir = path.resolve(process.argv[fromArg + 1]);
+    const branch = path.basename(dir);
+    const indexFile = path.resolve(dir, '../../index.json');
+    const camelVersion = fs.existsSync(indexFile) ? quarkusDefinitions(indexFile)[branch]?.camelCatalogVersion : undefined;
+    src = { dir, branch, camelVersion };
+  } else {
+    src = fetchCatalog(target);
+  }
+  if (!fs.existsSync(src.dir)) fail(`không có thư mục catalog: ${src.dir}`);
+  if (minorOf(src.branch) !== minorOf(target))
+    fail(`nhánh catalog ${src.branch} khác dòng ${minorOf(target)}.x của runtime camel/* (${target})`);
+  log(`runtime camel/*: ${target} → nhánh catalog ${RUNTIME}/${src.branch}`);
+  fs.rmSync(OUT_ROOT, { recursive: true, force: true });
+  build(src.dir, target, src.branch, src.camelVersion);
+  log(`đã ghi vào ${path.relative(CONSOLE_ROOT, OUT_ROOT)}`);
+}

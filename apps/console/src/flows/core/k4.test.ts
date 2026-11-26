@@ -11,11 +11,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALL_KINDS,
+  CATALOG_CAMEL_VERSION,
   CATALOG_COUNTS,
   CATALOG_LICENSE,
   CATALOG_NODES,
   CATALOG_RUNTIME,
   CATALOG_SOURCE,
+  CATALOG_TARGET_RUNTIME,
   CATALOG_TOTAL,
   groupProps,
   labelsOfKind,
@@ -26,15 +28,18 @@ import {
 } from './catalog';
 
 describe('K4-1 — duyệt toàn bộ danh mục', () => {
-  it('có đủ 751 nút chia theo bảy loại', () => {
-    expect(CATALOG_TOTAL).toBe(751);
+  // Số liệu của nhánh `camel-quarkus/3.33.1` (Camel 4.18.2 LTS). So với nhánh 3.35.0 dùng
+  // trước đây: thêm `nitrite`, `serviceCall`; bớt `hazelcast-pncounter`, `groovyJson`,
+  // `transformers`, `validators` — đúng những thứ runtime 4.18 có/không có.
+  it('có đủ 749 nút chia theo bảy loại', () => {
+    expect(CATALOG_TOTAL).toBe(749);
     expect(CATALOG_COUNTS).toEqual({
       component: 323,
       kamelet: 252,
-      pattern: 74,
-      dataformat: 48,
+      pattern: 75,
+      dataformat: 47,
       language: 26,
-      entity: 21,
+      entity: 19,
       loadbalancer: 7,
     });
   });
@@ -207,7 +212,7 @@ describe('K4-3 — dữ liệu cho trang chi tiết', () => {
   });
 
   it('kamelet không có lược đồ trả về rỗng, không ném lỗi', async () => {
-    // Chỉ mục có 751 nút nhưng trên đĩa chỉ 742 tệp lược đồ: 9 kamelet không có tham số
+    // Chỉ mục có 749 nút nhưng trên đĩa chỉ 740 tệp lược đồ: 9 kamelet không có tham số
     // cấu hình nên nhà sản xuất không phát hành lược đồ. Chúng vẫn là mục hợp lệ — màn
     // chi tiết phải hiện "không có tham số" thay vì báo lỗi tải, và muốn vậy `loadSchema`
     // phải im lặng trả rỗng thay vì ném (IP-07 §6).
@@ -222,7 +227,7 @@ describe('K4-3 — dữ liệu cho trang chi tiết', () => {
   });
 
   it('mọi nút trong chỉ mục đều nạp được lược đồ mà không ném', async () => {
-    // Quét cả 751 nút: đây là đường mà màn chi tiết đi với *bất kỳ* mục nào người dùng
+    // Quét cả 749 nút: đây là đường mà màn chi tiết đi với *bất kỳ* mục nào người dùng
     // bấm vào. Một nút làm `loadSchema` ném là một màn trắng.
     const empty: string[] = [];
     for (const n of CATALOG_NODES) {
@@ -239,7 +244,15 @@ describe('K4-5 — nguồn và giấy phép (nghĩa vụ tuân thủ)', () => {
   it('khai đúng nguồn, giấy phép và nhánh runtime', () => {
     expect(CATALOG_LICENSE).toBe('Apache-2.0');
     expect(CATALOG_SOURCE).toContain('@kaoto/camel-catalog');
-    // Bảng tham số chỉ đúng với đúng phiên bản runtime này — khớp ADR-002/020.
-    expect(CATALOG_RUNTIME).toBe('camel-quarkus 3.35.0');
+    // Bảng tham số chỉ đúng với đúng dòng runtime này — khớp ADR-002/020 (Camel 4.18 LTS).
+    // Gói Kaoto 0.7.0 không phát hành nhánh 3.33.2 nên dùng bản vá kề dưới 3.33.1.
+    expect(CATALOG_RUNTIME).toBe('camel-quarkus 3.33.1');
+    expect(CATALOG_CAMEL_VERSION).toMatch(/^4\.18\./);
+  });
+
+  it('nhánh catalog cùng dòng với runtime camel/* lúc sinh (không còn 3.35 / Camel 4.20 EOL)', () => {
+    const minor = (v: string) => v.split('.').slice(0, 2).join('.');
+    expect(CATALOG_TARGET_RUNTIME).toMatch(/^3\.33\./);
+    expect(minor(CATALOG_RUNTIME.split(' ')[1])).toBe(minor(CATALOG_TARGET_RUNTIME));
   });
 });

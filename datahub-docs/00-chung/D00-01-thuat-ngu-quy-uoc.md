@@ -21,7 +21,7 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 
 | Thuật ngữ | Tiếng Anh | Định nghĩa trong Datahub |
 |---|---|---|
-| Datahub | — | Tên sản phẩm. Nền tảng tích hợp, chia sẻ dữ liệu cấp tỉnh thế hệ mới, đóng gói triển khai cho nhiều tỉnh. Về chức năng, Datahub đóng vai trò LGSP theo NĐ 47/2020/NĐ-CP. |
+| Datahub | — | Tên sản phẩm. Nền tảng tích hợp, chia sẻ dữ liệu cấp tỉnh thế hệ mới, đóng gói triển khai cho nhiều tỉnh. Về chức năng, Datahub đóng vai trò LGSP theo NĐ 278/2025/NĐ-CP (thay NĐ 47/2020/NĐ-CP). |
 | LGSP | Local Government Service Platform | Nền tảng tích hợp, chia sẻ dữ liệu cấp bộ, cấp tỉnh. Trong bộ tài liệu này, "LGSP cũ" hoặc "hệ cũ" chỉ hệ thống do Viettel xây dựng năm 2021 được mô tả trong thư mục `lgsp_document`. |
 | NDXP | National Data Exchange Platform | Nền tảng tích hợp, chia sẻ dữ liệu quốc gia (trước đây gọi là NGSP). Datahub kết nối lên NDXP để khai thác CSDL quốc gia và dữ liệu của bộ, ngành. |
 | NDOP | National Data Open Platform | Nền tảng dữ liệu mở quốc gia, nơi công bố dữ liệu mở. |
@@ -134,6 +134,20 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `RSK-{nn}` | Rủi ro | D01-02 | `RSK-09` |
 | `TS-{PH}-{nn}` / `TC-{PH}-{nnn}` | Kịch bản kiểm thử / test case | D05-02 | `TC-07-045` |
 | `CMP-LAW-{nn}` | Điều khoản pháp lý được truy vết | D00-03 | `CMP-LAW-07` |
+| `THR-{nn}` / `TA-{nn}` | Mối đe dọa (STRIDE) / tác nhân đe dọa | D03-07 | `THR-05` |
+| `AS-{nn}` | Tài sản thông tin được bảo vệ (AS-01…20) | D03-07 | `AS-09` |
+| `UC-SEC-{nn}` / `PB-{nn}` | Ca phát hiện sự cố an ninh / kịch bản ứng phó (playbook) | D03-07 | `PB-04` |
+| `Z0`…`Z7` | Vùng mạng | D03-07, D03-09 | `Z2` |
+| `TCD-{nn}` / `CD4-{nn}` / `TT-{nn}` | Tiêu chí xác định cấp độ / yếu tố đẩy lên cấp độ 4 / trường điền hồ sơ cấp độ | D03-08 | `TCD-03` |
+| `QM-{NHO\|VUA\|LON\|CHUNG}` | Hồ sơ quy mô triển khai | D03-09 | `QM-VUA` |
+| `HT-{A\|B}` | Hồ sơ hạ tầng: A on-prem tại TTDL tỉnh, B cloud Chính phủ dùng chung | D03-09 | `HT-A` |
+| `TPH-{n}` / `RBK-{nn}` | Tầng phục hồi DR / runbook | D03-09 | `TPH-0` |
+| `RSK-H{nn}` / `RSK-T{nn}` | Rủi ro hạ tầng / rủi ro kiểm thử (khác `RSK-{nn}` của dự án) | D03-09, D05-01 | `RSK-H08` |
+| `CC-{nhóm}-{nn}` / `QT-{nhóm}-{nn}` | Quy chuẩn lập trình / quy trình kỹ thuật | D04-01, D04-02 | `CC-JAVA-04` |
+| `CI-1`…`CI-9` | Cổng chất lượng trong CI (khác cổng quản lý dự án G0–G5) | D04-02 | `CI-3` |
+| `RG-1`…`RG-5` / `CX-{nn}` | Cổng phát hành kiểm thử / tiêu chí xuất | D05-01 | `RG-2` |
+| `S1`…`S4` / `P1`…`P4` | Mức nghiêm trọng / mức ưu tiên của lỗi | D05-01 | `S2/P1` |
+| `T90`…`T99` | Mã tenant dành cho kiểm thử | D05-01 | `T91` |
 
 ### 3.2. Quy tắc truy vết
 
@@ -237,23 +251,34 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 |---|---|---|---|
 | CMP-LAW-01 | Luật Dữ liệu số 60/2024/QH15 (hiệu lực 01/7/2025) | Quản trị, kết nối, chia sẻ, phân loại dữ liệu | Đã đối chiếu với repo, cần xác minh nguồn gốc |
 | CMP-LAW-02 | Nghị định 165/2025/NĐ-CP | Quy định chi tiết Luật Dữ liệu | Cần xác minh |
-| CMP-LAW-03 | Nghị định 47/2020/NĐ-CP | Quản lý, kết nối, chia sẻ dữ liệu số của CQNN; xương sống chức năng LGSP | Cần xác minh còn hiệu lực sau Luật Dữ liệu |
-| CMP-LAW-04 | Nghị định 13/2023/NĐ-CP | Bảo vệ dữ liệu cá nhân | Cần xác minh quan hệ với Luật 2025 |
-| CMP-LAW-05 | Luật Bảo vệ dữ liệu cá nhân 2025 (hiệu lực dự kiến 01/01/2026) | Xử lý dữ liệu cá nhân, sự đồng ý, đánh giá tác động | Cần xác minh số hiệu |
-| CMP-LAW-06 | Nghị định 85/2016/NĐ-CP | Bảo đảm an toàn HTTT theo cấp độ | Cần xác minh |
-| CMP-LAW-07 | Thông tư 12/2022/TT-BTTTT | Hướng dẫn chi tiết NĐ 85/2016 | Cần xác minh |
-| CMP-LAW-08 | TCVN 11930:2017 | Yêu cầu cơ bản về ATTT theo cấp độ | Cần xác minh |
+| CMP-LAW-03 | Nghị định 278/2025/NĐ-CP ngày 22/10/2025 (thay toàn bộ NĐ 47/2020/NĐ-CP) | Kết nối, chia sẻ dữ liệu qua Nền tảng chia sẻ, điều phối dữ liệu của TTDL quốc gia; Agent Node tại tỉnh; hạn chuẩn hóa 31/12/2026 | Tra web 21/11/2026, cần đối chiếu Công báo. Kế thừa: NĐ 47/2020 |
+| CMP-LAW-04 | Nghị định 356/2025/NĐ-CP (hiệu lực 01/01/2026, thay NĐ 13/2023/NĐ-CP) | Quy định chi tiết Luật BVDLCN; DPIA, thông báo vi phạm 72 giờ | Tra web 21/11/2026, cần đối chiếu Công báo. Kế thừa: NĐ 13/2023 |
+| CMP-LAW-05 | Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 (hiệu lực 01/01/2026) | Xử lý dữ liệu cá nhân, sự đồng ý, đánh giá tác động | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-06 | Nghị định 331/2026/NĐ-CP ngày 19/8/2026 (kế nhiệm NĐ 85/2016/NĐ-CP) | Bảo vệ an ninh mạng đối với HTTT theo cấp độ 1–5; thẩm định, phê duyệt hồ sơ cấp độ | Tra web 21/11/2026, cần đối chiếu Công báo. Kế thừa: NĐ 85/2016 |
+| CMP-LAW-07 | Thông tư 12/2022/TT-BTTTT | Hướng dẫn chi tiết cấp độ (theo NĐ 85/2016) | Giữ làm đối chiếu cho tới khi có văn bản hướng dẫn NĐ 331/2026 (Q301) |
+| CMP-LAW-08 | TCVN 14423:2026 (thay TCVN 14423:2025 và TCVN 11930:2017) | Yêu cầu bảo đảm ATTT theo cấp độ; cấp độ 3 gồm 18 nhóm 5.1–5.18 | Tra web 21/11/2026; số mục cần đối chiếu bản chính thức (Q313). Kế thừa: TCVN 11930:2017 |
 | CMP-LAW-09 | Công văn 631/THH-THHT ngày 21/5/2020 | Yêu cầu chức năng, kỹ thuật của LGSP | Đã đối chiếu với repo |
 | CMP-LAW-10 | Quyết định 2568/QĐ-BTTTT (2023) và Quyết định 1729/QĐ-BTTTT (2024) | Khung Kiến trúc CPĐT Việt Nam phiên bản 3.0 | Đã đối chiếu với repo |
 | CMP-LAW-11 | Dự thảo Khung Kiến trúc tổng thể quốc gia số | Bốn lớp kiến trúc, năng lực NDOP, KPI, AI | Dự thảo, theo dõi bản chính thức |
 | CMP-LAW-12 | Thông tư 13/2017/TT-BTTTT | Yêu cầu kỹ thuật kết nối với CSDL quốc gia | Cần xác minh |
 | CMP-LAW-13 | Thông tư 39/2017/TT-BTTTT | Danh mục tiêu chuẩn kỹ thuật ứng dụng CNTT trong CQNN | Cần xác minh văn bản thay thế |
-| CMP-LAW-14 | Nghị định 45/2026/NĐ-CP (thay Nghị định 73/2019/NĐ-CP) | Quản lý đầu tư ứng dụng CNTT dùng ngân sách; khung báo cáo nghiên cứu khả thi, thiết kế | Chủ đầu tư chỉ đạo áp dụng văn bản mới (21/11/2026); cần xác minh số hiệu và điều khoản cụ thể |
+| CMP-LAW-14 | Nghị định 224/2026/NĐ-CP ngày 24/6/2026 quy định chi tiết Luật Chuyển đổi số 148/2025/QH15 (hiệu lực 01/7/2026); bãi bỏ NĐ 45/2026 (văn bản từng thay NĐ 73/2019) theo khoản 2 Điều 90 | Quản lý dự án đầu tư hệ thống chuyển đổi số: nội dung BCNCKT (Điều 45), thiết kế cơ sở (Điều 46), tuân thủ Khung kiến trúc tổng thể quốc gia số (Điều 37); dự án chưa có quyết định đầu tư áp dụng NĐ này (khoản 1 Điều 91). Chi phí theo Thông tư 39/2026/TT-BKHCN | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
 | CMP-LAW-15 | Nghị định 30/2020/NĐ-CP | Thể thức văn bản; áp dụng cho trình bày bản .docx | Cần xác minh |
-| CMP-LAW-16 | Luật An ninh mạng và văn bản hướng dẫn | Lưu trữ dữ liệu trong nước, nhật ký | Cần xác minh văn bản hiện hành |
+| CMP-LAW-16 | Luật An ninh mạng số 116/2025/QH15 (hiệu lực 01/7/2026) và văn bản hướng dẫn | Lưu trữ dữ liệu trong nước, nhật ký, bảo vệ hệ thống thông tin | Cần xác minh văn bản hướng dẫn |
+| CMP-LAW-17 | Nghị định 331/2026/NĐ-CP (xem CMP-LAW-06) | Điều 39 về chuyển tiếp; Datahub được xác định là hệ mới (Q300, chốt 25/11/2026) | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-18 | Nghị định 356/2025/NĐ-CP (xem CMP-LAW-04) | Hồ sơ DPIA gửi A05, thông báo vi phạm DLCN | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-19 | Nghị định 278/2025/NĐ-CP (xem CMP-LAW-03) | Kết nối với nền tảng chia sẻ dữ liệu quốc gia | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-20 | Quyết định 8297/QĐ-BCA-A05 (2025) | Tiêu chí an ninh mạng cho nền tảng đám mây phục vụ CPĐT; áp dụng cho hồ sơ HT-B | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-91 | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Nộp phí, lệ phí trực tuyến trong TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-92 | Nghị định 42/2022/NĐ-CP về cung cấp thông tin và dịch vụ công trực tuyến | Dịch vụ công trực tuyến toàn trình có thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-93 | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, sửa đổi bởi Nghị định 107/2021/NĐ-CP | Vai trò Cổng DVC quốc gia, HTTT giải quyết TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-94 | Nghị định 52/2024/NĐ-CP về thanh toán không dùng tiền mặt | Cơ sở khẳng định PH-19 không làm trung gian thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-95 | Luật Giao dịch điện tử số 20/2023/QH15 | Giá trị pháp lý của thông điệp dữ liệu, chứng cứ IPN, biên bản (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-96 | Thông tư 74/2022/TT-BTC hoặc văn bản thay thế; quy định về biên lai thu phí, lệ phí điện tử | Hình thức, thời hạn thu, nộp phí, lệ phí (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-97 | Luật Kế toán số 88/2015/QH13 và Luật Lưu trữ năm 2024 | Thời hạn lưu chứng từ ≥ 10 năm (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | STD-01 | ISO/IEC/IEEE 29148 | Cấu trúc đặc tả yêu cầu | — |
 | STD-02 | ISO/IEC/IEEE 29119-3 | Cấu trúc tài liệu kiểm thử | — |
-| STD-03 | OWASP ASVS 4.x | Yêu cầu kiểm chứng an toàn ứng dụng | — |
+| STD-03 | OWASP ASVS 5.0 (mức 2) | Yêu cầu kiểm chứng an toàn ứng dụng | — |
 | STD-04 | WCAG 2.2 | Khả năng truy cập giao diện, mức AA | — |
 | STD-05 | OpenAPI 3.1, AsyncAPI 3.0, RFC 9457 | Hợp đồng API, sự kiện, định dạng lỗi | — |
 
