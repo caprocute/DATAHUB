@@ -269,6 +269,13 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | CMP-LAW-18 | Nghị định 356/2025/NĐ-CP (xem CMP-LAW-04) | Hồ sơ DPIA gửi A05, thông báo vi phạm DLCN | Tra web 21/11/2026, cần đối chiếu Công báo |
 | CMP-LAW-19 | Nghị định 278/2025/NĐ-CP (xem CMP-LAW-03) | Kết nối với nền tảng chia sẻ dữ liệu quốc gia | Tra web 21/11/2026, cần đối chiếu Công báo |
 | CMP-LAW-20 | Quyết định 8297/QĐ-BCA-A05 (2025) | Tiêu chí an ninh mạng cho nền tảng đám mây phục vụ CPĐT; áp dụng cho hồ sơ HT-B | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-91 | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Nộp phí, lệ phí trực tuyến trong TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-92 | Nghị định 42/2022/NĐ-CP về cung cấp thông tin và dịch vụ công trực tuyến | Dịch vụ công trực tuyến toàn trình có thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-93 | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, sửa đổi bởi Nghị định 107/2021/NĐ-CP | Vai trò Cổng DVC quốc gia, HTTT giải quyết TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-94 | Nghị định 52/2024/NĐ-CP về thanh toán không dùng tiền mặt | Cơ sở khẳng định PH-19 không làm trung gian thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-95 | Luật Giao dịch điện tử số 20/2023/QH15 | Giá trị pháp lý của thông điệp dữ liệu, chứng cứ IPN, biên bản (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-96 | Thông tư 74/2022/TT-BTC hoặc văn bản thay thế; quy định về biên lai thu phí, lệ phí điện tử | Hình thức, thời hạn thu, nộp phí, lệ phí (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
+| CMP-LAW-97 | Luật Kế toán số 88/2015/QH13 và Luật Lưu trữ năm 2024 | Thời hạn lưu chứng từ ≥ 10 năm (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | STD-01 | ISO/IEC/IEEE 29148 | Cấu trúc đặc tả yêu cầu | — |
 | STD-02 | ISO/IEC/IEEE 29119-3 | Cấu trúc tài liệu kiểm thử | — |
 | STD-03 | OWASP ASVS 5.0 (mức 2) | Yêu cầu kiểm chứng an toàn ứng dụng | — |

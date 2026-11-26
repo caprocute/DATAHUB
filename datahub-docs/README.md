@@ -70,7 +70,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 |---|---|---|---|---|
 | 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Xong bản 0.2 đủ bảy tập (xem mục dưới), chờ duyệt tổng thể |
 | 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-060…069, chờ duyệt tổng thể |
-| 3 | PH-19 Thanh toán | Đợt 2 (BRD) | Nghiệp vụ mới hoàn toàn | BRD và khung truy vết xong |
+| 3 | PH-19 Thanh toán | Đợt 2 | Nghiệp vụ mới hoàn toàn (Q3): đối soát, hoàn tiền, đa kênh | Xong bản 0.1 đủ bảy tập cộng BRD, khung truy vết, ADR-040…049 (26/11/2026), chờ duyệt tổng thể |
 | 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Chưa bắt đầu |
 | 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Chưa bắt đầu |
 | 6 | PH-02, PH-03, PH-01 | Đợt 3 | Thay API Management | Chưa bắt đầu |
@@ -104,6 +104,22 @@ Viết theo khuôn và độ sâu của PH-07. Trình thiết kế (UI-04-04…1
 | D03-04-PH04 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH04-api-tich-hop.md) | `openapi-integration.yaml` (70 operation), `asyncapi-integration.yaml` (14 sự kiện), script sinh tại `03-thiet-ke/api/ph04/` |
 | D03-06-PH04 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md) | — |
 | D05-02-PH04 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH04-test-case.md) | 186 ca; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph04/` |
+
+## Phân hệ PH-19 Thanh toán
+
+Viết theo khuôn và độ sâu của PH-07, phạm vi Q3: nhà cung cấp (PayGov là kênh đầu tiên, qua adapter chống nhiễm), dịch vụ, đối tác, giao dịch, hoàn tiền, đối soát, dashboard, di trú strangler theo đối tác. CSDL riêng `pg-payment` (Q340), trạng thái nội bộ kèm bảng ánh xạ sang PayGov (GĐ-03). Đặc tả PayGov chưa có nên mọi chỗ phụ thuộc PayGov đều ghi giả định và câu hỏi mở OQ-19-01…07. Phạm vi MVP và Đ2b ghi ở từng FR và từng màn.
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-01-PH19 | [Yêu cầu nghiệp vụ phân hệ](02-yeu-cau/brd/D02-01-PH19-brd-thanh-toan.md) | — |
+| D02-03-PH19-00 | [Khung truy vết, mã, quyền, máy trạng thái](02-yeu-cau/frs/D02-03-PH19-00-khung-truy-vet.md) | — |
+| D02-03-PH19 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH19-frs-thanh-toan.md) | Công cụ sinh bảng tại `02-yeu-cau/frs/ph19/` |
+| D02-04-PH19 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH19-use-case-thanh-toan.md) | — |
+| D03-02-PH19 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH19-sdd-thanh-toan.md) | — |
+| D03-03-PH19 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH19-csdl-thanh-toan.md) | DDL `ph19_payment.sql`, ca kiểm thử cách ly tenant, công cụ sinh tại `03-thiet-ke/csdl/ph19/` |
+| D03-04-PH19 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH19-api-thanh-toan.md) | Ba hợp đồng OpenAPI (quản trị 92, đối tác 10, callback 5 operation) và `asyncapi-payment.yaml` (18 sự kiện), script sinh tại `03-thiet-ke/api/ph19/` |
+| D03-06-PH19 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH19-man-hinh-thanh-toan.md) | 28 màn UI-19-01…28 |
+| D05-02-PH19 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH19-test-case.md) | 34 kịch bản, 187 ca, 12 UAT; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph19/` |
 
 ## Xuất bản .docx
 

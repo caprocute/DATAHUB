@@ -1,0 +1,1931 @@
+# D03-04-PH19 · Datahub · PH-19 Thanh toán · API đối tác. SINH TỰ ĐỘNG bởi tools/gen_openapi.py — không sửa tay.
+openapi: 3.1.0
+info:
+  title: Datahub · PH-19 Thanh toán · API đối tác
+  version: 1.0.0-draft
+  summary: API cho HTTT đối tác thu phí, lệ phí qua PH-19 và nhận kết quả.
+  description: 'API cho HTTT đối tác thu phí, lệ phí qua PH-19 và nhận kết quả. Token máy-máy (client credentials với mTLS hoặc `private_key_jwt`,
+    NFR-19-019) vai trò `ROLE-PARTNER_SYSTEM`; mọi truy vấn chỉ thấy dữ liệu của chính đối tác. Mọi `POST` bắt buộc `Idempotency-Key`. Kết quả
+    thanh toán đến qua **webhook** ký HMAC (mục `webhooks`), dự phòng kéo bằng API-19-109.
+
+
+    Quy ước chung, bảng mã lỗi: D03-04-PH19 §1, §6. Mọi tên miền, dữ liệu là giả lập. Tệp sinh bởi `tools/gen_openapi.py`; không sửa tay.'
+  contact:
+    name: Nhóm phân hệ PH-19
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH19
+  x-datahub-phase: PH-19
+servers:
+- url: https://{host}/api/payment-partner/v1
+  description: Qua APISIX — giả lập
+  variables:
+    host:
+      default: api.t68.datahub.example.vn
+- url: http://localhost:8089/api/payment-partner/v1
+  description: Phát triển cục bộ
+security:
+- oauth2Client: []
+tags:
+- name: Thanh toán
+- name: Hoàn tiền đối tác
+- name: Đối soát đối tác
+- name: Tương thích hệ cũ
+paths:
+  /payments:
+    post:
+      tags:
+      - Thanh toán
+      operationId: createPayment
+      summary: Tạo giao dịch, trả `transactionCode`, `paymentUrl`, `expiresAt`
+      x-datahub-id: API-19-101
+      x-datahub-fr:
+      - FR-19-022
+      - FR-19-023
+      - FR-19-024
+      - FR-19-033
+      - FR-19-034
+      x-datahub-permission: partner-pay-create
+      description: 'Kiểm tra theo thứ tự BR-19-004, dừng ở lỗi đầu tiên. Chế độ `SHADOW` không gọi NCC, trả `CREATED`, `paymentUrl = null`. Header
+        `Location`; `Idempotent-Replayed: true` khi trả lại kết quả cũ.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreate'
+            example:
+              serviceCode: LPTB-OTO
+              partnerOrderId: H68.12-261121-0042
+              amount: 2350000000
+              description: Lệ phí trước bạ hồ sơ H68.12-261121-0042
+              returnUrl: https://dichvucong.t68.gov.vn/thanh-toan/ket-qua
+              payer:
+                name: Nguyễn Văn An
+                phone: '+84912345678'
+              expiryMinutes: 15
+              metadata:
+                hoSoId: '42'
+      responses:
+        '201':
+          description: Đã tạo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          headers:
+            Location:
+              schema:
+                type: string
+            Idempotent-Replayed:
+              schema: &id001
+                type: boolean
+              description: '`true` khi trả lại phản hồi đã lưu.'
+        '400':
+          $ref: '#/components/responses/Err001_002'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err005_009_046'
+        '404':
+          $ref: '#/components/responses/Err007'
+        '409':
+          $ref: '#/components/responses/Err006_015_004'
+        '422':
+          $ref: '#/components/responses/Err008_010_011_012_013_014_016_039_003'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '502':
+          $ref: '#/components/responses/Err018'
+        '503':
+          $ref: '#/components/responses/Err017_049_050'
+        '504':
+          $ref: '#/components/responses/Err019'
+    get:
+      tags:
+      - Thanh toán
+      operationId: listPaymentsByOrder
+      summary: Truy vấn theo mã đơn hàng (mọi lượt giao dịch của mã đó)
+      x-datahub-id: API-19-103
+      x-datahub-fr:
+      - FR-19-035
+      x-datahub-permission: partner-pay-read
+      parameters:
+      - name: partnerOrderId
+        in: query
+        schema:
+          $ref: '#/components/schemas/PartnerOrderId'
+        required: true
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentList'
+        '400':
+          $ref: '#/components/responses/Err001'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /payments/{transactionCode}:
+    get:
+      tags:
+      - Thanh toán
+      operationId: getPayment
+      summary: Truy vấn trạng thái theo mã giao dịch
+      x-datahub-id: API-19-102
+      x-datahub-fr:
+      - FR-19-035
+      x-datahub-permission: partner-pay-read
+      description: Đọc bản chính, nhất quán ngay.
+      parameters:
+      - $ref: '#/components/parameters/transactionCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '404':
+          $ref: '#/components/responses/Err020'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /payments/{transactionCode}/cancellations:
+    post:
+      tags:
+      - Thanh toán
+      operationId: cancelPayment
+      summary: Đối tác hủy giao dịch chưa thanh toán
+      x-datahub-id: API-19-104
+      x-datahub-fr:
+      - FR-19-026
+      x-datahub-permission: partner-pay-create
+      parameters:
+      - $ref: '#/components/parameters/transactionCode'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerCancel'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          headers:
+            Idempotent-Replayed:
+              schema: *id001
+              description: '`true` khi trả lại phản hồi đã lưu.'
+        '400':
+          $ref: '#/components/responses/Err001_002'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err005_046'
+        '404':
+          $ref: '#/components/responses/Err020'
+        '409':
+          $ref: '#/components/responses/Err021_004'
+        '422':
+          $ref: '#/components/responses/Err003'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049_050'
+  /refunds:
+    post:
+      tags:
+      - Hoàn tiền đối tác
+      operationId: createPartnerRefund
+      summary: Đối tác lập yêu cầu hoàn
+      x-datahub-id: API-19-105
+      x-datahub-fr:
+      - FR-19-038
+      x-datahub-permission: partner-refund-create
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerRefundCreate'
+      responses:
+        '201':
+          description: Đã tạo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerRefund'
+          headers:
+            Location:
+              schema:
+                type: string
+            Idempotent-Replayed:
+              schema: *id001
+              description: '`true` khi trả lại phản hồi đã lưu.'
+        '400':
+          $ref: '#/components/responses/Err001_002'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err005_046'
+        '404':
+          $ref: '#/components/responses/Err020'
+        '409':
+          $ref: '#/components/responses/Err029_004'
+        '422':
+          $ref: '#/components/responses/Err030_031_032_039_003'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049_050'
+  /refunds/{refundCode}:
+    get:
+      tags:
+      - Hoàn tiền đối tác
+      operationId: getPartnerRefund
+      summary: Truy vấn yêu cầu hoàn
+      x-datahub-id: API-19-106
+      x-datahub-fr:
+      - FR-19-041
+      x-datahub-permission: partner-pay-read
+      parameters:
+      - $ref: '#/components/parameters/refundCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerRefund'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '404':
+          $ref: '#/components/responses/Err020'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /reconciliation-reports:
+    get:
+      tags:
+      - Đối soát đối tác
+      operationId: getPartnerReconReport
+      summary: Tải kết quả đối soát phần của đối tác cho phiên đã chốt
+      x-datahub-id: API-19-107
+      x-datahub-fr:
+      - FR-19-048
+      x-datahub-permission: partner-recon-read
+      description: Chỉ giao dịch của đối tác gọi; `provisional = true` khi phiên chưa `CLOSED`.
+      parameters:
+      - name: date
+        in: query
+        schema:
+          type: string
+          format: date
+        required: true
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerReconReport'
+        '400':
+          $ref: '#/components/responses/Err001'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /services:
+    get:
+      tags:
+      - Đối soát đối tác
+      operationId: listPartnerServices
+      summary: Danh sách dịch vụ được gán và hạn mức còn lại trong ngày
+      x-datahub-id: API-19-108
+      x-datahub-fr:
+      - FR-19-020
+      - FR-19-022
+      x-datahub-permission: partner-pay-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerServiceList'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /notifications:
+    get:
+      tags:
+      - Đối soát đối tác
+      operationId: listNotifications
+      summary: Kéo các thông báo đã phát (dự phòng khi webhook lỡ), theo con trỏ
+      x-datahub-id: API-19-109
+      x-datahub-fr:
+      - FR-19-060
+      - FR-19-062
+      x-datahub-permission: partner-pay-read
+      description: Dự phòng khi lỡ webhook; giữ 7 ngày (A-19-10).
+      parameters:
+      - name: after
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+        description: '`id` CloudEvent cuối đã đọc; bỏ trống lấy từ 7 ngày trước.'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+        '400':
+          $ref: '#/components/responses/Err001'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err046'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049'
+  /legacy-compat/{operation}:
+    post:
+      tags:
+      - Tương thích hệ cũ
+      operationId: legacyCompat
+      summary: Mặt nạ tương thích hợp đồng API hệ cũ, ánh xạ sang API-19-101…103 (đường dẫn thật theo hợp đồng cũ, OQ-19-17)
+      x-datahub-id: API-19-110
+      x-datahub-fr:
+      - FR-19-067
+      x-datahub-permission: partner-pay-create
+      description: Ưu tiên C, đợt Sau (FR-19-067). Mặt nạ cho HTTT chưa sửa được mã; `Idempotency-Key` sinh từ mã đơn hàng nếu thiếu.
+      parameters:
+      - $ref: '#/components/parameters/operation'
+      - $ref: '#/components/parameters/IdempotencyKeyOpt'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegacyCompatRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyCompatResponse'
+          headers:
+            Idempotent-Replayed:
+              schema: *id001
+              description: '`true` khi trả lại phản hồi đã lưu.'
+        '400':
+          $ref: '#/components/responses/Err001'
+        '401':
+          description: Thiếu hoặc sai token (PH-12, PH-03 trả; không thuộc dải ERR-19).
+        '403':
+          $ref: '#/components/responses/Err005_046'
+        '404':
+          $ref: '#/components/responses/Err020'
+        '429':
+          $ref: '#/components/responses/Err048'
+        '500':
+          $ref: '#/components/responses/Err099'
+        '503':
+          $ref: '#/components/responses/Err049_050'
+webhooks:
+  transaction.succeeded:
+    post:
+      summary: Webhook `transaction.succeeded` (EVT-19-07)
+      operationId: webhook_transaction_succeeded
+      x-datahub-id: EVT-19-07
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: &id002
+          type: string
+          format: uuid
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  transaction.failed:
+    post:
+      summary: Webhook `transaction.failed` (EVT-19-08)
+      operationId: webhook_transaction_failed
+      x-datahub-id: EVT-19-08
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  transaction.cancelled:
+    post:
+      summary: Webhook `transaction.cancelled` (EVT-19-09)
+      operationId: webhook_transaction_cancelled
+      x-datahub-id: EVT-19-09
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  transaction.expired:
+    post:
+      summary: Webhook `transaction.expired` (EVT-19-10)
+      operationId: webhook_transaction_expired
+      x-datahub-id: EVT-19-10
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  refund.decided:
+    post:
+      summary: Webhook `refund.decided` (EVT-19-12)
+      operationId: webhook_refund_decided
+      x-datahub-id: EVT-19-12
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  refund.succeeded:
+    post:
+      summary: Webhook `refund.succeeded` (EVT-19-13)
+      operationId: webhook_refund_succeeded
+      x-datahub-id: EVT-19-13
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  refund.failed:
+    post:
+      summary: Webhook `refund.failed` (EVT-19-14)
+      operationId: webhook_refund_failed
+      x-datahub-id: EVT-19-14
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+  reconciliation.closed:
+    post:
+      summary: Webhook `reconciliation.closed` (EVT-19-16)
+      operationId: webhook_reconciliation_closed
+      x-datahub-id: EVT-19-16
+      description: Datahub gọi đầu nhận của đối tác. Kiểm `X-Datahub-Signature` = `t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`
+        (có thể hai `v1` khi xoay bí mật), lệch thời gian ≤ 5 phút, bỏ trùng theo `Webhook-Id`, sắp theo `sequence` (ADR-044, BR-19-021). Trả
+        2xx trong 10 giây.
+      parameters:
+      - name: Webhook-Id
+        in: header
+        required: true
+        schema: *id002
+      - name: Webhook-Timestamp
+        in: header
+        required: true
+        schema:
+          type: integer
+      - name: X-Datahub-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+          pattern: ^t=[0-9]+(,v1=[0-9a-f]{64})+$
+      requestBody:
+        required: true
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/CloudEvent'
+      responses:
+        2XX:
+          description: Đã nhận.
+        default:
+          description: 'Lỗi: 408, 425, 429, 5xx thử lại theo `19.webhook.retry-schedule`; 4xx khác dừng (EXHAUSTED).'
+components:
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        maxLength: 2048
+      description: Con trỏ mờ từ `page.next`.
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 20
+      description: Mặc định 20, tối đa 200 (khung §10.1).
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 64
+        minLength: 16
+        pattern: ^[A-Za-z0-9_-]{16,64}$
+      description: 16…64 ký tự `[A-Za-z0-9_-]`, lưu 24 giờ (BR-19-006); thiếu ERR-19-002, khác nội dung ERR-19-003, đang xử lý ERR-19-004.
+    IdempotencyKeyOpt:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+        minLength: 16
+        pattern: ^[A-Za-z0-9_-]{16,64}$
+      description: Khuyến nghị cho thao tác tạo của giao diện (chống bấm hai lần).
+    Traceparent:
+      name: traceparent
+      in: header
+      schema:
+        type: string
+        maxLength: 55
+      description: W3C Trace Context.
+    transactionCode:
+      name: transactionCode
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/TransactionCode'
+    refundCode:
+      name: refundCode
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/RefundCode'
+    operation:
+      name: operation
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - create
+        - query
+        - refund
+        - query-refund
+  responses:
+    Err001:
+      description: '`ERR-19-001` Yêu cầu không hợp lệ'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-001:
+              summary: Yêu cầu không hợp lệ
+              value:
+                type: /problems/ERR-19-001
+                title: Yêu cầu không hợp lệ
+                status: 400
+                code: ERR-19-001
+                detail: Thiếu trường bắt buộc, sai kiểu, sai định dạng, vượt độ dài
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err001_002:
+      description: '`ERR-19-001` Yêu cầu không hợp lệ; `ERR-19-002` Thiếu Idempotency-Key'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-001:
+              summary: Yêu cầu không hợp lệ
+              value:
+                type: /problems/ERR-19-001
+                title: Yêu cầu không hợp lệ
+                status: 400
+                code: ERR-19-001
+                detail: Thiếu trường bắt buộc, sai kiểu, sai định dạng, vượt độ dài
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-002:
+              summary: Thiếu Idempotency-Key
+              value:
+                type: /problems/ERR-19-002
+                title: Thiếu Idempotency-Key
+                status: 400
+                code: ERR-19-002
+                detail: API ghi của đối tác không có header hoặc header sai định dạng (BR-19-006)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err003:
+      description: '`ERR-19-003` Idempotency-Key đã dùng cho nội dung khác'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-003:
+              summary: Idempotency-Key đã dùng cho nội dung khác
+              value:
+                type: /problems/ERR-19-003
+                title: Idempotency-Key đã dùng cho nội dung khác
+                status: 422
+                code: ERR-19-003
+                detail: Cùng khóa nhưng băm nội dung khác bản ghi cũ
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err005_009_046:
+      description: '`ERR-19-005` Đối tác không ở trạng thái hoạt động; `ERR-19-009` Dịch vụ chưa được gán cho đối tác; `ERR-19-046` Không có quyền
+        thực hiện'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-005:
+              summary: Đối tác không ở trạng thái hoạt động
+              value:
+                type: /problems/ERR-19-005
+                title: Đối tác không ở trạng thái hoạt động
+                status: 403
+                code: ERR-19-005
+                detail: Đối tác `DRAFT`, `PENDING_APPROVAL`, `SUSPENDED` hoặc `TERMINATED` gọi API tạo giao dịch, hoàn tiền
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-009:
+              summary: Dịch vụ chưa được gán cho đối tác
+              value:
+                type: /problems/ERR-19-009
+                title: Dịch vụ chưa được gán cho đối tác
+                status: 403
+                code: ERR-19-009
+                detail: Không có `partner_service_grant` còn hiệu lực
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-046:
+              summary: Không có quyền thực hiện
+              value:
+                type: /problems/ERR-19-046
+                title: Không có quyền thực hiện
+                status: 403
+                code: ERR-19-046
+                detail: 'OPA từ chối: thiếu `PERM-19-*` cần thiết'
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err005_046:
+      description: '`ERR-19-005` Đối tác không ở trạng thái hoạt động; `ERR-19-046` Không có quyền thực hiện'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-005:
+              summary: Đối tác không ở trạng thái hoạt động
+              value:
+                type: /problems/ERR-19-005
+                title: Đối tác không ở trạng thái hoạt động
+                status: 403
+                code: ERR-19-005
+                detail: Đối tác `DRAFT`, `PENDING_APPROVAL`, `SUSPENDED` hoặc `TERMINATED` gọi API tạo giao dịch, hoàn tiền
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-046:
+              summary: Không có quyền thực hiện
+              value:
+                type: /problems/ERR-19-046
+                title: Không có quyền thực hiện
+                status: 403
+                code: ERR-19-046
+                detail: 'OPA từ chối: thiếu `PERM-19-*` cần thiết'
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err006_015_004:
+      description: '`ERR-19-006` Đối tác chưa chuyển sang Datahub; `ERR-19-015` Mã đơn hàng đã có giao dịch; `ERR-19-004` Yêu cầu cùng Idempotency-Key
+        đang được xử lý'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-006:
+              summary: Đối tác chưa chuyển sang Datahub
+              value:
+                type: /problems/ERR-19-006
+                title: Đối tác chưa chuyển sang Datahub
+                status: 409
+                code: ERR-19-006
+                detail: Đối tác ở chế độ `LEGACY` gọi trực tiếp API của PH-19 (BR-19-034)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-015:
+              summary: Mã đơn hàng đã có giao dịch
+              value:
+                type: /problems/ERR-19-015
+                title: Mã đơn hàng đã có giao dịch
+                status: 409
+                code: ERR-19-015
+                detail: Trùng `partner_order_id` theo BR-19-007
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-004:
+              summary: Yêu cầu cùng Idempotency-Key đang được xử lý
+              value:
+                type: /problems/ERR-19-004
+                title: Yêu cầu cùng Idempotency-Key đang được xử lý
+                status: 409
+                code: ERR-19-004
+                detail: Yêu cầu trước với cùng khóa chưa xong
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err007:
+      description: '`ERR-19-007` Dịch vụ không tồn tại'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-007:
+              summary: Dịch vụ không tồn tại
+              value:
+                type: /problems/ERR-19-007
+                title: Dịch vụ không tồn tại
+                status: 404
+                code: ERR-19-007
+                detail: Mã dịch vụ không có trong tenant
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err008_010_011_012_013_014_016_039_003:
+      description: '`ERR-19-008` Dịch vụ không hoạt động; `ERR-19-010` Số tiền không hợp lệ; `ERR-19-011` Số tiền ngoài khoảng cho phép của dịch
+        vụ; `ERR-19-012` Vượt hạn mức mỗi giao dịch; `ERR-19-013` Vượt hạn mức trong ngày; `ERR-19-014` Loại tiền không được hỗ trợ; `ERR-19-016`
+        Địa chỉ quay về không được phép; `ERR-19-039` Mã danh mục không hợp lệ; `ERR-19-003` Idempotency-Key đã dùng cho nội dung khác'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-008:
+              summary: Dịch vụ không hoạt động
+              value:
+                type: /problems/ERR-19-008
+                title: Dịch vụ không hoạt động
+                status: 422
+                code: ERR-19-008
+                detail: Dịch vụ không `ACTIVE`
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-010:
+              summary: Số tiền không hợp lệ
+              value:
+                type: /problems/ERR-19-010
+                title: Số tiền không hợp lệ
+                status: 422
+                code: ERR-19-010
+                detail: Số tiền ≤ 0, không nguyên, vượt trần BR-19-001
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-011:
+              summary: Số tiền ngoài khoảng cho phép của dịch vụ
+              value:
+                type: /problems/ERR-19-011
+                title: Số tiền ngoài khoảng cho phép của dịch vụ
+                status: 422
+                code: ERR-19-011
+                detail: Ngoài `[min_amount, max_amount]`
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-012:
+              summary: Vượt hạn mức mỗi giao dịch
+              value:
+                type: /problems/ERR-19-012
+                title: Vượt hạn mức mỗi giao dịch
+                status: 422
+                code: ERR-19-012
+                detail: Lớn hơn `max_amount_per_txn` của đối tác
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-013:
+              summary: Vượt hạn mức trong ngày
+              value:
+                type: /problems/ERR-19-013
+                title: Vượt hạn mức trong ngày
+                status: 422
+                code: ERR-19-013
+                detail: Vượt số giao dịch hoặc tổng tiền trong ngày (BR-19-005)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-014:
+              summary: Loại tiền không được hỗ trợ
+              value:
+                type: /problems/ERR-19-014
+                title: Loại tiền không được hỗ trợ
+                status: 422
+                code: ERR-19-014
+                detail: '`currency` khác `VND`'
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-016:
+              summary: Địa chỉ quay về không được phép
+              value:
+                type: /problems/ERR-19-016
+                title: Địa chỉ quay về không được phép
+                status: 422
+                code: ERR-19-016
+                detail: '`return_url` không thuộc danh sách đăng ký của đối tác'
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-039:
+              summary: Mã danh mục không hợp lệ
+              value:
+                type: /problems/ERR-19-039
+                title: Mã danh mục không hợp lệ
+                status: 422
+                code: ERR-19-039
+                detail: Mã PH-07 không tồn tại hoặc hết hiệu lực
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-003:
+              summary: Idempotency-Key đã dùng cho nội dung khác
+              value:
+                type: /problems/ERR-19-003
+                title: Idempotency-Key đã dùng cho nội dung khác
+                status: 422
+                code: ERR-19-003
+                detail: Cùng khóa nhưng băm nội dung khác bản ghi cũ
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err017_049_050:
+      description: '`ERR-19-017` Kênh thanh toán tạm thời không khả dụng; `ERR-19-049` Phân hệ thanh toán chưa bật cho tenant; `ERR-19-050` Không
+        ghi được nhật ký kiểm toán'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-017:
+              summary: Kênh thanh toán tạm thời không khả dụng
+              value:
+                type: /problems/ERR-19-017
+                title: Kênh thanh toán tạm thời không khả dụng
+                status: 503
+                code: ERR-19-017
+                detail: NCC `SUSPENDED` hoặc mạch ngắt đang mở (BR-19-009, 013)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-049:
+              summary: Phân hệ thanh toán chưa bật cho tenant
+              value:
+                type: /problems/ERR-19-049
+                title: Phân hệ thanh toán chưa bật cho tenant
+                status: 503
+                code: ERR-19-049
+                detail: PH-20 chưa bật hoặc đã tạm ngừng PH-19 cho tenant (FR-19-064)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-050:
+              summary: Không ghi được nhật ký kiểm toán
+              value:
+                type: /problems/ERR-19-050
+                title: Không ghi được nhật ký kiểm toán
+                status: 503
+                code: ERR-19-050
+                detail: Không ghi được bản ghi kiểm toán vào outbox
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err018:
+      description: '`ERR-19-018` Nhà cung cấp từ chối khởi tạo thanh toán'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-018:
+              summary: Nhà cung cấp từ chối khởi tạo thanh toán
+              value:
+                type: /problems/ERR-19-018
+                title: Nhà cung cấp từ chối khởi tạo thanh toán
+                status: 502
+                code: ERR-19-018
+                detail: NCC trả lỗi xác định
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err019:
+      description: '`ERR-19-019` Chưa xác định được kết quả khởi tạo'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-019:
+              summary: Chưa xác định được kết quả khởi tạo
+              value:
+                type: /problems/ERR-19-019
+                title: Chưa xác định được kết quả khởi tạo
+                status: 504
+                code: ERR-19-019
+                detail: Timeout hoặc lỗi không xác định khi gọi NCC
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err020:
+      description: '`ERR-19-020` Không tìm thấy tài nguyên'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-020:
+              summary: Không tìm thấy tài nguyên
+              value:
+                type: /problems/ERR-19-020
+                title: Không tìm thấy tài nguyên
+                status: 404
+                code: ERR-19-020
+                detail: Tài nguyên không tồn tại hoặc nằm ngoài phạm vi truy cập của bên gọi (khác tenant, khác đối tác)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err021_004:
+      description: '`ERR-19-021` Chuyển trạng thái không hợp lệ; `ERR-19-004` Yêu cầu cùng Idempotency-Key đang được xử lý'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-021:
+              summary: Chuyển trạng thái không hợp lệ
+              value:
+                type: /problems/ERR-19-021
+                title: Chuyển trạng thái không hợp lệ
+                status: 409
+                code: ERR-19-021
+                detail: Thao tác không được máy trạng thái (mục 7) cho phép ở trạng thái hiện tại
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-004:
+              summary: Yêu cầu cùng Idempotency-Key đang được xử lý
+              value:
+                type: /problems/ERR-19-004
+                title: Yêu cầu cùng Idempotency-Key đang được xử lý
+                status: 409
+                code: ERR-19-004
+                detail: Yêu cầu trước với cùng khóa chưa xong
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err029_004:
+      description: '`ERR-19-029` Giao dịch không đủ điều kiện hoàn tiền; `ERR-19-004` Yêu cầu cùng Idempotency-Key đang được xử lý'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-029:
+              summary: Giao dịch không đủ điều kiện hoàn tiền
+              value:
+                type: /problems/ERR-19-029
+                title: Giao dịch không đủ điều kiện hoàn tiền
+                status: 409
+                code: ERR-19-029
+                detail: Trạng thái không phải `SUCCEEDED`/`PARTIALLY_REFUNDED`, là giao dịch thử, hoặc đang có yêu cầu hoàn chưa kết thúc
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-004:
+              summary: Yêu cầu cùng Idempotency-Key đang được xử lý
+              value:
+                type: /problems/ERR-19-004
+                title: Yêu cầu cùng Idempotency-Key đang được xử lý
+                status: 409
+                code: ERR-19-004
+                detail: Yêu cầu trước với cùng khóa chưa xong
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err030_031_032_039_003:
+      description: '`ERR-19-030` Số tiền hoàn vượt số còn được hoàn; `ERR-19-031` Quá hạn hoàn tiền; `ERR-19-032` Hoàn tiền chưa được bật; `ERR-19-039`
+        Mã danh mục không hợp lệ; `ERR-19-003` Idempotency-Key đã dùng cho nội dung khác'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-030:
+              summary: Số tiền hoàn vượt số còn được hoàn
+              value:
+                type: /problems/ERR-19-030
+                title: Số tiền hoàn vượt số còn được hoàn
+                status: 422
+                code: ERR-19-030
+                detail: Tổng hoàn vượt số tiền gốc (BR-19-022)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-031:
+              summary: Quá hạn hoàn tiền
+              value:
+                type: /problems/ERR-19-031
+                title: Quá hạn hoàn tiền
+                status: 422
+                code: ERR-19-031
+                detail: Quá số ngày cho phép kể từ `paid_at`
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-032:
+              summary: Hoàn tiền chưa được bật
+              value:
+                type: /problems/ERR-19-032
+                title: Hoàn tiền chưa được bật
+                status: 422
+                code: ERR-19-032
+                detail: Tenant tắt hoàn tiền, hoặc chế độ thực thi không phù hợp thao tác
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-039:
+              summary: Mã danh mục không hợp lệ
+              value:
+                type: /problems/ERR-19-039
+                title: Mã danh mục không hợp lệ
+                status: 422
+                code: ERR-19-039
+                detail: Mã PH-07 không tồn tại hoặc hết hiệu lực
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-003:
+              summary: Idempotency-Key đã dùng cho nội dung khác
+              value:
+                type: /problems/ERR-19-003
+                title: Idempotency-Key đã dùng cho nội dung khác
+                status: 422
+                code: ERR-19-003
+                detail: Cùng khóa nhưng băm nội dung khác bản ghi cũ
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err046:
+      description: '`ERR-19-046` Không có quyền thực hiện'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-046:
+              summary: Không có quyền thực hiện
+              value:
+                type: /problems/ERR-19-046
+                title: Không có quyền thực hiện
+                status: 403
+                code: ERR-19-046
+                detail: 'OPA từ chối: thiếu `PERM-19-*` cần thiết'
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err048:
+      description: '`ERR-19-048` Vượt giới hạn tốc độ'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-048:
+              summary: Vượt giới hạn tốc độ
+              value:
+                type: /problems/ERR-19-048
+                title: Vượt giới hạn tốc độ
+                status: 429
+                code: ERR-19-048
+                detail: Vượt hạn mức gọi API của client hoặc tenant
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err049:
+      description: '`ERR-19-049` Phân hệ thanh toán chưa bật cho tenant'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-049:
+              summary: Phân hệ thanh toán chưa bật cho tenant
+              value:
+                type: /problems/ERR-19-049
+                title: Phân hệ thanh toán chưa bật cho tenant
+                status: 503
+                code: ERR-19-049
+                detail: PH-20 chưa bật hoặc đã tạm ngừng PH-19 cho tenant (FR-19-064)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err049_050:
+      description: '`ERR-19-049` Phân hệ thanh toán chưa bật cho tenant; `ERR-19-050` Không ghi được nhật ký kiểm toán'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-049:
+              summary: Phân hệ thanh toán chưa bật cho tenant
+              value:
+                type: /problems/ERR-19-049
+                title: Phân hệ thanh toán chưa bật cho tenant
+                status: 503
+                code: ERR-19-049
+                detail: PH-20 chưa bật hoặc đã tạm ngừng PH-19 cho tenant (FR-19-064)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-050:
+              summary: Không ghi được nhật ký kiểm toán
+              value:
+                type: /problems/ERR-19-050
+                title: Không ghi được nhật ký kiểm toán
+                status: 503
+                code: ERR-19-050
+                detail: Không ghi được bản ghi kiểm toán vào outbox
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err099:
+      description: '`ERR-19-099` Lỗi hệ thống'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-099:
+              summary: Lỗi hệ thống
+              value:
+                type: /problems/ERR-19-099
+                title: Lỗi hệ thống
+                status: 500
+                code: ERR-19-099
+                detail: Lỗi không lường trước
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+  schemas:
+    CloudEvent:
+      type: object
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          maxLength: 128
+          pattern: ^vn\.datahub\.payment\.[a-z-]+\.[a-z-]+\.v[0-9]+$
+        source:
+          type: string
+          maxLength: 64
+          pattern: ^/t[0-9]{2}/payment$
+        subject:
+          type: string
+          maxLength: 64
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          $ref: '#/components/schemas/TenantId'
+        sequence:
+          type: integer
+          minimum: 1
+        traceparent:
+          type: string
+          maxLength: 55
+        data:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - tenantid
+      - data
+      description: CloudEvents 1.0 dạng cấu trúc; webhook và Kafka cùng `id`, cùng `data` (khung §10.4, SDD §6.4).
+    CursorMeta:
+      type: object
+      properties:
+        next:
+          type:
+          - string
+          - 'null'
+          maxLength: 2048
+        hasMore:
+          type: boolean
+        total:
+          type: integer
+          minimum: 0
+          description: Đếm chính xác tới 10.000.
+        totalApprox:
+          type: integer
+          minimum: 0
+          description: Ước lượng khi vượt 10.000 (FR-19-049).
+      additionalProperties: false
+      required:
+      - hasMore
+    LegacyCompatRequest:
+      type: object
+      additionalProperties: true
+      description: Thân theo hợp đồng hệ cũ của thao tác (`create`, `query`, `refund`); ánh xạ sang API-19-101…106 (ADR-049). Chỉ trong thời gian
+        chuyển đổi.
+    LegacyCompatResponse:
+      type: object
+      additionalProperties: true
+      description: Phản hồi theo hợp đồng hệ cũ.
+    Money:
+      type: integer
+      minimum: 1
+      maximum: 999999999999
+      description: Số tiền VND, số nguyên đồng (T-MONEY, BR-19-001).
+    MoneyOrZero:
+      type: integer
+      minimum: 0
+      maximum: 999999999999
+    NotificationPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudEvent'
+        next:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+          description: '`id` cuối đã trả; dùng làm `after`.'
+        hasMore:
+          type: boolean
+      additionalProperties: false
+      required:
+      - items
+      - hasMore
+    PartnerCancel:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 255
+      additionalProperties: false
+    PartnerOrderId:
+      type: string
+      maxLength: 64
+      minLength: 1
+      pattern: ^[A-Za-z0-9._:/-]{1,64}$
+      description: Mã đơn hàng, mã hồ sơ của đối tác (T-ORDER-ID).
+      examples:
+      - H68.12-261121-0042
+    PartnerReconReport:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        provisional:
+          type: boolean
+        sessionStatus:
+          anyOf:
+          - $ref: '#/components/schemas/SessionStatus'
+          - type: 'null'
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              transactionCode:
+                $ref: '#/components/schemas/TransactionCode'
+              partnerOrderId:
+                $ref: '#/components/schemas/PartnerOrderId'
+              amount:
+                $ref: '#/components/schemas/Money'
+              status:
+                $ref: '#/components/schemas/TransactionStatus'
+              reconStatus:
+                $ref: '#/components/schemas/ReconStatus'
+              paidAt:
+                type:
+                - string
+                - 'null'
+                format: date-time
+              refundedAmount:
+                $ref: '#/components/schemas/MoneyOrZero'
+            additionalProperties: false
+        totals:
+          type: object
+          properties:
+            count:
+              type: integer
+            amount:
+              $ref: '#/components/schemas/MoneyOrZero'
+            refundedAmount:
+              $ref: '#/components/schemas/MoneyOrZero'
+          additionalProperties: false
+        page:
+          $ref: '#/components/schemas/CursorMeta'
+      additionalProperties: false
+      required:
+      - date
+      - provisional
+      - items
+    PartnerRefund:
+      type: object
+      properties:
+        refundCode:
+          $ref: '#/components/schemas/RefundCode'
+        partnerRefundId:
+          type: string
+          maxLength: 64
+        transactionCode:
+          $ref: '#/components/schemas/TransactionCode'
+        amount:
+          $ref: '#/components/schemas/Money'
+        status:
+          $ref: '#/components/schemas/RefundStatus'
+        mode:
+          $ref: '#/components/schemas/RefundMode'
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        reasonCode:
+          type: string
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - refundCode
+      - partnerRefundId
+      - transactionCode
+      - amount
+      - status
+      - createdAt
+    PartnerRefundCreate:
+      type: object
+      properties:
+        transactionCode:
+          $ref: '#/components/schemas/TransactionCode'
+        partnerRefundId:
+          type: string
+          maxLength: 64
+          pattern: ^[A-Za-z0-9._:/-]{1,64}$
+        amount:
+          $ref: '#/components/schemas/Money'
+        reasonCode:
+          type: string
+          maxLength: 64
+          description: Mã mục danh mục PH-07.
+        reasonText:
+          type: string
+          maxLength: 2000
+      additionalProperties: false
+      required:
+      - transactionCode
+      - partnerRefundId
+      - amount
+      - reasonCode
+    PartnerServiceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceCode:
+                type: string
+                maxLength: 64
+                pattern: ^[A-Z][A-Z0-9_-]{1,63}$
+              serviceName:
+                type: string
+                maxLength: 255
+              status:
+                $ref: '#/components/schemas/ServiceStatus'
+              minAmount: &id003
+                $ref: '#/components/schemas/Money'
+              maxAmount: *id003
+              maxAmountPerTxn: &id004
+                anyOf:
+                - $ref: '#/components/schemas/Money'
+                - type: 'null'
+              dailyTxnLimit:
+                type:
+                - integer
+                - 'null'
+              dailyAmountLimit: *id004
+              usedToday:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  amount:
+                    $ref: '#/components/schemas/MoneyOrZero'
+                additionalProperties: false
+            additionalProperties: false
+            required:
+            - serviceCode
+            - status
+      additionalProperties: false
+      required:
+      - items
+    Payer:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        idNumber:
+          type: string
+          maxLength: 20
+        phone:
+          type: string
+          maxLength: 20
+          pattern: ^\+?[0-9]{9,15}$
+        email:
+          type: string
+          maxLength: 254
+          format: email
+      additionalProperties: false
+      description: Dữ liệu cá nhân người nộp; mã hóa ngay khi nhận (ADR-048), không bao giờ trả lại nguyên văn qua API đối tác.
+    Payment:
+      type: object
+      properties:
+        transactionCode:
+          $ref: '#/components/schemas/TransactionCode'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        serviceCode:
+          type: string
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9_-]{1,63}$
+        partnerOrderId:
+          $ref: '#/components/schemas/PartnerOrderId'
+        amount:
+          $ref: '#/components/schemas/Money'
+        refundedAmount:
+          $ref: '#/components/schemas/MoneyOrZero'
+        currency:
+          type: string
+          const: VND
+        paymentUrl:
+          type:
+          - string
+          - 'null'
+          maxLength: 2048
+          format: uri
+        expiresAt: &id005
+          type: string
+          format: date-time
+        createdAt: *id005
+        paidAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        providerReference:
+          type:
+          - string
+          - 'null'
+          maxLength: 128
+        channelCode:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+        bankCode:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+        reasonCode:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+        reasonMessage:
+          type:
+          - string
+          - 'null'
+          maxLength: 500
+        latePaid:
+          type: boolean
+        sequence:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+      additionalProperties: false
+      required:
+      - transactionCode
+      - status
+      - serviceCode
+      - partnerOrderId
+      - amount
+      - expiresAt
+      - createdAt
+      - sequence
+    PaymentCreate:
+      type: object
+      properties:
+        serviceCode:
+          type: string
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9_-]{1,63}$
+        partnerOrderId:
+          $ref: '#/components/schemas/PartnerOrderId'
+        amount:
+          $ref: '#/components/schemas/Money'
+        currency:
+          type: string
+          const: VND
+          default: VND
+        description:
+          type: string
+          maxLength: 255
+          minLength: 1
+        returnUrl:
+          type: string
+          maxLength: 2048
+          pattern: ^https://
+        payer:
+          $ref: '#/components/schemas/Payer'
+        procedureCode:
+          type: string
+          maxLength: 64
+          description: Mã mục danh mục PH-07.
+        expiryMinutes:
+          type: integer
+          minimum: 5
+          maximum: 1440
+        clientIp:
+          type: string
+          maxLength: 45
+        metadata:
+          type: object
+          maxProperties: 10
+          additionalProperties:
+            type: string
+            maxLength: 255
+          description: Trả lại nguyên trong truy vấn, webhook; không chứa dữ liệu cá nhân.
+      additionalProperties: false
+      required:
+      - serviceCode
+      - partnerOrderId
+      - amount
+      - description
+      - returnUrl
+    PaymentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+          description: Mọi lượt thanh toán của mã đơn hàng, mới nhất trước.
+      additionalProperties: false
+      required:
+      - items
+    ProblemDetails:
+      type: object
+      description: RFC 9457, mở rộng theo khung §12 và D03-04-PH19 §6.
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          description: '`/problems/ERR-19-nnn`'
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          pattern: ^ERR-19-[0-9]{3}$
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              rule:
+                type: string
+              message:
+                type: string
+            additionalProperties: false
+          description: Lỗi trường (ERR-19-001).
+        missing:
+          type: array
+          items:
+            type: string
+          description: Mục checklist chưa đạt (ERR-19-035).
+        existingTransactionCode:
+          $ref: '#/components/schemas/TransactionCode'
+        currentEtag:
+          type: string
+        retryAfterSeconds:
+          type: integer
+      additionalProperties: true
+    ReconStatus:
+      type: string
+      enum:
+      - UNRECONCILED
+      - MATCHED
+      - MISMATCHED
+      description: Chưa đối soát, Khớp, Lệch (GĐ-03).
+    RefundCode:
+      type: string
+      maxLength: 15
+      pattern: ^R[0-9A-HJKMNP-TV-Z]{14}$
+      examples:
+      - RK7M2Q9XW4P3H8T
+    RefundMode:
+      type: string
+      enum:
+      - API
+      - MANUAL
+    RefundStatus:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - PENDING_SECOND_APPROVAL
+      - APPROVED
+      - PROCESSING
+      - AWAITING_MANUAL
+      - SUCCEEDED
+      - FAILED
+      - REJECTED
+      - CANCELLED
+    ServiceStatus:
+      type: string
+      enum:
+      - DRAFT
+      - ACTIVE
+      - SUSPENDED
+      - RETIRED
+    SessionStatus:
+      type: string
+      enum:
+      - SCHEDULED
+      - COLLECTING
+      - WAITING_DATA
+      - MATCHING
+      - IN_REVIEW
+      - READY_TO_CLOSE
+      - CLOSED
+      - REOPEN_PENDING
+      - FAILED
+    TenantId:
+      type: string
+      maxLength: 16
+      pattern: ^T[0-9]{2}$
+      description: Mã tenant T-TENANT (D00-01).
+    TransactionCode:
+      type: string
+      maxLength: 19
+      pattern: ^T[0-9]{2}[0-9]{6}[0-9A-HJKMNP-TV-Z]{10}$
+      description: T{nn} + yyMMdd + 10 ký tự Base32 Crockford, duy nhất toàn cục (BR-19-002).
+      examples:
+      - T68261126K7M2Q9XW4P
+    TransactionStatus:
+      type: string
+      enum:
+      - CREATED
+      - PENDING
+      - SUCCEEDED
+      - FAILED
+      - EXPIRED
+      - CANCELLED
+      - PARTIALLY_REFUNDED
+      - REFUNDED
+  securitySchemes:
+    oauth2Client:
+      type: oauth2
+      description: Client credentials, xác thực client bằng mTLS (RFC 8705) hoặc `private_key_jwt`; token ≤ 5 phút, ràng buộc chứng thư.
+      flows:
+        clientCredentials:
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token
+          scopes: {}
