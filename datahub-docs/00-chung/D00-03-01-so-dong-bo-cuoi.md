@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D00-03-01
 ten: Sổ đồng bộ chéo cuối bộ tài liệu Datahub
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, chủ đầu tư, kiến trúc sư, trưởng nhóm phân hệ
@@ -301,7 +301,7 @@ Ngày 27/11/2026 chủ đầu tư chọn áp đề xuất cho các câu thuần 
 | Q450 | DB-1169 | D05-02-PH12 | Có thêm API đọc bộ đếm quyết định không? Đề xuất: không, đo qua endpoint /metrics của OPA và Prometheus; ca kiểm thử truy vấn Prometheus. | Đã chốt theo đề xuất 27/11/2026 |
 | Q451 | DB-1174 | D05-02-PH13 | IE có được giữ PERM-13-dashboard trên hạ tầng hay không (Q13-41)? Đề xuất: giữ IE ● như D02-08 hiện hành, giới hạn ở bảng điều khiển của luồng và HTTT mình thiết kế. | Đã chốt theo đề xuất 27/11/2026 |
 | Q452 | DB-1220 | DE-NGHI-DONG-BO | Phiên liên tenant mặc định 60 phút không duyệt (D03-06-00 §2.11) hay tối đa 4 giờ có người duyệt thứ hai (SEC-85, BR-12-032, maxHours = 4)? Đề xuất: theo SEC-85, giao diện dùng thời hạn và bước duyệt do chính sách tenant của PH-20 quy định, 60 phút chỉ là mặc định chọn sẵn trong trần 4 giờ. | Đã chốt theo đề xuất 27/11/2026 |
-| Q453 | (sau đợt) | D02-03-PH12 | Khi danh bạ LDAP/AD vô hiệu một quản trị tỉnh (cán bộ đã nghỉ) mà tenant sẽ còn dưới hai TA, có cho đồng bộ vô hiệu vẫn chạy như ngoại lệ thứ ba của ERR-12-046 (BR-12-033, FR-12-026 bước 7) không? Đề xuất: có, kèm cảnh báo khẩn cho SO, PA và việc bổ sung TA, vì chặn thì người đã nghỉ vẫn giữ quyền quản trị. | Chờ chủ đầu tư chốt |
+| Q453 | (sau đợt) | D02-03-PH12 | Khi danh bạ LDAP/AD vô hiệu một quản trị tỉnh (cán bộ đã nghỉ) mà tenant sẽ còn dưới hai TA, có cho đồng bộ vô hiệu vẫn chạy như ngoại lệ thứ ba của ERR-12-046 (BR-12-033, FR-12-026 bước 7) không? Đề xuất: có, kèm cảnh báo khẩn cho SO, PA và việc bổ sung TA, vì chặn thì người đã nghỉ vẫn giữ quyền quản trị. | Đã chốt theo đề xuất (chủ đầu tư chọn 27/11/2026) |
 
 : Câu hỏi mở phát sinh ở đợt đồng bộ chéo cuối
 
@@ -486,3 +486,4 @@ Ba việc dưới đây chưa thuộc phạm vi đợt đồng bộ và được
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt các câu hỏi kỹ thuật theo đề xuất (chủ đầu tư chọn ngày 27/11/2026), thêm cột Tình trạng ở mục 4 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chủ đầu tư đồng ý đề xuất 10 câu nghiệp vụ, pháp chế, ATTT còn lại (Q385, Q390, Q393, Q401, Q403, Q408, Q412, Q419, Q420, Q423); đã áp vào tài liệu đích, toàn bộ Q380–Q452 đã chốt |
 | 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Thêm Q453 (ngoại lệ đồng bộ LDAP khi tenant dưới hai TA) phát sinh khi PH-12 chặn cứng ngưỡng hai TA |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chủ đầu tư chốt Q453 theo đề xuất |
