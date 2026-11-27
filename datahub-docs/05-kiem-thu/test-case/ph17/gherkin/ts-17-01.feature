@@ -9,7 +9,7 @@ Tính năng: TS-17-01 · Đề nghị, xác nhận bật trợ lý và tắt tr�
     # Mục đích: Chứng minh trợ lý chỉ có hiệu lực sau khi người thứ hai xác nhận, ghi kiểm toán trước khi đổi trạng thái và nút "Trợ lý" xuất hiện trong 60 giây.
     Biết T93 mới (`17.enabled = false`), có `MV-CHAT-1` và `MV-EMB-1` ở trạng thái `APPROVED` và là mô hình mặc định; U-T93-TA1, U-T93-SO.
     Khi U-T93-IE `GET /status`.
-    Và U-T93-TA1 `POST /policy/changes` với `type = ENABLE`, `decisionNumber = "QĐ-123/UBND ngày 01/12/2026"`, `reason` 30 ký tự, `capabilities = [SEARCH]`, `roleGroups = [ALL_READERS]`, kèm `Idempotency-Key`.
+    Và U-T93-TA1 `POST /policy/changes` với `changeType = ENABLE`, `decisionNumber = "QĐ-123/UBND ngày 01/12/2026"`, `reason` 30 ký tự, `capabilities = [SEARCH]`, kèm `Idempotency-Key`.
     Và U-T93-SO `POST /policy/changes/{changeId}:approve` kèm `If-Match`.
     Và chờ tối đa 60 giây rồi U-T93-IE `GET /status` và mở bảng điều khiển.
     Thì bước 1 `200` `enabled = false`, không có nút "Trợ lý". Bước 2 `201`, `state = PENDING`, tenant vẫn `DISABLED`. Bước 3 `200`, `TenantAssistState = ENABLED`, `ETag` mới; KT: có (policy-enable) ghi trước khi đổi trạng thái; EVT: `assist.enablement.changed`, `assist.config.changed`, `assist.policy-change.decided`. Bước 4 `enabled = true`, `capabilities = [SEARCH]`, nút "Trợ lý" hiện trên thanh trên.

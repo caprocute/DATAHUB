@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH17
 ten: Thiết kế chi tiết phần mềm phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-assist, kỹ sư tích hợp PH-03 PH-04 PH-09 PH-12, ATTT, pháp chế, kiến trúc sư, hội đồng thẩm định
@@ -538,7 +538,7 @@ Kết quả trả về là `RetrievedChunk` gồm nội dung đã cắt, `docRef
 
 **Giao diện vào.** Sự kiện nguồn (bảng tiêu thụ FRS 9.3), EVT-09-01, EVT-09-03; API-17-062…075, 088, 089.
 
-**Phụ thuộc ra.** `ContentFetcher` gọi API đọc siêu dữ liệu của PH-02, 04, 07, 10 và kho mã lỗi, hướng dẫn PH-18 bằng tài khoản `svc-assist-index` (scope `*.read-meta`); PH-09 (API-09-231, 232); `ChunkEmbedder` (4.5); `AuditPort`.
+**Phụ thuộc ra.** `ContentFetcher` gọi API đọc siêu dữ liệu của PH-02, 04, 07, 10 bằng tài khoản `svc-assist-index` (scope `*.read-meta`), và sổ tay mã lỗi, hướng dẫn PH-18 qua `GET /ops/internal/v1/error-guides:feed` (API-18-062, scope `ops:dlq-read`, theo `updatedSince`); PH-09 (API-09-231, 232); `ChunkEmbedder` (4.5); `AuditPort`.
 
 **Dữ liệu.** `knowledge_source`, `knowledge_document`, `index_job`, `classification_skip`, `inbox_event`.
 
@@ -549,7 +549,7 @@ Kết quả trả về là `RetrievedChunk` gồm nội dung đã cắt, `docRef
 **Quan sát.** `assist_index_event_lag_seconds`, `assist_index_docs{status}`, `assist_index_chunks`, `assist_index_job_total{kind,status}`, `assist_index_skipped_class_total{reason}`.
 :::
 
-`SourceEventListener` đăng ký bộ nghe Kafka theo từng loại nguồn qua `SourceTopicMap`: `API_SPEC` ↔ `{tenant}.catalog.api.*` và `catalog.version.published`, `RDM_CATALOG` ↔ `rdm.catalog.*`, `FLOW` ↔ `integration.flow.*`, `TOPIC` ↔ `event.publication.*`, và nhóm `privacy.*` cho kiểm lại mức. Tenant lấy từ tiền tố topic và đối chiếu với `inbox_event.tenant_id`; lệch thì bỏ và cảnh báo. Loại `ERROR_CODE` và `GUIDE` (PH-18) chưa chắc có sự kiện thay đổi nên mặc định lập theo lịch và theo nút "Lập lại" (Q17-09, Q17-63).
+`SourceEventListener` đăng ký bộ nghe Kafka theo từng loại nguồn qua `SourceTopicMap`: `API_SPEC` ↔ `{tenant}.catalog.api.*` và `catalog.version.published`, `RDM_CATALOG` ↔ `rdm.catalog.*`, `FLOW` ↔ `integration.flow.*`, `TOPIC` ↔ `event.publication.*`, và nhóm `privacy.*` cho kiểm lại mức. Tenant lấy từ tiền tố topic và đối chiếu với `inbox_event.tenant_id`; lệch thì bỏ và cảnh báo. Loại `ERROR_CODE` và `GUIDE` (PH-18) lập chỉ mục khi nhận `{tenant}.ops.error-guide.changed.v1` (EVT-18-11, PH-18 phát khi bản sổ tay được công bố), kèm lập theo lịch qua `error-guides:feed` làm dự phòng và nút "Lập lại" (Q17-09, Q17-63).
 
 **Đường xử lý một tài liệu** (máy trạng thái ở 4.4 FRS, bảng chuyển ở 8.1):
 
@@ -964,7 +964,7 @@ Mỗi người phản hồi một lần cho mỗi câu trả lời, bảo đảm
 
 **Theo `trace_id`.** `TraceExplainer` chạy năm bước: (1) kiểm dạng 32 ký tự hex (ERR-17-061) và khoảng thời gian ≤ `17.explain.trace-window-minutes` (ERR-17-062); (2) lấy vết bằng `view_trace` rồi tối đa `17.explain.log-lines-max` dòng log quanh các span lỗi bằng `search_logs`, đều bằng token người dùng; người dùng không có quyền thì ERR-17-060, không thử đường khác (BR-17-051); (3) loại trường mức `RESTRICTED` trở lên và che DLCN qua `LogRedactor` (BR-17-052); (4) `TraceFactsBuilder` **dựng sự kiện xác định trước khi gọi mô hình**: cây span, span lỗi đầu tiên theo thời gian, mã trạng thái, thời gian từng chặng, mã ERR xuất hiện; (5) mô hình chỉ diễn giải các sự kiện đó thành chuỗi nhân quả khả dĩ và mức chắc chắn, mọi nhận định trích dẫn mã span hoặc dòng log. Nhờ bước 4, kết quả `findings[]` vẫn đúng và có ích dù mô hình lỗi; nếu mô hình lỗi, API trả phần sự kiện xác định kèm thông báo. Nút "Tạo danh sách kiểm" và "Tóm tắt sự cố" dùng lại `explanationId`.
 
-**DLQ.** `DlqExplainer` lấy bản tin bằng `view_dlq_message` và chỉ đưa vào prompt **khung** của tải (tên trường, kiểu, độ dài) cùng tiêu đề lỗi và mã ERR, không đưa giá trị tải (Q17-12), rồi nêu hướng xử lý.
+**DLQ.** `DlqExplainer` lấy bản tin bằng `view_dlq_message` (API-18-061 `GET /ops/internal/v1/dlq/messages/{dlqId}` bằng token đổi, scope `ops:dlq-read`; gửi `includePayload = true` nhưng không gửi `X-Reveal-Reason`, nên PH-18 trả khung không giá trị theo FR-18-026) và chỉ đưa vào prompt **khung** của tải (tên trường, kiểu, độ dài) cùng tiêu đề lỗi và mã ERR, không đưa giá trị tải (Q17-12), rồi nêu hướng xử lý.
 
 **Danh sách kiểm và tóm tắt.** `RemediationChecklistService` yêu cầu đầu ra JSON gồm các bước có loại `VIEW_ONLY` hoặc `USER_ACTION`; sau sinh, bộ kiểm loại bước chứa nội dung cấm (xóa dữ liệu, vô hiệu hóa biện pháp bảo mật, lệnh phá hủy) theo danh sách mẫu (BR-17-053). Không có bước tự thực hiện. `IncidentSummarizer` chỉ dùng các mục người dùng chọn trong phạm vi quyền của họ, trả bản nháp có nhãn AI, người dùng tự sao chép; không ghi vào PH-18 (BR-17-054).
 
@@ -1665,6 +1665,8 @@ Ngân sách lượt: cả lượt tối đa 60 giây (BR-17-061), nên tổng th
 
 : Nhóm mã lỗi theo mã HTTP
 
+**Lỗi từ CSDL.** Lớp truy cập dữ liệu bắt `PSQLException` và ánh xạ theo `SQLSTATE` rồi theo tiền tố thông báo. Trigger và hàm kiểm của D03-03-PH17 luôn mở đầu thông báo bằng `ERR-17-nnn:`; `SqlStateMapper` đọc mã này và dùng nguyên văn làm mã của `AssistException`. Khi không có tiền tố, dùng mặc định: `23505` (trùng khóa duy nhất) thành ERR-17-002, `23514` (CHECK) thành ERR-17-003, `55000` (trigger bất biến hoặc máy trạng thái) thành ERR-17-006, `40001` và `40P01` (xung đột tuần tự, bế tắc) thử lại tối đa hai lần rồi thành ERR-17-004, `23503` (khóa ngoại) thành ERR-17-001. Mọi `SQLSTATE` khác trả ERR-17-009 với tên dịch vụ "cơ sở dữ liệu" và ghi log mức lỗi kèm `traceId`; thông báo gốc của CSDL không bao giờ chuyển ra người dùng.
+
 Lỗi trong luồng SSE đã bắt đầu không đổi được mã HTTP, nên được phát bằng sự kiện `error` mang mã ERR rồi đóng luồng; thẻ lỗi hiện dưới câu hỏi, lịch sử không mất (FRS 9.2). Thân lỗi không chứa nội dung hội thoại, không chứa dữ liệu của đối tượng ngoài quyền người hỏi, không chứa bí mật.
 
 ### 8.6. Giao dịch và tính nhất quán
@@ -2033,3 +2035,4 @@ Mười hai câu hỏi dưới đánh số từ Q17-60 để không trùng Q17-0
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.assist.*` tám module, mô hình miền, 22 thành phần với khối đặc tả 10 mục, ánh xạ đủ 62 FR, cấu trúc prompt tách kênh chỉ dẫn và dữ liệu không tin cậy, truy hồi lai, chín sơ đồ trình tự, bảng trạng thái theo enum FRS, cầu dao và thử lại, cấu hình Spring AI, Valkey, giới hạn tần suất, chỉ số `assist_*`, triển khai Z3, ước lượng tỉnh vừa, năm ADR đề xuất 170 đến 174, đề nghị đồng bộ, câu hỏi mở Q17-60…71 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nguồn mã lỗi PH-18 theo `error-guides:feed` và EVT-18-11, gọi API-18-061 với scope `ops:dlq-read`, ánh xạ SQLSTATE sang ERR-17 |

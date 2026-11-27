@@ -29,7 +29,7 @@ Tính năng: TS-17-09 · Mô hình ngoài bị từ chối khi chưa được b�
     # Truy vết: FR-17-060, 003 · API-17-187 · BR-17-081 · ERR-17-107 · ERR-17-102
     # Mục đích: Chứng minh BR-17-081 ở data plane và ở hội thoại.
     Biết T90 đã bật mô hình ngoài hợp lệ; định tuyến nhiệm vụ `CLASSIFY_TEXT` tới `MV-EXT-1`; S-T90-PH04 có `assist:infer`.
-    Khi S-T90-PH04 `POST /assist/v1/inference/classify` với `dataClass = RESTRICTED`, `purpose = MD-PHANLOAI`.
+    Khi S-T90-PH04 `POST /assist/v1/inference/classify` với `dataClass = RESTRICTED`, `purposeCode = MD-PHANLOAI`.
     Và như trên với `dataClass = INTERNAL`.
     Và như trên với `dataClass = PUBLIC` nhưng nội dung chứa số CCCD giả dạng rõ.
     Thì bước 1 `422` ERR-17-107, không có lời gọi tới `MV-EXT-1`. Bước 2 `200`. Bước 3 `422` ERR-17-115 (mẫu DLCN chưa che) hoặc được che trước khi gửi, vết không chứa nội dung thô.

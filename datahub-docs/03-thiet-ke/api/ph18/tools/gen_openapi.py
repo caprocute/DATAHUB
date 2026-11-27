@@ -154,7 +154,7 @@ FILT = {
     113: 'year!:i', 116: 'from!:d, to!:d', 118: 'kind:e(MAINTENANCE|FREEZE), environment:#Environment, from:ts, to:ts',
     123: 'severity:#Severity, status:#IncidentStatus, assignee:s, from:ts, to:ts', 133: 'tool:#BackupTool, freshness:#Freshness',
     134: 'objectCode:s, result:#BackupResult, from:ts, to:ts', 136: 'objectCode:s, result:e(PASSED|FAILED), from:ts, to:ts', 139: 'status:#RestoreStatus',
-    151: 'mergePlanId!:u, module:s', 154: 'kind:#DrillKind, from:ts, to:ts', 156: 'legacySystem:#LegacySystem, status:e(DRAFT|VERIFIED|DISABLED)',
+    151: 'mergePlanId!:mpid, module:ph', 154: 'kind:#DrillKind, from:ts, to:ts', 156: 'legacySystem:#LegacySystem, status:e(DRAFT|VERIFIED|DISABLED)',
     159: 'sourceCode:s, status:e(DRAFT|READY)', 165: 'planCode!:s, mode:#RunMode, status:#MigrationRunStatus',
     170: 'objectType:#ObjectType, reasonCode:s, status:#MigrationErrorStatus', 172: 'systemCode:s, status:e(PENDING|NOTIFIED|REISSUED|WAIVED), credentialKind:#CredentialKind',
     173: 'status:#CutoverStatus, q:s', 186: 'module:s, consumer:s, from:ts, to:ts', 177: 'action:s, objectType:s, actor:s, from!:ts, to!:ts', 178: 'period:e(MONTH|QUARTER), from:d, to:d',
@@ -213,7 +213,7 @@ KEY_NOTE = {
     122: 'PH-02, PH-04 đọc trước khi phát hành lên môi trường thật; PH-18 vắng thì bên gọi coi là không đóng băng và ghi cảnh báo (BR-18 về suy giảm).',
     130: 'Chuyển hồ sơ sang PH-09 (`INCIDENT_PH18`); PH-09 giữ đồng hồ 72 giờ. PH-09 không nhận thì thử lại mỗi 5 phút (ERR-18-054).',
     142: 'PA duyệt (người thứ hai, ERR-18-005), tạo Job `dh-tenant-restore` trong `dh-batch`; tenant chuyển `SUSPENDED` trong khi chạy tám bước (RBK-04).',
-    150: 'PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11). Chạy `dh-tenant-export` và nạp cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ về '
+    150: 'PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11) bằng tài khoản máy qua `apisix-int` (client credentials, scope `ops:merge-transfer`, không dùng phiên người dùng). `dryRun = true` chỉ đếm và kiểm xung đột khóa, không ghi. `mode = DELTA` (mặc định `FULL`) là lượt bù cuối trước cutover, chỉ chuyển dòng có `updated_at` từ `since` (mặc định là mốc kết thúc của lượt `FULL` thật gần nhất); lũy đẳng theo `mergePlanId:module:mode`. Chạy `dh-tenant-export` và nạp cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ về '
          '`POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` của PH-20. Trùng `mergePlanId` và `module` với thân khác: ERR-18-061.',
     164: 'Lần chạy `DRY_RUN` vào hàng đợi ngay; `REAL` cần lần chạy thử thành công trong `18.migration.dry-run-valid-days` (ERR-18-064), ở `PENDING_APPROVAL` chờ API-18-167. '
          '`retryOf` và `errorIds[]` chạy lại bản ghi lỗi.',

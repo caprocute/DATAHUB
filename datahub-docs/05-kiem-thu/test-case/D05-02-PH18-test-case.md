@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH18
 ten: Kịch bản và test case phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -558,7 +558,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. TA1 `PUT /params/18.dlq.replay.approval-threshold` giá trị 200, lý do 30 ký tự.
 2. TA1 `GET /params/18.dlq.replay.approval-threshold`.
-3. SO mở `/ca-nhan/viec`, mở việc `ph18.approve-param`, xem giá trị trước và sau ở UI-18-09.
+3. SO mở `/viec-cua-toi`, mở việc `ph18.approve-param`, xem giá trị trước và sau ở UI-18-09.
 4. SO `POST /param-change-requests/{requestId}:approve` kèm `If-Match`.
 
 **Kết quả mong đợi.** Bước 1 `202`, đề nghị `PENDING_APPROVAL`, EVT-18-02 phát; KT: có (param-change-request). Bước 2 giá trị hiệu lực vẫn 500. Bước 3 việc chỉ hiện cho SO và TA2, không hiện cho TA1. Bước 4 `200`, phiên bản mới `ACTIVE`, phiên bản cũ `SUPERSEDED`, EVT-18-01 phát, việc đóng `DONE`; KT ghi trước khi giá trị có hiệu lực.
@@ -1522,7 +1522,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. IE tạo bản sửa số 1 đổi `diaChiThuongTru`.
 2. IE `POST .../revisions/1:approve`.
 3. IE tạo bản sửa số 2 khi số 1 còn chờ.
-4. TA2 mở việc `ph18.approve-revision` ở `/ca-nhan/viec`, duyệt.
+4. TA2 mở việc `ph18.approve-revision` ở `/viec-cua-toi`, duyệt.
 
 **Kết quả mong đợi.** Bước 1 `201` `PENDING_APPROVAL`. Bước 2 `403` ERR-18-005. Bước 3 `409` ERR-18-030. Bước 4 `200` `APPROVED`, mục sang `TRIAGED` nếu đang `POISON`, EVT-18-07; việc không hiện với IE.
 
@@ -1899,7 +1899,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. TO tạo lượt 800 mục và gửi.
 2. TO `POST /replay-jobs/{jobId}:approve`.
 3. Trong lúc chờ, bỏ qua 20 mục của lượt.
-4. TA2 duyệt từ việc ở `/ca-nhan/viec`.
+4. TA2 duyệt từ việc ở `/viec-cua-toi`.
 
 **Kết quả mong đợi.** Bước 1 `200` `PENDING_APPROVAL`. Bước 2 `403` ERR-18-005. Bước 4 `200` `APPROVED` rồi `RUNNING`, `total = 780`, 20 mục ghi `SKIPPED`; việc duyệt không hiện cho TO.
 
@@ -2670,7 +2670,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /me/tasks?summary=true`.
-2. Mở `/ca-nhan/viec`, lọc loại `ph18.approve-param`.
+2. Mở `/viec-cua-toi`, lọc loại `ph18.approve-param`.
 3. Bấm một việc.
 
 **Kết quả mong đợi.** Bước 1 `200` `open = 12`, `overdue = 2`, theo loại. Bước 2 đúng việc, cột hạn và người giao. Bước 3 chuyển sang màn của phân hệ nguồn qua liên kết đã đăng ký.
@@ -2717,7 +2717,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /me/tasks/TASK-KHONG-CO`.
-2. Mở liên kết `/ca-nhan/viec/TASK-DONE-01`.
+2. Mở liên kết `/viec-cua-toi/TASK-DONE-01`.
 
 **Kết quả mong đợi.** Bước 1 `404` ERR-18-001. Bước 2 màn hiện câu thông báo ERR-18-048 và nút về danh sách.
 
@@ -3533,7 +3533,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. U-T96-DS `POST /migration-runs` `mode = DRY_RUN`, `retryErrorsOf = RUN-DRY-02`.
+1. U-T96-DS `POST /migration-runs` `mode = DRY_RUN`, `retryOf = RUN-DRY-02`.
 2. Gửi lại bước 1 khi không còn bản ghi `OPEN`.
 
 **Kết quả mong đợi.** Bước 1 lần chạy chỉ đọc 15 bản ghi, 15 hợp lệ, danh sách lỗi cũ `FIXED_AT_SOURCE`. Bước 2 `422` ERR-18-036.
@@ -4367,8 +4367,8 @@ Các kịch bản TS-18-41…46 kiểm các tính chất xuyên suốt: cô lậ
 **Các bước.**
 
 1. TA1 gọi API duyệt của từng đối tượng.
-2. TA1 mở `/ca-nhan/viec`.
-3. TA2 mở `/ca-nhan/viec`.
+2. TA1 mở `/viec-cua-toi`.
+3. TA2 mở `/viec-cua-toi`.
 
 **Kết quả mong đợi.** Bước 1 tám lần `403` ERR-18-005, không đối tượng nào đổi trạng thái. Bước 2 không có việc duyệt nào. Bước 3 có đủ tám việc; nút "Duyệt" trên màn đối tượng bị khóa với TA1.
 
@@ -5594,5 +5594,6 @@ Năm câu hỏi dưới theo dải Q18-40…44 dành cho tập kiểm thử.
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Nhóm kiểm thử | Bản đầu: kịch bản TS-18-01…46, test case TC-18, UAT-18-01…08, ma trận truy vết, Gherkin, bảng tính theo FRS 0.1 |
 | 0.2 | 2026-11-27 | Nhóm kiểm thử | Đồng bộ nội bộ theo FRS 0.2: chép lại câu thông báo ERR-18-001, 005, 006, 007, 013, 017, 036, 069, 071 theo §9.1; thêm bảy ca cho API-18-181…188; TC-18-126, 134 theo `action` và API-18-187; dấu cấp lại `REISSUED`; mục 10.1 thêm cột trạng thái, cả tám đề nghị đã hấp thụ |
+| 0.3 | 2026-11-27 | Nhóm kiểm thử | Đồng bộ chéo cuối: route `/viec-cua-toi`, `retryOf` theo OpenAPI |
 
 : Lịch sử phiên bản

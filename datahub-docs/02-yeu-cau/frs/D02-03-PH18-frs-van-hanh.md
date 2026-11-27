@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH18
 ten: Đặc tả yêu cầu chức năng phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị nền tảng, quản trị tỉnh, vận hành, kỹ sư dh-platform, kiểm thử viên
@@ -385,7 +385,7 @@ Tài khoản máy và scope (cấp khi triển khai, không gán cho người) �
 | `ops:incident-write` | PH-13, PH-09 | Mở, cập nhật sự cố (FR-18-047) |
 | `ops:migration-import` | Phân hệ đích | Nhận lô di trú từ `dh-migrate` (do PH-18 gọi ra) |
 | `ops:backup-report` | Tác vụ thu thập, CronJob kiểm tra khôi phục | Báo bản sao lưu, kết quả kiểm tra (FR-18-052, 053) |
-| `ops:merge-transfer` | PH-20 | Yêu cầu, hủy chuyển dữ liệu sáp nhập (FR-18-057) |
+| `ops:merge-transfer` | PH-20 | Yêu cầu, hủy chuyển dữ liệu sáp nhập (FR-18-057); PH-20 gọi bằng client credentials qua `apisix-int` |
 | `ops:shadow-ingest` | Bộ so sánh bóng | Gửi cặp phản hồi đã băm (FR-18-067) |
 
 : Scope máy của PH-18
@@ -1521,7 +1521,7 @@ Hình cho thấy hai đường vào hội tụ ở cùng bước kiểm hợp đ
 
 **Truy vết.** REQ-18; LGC-BUS-037; CMP-LAW-09; FR-18-001 cũ (repo).
 
-**Tiền điều kiện.** Topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18.
+**Tiền điều kiện.** Topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18.
 
 **Kích hoạt.** Có bản tin mới trên topic.
 
@@ -3242,7 +3242,7 @@ Hình cho thấy người dùng duyệt ở màn của phân hệ nguồn; PH-18
 
 **Tiền điều kiện.** Người dùng đã chọn tenant.
 
-**Kích hoạt.** Người dùng mở `/ca-nhan/viec` hoặc xem thẻ "Việc của tôi" trên trang chủ.
+**Kích hoạt.** Người dùng mở `/viec-cua-toi` hoặc xem thẻ "Việc của tôi" trên trang chủ.
 
 **Đầu vào.** Lọc `loai`, `phan-he`, `han` (`qua-han`, `hom-nay`, `tuan-nay`), `trang-thai`; `summary=true` cho thẻ trang chủ.
 
@@ -3299,7 +3299,7 @@ Hình cho thấy người dùng duyệt ở màn của phân hệ nguồn; PH-18
 3. Hệ thống lưu `work_calendar`, `calendar_holiday`, phát EVT-18-15.
 4. DU gọi tính hạn: hệ thống cộng ngày làm việc theo lịch tenant và múi giờ `18.calendar.timezone`, trả mốc hạn và danh sách ngày đã bỏ qua.
 
-**Luồng thay thế.** Năm chưa có lịch: dùng `COMMON`; `COMMON` cũng chưa có thì chỉ bỏ cuối tuần và trả cờ `calendarMissing = true` (BR-18-034). DU giữ đệm 24 giờ và làm mới khi nhận EVT-18-15.
+**Luồng thay thế.** Năm chưa có lịch: dùng `COMMON`; `COMMON` cũng chưa có thì chỉ bỏ cuối tuần và trả cờ `calendarMissing = true`; kết quả tính ngày luôn kèm `calendarSource` (`TENANT`, `COMMON`, `NONE`) cho biết lịch đã dùng (BR-18-034). DU giữ đệm 24 giờ và làm mới khi nhận EVT-18-15.
 
 **Luồng ngoại lệ.**
 
@@ -3684,7 +3684,7 @@ Hình cho thấy ba chức năng tác vụ nặng (055, 056, 057) đều chạy 
 3. Bản sao lưu lỗi hoặc đối tượng trễ: hệ thống phát EVT-18-19 (một lần khi chuyển trạng thái), mở sự cố `SEV2` (FR-18-047).
 4. Người dùng mở bảng điều khiển: thấy mỗi đối tượng với lần thành công gần nhất, độ tươi, thời gian giữ, kết quả kiểm tra khôi phục gần nhất, màu theo trạng thái.
 
-**Luồng thay thế.** Nguồn không trả lời (ví dụ API Velero lỗi): đối tượng hiện "Không rõ" kèm thời điểm thu gần nhất (ERR-18-122), không coi là lỗi sao lưu nhưng vẫn cảnh báo sau 3 lần thu liên tiếp lỗi.
+**Luồng thay thế.** Nguồn không trả lời (ví dụ API Velero lỗi): đối tượng hiện "Không rõ" kèm thời điểm thu gần nhất (ERR-18-122) và API đọc đặt cờ `collectorError = true` ở đối tượng đó, không coi là lỗi sao lưu nhưng vẫn cảnh báo sau 3 lần thu liên tiếp lỗi.
 
 **Luồng ngoại lệ.**
 
@@ -3942,7 +3942,7 @@ Hình cho thấy tenant chỉ tạm ngừng từ bước 4 đến bước 8; bư
 ::: dac-ta
 **Mục đích.** Khi hai tỉnh sáp nhập, chuyển dữ liệu của từng phân hệ từ tenant nguồn sang tenant đích theo kế hoạch do PH-20 điều phối, giữ `id` gốc và ghi `origin_tenant_id` để truy được nguồn gốc.
 
-**Tác nhân, quyền.** PH-20 (scope `ops:merge-transfer`); PA xem (`PERM-18-backup`); Job `dh-tenant-export` chạy chế độ trích và nạp.
+**Tác nhân, quyền.** PH-20 gọi bằng tài khoản máy (client credentials qua `apisix-int`, scope `ops:merge-transfer`; không có phiên người dùng); PA xem (`PERM-18-backup`); Job `dh-tenant-export` chạy chế độ trích và nạp.
 
 **Mức ưu tiên, đợt.** S · Đợt 2.
 
@@ -3952,14 +3952,14 @@ Hình cho thấy tenant chỉ tạm ngừng từ bước 4 đến bước 8; bư
 
 **Kích hoạt.** PH-20 gọi `POST /merge-transfers` cho từng phân hệ tham gia; PH-18 nhận `platform.tenant.merge-started.v1`.
 
-**Đầu vào.** Theo bảng dữ liệu vào của FR-18-057 dưới đây; `Idempotency-Key`.
+**Đầu vào.** Theo bảng dữ liệu vào của FR-18-057 dưới đây; `Idempotency-Key` (`{mergePlanId}:{module}` cho `FULL`, thêm hậu tố `:DELTA` cho lượt bù cuối).
 
 **Luồng xử lý chính.**
 
-1. PH-20 gửi yêu cầu. Hệ thống kiểm lũy đẳng theo `mergePlanId:module` (đã có với thân khác: ERR-18-061), kiểm `mappingRef` đọc được và `module` là schema có `tenant_id` (ERR-18-060).
+1. PH-20 gửi yêu cầu. Hệ thống kiểm lũy đẳng theo `mergePlanId:module:mode` (đã có với thân khác: ERR-18-061), kiểm `mappingRef` đọc được và `module` là mã phân hệ `PH-nn` có schema chứa `tenant_id`, PH-18 tự ánh xạ sang schema (ví dụ `PH-07` sang `ph07_rdm`; không có: ERR-18-060).
 2. Hệ thống tạo `merge_transfer` `QUEUED` và Job: trích dòng tenant nguồn, áp ánh xạ mã (ví dụ mã đơn vị, mã danh mục trùng), đặt `tenant_id` đích và `origin_tenant_id` nguồn, giữ `id` gốc.
-3. `dryRun = true`: Job chỉ đếm, kiểm xung đột khóa, trả báo cáo; không ghi. `dryRun = false`: Job nạp vào tenant đích trong giao dịch theo phân hệ với `SET LOCAL app.tenant_id` đích, tắt trigger outbox.
-4. Job báo tiến độ về PH-20 qua `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` (lỗi: ERR-18-123, thử lại), cập nhật `merge_transfer`, phát EVT-18-24.
+3. `dryRun = true`: Job chỉ đếm, kiểm xung đột khóa, trả báo cáo; không ghi (PH-20 dùng chế độ này cho bước chạy thử của kế hoạch, API-20-097). `dryRun = false`: Job nạp vào tenant đích trong giao dịch theo phân hệ với `SET LOCAL app.tenant_id` đích, tắt trigger outbox. `mode = FULL` (mặc định) chuyển toàn bộ dòng; `mode = DELTA` là lượt bù cuối trước cutover (UC-20-28), chỉ trích dòng có `updated_at` từ `since` (mặc định là mốc kết thúc của lượt `FULL` thật gần nhất của cùng kế hoạch và phân hệ), nạp theo khóa `id` gốc để dòng đã chuyển được cập nhật thay vì nhân đôi.
+4. Job báo tiến độ về PH-20 qua `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` (API-20-167; báo ở các mốc bắt đầu, từng lô và kết thúc, kèm số bản ghi, `dryRun` và lỗi; lỗi gọi: ERR-18-123, thử lại), cập nhật `merge_transfer`, phát EVT-18-24.
 
 **Luồng thay thế.** PH-20 hủy chuyển chưa xong: Job dừng sau giao dịch hiện tại, dữ liệu đã nạp của phân hệ đó được xóa theo `origin_tenant_id` và `mergePlanId`. Định danh người dùng chuyển qua PH-12 (API-12-045, API-12-046), không qua công cụ này.
 
@@ -3986,12 +3986,14 @@ Hình cho thấy tenant chỉ tạm ngừng từ bước 4 đến bước 8; bư
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
 |---|---|---|---|---|
-| `mergePlanId` | T-ID | Có | Kế hoạch của PH-20 | (theo PH-20) |
-| `module` | T-CODE | Có | Schema có `tenant_id` | `ph07_rdm` |
+| `mergePlanId` | T-CODE | Có | Mã kế hoạch của PH-20, mẫu `^SN-[0-9]{4}-[0-9]{3}$` | `SN-2026-001` |
+| `module` | T-CODE | Có | Mã phân hệ `PH-nn` có schema chứa `tenant_id` | `PH-07` |
 | `sourceTenant` | T-CODE | Có | `SUSPENDED` | `T68` |
 | `targetTenant` | T-CODE | Có | `ACTIVE`, khác nguồn | `T01` |
 | `mappingRef` | T-TEXT | Có | Tham chiếu bảng ánh xạ mã do PH-20 giữ | `merge-plan/ánh-xạ/ph07` |
 | `dryRun` | T-BOOL | Có | | `true` |
+| `mode` | Enum | Không | `FULL` (mặc định) hoặc `DELTA` | `DELTA` |
+| `since` | T-TS | Không | Chỉ với `mode = DELTA`; không sau thời điểm gọi | `2026-11-27T09:15:02+07:00` |
 
 : Dữ liệu vào của FR-18-057
 
@@ -4846,7 +4848,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-18. Mỗi quy tắc đ
 | BR-18-042 | Không di trú thông tin xác thực; mỗi thông tin bị bỏ có dấu cấp lại ở PH-01, PH-03 | 062, 065 |
 | BR-18-043 | Di trú không phát sự kiện nghiệp vụ hàng loạt: API nhập của phân hệ đích chạy với cờ `migration = true` | 061, 062 |
 | BR-18-044 | Cắt chuyển cần danh sách kiểm tra đạt (DLQ của nhóm rỗng, tỷ lệ khớp ≥ ngưỡng, xác thực đã cấp lại, đối chiếu đã giải trình) và bốn mắt; quay lui trong `18.migration.rollback-window-minutes` (15 phút) không cần duyệt | 066, 067, 068 |
-| BR-18-045 | Chuyển sáp nhập giữ `id` gốc, ghi `origin_tenant_id`, lũy đẳng theo `mergePlanId:module`; PH-20 là bên điều phối | 057 |
+| BR-18-045 | Chuyển sáp nhập giữ `id` gốc, ghi `origin_tenant_id`, lũy đẳng theo `mergePlanId:module:mode`; PH-20 là bên điều phối | 057 |
 | BR-18-046 | Mọi thao tác ghi vận hành ghi kiểm toán PH-13 trước khi có hiệu lực; trừ hủy, tạm dừng, quay lui khẩn được ghi trễ qua outbox | 004, 023, 047, 070 |
 | BR-18-047 | Mọi dữ liệu của PH-18 có `tenant_id` và RLS; PA, PO xem liên tenant qua chế độ nền tảng có lý do và kiểm toán (SEC-85); công cụ khôi phục, xuất, chuyển chạy với `SET LOCAL app.tenant_id` | 019, 020, 021, 052, 055, 057 |
 | BR-18-048 | Bí mật chỉ là tham chiếu OpenBao `kv/dh/{tenant}/...`; gói tham số, gói xuất, biên bản có tổng kiểm tra SHA-256 | 008, 052, 053, 056, 058, 059 |
@@ -4960,7 +4962,7 @@ Các tham số dưới đây thuộc không gian tên `18.` và được chỉnh
 
 PH-18 dùng thêm ba cờ tính năng của chính mình theo chuẩn `ff.{module}.{tính-năng}` (FR-18-009), có chủ sở hữu PH-18 và ngày gỡ: `ff.ops.shadow-compare` (bật đối soát bóng FR-18-067 khi PH-03 sẵn sàng bộ chạm), `ff.ops.sms-channel` (bật kênh SMS mức nền tảng trước khi tỉnh bật `18.notify.sms.enabled`), `ff.ops.merge-transfer` (bật chuyển sáp nhập FR-18-057 khi PH-20 lên đợt 2). Cờ tắt thì API tương ứng trả ERR-18-006.
 
-Ngoài các khóa `18.*`, PH-18 lưu tham số của mọi không gian tên đã đăng ký (khoảng 340 khóa theo danh sách của các phân hệ: `onboarding.*` 30, `02.*` 28, `04.*` 23, `05.*` 17, `07.rdm.*` 23, `10.*` 59, `12.*` 38, `14.*` 51, `15.*` 27, `17.*` 49); định nghĩa của các khóa đó nằm ở mục 8.2 của FRS từng phân hệ.
+Ngoài các khóa `18.*`, PH-18 lưu tham số của mọi không gian tên đã đăng ký (khoảng 370 khóa theo danh sách của các phân hệ: `onboarding.*` 30, `02.*` 28, `04.*` 23, `05.*` 17, `07.rdm.*` 23, `10.*` 59, `12.*` 38, `14.*` 51, `15.*` 27, `17.*` 49, `20.*` 29); định nghĩa của các khóa đó nằm ở mục 8.2 của FRS từng phân hệ.
 
 ## 9. Mã lỗi, thông báo, sự kiện và API
 
@@ -5139,7 +5141,7 @@ PH-18 tiêu thụ các sự kiện dưới để mở việc, gửi thông báo 
 
 Mã sự kiện của PH-20 sẽ theo D03-04-PH20; ở đây ghi tên topic của hợp đồng. Ngoài sự kiện, PH-20 dùng hai hợp đồng đồng bộ của PH-18: đăng ký không gian tên `20.*` qua `PUT /ops/internal/v1/param-namespaces/{ns}/schema` và gửi thư (kích hoạt, tạm ngừng tenant, bảo trì, phát hành) qua NotificationApi (FR-18-036). Danh sách tenant hoạt động cho mọi tác vụ nền (đối soát, thu trạng thái sao lưu, báo cáo) PH-18 lấy từ registry `/internal/tenant/v1/tenants?status=ACTIVE` với scope `tenant:registry-read`.
 
-Kênh DLQ chung `{tenant}.ops.dlq.v1` không mang mã EVT: đây là topic hạ tầng mà nguồn ghi bản tin lỗi kèm header của hợp đồng ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013). Thời hạn giữ topic 14 ngày (ADR-181), 6 phân vùng, khóa `dh-source-ph:dh-flow`. Tên topic chờ chốt với CC-CAMEL-05 (Q18-01).
+Kênh DLQ chung `{tenant}.ops.dlq.v1` không mang mã EVT: đây là topic hạ tầng mà nguồn ghi bản tin lỗi kèm header của hợp đồng ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013). Thời hạn giữ topic 14 ngày (ADR-181), 6 phân vùng, khóa `dh-source-ph:dh-flow`. Tên topic đã chốt: PH-18 là chủ topic DLQ chung, PH-04 và D04-01 (CC-CAMEL-05) đổi `{tenant}.integration.dlq.v1` theo tên này; bộ header theo bảng 4.1b.
 
 ### 9.4. Danh mục API
 
@@ -5360,7 +5362,7 @@ PH-18 có 24 màn hình. Hai mươi hai màn nằm trong khu `/van-hanh` của `
 | UI-18-12 | Soạn mẫu thông báo | `/van-hanh/thong-bao/mau/{ma}` | PTN-03 | TA | 035 |
 | UI-18-13 | Nhật ký gửi thông báo | `/van-hanh/thong-bao/nhat-ky` | PTN-11 | TA, TO, AU | 036, 037, 040, 041 |
 | UI-18-14 | Tùy chọn nhận thông báo | `/ca-nhan/thong-bao` | PTN-12 | Mọi người dùng | 036, 038 |
-| UI-18-15 | Việc của tôi | `/ca-nhan/viec` | PTN-10 | Mọi người dùng | 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068 |
+| UI-18-15 | Việc của tôi | `/viec-cua-toi` | PTN-10 | Mọi người dùng | 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068 |
 | UI-18-16 | Lịch, bảo trì và đóng băng | `/van-hanh/lich` | PTN-01 | TA, PA, PO | 045, 046 |
 | UI-18-17 | Danh sách sự cố | `/van-hanh/su-co` | PTN-01 | TO, SO, TA | 047, 048 |
 | UI-18-18 | Chi tiết sự cố | `/van-hanh/su-co/{ma}` | PTN-02 | TO, SO | 048, 049, 050, 051 |
@@ -5387,7 +5389,7 @@ Màn UI-18-03 chia ba cột ở `bp-xl` và xếp thành tab ở màn hẹp. C�
 
 ### 10.3. Quy ước route và tab
 
-Mọi route của PH-18 dùng chữ thường không dấu, gạch nối; tab là tham số `?tab=` (ví dụ `?tab=nhom`, `?tab=co-tinh-nang`), bộ lọc là tham số tiếng Việt không dấu. Mã đối tượng trên URL là mã nghiệp vụ (`{ma}` của sự cố, kế hoạch di trú) hoặc định danh (`{dlqId}`, `{jobId}`); không đặt giá trị nhạy cảm trên URL. Màn của PH khác nhúng màn tham số chung bằng `/van-hanh/tham-so?ns={ns}`; liên kết cũ `/quan-tri/tham-so?nhom={ns}` của PH-04 chuyển hướng về route này (đề nghị đồng bộ 12.4).
+Mọi route của PH-18 dùng chữ thường không dấu, gạch nối; tab là tham số `?tab=` (ví dụ `?tab=nhom`, `?tab=co-tinh-nang`), bộ lọc là tham số tiếng Việt không dấu. Mã đối tượng trên URL là mã nghiệp vụ (`{ma}` của sự cố, kế hoạch di trú) hoặc định danh (`{dlqId}`, `{jobId}`); không đặt giá trị nhạy cảm trên URL. Màn của PH khác nhúng màn tham số chung bằng `/van-hanh/tham-so?ns={ns}`; liên kết cũ `/quan-tri/tham-so?nhom={ns}` của PH-04 chuyển hướng về route này (đề nghị đồng bộ 12.4). Hộp việc UI-18-15 dùng route chung `/viec-cua-toi` của D03-06-00 (mẫu chung thắng); đường `/ca-nhan/viec` chỉ là chuyển hướng 301 về route này.
 
 ## 11. Truy vết
 
@@ -5664,6 +5666,7 @@ Mỗi tiêu chí kiểm ở mức phân hệ trên hồ sơ "tỉnh vừa" (GĐ-
 
 | Phiên bản | Ngày | Người thực hiện | Thay đổi |
 |---|---|---|---|
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: chốt PH-18 là chủ topic DLQ chung, PH-20 gọi merge-transfers bằng client credentials qua apisix-int (thêm mode DELTA, since, mã `PH-nn` và `SN-yyyy-nnn`), báo tiến độ API-20-167, route `/viec-cua-toi`, thêm không gian tên `20.*`, `calendarSource`, `collectorError` |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18: thêm API-18-181…188 (nhận việc, bản ghi lỗi di trú, miễn cấp lại xác thực, quy tắc chuẩn hóa, xác nhận mục kiểm tay, inbox lỗi, chế độ chỉ đọc, lấy nội dung phát lại); câu thông báo chung có chỗ trống cho ERR-18-001, 005, 006, 007, 013, 017, 036, thống nhất ERR-18-069, 071; FR-18-062 kiểm `READY`; vai mục 10.1 theo bảng 3.1; API-18-041, 043, 045 dùng `PERM-18-read`; FR-18-068 thân `action`; NFR-18-016 giữ topic 14 ngày; 2 bản sao theo SAD; bảng trạng thái đối tượng phụ (mục 4.5); BR-18-013 hai đường vào; mục 12.5 ghi đề nghị nội bộ đã hấp thụ |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của FRS PH-18: 72 FR, 50 BR, 22 NFR, 24 màn hình, 180 API, 29 sự kiện phát, 96 mã lỗi, 55 thực thể, 61 tham số `18.*`, 19 câu hỏi mở; gồm hợp đồng với PH-20 (chuyển sáp nhập, sự kiện `platform.*`) |
 

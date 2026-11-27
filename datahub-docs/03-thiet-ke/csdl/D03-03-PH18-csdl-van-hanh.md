@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH18
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -1575,23 +1575,23 @@ Cột: `drill_code` v(32); `drill_kind` v(20) {DR_SWITCHOVER, RBK_03, PITR_CLUST
 ### 3.44. `merge_transfer`
 
 ::: dac-ta
-**Mục đích.** EN-18-55 Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; PH-18 báo tiến độ về PH-20 (participants/{module}:report).
+**Mục đích.** EN-18-55 Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; thêm mode (FULL hoặc DELTA, lượt bù cuối) và since cho lượt bù; PH-18 báo tiến độ về PH-20 (participants/{module}:report).
 
 **FR phục vụ.** FR-18-057; EN-18-55.
 
 **Khóa chính.** `id`.
 
-**Duy nhất.** `uq_merge_transfer_real` (tenant_id, merge_plan_id, module) có điều kiện.
+**Duy nhất.** `uq_merge_transfer_real` (tenant_id, merge_plan_id, module, transfer_mode) có điều kiện.
 
 **Khóa ngoại.** (tenant_id, export_job_id) → `tenant_export_job`.
 
-**Ràng buộc CHECK.** `ck_merge_transfer_` + module, tenants, status, progress, rows, report, done.
+**Ràng buộc CHECK.** `ck_merge_transfer_` + module, mode, tenants, status, progress, rows, report, done.
 
 **Chỉ mục.** `ix_merge_transfer_plan`.
 
 **Cách ly tenant.** FORCE RLS theo `tenant_id`, bốn chính sách (đọc, chèn, sửa, xóa). Quyền thêm: vai `ph18_worker` đọc, thêm, sửa.
 
-**Phân vùng, bất biến.** Bất biến: `merge_plan_id`, `module`, `source_tenant`, `target_tenant`, `mapping_ref`, `dry_run`; Trigger: `tg_merge_transfer_fsm_status`.
+**Phân vùng, bất biến.** Bất biến: `merge_plan_id`, `module`, `source_tenant`, `target_tenant`, `mapping_ref`, `dry_run`, `transfer_mode`, `delta_since`; Trigger: `tg_merge_transfer_fsm_status`.
 
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
@@ -1599,6 +1599,8 @@ Cột: `drill_code` v(32); `drill_kind` v(20) {DR_SWITCHOVER, RBK_03, PITR_CLUST
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | `mapping_ref` | `varchar(255)` | Tham chiếu bảng ánh xạ mã của kế hoạch sáp nhập do PH-20 giữ (không chép nội dung). |
+| `transfer_mode` | `varchar(5), mặc định 'FULL'` | FULL chuyển toàn bộ dòng của phân hệ; DELTA là lượt bù cuối trước cutover, chỉ chuyển dòng có updated_at từ delta_since (PH-20 gọi sau khi nguồn chỉ đọc). |
+| `delta_since` | `timestamptz, NULL` | Mốc updated_at bắt đầu của lượt bù; chỉ có khi transfer_mode = DELTA, mặc định là finished_at của lượt FULL thật gần nhất. |
 
 : Cột của bảng `merge_transfer`
 
@@ -2325,6 +2327,7 @@ Bảng dưới gom các điểm cần tài liệu chung hoặc phân hệ khác 
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.3 | 2026-11-27 | Luồng CSDL PH-18 | Đồng bộ chéo cuối: `merge_transfer` thêm `transfer_mode`, `delta_since` cho lượt bù cuối, chỉ mục duy nhất theo chế độ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18 theo FRS 0.2: 61 khóa `18.*` sinh từ FRS §8.2, `replay_mode`, bộ đếm lần gặp, enum và tên cột theo FRS và OpenAPI, mã phân hệ `PH-nn`, cửa sổ khử trùng 7 ngày, schema `ph18_batch` cho Spring Batch, FR phục vụ theo số FR-18; kiểm cô lập 525 khối PASS, changelog 15 tệp; đánh dấu mục đề nghị nội bộ đã hấp thụ |
 | 0.1 | 2026-11-27 | Luồng CSDL PH-18 | Bản đầu: 57 bảng (EN-18-01…55 và outbox, inbox), RLS FORCE, bốn vai, bốn bảng phân vùng tháng, dữ liệu `COMMON`, khung nhìn DD-13, DD-14, kiểm cô lập 520 khối PASS, changelog Liquibase 14 tệp |
 

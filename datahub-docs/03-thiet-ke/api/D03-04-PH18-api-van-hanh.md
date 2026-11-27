@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH18
 ten: Đặc tả API và sự kiện phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, kiểm thử viên, tích hợp viên, cán bộ vận hành, cán bộ ATTT, hội đồng thẩm định
@@ -34,7 +34,7 @@ Năm điểm hội đồng cần lưu ý.
 | Có `If-Match` | 54 operation |
 | `Idempotency-Key` | 83 bắt buộc, 6 tùy chọn (lũy đẳng theo khóa tự nhiên) |
 | Duyệt bốn mắt (ERR-18-005) | 13 operation |
-| Lược đồ thành phần | 322 |
+| Lược đồ thành phần | 323 |
 | Kênh AsyncAPI | 42 (29 sự kiện phát EVT-18-01…29, 13 kênh tiêu thụ) |
 | Mã lỗi | 96 (ERR-18-001…072 trả qua HTTP, ERR-18-101…124 của worker); 401, 403, 428 dùng ERR-00 |
 
@@ -123,7 +123,7 @@ Hai mặt API khác nhau về bên gọi, xác thực và cách lỗi được x
 | Mục | API người dùng | API nội bộ |
 |---|---|---|
 | Đường gốc | `/api/ops/v1` | `/ops/internal/v1` |
-| Bên gọi | Cán bộ qua BFF của cổng; PH-20 gọi `merge-transfers` bằng token dịch vụ (`ops:merge-transfer`) | Mọi DU qua thư viện `dh-ops-client`; máy chủ thư, SMS gateway; CronJob sao lưu; bộ so sánh bóng |
+| Bên gọi | Cán bộ qua BFF của cổng; PH-20 gọi `merge-transfers` bằng tài khoản máy (client credentials qua `apisix-int`, scope `ops:merge-transfer`) | Mọi DU qua thư viện `dh-ops-client`; máy chủ thư, SMS gateway; CronJob sao lưu; bộ so sánh bóng |
 | Xác thực | OIDC và PKCE ở BFF (quyền `PERM-18-*`) | `client_credentials`, mTLS và danh tính SPIFFE; một trong 14 scope `ops:*` |
 | Operation | 161 | 27 |
 | Hiệu năng | Đọc p95 ≤ 500 ms, ghi p95 ≤ 1 s | Đọc lô tham số p95 ≤ 50 ms (có bộ đệm phía DU), gửi thông báo bất đồng bộ p95 ≤ 200 ms |
@@ -191,7 +191,7 @@ Mỗi operation ghi quyền `PERM-18-*` ở `x-datahub-permission`; dấu `/` l�
 
 ### 2.2. Scope máy
 
-Token dịch vụ lấy bằng `client_credentials` có mTLS; API nội bộ kiểm DU nào có scope nào theo SPIFFE ID. Scope `ops:backup-report`, `ops:merge-transfer`, `ops:shadow-ingest` là đề nghị mới so với brief chung (FRS §12.4).
+Token dịch vụ lấy bằng `client_credentials` có mTLS; API nội bộ kiểm DU nào có scope nào theo SPIFFE ID. API-18-150 và 153 nằm ở tiền tố `/api/ops/v1` nhưng PH-20 gọi bằng tài khoản máy qua nhóm `apisix-int` với scope `ops:merge-transfer`; người dùng không gọi hai operation này. Thân API-18-150 có `dryRun` (`true`: chỉ đếm, kiểm xung đột, không ghi) và tiến độ được báo về PH-20 qua API-20-167 (`POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report`). Scope `ops:backup-report`, `ops:merge-transfer`, `ops:shadow-ingest` là đề nghị mới so với brief chung (FRS §12.4).
 
 | Scope | Dùng bởi | Operation |
 |---|---|---|
@@ -727,7 +727,7 @@ PH-18 tiêu thụ topic DLQ chung (không mang mã EVT, FRS §9.3) và sự ki�
 <!-- gen:consume:start -->
 | Topic | Bên phát | PH-18 dùng để |
 |---|---|---|
-| `{tenant}.ops.dlq.v1` | Mọi nguồn (PH-04 runtime và nguồn khác) | Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013) |
+| `{tenant}.ops.dlq.v1` | Mọi nguồn (PH-04 runtime và nguồn khác) | Topic DLQ hạ tầng: PH-18 là chủ topic; nguồn ghi bản tin lỗi kèm header ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013) |
 | `{tenant}.event.delivery.dead-lettered.v1` | PH-10 | EVT-10-11: có mục DLQ tầng sự kiện mới (gộp 1 phút); PH-18 hiển thị chung (FR-18-017) |
 | `{tenant}.event.replay.completed.v1` | PH-10 | EVT-10-12: lượt phát lại của PH-10 kết thúc; cập nhật kết quả đề nghị (FR-18-030) |
 | `{tenant}.event.migration.cut-over.v1` | PH-10 | EVT-10-15: ánh xạ di trú chuyển hẳn hoặc quay lui (FR-18-066) |
@@ -6417,7 +6417,7 @@ GET /ops/internal/v1/calendar/T68:working-days?from=2026-11-01&to=2026-11-30
 HTTP/1.1 200 OK
 
 {"tenant": "T68", "from": "2026-11-01", "to": "2026-11-30", "count": 37,
- "days": ["2026-12-01", "2026-12-02"]}
+ "days": ["2026-12-01", "2026-12-02"], "calendarMissing": false, "calendarSource": "TENANT"}
 ```
 
 #### API-18-117 · Tính hạn: mốc cộng n ngày làm việc
@@ -6456,7 +6456,8 @@ POST /ops/internal/v1/calendar/T68:add-working-days
 HTTP/1.1 200 OK
 
 {"from": "2026-11-26T00:00:00+07:00", "workingDays": 5,
- "dueAt": "2026-11-27T09:15:02+07:00", "skippedDates": ["2026-12-05", "2026-12-06"]}
+ "dueAt": "2026-11-27T09:15:02+07:00", "skippedDates": ["2026-12-05", "2026-12-06"],
+ "calendarMissing": false, "calendarSource": "TENANT"}
 ```
 
 #### API-18-118 · Cửa sổ bảo trì và đóng băng theo môi trường, thời gian
@@ -8028,7 +8029,7 @@ HTTP/1.1 200 OK
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-060, ERR-18-061 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11). Chạy `dh-tenant-export` và nạp cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ về `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` của PH-20. Trùng `mergePlanId` và `module` với thân khác: ERR-18-061.
+**Ghi chú.** PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11) bằng tài khoản máy qua `apisix-int` (client credentials, scope `ops:merge-transfer`, không dùng phiên người dùng). `dryRun = true` chỉ đếm và kiểm xung đột khóa, không ghi. `mode = DELTA` (mặc định `FULL`) là lượt bù cuối trước cutover, chỉ chuyển dòng có `updated_at` từ `since` (mặc định là mốc kết thúc của lượt `FULL` thật gần nhất); lũy đẳng theo `mergePlanId:module:mode`. Chạy `dh-tenant-export` và nạp cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ về `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` của PH-20. Trùng `mergePlanId` và `module` với thân khác: ERR-18-061.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -8037,9 +8038,9 @@ HTTP/1.1 200 OK
 POST /api/ops/v1/merge-transfers
 Idempotency-Key: dh-2026-11-27-0001
 
-{"mergePlanId": "0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60", "module": "ph01_onboarding",
- "sourceTenant": "T67", "targetTenant": "T68",
- "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01", "dryRun": true}
+{"mergePlanId": "SN-2026-001", "module": "PH-01", "sourceTenant": "T67",
+ "targetTenant": "T68", "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01",
+ "dryRun": true}
 ```
 
 ```http
@@ -8049,11 +8050,11 @@ ETag: W/"3"
 {"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
  "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
  "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
- "mergePlanId": "0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60", "module": "ph01_onboarding",
- "sourceTenant": "T68", "targetTenant": "T68",
- "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01", "dryRun": true,
- "status": "RUNNING", "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12,
- "rowsConflicted": 12, "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
+ "mergePlanId": "SN-2026-001", "module": "PH-04", "sourceTenant": "T68",
+ "targetTenant": "T68", "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01",
+ "dryRun": true, "mode": "FULL", "since": "2026-11-27T09:15:02+07:00", "status": "RUNNING",
+ "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12, "rowsConflicted": 12,
+ "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
  "finishedAt": "2026-11-27T02:40:00+07:00", "lastReportedAt": "2026-11-27T09:15:02+07:00",
  "reportStatus": "PENDING", "errorMessage": "Hệ đích trả 503 sau 3 lần thử"}
 ```
@@ -8069,7 +8070,7 @@ ETag: W/"3"
 
 **FR hiện thực.** FR-18-057.
 
-**Tham số.** `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn); `mergePlanId` (query, string, bắt buộc); `module` (query, string, tùy chọn).
+**Tham số.** `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn); `mergePlanId` (query, MergePlanId, bắt buộc); `module` (query, ModuleCode, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -8085,15 +8086,14 @@ ETag: W/"3"
 **Ví dụ yêu cầu và phản hồi.**
 
 ```http
-GET /api/ops/v1/merge-transfers?mergePlanId=0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
+GET /api/ops/v1/merge-transfers?mergePlanId=SN-2026-001
 ```
 
 ```http
 HTTP/1.1 200 OK
 
-{"items": [{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
-   "mergePlanId": "0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60", "module": "ph01_onboarding",
-   "sourceTenant": "T68", "targetTenant": "T68",
+{"items": [{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3, "mergePlanId": "SN-2026-001",
+   "module": "PH-04", "sourceTenant": "T68", "targetTenant": "T68",
    "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01", "dryRun": true,
    "status": "RUNNING"}], "page": 0, "size": 20, "totalElements": 1}
 ```
@@ -8135,11 +8135,11 @@ ETag: W/"3"
 {"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
  "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
  "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
- "mergePlanId": "0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60", "module": "ph01_onboarding",
- "sourceTenant": "T68", "targetTenant": "T68",
- "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01", "dryRun": true,
- "status": "RUNNING", "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12,
- "rowsConflicted": 12, "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
+ "mergePlanId": "SN-2026-001", "module": "PH-04", "sourceTenant": "T68",
+ "targetTenant": "T68", "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01",
+ "dryRun": true, "mode": "FULL", "since": "2026-11-27T09:15:02+07:00", "status": "RUNNING",
+ "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12, "rowsConflicted": 12,
+ "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
  "finishedAt": "2026-11-27T02:40:00+07:00", "lastReportedAt": "2026-11-27T09:15:02+07:00",
  "reportStatus": "PENDING", "errorMessage": "Hệ đích trả 503 sau 3 lần thử"}
 ```
@@ -8184,11 +8184,11 @@ ETag: W/"3"
 {"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
  "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
  "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
- "mergePlanId": "0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60", "module": "ph01_onboarding",
- "sourceTenant": "T68", "targetTenant": "T68",
- "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01", "dryRun": true,
- "status": "RUNNING", "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12,
- "rowsConflicted": 12, "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
+ "mergePlanId": "SN-2026-001", "module": "PH-04", "sourceTenant": "T68",
+ "targetTenant": "T68", "mappingRef": "ph20/merge-plans/MP-0003/mappings/ph01",
+ "dryRun": true, "mode": "FULL", "since": "2026-11-27T09:15:02+07:00", "status": "RUNNING",
+ "progressPercent": 42.5, "rowsRead": 12, "rowsLoaded": 12, "rowsConflicted": 12,
+ "rowsFailed": 12, "startedAt": "2026-11-27T02:00:00+07:00",
  "finishedAt": "2026-11-27T02:40:00+07:00", "lastReportedAt": "2026-11-27T09:15:02+07:00",
  "reportStatus": "PENDING", "errorMessage": "Hệ đích trả 503 sau 3 lần thử"}
 ```
@@ -9693,6 +9693,7 @@ Bảng dưới đây ghi các phiên bản của tài liệu.
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-20 gọi merge-transfers bằng client credentials qua apisix-int, thêm `mode`, `since`, mã kế hoạch `SN-yyyy-nnn` và `PH-nn`, thêm `calendarMissing`, `calendarSource`, `collectorError`, PH-18 là chủ topic DLQ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18 theo FRS 0.2: thêm API-18-181…188, `PERM-18-read` cho API-18-041, 043, 045, thân `action` của API-18-175, ERR-18-071 ở mọi API ghi, `SKIPPED` ở mục phát lại, câu thông báo chung của §9.1; đánh dấu mục 11.1 đã hấp thụ; `check_contracts.py` sạch 188 operation |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 180 operation OpenAPI 3.1, 29 sự kiện và 13 kênh tiêu thụ AsyncAPI 3.0, quy ước RFC 9457, bốn mắt, DLQ hợp nhất, bốn API dùng chung; đối chiếu FRS §9.4 đủ mã, sạch Spectral và `check_contracts.py` |
 

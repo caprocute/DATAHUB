@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH18
 ten: Đặc tả use case phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -1860,7 +1860,7 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 
 **Tiền điều kiện.** Tuấn đã chọn tenant T68.
 
-**Kích hoạt.** Tuấn mở `/ca-nhan/viec` hoặc xem thẻ "Việc của tôi" trên trang chủ; tác vụ nhắc chạy mỗi 15 phút.
+**Kích hoạt.** Tuấn mở `/viec-cua-toi` hoặc xem thẻ "Việc của tôi" trên trang chủ; tác vụ nhắc chạy mỗi 15 phút.
 
 **Đảm bảo tối thiểu.** Mất quyền xem thì việc bị ẩn ngay lúc đọc; nhận việc không đổi trạng thái ở phân hệ nguồn.
 
@@ -2225,7 +2225,7 @@ Hình cho thấy tenant chỉ bị tạm ngừng từ bước 4 và dữ liệu 
 ::: dac-ta
 **Mục tiêu.** Khi hai tỉnh sáp nhập, dữ liệu từng phân hệ của tỉnh nguồn được chuyển sang tỉnh đích giữ nguyên định danh gốc và đánh dấu nguồn gốc, chạy thử được trước, dừng và gỡ được nếu PH-20 hủy.
 
-**Tác nhân chính.** PH-20 (scope `ops:merge-transfer`), bên điều phối.
+**Tác nhân chính.** PH-20 (tài khoản máy, client credentials qua `apisix-int`, scope `ops:merge-transfer`), bên điều phối.
 
 **Tác nhân phụ.** Job `dh-tenant-export` chế độ trích và nạp; PA (Hà) xem (`PERM-18-backup`); PH-12 (chuyển định danh người dùng bằng API-12-045, API-12-046, ngoài công cụ này).
 
@@ -2237,9 +2237,9 @@ Hình cho thấy tenant chỉ bị tạm ngừng từ bước 4 và dữ liệu 
 
 **Tiền điều kiện.** PH-20 có kế hoạch sáp nhập `mergePlanId` gộp T91 vào T92; T91 đã `SUSPENDED`, T92 `ACTIVE`; không có tác vụ nặng khác trên hai tenant; PH-18 đã nhận `platform.tenant.merge-started.v1`.
 
-**Kích hoạt.** PH-20 gọi `POST /merge-transfers` cho từng phân hệ tham gia.
+**Kích hoạt.** PH-20 gọi `POST /merge-transfers` (có `dryRun`) cho từng phân hệ tham gia; PH-18 báo tiến độ về PH-20 qua API-20-167.
 
-**Đảm bảo tối thiểu.** Chuyển lũy đẳng theo `mergePlanId:module` (BR-18-045); xung đột khóa thì dừng phân hệ đó và báo danh sách khóa xung đột; hủy thì dữ liệu đã nạp của phân hệ đó bị xóa theo `origin_tenant_id` và `mergePlanId`.
+**Đảm bảo tối thiểu.** Chuyển lũy đẳng theo `mergePlanId:module:mode` (BR-18-045; `mode = DELTA` là lượt bù cuối trước cutover do PH-20 gọi, chỉ trích dòng có `updated_at` từ `since`); xung đột khóa thì dừng phân hệ đó và báo danh sách khóa xung đột; hủy thì dữ liệu đã nạp của phân hệ đó bị xóa theo `origin_tenant_id` và `mergePlanId`.
 
 **Đảm bảo thành công.** Dữ liệu `PH-07` của T91 nằm ở T92 với `id` gốc và `origin_tenant_id = T91`; `merge_transfer` `SUCCEEDED`; PH-20 nhận tiến độ và EVT-18-24.
 
@@ -2747,3 +2747,4 @@ Phụ lục ghi những điểm lệch, thiếu hoặc chưa rõ phát hiện kh
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 40 use case phủ 72 FR của FRS 0.1, sáu sơ đồ use case theo nhóm, mười bốn sơ đồ trình tự (bốn mắt tham số, tiếp nhận DLQ, DLQ tầng sự kiện, chẩn đoán và xem nội dung, sửa payload, phát lại một mục, phát lại loạt, mẫu thông báo, gửi thông báo, chuyển PH-09, khôi phục tenant tám bước, sáp nhập, di trú thật, cắt chuyển), ma trận truy vết hai chiều, sáu luồng phụ, mười lăm đề nghị đồng bộ, năm câu hỏi mở Q18-45…49 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ theo FRS 0.2: câu thông báo ERR-18-001, 005, 006, 007, 013, 017, 036, 069, 071 dẫn nguyên văn câu chung có tham số; thêm API-18-181…188 vào luồng và ma trận mục 5.2 (UC-18-16, 26, 35 đến 38, 40); `NOT_NEEDED` đổi thành `WAIVED`; cắt chuyển dùng `action` của API-18-175; UC-18-36 kiểm kế hoạch `READY` (ERR-18-065); chế độ chỉ đọc bật, tắt qua API-18-187; Phụ lục A thêm cột trạng thái, 12 đề nghị đã hấp thụ, giữ ĐN-UC-10, 12, 14 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: route `/viec-cua-toi`, PH-20 gọi merge-transfers bằng tài khoản máy qua apisix-int, lượt bù DELTA, báo tiến độ API-20-167 |

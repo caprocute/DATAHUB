@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH18
 ten: Thiết kế giao diện màn hình phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, người vận hành tỉnh và nền tảng, cán bộ ATTT, kiểm thử viên, hội đồng thẩm định
@@ -247,12 +247,13 @@ Route theo D03-06-00 §2.4 và FRS §10.1, §10.3. Route tĩnh đứng trước 
 | `/van-hanh/di-tru/lan-chay/{ma}` | UI-18-22 | PTN-11 | `tab=loi`, `tab=doi-chieu`, `tab=xac-thuc` |
 | `/van-hanh/di-tru/song-song` | UI-18-23 | PTN-06 | `nhom={groupCode}` |
 | `/ca-nhan/thong-bao` | UI-18-14 | PTN-12 | `tab=tuy-chon` (mặc định là hộp thông báo) |
-| `/ca-nhan/viec` | UI-18-15 | PTN-10 | `loai`, `phan-he`, `han`, `trang-thai`, `chon={taskId}` |
+| `/viec-cua-toi` | UI-18-15 | PTN-10 | `loai`, `phan-he`, `han`, `trang-thai`, `chon={taskId}` |
 | `/quan-tri/tham-so?nhom={ns}` | Chuyển hướng 301 tới `/van-hanh/tham-so?ns={ns}` | | Liên kết cũ của PH-04 (FRS §10.3) |
+| `/ca-nhan/viec` | Chuyển hướng 301 tới `/viec-cua-toi` | | Đường cũ của FRS PH-18; route chung theo D03-06-00 |
 
 : Bảng đường dẫn của PH-18
 
-Mã trên URL là mã nghiệp vụ (`{ma}` của sự cố `SC-2026-0041`, lần chạy `LC-2026-014`, mẫu `ph01.review-decided`) hoặc định danh công khai ULID (`{dlqId}`, `{jobId}`, `{requestId}`); khóa tham số `{khoa}` giữ nguyên dấu chấm. Không đặt giá trị nhạy cảm trên URL. Các route `/van-hanh`, `/van-hanh/thong-bao`, `/van-hanh/su-co`, `/van-hanh/lich`, `/ca-nhan/viec` và ý nghĩa mới của `/ca-nhan/thong-bao` là đề nghị đồng bộ D03-06-00 (Phụ lục C, ĐB-01 đến ĐB-03).
+Mã trên URL là mã nghiệp vụ (`{ma}` của sự cố `SC-2026-0041`, lần chạy `LC-2026-014`, mẫu `ph01.review-decided`) hoặc định danh công khai ULID (`{dlqId}`, `{jobId}`, `{requestId}`); khóa tham số `{khoa}` giữ nguyên dấu chấm. Không đặt giá trị nhạy cảm trên URL. Các route `/van-hanh`, `/van-hanh/thong-bao`, `/van-hanh/su-co`, `/van-hanh/lich` và ý nghĩa mới của `/ca-nhan/thong-bao` đã được D03-06-00 nhận (Phụ lục C, ĐB-01 đến ĐB-03). Hộp việc dùng route chung `/viec-cua-toi` của D03-06-00; đường cũ `/ca-nhan/viec` chỉ còn là chuyển hướng 301.
 
 ### 4.3. Menu và phân quyền hiển thị
 
@@ -286,7 +287,7 @@ Breadcrumb theo D03-06-00 §2.5, cấp đầu là "Vận hành" hoặc "Cá nhâ
 | `/van-hanh/tham-so/{khoa}/lich-su` | Vận hành › Tham số hệ thống › {khóa} › Lịch sử | Lịch sử {khóa} · Vận hành · T68 |
 | `/van-hanh/su-co/{ma}` | Vận hành › Sự cố › SC-2026-0041 | SC-2026-0041 · Vận hành · T68 |
 | `/van-hanh/di-tru/lan-chay/{ma}` | Vận hành › Di trú hệ cũ › {kế hoạch} › Lần chạy {mã} | Lần chạy {mã} · Vận hành · T68 |
-| `/ca-nhan/viec` | Cá nhân › Việc của tôi | Việc của tôi (7) · T68 |
+| `/viec-cua-toi` | Cá nhân › Việc của tôi | Việc của tôi (7) · T68 |
 
 : Breadcrumb và tiêu đề tab của PH-18
 
@@ -1524,7 +1525,7 @@ Hành động: "Lưu tùy chọn" (`If-Match`, lệch: ST-13), "Đưa về mặc
 ::: dac-ta
 **Mục đích.** Gom mọi việc chờ người dùng từ mọi phân hệ (duyệt bốn mắt, mục được gán, nhắc gia hạn) vào một hộp việc, có hạn, quá hạn, liên kết sang màn nguồn; duyệt được ngay tại chỗ với việc duyệt của PH-18.
 
-**Đường dẫn, mẫu.** `/ca-nhan/viec`, `?chon={taskId}`; PTN-10 Hộp việc và duyệt; thẻ trang chủ dùng `?summary=true`.
+**Đường dẫn, mẫu.** `/viec-cua-toi`, `?chon={taskId}`; PTN-10 Hộp việc và duyệt; thẻ trang chủ dùng `?summary=true`.
 
 **Vai trò, quyền.** Mọi người dùng; việc chỉ hiện khi người dùng còn quyền xem tại thời điểm đọc; nút duyệt theo quyền của loại việc (`PERM-18-approve` với việc của PH-18).
 
@@ -2489,6 +2490,7 @@ Các câu dưới đây cần người có thẩm quyền chốt trước khi k�
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Bản đầu: 24 màn UI-18-01 đến 24, điều hướng, trạng thái riêng, luồng chính, ma trận vai trò, FR và API, 26 ảnh hi-fi, đề nghị bổ sung D03-05 và API, điểm lệch và đề nghị đồng bộ, câu hỏi mở Q18-30 đến 39 | Nhóm phân hệ PH-18 |
 | 0.2 | 27/11/2026 | Đồng bộ nội bộ theo FRS 0.2 và D03-04-PH18 0.2: gắn API-18-181…187 vào UI-18-15, 22, 23, 24 và ma trận chương 33; câu thông báo theo câu chung của FRS §9.1; vai trò SO, PA, TA thay MO, DPO; AU, VW xem siêu dữ liệu DLQ; chốt Q18-30, Q18-37; Phụ lục B, C.1 thêm cột trạng thái, giữ LC-01, 02, 06 và ĐB-01…05 cho D03-06-00 | Nhóm phân hệ PH-18 |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: Việc của tôi dùng route chung `/viec-cua-toi`, thêm chuyển hướng 301 từ `/ca-nhan/viec` | Nhóm viết tài liệu (Claude) |
 
 : Lịch sử phiên bản D03-06-PH18
 

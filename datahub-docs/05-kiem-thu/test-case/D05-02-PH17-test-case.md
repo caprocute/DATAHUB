@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH17
 ten: Kịch bản và test case phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -109,7 +109,7 @@ Tiêu chí vào và ra bám các cổng `RG-1…5` của D05-01.
 
 ### 1.5. Quy ước mã và cách trình bày
 
-Kịch bản có mã `TS-17-nn`, test case `TC-17-nnn`; mã không tái sử dụng, ca bị hủy ghi "Đã hủy" và giữ mã. Mỗi ca là khối `::: dac-ta`, tiêu đề `#### TC-17-nnn · Tên ca <!--k:khóa-->`; khóa dùng cho `number_tcs.py` và tham chiếu `[[tc:khóa]]`, không in ra bản xuất. Đường dẫn trong bước tương đối với `/api/assist/v1`; data plane ghi đủ `/assist/v1/...`. Tên trường JSON không có trong FRS (ví dụ `decisionNumber`, `roleGroups`, `autoDecide`, `noticeRequired`, `purpose = TRAINING`) là giả định, đối chiếu lại khi `openapi-assist.yaml` chốt (Q17-81).
+Kịch bản có mã `TS-17-nn`, test case `TC-17-nnn`; mã không tái sử dụng, ca bị hủy ghi "Đã hủy" và giữ mã. Mỗi ca là khối `::: dac-ta`, tiêu đề `#### TC-17-nnn · Tên ca <!--k:khóa-->`; khóa dùng cho `number_tcs.py` và tham chiếu `[[tc:khóa]]`, không in ra bản xuất. Đường dẫn trong bước tương đối với `/api/assist/v1`; data plane ghi đủ `/assist/v1/...`. Tên trường JSON lấy theo `openapi-assist.yaml` (`changeType`, `decisionNumber`, `noticeRequired`, `purposeCode`, `datasetRef`); riêng `autoDecide` không thuộc lược đồ mà FR-17-061 buộc từ chối, nên ca TS-17-35 gửi cờ này để kiểm việc từ chối (Q17-81 còn giữ cho tên đường dẫn một số thao tác).
 
 | Trường | Nội dung |
 |---|---|
@@ -406,7 +406,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. U-T93-IE `GET /status`.
-2. U-T93-TA1 `POST /policy/changes` với `type = ENABLE`, `decisionNumber = "QĐ-123/UBND ngày 01/12/2026"`, `reason` 30 ký tự, `capabilities = [SEARCH]`, `roleGroups = [ALL_READERS]`, kèm `Idempotency-Key`.
+2. U-T93-TA1 `POST /policy/changes` với `changeType = ENABLE`, `decisionNumber = "QĐ-123/UBND ngày 01/12/2026"`, `reason` 30 ký tự, `capabilities = [SEARCH]`, kèm `Idempotency-Key`.
 3. U-T93-SO `POST /policy/changes/{changeId}:approve` kèm `If-Match`.
 4. Chờ tối đa 60 giây rồi U-T93-IE `GET /status` và mở bảng điều khiển.
 
@@ -1199,7 +1199,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. S-T90-PH04 `POST /assist/v1/inference/classify` với `dataClass = RESTRICTED`, `purpose = MD-PHANLOAI`.
+1. S-T90-PH04 `POST /assist/v1/inference/classify` với `dataClass = RESTRICTED`, `purposeCode = MD-PHANLOAI`.
 2. Như trên với `dataClass = INTERNAL`.
 3. Như trên với `dataClass = PUBLIC` nhưng nội dung chứa số CCCD giả dạng rõ.
 
@@ -3399,7 +3399,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /assist/v1/inference/tasks`.
-2. `POST /assist/v1/inference/classify` với `purpose = MD-PHANLOAI`, `dataClass = INTERNAL`, `tenant = T90`.
+2. `POST /assist/v1/inference/classify` với `purposeCode = MD-PHANLOAI`, `dataClass = INTERNAL`, `tenant = T90`.
 3. `POST /assist/v1/inference/extract`.
 4. Đo thời gian thêm so với gọi thẳng mô hình (1.000 lần).
 
@@ -3425,7 +3425,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. S-T90-NOSCOPE `POST /assist/v1/inference/classify`.
 2. Gọi không có mTLS hợp lệ.
-3. S-T90-PH04 gọi thiếu `purpose` hoặc `dataClass`.
+3. S-T90-PH04 gọi thiếu `purposeCode` hoặc `dataClass`.
 4. Gọi `POST /assist/v1/inference/translate`.
 5. Gọi `extract` với trường `fields` sai kiểu.
 6. Gọi `classify` văn bản 5.000 ký tự.
@@ -3535,7 +3535,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. S-T90-PH11 `POST /assist/v1/process-suggestions` với `autoDecide = true`.
+1. S-T90-PH11 `POST /assist/v1/process-suggestions` với `stepType = APPROVAL`, `processRef`, `purposeCode` hợp lệ và thêm cờ `autoDecide = true` (cờ không thuộc lược đồ, FR-17-061 buộc từ chối).
 2. S-T90-PH11 `:record-decision` cho `SG-khong-co`.
 
 **Kết quả mong đợi.** Bước 1 `403` ERR-17-114. Bước 2 `404` ERR-17-117.
@@ -3619,7 +3619,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Spectral duyệt hợp đồng, tìm đường dẫn chứa `train`, `fine-tune`, `finetune`.
 2. Quét mã tìm lời gọi tới API huấn luyện của nhà cung cấp.
-3. Gọi `POST /eval-datasets` với `purpose = TRAINING`.
+3. Gọi `POST /eval-datasets` với `evalSetId` hợp lệ và `datasetRef` trỏ tập mà PH-09 khai mục đích huấn luyện (`purposeCode = TRAINING`).
 
 **Kết quả mong đợi.** Bước 1 và 2 không có. Bước 3 `400` ERR-17-003 (mục đích duy nhất là đánh giá).
 :::
@@ -5446,5 +5446,6 @@ Các việc dưới thuộc tài liệu dùng chung hoặc tập của người 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-17-01…45, test case TC-17, bộ ca đỏ RT-01…66, ma trận truy vết, Gherkin, bảng tính theo FRS 0.1 |
+| 0.2 | 2026-11-27 | Đồng bộ chéo cuối: tên trường theo `openapi-assist.yaml` (`changeType`, `purposeCode`, `datasetRef`), bỏ `roleGroups` |
 
 : Lịch sử phiên bản

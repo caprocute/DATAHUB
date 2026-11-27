@@ -44,7 +44,7 @@ D = {
     21: 'restoreId!:u, step:i, from:#RestoreStatus, to!:#RestoreStatus, pointInTime!:ts',
     22: 'restoreId!:u, pointInTime!:ts, scope!:e(FULL_TENANT|MODULES), modules:[s], completedAt!:ts',
     23: 'exportId!:u, result!:#JobStatus, sizeBytes:i, manifestSha256:hash',
-    24: 'mergePlanId!:u, module!:s, from:#JobStatus, to!:#JobStatus, rows:i, dryRun!:b',
+    24: 'mergePlanId!:mpid, module!:ph, from:#JobStatus, to!:#JobStatus, rows:i, dryRun!:b',
     25: 'runId!:u, planCode!:s, mode!:#RunMode, result!:#MigrationRunStatus, read!:i, written!:i, rejected!:i',
     26: 'systemCode!:s, credentialType!:#CredentialKind, count!:i, runId!:u',
     27: 'groupCode!:s, from:#CutoverStatus, to!:#CutoverStatus, routes!:[s], rollbackUntil:ts, trafficPercent:i',
@@ -63,13 +63,13 @@ EXD = {
         'payloadRef': '/ops/internal/v1/dlq/messages/%s?includePayload=true' % U, 'sourceCode': 'ph04-runtime', 'flow': 'hs-mot-cua-dong-bo'},
     16: {'windowId': U, 'kind': 'FREEZE', 'envs': ['PROD'], 'start': '2026-12-20T00:00:00+07:00', 'end': '2027-01-03T00:00:00+07:00', 'state': 'PLANNED'},
     22: {'restoreId': U, 'pointInTime': '2026-11-26T08:00:00+07:00', 'scope': 'FULL_TENANT', 'completedAt': TS},
-    24: {'mergePlanId': U, 'module': 'ph01_onboarding', 'from': 'RUNNING', 'to': 'SUCCEEDED', 'rows': 18240, 'dryRun': False},
+    24: {'mergePlanId': 'SN-2026-001', 'module': 'PH-01', 'from': 'RUNNING', 'to': 'SUCCEEDED', 'rows': 18240, 'dryRun': False},
     27: {'groupCode': 'NHOM-HO-TICH', 'from': 'SHADOW_OK', 'to': 'PARTIAL_CUTOVER', 'routes': ['/api/ho-tich/v1/khai-sinh'], 'rollbackUntil': '2026-11-27T09:30:02+07:00',
          'trafficPercent': 20},
 }
 # kênh tiêu thụ chính (FRS §9.3b); mã sự kiện của PH-20 sẽ theo D03-04-PH20
 CONSUME = [
-    ('opsDlq', '{tenant}.ops.dlq.v1', 'Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013)', 'Mọi nguồn (PH-04 runtime và nguồn khác)', 'DlqRecord'),
+    ('opsDlq', '{tenant}.ops.dlq.v1', 'Topic DLQ hạ tầng: PH-18 là chủ topic; nguồn ghi bản tin lỗi kèm header ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013)', 'Mọi nguồn (PH-04 runtime và nguồn khác)', 'DlqRecord'),
     ('eventDeadLettered', '{tenant}.event.delivery.dead-lettered.v1', 'EVT-10-11: có mục DLQ tầng sự kiện mới (gộp 1 phút); PH-18 hiển thị chung (FR-18-017)', 'PH-10', 'Ext'),
     ('eventReplayCompleted', '{tenant}.event.replay.completed.v1', 'EVT-10-12: lượt phát lại của PH-10 kết thúc; cập nhật kết quả đề nghị (FR-18-030)', 'PH-10', 'Ext'),
     ('eventMigrationCutOver', '{tenant}.event.migration.cut-over.v1', 'EVT-10-15: ánh xạ di trú chuyển hẳn hoặc quay lui (FR-18-066)', 'PH-10', 'Ext'),
