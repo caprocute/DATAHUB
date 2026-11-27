@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH08
 ten: Đặc tả API và sự kiện phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư tích hợp PH-04 và PH-06, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-08
@@ -83,7 +83,7 @@ Quy ước áp dụng cho mọi operation. Cột "Khóa" ở chương 3: `I` là
 | Khóa lạc quan | `GET` trả `ETag: W/"{version}"`; `PUT`, `PATCH`, `DELETE` và hành động trên tài nguyên có `If-Match`; lệch trả `409` ERR-08-004, thiếu trả `428` ERR-00-428. Tạo mới bằng `PUT` khi chưa có tài nguyên: `If-Match: *` |
 | Chống trùng | `POST` tạo hoặc chạy bất đồng bộ bắt buộc `Idempotency-Key` (UUID), giữ 24 giờ; cùng khóa cùng thân trả lại phản hồi cũ, khác thân `409` ERR-08-055. API trực tuyến 068, 069 không dùng, bên gọi dùng `correlationId` |
 | Phân trang | `page` (từ 0), `size` (1…100, mặc định 20); phản hồi `items`, `page`, `size`, `totalElements`. Mọi danh sách có hai tham số này nên chương 11 không lặp lại |
-| Lỗi | RFC 9457 `application/problem+json`, `type = https://datahub.example.vn/errors/{code}`, `code`, `traceId`, `errors[]` theo trường |
+| Lỗi | RFC 9457 `application/problem+json`, `type = https://datahub.gov.vn/errors/{code}`, `code`, `traceId`, `errors[]` theo trường |
 | Mã lỗi chung | Mọi operation có thể trả `401`, `403` (ERR-00-401, ERR-00-403), ERR-08-001 (không thấy), ERR-08-003 (sai lược đồ), ERR-08-004 (xung đột), ERR-08-006 (sai trạng thái), ERR-08-045 (tham số danh sách sai), ERR-08-054 (503 dùng chung khi dịch vụ phụ thuộc hoặc kiểm toán không khả dụng); lệnh có `M` thiếu `If-Match` trả `428`. Chương 11 chỉ nêu mã riêng; ERR-08-055 nêu ở từng lệnh có `Idempotency-Key` |
 | Tham số đường dẫn | Các `{…}` trong đường dẫn, kiểu chuỗi theo mẫu mã hoặc UUID, bắt buộc; chương 11 không lặp lại |
 | Tác vụ dài | Hồ sơ, đo, xuất tệp trả `202` kèm tài nguyên ở trạng thái `QUEUED` hoặc `RUNNING`; theo dõi bằng `GET`, sự kiện EVT-08-02, 03 |
@@ -578,7 +578,7 @@ PH-08 dùng dải ERR-08-001…099 cho control plane và ERR-08-101…199 cho ru
 Thân lỗi mang `code` và `errors[]` theo trường; ví dụ cho ERR-08-023 (tổng trọng số sai):
 
 ```json
-{ "type": "https://datahub.example.vn/errors/ERR-08-023", "title": "Tổng trọng số khác 1", "status": 422,
+{ "type": "https://datahub.gov.vn/errors/ERR-08-023", "title": "Tổng trọng số khác 1", "status": 422,
   "code": "ERR-08-023", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "errors": [{"field": "weights", "message": "Tổng trọng số sáu chiều phải bằng 1 (hiện là 0,95)."}] }
 ```
@@ -6107,3 +6107,4 @@ Trường chỉ có ở API (kết quả tính, gộp hoặc tham chiếu, khôn
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm PH-08 | Bản đầu: 129 operation, 14 sự kiện phát, 8 sự kiện nhận, bảng mã lỗi và thông báo, 5 câu hỏi mở Q08-55…59, phụ lục đề nghị đồng bộ |
 | 0.2 | 2026-11-26 | Nhóm PH-08 | Đồng bộ với FRS 0.2: 132 operation (thêm API-08-129 `POST /findings:search` theo FRS, API-08-130, 131 bật, tắt đo tăng dần, API-08-132 `POST /weight-configs:preview` xem trước điểm theo trọng số), ERR-08-056 không có lần đo trong kỳ, ERR-08-101 cho lô quá 100 bản ghi, `etaSeconds` ở lần đo, `facets` ở danh sách phiếu, `dimensionsPrev` ở bảng điều khiển, ERR-08-055 cho `Idempotency-Key` dùng lại với thân khác, enum theo Phụ lục A, `updatedAtField` và cấu hình trực tuyến ở đối tượng đo, `scanTrigger` chỉ `MANUAL`, `ANNUAL`, mã phiếu `DQ-`, mã báo cáo `BC-DQ-`, 43 tham số; chương 11 in ví dụ cho mọi endpoint; giới hạn tập 240 KB |
+| 0.3 | 2026-11-27 | Nhóm PH-08 | Đồng bộ chéo cuối: mẫu `type` lỗi RFC 9457 thành `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}`; EVT-08-14 có `snapshotId` |

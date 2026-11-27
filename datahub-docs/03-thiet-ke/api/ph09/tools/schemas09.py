@@ -183,6 +183,7 @@ INPUT = {
     'LeakScanInput': 'sources:[s], windowHours:i',
     'PseudonymDomainInput': 'domainCode!:code, purposeCode!:code, method!:#PseudonymMethod, rotateDays:i, description:s',
     'PseudonymDomainPatch': 'description:s, rotateDays:i',
+    'KeyRotateInput': 'reason!:s20, confirmInconsistency!:b',
     'KeyDestroyInput': 'reason!:s20, confirmation!:e(DESTROY)',
     'ReidRequestInput': 'domainCode!:code, tokens!:[s], purposeCode!:code, basis!:s, reason!:s20',
     'ReidApproveInput': 'level!:e(1|2), comment:s',

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH08
 ten: Thiết kế chi tiết phần mềm phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư dữ liệu, kiến trúc sư, ATTT, SRE, hội đồng thẩm định
 phan_he: PH-08
@@ -169,7 +169,7 @@ PH-08 gọi hoặc tiêu thụ sự kiện từ các phân hệ khác; bảng d�
 | PH-06 Dữ liệu chủ | `dq` đọc, nghe, gọi | Khung nhìn `v_dq_{domain}`, EVT-06-01…04, 10; `StewardIntakeApi` (FR-08-046) | Lần đo `FAILED` (ERR-08-105), không bịa điểm |
 | PH-07 Danh mục | `dq` gọi | `RdmLookupApi` (module cùng DU), ảnh chụp ADR-053, bộ đệm Valkey | Quy tắc `SKIPPED` (ERR-08-108), trực tuyến theo `onDependencyFailure` |
 | PH-05 Kết nối | `dq` gọi | API nội bộ thuê kết nối chỉ đọc, khám phá lược đồ, nhận chỉ số hồ sơ API-08-024 | Lần đo `FAILED`, chạy thử báo ERR-08-105 |
-| PH-09 Quyền riêng tư | `dq` gọi | `ClassificationApi` tra phân loại trường, đệm 5 phút | Coi trường chưa phân loại là `SENSITIVE` |
+| PH-09 Quyền riêng tư | `dq` gọi | `ClassificationLookupApi` tra phân loại trường (PH-09 SDD §3.3), đệm thường tối đa 60 giây và xóa đệm khi nhận EVT-09-01; khi PH-09 không đáp ứng thì dùng bản đệm tối đa 5 phút | Coi trường chưa phân loại là `SENSITIVE` |
 | PH-04 Tích hợp | gọi `dq` | `POST /checks:evaluate` qua Kamelet `dh-dq-check` | Luồng áp `onUnavailable`, đo lô không ảnh hưởng |
 | PH-13, PH-16, PH-18 | `dq` phát, nhận | Sự kiện EVT-08-02…14; KPI; lịch Quartz tùy chọn | Outbox giữ và phát lại; lịch nội bộ vẫn chạy |
 | PH-12 Keycloak, OPA | `dq` gọi | Xác thực, quyền, scope `dq.check`, `dq.read`, `dq.ingest` | Từ chối |
@@ -217,7 +217,7 @@ Quy tắc kiểm bằng ArchUnit và `ApplicationModules.verify()` của Spring 
 2. Chỉ `worker` và `profile` được mở kết nối tới dữ liệu được đo (lớp `SourceReader`); `inline`, `score`, `report` không có `DataSource` nào ngoài `ph08_dq`.
 3. Chỉ `finding` ghi bảng `dq_finding`; chỉ `score` ghi `dq_score_snapshot` và `dq_score_dimension`; chỉ `outbox` ghi `outbox_event`. ArchUnit cấm câu `INSERT` hay `UPDATE` vào các bảng đó ở gói khác.
 4. Không có chu trình giữa `dq` và `mdm`. PH-06 gọi cổng chất lượng qua interface `QualityGatePort` do `mdm::api` định nghĩa và `dq::internal.inline` hiện thực (đảo phụ thuộc); `dq` gọi hàng đợi steward qua `mdm::api.StewardIntakeApi`. Cả hai mũi tên đều hướng từ `dq` sang `mdm`.
-5. `dq` không đọc bảng vật lý của `rdm`, `mdm`, `privacy`; chỉ dùng `RdmLookupApi`, `ClassificationApi`, `MaskingApi` và khung nhìn hợp đồng (BR-08-004, BR-08-005).
+5. `dq` không đọc bảng vật lý của `rdm`, `mdm`, `privacy`; chỉ dùng `RdmLookupApi`, `ClassificationLookupApi`, `MaskPlanApi` (tên giao diện công bố của PH-06, PH-09) và khung nhìn hợp đồng (BR-08-004, BR-08-005).
 
 ### 3.3. Giao diện công bố
 
@@ -707,7 +707,7 @@ Chi tiết thiết kế:
 
 **Duyệt, công bố.** `DRAFT → IN_REVIEW → PUBLISHED`; người duyệt khác người gửi (ERR-08-005, `ck_dq_report_four_eyes`). Công bố trong một giao dịch: chuyển `PUBLISHED`, ghi `content_sha256`, outbox EVT-08-11 và EVT-08-14. Báo cáo `PUBLISHED` bất biến (ERR-08-040); sửa bằng thu hồi `WITHDRAWN` kèm lý do và báo cáo thay thế.
 
-**Dựng tệp, ký, lưu.** `PdfRenderer` render mẫu HTML bằng OpenHTMLtoPDF; biểu đồ radar sáu chiều và xu hướng dựng SVG bằng ECharts chạy phía máy chủ; chân trang có `reportCode` (`BC-DQ-yyyy-kỳ-Ttt`, thêm hậu tố `-Rn` cho báo cáo thay thế sau thu hồi) và `contentHash`. `XlsxWriter` ghi luồng `SXSSFWorkbook`. Tính trước `summary` giúp PDF 100 trang trong 2 phút (NFR-08-012); chọn OpenHTMLtoPDF thay vì trình duyệt không đầu để không thêm Chromium vào ảnh (ADR 089). `SigningClient` gửi băm PDF tới dịch vụ ký số nền tảng (PAdES, chứng thư cơ quan, Q08-06); ký lỗi (ERR-08-048) không chặn công bố, báo cáo giữ trạng thái chưa ký. Bản nháp và tệp xuất ở Garage có hạn tải; khi công bố, `ObjectStoreWriter` chép PDF, XLSX và `summary` sang bucket Ceph RGW `dq-reports-official` có Object Lock theo `08.report.official-retention-years` (10 năm), đối chiếu `content_sha256`. `ReportDistributor` đọc `dq_report_subscription` và phát sự kiện tới PH-13 kèm đường dẫn có hạn, không đính kèm tệp.
+**Dựng tệp, ký, lưu.** `PdfRenderer` render mẫu HTML bằng OpenHTMLtoPDF; biểu đồ radar sáu chiều và xu hướng dựng SVG bằng ECharts chạy phía máy chủ; chân trang có `reportCode` (`BC-DQ-yyyy-kỳ-Ttt`, thêm hậu tố `-Rn` cho báo cáo thay thế sau thu hồi) và `contentHash`. `XlsxWriter` ghi luồng `SXSSFWorkbook`. Tính trước `summary` giúp PDF 100 trang trong 2 phút (NFR-08-012); chọn OpenHTMLtoPDF thay vì trình duyệt không đầu để không thêm Chromium vào ảnh (ADR 089). `SigningClient` gửi băm PDF tới dịch vụ ký số nền tảng (PAdES, chứng thư cơ quan, Q08-06); ký lỗi (ERR-08-048) không chặn công bố, báo cáo giữ trạng thái chưa ký. Bản nháp và tệp xuất ở Garage có hạn tải; khi công bố, `ObjectStoreWriter` chép PDF, XLSX và `summary` sang bucket Ceph RGW `dq-reports` có Object Lock theo `08.report.official-retention-years` (10 năm), đối chiếu `content_sha256`. `ReportDistributor` đọc `dq_report_subscription` và phát sự kiện tới PH-13 kèm đường dẫn có hạn, không đính kèm tệp.
 
 ### 4.15. Outbox, inbox, tích hợp PH-16, PH-13 và vận hành (`outbox`, `ops`)
 
@@ -1072,7 +1072,7 @@ PH-08 chạy ở namespace `dh-control` (D03-09 §4), hai Deployment cùng ảnh
 |---|---|---|---|---|
 | `dh-data` hồ sơ `api` (dùng chung PH-06…09) | 2, tối đa 4 | 1/2 vCPU, 3 GiB | HPA theo CPU 65% | REST, trực tuyến, bộ lập lịch; thêm khoảng 0,5 GiB cho bộ đệm quy tắc |
 | `dh-data-dq-worker` (hồ sơ `worker`) | 2 nghỉ, 4 giai đoạn 1, tối đa 8 | 1/2 vCPU, 3 GiB | KEDA theo `dq_scan_tasks_queued` (thêm khi > 2 tác vụ chờ mỗi bản sao) | Gần tuyến tính đến 8 (NFR-08-019); `terminationGracePeriodSeconds` 330 |
-| Bucket Ceph RGW `dq-reports-official` | Theo nền tảng | Khoảng 50 MB mỗi năm | Không | Object Lock, lưu 10 năm |
+| Bucket Ceph RGW `dq-reports` | Theo nền tảng | Khoảng 50 MB mỗi năm | Không | Object Lock, lưu 10 năm |
 
 : Mô hình triển khai PH-08 theo QM-VUA (giả định)
 
@@ -1217,8 +1217,8 @@ Các đề nghị của bản 0.1 về FRS và CSDL (HMAC, ví dụ 86,37, PH-18
 | D02-03-PH06, D03-02-PH06 | `QualityGatePort` và `StewardIntakeApi` ở `mdm::api` (đảo phụ thuộc); khung nhìn `v_dq_{domain}` ổn định; lý do hàng đợi `DQ_FINDING` | §4.2, 4.12; Q08-08 |
 | D02-03-PH05, D03-02-PH05 | API thuê kết nối chỉ đọc có hạn cho `dq`; khám phá lược đồ; Kamelet `dh-dq-check` với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; scope `dq.ingest` | §4.2, 4.7; Q08-09, Q08-21 |
 | D03-02-PH07 | `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản PH-08 | §4.8 |
-| PH-09, PH-13 | PH-09: `ClassificationApi` p95 ≤ 100 ms, sự kiện đổi phân loại. PH-13: API lịch ngày làm việc và ngày lễ theo tenant cho `SlaClock`, tiêu thụ EVT-08-02…14 | §4.2, 4.12 |
-| D03-09, D03-10, D04-01 | D03-09: hàng `dh-data-dq-worker` (4 bản sao ở `QM-VUA`, tối đa 8), `ScaledObject` KEDA, bucket Ceph `dq-reports-official`. D03-10: ngoại lệ RLS duy nhất cho so sánh liên tenant. D04-01: năm quy tắc ArchUnit của `dq` (§3.2) | §11.1, 6, 3.2 |
+| PH-09, PH-13 | PH-09: `ClassificationLookupApi` p95 ≤ 100 ms, sự kiện đổi phân loại. PH-13: API lịch ngày làm việc và ngày lễ theo tenant cho `SlaClock`, tiêu thụ EVT-08-02…14 | §4.2, 4.12 |
+| D03-09, D03-10, D04-01 | D03-09: hàng `dh-data-dq-worker` (4 bản sao ở `QM-VUA`, tối đa 8), `ScaledObject` KEDA, bucket Ceph `dq-reports`. D03-10: ngoại lệ RLS duy nhất cho so sánh liên tenant. D04-01: năm quy tắc ArchUnit của `dq` (§3.2) | §11.1, 6, 3.2 |
 | D00-04 §2, §3.2 | Dòng PH-08: SDD 0.2; chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` | Sổ tra cứu |
 
 : Đề nghị đồng bộ còn lại
@@ -1229,3 +1229,4 @@ Các đề nghị của bản 0.1 về FRS và CSDL (HMAC, ví dụ 86,37, PH-18
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: module `dq` với 14 thành phần có khối đặc tả 10 mục, trình biên dịch SQL pushdown và CEL, điều phối đo phân mảnh với ShedLock, thuật toán chấm điểm, lấy mẫu có seed, dấu vân tay HMAC, năm sơ đồ trình tự, mô hình triển khai và dung lượng giả định, ma trận thành phần với FR, ADR đề xuất 085 đến 087, câu hỏi mở Q08-20…29, đề nghị đồng bộ |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2 và CSDL 0.2: 35 bảng, 43 tham số, 132 API (thêm API-08-129 tìm lỗi theo khóa, 130 và 131 bật, tắt đo tăng dần, 132 xem trước trọng số), ERR-08-055, ERR-08-056, scope `dq.ingest`, `value_mode`, mã phiếu và mã báo cáo, `scanTrigger` của `POST /scans`, `ADVISORY` trả `WARN` khi có vi phạm, lô tối đa 100 bản ghi, `VERIFY` do hệ thống tạo; Q08-20 đã chốt; §13.6 chỉ còn đề nghị dồn đợt cuối |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bucket báo cáo `dq-reports`; đổi tên giao diện gọi PH-09 thành `ClassificationLookupApi`, `MaskPlanApi`; đệm phân loại tối đa 60 giây |

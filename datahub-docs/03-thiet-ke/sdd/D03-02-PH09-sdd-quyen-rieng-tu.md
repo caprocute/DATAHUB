@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH09
 ten: Thiết kế chi tiết phần mềm phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư tích hợp PEP, ATTT, pháp chế, kiến trúc sư, hội đồng thẩm định
 phan_he: PH-09
@@ -235,10 +235,10 @@ Module khác trong DU chỉ dùng PH-09 qua các giao diện dưới đây.
 |---|---|---|
 | `PrivacyDecisionApi` | PH-06, PH-08 (cùng DU) | `decide(purpose, htttId, contract, fields)`, `isRestricted(subjectHash)` |
 | `MaskPlanApi` | PH-06, PH-08 | `plan(roles, purpose, channel, contract)`, `apply(plan, record)` |
-| `ClassificationLookupApi` | PH-06, PH-02 | `levelOf(kind, contractId)`, `register(elementRef, proposed)` |
+| `ClassificationLookupApi` | PH-06, PH-08, PH-02 | `levelOf(kind, contractId)`, `levelOfField(elementRef)` (p95 ≤ 100 ms, NFR-09-002), `register(elementRef, proposed)` (PH-08 đề xuất phân loại cho CDE ở `PROPOSED`) |
 | `ConsentLookupApi` | Module trong DU | `check(subjectHash, templateCode)` |
 | `PseudonymApi` | PH-08, PH-17 | `issue(domain, values)` |
-| Sự kiện `events/*` | PH-02, 03, 04, 06, 12, 13, 14, 19 | Phát qua outbox, EVT-09-01…32 |
+| Sự kiện `events/*` | PH-02, 03, 04, 06, 08, 12, 13, 14, 17, 19 | Phát qua outbox, EVT-09-01…32 |
 | REST `/api/privacy/v1`, `/privacy/v1` | HTTT, điểm thực thi | API-09-001…237 |
 
 : Giao diện công bố của module privacy
@@ -666,7 +666,7 @@ Hồ sơ dùng vòng đời `DpiaStatus` (như `VersionStatus` cộng `SUBMITTED
 
 **FR hiện thực.** FR-09-058…060; BR-09-054…057.
 
-**Giao diện vào.** API-09-202…214, 239, 240 (liệt kê thông báo và biện pháp khắc phục); sự kiện sự cố từ PH-18, cảnh báo từ `purpose.AnomalyDetector` và PH-13.
+**Giao diện vào.** API-09-202…214, 239, 240 (liệt kê thông báo và biện pháp khắc phục); sự cố có DLCN từ PH-18 qua API-09-203 bằng tài khoản máy `privacy:register` (`source = INCIDENT_PH18`, khóa lũy đẳng theo mã sự cố), sự kiện sự cố từ PH-18, cảnh báo từ `purpose.AnomalyDetector` và PH-13.
 
 **Phụ thuộc ra.** PH-18, PH-13 (kiểm toán, mẫu báo cáo), `audit`.
 
@@ -736,7 +736,7 @@ Hồ sơ dùng vòng đời `DpiaStatus` (như `VersionStatus` cộng `SUBMITTED
 ### 4.17. Thư viện điểm thực thi `dh-privacy-client`
 
 ::: dac-ta
-**Mục đích.** Cho mọi điểm thực thi (APISIX plugin, PH-04, PH-06, PH-14, PH-19) một cách dùng thống nhất: hỏi quyết định, lấy và đệm kế hoạch che, áp che, đóng an toàn, báo lượt khai thác, che log.
+**Mục đích.** Cho mọi điểm thực thi (APISIX plugin, PH-04, PH-06, PH-14, PH-19; PH-17 ở chế độ chỉ phân loại) một cách dùng thống nhất: hỏi quyết định, lấy và đệm kế hoạch che, áp che, đóng an toàn, báo lượt khai thác, che log.
 
 **Lớp chính.** `PrivacyClient`, `DecisionCache`, `PlanCache`, `MaskEngine`, `FailSafePolicy`, `BundleWatcher`, `PrivacyEventListener`, `UsageReporter`, `LogMasker`.
 
@@ -744,18 +744,20 @@ Hồ sơ dùng vòng đời `DpiaStatus` (như `VersionStatus` cộng `SUBMITTED
 
 **FR hiện thực.** FR-09-027, 028, 030 (phía PEP); BR-09-027, BR-09-062; NFR-09-024.
 
-**Giao diện vào.** `PrivacyClient.decide`, `plan`, `applyLocal`, `report`; cấu hình `datahub.privacy.client.*`.
+**Giao diện vào.** `PrivacyClient.decide`, `plan`, `applyLocal`, `report`, `classify` (chế độ `ClassificationOnly`); cấu hình `datahub.privacy.client.*`.
 
 **Phụ thuộc ra.** `/privacy/v1` (mTLS), Kafka (nghe EVT-09), OPA cục bộ.
 
 **Dữ liệu.** Chỉ bộ nhớ, không ghi đĩa.
 
-**Sự kiện.** Tiêu thụ EVT-09-01, 07, 08, 09, 12; không phát.
+**Sự kiện.** Tiêu thụ EVT-09-01, 03, 07, 08, 09, 12; không phát.
 
 **Lỗi và xử lý.** ERR-09-101…113 ở phía bên gọi; ERR-04-109 của PH-04.
 
 **Quan sát.** `privacy_client_cache_hit_ratio`, `privacy_client_fallback_total{mode}`, `privacy_client_call_seconds`, `privacy_client_stale_serve_total`.
 :::
+
+**Chế độ chỉ phân loại (`ClassificationOnly`).** Với `dh-assist` (PH-17) khi lập chỉ mục, `PrivacyClient` khởi tạo ở chế độ này: chỉ dùng `classification:check` (API-09-231) và đọc `classification-index` (API-09-232) có `ETag` với `If-None-Match`, nghe EVT-09-01 và EVT-09-03 để xóa đệm, không gọi `decide`, `plan` hay `apply`. Không rõ mức của trường thì bên gọi bỏ qua tài liệu (đóng an toàn). Tập ẩn danh cho AI đọc qua EVT-09-18 và API-09-137.
 
 Thiết kế đệm và đóng an toàn nằm ở §8.6 vì áp dụng cho mọi PEP. Điểm cần chốt ở đây là thư viện không chứa luật nghiệp vụ: quyết định `ALLOW` hoặc `DENY` do OPA cục bộ hoặc `decide` trả, thư viện chỉ đệm, hết hạn đệm, áp `PolicyResolver` kết quả (bảng kế hoạch) bằng `MaskEngine` và chọn hành vi khi thiếu chính sách. `MaskEngine` dùng cùng mã với `PolicyResolver`, kiểm bằng ca tương đương mỗi lần phát hành (NFR-09-008).
 
@@ -1372,3 +1374,4 @@ Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì t�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc module `privacy`, mô hình miền, 15 thành phần và thư viện `dh-privacy-client` với khối đặc tả 10 mục, chín sơ đồ trình tự, bảng trạng thái theo enum FRS, đệm và đóng an toàn ở PEP, ánh xạ ERR-09, chỉ số `privacy_*`, bốn ADR đề xuất số 090 đến 093, đề nghị cho FRS, câu hỏi mở Q09-20…29 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thư viện `dh-privacy-client` chốt, đệm `DENY` 5 giây theo BR-09-062, `09.decision.cache-seconds`, `09.mask.reveal-alert-per-hour`, hai khóa hạn mức API, ERR-09-001…082, NFR-09-024, đồng hồ vi phạm dừng duy nhất khi đã thông báo Cục A05, mục 13.5 thành kết quả đồng bộ |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: `ClassificationLookupApi` thêm PH-08; chế độ `ClassificationOnly` của `dh-privacy-client` cho PH-17; PH-18 chuyển sự cố qua API-09-203 |

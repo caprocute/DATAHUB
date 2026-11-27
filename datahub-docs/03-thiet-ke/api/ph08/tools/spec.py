@@ -315,7 +315,7 @@ AUD = [("createdAt", "ts"), ("createdBy", "str", "nguyen.thi.lan"), ("updatedAt"
 A = "mdm-cong-dan"
 
 obj("FieldError", "Lỗi theo trường.", ("field!", "str", "record.citizenId"), ("message!", "str", "Giá trị không hợp lệ."))
-obj("Problem", "Lỗi theo RFC 9457.", ("type!", "str", "https://datahub.example.vn/errors/ERR-08-003"), ("title!", "str", "Dữ liệu không hợp lệ"),
+obj("Problem", "Lỗi theo RFC 9457.", ("type!", "str", "https://datahub.gov.vn/errors/ERR-08-003"), ("title!", "str", "Dữ liệu không hợp lệ"),
     ("status!", "int", 400), ("detail", "str", "Trường name bắt buộc."), ("instance", "str", "/api/dq/v1/assets"),
     ("code!", "str", "ERR-08-003"), ("traceId!", "str", "4bf92f3577b34da6a3ce929d0e0e4736"), ("errors", "[$FieldError]"))
 obj("CommentBody", "Ý kiến kèm hành động.", ("comment", "str", "Đồng ý theo biên bản họp ngày 20/11/2026.", {"maxLength": 2000}))

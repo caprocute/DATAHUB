@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH08
 ten: Đặc tả yêu cầu chức năng phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ quản lý dữ liệu, chủ quản dữ liệu, kỹ sư dh-data, kiểm thử viên
 phan_he: PH-08
@@ -3896,7 +3896,7 @@ Hình cho thấy kiểm sẵn sàng chỉ ra đúng đối tượng thiếu và 
 
 **Luồng xử lý chính.**
 
-1. Hệ thống ghi EVT-08-14 vào hộp gửi trong cùng giao dịch với ảnh chụp hoặc báo cáo; khóa idempotent `snapshotId` hoặc `reportCode`.
+1. Hệ thống ghi EVT-08-14 vào hộp gửi trong cùng giao dịch với ảnh chụp hoặc báo cáo; khóa lũy đẳng là `snapshotId`, có trong dữ liệu mọi bản tin EVT-08-14 để PH-16 dùng làm `idempotencyRef`.
 2. Nội dung KPI: điểm tổng, điểm chiều, kết luận theo đối tượng, miền, tenant; báo cáo năm (mã, năm, trạng thái); tỷ lệ phiếu quá hạn, tỷ lệ lỗi `CRITICAL` còn mở, độ phủ đo trong tháng; phiên bản lược đồ `kpiSchemaVersion`.
 3. Chỉ số vận hành cho PH-13 xuất qua Prometheus (NFR-08-015), không qua sự kiện.
 4. PH-16 lỡ sự kiện thì đọc lại qua API-08-122 theo khoảng thời gian.
@@ -4723,7 +4723,7 @@ Bảng dưới phân biệt phụ thuộc cứng và mềm, và ghi PH-08 ứng 
 | PH-05 kết nối chỉ đọc | Cứng với `SOURCE_DATASET` | Đo bảng HTTT, hồ sơ | Lần đo `FAILED` |
 | PH-09 phân loại | Mềm | Chế độ che | Coi trường chưa phân loại là `SENSITIVE` |
 | PH-18 lịch | Mềm | Kích hoạt thêm lần đo; xử lý lại DLQ | Lịch nội bộ của PH-08 vẫn chạy khi PH-18 vắng; PH-18 chỉ gọi API-08-059 khi cần kích hoạt ngoài lịch |
-| PH-13 thông báo, kiểm toán | Cứng với thao tác cần kiểm toán; mềm với cảnh báo | Kiểm toán, cảnh báo, phân phối | Từ chối thao tác cần kiểm toán (ERR-08-054); cảnh báo xếp hàng |
+| PH-13 thông báo, kiểm toán | Cứng với thao tác cần kiểm toán; mềm với cảnh báo | Kiểm toán, cảnh báo, phân phối | Từ chối thao tác cần kiểm toán (ERR-08-054); cảnh báo xếp hàng. PH-08 không có bảng kiểm toán riêng: bản ghi đi vào kho kiểm toán chung của nền tảng và API-08-127 đọc từ kho đó |
 | PH-16 | Mềm | KPI | Hộp gửi đệm, đọc lại qua API-08-122 |
 | PH-12 Keycloak, OPA | Cứng | Xác thực, quyền, scope | Từ chối |
 | PH-04 | Mềm | Bên gọi trực tuyến | Không ảnh hưởng đo lô |
@@ -4977,5 +4977,6 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EVT-08-14 mang `snapshotId` làm khóa lũy đẳng cho PH-16; ghi rõ PH-08 không có bảng kiểm toán riêng |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 56 đề nghị từ UC, SDD, CSDL, API, TC, MH (chương 15): sửa ví dụ FR-08-028 (86,37), BR-08-013 HMAC-SHA256 khóa theo tenant, PH-18 phụ thuộc mềm; thêm API-08-129…131, ERR-08-055, scope `dq.ingest`, EN-08-30…33, 3 khóa tham số; thống nhất `domain_status`, `weight_config.status`, `value_mode`; 19 enum mới ở Phụ lục A; làm rõ FR-08-016, 017, 021, 025, 035, 044, 046, 054; Q08-18, 19; hấp thụ thêm TC §10.1 và MH Phụ lục B: ADVISORY `WARN` khi có vi phạm, lô quá 100 bản ghi và `INLINE` với toán tử chỉ chạy lô, ERR-08-056 tách khỏi ERR-08-027, ERR-08-042 cho hạn tắt tiếng, API-08-132 xem trước trọng số, `etaSeconds`, `facets`, radar kỳ trước |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 61 FR đủ 17 mục chia mười nhóm, phủ 16 FR của SRS cũ; bảy máy trạng thái; 35 BR, 20 NFR, 40 tham số; 54 mã lỗi control và 19 runtime kèm câu thông báo; 14 sự kiện phát, 8 tiêu thụ; 128 API dự kiến; 20 màn hình; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; thay căn cứ NĐ 47/2020 bằng NĐ 278/2025 |

@@ -121,10 +121,10 @@ def build():
     responses = {}
     for st, (n, title, code) in STATUS.items():
         responses[n] = {"description": title + ".", "content": {"application/problem+json": {"schema": ref("Problem"), "examples": {"vi-du": {"value": {
-            "type": "https://datahub.example.vn/errors/" + code, "title": title, "status": st, "detail": title + ".", "code": code,
+            "type": "https://datahub.gov.vn/errors/" + code, "title": title, "status": st, "detail": title + ".", "code": code,
             "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
     responses["PreconditionRequired"] = {"description": "Thiếu `If-Match`.", "content": {"application/problem+json": {"schema": ref("Problem"), "examples": {"vi-du": {"value": {
-        "type": "https://datahub.example.vn/errors/ERR-00-428", "title": "Thiếu If-Match", "status": 428, "code": "ERR-00-428", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
+        "type": "https://datahub.gov.vn/errors/ERR-00-428", "title": "Thiếu If-Match", "status": 428, "code": "ERR-00-428", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
     paths = {}
     for code, meth, path, frs_ in spec.ROWS:
         o = spec.OPS[code]

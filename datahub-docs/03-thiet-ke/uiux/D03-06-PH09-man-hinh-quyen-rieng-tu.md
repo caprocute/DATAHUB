@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH09
 ten: Thiết kế giao diện màn hình phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ ATTT, chủ quản dữ liệu, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-09
@@ -1746,7 +1746,7 @@ Hộp thoại rộng `size-modal-sm` mở trên `color-scrim`, khung `glass-moda
 | 2 | Ô lý do | `CMP-ReasonDialog` (nội dung), `CMP-TextArea` | Tối thiểu 20 ký tự, đếm ký tự, mẫu câu nhanh theo ngữ cảnh |
 | 3 | Dòng hạn mức | `CMP-Text` | "Còn được xem {n} lần trong giờ này" (`09.mask.reveal-max-per-hour`; `{n}` lấy từ `remainingThisHour` của API-09-102) |
 | 4 | Cảnh báo thủy vân | `CMP-Alert` vàng | "Ảnh chụp màn hình sẽ có thủy vân tên bạn và thời điểm xem" |
-| 5 | Đồng hồ | `CMP-Duration` + vòng (đề nghị `CountdownRing`, Phụ lục A) | Số giây còn lại bằng chữ "Còn 47 giây, sau đó tự che lại" |
+| 5 | Đồng hồ | `CMP-Duration` đếm bằng chữ theo `expiresAt` của `CMP-MaskedValue` (D03-05-03 §8.5; `CountdownRing` không được nhận, Phụ lục A) | Số giây còn lại bằng chữ "Còn 47 giây, sau đó tự che lại" |
 | 6 | Giá trị rõ | `CMP-MaskedValue` chế độ `revealed`, `font-mono` | Nền đặc, viền `color-accent`, không chọn được chữ |
 | 7 | Chân | `CMP-Button` | Nhập lý do: "Hủy", "Xem trong 60 giây"; đếm ngược: "Che lại ngay" |
 
@@ -1967,17 +1967,17 @@ Bảng liệt kê 13 ảnh PNG ở `ph09/hifi/` và điểm cần kiểm tra tr�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Bảng ghi các thành phần và token mới PH-09 đề nghị bổ sung vào bộ chung; tập này dùng tạm tổ hợp có sẵn ghi ở cột cuối.
+Bảng ghi các thành phần và token mới PH-09 đã đề nghị bổ sung vào bộ chung. Sau đợt đồng bộ chéo cuối, cột cuối ghi thành phần chuẩn của D03-05-03, D03-05-04 (§14.2 ánh xạ tên) mà tập này dùng; không còn thành phần tự dựng.
 
-| # | Đề nghị | Nơi dùng | Dùng tạm |
+| # | Đề nghị | Nơi dùng | Thành phần chuẩn |
 |---|---|---|---|
-| A1 | `RevealDialog`: hộp thoại xem giá trị đầy đủ có lý do, đếm ngược theo `expiresAt`, tự che, biến thể bảng | UI-09-22, UI-09-13; PH-06, PH-19 | `CMP-Modal` + `CMP-ReasonDialog` + `CMP-MaskedValue` + `CMP-Duration` |
-| A2 | `CountdownRing`: vòng đếm ngược kèm chữ, `aria-live` theo mốc, tắt hoạt ảnh khi giảm chuyển động | UI-09-22 | `CMP-ProgressBar` + `CMP-Duration` |
-| A3 | `DeadlineClock`: đồng hồ có mốc (24, 48, 60, 72 giờ), màu và chữ theo mốc | UI-09-19, UI-09-01 | `CMP-Banner` + `CMP-ProgressBar` |
-| A4 | `ApprovalChain`: chuỗi duyệt nhiều cấp, mỗi cấp có người, thời điểm, trạng thái | UI-09-13 | `CMP-ApprovalPanel` + `CMP-Steps` |
-| A5 | `RiskMeter`: thang `LOW`, `MEDIUM`, `HIGH` có vạch ngưỡng (chung với ScoreMeter đề nghị ở PH-06) | UI-09-14 | `CMP-ProgressBar` nhiều đoạn |
-| A6 | Biến thể `CMP-MaskedValue` `revealed` và `fallback` ("Không hiển thị"); `Watermark` cho thủy vân người xem | Mọi màn có DLCN | `CMP-MaskedValue` kèm lớp phủ tự dựng |
-| A7 | `RuleTable`: bảng quy tắc có đổi thứ tự bằng bàn phím (`Alt+↑`, `Alt+↓`) và thông báo `aria-live` | UI-09-10 | `CMP-EditableTable` |
+| A1 | `RevealDialog`: hộp thoại xem giá trị đầy đủ có lý do, đếm ngược theo `expiresAt`, tự che, biến thể bảng | UI-09-22, UI-09-13; PH-06, PH-19 | `CMP-MaskedValue` `revealable` cộng `CMP-ReasonDialog` (D03-05-03 §8.5); không có thành phần `RevealDialog` riêng |
+| A2 | `CountdownRing`: vòng đếm ngược kèm chữ, `aria-live` theo mốc, tắt hoạt ảnh khi giảm chuyển động | UI-09-22 | Không nhận vòng tròn (D03-05-03 §6.3 không dùng `Progress` kiểu `circle`): đếm ngược bằng chữ `CMP-Duration` theo `expiresAt` của `CMP-MaskedValue`, cập nhật cho trình đọc màn hình theo mốc |
+| A3 | `DeadlineClock`: đồng hồ có mốc (24, 48, 60, 72 giờ), màu và chữ theo mốc | UI-09-19, UI-09-01 | `CMP-ProgressBar` biến thể `milestone` cộng `CMP-Duration` (D03-05-03 §6.3, mốc 24, 48, 60, 72 giờ) |
+| A4 | `ApprovalChain`: chuỗi duyệt nhiều cấp, mỗi cấp có người, thời điểm, trạng thái | UI-09-13 | `CMP-ApprovalPanel` với trường `levels` (D03-05-04 §10.2) |
+| A5 | `RiskMeter`: thang `LOW`, `MEDIUM`, `HIGH` có vạch ngưỡng (chung với ScoreMeter đề nghị ở PH-06) | UI-09-14 | `CMP-ScoreMeter` biến thể `risk` (D03-05-04 §13.18) |
+| A6 | Biến thể `CMP-MaskedValue` `revealed` và `fallback` ("Không hiển thị"); `Watermark` cho thủy vân người xem | Mọi màn có DLCN | `CMP-MaskedValue` có `expiresAt`, `fallbackText` và thủy vân người xem `watermark` (D03-05-03 §8.5) |
+| A7 | `RuleTable`: bảng quy tắc có đổi thứ tự bằng bàn phím (`Alt+↑`, `Alt+↓`) và thông báo `aria-live` | UI-09-10 | `CMP-EditableTable` có `reorderable` (kéo hoặc `Alt+↑/↓`, D03-05-04 §13.1) |
 | A8 | Ghi chú ánh xạ `DataClass` sang sắc thái (Công khai neutral, Nội bộ info, Hạn chế warning, Nhạy cảm error) | Mọi màn PH-09, PH-06 | Mục 5.1 |
 
 : Đề nghị bổ sung cho D03-05
@@ -2069,3 +2069,4 @@ Bảng ghi tài liệu chung cần sửa theo kết quả thiết kế màn và 
 
 : Lịch sử phiên bản D03-06-PH09
 | 0.2 | 26/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ FRS 0.2: vai trò UI-09-01, 03, 20 (bỏ TO ở UI-09-20), FR-09-063 ở UI-09-21, loại yêu cầu `RENEWAL`, API-09-238, 241 đến 245 vào các màn, ERR-09-003, 079, 080, 081, 082 theo câu của §9.1, `serverTime` và `remainingThisHour` ở UI-09-22, đồng hồ vi phạm dừng khi đã thông báo, Phụ lục B có trạng thái, đề nghị cho FRS thành bảng kết quả |
+| 0.3 | 27/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ chéo cuối: Phụ lục A ghi thành phần chuẩn của D03-05 thay cho phần dùng tạm (RevealDialog, DeadlineClock, ApprovalChain, RiskMeter, RuleTable, MaskedValue); không nhận CountdownRing |

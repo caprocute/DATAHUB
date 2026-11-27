@@ -11236,7 +11236,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-003
+                type: https://datahub.gov.vn/errors/ERR-08-003
                 title: Dữ liệu không hợp lệ
                 status: 400
                 detail: Dữ liệu không hợp lệ.
@@ -11251,7 +11251,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-00-401
+                type: https://datahub.gov.vn/errors/ERR-00-401
                 title: Chưa xác thực
                 status: 401
                 detail: Chưa xác thực.
@@ -11266,7 +11266,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-00-403
+                type: https://datahub.gov.vn/errors/ERR-00-403
                 title: Không đủ quyền
                 status: 403
                 detail: Không đủ quyền.
@@ -11281,7 +11281,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-001
+                type: https://datahub.gov.vn/errors/ERR-08-001
                 title: Không tìm thấy
                 status: 404
                 detail: Không tìm thấy.
@@ -11296,7 +11296,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-006
+                type: https://datahub.gov.vn/errors/ERR-08-006
                 title: Xung đột
                 status: 409
                 detail: Xung đột.
@@ -11311,7 +11311,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-041
+                type: https://datahub.gov.vn/errors/ERR-08-041
                 title: Đã không còn
                 status: 410
                 detail: Đã không còn.
@@ -11326,7 +11326,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-046
+                type: https://datahub.gov.vn/errors/ERR-08-046
                 title: Vượt giới hạn
                 status: 413
                 detail: Vượt giới hạn.
@@ -11341,7 +11341,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-045
+                type: https://datahub.gov.vn/errors/ERR-08-045
                 title: Không xử lý được
                 status: 422
                 detail: Không xử lý được.
@@ -11356,7 +11356,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-052
+                type: https://datahub.gov.vn/errors/ERR-08-052
                 title: Vượt hạn mức
                 status: 429
                 detail: Vượt hạn mức.
@@ -11371,7 +11371,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-054
+                type: https://datahub.gov.vn/errors/ERR-08-054
                 title: Dịch vụ phụ thuộc không khả dụng
                 status: 503
                 detail: Dịch vụ phụ thuộc không khả dụng.
@@ -11386,7 +11386,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-08-103
+                type: https://datahub.gov.vn/errors/ERR-08-103
                 title: Vượt ngân sách thời gian
                 status: 504
                 detail: Vượt ngân sách thời gian.
@@ -11401,7 +11401,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-00-428
+                type: https://datahub.gov.vn/errors/ERR-00-428
                 title: Thiếu If-Match
                 status: 428
                 code: ERR-00-428

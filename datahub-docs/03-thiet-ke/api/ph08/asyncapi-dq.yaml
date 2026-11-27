@@ -982,6 +982,7 @@ components:
           time: '2026-11-26T09:15:00+07:00'
           datacontenttype: application/json
           data:
+            snapshotId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
             kind: SCAN_SNAPSHOT
             kpiSchemaVersion: 1
             periodCode: '2026-11'
@@ -6176,8 +6177,11 @@ components:
       - checkCount
     KpiPublishedData:
       type: object
-      description: Bản tin KPI cho PH-16 (FR-08-057).
+      description: Bản tin KPI cho PH-16 (FR-08-057); `snapshotId` là khóa lũy đẳng, PH-16 dùng làm `idempotencyRef`.
       properties:
+        snapshotId:
+          type: string
+          format: uuid
         kind:
           $ref: '#/components/schemas/KpiKind'
         kpiSchemaVersion:
@@ -6198,6 +6202,7 @@ components:
         official:
           type: boolean
       required:
+      - snapshotId
       - kind
       - kpiSchemaVersion
     MdmGoldenEventData:

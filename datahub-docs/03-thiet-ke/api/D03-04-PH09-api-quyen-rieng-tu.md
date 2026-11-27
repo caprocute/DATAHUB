@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH09
 ten: Đặc tả API và sự kiện phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư tích hợp, kỹ sư dh-data, ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-09
@@ -155,7 +155,7 @@ Quyền chức năng ghi `PERM-09-` rút gọn ở chương 3 (ví dụ `read` l
 | `scope privacy:consent` | 3 | 188, 189, 234 |
 | `scope privacy:decide` | 8 | 227, 228, 231…233, 235…237 |
 | `scope privacy:pseudonymize` | 1 | 230 |
-| `scope privacy:register` | 6 | 012, 029, 088, 137, 165, 172 |
+| `scope privacy:register` | 7 | 012, 029, 088, 137, 165, 172, 203 |
 
 : Số operation theo quyền chức năng và scope máy
 <!-- gen:perm:end -->
@@ -490,7 +490,7 @@ Hồ sơ đánh giá tác động, vụ việc vi phạm dữ liệu cá nhân, 
 | API-09-200 | `POST /dpia-records/{dpiaId}:export-a05` | Xuất hồ sơ gửi Cục A05 (nền) | 057 | ropa | 202 | 074 |
 | API-09-201 | `POST /dpia-records/{dpiaId}:mark-submitted` | Ghi nhận đã gửi, số công văn | 057 | ropa | 200 | 074 |
 | API-09-202 | `GET /breaches` | Liệt kê vụ việc | 058 | breach | 200 |  |
-| API-09-203 | `POST /breaches` | Ghi nhận vi phạm | 058 | breach | 201 | 075 |
+| API-09-203 | `POST /breaches` | Ghi nhận vi phạm (người dùng hoặc PH-18) | 058 | breach; s:privacy:register | 201 | 075 |
 | API-09-204 | `GET /breaches/{breachId}` | Chi tiết vụ việc | 058 | breach | 200 |  |
 | API-09-205 | `PATCH /breaches/{breachId}` | Cập nhật mô tả, phạm vi | 058 | breach | 200 | 075 |
 | API-09-206 | `POST /breaches/{breachId}:assess` | Đánh giá ảnh hưởng, mức nghiêm trọng | 058 | breach | 200 | 075 |
@@ -560,9 +560,9 @@ Bảng sau lấy từ AsyncAPI, bám FRS §9.3.
 <!-- gen:events:start -->
 | Mã | Topic | Khi nào | Bên tiêu thụ | Trường dữ liệu |
 |---|---|---|---|---|
-| EVT-09-01 | `{tenant}.privacy.classification.changed.v1` | Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới) | PH-02, PH-04, PH-06, PH-13 | `elementId`, `target`, `fromClass`, `toClass`, `personalDataType`, `downgrade`, `contractIds` |
+| EVT-09-01 | `{tenant}.privacy.classification.changed.v1` | Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới) | PH-02, PH-04, PH-06, PH-08, PH-13, PH-17 | `elementId`, `target`, `fromClass`, `toClass`, `personalDataType`, `downgrade`, `contractIds` |
 | EVT-09-02 | `{tenant}.privacy.classification.scan-finished.v1` | Lượt quét phát hiện kết thúc | PH-13, UI-09-04 | `scanId`, `status`, `suspectCount` |
-| EVT-09-03 | `{tenant}.privacy.contract-level.changed.v1` | Mức phân loại của hợp đồng API, topic, luồng đổi | PH-02, PH-03, PH-04, PH-10 | `contractKind`, `contractId`, `fromClass`, `toClass`, `blocked` |
+| EVT-09-03 | `{tenant}.privacy.contract-level.changed.v1` | Mức phân loại của hợp đồng API, topic, luồng đổi | PH-02, PH-03, PH-04, PH-10, PH-17 | `contractKind`, `contractId`, `fromClass`, `toClass`, `blocked` |
 | EVT-09-04 | `{tenant}.privacy.activity.activated.v1` | Hoạt động xử lý được kích hoạt hoặc ngừng | PH-13 | `activityId`, `code`, `versionNo`, `status` |
 | EVT-09-05 | `{tenant}.privacy.purpose-request.submitted.v1` | Yêu cầu khai thác được gửi thẩm định | PH-11 hoặc Việc của tôi, chủ quản dữ liệu | `requestId`, `requestKind`, `renewsGrantId`, `htttId`, `purposeCode`, `contractId`, `ownerOrgId`, `dueAt` |
 | EVT-09-06 | `{tenant}.privacy.purpose-grant.approved.v1` | Chấp thuận được cấp hoặc sửa, gia hạn | PH-02, PH-03, PH-12, HTTT yêu cầu | `grantId`, `htttId`, `purposeCode`, `contractKind`, `contractId`, `validUntil`, `change` |
@@ -1870,14 +1870,14 @@ Mẫu đồng ý, bản ghi đồng ý, bằng chứng (FR-09-052…054). Các o
 
 Hồ sơ đánh giá tác động, vụ việc vi phạm dữ liệu cá nhân, đồng hồ 72 giờ (FR-09-055…060). Các operation sau có đặc tả đầy đủ.
 
-#### API-09-203 · Ghi nhận vi phạm
+#### API-09-203 · Ghi nhận vi phạm (người dùng hoặc PH-18)
 
 ::: dac-ta
-**Mục đích.** Ghi nhận vi phạm.
+**Mục đích.** Ghi nhận vi phạm (người dùng hoặc PH-18).
 
 **Phương thức, đường dẫn.** `POST /breaches`.
 
-**Quyền.** breach.
+**Quyền.** breach; scope privacy:register.
 
 **FR hiện thực.** FR-09-058.
 
@@ -2245,3 +2245,4 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-API và K-TRINH-BAY: 237 operation (226 control plane, 11 data plane), 33 kênh sự kiện, 91 mã lỗi, OpenAPI 3.1 và AsyncAPI 3.0 sinh từ FRS, ví dụ kiểm khớp lược đồ, đặc tả 10 mục cho 35 operation trọng yếu, năm câu hỏi mở Q09-55…59 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thêm API-09-238 đến 245 (245 operation, 234 control plane), ERR-09-082 và đưa 079 đến 081 về FRS, `requestKind`, `renewsGrantId`, `serverTime`, `remainingThisHour`, hạn 60 giây của kết quả khôi phục, giới hạn bản tin 1 MiB, 329 lược đồ, 37 operation trọng yếu, chốt bốn trong năm câu hỏi mở |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: API-09-203 thêm scope `privacy:register` cho PH-18; thân xoay khóa API-09-116 thêm `confirmInconsistency`; bên tiêu thụ EVT-09-01, EVT-09-03 |
