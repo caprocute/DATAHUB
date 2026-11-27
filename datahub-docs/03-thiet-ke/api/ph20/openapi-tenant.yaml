@@ -1,0 +1,3663 @@
+# D03-04-PH20 · OpenAPI PH-20 (module tenant và release của dh-platform). SINH TỰ ĐỘNG bởi tools/gen_openapi.py, không sửa tay.
+openapi: '3.1.0'
+info:
+  title: Datahub · PH-20 Quản trị tỉnh
+  version: 0.1.0-draft
+  summary: Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).
+  description: |-
+    Nhóm `/api/tenant/v1`: cài đặt tỉnh, tổ chức, sử dụng, phiên bản của chính tenant gọi (tenant lấy từ token).
+
+    Quy ước (D03-04-PH20 chương 1, 2): tenant lấy từ token, không từ thân hay đường dẫn (trừ API nền tảng nêu `tenantCode` của tenant bị tác động); `POST` nhận `Idempotency-Key`; `PUT`, `PATCH` và hành động trên đối tượng có phiên bản nhận `If-Match`; hậu tố `:{hành-động}`; lỗi RFC 9457 `application/problem+json` mã `ERR-20-nnn`; phân trang `page`, `size`. Mọi tên miền, mã, dữ liệu là giả lập.
+
+    Tệp sinh bởi `tools/gen_openapi.py`; không sửa tay.
+  contact:
+    name: Nhóm phân hệ PH-20
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH20
+  x-datahub-phase: PH-20
+servers:
+- url: https://console.{tenantHost}.datahub.example.vn
+  description: Console của tỉnh qua BFF (giả lập).
+  variables:
+    tenantHost:
+      default: t68
+      description: Ví dụ `t68` (giả lập).
+tags:
+- name: Cài đặt và ngữ cảnh tỉnh
+  description: Cài đặt, chính sách liên tenant, sử dụng, ngữ cảnh của tỉnh (`/api/tenant/v1`).
+- name: Tổ chức
+  description: Danh mục tổ chức của tỉnh (nhóm H).
+- name: Phiên bản và kiểm toán của tỉnh
+  description: Phiên bản, bảo trì, kiểm toán của tỉnh.
+paths:
+  /api/tenant/v1/settings:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getSettings135
+      summary: Cài đặt tỉnh
+      description: Tenant lấy từ token, không có tham số tenant ở đường dẫn.
+      x-datahub-id: API-20-135
+      x-datahub-fr:
+      - FR-20-018
+      - FR-20-064
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+              example:
+                displayName: Datahub tỉnh T68
+                logoFileId: 0193a000-1111-7000-8000-000000000071
+                itOwnerOrgCode: SO-KHCN
+                sessionIdleMinutes: 15
+                passwordMinLength: 14
+                mfaRequiredRoles:
+                - ROLE-TENANT_ADMIN
+                - ROLE-SECURITY_OFFICER
+                maintenanceWindowPref:
+                  rrule: FREQ=WEEKLY;BYDAY=SA
+                  startTime: '22:00'
+                  durationHours: 4
+                  timezone: Asia/Ho_Chi_Minh
+                supportContactEmail: ho-tro@t68.example.vn
+                hotline: '1900123456'
+                configVersionNo: 8
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors: []
+    put:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: putSettings136
+      summary: Sửa cài đặt tỉnh (`If-Match`)
+      description: Trong giới hạn nền tảng (`sessionIdleMinutes` 5…15, `passwordMinLength` 14…64, vai trò `ROLE-TENANT_ADMIN` luôn bắt buộc MFA) trả ERR-20-023 khi
+        vượt. Phát EVT-20-09.
+      x-datahub-id: API-20-136
+      x-datahub-fr:
+      - FR-20-018
+      x-datahub-permission:
+        permission: PERM-20-settings
+      security:
+      - oauth2User:
+        - PERM-20-settings
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSettingsUpdate'
+            example:
+              displayName: Datahub tỉnh T68
+              logoFileId: 0193a000-1111-7000-8000-000000000071
+              itOwnerOrgCode: SO-KHCN
+              sessionIdleMinutes: 15
+              passwordMinLength: 14
+              mfaRequiredRoles:
+              - ROLE-TENANT_ADMIN
+              - ROLE-SECURITY_OFFICER
+              maintenanceWindowPref:
+                rrule: FREQ=WEEKLY;BYDAY=SA
+                startTime: '22:00'
+                durationHours: 4
+                timezone: Asia/Ho_Chi_Minh
+              supportContactEmail: ho-tro@t68.example.vn
+              hotline: '1900123456'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+              example:
+                displayName: Datahub tỉnh T68
+                logoFileId: 0193a000-1111-7000-8000-000000000071
+                itOwnerOrgCode: SO-KHCN
+                sessionIdleMinutes: 15
+                passwordMinLength: 14
+                mfaRequiredRoles:
+                - ROLE-TENANT_ADMIN
+                - ROLE-SECURITY_OFFICER
+                maintenanceWindowPref:
+                  rrule: FREQ=WEEKLY;BYDAY=SA
+                  startTime: '22:00'
+                  durationHours: 4
+                  timezone: Asia/Ho_Chi_Minh
+                supportContactEmail: ho-tro@t68.example.vn
+                hotline: '1900123456'
+                configVersionNo: 8
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-023
+      - ERR-20-115
+      - ERR-00-428
+  /api/tenant/v1/cross-tenant-policy:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getCrossTenantPolicy137
+      summary: Chính sách tiếp nhận liên tenant
+      description: Đọc chính sách tiếp nhận; SO và AU đọc, TA sửa. Vai trò SO và AU của tỉnh đọc được (không ghi).
+      x-datahub-id: API-20-137
+      x-datahub-fr:
+      - FR-20-023
+      x-datahub-permission:
+        permission: PERM-20-settings
+      security:
+      - oauth2User:
+        - PERM-20-settings
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossTenantPolicy'
+              example:
+                allowRead: true
+                allowWrite: false
+                requirePriorApproval: true
+                maxHours: 4
+                notifyContacts:
+                - cong-vu@t68.example.vn
+                blockedReasons:
+                - THUONG_MAI
+                effectiveFrom: '2025-07-01T00:00:00+07:00'
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors: []
+    put:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: putCrossTenantPolicy138
+      summary: Sửa chính sách tiếp nhận liên tenant
+      description: '`maxHours` không vượt `20.cross-tenant.max-hours` (ERR-20-027). PH-12 đọc chính sách này khi cấp truy cập liên tenant.'
+      x-datahub-id: API-20-138
+      x-datahub-fr:
+      - FR-20-023
+      x-datahub-permission:
+        permission: PERM-20-settings
+      security:
+      - oauth2User:
+        - PERM-20-settings
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrossTenantPolicyUpdate'
+            example:
+              allowRead: true
+              allowWrite: false
+              requirePriorApproval: true
+              maxHours: 4
+              notifyContacts:
+              - cong-vu@t68.example.vn
+              blockedReasons:
+              - THUONG_MAI
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossTenantPolicy'
+              example:
+                allowRead: true
+                allowWrite: false
+                requirePriorApproval: true
+                maxHours: 4
+                notifyContacts:
+                - cong-vu@t68.example.vn
+                blockedReasons:
+                - THUONG_MAI
+                effectiveFrom: '2025-07-01T00:00:00+07:00'
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-027
+      - ERR-00-428
+  /api/tenant/v1/cross-tenant-access-log:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getCrossTenantAccessLog139
+      summary: Nhật ký truy cập liên tenant vào tỉnh
+      description: Khoảng tối đa 366 ngày (ERR-20-032); chỉ lượt truy cập vào tỉnh của người gọi. Vai trò SO và AU của tỉnh đọc được (không ghi).
+      x-datahub-id: API-20-139
+      x-datahub-fr:
+      - FR-20-024
+      x-datahub-permission:
+        permission: PERM-20-settings
+      security:
+      - oauth2User:
+        - PERM-20-settings
+      parameters:
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00+07:00'
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-27T00:00:00+07:00'
+      - name: actor
+        in: query
+        schema:
+          type: string
+        example: nguyen.thi.lan
+      - name: reasonType
+        in: query
+        schema:
+          type: string
+        example: HO_TRO_VAN_HANH
+      - name: ticketRef
+        in: query
+        schema:
+          type: string
+        example: PT-2026-0412
+      - name: access
+        in: query
+        schema:
+          $ref: '#/components/schemas/AccessKind'
+        example: READ
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossTenantAccessPage'
+              example:
+                items:
+                - accessId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e20
+                  at: '2026-11-27T09:15:00+07:00'
+                  actor: cb.nen.tang
+                  actorTenant: T90
+                  reasonType: HO_TRO_VAN_HANH
+                  ticketRef: PT-2026-0412
+                  access: READ
+                  apiCode: API-20-003
+                  objectRef: tenant/T68
+                  result: SUCCESS
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-004
+      - ERR-20-032
+      - ERR-20-062
+  /api/tenant/v1/usage:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getUsage140
+      summary: Sử dụng tài nguyên của tỉnh
+      description: Sử dụng tài nguyên của tỉnh.
+      x-datahub-id: API-20-140
+      x-datahub-fr:
+      - FR-20-030
+      x-datahub-permission:
+        permission: PERM-20-usage-read
+      security:
+      - oauth2User:
+        - PERM-20-usage-read
+      parameters:
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00+07:00'
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-27T00:00:00+07:00'
+      - name: granularity
+        in: query
+        schema:
+          $ref: '#/components/schemas/UsageGranularity'
+        example: DAY
+      - name: resource
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaResource'
+        example:
+        - API_RPS
+        style: form
+        explode: true
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+              example:
+                from: '2026-11-27T09:15:00+07:00'
+                to: '2026-11-27T09:15:00+07:00'
+                granularity: HOUR
+                series:
+                - resource: API_RPS
+                  unit: req/s
+                  points:
+                  - t: '2026-11-27T09:00:00+07:00'
+                    value: 312
+                    peak: 365
+                    limit: 500
+                    percent: 62.4
+                    quality: MEASURED
+                ranking:
+                - tenantCode: T68
+                  resource: API_RPS
+                  percent: 62.4
+                  used: 312
+                  limit: 500
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-20-004
+      - ERR-20-032
+  /api/tenant/v1/quotas:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getQuotas141
+      summary: Hạn mức hiệu lực và cảnh báo của tỉnh
+      description: Hạn mức hiệu lực và cảnh báo của tỉnh.
+      x-datahub-id: API-20-141
+      x-datahub-fr:
+      - FR-20-030
+      x-datahub-permission:
+        permission: PERM-20-usage-read
+      security:
+      - oauth2User:
+        - PERM-20-usage-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaView'
+              example:
+                tenantCode: T68
+                items:
+                - resource: API_RPS
+                  unit: req/s
+                  contractValue: 500
+                  platformCeiling: 2000
+                  overrideValue: 800
+                  effectiveValue: 800
+                  lastUsage: 312
+                  source: OVERRIDE
+                  pushStatus: PUSHED
+                alerts:
+                - alertId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e06
+                  tenantCode: T68
+                  resource: API_RPS
+                  alertLevel: WARN_80
+                  state: OPEN
+                  used: 412
+                  limit: 500
+                  percent: 82.4
+                  raisedAt: '2026-11-27T09:15:00+07:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-20-032
+  /api/tenant/v1/context:
+    get:
+      tags:
+      - Cài đặt và ngữ cảnh tỉnh
+      operationId: getContext142
+      summary: Trạng thái tenant, phân hệ đang bật, dải cảnh báo cho `dh-console`
+      description: Mọi người dùng đã đăng nhập gọi được, kể cả khi tenant `SUSPENDED` (trả `readOnly = true` và `banner`) để giao diện hiện đúng trạng thái.
+      x-datahub-id: API-20-142
+      x-datahub-fr:
+      - FR-20-037
+      - FR-20-066
+      x-datahub-permission:
+        permission: Mọi người dùng đã đăng nhập
+      security:
+      - oauth2User: []
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantContext'
+              example:
+                tenantCode: T68
+                name: Tỉnh Lâm Viên (giả định)
+                status: ACTIVE
+                readOnly: false
+                modules:
+                - moduleCode: PH-01
+                  state: ENABLED
+                featureFlags:
+                  ph04.sql-direct: false
+                banner:
+                  type: INFO
+                  message: Hệ thống sẽ bảo trì từ 22:00 thứ Bảy.
+                  until: '2026-11-27T09:15:00+07:00'
+                  link: /quan-tri/cai-dat-tinh
+                currentVersion: '2.3.1'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors: []
+  /api/tenant/v1/organizations:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizations143
+      summary: Danh mục tổ chức (cây, bảng)
+      description: '`view = TREE` trả thêm `tree`; `asOf` xem theo ngày hiệu lực. Chỉ tổ chức của tenant người gọi.'
+      x-datahub-id: API-20-143
+      x-datahub-fr:
+      - FR-20-053
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+        example: lam vien
+      - name: orgType
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgType'
+        example:
+        - DEPARTMENT
+        style: form
+        explode: true
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgStatus'
+        example:
+        - ACTIVE
+        style: form
+        explode: true
+      - name: parentCode
+        in: query
+        schema:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        example: UBND-TINH
+      - name: adminUnitId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        example: 0193a000-1111-7000-8000-000000000068
+      - name: asOf
+        in: query
+        schema:
+          type: string
+          format: date
+        example: '2026-11-27'
+      - name: view
+        in: query
+        schema:
+          $ref: '#/components/schemas/OrgView'
+        example: TABLE
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationPage'
+              example:
+                items:
+                - orgCode: SO-KHCN
+                  name: Sở Khoa học và Công nghệ
+                  shortName: Sở KH&CN
+                  parentCode: UBND-TINH
+                  orgType: DEPARTMENT
+                  adminUnitId: 0193a000-1111-7000-8000-000000000068
+                  electronicId: H68.07
+                  effectiveFrom: '2025-07-01'
+                  sortOrder: 1
+                  note: Tỉnh thí điểm đợt 2.
+                  status: ACTIVE
+                  isDataOwner: false
+                  dataDomains:
+                  - ho-tich
+                  externalCode: Nội dung
+                  childCount: 4
+                  createdAt: '2026-11-27T09:15:00+07:00'
+                  createdBy: nguyen.thi.lan
+                  updatedAt: '2026-11-27T09:15:00+07:00'
+                  updatedBy: nguyen.thi.lan
+                tree:
+                - orgCode: SO-KHCN
+                  name: Tỉnh Lâm Viên (giả định)
+                  orgType: DEPARTMENT
+                  status: ACTIVE
+                  children: []
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-20-004
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizations144
+      summary: Tạo tổ chức
+      description: Mã tổ chức duy nhất trong tenant (ERR-20-003); cấp trên không tạo chu trình (ERR-20-047); hiệu lực hợp lệ (ERR-20-052). Phát EVT-20-13.
+      x-datahub-id: API-20-144
+      x-datahub-fr:
+      - FR-20-053
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreate'
+            example:
+              orgCode: SO-KHCN
+              name: Sở Khoa học và Công nghệ
+              shortName: Sở KH&CN
+              parentCode: UBND-TINH
+              orgType: DEPARTMENT
+              adminUnitId: 0193a000-1111-7000-8000-000000000068
+              electronicId: H68.07
+              effectiveFrom: '2025-07-01'
+              sortOrder: 7
+              note: Tỉnh thí điểm đợt 2.
+              isDataOwner: false
+      responses:
+        '201':
+          description: Đã tạo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: ACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+            Location:
+              description: Đường dẫn của đối tượng vừa tạo.
+              schema:
+                type: string
+              example: /api/tenant/v1/organizations/SO-KHCN
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-003
+      - ERR-20-004
+      - ERR-20-009
+      - ERR-20-047
+      - ERR-20-052
+  /api/tenant/v1/organizations/{orgCode}:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizations145
+      summary: Chi tiết tổ chức
+      description: Chi tiết tổ chức.
+      x-datahub-id: API-20-145
+      x-datahub-fr:
+      - FR-20-053
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: ACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+    patch:
+      tags:
+      - Tổ chức
+      operationId: patchOrganizations146
+      summary: Sửa tổ chức (`If-Match`)
+      description: Không đổi `orgCode`; đổi cấp trên kiểm chu trình (ERR-20-047). Phát EVT-20-13.
+      x-datahub-id: API-20-146
+      x-datahub-fr:
+      - FR-20-053
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUpdate'
+            example:
+              name: Sở Khoa học và Công nghệ
+              shortName: Nội dung
+              parentCode: UBND-TINH
+              orgType: DEPARTMENT
+              electronicId: H68.07
+              sortOrder: 1
+              note: Tỉnh thí điểm đợt 2.
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: ACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-003
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-047
+      - ERR-20-052
+      - ERR-00-428
+  /api/tenant/v1/organizations/{orgCode}:deactivate:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationsDeactivate147
+      summary: Ngừng tổ chức
+      description: Ngừng tổ chức; còn tham chiếu mà không có tổ chức kế thừa trả ERR-20-049.
+      x-datahub-id: API-20-147
+      x-datahub-fr:
+      - FR-20-054
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgDeactivateRequest'
+            example:
+              effectiveTo: '2026-12-31'
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: INACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+                effectiveTo: '2026-12-31'
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-048
+      - ERR-20-049
+      - ERR-20-062
+      - ERR-00-428
+  /api/tenant/v1/organizations/{orgCode}:reactivate:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationsReactivate148
+      summary: Hoạt động lại tổ chức
+      description: Hoạt động lại tổ chức. Cần `If-Match` theo `ETag` đã đọc.
+      x-datahub-id: API-20-148
+      x-datahub-fr:
+      - FR-20-054
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+            example:
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+              ticketRef: PT-2026-0412
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: ACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-048
+      - ERR-20-049
+      - ERR-20-062
+      - ERR-00-428
+  /api/tenant/v1/organizations/{orgCode}:dissolve:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationsDissolve149
+      summary: Giải thể tổ chức có kế thừa
+      description: Giải thể cần tổ chức kế thừa khi còn tham chiếu (ERR-20-048, 049). Phát EVT-20-13 để PH-01, PH-06, PH-07, PH-08, PH-12, PH-16 xử lý.
+      x-datahub-id: API-20-149
+      x-datahub-fr:
+      - FR-20-054
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgDissolveRequest'
+            example:
+              effectiveTo: '2026-12-31'
+              successorCode: SO-TTTT
+              decisionDocNo: 45/QĐ-UBND
+              decisionDocDate: '2026-11-20'
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: DISSOLVED
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+                effectiveTo: '2026-12-31'
+                successorCode: SO-TTTT
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-048
+      - ERR-20-049
+      - ERR-20-062
+      - ERR-00-428
+  /api/tenant/v1/organizations:merge:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationsMerge150
+      summary: Sáp nhập nhiều tổ chức vào một tổ chức
+      description: Sáp nhập nhiều tổ chức nguồn vào tổ chức đích có sẵn hoặc tạo mới (`createTarget`); chuyển tổ chức con sang đích.
+      x-datahub-id: API-20-150
+      x-datahub-fr:
+      - FR-20-054
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgMergeRequest'
+            example:
+              sourceCodes:
+              - SO-KHCN
+              - SO-TTTT
+              targetCode: SO-KHCN-MOI
+              effectiveTo: '2026-12-31'
+              decisionDocNo: 45/QĐ-UBND
+              decisionDocDate: '2026-11-20'
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgMergeResult'
+              example:
+                target:
+                  orgCode: SO-KHCN
+                  name: Sở Khoa học và Công nghệ
+                  shortName: Sở KH&CN
+                  parentCode: UBND-TINH
+                  orgType: DEPARTMENT
+                  adminUnitId: 0193a000-1111-7000-8000-000000000068
+                  electronicId: H68.07
+                  effectiveFrom: '2025-07-01'
+                  sortOrder: 1
+                  note: Tỉnh thí điểm đợt 2.
+                  status: ACTIVE
+                  isDataOwner: false
+                  dataDomains:
+                  - ho-tich
+                  externalCode: Nội dung
+                  childCount: 4
+                  createdAt: '2026-11-27T09:15:00+07:00'
+                  createdBy: nguyen.thi.lan
+                  updatedAt: '2026-11-27T09:15:00+07:00'
+                  updatedBy: nguyen.thi.lan
+                mergedCodes:
+                - SO-KHCN
+                - SO-TTTT
+                movedChildren:
+                - orgCode: SO-KHCN
+                  newParentCode: SO-KHCN-MOI
+                referencesRebound: 12
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-004
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-048
+      - ERR-20-049
+      - ERR-20-062
+  /api/tenant/v1/organizations/{orgCode}/history:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizationsHistory151
+      summary: Lịch sử hiệu lực, kế thừa
+      description: Lịch sử hiệu lực, kế thừa.
+      x-datahub-id: API-20-151
+      x-datahub-fr:
+      - FR-20-054
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgHistoryPage'
+              example:
+                items:
+                - at: '2026-11-27T09:15:00+07:00'
+                  action: DISSOLVED
+                  from: ACTIVE
+                  to: DISSOLVED
+                  actor: nguyen.thi.lan
+                  successorCode: SO-TTTT
+                  decisionDocNo: 1234/QĐ-TTg
+                  reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+                page: 0
+                size: 20
+                totalElements: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+  /api/tenant/v1/organizations/{orgCode}/data-owner:
+    put:
+      tags:
+      - Tổ chức
+      operationId: putOrganizationsDataOwner152
+      summary: Đánh dấu, bỏ đánh dấu chủ quản dữ liệu
+      description: Đánh dấu tổ chức chủ quản dữ liệu để PH-06, PH-08 tra cứu (API-20-171).
+      x-datahub-id: API-20-152
+      x-datahub-fr:
+      - FR-20-058
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataOwnerRequest'
+            example:
+              isDataOwner: true
+              dataDomains:
+              - ho-tich
+              - dat-dai
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                shortName: Sở KH&CN
+                parentCode: UBND-TINH
+                orgType: DEPARTMENT
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                electronicId: H68.07
+                effectiveFrom: '2025-07-01'
+                sortOrder: 1
+                note: Tỉnh thí điểm đợt 2.
+                status: ACTIVE
+                isDataOwner: false
+                dataDomains:
+                - ho-tich
+                externalCode: Nội dung
+                childCount: 4
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-006
+      - ERR-20-049
+      - ERR-00-428
+  /api/tenant/v1/organization-imports:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationImports153
+      summary: Tải tệp nhập, sinh xem trước
+      description: '`multipart/form-data` với tệp `.xlsx` hoặc `.csv` UTF-8 tối đa 10 MB và `20.org.import-max-rows` dòng (ERR-20-050). Chưa ghi dữ liệu: trả bản
+        xem trước theo dòng. Kết quả đọc ở API-20-154.'
+      x-datahub-id: API-20-153
+      x-datahub-fr:
+      - FR-20-055
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrgImportUpload'
+            encoding:
+              file:
+                contentType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv
+            example:
+              file: to-chuc.xlsx
+              mode: UPSERT
+      responses:
+        '202':
+          description: Đã nhận, xử lý bất đồng bộ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgImportJob'
+              example:
+                importId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d
+                status: UPLOADED
+                mode: UPSERT
+                fileName: to-chuc.xlsx
+                totalRows: 0
+                validRows: 0
+                errorRows: 0
+                appliedRows: 0
+                previewExpiresAt: '2026-11-27T09:15:00+07:00'
+                errorFileUrl: https://nen-tang.datahub.example.vn/tai-ve/goi-t68
+                rows: []
+                summary: {}
+                page: 0
+                size: 50
+                totalElements: 120
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+            Location:
+              description: Đường dẫn để theo dõi tiến độ.
+              schema:
+                type: string
+              example: /api/tenant/v1/organization-imports/0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-004
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-050
+      - ERR-20-051
+  /api/tenant/v1/organization-imports/{importId}:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizationImports154
+      summary: Kết quả kiểm từng dòng
+      description: Kết quả kiểm từng dòng (`rows`, phân trang), thống kê `summary`; lô còn dòng lỗi không xác nhận được (ERR-20-051).
+      x-datahub-id: API-20-154
+      x-datahub-fr:
+      - FR-20-055
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      parameters:
+      - $ref: '#/components/parameters/ImportId'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgImportJob'
+              example:
+                importId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d
+                status: PREVIEWED
+                mode: UPSERT
+                fileName: to-chuc.xlsx
+                totalRows: 120
+                validRows: 118
+                errorRows: 2
+                appliedRows: 0
+                previewExpiresAt: '2026-11-27T09:15:00+07:00'
+                errorFileUrl: https://nen-tang.datahub.example.vn/tai-ve/goi-t68
+                rows:
+                - rowNo: 2
+                  orgCode: SO-KHCN
+                  action: CREATE
+                  errors: []
+                - rowNo: 3
+                  orgCode: SO-XX
+                  action: ERROR
+                  errors:
+                  - field: parentCode
+                    message: Tổ chức cấp trên không tồn tại.
+                    code: ERR-20-047
+                summary:
+                  CREATE: 100
+                  UPDATE: 18
+                  ERROR: 2
+                page: 0
+                size: 50
+                totalElements: 120
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+  /api/tenant/v1/organization-imports/{importId}:confirm:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationImportsConfirm155
+      summary: Xác nhận nhập
+      description: Ghi các dòng hợp lệ, bất đồng bộ; trả `202`.
+      x-datahub-id: API-20-155
+      x-datahub-fr:
+      - FR-20-055
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/ImportId'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Đã nhận, xử lý bất đồng bộ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgImportJob'
+              example:
+                importId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d
+                status: APPLYING
+                mode: UPSERT
+                fileName: to-chuc.xlsx
+                totalRows: 120
+                validRows: 118
+                errorRows: 2
+                appliedRows: 0
+                previewExpiresAt: '2026-11-27T09:15:00+07:00'
+                errorFileUrl: https://nen-tang.datahub.example.vn/tai-ve/goi-t68
+                rows:
+                - rowNo: 2
+                  orgCode: SO-KHCN
+                  action: CREATE
+                  errors: []
+                summary:
+                  CREATE: 100
+                  UPDATE: 18
+                  ERROR: 2
+                page: 0
+                size: 50
+                totalElements: 120
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+            Location:
+              description: Đường dẫn để theo dõi tiến độ.
+              schema:
+                type: string
+              example: /api/tenant/v1/organization-imports/0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d:confirm
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-050
+      - ERR-20-051
+  /api/tenant/v1/organizations:export:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizationsExport156
+      summary: Xuất danh mục tổ chức, tải tệp mẫu
+      description: Trả tệp XLSX hoặc CSV; `template = true` trả tệp mẫu nhập.
+      x-datahub-id: API-20-156
+      x-datahub-fr:
+      - FR-20-055
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - name: format
+        in: query
+        schema:
+          $ref: '#/components/schemas/OrgExportFormat'
+        example: XLSX
+      - name: template
+        in: query
+        schema:
+          type: boolean
+        example: false
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgStatus'
+        example:
+        - ACTIVE
+        style: form
+        explode: true
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Tên tệp tải về.
+              schema:
+                type: string
+              example: attachment; filename="tep-xuat.xlsx"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-20-004
+  /api/tenant/v1/organization-sync-proposals:
+    get:
+      tags:
+      - Tổ chức
+      operationId: getOrganizationSyncProposals157
+      summary: Đề xuất đồng bộ do sắp xếp ĐVHC
+      description: Đề xuất sinh từ EVT-07-10 khi sắp xếp đơn vị hành chính; TA quyết định.
+      x-datahub-id: API-20-157
+      x-datahub-fr:
+      - FR-20-056
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      parameters:
+      - name: state
+        in: query
+        schema:
+          $ref: '#/components/schemas/ProposalState'
+        example: PENDING
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncProposalPage'
+              example:
+                items:
+                - proposalId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0e
+                  state: PENDING
+                  adminUnitOld: XA-0101
+                  adminUnitNew: XA-0105
+                  effectiveDate: '2026-12-15'
+                  decisionDoc: 12/NQ-HĐND
+                  suggestedAction: Sáp nhập hai tổ chức cấp xã thành một
+                  orgCodes:
+                  - UBND-XA-A
+                  - UBND-XA-B
+                  suggestedCode: UBND-XA-AB
+                  suggestedName: UBND xã A-B
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors:
+      - ERR-20-004
+  /api/tenant/v1/organization-sync-proposals/{proposalId}:decide:
+    post:
+      tags:
+      - Tổ chức
+      operationId: postOrganizationSyncProposalsDecide158
+      summary: Áp hoặc bỏ đề xuất đồng bộ
+      description: Áp hoặc bỏ đề xuất đồng bộ.
+      x-datahub-id: API-20-158
+      x-datahub-fr:
+      - FR-20-056
+      x-datahub-permission:
+        permission: PERM-20-org
+      security:
+      - oauth2User:
+        - PERM-20-org
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/ProposalId'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideProposalRequest'
+            example:
+              decision: APPLY
+              name: UBND xã A-B
+              orgCode: UBND-XA-AB
+              reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncProposal'
+              example:
+                proposalId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0e
+                state: APPLIED
+                adminUnitOld: XA-0101
+                adminUnitNew: XA-0105
+                effectiveDate: '2026-12-15'
+                decisionDoc: 12/NQ-HĐND
+                suggestedAction: Sáp nhập hai tổ chức cấp xã thành một
+                orgCodes:
+                - UBND-XA-A
+                - UBND-XA-B
+                suggestedCode: UBND-XA-AB
+                suggestedName: UBND xã A-B
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-006
+      - ERR-20-009
+      - ERR-20-049
+  /api/tenant/v1/release-info:
+    get:
+      tags:
+      - Phiên bản và kiểm toán của tỉnh
+      operationId: getReleaseInfo159
+      summary: Phiên bản đang chạy, ghi chú phát hành, lịch bảo trì
+      description: Phiên bản đang chạy, ghi chú phát hành, lịch bảo trì sắp tới của tỉnh.
+      x-datahub-id: API-20-159
+      x-datahub-fr:
+      - FR-20-064
+      x-datahub-permission:
+        permission: PERM-20-org-read
+      security:
+      - oauth2User:
+        - PERM-20-org-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantReleaseInfo'
+              example:
+                currentVersion: '2.3.1'
+                channel: STABLE
+                releaseNotes: Nội dung
+                releasedAt: '2026-11-27T09:15:00+07:00'
+                nextMaintenance:
+                  startsAt: '2026-11-27T09:15:00+07:00'
+                  endsAt: '2026-11-27T09:15:00+07:00'
+                  release: '2.4.0'
+                  note: Tỉnh thí điểm đợt 2.
+                maintenanceWindowPref:
+                  rrule: FREQ=WEEKLY;BYDAY=SA
+                  startTime: '22:00'
+                  durationHours: 4
+                  timezone: Asia/Ho_Chi_Minh
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-datahub-errors: []
+  /api/tenant/v1/maintenance-window:
+    put:
+      tags:
+      - Phiên bản và kiểm toán của tỉnh
+      operationId: putMaintenanceWindow160
+      summary: Đặt cửa sổ bảo trì ưa thích của tỉnh
+      description: Cửa sổ dài 2 đến 6 giờ theo múi giờ `Asia/Ho_Chi_Minh` (ERR-20-059); kế hoạch nâng cấp chỉ xếp tenant vào cửa sổ này.
+      x-datahub-id: API-20-160
+      x-datahub-fr:
+      - FR-20-018
+      - FR-20-061
+      x-datahub-permission:
+        permission: PERM-20-settings
+      security:
+      - oauth2User:
+        - PERM-20-settings
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceWindowSet'
+            example:
+              dayOfWeek: 6
+              startTime: '22:00'
+              durationHours: 4
+              timezone: Asia/Ho_Chi_Minh
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceWindow'
+              example:
+                dayOfWeek: 6
+                startTime: '22:00'
+                durationHours: 4
+                timezone: Asia/Ho_Chi_Minh
+                updatedAt: '2026-11-27T09:15:00+07:00'
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+      x-datahub-errors:
+      - ERR-20-001
+      - ERR-20-004
+      - ERR-20-005
+      - ERR-20-023
+      - ERR-20-055
+      - ERR-20-056
+      - ERR-20-059
+      - ERR-20-115
+      - ERR-00-428
+  /api/tenant/v1/audit-events:
+    get:
+      tags:
+      - Phiên bản và kiểm toán của tỉnh
+      operationId: getAuditEvents161
+      summary: Nhật ký kiểm toán PH-20 của tỉnh
+      description: Nhật ký kiểm toán thao tác PH-20 của tỉnh (TA, AU); khoảng tối đa 366 ngày. Vai trò TA và AU của tỉnh đọc được.
+      x-datahub-id: API-20-161
+      x-datahub-fr:
+      - FR-20-068
+      x-datahub-permission:
+        permission: Vai trò TA hoặc AU của tỉnh (ROLE-TENANT_ADMIN, ROLE-AUDITOR)
+      security:
+      - oauth2User: []
+      parameters:
+      - name: actor
+        in: query
+        schema:
+          type: string
+        example: nguyen.thi.lan
+      - name: action
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        example:
+        - tenant.status.change
+        style: form
+        explode: true
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00+07:00'
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-27T00:00:00+07:00'
+      - name: ticketRef
+        in: query
+        schema:
+          type: string
+        example: PT-2026-0412
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventPage'
+              example:
+                items:
+                - eventId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e11
+                  at: '2026-11-27T09:15:00+07:00'
+                  actor: nguyen.thi.lan
+                  actorRole: ROLE-PLATFORM_ADMIN
+                  action: tenant.status.change
+                  tenantCode: T68
+                  objectType: tenant
+                  objectId: T68
+                  reason: Theo biên bản họp của Ban điều hành ngày 20/11/2026.
+                  ticketRef: PT-2026-0412
+                  result: SUCCESS
+                  traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-20-004
+      - ERR-20-032
+      - ERR-20-062
+components:
+  securitySchemes:
+    oauth2User:
+      type: oauth2
+      description: Người dùng đăng nhập OIDC (WebAuthn cho vai trò nền tảng), tenant lấy từ token (claim `tenant`); không nhận mã tenant từ thân yêu cầu.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://sso.datahub.example.vn/realms/dh-platform/protocol/openid-connect/auth
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-platform/protocol/openid-connect/token
+          scopes:
+            PERM-20-org: Quyền chức năng PERM-20-org do Keycloak cấp qua vai trò (D02-08).
+            PERM-20-org-read: Quyền chức năng PERM-20-org-read do Keycloak cấp qua vai trò (D02-08).
+            PERM-20-settings: Quyền chức năng PERM-20-settings do Keycloak cấp qua vai trò (D02-08).
+            PERM-20-usage-read: Quyền chức năng PERM-20-usage-read do Keycloak cấp qua vai trò (D02-08).
+  parameters:
+    Traceparent:
+      name: traceparent
+      in: header
+      required: false
+      description: Ngữ cảnh truy vết W3C.
+      schema:
+        type: string
+      example: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Khóa chống trùng (UUID), giữ 24 giờ; cùng khóa cùng thân trả lại phản hồi cũ, khác thân trả `409` ERR-20-009.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-7000-7000-8000-000000000001
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Giá trị `ETag` đã đọc; lệch trả `412` ERR-20-005, thiếu trả `428` ERR-00-428.
+      schema:
+        type: string
+      example: W/"3"
+    ImportId:
+      name: importId
+      in: path
+      required: true
+      description: Mã `importId`.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0d
+    OrgCode:
+      name: orgCode
+      in: path
+      required: true
+      description: Mã tổ chức trong tenant.
+      schema:
+        type: string
+        pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+      example: SO-KHCN
+    ProposalId:
+      name: proposalId
+      in: path
+      required: true
+      description: Mã `proposalId`.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e0e
+  responses:
+    BadRequest:
+      description: Dữ liệu không hợp lệ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-004
+            title: Dữ liệu sai định dạng
+            status: 400
+            code: ERR-20-004
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Dữ liệu sai định dạng.
+            instance: /api/platform/v1/tenants/T68
+    Unauthorized:
+      description: Chưa xác thực
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-00-401
+            title: Chưa xác thực
+            status: 401
+            code: ERR-00-401
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Chưa xác thực.
+            instance: /api/platform/v1/tenants/T68
+    Forbidden:
+      description: Không đủ quyền hoặc bị chặn
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-00-403
+            title: Không đủ quyền
+            status: 403
+            code: ERR-00-403
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Không đủ quyền.
+            instance: /api/platform/v1/tenants/T68
+    NotFound:
+      description: Không tìm thấy (kể cả đối tượng của tenant khác)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-002
+            title: Không tìm thấy
+            status: 404
+            code: ERR-20-002
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Không tìm thấy.
+            instance: /api/platform/v1/tenants/T68
+    Conflict:
+      description: Xung đột trạng thái hoặc dữ liệu
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-006
+            title: Trạng thái không cho phép
+            status: 409
+            code: ERR-20-006
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Trạng thái không cho phép.
+            instance: /api/platform/v1/tenants/T68
+    PreconditionFailed:
+      description: Phiên bản lệch (`If-Match`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-005
+            title: Phiên bản lệch
+            status: 412
+            code: ERR-20-005
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Phiên bản lệch.
+            instance: /api/platform/v1/tenants/T68
+    Unprocessable:
+      description: Không xử lý được do quy tắc nghiệp vụ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-008
+            title: Thiếu lý do, phiếu
+            status: 422
+            code: ERR-20-008
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Thiếu lý do, phiếu.
+            instance: /api/platform/v1/tenants/T68
+    PreconditionRequired:
+      description: Thiếu `If-Match`
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-00-428
+            title: Thiếu If-Match
+            status: 428
+            code: ERR-00-428
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Thiếu If-Match.
+            instance: /api/platform/v1/tenants/T68
+    ServiceUnavailable:
+      description: Phụ thuộc không khả dụng
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-062
+            title: Phụ thuộc không khả dụng
+            status: 503
+            code: ERR-20-062
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Phụ thuộc không khả dụng.
+            instance: /api/platform/v1/tenants/T68
+  schemas:
+    AccessKind:
+      type: string
+      enum:
+      - READ
+      - WRITE
+      description: Loại truy cập liên tenant.
+    AlertState:
+      type: string
+      enum:
+      - OPEN
+      - ACKNOWLEDGED
+      - RESOLVED
+      description: Trạng thái cảnh báo hạn mức.
+    AuditEvent:
+      type: object
+      description: Sự kiện kiểm toán thao tác PH-20.
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        at:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        actorRole:
+          type: string
+        action:
+          type: string
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        objectType:
+          type: string
+        objectId:
+          type: string
+        reason:
+          type: string
+        ticketRef:
+          type: string
+        result:
+          type: string
+        traceId:
+          type: string
+      required:
+      - eventId
+      - at
+      - actor
+      - action
+    AuditEventPage:
+      type: object
+      description: Trang `AuditEvent`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    Banner:
+      type: object
+      description: Dải thông báo trên giao diện.
+      properties:
+        type:
+          $ref: '#/components/schemas/BannerType'
+        message:
+          type: string
+        until:
+          type: string
+          format: date-time
+        link:
+          type: string
+      required:
+      - type
+      - message
+    BannerType:
+      type: string
+      enum:
+      - INFO
+      - WARNING
+      - CRITICAL
+      description: Loại dải thông báo.
+    CrossTenantAccess:
+      type: object
+      description: Một lượt truy cập liên tenant vào tỉnh.
+      properties:
+        accessId:
+          type: string
+          format: uuid
+        at:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        actorTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        reasonType:
+          type: string
+        ticketRef:
+          type: string
+        access:
+          $ref: '#/components/schemas/AccessKind'
+        apiCode:
+          type: string
+        objectRef:
+          type: string
+        result:
+          type: string
+      required:
+      - accessId
+      - at
+      - actor
+      - actorTenant
+      - access
+    CrossTenantAccessPage:
+      type: object
+      description: Trang `CrossTenantAccess`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossTenantAccess'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    CrossTenantPolicy:
+      type: object
+      description: Chính sách tiếp nhận truy cập liên tenant (EN-20-29).
+      properties:
+        allowRead:
+          type: boolean
+        allowWrite:
+          type: boolean
+        requirePriorApproval:
+          type: boolean
+        maxHours:
+          type: integer
+          minimum: 1
+          maximum: 4
+        notifyContacts:
+          type: array
+          items:
+            type: string
+            format: email
+        blockedReasons:
+          type: array
+          items:
+            type: string
+        effectiveFrom:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      required:
+      - allowRead
+      - allowWrite
+      - requirePriorApproval
+      - maxHours
+    CrossTenantPolicyUpdate:
+      type: object
+      description: Sửa chính sách tiếp nhận (FR-20-023).
+      properties:
+        allowRead:
+          type: boolean
+        allowWrite:
+          type: boolean
+        requirePriorApproval:
+          type: boolean
+        maxHours:
+          type: integer
+          minimum: 1
+          maximum: 4
+        notifyContacts:
+          type: array
+          items:
+            type: string
+            format: email
+        blockedReasons:
+          type: array
+          items:
+            type: string
+      required:
+      - allowRead
+      - allowWrite
+      - requirePriorApproval
+      - maxHours
+    DataOwnerRequest:
+      type: object
+      description: Đánh dấu chủ quản dữ liệu (FR-20-058).
+      properties:
+        isDataOwner:
+          type: boolean
+        dataDomains:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - isDataOwner
+    DecideProposalRequest:
+      type: object
+      description: Áp hoặc bỏ đề xuất đồng bộ.
+      properties:
+        decision:
+          $ref: '#/components/schemas/ProposalDecision'
+        name:
+          type: string
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - decision
+    FieldError:
+      type: object
+      description: Lỗi theo trường.
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+      required:
+      - field
+      - message
+    ImportAction:
+      type: string
+      enum:
+      - CREATE
+      - UPDATE
+      - SKIP
+      - ERROR
+      description: Hành động dự kiến của một dòng nhập.
+    ImportMode:
+      type: string
+      enum:
+      - CREATE_ONLY
+      - UPSERT
+      description: Chế độ nhập tổ chức.
+    ImportRow:
+      type: object
+      description: Một dòng của lô nhập.
+      properties:
+        rowNo:
+          type: integer
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        action:
+          $ref: '#/components/schemas/ImportAction'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+      required:
+      - rowNo
+      - action
+    ImportStatus:
+      type: string
+      enum:
+      - PREVIEWED
+      - UPLOADED
+      - APPLYING
+      - DONE
+      - FAILED
+      - CANCELLED
+      description: Trạng thái lô nhập tổ chức.
+    MaintenanceSlot:
+      type: object
+      description: Một lịch bảo trì sắp tới.
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        release:
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+          description: Phiên bản theo SemVer.
+        note:
+          type: string
+      required:
+      - startsAt
+      - endsAt
+    MaintenanceWindow:
+      type: object
+      description: Cửa sổ bảo trì của tỉnh (EN-20-33).
+      properties:
+        dayOfWeek:
+          type: integer
+        startTime:
+          type: string
+        durationHours:
+          type: integer
+        timezone:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - dayOfWeek
+      - startTime
+      - durationHours
+      - timezone
+    MaintenanceWindowPref:
+      type: object
+      description: Cửa sổ bảo trì ưa thích.
+      properties:
+        rrule:
+          type: string
+        startTime:
+          type: string
+        durationHours:
+          type: integer
+          minimum: 2
+          maximum: 6
+        timezone:
+          type: string
+      required:
+      - rrule
+      - startTime
+      - durationHours
+      - timezone
+    MaintenanceWindowSet:
+      type: object
+      description: Đặt cửa sổ bảo trì ưa thích (FR-20-018, 061).
+      properties:
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+        startTime:
+          type: string
+          pattern: ^[0-2][0-9]:[0-5][0-9]$
+        durationHours:
+          type: integer
+          minimum: 2
+          maximum: 6
+        timezone:
+          type: string
+      required:
+      - dayOfWeek
+      - startTime
+      - durationHours
+    ModuleState:
+      type: string
+      enum:
+      - ENABLED
+      - DISABLED
+      - ENABLING
+      - DISABLING
+      - SUSPENDED
+      - FAILED
+      description: Trạng thái phân hệ theo tenant.
+    OrgDeactivateRequest:
+      type: object
+      description: Ngừng tổ chức (FR-20-054).
+      properties:
+        effectiveTo:
+          type: string
+          format: date
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - reason
+    OrgDissolveRequest:
+      type: object
+      description: Giải thể tổ chức có tổ chức kế thừa.
+      properties:
+        effectiveTo:
+          type: string
+          format: date
+        successorCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        decisionDocNo:
+          type: string
+        decisionDocDate:
+          type: string
+          format: date
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - effectiveTo
+      - reason
+    OrgExportFormat:
+      type: string
+      enum:
+      - XLSX
+      - CSV
+      description: Định dạng tệp xuất tổ chức.
+    OrgHistoryAction:
+      type: string
+      enum:
+      - CREATED
+      - UPDATED
+      - DEACTIVATED
+      - REACTIVATED
+      - DISSOLVED
+      - MERGED
+      description: Hành động trong lịch sử tổ chức.
+    OrgHistoryEntry:
+      type: object
+      description: Một dòng lịch sử tổ chức.
+      properties:
+        at:
+          type: string
+          format: date-time
+        action:
+          $ref: '#/components/schemas/OrgHistoryAction'
+        from:
+          $ref: '#/components/schemas/OrgStatus'
+        to:
+          $ref: '#/components/schemas/OrgStatus'
+        actor:
+          type: string
+        successorCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        decisionDocNo:
+          type: string
+        reason:
+          type: string
+      required:
+      - at
+      - action
+    OrgHistoryPage:
+      type: object
+      description: Trang `OrgHistoryEntry`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgHistoryEntry'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    OrgImportJob:
+      type: object
+      description: Lô nhập tổ chức (EN-20-30), kèm các dòng của trang yêu cầu.
+      properties:
+        importId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ImportStatus'
+        mode:
+          $ref: '#/components/schemas/ImportMode'
+        fileName:
+          type: string
+        totalRows:
+          type: integer
+        validRows:
+          type: integer
+        errorRows:
+          type: integer
+        appliedRows:
+          type: integer
+        previewExpiresAt:
+          type: string
+          format: date-time
+        appliedAt:
+          type: string
+          format: date-time
+        errorFileUrl:
+          type: string
+          format: uri
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportRow'
+        summary:
+          type: object
+          additionalProperties:
+            type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - importId
+      - status
+      - mode
+      - totalRows
+      - validRows
+      - errorRows
+    OrgImportUpload:
+      type: object
+      description: Tệp nhập tổ chức (multipart).
+      properties:
+        file:
+          type: string
+          format: binary
+        mode:
+          $ref: '#/components/schemas/ImportMode'
+      required:
+      - file
+    OrgMergeRequest:
+      type: object
+      description: Sáp nhập nhiều tổ chức vào một tổ chức.
+      properties:
+        sourceCodes:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+          minItems: 1
+        targetCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        createTarget:
+          $ref: '#/components/schemas/OrganizationCreate'
+        effectiveTo:
+          type: string
+          format: date
+        decisionDocNo:
+          type: string
+        decisionDocDate:
+          type: string
+          format: date
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - sourceCodes
+      - targetCode
+      - effectiveTo
+      - reason
+    OrgMergeResult:
+      type: object
+      description: Kết quả sáp nhập tổ chức.
+      properties:
+        target:
+          $ref: '#/components/schemas/Organization'
+        mergedCodes:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        movedChildren:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgMoved'
+        referencesRebound:
+          type: integer
+      required:
+      - target
+      - mergedCodes
+      - movedChildren
+    OrgMoved:
+      type: object
+      description: Tổ chức con đã chuyển cấp trên.
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        newParentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+      required:
+      - orgCode
+      - newParentCode
+    OrgStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      - DISSOLVED
+      - MERGED
+      description: Trạng thái tổ chức.
+    OrgType:
+      type: string
+      enum:
+      - DEPARTMENT
+      - PROVINCE_PC
+      - COMMUNE_PC
+      - PUBLIC_UNIT
+      - OTHER
+      description: Loại tổ chức (DD-02).
+    OrgView:
+      type: string
+      enum:
+      - TABLE
+      - TREE
+      description: Cách hiển thị danh mục tổ chức.
+    Organization:
+      type: object
+      description: Tổ chức (EN-20-02, DD-02).
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        name:
+          type: string
+        shortName:
+          type: string
+        parentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        orgType:
+          $ref: '#/components/schemas/OrgType'
+        adminUnitId:
+          type: string
+          format: uuid
+        electronicId:
+          type: string
+        effectiveFrom:
+          type: string
+          format: date
+        effectiveTo:
+          type: string
+          format: date
+        sortOrder:
+          type: integer
+        note:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrgStatus'
+        isDataOwner:
+          type: boolean
+        dataDomains:
+          type: array
+          items:
+            type: string
+        successorCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        externalCode:
+          type: string
+        childCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      required:
+      - orgCode
+      - name
+      - orgType
+      - effectiveFrom
+      - status
+      - isDataOwner
+    OrganizationCreate:
+      type: object
+      description: Tạo tổ chức (FR-20-053).
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        name:
+          type: string
+        shortName:
+          type: string
+        parentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        orgType:
+          $ref: '#/components/schemas/OrgType'
+        adminUnitId:
+          type: string
+          format: uuid
+        electronicId:
+          type: string
+        effectiveFrom:
+          type: string
+          format: date
+        effectiveTo:
+          type: string
+          format: date
+        sortOrder:
+          type: integer
+        note:
+          type: string
+        isDataOwner:
+          type: boolean
+      required:
+      - orgCode
+      - name
+      - orgType
+      - adminUnitId
+      - effectiveFrom
+    OrganizationNode:
+      type: object
+      description: Nút của cây tổ chức.
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        name:
+          type: string
+        orgType:
+          $ref: '#/components/schemas/OrgType'
+        status:
+          $ref: '#/components/schemas/OrgStatus'
+        children:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required:
+      - orgCode
+      - name
+      - orgType
+      - status
+    OrganizationPage:
+      type: object
+      description: Danh mục tổ chức dạng bảng (`items`) hoặc cây (`tree`).
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+        tree:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationNode'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    OrganizationUpdate:
+      type: object
+      description: Sửa tổ chức (FR-20-053).
+      properties:
+        name:
+          type: string
+        shortName:
+          type: string
+        parentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        orgType:
+          $ref: '#/components/schemas/OrgType'
+        electronicId:
+          type: string
+        sortOrder:
+          type: integer
+        note:
+          type: string
+        reason:
+          type: string
+          minLength: 20
+    Problem:
+      type: object
+      description: Thân lỗi RFC 9457 (`application/problem+json`).
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          pattern: ^ERR-(00|20)-[0-9]{3}$
+        traceId:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+    ProposalDecision:
+      type: string
+      enum:
+      - APPLY
+      - DISMISS
+      description: Quyết định về đề xuất đồng bộ tổ chức.
+    ProposalState:
+      type: string
+      enum:
+      - PENDING
+      - APPLIED
+      - DISMISSED
+      description: Trạng thái đề xuất đồng bộ tổ chức.
+    PushStatus:
+      type: string
+      enum:
+      - PUSHED
+      - PENDING
+      - FAILED
+      description: Trạng thái đẩy hạn mức xuống nơi thực thi.
+    QuotaAlert:
+      type: object
+      description: Cảnh báo hạn mức (EN-20-17).
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        alertLevel:
+          $ref: '#/components/schemas/QuotaAlertLevel'
+        state:
+          $ref: '#/components/schemas/AlertState'
+        used:
+          type: number
+        limit:
+          type: number
+        percent:
+          type: number
+        raisedAt:
+          type: string
+          format: date-time
+        acknowledgedBy:
+          type: string
+        acknowledgedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+      required:
+      - alertId
+      - tenantCode
+      - resource
+      - alertLevel
+      - state
+      - raisedAt
+    QuotaAlertLevel:
+      type: string
+      enum:
+      - WARN_80
+      - LIMIT_100
+      description: Mức cảnh báo hạn mức.
+    QuotaItem:
+      type: object
+      description: Một dòng hạn mức hiệu lực (EN-20-13).
+      properties:
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        unit:
+          type: string
+        contractValue:
+          type: number
+        platformCeiling:
+          type: number
+        overrideValue:
+          type: number
+        effectiveValue:
+          type: number
+        lastUsage:
+          type: number
+        source:
+          $ref: '#/components/schemas/QuotaSource'
+        pushStatus:
+          $ref: '#/components/schemas/PushStatus'
+      required:
+      - resource
+      - effectiveValue
+    QuotaResource:
+      type: string
+      enum:
+      - API_RPS
+      - ACTIVE_FLOWS
+      - KAFKA_PRODUCE_MBPS
+      - KAFKA_CONSUME_MBPS
+      - OBJECT_STORAGE_GB
+      - DATABASE_GB
+      - USERS
+      - MEMBER_SYSTEMS
+      - PUBLISHED_APIS
+      - TOPICS
+      - RUNTIME_CPU
+      - RUNTIME_MEMORY_GB
+      description: Tài nguyên có hạn mức.
+    QuotaSource:
+      type: string
+      enum:
+      - CONTRACT
+      - TEMPLATE
+      - OVERRIDE
+      description: Nguồn của giá trị hạn mức hiệu lực.
+    QuotaView:
+      type: object
+      description: Hạn mức hiệu lực và cảnh báo của tỉnh.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaItem'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaAlert'
+      required:
+      - tenantCode
+      - items
+      - alerts
+    ReasonRequest:
+      type: object
+      description: Lý do của thao tác (mã phiếu tùy chọn).
+      properties:
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 1000
+        ticketRef:
+          type: string
+          maxLength: 32
+      required:
+      - reason
+    ReleaseChannel:
+      type: string
+      enum:
+      - STABLE
+      - PREVIEW
+      description: Kênh phát hành.
+    SyncProposal:
+      type: object
+      description: Đề xuất đồng bộ tổ chức khi sắp xếp ĐVHC (FR-20-056).
+      properties:
+        proposalId:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/ProposalState'
+        adminUnitOld:
+          type: string
+        adminUnitNew:
+          type: string
+        effectiveDate:
+          type: string
+          format: date
+        decisionDoc:
+          type: string
+        suggestedAction:
+          type: string
+        orgCodes:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        suggestedCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        suggestedName:
+          type: string
+      required:
+      - proposalId
+      - state
+    SyncProposalPage:
+      type: object
+      description: Trang `SyncProposal`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncProposal'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    TenantContext:
+      type: object
+      description: Trạng thái tenant cho `dh-console` (FR-20-037, 066).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/TenantStatus'
+        readOnly:
+          type: boolean
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantModuleState'
+        featureFlags:
+          type: object
+          additionalProperties:
+            type: boolean
+        banner:
+          $ref: '#/components/schemas/Banner'
+        currentVersion:
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+          description: Phiên bản theo SemVer.
+      required:
+      - tenantCode
+      - status
+      - readOnly
+      - modules
+    TenantModuleState:
+      type: object
+      description: Trạng thái một phân hệ cho giao diện.
+      properties:
+        moduleCode:
+          type: string
+          pattern: ^PH-[0-9]{2}$
+          description: Mã phân hệ dạng `PH-nn`.
+        state:
+          $ref: '#/components/schemas/ModuleState'
+      required:
+      - moduleCode
+      - state
+    TenantReleaseInfo:
+      type: object
+      description: Phiên bản, ghi chú, lịch bảo trì của tỉnh (FR-20-064).
+      properties:
+        currentVersion:
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+          description: Phiên bản theo SemVer.
+        channel:
+          $ref: '#/components/schemas/ReleaseChannel'
+        releaseNotes:
+          type: string
+        releasedAt:
+          type: string
+          format: date-time
+        nextMaintenance:
+          $ref: '#/components/schemas/MaintenanceSlot'
+        maintenanceWindowPref:
+          $ref: '#/components/schemas/MaintenanceWindowPref'
+      required:
+      - currentVersion
+    TenantSettings:
+      type: object
+      description: Cài đặt tỉnh (EN-20-06).
+      properties:
+        displayName:
+          type: string
+        logoFileId:
+          type: string
+          format: uuid
+        itOwnerOrgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        sessionIdleMinutes:
+          type: integer
+          minimum: 5
+          maximum: 15
+        passwordMinLength:
+          type: integer
+          minimum: 14
+          maximum: 64
+        mfaRequiredRoles:
+          type: array
+          items:
+            type: string
+        maintenanceWindowPref:
+          $ref: '#/components/schemas/MaintenanceWindowPref'
+        supportContactEmail:
+          type: string
+          format: email
+        hotline:
+          type: string
+        configVersionNo:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      required:
+      - displayName
+      - itOwnerOrgCode
+      - sessionIdleMinutes
+      - passwordMinLength
+      - mfaRequiredRoles
+      - maintenanceWindowPref
+    TenantSettingsUpdate:
+      type: object
+      description: Sửa cài đặt tỉnh (FR-20-018), trong giới hạn nền tảng (ERR-20-023).
+      properties:
+        displayName:
+          type: string
+        logoFileId:
+          type: string
+          format: uuid
+        itOwnerOrgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        sessionIdleMinutes:
+          type: integer
+          minimum: 5
+          maximum: 15
+        passwordMinLength:
+          type: integer
+          minimum: 14
+          maximum: 64
+        mfaRequiredRoles:
+          type: array
+          items:
+            type: string
+        maintenanceWindowPref:
+          $ref: '#/components/schemas/MaintenanceWindowPref'
+        supportContactEmail:
+          type: string
+          format: email
+        hotline:
+          type: string
+      required:
+      - displayName
+      - itOwnerOrgCode
+      - sessionIdleMinutes
+      - passwordMinLength
+      - mfaRequiredRoles
+      - maintenanceWindowPref
+    TenantStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - PROVISIONING
+      - SUSPENDED
+      - MERGING
+      - MERGED
+      - DECOMMISSIONED
+      - FAILED
+      description: Trạng thái tenant (DD-01).
+    UsageGranularity:
+      type: string
+      enum:
+      - DAY
+      - HOUR
+      - MONTH
+      description: Độ mịn chuỗi sử dụng.
+    UsagePoint:
+      type: object
+      description: Một điểm số liệu sử dụng.
+      properties:
+        t:
+          type: string
+          format: date-time
+        value:
+          type: number
+        peak:
+          type: number
+        limit:
+          type: number
+        percent:
+          type: number
+        quality:
+          $ref: '#/components/schemas/UsageQuality'
+      required:
+      - t
+      - value
+    UsageQuality:
+      type: string
+      enum:
+      - MEASURED
+      - ESTIMATED
+      - MISSING
+      description: Chất lượng điểm số liệu.
+    UsageRankItem:
+      type: object
+      description: Xếp hạng tenant theo mức sử dụng.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        percent:
+          type: number
+        used:
+          type: number
+        limit:
+          type: number
+      required:
+      - tenantCode
+      - resource
+      - percent
+    UsageResponse:
+      type: object
+      description: Sử dụng tài nguyên (FR-20-030).
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        granularity:
+          $ref: '#/components/schemas/UsageGranularity'
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageSeriesItem'
+        ranking:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageRankItem'
+      required:
+      - from
+      - to
+      - granularity
+      - series
+    UsageSeriesItem:
+      type: object
+      description: Chuỗi sử dụng của một tài nguyên.
+      properties:
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        unit:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsagePoint'
+      required:
+      - resource
+      - points
+security:
+- oauth2User: []
