@@ -1,0 +1,70 @@
+FR-20-001	A Hồ sơ tenant	Khai báo tenant mới (mã T-TENANT, tên, ĐVHC cấp tỉnh, chế độ cách ly, hồ sơ quy mô `QM-*`, hồ sơ triển khai `HT-A`/`HT-B`, mẫu khởi tạo, đầu mối)	M	UI-20-02
+FR-20-002	A	Liệt kê, tìm, lọc tenant toàn nền tảng	M	UI-20-01
+FR-20-003	A	Xem chi tiết tenant	M	UI-20-03
+FR-20-004	A	Sửa hồ sơ hành chính của tenant (không đổi mã, realm)	M	UI-20-03
+FR-20-005	A	Quản lý đầu mối và hợp đồng dịch vụ của tenant	S	UI-20-03
+FR-20-006	A	Bảo vệ tenant đặc biệt `PLATFORM` và `COMMON`	M	—
+FR-20-007	A	Kiểm tra sẵn sàng trước khởi tạo (mã trùng, ĐVHC đã có tenant, sức chứa nền tảng NFR-00-060, tài nguyên cụm, mẫu hợp lệ)	M	UI-20-02
+FR-20-008	B Saga khởi tạo	Chạy saga khởi tạo tenant	M	UI-20-04
+FR-20-009	B	Theo dõi tiến độ saga thời gian thực	M	UI-20-04
+FR-20-010	B	Thử lại saga từ bước lỗi	M	UI-20-04
+FR-20-011	B	Bù trừ và hủy khởi tạo	M	UI-20-04
+FR-20-012	B	Kiểm tra khói sau khởi tạo	M	UI-20-04
+FR-20-013	B	Kích hoạt tenant và bàn giao cho quản trị tỉnh	M	UI-20-04
+FR-20-014	B	Đo và báo thời gian khởi tạo tenant (KPI-12) cho PH-16	S	—
+FR-20-015	B	Quản lý mẫu khởi tạo có phiên bản	S	UI-20-21
+FR-20-016	B	Khởi tạo bổ sung cho tenant đang hoạt động khi nền tảng thêm bước, phân hệ	S	UI-20-04
+FR-20-017	B	Khởi tạo tenant chế độ `DEDICATED_CLUSTER` (đăng ký cụm riêng, sinh gói cấu hình, chạy saga trên cụm đích)	S, Đợt 2	UI-20-02
+FR-20-018	C Cấu hình	Cài đặt tỉnh do quản trị tỉnh tự quản	M	UI-20-12
+FR-20-019	C	Cấu hình nền tảng của tenant (realm, host và tiền tố API công bố, hồ sơ triển khai, vùng DR)	M	UI-20-03
+FR-20-020	C	Ghi cấu hình tenant vào kho GitOps có phiên bản và áp xuống	M	—
+FR-20-021	C	Lịch sử, so sánh, khôi phục phiên bản cấu hình	S	UI-20-17
+FR-20-022	C	Phát hiện lệch cấu hình và đối chiếu định kỳ	S	UI-20-17
+FR-20-023	C	Chính sách tiếp nhận truy cập liên tenant của tỉnh (cho phép ghi hay không, chấp thuận trước, thời hạn tối đa, người nhận thông báo)	M	UI-20-22
+FR-20-024	C	Xem nhật ký truy cập liên tenant vào tỉnh	S	UI-20-22
+FR-20-025	C	Chuyển chế độ cách ly của tenant	S, Đợt 2	UI-20-03
+FR-20-026	D Hạn mức, sử dụng	Đặt hạn mức hợp đồng của tenant	M	UI-20-05
+FR-20-027	D	Đổi hạn mức có duyệt và đẩy xuống nơi thực thi	M	UI-20-05
+FR-20-028	D	Thu thập sử dụng tài nguyên theo tenant	M	—
+FR-20-029	D	Cảnh báo ngưỡng hạn mức 80% và 100%	M	UI-20-06
+FR-20-030	D	Xem sử dụng tài nguyên của tỉnh và toàn nền tảng	M	UI-20-06, UI-20-13
+FR-20-031	D	Báo cáo sử dụng tài nguyên theo kỳ, xuất tệp	S	UI-20-06
+FR-20-032	D	Ghi đè hạn mức tạm thời có thời hạn	S	UI-20-05
+FR-20-033	E Phân hệ, tính năng	Danh mục phân hệ của nền tảng và ma trận phụ thuộc	M	UI-20-07
+FR-20-034	E	Bật phân hệ cho tenant	M	UI-20-07
+FR-20-035	E	Tắt, tạm ngừng phân hệ cho tenant	M	UI-20-07
+FR-20-036	E	Cờ tính năng theo tenant	S	UI-20-07
+FR-20-037	E	Cung cấp trạng thái phân hệ cho menu và giao diện	M	—
+FR-20-038	F Vòng đời	Tạm ngừng tenant	M	UI-20-08
+FR-20-039	F	Khôi phục tenant	M	UI-20-08
+FR-20-040	F	Đề nghị và duyệt chấm dứt tenant	M	UI-20-08
+FR-20-041	F	Xuất gói bàn giao dữ liệu tenant	M	UI-20-08
+FR-20-042	F	Thực hiện chấm dứt tenant	M	UI-20-08
+FR-20-043	F	Lịch sử vòng đời và quyết định	M	UI-20-03
+FR-20-044	F	Thông báo thay đổi trạng thái tenant	M	—
+FR-20-045	G Sáp nhập	Lập kế hoạch sáp nhập	M	UI-20-09
+FR-20-046	G	Lập bảng ánh xạ sáp nhập	M	UI-20-09
+FR-20-047	G	Chạy thử sáp nhập	M	UI-20-10
+FR-20-048	G	Điều phối chuyển dữ liệu theo phân hệ	M	UI-20-10
+FR-20-049	G	Xử lý xung đột sáp nhập	M	UI-20-10
+FR-20-050	G	Chuyển định danh và cấp song song thông tin xác thực HTTT	M	UI-20-10
+FR-20-051	G	Chuyển tiếp lượt gọi và chuyển tenant nguồn sang `MERGED`	M	UI-20-10
+FR-20-052	G	Kết thúc sáp nhập sau thời gian chuyển tiếp	M	UI-20-10
+FR-20-053	H Tổ chức	Quản lý danh mục tổ chức	M	UI-20-14, UI-20-15
+FR-20-054	H	Hiệu lực, giải thể, sáp nhập tổ chức có tổ chức kế thừa	M	UI-20-15
+FR-20-055	H	Nhập tổ chức từ Excel, CSV có xem trước và xuất	M	UI-20-16
+FR-20-056	H	Đồng bộ tổ chức khi sắp xếp đơn vị hành chính (EVT-07-10)	S	UI-20-14
+FR-20-057	H	API đọc tổ chức cho phân hệ khác	M	—
+FR-20-058	H	Đánh dấu và tra cứu tổ chức chủ quản dữ liệu	S	UI-20-15
+FR-20-059	I Phát hành	Danh mục phiên bản sản phẩm	M	UI-20-18
+FR-20-060	I	Kênh phát hành và đăng ký kênh của tenant	M	UI-20-18
+FR-20-061	I	Lập kế hoạch nâng cấp theo sóng và cửa sổ bảo trì	M	UI-20-19
+FR-20-062	I	Theo dõi nâng cấp, dừng sóng, quay lui	S	UI-20-19
+FR-20-063	I	Thông báo phát hành và lịch bảo trì tới tỉnh	S	UI-20-12
+FR-20-064	I	Xem phiên bản, ghi chú phát hành, lịch bảo trì của tỉnh	S	UI-20-12
+FR-20-065	J Dịch vụ, quản trị	Registry tenant cho phân hệ khác	M	—
+FR-20-066	J	Thực thi trạng thái tenant ở data plane và control plane (`ERR-20-001`)	M	—
+FR-20-067	J	Bảng điều khiển nền tảng đa tenant	S	UI-20-20
+FR-20-068	J	Nhật ký kiểm toán thao tác PH-20	M	UI-20-03
+FR-20-069	J	Tham số `20.*` của phân hệ	M	—
+FR-20-070	J	Điều phối kiểm thử rò rỉ chéo tenant định kỳ (SEC-87)	S	UI-20-20

@@ -1,0 +1,1358 @@
+# D03-04-PH20 · OpenAPI PH-20 (module tenant và release của dh-platform). SINH TỰ ĐỘNG bởi tools/gen_openapi.py, không sửa tay.
+openapi: '3.1.0'
+info:
+  title: Datahub · PH-20 API nội bộ
+  version: 0.2.0-draft
+  summary: Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).
+  description: |-
+    Nhóm `/internal/tenant/v1`: registry, tổ chức, báo tiến độ cho phân hệ khác; chỉ trong mesh, scope dịch vụ.
+
+    Quy ước (D03-04-PH20 chương 1, 2): tenant lấy từ token, không từ thân hay đường dẫn (trừ API nền tảng nêu `tenantCode` của tenant bị tác động); `POST` nhận `Idempotency-Key`; `PUT`, `PATCH` và hành động trên đối tượng có phiên bản nhận `If-Match`; hậu tố `:{hành-động}`; lỗi RFC 9457 `application/problem+json` mã `ERR-20-nnn`; phân trang `page`, `size`. Mọi tên miền, mã, dữ liệu là giả lập.
+
+    Tệp sinh bởi `tools/gen_openapi.py`; không sửa tay.
+  contact:
+    name: Nhóm phân hệ PH-20
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH20
+  x-datahub-phase: PH-20
+servers:
+- url: http://dh-platform.dh-control.svc:8080
+  description: Trong mesh `dh-control`; mTLS và scope dịch vụ, không qua cổng công khai.
+tags:
+- name: Registry tenant
+  description: Registry và cấu hình thực thi cho phân hệ khác (`/internal`).
+- name: Báo tiến độ
+  description: Phân hệ báo tiến độ bước saga, sáp nhập, xuất gói (`/internal`).
+- name: Đọc tổ chức
+  description: API đọc tổ chức cho phân hệ khác (`/internal`).
+paths:
+  /internal/tenant/v1/tenants:
+    get:
+      tags:
+      - Registry tenant
+      operationId: getTenants162
+      summary: Registry tenant (`?status=ACTIVE` cho tác vụ nền)
+      description: Registry cho phân hệ khác; `?status=ACTIVE` cho tác vụ nền. Kết quả được đệm tối đa `20.registry.cache-seconds` giây.
+      x-datahub-id: API-20-162
+      x-datahub-fr:
+      - FR-20-065
+      x-datahub-permission:
+        permission: Scope tenant:registry-read
+      security:
+      - oauth2Service:
+        - tenant:registry-read
+      parameters:
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/TenantStatus'
+        example: ACTIVE
+      - name: isolationMode
+        in: query
+        schema:
+          $ref: '#/components/schemas/IsolationMode'
+        example: SHARED
+      - name: module
+        in: query
+        schema:
+          type: string
+          pattern: ^PH-[0-9]{2}$
+          description: Mã phân hệ dạng `PH-nn`.
+        example: PH-01
+      - name: updatedSince
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00+07:00'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryPage'
+              example:
+                items:
+                - tenantCode: T68
+                  tenantId: 0193a000-1111-7000-8000-000000000001
+                  status: ACTIVE
+                  kind: PROVINCE
+                  isolationMode: SHARED
+                  realm: dh-t68
+                  hosts:
+                  - api.t68.datahub.example.vn
+                  apiPrefix: /t68
+                  modules:
+                  - moduleCode: PH-01
+                    state: ENABLED
+                  configVersion: 8
+                  updatedAt: '2026-11-27T09:15:00+07:00'
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+  /internal/tenant/v1/tenants/{tenantCode}:
+    get:
+      tags:
+      - Registry tenant
+      operationId: getTenants163
+      summary: Bản ghi registry của một tenant kèm phân hệ đang bật
+      description: Bản ghi registry của một tenant kèm phân hệ đang bật; tenant không tồn tại trả `404`.
+      x-datahub-id: API-20-163
+      x-datahub-fr:
+      - FR-20-037
+      - FR-20-065
+      - FR-20-066
+      x-datahub-permission:
+        permission: Scope tenant:registry-read
+      security:
+      - oauth2Service:
+        - tenant:registry-read
+      parameters:
+      - $ref: '#/components/parameters/TenantCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryTenant'
+              example:
+                tenantCode: T68
+                tenantId: 0193a000-1111-7000-8000-000000000001
+                status: ACTIVE
+                kind: PROVINCE
+                isolationMode: SHARED
+                realm: dh-t68
+                hosts:
+                - api.t68.datahub.example.vn
+                apiPrefix: /t68
+                modules:
+                - moduleCode: PH-01
+                  state: ENABLED
+                configVersion: 8
+                updatedAt: '2026-11-27T09:15:00+07:00'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-104
+  /internal/tenant/v1/tenants/{tenantCode}/enforcement:
+    get:
+      tags:
+      - Registry tenant
+      operationId: getTenantsEnforcement164
+      summary: Hạn mức hiệu lực, host, tiền tố, ánh xạ chuyển tiếp cho PH-03, PH-04, PH-10
+      description: Hạn mức hiệu lực, host, tiền tố, ánh xạ chuyển tiếp cho PH-03, PH-04, PH-10.
+      x-datahub-id: API-20-164
+      x-datahub-fr:
+      - FR-20-026
+      - FR-20-027
+      - FR-20-051
+      - FR-20-066
+      x-datahub-permission:
+        permission: Scope tenant:registry-read
+      security:
+      - oauth2Service:
+        - tenant:registry-read
+      parameters:
+      - $ref: '#/components/parameters/TenantCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnforcementConfig'
+              example:
+                tenantCode: T68
+                status: ACTIVE
+                hosts:
+                - api.t68.datahub.example.vn
+                apiPrefix: /t68
+                quotas:
+                - resource: API_RPS
+                  effectiveValue: 800
+                  unit: req/s
+                redirects:
+                - fromPrefix: /t91
+                  toTenant: T90
+                  toPrefix: /t90
+                  sunsetAt: '2026-11-27T09:15:00+07:00'
+                configVersion: 8
+                essentialApisAllowed: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-104
+  /internal/tenant/v1/tenants/{tenantCode}/cross-tenant-policy:
+    get:
+      tags:
+      - Registry tenant
+      operationId: getTenantsCrossTenantPolicy165
+      summary: Chính sách tiếp nhận cho PH-12
+      description: Chính sách tiếp nhận liên tenant cho PH-12 khi cấp truy cập liên tenant.
+      x-datahub-id: API-20-165
+      x-datahub-fr:
+      - FR-20-023
+      x-datahub-permission:
+        permission: Scope tenant:registry-read
+      security:
+      - oauth2Service:
+        - tenant:registry-read
+      parameters:
+      - $ref: '#/components/parameters/TenantCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossTenantPolicy'
+              example:
+                allowRead: true
+                allowWrite: false
+                requirePriorApproval: true
+                maxHours: 4
+                notifyContacts:
+                - cong-vu@t68.example.vn
+                blockedReasons:
+                - THUONG_MAI
+                effectiveFrom: '2025-07-01T00:00:00+07:00'
+                createdAt: '2026-11-27T09:15:00+07:00'
+                createdBy: nguyen.thi.lan
+                updatedAt: '2026-11-27T09:15:00+07:00'
+                updatedBy: nguyen.thi.lan
+          headers:
+            ETag:
+              description: Phiên bản của đối tượng để dùng cho `If-Match`.
+              schema:
+                type: string
+              example: W/"3"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-104
+  /internal/tenant/v1/provisioning-runs/{runId}/steps/{stepCode}:report:
+    post:
+      tags:
+      - Báo tiến độ
+      operationId: postProvisioningRunsStepsReport166
+      summary: Phân hệ báo tiến độ bước saga bất đồng bộ
+      description: Phân hệ báo kết quả bước bất đồng bộ của saga (`S06`, `S09`, `S10`, `S12`, `S15`). Chỉ bên thực hiện của bước mới báo được (ERR-20-104); sai bước
+        hoặc trạng thái trả ERR-20-105. Báo lặp cùng kết quả vẫn trả `200`.
+      x-datahub-id: API-20-166
+      x-datahub-fr:
+      - FR-20-008
+      - FR-20-034
+      x-datahub-permission:
+        permission: Scope tenant:provision-report
+      security:
+      - oauth2Service:
+        - tenant:provision-report
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/RunId'
+      - $ref: '#/components/parameters/StepCode'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StepReport'
+            example:
+              status: SUCCEEDED
+              attempt: 1
+              outputRef: kv/dh/t68/eventing
+              detail:
+                topicsCreated: 12
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportAck'
+              example:
+                accepted: true
+                stepStatus: SUCCEEDED
+                runStatus: RUNNING
+                message: Đã ghi tiến độ.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+      - ERR-20-105
+  /internal/tenant/v1/merge-plans/{mergePlanId}/participants/{module}:report:
+    post:
+      tags:
+      - Báo tiến độ
+      operationId: postMergePlansParticipantsReport167
+      summary: PH-18, phân hệ tham gia báo tiến độ chuyển sáp nhập
+      description: PH-18 và phân hệ tham gia báo tiến độ chuyển dữ liệu sáp nhập; sai trạng thái kế hoạch trả ERR-20-114.
+      x-datahub-id: API-20-167
+      x-datahub-fr:
+      - FR-20-047
+      - FR-20-048
+      x-datahub-permission:
+        permission: Scope tenant:provision-report
+      security:
+      - oauth2Service:
+        - tenant:provision-report
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/MergePlanId'
+      - $ref: '#/components/parameters/Module'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantReport'
+            example:
+              phase: TRANSFER
+              status: SUCCEEDED
+              exportedCount: 12500
+              importedCount: 12500
+              verifiedCount: 12500
+              conflictCount: 3
+              transferRef: mt-2026-0007
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportAck'
+              example:
+                accepted: true
+                runStatus: RUNNING
+                message: Đã ghi tiến độ.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+      - ERR-20-114
+  /internal/tenant/v1/export-packages/{packageId}/items/{module}:report:
+    post:
+      tags:
+      - Báo tiến độ
+      operationId: postExportPackagesItemsReport168
+      summary: Phân hệ báo đã xuất phần dữ liệu của mình
+      description: Phân hệ báo đã xuất phần dữ liệu của mình vào gói bàn giao.
+      x-datahub-id: API-20-168
+      x-datahub-fr:
+      - FR-20-041
+      x-datahub-permission:
+        permission: Scope tenant:provision-report
+      security:
+      - oauth2Service:
+        - tenant:provision-report
+      x-datahub-idempotent: required
+      parameters:
+      - $ref: '#/components/parameters/PackageId'
+      - $ref: '#/components/parameters/Module'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportItemReport'
+            example:
+              status: DONE
+              itemType: DATA
+              rowCount: 125000
+              sizeBytes: 48213004
+              sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+              fileId: 0193a000-1111-7000-8000-000000000070
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportAck'
+              example:
+                accepted: true
+                stepStatus: SUCCEEDED
+                runStatus: RUNNING
+                message: Đã ghi tiến độ.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+  /internal/tenant/v1/organizations:
+    get:
+      tags:
+      - Đọc tổ chức
+      operationId: getOrganizations169
+      summary: Đọc tổ chức của tenant ngữ cảnh
+      description: Chỉ tổ chức của tenant ngữ cảnh (tenant lấy từ thông tin xác thực máy), `size` tối đa 1.000.
+      x-datahub-id: API-20-169
+      x-datahub-fr:
+      - FR-20-057
+      x-datahub-permission:
+        permission: Scope tenant:org-read
+      security:
+      - oauth2Service:
+        - tenant:org-read
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgStatus'
+        example:
+        - ACTIVE
+        style: form
+        explode: true
+      - name: orgType
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrgType'
+        example:
+        - DEPARTMENT
+        style: form
+        explode: true
+      - name: isDataOwner
+        in: query
+        schema:
+          type: boolean
+        example: true
+      - name: asOf
+        in: query
+        schema:
+          type: string
+          format: date
+        example: '2026-11-27'
+      - name: updatedSince
+        in: query
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-01T00:00:00+07:00'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 20
+        example: 20
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationRefPage'
+              example:
+                items:
+                - orgCode: SO-KHCN
+                  name: Sở Khoa học và Công nghệ
+                  orgType: DEPARTMENT
+                  parentCode: UBND-TINH
+                  adminUnitId: 0193a000-1111-7000-8000-000000000068
+                  status: ACTIVE
+                  isDataOwner: false
+                  effectiveFrom: '2025-07-01'
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+  /internal/tenant/v1/organizations/{orgCode}:
+    get:
+      tags:
+      - Đọc tổ chức
+      operationId: getOrganizations170
+      summary: Đọc một tổ chức, kể cả đã giải thể
+      description: Đọc một tổ chức, kể cả đã giải thể, kèm `resolvedSuccessor` đã giải chuỗi kế thừa.
+      x-datahub-id: API-20-170
+      x-datahub-fr:
+      - FR-20-057
+      x-datahub-permission:
+        permission: Scope tenant:org-read
+      security:
+      - oauth2Service:
+        - tenant:org-read
+      parameters:
+      - $ref: '#/components/parameters/OrgCode'
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationRef'
+              example:
+                orgCode: SO-KHCN
+                name: Sở Khoa học và Công nghệ
+                orgType: DEPARTMENT
+                parentCode: UBND-TINH
+                adminUnitId: 0193a000-1111-7000-8000-000000000068
+                status: ACTIVE
+                isDataOwner: false
+                effectiveFrom: '2025-07-01'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-104
+  /internal/tenant/v1/organizations:lookup:
+    post:
+      tags:
+      - Đọc tổ chức
+      operationId: postOrganizationsLookup171
+      summary: Tra hàng loạt tối đa 500 mã
+      description: Tra tối đa 500 mã; mã không có nằm ở `notFound`. Là lệnh `POST` chỉ đọc nên không cần `Idempotency-Key`.
+      x-datahub-id: API-20-171
+      x-datahub-fr:
+      - FR-20-057
+      - FR-20-058
+      x-datahub-permission:
+        permission: Scope tenant:org-read
+      security:
+      - oauth2Service:
+        - tenant:org-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgLookupRequest'
+            example:
+              codes:
+              - SO-KHCN
+              - UBND-TINH
+              asOf: '2026-11-27'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgLookupResult'
+              example:
+                items:
+                - orgCode: SO-KHCN
+                  name: Sở Khoa học và Công nghệ
+                  orgType: DEPARTMENT
+                  parentCode: UBND-TINH
+                  adminUnitId: 0193a000-1111-7000-8000-000000000068
+                  status: ACTIVE
+                  isDataOwner: false
+                  effectiveFrom: '2025-07-01'
+                notFound: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-datahub-errors:
+      - ERR-20-002
+      - ERR-20-004
+      - ERR-20-104
+components:
+  securitySchemes:
+    oauth2Service:
+      type: oauth2
+      description: Tài khoản máy của phân hệ khác (client credentials, mTLS trong mesh, ADR-006).
+      flows:
+        clientCredentials:
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-platform/protocol/openid-connect/token
+          scopes:
+            tenant:registry-read: Đọc registry tenant, cấu hình thực thi, chính sách liên tenant.
+            tenant:org-read: Đọc tổ chức của tenant ngữ cảnh.
+            tenant:provision-report: Báo tiến độ bước saga, chuyển sáp nhập, xuất gói bàn giao.
+  parameters:
+    Traceparent:
+      name: traceparent
+      in: header
+      required: false
+      description: Ngữ cảnh truy vết W3C.
+      schema:
+        type: string
+      example: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Khóa chống trùng (UUID), giữ 24 giờ; cùng khóa cùng thân trả lại phản hồi cũ, khác thân trả `409` ERR-20-009.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-7000-7000-8000-000000000001
+    MergePlanId:
+      name: mergePlanId
+      in: path
+      required: true
+      description: Mã kế hoạch sáp nhập, ví dụ `SN-2026-001`.
+      schema:
+        type: string
+      example: SN-2026-001
+    Module:
+      name: module
+      in: path
+      required: true
+      description: Mã phân hệ `PH-nn`.
+      schema:
+        type: string
+        pattern: ^PH-[0-9]{2}$
+        description: Mã phân hệ dạng `PH-nn`.
+      example: PH-01
+    OrgCode:
+      name: orgCode
+      in: path
+      required: true
+      description: Mã tổ chức trong tenant.
+      schema:
+        type: string
+        pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+      example: SO-KHCN
+    PackageId:
+      name: packageId
+      in: path
+      required: true
+      description: Mã `packageId`.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e03
+    RunId:
+      name: runId
+      in: path
+      required: true
+      description: Mã lần chạy saga.
+      schema:
+        type: string
+        format: uuid
+      example: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
+    StepCode:
+      name: stepCode
+      in: path
+      required: true
+      description: Mã bước saga `S01_RECORD` … `S17_ACTIVATE`.
+      schema:
+        $ref: '#/components/schemas/StepCode'
+      example: S06_EVENTING
+    TenantCode:
+      name: tenantCode
+      in: path
+      required: true
+      description: Mã tenant, ví dụ `T68`.
+      schema:
+        type: string
+        pattern: ^T[0-9]{2}$
+        description: Mã tenant dạng `T` và hai chữ số.
+      example: T68
+  responses:
+    BadRequest:
+      description: Dữ liệu không hợp lệ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-004
+            title: Dữ liệu sai định dạng
+            status: 400
+            code: ERR-20-004
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: 'tenantCode chưa hợp lệ: cần dạng T và hai chữ số.'
+            instance: /api/platform/v1/tenants/T68
+    Unauthorized:
+      description: Chưa xác thực
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-00-401
+            title: Chưa xác thực
+            status: 401
+            code: ERR-00-401
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Chưa xác thực.
+            instance: /api/platform/v1/tenants/T68
+    Forbidden:
+      description: Không đủ quyền hoặc bị chặn
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-00-403
+            title: Không đủ quyền
+            status: 403
+            code: ERR-00-403
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Không đủ quyền.
+            instance: /api/platform/v1/tenants/T68
+    NotFound:
+      description: Không tìm thấy (kể cả đối tượng của tenant khác)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-002
+            title: Không tìm thấy
+            status: 404
+            code: ERR-20-002
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Không tìm thấy tenant T68 trong phạm vi được xem.
+            instance: /api/platform/v1/tenants/T68
+    Conflict:
+      description: Xung đột trạng thái hoặc dữ liệu
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://datahub.example.vn/errors/ERR-20-006
+            title: Trạng thái không cho phép
+            status: 409
+            code: ERR-20-006
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            detail: Không thể khôi phục khi tenant đang ở trạng thái SUSPENDED.
+            instance: /api/platform/v1/tenants/T68
+  schemas:
+    CrossTenantPolicy:
+      type: object
+      description: Chính sách tiếp nhận truy cập liên tenant (EN-20-29).
+      properties:
+        allowRead:
+          type: boolean
+        allowWrite:
+          type: boolean
+        requirePriorApproval:
+          type: boolean
+        maxHours:
+          type: integer
+          minimum: 1
+          maximum: 4
+        notifyContacts:
+          type: array
+          items:
+            type: string
+            format: email
+        blockedReasons:
+          type: array
+          items:
+            type: string
+        effectiveFrom:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      required:
+      - allowRead
+      - allowWrite
+      - requirePriorApproval
+      - maxHours
+    EnforcementConfig:
+      type: object
+      description: Cấu hình thực thi cho PH-03, PH-04, PH-10 (FR-20-066).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        status:
+          $ref: '#/components/schemas/TenantStatus'
+        hosts:
+          type: array
+          items:
+            type: string
+        apiPrefix:
+          type: string
+        quotas:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaEnforcement'
+        redirects:
+          type: array
+          items:
+            $ref: '#/components/schemas/MergeRedirect'
+        configVersion:
+          type: integer
+        essentialApisAllowed:
+          type: boolean
+      required:
+      - tenantCode
+      - status
+      - hosts
+      - quotas
+      - configVersion
+    ExportItemReport:
+      type: object
+      description: Phân hệ báo đã xuất phần dữ liệu của mình (FR-20-041).
+      properties:
+        status:
+          $ref: '#/components/schemas/ExportItemStatus'
+        itemType:
+          type: string
+        rowCount:
+          type: integer
+        sizeBytes:
+          type: integer
+        sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        fileId:
+          type: string
+          format: uuid
+        errorMessage:
+          type: string
+      required:
+      - status
+    ExportItemStatus:
+      type: string
+      enum:
+      - DONE
+      - PENDING
+      - COLLECTING
+      - FAILED
+      description: Trạng thái phần dữ liệu của một phân hệ trong gói.
+    FieldError:
+      type: object
+      description: Lỗi theo trường.
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+      required:
+      - field
+      - message
+    IsolationMode:
+      type: string
+      enum:
+      - SHARED
+      - DEDICATED_DB
+      - DEDICATED_CLUSTER
+      description: Chế độ cách ly.
+    MergeRedirect:
+      type: object
+      description: Ánh xạ chuyển tiếp khi tenant nguồn `MERGED`.
+      properties:
+        fromPrefix:
+          type: string
+        toTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        toPrefix:
+          type: string
+        sunsetAt:
+          type: string
+          format: date-time
+      required:
+      - fromPrefix
+      - toTenant
+      - toPrefix
+    ModuleState:
+      type: string
+      enum:
+      - ENABLED
+      - DISABLED
+      - ENABLING
+      - DISABLING
+      - SUSPENDED
+      - FAILED
+      description: Trạng thái phân hệ theo tenant.
+    OrgLookupRequest:
+      type: object
+      description: Tra hàng loạt tổ chức (FR-20-057, 058).
+      properties:
+        codes:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+          minItems: 1
+          maxItems: 500
+        asOf:
+          type: string
+          format: date
+      required:
+      - codes
+    OrgLookupResult:
+      type: object
+      description: Kết quả tra hàng loạt.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationRef'
+        notFound:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+      required:
+      - items
+      - notFound
+    OrgStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      - DISSOLVED
+      - MERGED
+      description: Trạng thái tổ chức.
+    OrgType:
+      type: string
+      enum:
+      - DEPARTMENT
+      - PROVINCE_PC
+      - COMMUNE_PC
+      - PUBLIC_UNIT
+      - OTHER
+      description: Loại tổ chức (DD-02).
+    OrganizationRef:
+      type: object
+      description: Tổ chức cho phân hệ đọc (FR-20-057), có tổ chức kế thừa đã giải.
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        name:
+          type: string
+        orgType:
+          $ref: '#/components/schemas/OrgType'
+        parentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        adminUnitId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OrgStatus'
+        isDataOwner:
+          type: boolean
+        effectiveFrom:
+          type: string
+          format: date
+        effectiveTo:
+          type: string
+          format: date
+        successorCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        resolvedSuccessor:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+      required:
+      - orgCode
+      - name
+      - orgType
+      - status
+      - isDataOwner
+    OrganizationRefPage:
+      type: object
+      description: Trang `OrganizationRef`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationRef'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ParticipantPhase:
+      type: string
+      enum:
+      - TRANSFER
+      - DRY_RUN
+      - IDENTITY
+      - CUTOVER
+      - VERIFY
+      description: Pha chuyển dữ liệu của một phân hệ.
+    ParticipantReport:
+      type: object
+      description: Phân hệ hoặc PH-18 báo tiến độ chuyển sáp nhập (FR-20-048).
+      properties:
+        phase:
+          $ref: '#/components/schemas/ParticipantPhase'
+        status:
+          $ref: '#/components/schemas/ParticipantStatus'
+        exportedCount:
+          type: integer
+        importedCount:
+          type: integer
+        verifiedCount:
+          type: integer
+        conflictCount:
+          type: integer
+        transferRef:
+          type: string
+        errorCode:
+          type: string
+          pattern: ^[A-Za-z0-9-]{3,32}$
+        errorMessage:
+          type: string
+      required:
+      - phase
+      - status
+    ParticipantStatus:
+      type: string
+      enum:
+      - SUCCEEDED
+      - PENDING
+      - RUNNING
+      - FAILED
+      - SKIPPED
+      description: Trạng thái lần chuyển của một phân hệ.
+    Problem:
+      type: object
+      description: Thân lỗi RFC 9457 (`application/problem+json`).
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          pattern: ^ERR-(00|20)-[0-9]{3}$
+        traceId:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+    QuotaEnforcement:
+      type: object
+      description: Hạn mức hiệu lực để thực thi.
+      properties:
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        effectiveValue:
+          type: number
+        unit:
+          type: string
+      required:
+      - resource
+      - effectiveValue
+    QuotaResource:
+      type: string
+      enum:
+      - API_RPS
+      - ACTIVE_FLOWS
+      - KAFKA_PRODUCE_MBPS
+      - KAFKA_CONSUME_MBPS
+      - OBJECT_STORAGE_GB
+      - DATABASE_GB
+      - USERS
+      - MEMBER_SYSTEMS
+      - PUBLISHED_APIS
+      - TOPICS
+      - RUNTIME_CPU
+      - RUNTIME_MEMORY_GB
+      description: Tài nguyên có hạn mức.
+    RegistryModule:
+      type: object
+      description: Phân hệ đang bật của tenant trong registry.
+      properties:
+        moduleCode:
+          type: string
+          pattern: ^PH-[0-9]{2}$
+          description: Mã phân hệ dạng `PH-nn`.
+        state:
+          $ref: '#/components/schemas/ModuleState'
+      required:
+      - moduleCode
+      - state
+    RegistryPage:
+      type: object
+      description: Trang `RegistryTenant`.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistryTenant'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        totalElements:
+          type: integer
+          minimum: 0
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RegistryTenant:
+      type: object
+      description: Bản ghi registry tenant (FR-20-065).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        tenantId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/TenantStatus'
+        kind:
+          $ref: '#/components/schemas/TenantKind'
+        isolationMode:
+          $ref: '#/components/schemas/IsolationMode'
+        realm:
+          type: string
+        hosts:
+          type: array
+          items:
+            type: string
+        apiPrefix:
+          type: string
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistryModule'
+        configVersion:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - tenantId
+      - status
+      - isolationMode
+      - realm
+      - hosts
+    ReportAck:
+      type: object
+      description: Xác nhận đã nhận báo cáo tiến độ.
+      properties:
+        accepted:
+          type: boolean
+        stepStatus:
+          type: string
+        runStatus:
+          type: string
+        message:
+          type: string
+      required:
+      - accepted
+    StepCode:
+      type: string
+      enum:
+      - S01_RECORD
+      - S02_CONFIG_REPO
+      - S03_REALM
+      - S04_SECRETS
+      - S05_BUCKETS
+      - S06_EVENTING
+      - S07_DATABASE
+      - S08_OBSERVABILITY
+      - S09_GATEWAY
+      - S10_INTEGRATION
+      - S11_SEED_RDM
+      - S12_SEED_MDM
+      - S13_ORG_SEED
+      - S14_KPI
+      - S15_MODULES
+      - S16_SMOKE
+      - S17_ACTIVATE
+      description: Mã bước saga khởi tạo.
+    StepReport:
+      type: object
+      description: Phân hệ báo kết quả bước saga bất đồng bộ (FR-20-008).
+      properties:
+        status:
+          $ref: '#/components/schemas/StepReportStatus'
+        attempt:
+          type: integer
+        errorCode:
+          type: string
+          pattern: ^[A-Za-z0-9-]{3,32}$
+        errorMessage:
+          type: string
+        outputRef:
+          type: string
+        detail:
+          type: object
+          additionalProperties: true
+      required:
+      - status
+    StepReportStatus:
+      type: string
+      enum:
+      - SUCCEEDED
+      - FAILED
+      description: Kết quả bên thực hiện báo cho bước bất đồng bộ.
+    TenantKind:
+      type: string
+      enum:
+      - PROVINCE
+      - PLATFORM
+      - COMMON
+      description: Loại tenant.
+    TenantStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - PROVISIONING
+      - SUSPENDED
+      - MERGING
+      - MERGED
+      - DECOMMISSIONED
+      - FAILED
+      description: Trạng thái tenant (DD-01).
+security:
+- oauth2Service: []

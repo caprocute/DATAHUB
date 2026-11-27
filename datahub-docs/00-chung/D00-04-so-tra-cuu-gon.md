@@ -117,7 +117,7 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 17 | Trợ lý AI | `dh-assist` | Đợt 3 | đủ bảy tập (FRS 0.2) |
 | 18 | Vận hành và xử lý lỗi | `dh-platform` | MVP | chưa |
 | 19 | Thanh toán | `dh-payment` | Đợt 2 | BRD, khung truy vết (luồng riêng) |
-| 20 | Quản trị tenant | `dh-platform` | MVP | chưa |
+| 20 | Quản trị tenant | `dh-platform` | MVP | đủ bảy tập 0.2 |
 
 : Phân hệ, DU triển khai, đợt và tình trạng tài liệu
 
@@ -129,7 +129,7 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 
 | Họ | Dải | Ghi chú |
 |---|---|---|
-| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 · 080–084 PH-06 · 085–089 PH-08 · 090–094 PH-09 (đề xuất, chưa có tệp) · 160–164 PH-16 (đề xuất, chưa có tệp) | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
+| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 · 080–084 PH-06 · 085–089 PH-08 · 090–094 PH-09 (đề xuất, chưa có tệp) · 160–164 PH-16 (đề xuất, chưa có tệp) · 200–204 PH-20 (đề xuất, chưa có tệp) | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
 | SEC | 01–09 quản trị · 10–19 mạng · 20–29 IAM · 30–39 dữ liệu · 40–49 ứng dụng · 50–59 nền tảng · 60–67 giám sát · 70–75 sự cố · 80–88 tenant · 90–99 cấp độ 4 | Định nghĩa ở D03-07; tập phân hệ chỉ tham chiếu, không tạo mới |
 | ERR-{PH} | 001–099 control plane · 101–199 runtime/data plane | Theo cách PH-04 (ERR-04-001…049, 101…112) |
 | Câu hỏi mở | `Q{PH}-nn` theo tập: 01–19 FRS · 20–29 SDD · 30–39 màn hình · 40–44 test · 45–49 UC · 50–54 CSDL · 55–59 API | Theo cách PH-04. Câu hỏi cấp hệ thống: Q300–313 D03-07, Q320–329 D03-08, Q330–349 D03-09, Q350–359 D04, Q360–369 D05-01 |
@@ -169,6 +169,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | FR | 16 | 58 | `FR-16-001` | `FR-16-058` | `FR-16-059` |
 | FR | 17 | 62 | `FR-17-001` | `FR-17-062` | `FR-17-063` |
 | FR | 19 | 69 | `FR-19-001` | `FR-19-069` | `FR-19-070` |
+| FR | 20 | 70 | `FR-20-001` | `FR-20-070` | `FR-20-071` |
 | NFR | 00 | 43 | `NFR-00-001` | `NFR-00-062` | `NFR-00-063` |
 | NFR | 01 | 22 | `NFR-01-001` | `NFR-01-022` | `NFR-01-023` |
 | NFR | 02 | 22 | `NFR-02-001` | `NFR-02-022` | `NFR-02-023` |
@@ -188,6 +189,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | NFR | 16 | 22 | `NFR-16-001` | `NFR-16-022` | `NFR-16-023` |
 | NFR | 17 | 28 | `NFR-17-001` | `NFR-17-028` | `NFR-17-029` |
 | NFR | 19 | 32 | `NFR-19-001` | `NFR-19-032` | `NFR-19-033` |
+| NFR | 20 | 24 | `NFR-20-001` | `NFR-20-024` | `NFR-20-025` |
 | BR | 01 | 34 | `BR-01-001` | `BR-01-034` | `BR-01-035` |
 | BR | 02 | 40 | `BR-02-001` | `BR-02-040` | `BR-02-041` |
 | BR | 03 | 30 | `BR-03-001` | `BR-03-030` | `BR-03-031` |
@@ -206,6 +208,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | BR | 16 | 35 | `BR-16-001` | `BR-16-035` | `BR-16-036` |
 | BR | 17 | 87 | `BR-17-001` | `BR-17-087` | `BR-17-088` |
 | BR | 19 | 34 | `BR-19-001` | `BR-19-034` | `BR-19-035` |
+| BR | 20 | 42 | `BR-20-001` | `BR-20-042` | `BR-20-043` |
 | UC | 01 | 34 | `UC-01-01` | `UC-01-34` | `UC-01-35` |
 | UC | 02 | 38 | `UC-02-01` | `UC-02-38` | `UC-02-39` |
 | UC | 03 | 31 | `UC-03-01` | `UC-03-31` | `UC-03-32` |
@@ -224,6 +227,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | UC | 16 | 30 | `UC-16-01` | `UC-16-30` | `UC-16-31` |
 | UC | 17 | 36 | `UC-17-01` | `UC-17-36` | `UC-17-37` |
 | UC | 19 | 29 | `UC-19-01` | `UC-19-29` | `UC-19-30` |
+| UC | 20 | 36 | `UC-20-01` | `UC-20-36` | `UC-20-37` |
 | API | 01 | 88 | `API-01-001` | `API-01-088` | `API-01-089` |
 | API | 02 | 98 | `API-02-001` | `API-02-098` | `API-02-099` |
 | API | 03 | 96 | `API-03-001` | `API-03-096` | `API-03-097` |
@@ -242,6 +246,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | API | 16 | 130 | `API-16-001` | `API-16-130` | `API-16-131` |
 | API | 17 | 193 | `API-17-001` | `API-17-193` | `API-17-194` |
 | API | 19 | 107 | `API-19-001` | `API-19-205` | `API-19-206` |
+| API | 20 | 171 | `API-20-001` | `API-20-171` | `API-20-172` |
 | EVT | 01 | 15 | `EVT-01-01` | `EVT-01-15` | `EVT-01-16` |
 | EVT | 02 | 16 | `EVT-02-01` | `EVT-02-16` | `EVT-02-17` |
 | EVT | 03 | 12 | `EVT-03-01` | `EVT-03-12` | `EVT-03-13` |
@@ -260,6 +265,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | EVT | 16 | 14 | `EVT-16-01` | `EVT-16-14` | `EVT-16-15` |
 | EVT | 17 | 28 | `EVT-17-01` | `EVT-17-28` | `EVT-17-29` |
 | EVT | 19 | 18 | `EVT-19-01` | `EVT-19-18` | `EVT-19-19` |
+| EVT | 20 | 16 | `EVT-20-01` | `EVT-20-16` | `EVT-20-17` |
 | ERR | 01 | 54 | `ERR-01-001` | `ERR-01-054` | `ERR-01-055` |
 | ERR | 02 | 45 | `ERR-02-001` | `ERR-02-045` | `ERR-02-046` |
 | ERR | 03 | 57 | `ERR-03-001` | `ERR-03-130` | `ERR-03-131` |
@@ -278,6 +284,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | ERR | 16 | 86 | `ERR-16-001` | `ERR-16-125` | `ERR-16-126` |
 | ERR | 17 | 105 | `ERR-17-001` | `ERR-17-118` | `ERR-17-119` |
 | ERR | 19 | 51 | `ERR-19-001` | `ERR-19-099` | `ERR-19-100` |
+| ERR | 20 | 86 | `ERR-20-001` | `ERR-20-118` | `ERR-20-119` |
 | UI | 01 | 17 | `UI-01-01` | `UI-01-17` | `UI-01-18` |
 | UI | 02 | 17 | `UI-02-01` | `UI-02-17` | `UI-02-18` |
 | UI | 03 | 18 | `UI-03-01` | `UI-03-18` | `UI-03-19` |
@@ -296,6 +303,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | UI | 16 | 20 | `UI-16-01` | `UI-16-20` | `UI-16-21` |
 | UI | 17 | 20 | `UI-17-01` | `UI-17-20` | `UI-17-21` |
 | UI | 19 | 28 | `UI-19-01` | `UI-19-28` | `UI-19-29` |
+| UI | 20 | 22 | `UI-20-01` | `UI-20-22` | `UI-20-23` |
 | TS | 01 | 35 | `TS-01-01` | `TS-01-35` | `TS-01-36` |
 | TS | 02 | 28 | `TS-02-01` | `TS-02-28` | `TS-02-29` |
 | TS | 03 | 32 | `TS-03-01` | `TS-03-32` | `TS-03-33` |
@@ -314,6 +322,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | TS | 16 | 36 | `TS-16-01` | `TS-16-36` | `TS-16-37` |
 | TS | 17 | 45 | `TS-17-01` | `TS-17-45` | `TS-17-46` |
 | TS | 19 | 34 | `TS-19-01` | `TS-19-34` | `TS-19-35` |
+| TS | 20 | 44 | `TS-20-01` | `TS-20-44` | `TS-20-45` |
 | TC | 01 | 143 | `TC-01-001` | `TC-01-143` | `TC-01-144` |
 | TC | 02 | 168 | `TC-02-001` | `TC-02-168` | `TC-02-169` |
 | TC | 03 | 136 | `TC-03-001` | `TC-03-136` | `TC-03-137` |
@@ -332,6 +341,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | TC | 16 | 124 | `TC-16-001` | `TC-16-124` | `TC-16-125` |
 | TC | 17 | 163 | `TC-17-001` | `TC-17-163` | `TC-17-164` |
 | TC | 19 | 187 | `TC-19-001` | `TC-19-836` | `TC-19-837` |
+| TC | 20 | 233 | `TC-20-001` | `TC-20-233` | `TC-20-234` |
 | ADR | — | 65 | `ADR-001` | `ADR-174` | theo dải nhóm, §3 |
 | SEC | — | 92 | `SEC-01` | `SEC-99` | theo dải nhóm, §3 |
 | PTN | — | 14 | `PTN-01` | `PTN-14` | `PTN-15` |
@@ -346,7 +356,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | LGC-TOOL | — | 29 | `LGC-TOOL-001` | `LGC-TOOL-029` | `LGC-TOOL-030` |
 | REQ | — | 31 | `REQ-01` | `REQ-99` | `REQ-100` |
 | CMP-LAW | — | 33 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
-| PERM | 01…20 | 222 | — | — | động từ theo D02-08 |
+| PERM | 01…20 | 232 | — | — | động từ theo D02-08 |
 
 : Dải mã đã dùng thực tế trong bộ tài liệu (sinh tự động)
 
