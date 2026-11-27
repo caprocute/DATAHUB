@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH12
 ten: Thiết kế chi tiết phần mềm phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư hạ tầng định danh, kiến trúc sư ATTT, kiểm thử viên, hội đồng thẩm định
@@ -557,7 +557,7 @@ Hình cho thấy ba nhóm gần như độc lập: nhóm người dùng (trái),
 | `UserAccount` | Không xóa vật lý, kết thúc là `DISABLED` | BR-12-035 | Không có phương thức xóa; CSDL không có quyền `DELETE` trên `user_account` cho vai trò ứng dụng |
 | `UserAccount` | Chuyển trạng thái đúng bảng ở mục 8.1; kích hoạt lại buộc đặt mật khẩu mới | ERR-12-006 | `UserAccount.transitionTo` |
 | `UserAccount` | Không tự gán, gỡ vai trò, khóa, đặt lại yếu tố của chính mình | BR-12-033, ERR-12-013 | `UserService`, `AssignmentService` so `actor.id` với `target.id` |
-| `UserAccount` | Mỗi tenant còn ít nhất một `TENANT_ADMIN` hoạt động | BR-12-033, ERR-12-046 | `AssignmentService.unassign` và `UserService.disable` khóa hàng gán `TENANT_ADMIN` bằng `FOR UPDATE` rồi đếm |
+| `UserAccount` | Tenant đã kích hoạt luôn có ít nhất hai `TENANT_ADMIN` hiệu lực (Q403, chốt 27/11/2026); ngoại lệ chỉ cho tự vô hiệu không dùng và khóa do sự cố ATTT | BR-12-033, ERR-12-046 | `AssignmentService.unassign`, `UserService.disable` và `UserService.lock` khóa hàng gán `TENANT_ADMIN` bằng `FOR UPDATE` rồi đếm TA hiệu lực khác; còn dưới hai thì ERR-12-046. `InactivityJob`, thao tác khóa kèm `incidentRef` và bộ tiêu thụ EVT-12-16 (khóa `BLOCKED`) đặt `SET LOCAL ph12.ta_floor_exception` để trigger `tg_user_account_last_admin` cho qua, rồi `AlertEngine` phát cảnh báo khẩn cho SO, PA và tạo việc bổ sung TA |
 | `RoleAssignment` | Không giữ cặp vai trò xung đột trừ ngoại lệ còn hiệu lực | BR-12-030, ERR-12-009 | `SodGuard.check` trong giao dịch có khóa hàng người dùng |
 | `RoleAssignment` | `PLATFORM_*` chỉ ở tenant `PLATFORM`; phạm vi `ORG` chỉ cho người thuộc đơn vị hoặc cấp dưới | BR-12-031, BR-12-037, ERR-12-010 | `AssignmentService.validate` |
 | `SodException` | Tối đa 90 ngày, người đề nghị khác người duyệt; cặp có `AUDITOR` với quyền ghi PH-19 không có ngoại lệ | BR-12-030, ERR-12-008 | `SodException.approve` |
@@ -604,7 +604,7 @@ Tạo tài khoản dùng mẫu "ghi ý định trước, thực hiện sau" vì 
 
 `UserStateResolver` dựng trạng thái hiển thị từ ba nguồn vì Keycloak không có khái niệm `LOCKED` hay `BLOCKED` như FRS: `enabled` và thuộc tính `dh_disabled_reason` cho `DISABLED`, hành động bắt buộc `UPDATE_PASSWORD` còn treo cho `PENDING_ACTIVATION`, và kết quả `attack-detection/brute-force/users/{id}` cho `LOCKED` (khóa tạm) và `BLOCKED` (khóa hẳn do Keycloak đặt `enabled=false` kèm thuộc tính `dh_blocked=true` qua bộ lắng nghe sự kiện). Kết quả được lưu ở cột `state` của bản chiếu mỗi khi có sự kiện; màn hình danh sách (FR-12-001) đọc bản chiếu, màn chi tiết (FR-12-002) hỏi Keycloak để lấy trạng thái tươi.
 
-Tự vô hiệu (FR-12-008) chạy 02:00 mỗi ngày theo từng tenant trong `TenantContext.runAs`. `InactivityJob` chọn tài khoản `ACTIVE` có `last_login_at` quá ngưỡng (`12.account.inactive-days`, quản trị `12.account.inactive-days-admin`) và `created_at` quá ngưỡng cho trường hợp chưa từng đăng nhập. Nguồn `last_login_at` là sự kiện đăng nhập của Keycloak (EVT-12-16), không phải API. Vì vậy trước khi vô hiệu hàng loạt, tác vụ kiểm `iam_auth_event_lag_seconds` của bộ tiêu thụ; nếu trễ quá 3.600 giây, tác vụ bỏ lượt chạy và phát cảnh báo thay vì vô hiệu nhầm người chỉ vì thiếu dữ liệu. Mỗi tài khoản bị vô hiệu đi qua đúng đường của FR-12-005 (đổi trạng thái, hủy phiên, thu hồi) với `actor = SYSTEM` và lý do `INACTIVE_45D`; sự kiện kiểm toán ghi rõ ngưỡng đã vượt.
+Tự vô hiệu (FR-12-008) chạy 02:00 mỗi ngày theo từng tenant trong `TenantContext.runAs`. `InactivityJob` chọn tài khoản `ACTIVE` có `last_login_at` quá ngưỡng (`12.account.inactive-days`, quản trị `12.account.inactive-days-admin`) và `created_at` quá ngưỡng cho trường hợp chưa từng đăng nhập. Nguồn `last_login_at` là sự kiện đăng nhập của Keycloak (EVT-12-16), không phải API. Vì vậy trước khi vô hiệu hàng loạt, tác vụ kiểm `iam_auth_event_lag_seconds` của bộ tiêu thụ; nếu trễ quá 3.600 giây, tác vụ bỏ lượt chạy và phát cảnh báo thay vì vô hiệu nhầm người chỉ vì thiếu dữ liệu. Mỗi tài khoản bị vô hiệu đi qua đúng đường của FR-12-005 (đổi trạng thái, hủy phiên, thu hồi) với `actor = SYSTEM` và lý do `INACTIVE_45D` (hoặc `INACTIVE_30D_ADMIN` với vai trò quản trị); tài khoản TA được miễn ngưỡng hai TA của ERR-12-046 (đặt `ph12.ta_floor_exception = 'INACTIVITY'` trong giao dịch) và nếu tenant xuống dưới hai TA thì `AlertEngine` phát cảnh báo khẩn cho SO, PA và tạo việc "Bổ sung quản trị tỉnh" cho PA; sự kiện kiểm toán ghi rõ ngưỡng đã vượt.
 
 Nhập hàng loạt (FR-12-009) theo hai pha (BR-12-043, ADR-056 làm mẫu). Pha 1: tệp qua bộ quét DD-12, đọc luồng bằng SAX (xlsx) hoặc bộ đọc CSV, kiểm từng dòng (miền thư, đơn vị, vai trò hệ cũ có ánh xạ, trùng), ghi `user_import_row` với kết quả `OK`, `WARN`, `ERROR`; tối đa `12.import.max-rows` = 5.000 dòng. Pha 2: khi người dùng xác nhận, các dòng `OK` được tạo bởi `ImportService` chạy nền (4 luồng song song, mỗi lượt tạo đi qua `UserService.create`), tiến độ qua SSE; kết thúc thì gỡ tệp gốc (S3 lifecycle 24 giờ). Mật khẩu không bao giờ có trong tệp; mọi tài khoản tạo ở `PENDING_ACTIVATION` và nhận liên kết kích hoạt.
 
@@ -631,7 +631,7 @@ Kích hoạt và quên mật khẩu (FR-12-006, 007) dùng luồng gốc của K
 
 **Sự kiện.** EVT-12-03, EVT-12-12.
 
-**Lỗi và xử lý.** Cặp xung đột: ERR-12-009; vai trò hay phạm vi sai: ERR-12-010; còn dùng: ERR-12-011; vòng lặp: ERR-12-012; tự thao tác: ERR-12-013; quản trị tỉnh cuối cùng: ERR-12-046.
+**Lỗi và xử lý.** Cặp xung đột: ERR-12-009; vai trò hay phạm vi sai: ERR-12-010; còn dùng: ERR-12-011; vòng lặp: ERR-12-012; tự thao tác: ERR-12-013; thao tác làm tenant còn dưới hai quản trị tỉnh: ERR-12-046 (409), kể cả gỡ vai trò TA; gán `TENANT_ADMIN` sắp hết hạn mà việc hết hạn làm xuống dưới hai TA thì `AssignmentExpiryJob` không đặt `EXPIRED` (trigger chặn), giữ gán và gửi cảnh báo TA, SO, PA.
 
 **Quan sát.** `iam_role_assignments_total{role}`, `iam_sod_blocked_total`, `iam_effective_permission_requests_total`.
 :::
@@ -644,7 +644,7 @@ Chi tiết thiết kế:
 
 Thời điểm có hiệu lực khác nhau theo chiều thay đổi, đúng BR-12-036. Gỡ hoặc thu hẹp quyền: Keycloak thu hồi phiên của người đó và OPA nhận dữ liệu mới trong ≤ 60 giây; trong khoảng đó token cũ vẫn mang vai trò cũ nhưng OPA lấy **giao** của vai trò trong token với gán trong dữ liệu gói, nên quyền đã gỡ hết hiệu lực ngay khi gói mới được nạp. Nâng quyền: gói mới có gán mới nhưng token cũ chưa mang vai trò, nên quyền chỉ có khi người dùng có token mới (tối đa 5 phút). Cách chọn giao thay vì hợp bảo đảm lỗi nghiêng về phía thiếu quyền, không bao giờ thừa quyền.
 
-`AssignmentExpiryJob` (mỗi phút) tìm gán có `valid_to` đã qua, đặt `EXPIRED`, gỡ vai trò khỏi Keycloak nếu người đó không còn gán nào mang vai trò ấy, rồi kích hoạt dựng gói. Việc hết hạn có hiệu lực ở OPA ngay lập tức vì quy tắc Rego `assignment_active` kiểm `valid_to` ở mọi quyết định; tác vụ nền chỉ dọn dữ liệu.
+`AssignmentExpiryJob` (mỗi phút) tìm gán có `valid_to` đã qua, đặt `EXPIRED` (riêng gán `TENANT_ADMIN`, nếu trigger `tg_role_assignment_last_admin` trả `P1246` vì tenant sẽ còn dưới hai TA thì tác vụ bỏ qua gán đó, ghi cảnh báo cho TA, SO, PA và thử lại ở lượt sau; Rego `assignment_active` vẫn tước hiệu lực ở OPA ngay theo `valid_to`), gỡ vai trò khỏi Keycloak nếu người đó không còn gán nào mang vai trò ấy, rồi kích hoạt dựng gói. Việc hết hạn có hiệu lực ở OPA ngay lập tức vì quy tắc Rego `assignment_active` kiểm `valid_to` ở mọi quyết định; tác vụ nền chỉ dọn dữ liệu.
 
 `SodGuard` đọc bảy cặp xung đột của D02-08 §4 từ `SodRuleSet`. Ngoại lệ (`SodException`) đi theo luồng: TA đề nghị với lý do ≥ 30 ký tự và ngày hết hạn ≤ 90 ngày, SO khác duyệt, hệ thống tự gỡ ngoại lệ và vai trò thứ hai khi hết hạn. Cặp `AUDITOR` với vai trò có quyền ghi của PH-19 được đánh dấu `noException` trong tệp luật và bị chặn ở bước đề nghị (BR-12-030).
 
@@ -1488,11 +1488,12 @@ sequenceDiagram
     IJ->>DB: Chọn ACTIVE có last_login_at quá ngưỡng
     loop mỗi tài khoản
       IJ->>US: disable với actor SYSTEM, lý do INACTIVE_45D
-      US->>DB: DISABLED, outbox EVT-12-02, kiểm quản trị cuối cùng
+      US->>DB: DISABLED (ngoại lệ INACTIVITY của ngưỡng hai TA), outbox EVT-12-02
       US->>R: revoke SUB
       R->>DB: Mục SUB notBefore bây giờ
       US->>KC: Vô hiệu, hủy phiên, thu hồi refresh token
       US->>AW: Kiểm toán kèm ngưỡng đã vượt
+      US->>AL: Nếu là TA và tenant xuống dưới hai TA: cảnh báo khẩn SO, PA, việc bổ sung TA
     end
   end
 ```
@@ -1727,7 +1728,7 @@ Mỗi đối tượng có vòng đời ở FRS mục 4.3…4.7 hoặc ở thiế
 | UserAccount | LOCKED | hết hạn, mở khóa | ACTIVE | 15 phút hoặc TA, SO; không tự mở khóa mình (ERR-12-013) |
 | UserAccount | LOCKED | hệ thống | BLOCKED | 3 lần khóa tạm trong 24 giờ |
 | UserAccount | BLOCKED | mở khóa | ACTIVE | TA hoặc SO khác người bị khóa |
-| UserAccount | ACTIVE | vô hiệu, hệ thống | DISABLED | Lý do; không phải quản trị tỉnh cuối cùng (ERR-12-046); không tự vô hiệu mình |
+| UserAccount | ACTIVE | vô hiệu, hệ thống | DISABLED | Lý do; tenant đã kích hoạt còn ít nhất hai TA hiệu lực sau thao tác (ERR-12-046), trừ ngoại lệ không dùng quá ngưỡng (`INACTIVE_45D`, `INACTIVE_30D_ADMIN`) và sự cố ATTT, kèm cảnh báo khẩn và việc bổ sung TA; không tự vô hiệu mình |
 | UserAccount | DISABLED | kích hoạt lại | ACTIVE | Buộc đặt mật khẩu mới; đăng ký lại yếu tố nếu thuộc nhóm bắt buộc |
 | Client | (mới) | cấp | PROVISIONING | Không trùng HTTT (ERR-12-018), phương thức theo mức hợp đồng (ERR-12-022) |
 | Client | PROVISIONING | hệ thống | ENABLED, FAILED | Keycloak tạo thành công; lỗi thì bù trừ |
@@ -2051,3 +2052,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu; vị trí trong kiến trúc và hiện trạng mã; cấu trúc mã (module `iam`, thư viện PEP, bộ mở rộng Keycloak, kho `dh-policies`) và hợp đồng quyết định; mô hình miền và 14 thành phần với bảng đặc tả 10 mục; 14 biểu đồ tuần tự; đa tenant; bảo mật dẫn SEC và THR; bảng chuyển trạng thái 10 đối tượng; chịu lỗi và nhất quán; cấu hình và cờ; quan sát; hiệu năng và vận hành; kiểm thử; lộ trình, rủi ro; 10 câu hỏi mở (Q12-20…Q12-29); đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: giao diện PermissionApi, StepUpApi, đường đẩy API-03-053, đối chiếu CSDL, bước S03_REALM; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: bất biến tối thiểu hai TA (ERR-12-046) cho gỡ, khóa, vô hiệu, hết hạn gán TA; ngoại lệ InactivityJob và khóa do sự cố ATTT qua `ph12.ta_floor_exception`, cảnh báo khẩn và việc bổ sung TA |

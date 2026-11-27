@@ -331,10 +331,10 @@ Bảng sau là kết quả áp công thức cho toàn bộ backlog. Phân bố l
 | Điểm | Số story | Tỷ lệ | Tổng điểm |
 |---|---|---|---|
 | 1 | 95 | 7,4% | 95 |
-| 2 | 380 | 29,5% | 760 |
-| 3 | 447 | 34,7% | 1341 |
-| 5 | 293 | 22,8% | 1465 |
-| 8 | 72 | 5,6% | 576 |
+| 2 | 379 | 29,4% | 758 |
+| 3 | 445 | 34,5% | 1335 |
+| 5 | 297 | 23,0% | 1485 |
+| 8 | 74 | 5,7% | 592 |
 
 : Phân bố story theo điểm ước lượng (sinh tự động)
 
@@ -359,27 +359,27 @@ Với hệ số đó, một đội 5–6 người làm 10 ngày mỗi sprint, t�
 | PH | Tên | Epic | Story | Điểm | M | S | C | Wave |
 |---|---|---|---|---|---|---|---|---|
 | PH-00 | Dùng chung (FR-00) | 9 | 40 | 82 | 36 | 4 | 0 | W1 |
-| PH-01 | Kết nạp hệ thống thông tin | 7 | 51 | 202 | 41 | 9 | 1 | W1 |
-| PH-02 | Danh mục dịch vụ | 10 | 62 | 254 | 50 | 11 | 1 | W1 |
-| PH-03 | Cổng API | 7 | 59 | 212 | 47 | 11 | 1 | W1 |
+| PH-01 | Kết nạp hệ thống thông tin | 7 | 53 | 210 | 42 | 10 | 1 | W1 |
+| PH-02 | Danh mục dịch vụ | 10 | 62 | 257 | 50 | 11 | 1 | W1 |
+| PH-03 | Cổng API | 7 | 59 | 214 | 47 | 11 | 1 | W1 |
 | PH-04 | Lõi tích hợp và trình thiết kế luồng | 7 | 60 | 174 | 49 | 10 | 1 | W1 |
 | PH-05 | Bộ điều hợp và kết nối | 8 | 62 | 212 | 54 | 7 | 1 | W1 |
-| PH-06 | Dữ liệu chủ | 8 | 60 | 183 | 54 | 6 | 0 | W4–W5 |
+| PH-06 | Dữ liệu chủ | 8 | 60 | 187 | 54 | 6 | 0 | W4–W5 |
 | PH-07 | Danh mục dùng chung | 8 | 53 | 221 | 48 | 4 | 1 | W2 |
 | PH-08 | Chất lượng dữ liệu | 10 | 61 | 161 | 36 | 21 | 4 | W4–W5 |
-| PH-09 | Quyền riêng tư | 11 | 64 | 140 | 47 | 13 | 4 | W4 |
+| PH-09 | Quyền riêng tư | 11 | 64 | 142 | 47 | 13 | 4 | W4 |
 | PH-10 | Sự kiện | 11 | 76 | 266 | 66 | 8 | 2 | W2 |
 | PH-11 | Quy trình liên thông | 10 | 66 | 147 | 48 | 16 | 2 | W4 |
 | PH-12 | Định danh và phân quyền | 8 | 62 | 316 | 52 | 9 | 1 | W1 |
-| PH-13 | Giám sát và kiểm toán | 8 | 61 | 216 | 52 | 8 | 1 | W1–W2 |
+| PH-13 | Giám sát và kiểm toán | 8 | 62 | 219 | 52 | 8 | 2 | W1–W2 |
 | PH-14 | Kết nối quốc gia | 9 | 57 | 245 | 48 | 8 | 1 | W2 |
 | PH-15 | Cổng nhà phát triển | 10 | 62 | 196 | 47 | 13 | 2 | W4 |
 | PH-16 | Báo cáo chỉ tiêu và sổ kiến trúc | 9 | 58 | 150 | 37 | 17 | 4 | W5 |
-| PH-17 | Trợ lý AI và quản trị AI | 10 | 62 | 214 | 44 | 15 | 3 | W5 |
+| PH-17 | Trợ lý AI và quản trị AI | 10 | 62 | 218 | 44 | 15 | 3 | W5 |
 | PH-18 | Vận hành và xử lý lỗi | 10 | 72 | 202 | 57 | 12 | 3 | W2 |
 | PH-19 | Thanh toán điện tử | 15 | 69 | 237 | 58 | 10 | 1 | W4 |
-| PH-20 | Quản trị tenant và phát hành sản phẩm | 10 | 70 | 207 | 51 | 19 | 0 | W2 |
-| **Cộng** |  | 195 | **1287** | **4237** | 1022 | 231 | 34 |  |
+| PH-20 | Quản trị tenant và phát hành sản phẩm | 10 | 70 | 209 | 51 | 19 | 0 | W2 |
+| **Cộng** |  | 195 | **1290** | **4265** | 1023 | 232 | 35 |  |
 
 : Số epic, story, điểm và mức ưu tiên theo phân hệ (sinh tự động)
 
@@ -421,13 +421,13 @@ Hình cho thấy W3 và W4 chạy song song theo D01-02 §3.2: trong khi đội 
 
 | Wave | Số story | Tổng điểm | Điểm mức M |
 |---|---|---|---|
-| W1 | 359 | 1336 | 1249 |
+| W1 | 361 | 1349 | 1259 |
 | W1–W2 | 59 | 210 | 189 |
-| W2 | 310 | 1088 | 996 |
-| W4 | 298 | 841 | 588 |
-| W4–W5 | 121 | 344 | 270 |
-| W5 | 135 | 406 | 266 |
-| Sau G5 | 5 | 12 | 0 |
+| W2 | 310 | 1090 | 998 |
+| W4 | 298 | 843 | 590 |
+| W4–W5 | 121 | 348 | 274 |
+| W5 | 135 | 410 | 270 |
+| Sau G5 | 6 | 15 | 0 |
 
 : Story và điểm theo wave phát triển (sinh tự động)
 
@@ -588,7 +588,7 @@ Epic gồm 7 story, 12 điểm (6 story mức M).
 
 ### 6.2. PH-01 · Kết nạp hệ thống thông tin
 
-Phân hệ có 7 epic, 51 story, tổng 202 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH01 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 7 epic, 53 story, tổng 210 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH01 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-01-A · Hồ sơ HTTT và đầu mối
 
@@ -647,7 +647,7 @@ Epic gồm 9 story, 50 điểm (9 story mức M).
 
 #### EP-01-D · Vòng đời thành viên
 
-Epic gồm 10 story, 46 điểm (8 story mức M).
+Epic gồm 12 story, 54 điểm (9 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
@@ -661,6 +661,8 @@ Epic gồm 10 story, 46 điểm (8 story mức M).
 | US-01-036 | Là quản trị tỉnh, tôi muốn hệ thống tự tạm ngừng định danh không hoạt động, để định danh bị bỏ quên không còn dùng được; đầu mối được báo trước. | S | 3 | Đợt 2, W4 | FR-01-036; UC-01-25 |
 | US-01-037 | Là quản trị tỉnh, tôi muốn hệ thống đồng bộ trạng thái HTTT tới phân hệ khác, để các phân hệ có cùng một bức tranh về HTTT; tạm ngừng ở PH-01 lan xuống không cần thao tác tay. | M | 5 | MVP, W1 | FR-01-037; UC-01-26 |
 | US-01-038 | Là quản trị tỉnh, tôi muốn hệ thống cung cấp bản sao đọc HTTT cho phân hệ khác, để phân hệ khác có bản sao HTTT đáng tin cậy, cập nhật theo sự kiện. | M | 2 | MVP, W1 | FR-01-038; UC-01-26 |
+| US-01-053 | Là cán bộ ATTT, tôi muốn hệ thống tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO, để SO có việc khẩn với đủ bối cảnh để quyết định trong vài phút; PH-13 không giữ quyền đổi trạng thái HTTT. | M | 5 | MVP, W1 | FR-01-053; UC-01-22 |
+| US-01-054 | Là quản trị tỉnh, tôi muốn hệ thống tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập, để mọi HTTT của tổ chức giải thể, sáp nhập có sẵn đề nghị đổi chủ quản chờ TA duyệt một lượt. | S | 3 | MVP, W1 | FR-01-054 |
 
 : Story của epic EP-01-D Vòng đời thành viên
 
@@ -706,7 +708,7 @@ Epic gồm 4 story, 13 điểm (2 story mức M).
 
 ### 6.3. PH-02 · Danh mục dịch vụ
 
-Phân hệ có 10 epic, 62 story, tổng 254 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH02 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 10 epic, 62 story, tổng 257 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH02 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-02-A · Danh mục và tra cứu
 
@@ -809,11 +811,11 @@ Epic gồm 12 story, 61 điểm (11 story mức M).
 
 #### EP-02-G · Đăng ký sử dụng
 
-Epic gồm 7 story, 31 điểm (6 story mức M).
+Epic gồm 7 story, 34 điểm (6 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
-| US-02-046 | Là cán bộ đầu mối của tổ chức, tôi muốn gửi đăng ký sử dụng API, để đơn vị khai thác có đăng ký đang chờ duyệt (hoặc đã được tự duyệt) và biết ai sẽ duyệt. | M | 5 | MVP, W1 | FR-02-046; UC-02-23 |
+| US-02-046 | Là cán bộ đầu mối của tổ chức, tôi muốn gửi đăng ký sử dụng API, để đơn vị khai thác có đăng ký đang chờ duyệt (hoặc đã được tự duyệt) và biết ai sẽ duyệt. | M | 8 | MVP, W1 | FR-02-046; UC-02-23 |
 | US-02-047 | Là chủ dịch vụ, tôi muốn duyệt hoặc từ chối đăng ký sử dụng, để đăng ký được quyết định có người chịu trách nhiệm; HTTT khai thác nhận kết quả kèm ý kiến. | M | 5 | MVP, W1 | FR-02-047; UC-02-24 |
 | US-02-048 | Là vận hành tỉnh, tôi muốn hệ thống cấp phạm vi truy cập theo đăng ký đã duyệt, để HTTT khai thác gọi được API ngay sau khi duyệt mà không ai thao tác thủ công ở nhiều nơi. | M | 5 | MVP, W1 | FR-02-048; UC-02-25 |
 | US-02-049 | Là chủ dịch vụ, tôi muốn xem đăng ký theo API, để chủ dịch vụ nhìn rõ danh sách bên khai thác API của mình. | M | 3 | MVP, W1 | FR-02-049; UC-02-26 |
@@ -862,15 +864,15 @@ Epic gồm 4 story, 19 điểm (3 story mức M).
 
 ### 6.4. PH-03 · Cổng API
 
-Phân hệ có 7 epic, 59 story, tổng 212 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH03 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 7 epic, 59 story, tổng 214 điểm; wave phát triển W1, đợt MVP. Nguồn: D02-03-PH03 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-03-A · Lớp biên và bảo vệ truyền tải
 
-Epic gồm 11 story, 43 điểm (8 story mức M).
+Epic gồm 11 story, 45 điểm (8 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
-| US-03-001 | Là quản trị nền tảng, tôi muốn kết thúc TLS tại hai cửa vào, để HTTT kết nối được qua TLS 1.3; HTTT cũ có đường kết nối tạm thời có hạn, hiển thị rõ ở UI-03-12 để theo dõi thanh lý. | M | 3 | MVP, W1 | FR-03-001; UC-03-01, 03-05, 03-17 |
+| US-03-001 | Là quản trị nền tảng, tôi muốn kết thúc TLS tại hai cửa vào, để HTTT kết nối được qua TLS 1.3; HTTT cũ có đường kết nối tạm thời có hạn, hiển thị rõ ở UI-03-12 để theo dõi thanh lý. | M | 5 | MVP, W1 | FR-03-001; UC-03-01, 03-05, 03-17 |
 | US-03-002 | Là quản trị nền tảng, tôi muốn xác minh chứng thư khách mTLS, để HTTT có chứng thư hợp lệ được nhận diện ngay ở biên; chứng thư sai bị chặn trước khi tốn tài nguyên. | M | 5 | MVP, W1 | FR-03-002; UC-03-02, 03-17 |
 | US-03-003 | Là quản trị nền tảng, tôi muốn hệ thống giới hạn kết nối và tốc độ theo địa chỉ nguồn, để lưu lượng bất thường từ một địa chỉ bị cắt ở biên, nền tảng chịu được tải gấp ba lần cao điểm (900 lượt/giây) không suy giảm (NFR-03-013). | M | 5 | MVP, W1 | FR-03-003; UC-03-05, 03-12, 03-29 |
 | US-03-004 | Là cán bộ ATTT, tôi muốn hệ thống chặn tạm địa chỉ nguồn vi phạm liên tục, để nguồn tấn công bị cắt khỏi nền tảng trong tối đa 60 giây, tự gỡ sau 15 phút nếu không phải do SO đặt tay. | S | 5 | MVP, W1 | FR-03-004; UC-03-12 |
@@ -1253,7 +1255,7 @@ Epic gồm 2 story, 3 điểm (1 story mức M).
 
 ### 6.7. PH-06 · Dữ liệu chủ
 
-Phân hệ có 8 epic, 60 story, tổng 183 điểm; wave phát triển W4–W5, đợt Đợt 3. Nguồn: D02-03-PH06 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 8 epic, 60 story, tổng 187 điểm; wave phát triển W4–W5, đợt Đợt 3. Nguồn: D02-03-PH06 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-06-A · Mô hình domain dữ liệu chủ
 
@@ -1310,14 +1312,14 @@ Epic gồm 9 story, 26 điểm (8 story mức M).
 
 #### EP-06-D · Hàng đợi người quản lý dữ liệu
 
-Epic gồm 6 story, 16 điểm (6 story mức M).
+Epic gồm 6 story, 20 điểm (6 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
-| US-06-027 | Là cán bộ quản lý dữ liệu, tôi muốn hệ thống tạo mục hàng đợi và tính mức ưu tiên, để người quản lý thấy việc đã xếp đúng mức khẩn. | M | 2 | Đợt 3, W4–W5 | FR-06-027; UC-06-12 |
+| US-06-027 | Là cán bộ quản lý dữ liệu, tôi muốn hệ thống tạo mục hàng đợi và tính mức ưu tiên, để người quản lý thấy việc đã xếp đúng mức khẩn. | M | 3 | Đợt 3, W4–W5 | FR-06-027; UC-06-12 |
 | US-06-028 | Là cán bộ quản lý dữ liệu, tôi muốn liệt kê, nhận việc và phân công mục hàng đợi, để mỗi người có hàng việc riêng, không ai xử lý trùng. | M | 2 | Đợt 3, W4–W5 | FR-06-028; UC-06-12 |
 | US-06-029 | Là người duyệt danh mục, tôi muốn so sánh cạnh nhau hai bản ghi, để người quản lý thấy điểm giống, điểm khác trong một màn, đủ để quyết định trong vài chục giây. | M | 2 | Đợt 3, W4–W5 | FR-06-029; UC-06-13 |
-| US-06-030 | Là người đang nhận mục, tôi muốn quyết định khớp, không khớp, hoãn, để quyết định có hiệu lực ngay (rủi ro thấp) hoặc chờ duyệt (rủi ro cao); người dùng làm tiếp mục sau không phải quay về danh sách. | M | 5 | Đợt 3, W4–W5 | FR-06-030; UC-06-13 |
+| US-06-030 | Là người đang nhận mục, tôi muốn quyết định khớp, không khớp, hoãn, để quyết định có hiệu lực ngay (rủi ro thấp) hoặc chờ duyệt (rủi ro cao); người dùng làm tiếp mục sau không phải quay về danh sách. | M | 8 | Đợt 3, W4–W5 | FR-06-030; UC-06-13 |
 | US-06-031 | Là người duyệt danh mục, tôi muốn duyệt bốn mắt hợp nhất rủi ro cao, để hợp nhất rủi ro cao chỉ có hiệu lực khi hai người đồng ý. | M | 3 | Đợt 3, W4–W5 | FR-06-031; UC-06-14 |
 | US-06-032 | Là cán bộ quản lý dữ liệu, tôi muốn hệ thống theo dõi SLA, nâng ưu tiên và cảnh báo quá tải, để trưởng nhóm thấy ngay mục quá hạn và nguồn gây tải. | M | 2 | Đợt 3, W4–W5 | FR-06-032; UC-06-12 |
 
@@ -1673,18 +1675,18 @@ Epic gồm 4 story, 6 điểm (3 story mức M).
 
 ### 6.10. PH-09 · Quyền riêng tư
 
-Phân hệ có 11 epic, 64 story, tổng 140 điểm; wave phát triển W4, đợt Đợt 2. Nguồn: D02-03-PH09 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 11 epic, 64 story, tổng 142 điểm; wave phát triển W4, đợt Đợt 2. Nguồn: D02-03-PH09 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-09-A · Phân loại dữ liệu
 
-Epic gồm 8 story, 19 điểm (6 story mức M).
+Epic gồm 8 story, 21 điểm (6 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-09-001 | Là quản trị tỉnh, tôi muốn quản lý danh mục mức phân loại và nhãn chặn bí mật nhà nước, để mọi phân hệ thấy cùng bốn mức và cách xử lý tương ứng. | M | 1 | Đợt 2, W4 | FR-09-001; UC-09-01 |
 | US-09-002 | Là quản trị tỉnh, tôi muốn quản lý danh mục loại dữ liệu cá nhân, để có một danh mục loại DLCN thống nhất theo luật. | M | 2 | Đợt 2, W4 | FR-09-002; UC-09-01 |
 | US-09-003 | Là quản trị tỉnh, tôi muốn hệ thống đăng ký phần tử dữ liệu từ phân hệ, lược đồ API, topic và khai báo MVP, để cán bộ thấy toàn bộ trường cần phân loại, gom theo hợp đồng và chủ sở hữu. | M | 3 | Đợt 2, W4 | FR-09-003; UC-09-02 |
-| US-09-004 | Là cán bộ quản lý dữ liệu, tôi muốn đề xuất, xác nhận phân loại trường (hạ mức cần bốn mắt), để phân loại có hiệu lực toàn hệ trong 60 giây; PH-06, PH-04, PH-02 nhận được thay đổi. | M | 3 | Đợt 2, W4 | FR-09-004; UC-09-03 |
+| US-09-004 | Là cán bộ quản lý dữ liệu, tôi muốn đề xuất, xác nhận phân loại trường (hạ mức cần bốn mắt), để phân loại có hiệu lực toàn hệ trong 60 giây; PH-06, PH-04, PH-02 nhận được thay đổi. | M | 5 | Đợt 2, W4 | FR-09-004; UC-09-03 |
 | US-09-005 | Là quản trị tỉnh, tôi muốn quét phát hiện trường nghi dữ liệu cá nhân chưa phân loại, để danh sách trường nghi DLCN để SO quyết định. | S | 3 | Đợt 2, W4 | FR-09-005; UC-09-04 |
 | US-09-006 | Là cán bộ ATTT, tôi muốn hệ thống tính và công bố mức phân loại của hợp đồng API, topic, luồng, để mỗi hợp đồng có một mức rõ ràng, dùng ngay để chọn xác thực và chặn kích hoạt. | M | 2 | Đợt 2, W4 | FR-09-006; UC-09-05 |
 | US-09-007 | Là quản trị tỉnh, tôi muốn chặn dữ liệu bí mật nhà nước đi qua Datahub, để không có dữ liệu mật nào lọt qua Datahub; SO biết ngay nơi cấu hình sai. | M | 3 | Đợt 2, W4 | FR-09-007; UC-09-06 |
@@ -2317,7 +2319,7 @@ Epic gồm 2 story, 8 điểm (2 story mức M).
 
 ### 6.14. PH-13 · Giám sát và kiểm toán
 
-Phân hệ có 8 epic, 61 story, tổng 216 điểm; wave phát triển W1–W2, đợt MVP. Nguồn: D02-03-PH13 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 8 epic, 62 story, tổng 219 điểm; wave phát triển W1–W2, đợt MVP. Nguồn: D02-03-PH13 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-13-A · Thu thập dữ liệu quan sát
 
@@ -2339,7 +2341,7 @@ Epic gồm 9 story, 25 điểm (9 story mức M).
 
 #### EP-13-B · Ghi vết kiểm toán
 
-Epic gồm 10 story, 41 điểm (10 story mức M).
+Epic gồm 11 story, 44 điểm (10 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
@@ -2353,6 +2355,7 @@ Epic gồm 10 story, 41 điểm (10 story mức M).
 | US-13-017 | Là cán bộ ATTT, tôi muốn hệ thống đối chiếu số bản ghi với bộ đếm của DU, để báo cáo đối chiếu hằng ngày chứng minh độ phủ kiểm toán 100%. | M | 5 | MVP, W1–W2 | FR-13-017; UC-13-09 |
 | US-13-018 | Là quản trị nền tảng, tôi muốn hệ thống có vòng đời lưu giữ và lưu trữ phân vùng, để bản ghi trong 12 tháng tra ngay; bản cũ hơn vẫn có trên WORM và xuất được thành bằng chứng. | M | 5 | MVP, W1–W2 | FR-13-018; UC-13-10 |
 | US-13-019 | Là vận hành tỉnh, tôi muốn hệ thống kiểm toán chính thao tác của PH-13, để mọi thao tác nhạy cảm ở PH-13 truy được tới người thực hiện, lý do, thời điểm. | M | 2 | MVP, W1–W2 | FR-13-019; UC-13-11 |
+| US-13-062 | Là cán bộ ATTT, tôi muốn khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu, để chuỗi kiểm toán liền lại bằng đúng các bản ghi gốc đã kiểm chứng; không bản ghi nào bị sửa hay dựng mới. | C | 3 | Đợt sau, Sau G5 | FR-13-062; UC-13-43 |
 
 : Story của epic EP-13-B Ghi vết kiểm toán
 
@@ -2895,7 +2898,7 @@ Epic gồm 4 story, 6 điểm (2 story mức M).
 
 ### 6.18. PH-17 · Trợ lý AI và quản trị AI
 
-Phân hệ có 10 epic, 62 story, tổng 214 điểm; wave phát triển W5, đợt Đợt 3. Nguồn: D02-03-PH17 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 10 epic, 62 story, tổng 218 điểm; wave phát triển W5, đợt Đợt 3. Nguồn: D02-03-PH17 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-17-A · Bật tắt và chính sách AI theo tenant
 
@@ -2931,14 +2934,14 @@ Epic gồm 8 story, 32 điểm (7 story mức M).
 
 #### EP-17-C · Kho tri thức và lập chỉ mục
 
-Epic gồm 7 story, 22 điểm (5 story mức M).
+Epic gồm 7 story, 24 điểm (5 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-17-015 | Là quản trị tỉnh, tôi muốn khai báo nguồn tri thức, để quản trị thấy danh sách nguồn kèm trạng thái và số tài liệu; trợ lý chỉ dùng nội dung của các nguồn này. | M | 3 | Đợt 3, W5 | FR-17-015; UC-17-12 |
 | US-17-016 | Là quản trị tỉnh, tôi muốn hệ thống kiểm mức phân loại trước khi lập chỉ mục, để quản trị có danh sách đối tượng không vào chỉ mục và lý do; không có dữ liệu mức cao trong vector. | M | 3 | Đợt 3, W5 | FR-17-016; UC-17-12 |
 | US-17-017 | Là quản trị tỉnh, tôi muốn hệ thống lập chỉ mục theo sự kiện và lập lại toàn bộ theo lịch, để chỉ mục tươi: p95 ≤ 120 giây từ sự kiện nguồn (NFR-17-010); quản trị theo dõi tiến độ. | M | 3 | Đợt 3, W5 | FR-17-017; UC-17-13 |
-| US-17-018 | Là quản trị tỉnh, tôi muốn hệ thống cắt đoạn, nhúng, lưu vector có tenant_id và phạm vi quyền đọc, để mỗi đoạn truy hồi được, có quyền đi kèm, không lẫn tenant. | M | 3 | Đợt 3, W5 | FR-17-018; UC-17-13 |
+| US-17-018 | Là quản trị tỉnh, tôi muốn hệ thống cắt đoạn, nhúng, lưu vector có tenant_id và phạm vi quyền đọc, để mỗi đoạn truy hồi được, có quyền đi kèm, không lẫn tenant. | M | 5 | Đợt 3, W5 | FR-17-018; UC-17-13 |
 | US-17-019 | Là quản trị tỉnh, tôi muốn hệ thống xóa lan truyền khi nguồn bị xóa, thu hồi, đổi mức phân loại, để người dùng không còn nhận trích dẫn tới đối tượng đã thu hồi; SO có nhật ký xóa để chứng minh. | M | 3 | Đợt 3, W5 | FR-17-019; UC-17-14 |
 | US-17-020 | Là cán bộ quản lý dữ liệu, tôi muốn tải lên tài liệu hướng dẫn nội bộ làm nguồn tri thức, có duyệt, để tỉnh có hướng dẫn riêng trong tri thức của trợ lý, có người chịu trách nhiệm duyệt. | S | 5 | Đợt 3, W5 | FR-17-020; UC-17-15 |
 | US-17-021 | Là quản trị tỉnh, tôi muốn theo dõi trạng thái chỉ mục, để quản trị thấy một bảng sức khỏe chỉ mục, bấm vào lỗi để xử lý. | S | 2 | Đợt 3, W5 | FR-17-021; UC-17-13 |
@@ -3010,14 +3013,14 @@ Epic gồm 7 story, 22 điểm (7 story mức M).
 
 #### EP-17-H · Quản trị AI, đánh giá và chất lượng
 
-Epic gồm 6 story, 22 điểm (4 story mức M).
+Epic gồm 6 story, 24 điểm (4 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-17-049 | Là quản trị tỉnh, tôi muốn quản lý mẫu chỉ dẫn hệ thống có phiên bản, duyệt bốn mắt, để mọi thay đổi chỉ dẫn hệ thống có lịch sử, người duyệt và bằng chứng đánh giá. | M | 5 | Đợt 3, W5 | FR-17-049; UC-17-28 |
 | US-17-050 | Là quản trị tỉnh, tôi muốn có bộ đánh giá chuẩn theo năng lực, chạy khi đổi mô hình hoặc prompt, để có điểm đo được trước và sau mỗi thay đổi; quản trị xem được ca nào sai. | M | 5 | Đợt 3, W5 | FR-17-050; UC-17-29 |
 | US-17-051 | Là cán bộ ATTT, tôi muốn có bộ ca đỏ tiêm lệnh, cổng phát hành chặn khi có ca lọt, để có bằng chứng định lượng về an toàn trước mỗi lần phát hành; ca lọt không thể bị bỏ qua. | M | 3 | Đợt 3, W5 | FR-17-051; UC-17-29 |
-| US-17-052 | Là quản trị tỉnh, tôi muốn phản hồi của người dùng và hàng xử lý phản hồi, để người dùng thấy "Cảm ơn phản hồi"; quản trị có hàng xử lý theo hạn. | M | 3 | Đợt 3, W5 | FR-17-052; UC-17-30 |
+| US-17-052 | Là quản trị tỉnh, tôi muốn phản hồi của người dùng và hàng xử lý phản hồi, để người dùng thấy "Cảm ơn phản hồi"; quản trị có hàng xử lý theo hạn. | M | 5 | Đợt 3, W5 | FR-17-052; UC-17-30 |
 | US-17-053 | Là quản trị tỉnh, tôi muốn có chỉ số chất lượng và cảnh báo suy giảm, để quản trị có bảng chất lượng và cảnh báo khi trợ lý kém đi. | S | 3 | Đợt 3, W5 | FR-17-053; UC-17-30 |
 | US-17-054 | Là quản trị tỉnh, tôi muốn có sổ đăng ký hệ thống AI của tenant, để tỉnh có hồ sơ hệ thống AI luôn khớp cấu hình thật. | S | 3 | Đợt 3, W5 | FR-17-054; UC-17-31 |
 
@@ -3425,7 +3428,7 @@ Epic gồm 4 story, 11 điểm (3 story mức M).
 
 ### 6.21. PH-20 · Quản trị tenant và phát hành sản phẩm
 
-Phân hệ có 10 epic, 70 story, tổng 207 điểm; wave phát triển W2, đợt MVP. Nguồn: D02-03-PH20 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 10 epic, 70 story, tổng 209 điểm; wave phát triển W2, đợt MVP. Nguồn: D02-03-PH20 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-20-A · Hồ sơ tenant
 
@@ -3445,7 +3448,7 @@ Epic gồm 7 story, 22 điểm (6 story mức M).
 
 #### EP-20-B · Saga khởi tạo
 
-Epic gồm 10 story, 36 điểm (6 story mức M).
+Epic gồm 10 story, 38 điểm (6 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
@@ -3454,7 +3457,7 @@ Epic gồm 10 story, 36 điểm (6 story mức M).
 | US-20-010 | Là quản trị nền tảng, tôi muốn thử lại saga từ bước lỗi, để saga chạy tiếp từ đúng chỗ dừng; các bước đã xong không bị làm lại. | M | 2 | MVP, W2 | FR-20-010; UC-20-06 |
 | US-20-011 | Là quản trị nền tảng, tôi muốn bù trừ và hủy khởi tạo, để không còn tài nguyên mồ côi; danh sách việc dọn tay (nếu có) hiện ở UI-20-04. | M | 5 | MVP, W2 | FR-20-011; UC-20-06 |
 | US-20-012 | Là quản trị nền tảng, tôi muốn hệ thống kiểm tra khói sau khởi tạo, để PA thấy bốn dấu tích xanh trước khi nút "Kích hoạt" sáng. | M | 3 | MVP, W2 | FR-20-012; UC-20-07 |
-| US-20-013 | Là quản trị nền tảng, tôi muốn hệ thống kích hoạt tenant và bàn giao cho quản trị tỉnh, để quản trị tỉnh nhận thư, đăng nhập `dh-console` của tỉnh và bắt đầu làm việc. | M | 3 | MVP, W2 | FR-20-013; UC-20-07 |
+| US-20-013 | Là quản trị nền tảng, tôi muốn hệ thống kích hoạt tenant và bàn giao cho quản trị tỉnh, để quản trị tỉnh nhận thư, đăng nhập `dh-console` của tỉnh và bắt đầu làm việc. | M | 5 | MVP, W2 | FR-20-013; UC-20-07 |
 | US-20-014 | Là quản trị nền tảng, tôi muốn hệ thống đo và báo thời gian khởi tạo tenant (KPI-12) cho PH-16, để chỉ tiêu `thoi-gian-khoi-tao-tenant` của PH-16 có số tự động cho mỗi tỉnh mới. | S | 2 | MVP, W2 | FR-20-014; UC-20-07 |
 | US-20-015 | Là quản trị nền tảng, tôi muốn quản lý mẫu khởi tạo có phiên bản, để PA có danh sách mẫu (`tinh-chuan`, `tinh-thi-diem`, `test-minimal`) để chọn khi khai báo. | S | 3 | MVP, W2 | FR-20-015; UC-20-04 |
 | US-20-016 | Là quản trị nền tảng, tôi muốn khởi tạo bổ sung cho tenant đang hoạt động, để mọi tỉnh đang hoạt động có cùng nền tài nguyên với tỉnh mới, không gián đoạn phục vụ. | S | 3 | MVP, W2 | FR-20-016; UC-20-08 |

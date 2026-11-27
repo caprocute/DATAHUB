@@ -2854,8 +2854,10 @@ paths:
       - ERR-13-020
       - ERR-13-028
       description: 'Chỉ đề xuất: PH-13 gọi API-01-089 của PH-01 bằng token dịch vụ (scope `onboarding:suspension-proposal`) để PH-01 tạo việc
-        khẩn cho SO; SO quyết định bằng thao tác khẩn FR-01-032 ở PH-01 (đã chốt 27/11/2026, Q13-12). PH-01 không khả dụng trả ERR-13-014, đề
-        xuất chưa gửi.'
+        khẩn cho SO, chuyển `alertId`, `severity`, `reason`, `incidentRef`, `evidenceUrl` lấy từ cảnh báo gốc. Chỉ cảnh báo mức `HIGH` hoặc `CRITICAL`
+        được đề xuất, mức thấp hơn trả ERR-13-003 (400). PH-01 trả ERR-01-048 (HTTT đã tạm ngừng) thì coi đề xuất đã được đáp ứng; ERR-01-005
+        thì báo người dùng HTTT không ở trạng thái cho phép tạm ngừng; SO quyết định bằng thao tác khẩn FR-01-032 ở PH-01 (đã chốt 27/11/2026,
+        Q13-12). PH-01 không khả dụng trả ERR-13-014, đề xuất chưa gửi.'
       requestBody:
         required: true
         content:
@@ -4834,6 +4836,15 @@ components:
       - WARNING
       - INFO
       description: Nghiêm trọng, Cảnh báo, Thông tin (BR-13-009).
+    SecuritySeverity:
+      type: string
+      enum:
+      - CRITICAL
+      - HIGH
+      - MEDIUM
+      - LOW
+      description: 'Mức cảnh báo an ninh: Nghiêm trọng, Cao, Trung bình, Thấp (D03-07 §7.5). Chỉ `CRITICAL` và `HIGH` được đề xuất tạm ngừng HTTT
+        (BR-13-024).'
     AlertStatus:
       type: string
       enum:
@@ -6708,7 +6719,7 @@ components:
         threshold: *id005
         thresholdLimit: *id005
         severity:
-          $ref: '#/components/schemas/Severity'
+          $ref: '#/components/schemas/SecuritySeverity'
         enabled: *id003
         canDisable: *id003
         version:
@@ -6754,7 +6765,7 @@ components:
           status:
             $ref: '#/components/schemas/SecurityAlertStatus'
           severity:
-            $ref: '#/components/schemas/Severity'
+            $ref: '#/components/schemas/SecuritySeverity'
           subject:
             type: string
             maxLength: 255
@@ -6831,10 +6842,26 @@ components:
           maxLength: 64
         reason:
           $ref: '#/components/schemas/Reason'
+        alertId: *id001
+        severity:
+          type: string
+          enum:
+          - HIGH
+          - CRITICAL
+        incidentRef:
+          type: string
+          maxLength: 64
+        evidenceUrl:
+          type: string
+          maxLength: 2048
+          format: uri
       additionalProperties: false
       required:
       - systemCode
       - reason
+      description: PH-13 chuyển nguyên các trường này sang API-01-089. `alertId`, `severity`, `incidentRef`, `evidenceUrl` do PH-13 lấy từ cảnh
+        báo gốc theo `{alertId}` của đường dẫn; nếu người gọi gửi kèm thì phải khớp cảnh báo gốc, lệch thì ERR-13-003. Cảnh báo mức thấp hơn `HIGH`
+        bị từ chối với ERR-13-003.
     SiemTarget:
       type: object
       properties:

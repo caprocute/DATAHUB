@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-05-01
 ten: Phụ lục tiêu chí chấp nhận Gherkin của backlog user story
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư phát triển, kiểm thử viên, PO hai phía
@@ -15,7 +15,7 @@ tai_lieu_lien_quan: D02-05 Backlog user story; D02-02 SRS; D02-03 FRS 20 phân h
 
 **Mục tiêu.** Phụ lục ghi cho từng story của D02-05 câu chuyện người dùng, truy vết tới FR, UC, màn hình, API và tiêu chí chấp nhận viết theo Gherkin (Biết, Khi, Thì), để mỗi story đạt điều kiện sẵn sàng (DoR) của D01-02 §3.6 mà không phải viết tay lại.
 
-**Phạm vi.** 1287 story của 21 nhóm (FR-00 dùng chung và 20 phân hệ), sinh tự động bằng `02-yeu-cau/backlog/tools/sinh_backlog.py` từ khối đặc tả 17 mục của SRS và FRS. Bản chạy được của cùng nội dung nằm ở `02-yeu-cau/backlog/gherkin/us-{ph}.feature`.
+**Phạm vi.** 1290 story của 21 nhóm (FR-00 dùng chung và 20 phân hệ), sinh tự động bằng `02-yeu-cau/backlog/tools/sinh_backlog.py` từ khối đặc tả 17 mục của SRS và FRS. Bản chạy được của cùng nội dung nằm ở `02-yeu-cau/backlog/gherkin/us-{ph}.feature`.
 
 **Căn cứ.** D01-02 §3.6 (DoR, DoD mức story); D02-05 chương 3 (quy tắc chuyển FR thành story); dàn ý bộ tài liệu SDLC mục D02-05.
 
@@ -1155,7 +1155,7 @@ Kịch bản: US-00-093 âm 1 · Phát hiện giá trị bí mật trong trườ
 
 ## 2. PH-01 · Kết nạp hệ thống thông tin
 
-Chương gồm 51 story của PH-01. Tệp chạy được: `backlog/gherkin/us-01.feature`.
+Chương gồm 53 story của PH-01. Tệp chạy được: `backlog/gherkin/us-01.feature`.
 
 ### 2.1. EP-01-A · Hồ sơ HTTT và đầu mối
 
@@ -2027,7 +2027,7 @@ Kịch bản: US-01-028 âm 1 · Không thấy định danh hoặc HTTT thuộc 
 
 ### 2.4. EP-01-D · Vòng đời thành viên
 
-Epic gồm 10 story, 46 điểm.
+Epic gồm 12 story, 54 điểm.
 
 #### US-01-029 · Tạm ngừng HTTT
 
@@ -2140,7 +2140,7 @@ Là cán bộ ATTT, tôi muốn thu hồi, tạm ngừng khẩn cấp bởi Cán
 @US-01-032 @FR-01-032 @M
 Kịch bản: US-01-032 dương · Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT
   Biết HTTT `ACTIVE`, `SUSPENDED` hoặc `APPROVED`
-  Khi SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07
+  Khi SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07; hoặc SO mở việc đề xuất tạm ngừng do PH-13 gửi (FR-01-053) và chọn "Xử lý khẩn", khi đó `incidentRef` lấy sẵn từ đề xuất
   Thì hệ thống trả `200`; `{ "actionId", "status": "SUSPENDED", "confirmBy", "enforcement" }`
   Và HTTT `SUSPENDED` hoặc `TERMINATED`; thao tác khẩn ở `PENDING_CONFIRM`, `CONFIRMED` hoặc `OVERDUE`
   Và sự kiện được phát: EVT-01-15, EVT-01-03, EVT-01-07
@@ -2322,6 +2322,61 @@ Kịch bản: US-01-038 âm 2 · Không thấy HTTT
   Biết phân hệ gọi có token dịch vụ với scope phù hợp
   Khi không thấy HTTT
   Thì hệ thống từ chối với ERR-01-001 (404)
+```
+
+#### US-01-053 · Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+
+Là cán bộ ATTT, tôi muốn hệ thống tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO, để SO có việc khẩn với đủ bối cảnh để quyết định trong vài phút; PH-13 không giữ quyền đổi trạng thái HTTT.
+
+*Epic* EP-01-D · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-01-053 · *UC* UC-01-22.
+
+*Truy vết* REQ-01, REQ-13; FR-01-032; FR-13-053, API-13-060; BR-01-009, BR-01-010; Q13-12 (đã chốt 27/11/2026). *Màn hình, API* UI-01-11 (mở từ việc); API-01-089; thao tác khẩn dùng API-01-054.
+
+```gherkin
+@US-01-053 @FR-01-053 @M
+Kịch bản: US-01-053 dương · Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+  Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+  Khi cán bộ an ninh ở PH-13 kết luận "Sự cố thật" và bấm "Đề xuất tạm ngừng HTTT" (API-13-060); PH-13 gọi API-01-089
+  Thì hệ thống trả `202`; `{ "systemCode", "alertId", "taskId", "accepted", "duplicate" }`
+  Và trạng thái HTTT không đổi; một việc khẩn mở cho SO của tenant
+  Và nhật ký kiểm toán ghi nhận thao tác
+
+@US-01-053 @FR-01-053 @M @âm
+Kịch bản: US-01-053 âm 1 · Không thấy HTTT hoặc thuộc tenant khác
+  Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+  Khi không thấy HTTT hoặc thuộc tenant khác
+  Thì hệ thống từ chối với ERR-01-001 (404)
+
+@US-01-053 @FR-01-053 @M @âm
+Kịch bản: US-01-053 âm 2 · HTTT không `ACTIVE`
+  Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+  Khi HTTT không `ACTIVE`
+  Thì hệ thống từ chối với ERR-01-005, ERR-01-048 (409)
+```
+
+#### US-01-054 · Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập
+
+Là quản trị tỉnh, tôi muốn hệ thống tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập, để mọi HTTT của tổ chức giải thể, sáp nhập có sẵn đề nghị đổi chủ quản chờ TA duyệt một lượt.
+
+*Epic* EP-01-D · *Ưu tiên* S · *Đợt* MVP · *Wave* W1 · *Điểm* 3 · *FR* FR-01-054.
+
+*Truy vết* REQ-01; FR-01-034; BR-01-029; FR-20-054; EVT-20-13; Q01-10 (đã chốt 27/11/2026). *Màn hình, API* UI-01-04, UI-01-07; API-01-058, API-01-059; nghe EVT-20-13.
+
+```gherkin
+@US-01-054 @FR-01-054 @S
+Kịch bản: US-01-054 dương · Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập
+  Biết tổ chức có `change = DISSOLVED` hoặc `MERGED` kèm `successorCode` của tổ chức `ACTIVE` (PH-20 đã giải chuỗi kế thừa)
+  Khi PH-01 nhận EVT-20-13 (`{tenant}.tenant.org.changed.v1`) có `change` là `DISSOLVED` hoặc `MERGED`
+  Thì mọi HTTT của tổ chức giải thể, sáp nhập có sẵn đề nghị đổi chủ quản chờ TA duyệt một lượt
+  Và yêu cầu `OWNER_CHANGE` `PENDING` cho từng HTTT thuộc diện; chưa HTTT nào đổi chủ quản cho tới khi TA duyệt
+  Và sự kiện được phát: EVT-01-04 (khi duyệt và áp dụng)
+  Và nhật ký kiểm toán ghi nhận thao tác
+
+@US-01-054 @FR-01-054 @S @âm
+Kịch bản: US-01-054 âm 1 · Yêu cầu đã được TA khác duyệt hoặc hủy trước
+  Biết tổ chức có `change = DISSOLVED` hoặc `MERGED` kèm `successorCode` của tổ chức `ACTIVE` (PH-20 đã giải chuỗi kế thừa)
+  Khi yêu cầu đã được TA khác duyệt hoặc hủy trước
+  Thì hệ thống từ chối với ERR-01-005 (409)
 ```
 
 ### 2.5. EP-01-E · Rà soát quyền định kỳ
@@ -3348,7 +3403,7 @@ Là chủ dịch vụ, tôi muốn khai báo backend của API, để API có í
 ```gherkin
 @US-02-022 @FR-02-022 @M
 Kịch bản: US-02-022 dương · Khai báo backend của API
-  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
   Khi người dùng bấm "+ Thêm backend" ở tab Backend của UI-02-02, hoặc ở bước 4 của UI-02-03
   Thì hệ thống trả `201`, tiêu đề `Location`; chi tiết backend: `backendCode`, loại, `targetRef`, `weight`, `status`, cấu hình mặc định
   Và backend lưu, gắn với phiên bản; chưa ảnh hưởng gateway cho tới khi công bố (hoặc duyệt thay đổi)
@@ -3357,14 +3412,14 @@ Kịch bản: US-02-022 dương · Khai báo backend của API
 
 @US-02-022 @FR-02-022 @M @âm
 Kịch bản: US-02-022 âm 1 · Kết nối hoặc luồng không tồn tại hoặc khác HTTT
-  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
   Khi kết nối hoặc luồng không tồn tại hoặc khác HTTT
   Thì hệ thống từ chối với ERR-02-020 (422)
   Và người dùng thấy thông báo "Backend không hợp lệ: {lý do}."
 
 @US-02-022 @FR-02-022 @M @âm
 Kịch bản: US-02-022 âm 2 · Đích ngoài danh sách cho phép
-  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+  Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
   Khi đích ngoài danh sách cho phép
   Thì hệ thống từ chối với ERR-02-020 (422)
   Và người dùng thấy thông báo "Đích {máy chủ} chưa có trong danh sách đích cho phép. Đề nghị quản trị tenant bổ sung."
@@ -4107,13 +4162,13 @@ Kịch bản: US-02-045 âm 1 · HTTT hoặc đơn vị đích không hợp lệ
 
 ### 3.7. EP-02-G · Đăng ký sử dụng
 
-Epic gồm 7 story, 31 điểm.
+Epic gồm 7 story, 34 điểm.
 
 #### US-02-046 · Gửi đăng ký sử dụng API
 
 Là cán bộ đầu mối của tổ chức, tôi muốn gửi đăng ký sử dụng API, để đơn vị khai thác có đăng ký đang chờ duyệt (hoặc đã được tự duyệt) và biết ai sẽ duyệt.
 
-*Epic* EP-02-G · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-02-046 · *UC* UC-02-23.
+*Epic* EP-02-G · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 8 · *FR* FR-02-046 · *UC* UC-02-23.
 
 *Truy vết* REQ-02; LGC-APIM-016; LGC-APIM-021; SRS cũ FR-02-011; CMP-LAW-05. *Màn hình, API* UI-02-09; API-02-058.
 
@@ -4644,13 +4699,13 @@ Chương gồm 59 story của PH-03. Tệp chạy được: `backlog/gherkin/us-
 
 ### 4.1. EP-03-A · Lớp biên và bảo vệ truyền tải
 
-Epic gồm 11 story, 43 điểm.
+Epic gồm 11 story, 45 điểm.
 
 #### US-03-001 · Kết thúc TLS tại hai cửa vào
 
 Là quản trị nền tảng, tôi muốn kết thúc TLS tại hai cửa vào, để HTTT kết nối được qua TLS 1.3; HTTT cũ có đường kết nối tạm thời có hạn, hiển thị rõ ở UI-03-12 để theo dõi thanh lý.
 
-*Epic* EP-03-A · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 3 · *FR* FR-03-001 · *UC* UC-03-01, UC-03-05, UC-03-17.
+*Epic* EP-03-A · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-03-001 · *UC* UC-03-01, UC-03-05, UC-03-17.
 
 *Truy vết* REQ-03; LGC-BUS-041; CMP-LAW-09, CMP-LAW-08; SEC-12; NFR-00-020; ADR-033. *Màn hình, API* UI-03-12; API-03-031, API-03-032, API-03-033, API-03-034.
 
@@ -4866,7 +4921,7 @@ Là cán bộ ATTT, tôi muốn luật vá ảo khẩn cấp, để luật vá �
 
 *Epic* EP-03-A · *Ưu tiên* S · *Đợt* Đợt 2 · *Wave* W4 · *Điểm* 3 · *FR* FR-03-008 · *UC* UC-03-15.
 
-*Truy vết* REQ-03; SEC-11, SEC-09; ADR-033; NFR-03-012. *Màn hình, API* UI-03-08; API-03-047, API-03-048, API-03-049.
+*Truy vết* REQ-03; SEC-11, SEC-09; ADR-033; NFR-03-012. *Màn hình, API* UI-03-08; API-03-047, API-03-048, API-03-049; API-03-097 (nút "Thử khô": số yêu cầu mẫu 24 giờ gần nhất sẽ bị chặn, quyền `PERM-03-waf`, không ghi, không tạo luật; đã chốt 27/11/2026).
 
 ```gherkin
 @US-03-008 @FR-03-008 @S
@@ -5933,7 +5988,7 @@ Là quản trị nền tảng, tôi muốn quay lui về phiên bản cấu hìn
 
 *Epic* EP-03-E · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-03-044 · *UC* UC-03-21.
 
-*Truy vết* REQ-03; ADR-009; SEC-65; BR-03-018; NFR-03-008. *Màn hình, API* UI-03-10; API-03-061, API-03-062, API-03-056.
+*Truy vết* REQ-03; ADR-009; SEC-65; BR-03-018; NFR-03-008. *Màn hình, API* UI-03-10; API-03-061, API-03-062, API-03-056; API-03-098 (nút "Bỏ giữ": API riêng `POST /snapshots:release-hold`, quyền `PERM-03-operate`, lý do bắt buộc, tách khỏi thao tác phát; đã chốt 27/11/2026).
 
 ```gherkin
 @US-03-044 @FR-03-044 @M
@@ -6134,20 +6189,20 @@ Là vận hành tỉnh, tôi muốn hệ thống ghi siêu dữ liệu lượt g
 ```gherkin
 @US-03-050 @FR-03-050 @M
 Kịch bản: US-03-050 dương · Ghi siêu dữ liệu lượt gọi có che dữ liệu
-  Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+  Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
   Khi sau mỗi lượt gọi, kể cả lượt bị từ chối ở bất kỳ chốt nào
-  Thì bản ghi siêu dữ liệu ở PH-13; chỉ số `dh_gateway_accesslog_sent_total`
+  Thì bản ghi siêu dữ liệu ở PH-13 (qua `kafka-logger`, topic `{tenant}.obs.access.logged.v1`); chỉ số `dh_gateway_accesslog_sent_total` và `dh_connect_config_revision` (phiên bản cấu hình đang chạy, PH-13 theo dõi độ lệch; đã chốt 27/11/2026)
   Và bản ghi nằm ở kho của PH-13 theo thời hạn lưu của NFR-03-026
 
 @US-03-050 @FR-03-050 @M @âm
 Kịch bản: US-03-050 âm 1 · Bộ đệm đĩa đầy do PH-13 ngừng lâu
-  Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+  Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
   Khi bộ đệm đĩa đầy do PH-13 ngừng lâu
   Thì bỏ bản ghi cũ nhất, cảnh báo Cao ở FR-03-054; không ảnh hưởng lượt gọi
 
 @US-03-050 @FR-03-050 @M @âm
 Kịch bản: US-03-050 âm 2 · Bản ghi chứa giá trị khớp mẫu dữ liệu nhạy cảm sau bước 4
-  Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+  Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
   Khi bản ghi chứa giá trị khớp mẫu dữ liệu nhạy cảm sau bước 4
   Thì bộ quét mẫu của CI và kiểm thử chạy hằng ngày báo lỗi (NFR-03-014); không có ca ngoại lệ được chấp nhận
 ```
@@ -7132,7 +7187,7 @@ Là kỹ sư tích hợp, tôi muốn chạy thử luồng trên sandbox với �
 Kịch bản: US-04-030 dương · Chạy thử luồng trên sandbox với đích mô phỏng
   Biết phiên bản không có lỗi mức `ERROR` ở mức `DESIGN`; tenant chưa vượt hạn mức chạy thử đồng thời (`04.test.max-concurrent`, mặc định 5)
   Khi IE bấm "Chạy thử" trên UI-04-04 hoặc UI-04-11; bộ chạy ca kiểm thử gọi khi gửi duyệt (FR-04-040)
-  Thì hệ thống trả `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE)
+  Thì hệ thống trả `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE, API-04-099)
   Và một `test_run` và các `test_run_step`; phiên bản được đánh dấu "có lần chạy thử đạt" nếu `PASSED` ở chế độ không mô phỏng
   Và sự kiện được phát: EVT-04-10 `testrun.completed`
   Và nhật ký kiểm toán ghi nhận thao tác
@@ -7158,7 +7213,7 @@ Là kỹ sư tích hợp, tôi muốn ca kiểm thử của luồng và bộ ch�
 
 *Epic* EP-04-C · *Ưu tiên* S · *Đợt* Đợt 2 · *Wave* W4 · *Điểm* 3 · *FR* FR-04-031 · *UC* UC-04-09.
 
-*Truy vết* REQ-04 · Mã repo: FR-D-064. *Màn hình, API* UI-04-13; API-04-044.
+*Truy vết* REQ-04 · Mã repo: FR-D-064. *Màn hình, API* UI-04-13; API-04-044, 101, 102, 103.
 
 ```gherkin
 @US-04-031 @FR-04-031 @S
@@ -7306,14 +7361,14 @@ Là người duyệt tích hợp, tôi muốn phát hành qua GitOps và theo d�
 
 *Epic* EP-04-D · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 8 · *FR* FR-04-042 · *UC* UC-04-12.
 
-*Truy vết* REQ-04; LGC-BUS-033, 034 · Mã repo: FR-04-020, FR-04-022 (repo); ADR-063. *Màn hình, API* UI-04-15; API-04-054.
+*Truy vết* REQ-04; LGC-BUS-033, 034 · Mã repo: FR-04-020, FR-04-022 (repo); ADR-063. *Màn hình, API* UI-04-15; API-04-054, 104, 105, 106.
 
 ```gherkin
 @US-04-042 @FR-04-042 @M
 Kịch bản: US-04-042 dương · Phát hành qua GitOps và theo dõi tình trạng triển khai
   Biết phiên bản `APPROVED`; kiểm tra mức `PUBLISH` cho môi trường đích không có `ERROR`; không trong thời gian đóng băng thay đổi
   Khi duyệt ở FR-04-041 (mặc định), hoặc IA bấm "Phát hành" trên UI-04-15. Phát hành theo lịch (`scheduledAt`) thuộc đợt 2
-  Thì hệ thống trả `202 Accepted` với `deploymentId`; tiến trình qua API-04-054 (SSE)
+  Thì hệ thống trả `202 Accepted` với `deploymentId`; tiến trình qua API-04-106 (SSE)
   Và một `deployment` `PENDING`; commit trong kho cấu hình
   Và sự kiện được phát: EVT-04-06 `deployment.requested`; sau đó EVT-04-07 `deployment.status-changed` mỗi lần trạng thái đổi
   Và nhật ký kiểm toán ghi nhận thao tác
@@ -7417,14 +7472,14 @@ Là vận hành tỉnh, tôi muốn kích hoạt, tạm dừng, tiếp tục lu�
 
 *Epic* EP-04-E · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-04-050 · *UC* UC-04-14, UC-04-15.
 
-*Truy vết* REQ-04; LGC-BUS-009, 012, 026 · Mã repo: FR-04-021 (repo), FR-D-002 (tạm dừng); ADR-065. *Màn hình, API* UI-04-02 tab Triển khai; API-04-061.
+*Truy vết* REQ-04; LGC-BUS-009, 012, 026 · Mã repo: FR-04-021 (repo), FR-D-002 (tạm dừng); ADR-065. *Màn hình, API* UI-04-02 tab Triển khai; API-04-061, 107, 108.
 
 ```gherkin
 @US-04-050 @FR-04-050 @M
 Kịch bản: US-04-050 dương · Kích hoạt, tạm dừng, tiếp tục luồng và từng route có lý do
   Biết luồng có triển khai `SYNCED` ở môi trường chọn
   Khi người dùng bấm "Tạm dừng", "Tiếp tục" hoặc "Dừng khẩn" trên tab Triển khai của UI-04-02
-  Thì hệ thống trả `202` với `commandId`; trạng thái lệnh qua API-04-061
+  Thì hệ thống trả `202` với `commandId`; trạng thái lệnh qua API-04-107
   Và lệnh `RuntimeCommand` (EN-04-10); khi tất cả bản sao xác nhận, trạng thái mong muốn ghi vào kho cấu hình để lần đồng bộ sau không bật lại luồng
   Và sự kiện được phát: EVT-04-11 `runtime.command` (topic điều khiển), EVT-04-08 `flow.runtime-state-changed` khi đã xác nhận
   Và nhật ký kiểm toán ghi nhận thao tác
@@ -7969,7 +8024,7 @@ Là kỹ sư tích hợp, tôi muốn chuyển luồng Camel XML của Bus cũ s
 
 *Epic* EP-04-G · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 3 · *FR* FR-04-082 · *UC* UC-04-20.
 
-*Truy vết* REQ-04, REQ-22; LGC-BUS-033; LGC-TOOL-015. *Màn hình, API* UI-04-18; API-04-028, 011.
+*Truy vết* REQ-04, REQ-22; LGC-BUS-033; LGC-TOOL-015. *Màn hình, API* UI-04-18; API-04-028, 097, 011.
 
 ```gherkin
 @US-04-082 @FR-04-082 @M
@@ -8024,7 +8079,7 @@ Là quản trị tỉnh, tôi muốn có tham số PH-04 theo tenant và đóng 
 
 *Epic* EP-04-G · *Ưu tiên* S · *Đợt* Đợt 2 · *Wave* W4 · *Điểm* 2 · *FR* FR-04-084.
 
-*Truy vết* REQ-04; LGC-BUS-031 · Mã repo: FR-04-036 (biến môi trường). *Màn hình, API* UI-04-20; API-04-090.
+*Truy vết* REQ-04; LGC-BUS-031 · Mã repo: FR-04-036 (biến môi trường). *Màn hình, API* UI-04-20; API-04-090, 113.
 
 ```gherkin
 @US-04-084 @FR-04-084 @S
@@ -8308,7 +8363,7 @@ Là kỹ sư tích hợp, tôi muốn cấp và thu hồi quyền sử dụng k�
 ```gherkin
 @US-05-009 @FR-05-009 @M
 Kịch bản: US-05-009 dương · Cấp và thu hồi quyền sử dụng kết nối
-  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
   Khi người dùng bấm "+ Cấp" ở tab Cấp sử dụng của UI-05-02, hoặc ở bước 5 của trình hướng dẫn tạo kết nối
   Thì hệ thống trả `201` cấp mới hoặc `200` cấp sẵn có; thu hồi `204`, kèm danh sách luồng bị ảnh hưởng
   Và có bản ghi cấp sử dụng; trình thiết kế của không gian thấy kết nối (FR-04-016)
@@ -8317,15 +8372,15 @@ Kịch bản: US-05-009 dương · Cấp và thu hồi quyền sử dụng kết
 
 @US-05-009 @FR-05-009 @M @âm
 Kịch bản: US-05-009 âm 1 · Không gian hoặc luồng không tồn tại
-  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
   Khi không gian hoặc luồng không tồn tại
   Thì hệ thống từ chối với ERR-05-033 (422)
 
 @US-05-009 @FR-05-009 @M @âm
 Kịch bản: US-05-009 âm 2 · Phạm vi không hợp lệ với loại kết nối
-  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+  Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
   Khi phạm vi không hợp lệ với loại kết nối
-  Thì hệ thống từ chối với ERR-05-003 (400)
+  Thì hệ thống từ chối với ERR-05-003, ERR-05-003 (400)
   Và người dùng thấy thông báo "Kết nối CSDL cho luồng chỉ cấp được cho từng luồng."
 ```
 
@@ -10607,30 +10662,37 @@ Kịch bản: US-06-026 âm 2 · Gửi duyệt khi đánh giá không đạt
 
 ### 7.4. EP-06-D · Hàng đợi người quản lý dữ liệu
 
-Epic gồm 6 story, 16 điểm.
+Epic gồm 6 story, 20 điểm.
 
 #### US-06-027 · Tạo mục hàng đợi và tính mức ưu tiên
 
 Là cán bộ quản lý dữ liệu, tôi muốn hệ thống tạo mục hàng đợi và tính mức ưu tiên, để người quản lý thấy việc đã xếp đúng mức khẩn.
 
-*Epic* EP-06-D · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W4–W5 · *Điểm* 2 · *FR* FR-06-027 · *UC* UC-06-12.
+*Epic* EP-06-D · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W4–W5 · *Điểm* 3 · *FR* FR-06-027 · *UC* UC-06-12.
 
-*Truy vết* REQ-06; FR-06-005 cũ bước 1; FR-06-006 cũ E1. *Màn hình, API* UI-06-04; không có API tạo.
+*Truy vết* REQ-06; FR-06-005 cũ bước 1; FR-06-006 cũ E1. *Màn hình, API* UI-06-04; API-06-126 (nội bộ, chỉ tạo mục `DQ_FINDING` cho PH-08); mục các lý do khác do hệ thống tạo, không có API tạo.
 
 ```gherkin
 @US-06-027 @FR-06-027 @M
 Kịch bản: US-06-027 dương · Tạo mục hàng đợi và tính mức ưu tiên
-  Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi
-  Khi nhóm C, FR-06-033, FR-06-016
+  Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
+  Khi nhóm C, FR-06-033, FR-06-016; PH-08 gọi API-06-126 (FR-08-046) bằng scope `mdm:steward-intake`
   Thì mục hàng đợi nội bộ
   Và mục `OPEN`; bản ghi vàng liên quan không bị khóa (chỉ khóa khi chờ duyệt)
   Và sự kiện được phát: EVT-06-08
 
 @US-06-027 @FR-06-027 @M @âm
 Kịch bản: US-06-027 âm 1 · Hàng đợi vượt `06.queue.max-open` (mặc định 500)
-  Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi
+  Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
   Khi hàng đợi vượt `06.queue.max-open` (mặc định 500)
   Thì vẫn tạo, cảnh báo quá tải (FR-06-032)
+
+@US-06-027 @FR-06-027 @M @âm
+Kịch bản: US-06-027 âm 2 · `DQ_FINDING` có `goldenId` không tồn tại hoặc không thuộc domain
+  Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
+  Khi `DQ_FINDING` có `goldenId` không tồn tại hoặc không thuộc domain
+  Thì hệ thống từ chối với ERR-06-050 (404)
+  Và người dùng thấy thông báo "Không có bản ghi vàng cho {nguồn}/{khóa}."
 ```
 
 #### US-06-028 · Liệt kê, nhận việc và phân công mục hàng đợi
@@ -10700,7 +10762,7 @@ Kịch bản: US-06-029 âm 2 · Không ghi được nhật ký
 
 Là người đang nhận mục, tôi muốn quyết định khớp, không khớp, hoãn, để quyết định có hiệu lực ngay (rủi ro thấp) hoặc chờ duyệt (rủi ro cao); người dùng làm tiếp mục sau không phải quay về danh sách.
 
-*Epic* EP-06-D · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W4–W5 · *Điểm* 5 · *FR* FR-06-030 · *UC* UC-06-13.
+*Epic* EP-06-D · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W4–W5 · *Điểm* 8 · *FR* FR-06-030 · *UC* UC-06-13.
 
 *Truy vết* REQ-06; FR-06-005 cũ bước 3–5; BR-06-008 cũ. *Màn hình, API* UI-06-05; API-06-048, API-06-121.
 
@@ -11986,7 +12048,7 @@ Là cán bộ quản lý dữ liệu, tôi muốn thêm, sửa, ngừng dùng b�
 
 *Epic* EP-07-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W2 · *Điểm* 8 · *FR* FR-07-012 · *UC* UC-07-02.
 
-*Truy vết* REQ-07, BP-03; LGC-DMDC-011. *Màn hình, API* UI-07-05; API-07-027, API-07-028, API-07-030, API-07-029.
+*Truy vết* REQ-07, BP-03; LGC-DMDC-011. *Màn hình, API* UI-07-05; API-07-027, API-07-028, API-07-030, API-07-029, API-07-077.
 
 ```gherkin
 @US-07-012 @FR-07-012 @M
@@ -12339,7 +12401,7 @@ Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi qua API theo 
 Kịch bản: US-07-023 dương · Nhập bản ghi qua API theo lô, idempotent
   Biết danh mục không `NATIONAL`, không `RETIRED`; có bản nháp `DRAFT`, hoặc `createDraftIfMissing = true`
   Khi HTTT nguồn hoặc người dùng gọi API-07-031 với lô bản ghi và `Idempotency-Key`
-  Thì hệ thống trả `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp; `207 Multi-Status` không dùng, kết quả từng thao tác nằm trong thân
+  Thì hệ thống trả `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp …
   Và với `atomic = true` (mặc định): tất cả thao tác được áp hoặc không thao tác nào; với `atomic = false`: thao tác hợp lệ được áp, thao tác lỗi được báo
 
 @US-07-023 @FR-07-023 @M @âm
@@ -13202,7 +13264,7 @@ Là quản trị tỉnh, tôi muốn khai thác danh mục hạn chế và cấp
 
 *Epic* EP-07-H · *Ưu tiên* M · *Đợt* MVP · *Wave* W2 · *Điểm* 3 · *FR* FR-07-052 · *UC* UC-07-09.
 
-*Truy vết* REQ-07; SAD §8.2; mới. *Màn hình, API* UI-07-02; API-07-075.
+*Truy vết* REQ-07; SAD §8.2; mới. *Màn hình, API* UI-07-02; API-07-075, 079.
 
 ```gherkin
 @US-07-052 @FR-07-052 @M
@@ -15027,7 +15089,7 @@ Chương gồm 64 story của PH-09. Tệp chạy được: `backlog/gherkin/us-
 
 ### 10.1. EP-09-A · Phân loại dữ liệu
 
-Epic gồm 8 story, 19 điểm.
+Epic gồm 8 story, 21 điểm.
 
 #### US-09-001 · Quản lý danh mục mức phân loại và nhãn chặn bí mật nhà nước
 
@@ -15129,7 +15191,7 @@ Kịch bản: US-09-003 âm 2 · Lược đồ không đọc được
 
 Là cán bộ quản lý dữ liệu, tôi muốn đề xuất, xác nhận phân loại trường (hạ mức cần bốn mắt), để phân loại có hiệu lực toàn hệ trong 60 giây; PH-06, PH-04, PH-02 nhận được thay đổi.
 
-*Epic* EP-09-A · *Ưu tiên* M · *Đợt* Đợt 2 · *Wave* W4 · *Điểm* 3 · *FR* FR-09-004 · *UC* UC-09-03.
+*Epic* EP-09-A · *Ưu tiên* M · *Đợt* Đợt 2 · *Wave* W4 · *Điểm* 5 · *FR* FR-09-004 · *UC* UC-09-03.
 
 *Truy vết* REQ-09; CMP-LAW-05; SEC-31; SEC-37; DD-09; FR-06-004. *Màn hình, API* UI-09-02, UI-09-03; API-09-015, API-09-016, API-09-017, API-09-018.
 
@@ -15230,7 +15292,7 @@ Là quản trị tỉnh, tôi muốn chặn dữ liệu bí mật nhà nước �
 Kịch bản: US-09-007 dương · Chặn dữ liệu bí mật nhà nước đi qua Datahub
   Biết nhãn `STATE_SECRET` nạp ở FR-09-001; danh mục nhãn của tenant do cán bộ bảo vệ bí mật nhà nước cung cấp (Q09-06)
   Khi gán nhãn ở UI-09-03; bản tin vào chặng `schema` của PH-04 hoặc PH-14 gọi kiểm tra
-  Thì kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết
+  Thì kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết; với `egressScope` là `OUT_OF_PROVINCE` thêm `egressBlocked`, `egressBlockedFields[]`, p95 ≤ 200 ms (NFR-09-027)
   Và nhãn có hiệu lực trong chỉ mục phân loại ≤ 60 giây
   Và sự kiện được phát: EVT-09-14
   Và nhật ký kiểm toán ghi nhận thao tác
@@ -22421,7 +22483,7 @@ Là quản trị nền tảng, tôi muốn có cấu hình bảo mật realm b�
 
 *Epic* EP-12-E · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-12-042 · *UC* UC-12-29.
 
-*Truy vết* REQ-12; SEC-20, SEC-65; THR-38; BR-12-038. *Màn hình, API* UI-12-19; API-12-081, API-12-082, API-12-083.
+*Truy vết* REQ-12; SEC-20, SEC-65; THR-38; BR-12-038. *Màn hình, API* UI-12-19; API-12-081, API-12-082, API-12-083, API-12-113 (danh sách realm, lọc `driftStatus=DRIFTED`, quyền `PERM-12-realm-admin`; đã chốt 27/11/2026).
 
 ```gherkin
 @US-12-042 @FR-12-042 @M
@@ -22714,7 +22776,7 @@ Là quản trị nền tảng, tôi muốn soạn và kiểm thử chính sách,
 
 *Epic* EP-12-F · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 5 · *FR* FR-12-052 · *UC* UC-12-34.
 
-*Truy vết* REQ-12; SEC-26; ADR-006; ADR-068; FR-12-014 của repo. *Màn hình, API* UI-12-12; API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094.
+*Truy vết* REQ-12; SEC-26; ADR-006; ADR-068; FR-12-014 của repo. *Màn hình, API* UI-12-12; API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094, API-12-112.
 
 ```gherkin
 @US-12-052 @FR-12-052 @M
@@ -23050,7 +23112,7 @@ Kịch bản: US-12-062 âm 2 · Quá 100 mã
 
 ## 14. PH-13 · Giám sát và kiểm toán
 
-Chương gồm 61 story của PH-13. Tệp chạy được: `backlog/gherkin/us-13.feature`.
+Chương gồm 62 story của PH-13. Tệp chạy được: `backlog/gherkin/us-13.feature`.
 
 ### 14.1. EP-13-A · Thu thập dữ liệu quan sát
 
@@ -23331,7 +23393,7 @@ Kịch bản: US-13-009 âm 2 · Kiểm thử rò rỉ thành công
 
 ### 14.2. EP-13-B · Ghi vết kiểm toán
 
-Epic gồm 10 story, 41 điểm.
+Epic gồm 11 story, 44 điểm.
 
 #### US-13-010 · Tiếp nhận và xác thực bản ghi kiểm toán
 
@@ -23641,6 +23703,30 @@ Kịch bản: US-13-019 âm 2 · Bản ghi thiếu lý do ở thao tác bắt bu
   Biết module `observability` và `audit` của `dh-platform` dùng `dh-audit`
   Khi bản ghi thiếu lý do ở thao tác bắt buộc lý do
   Thì hệ thống từ chối với ERR-13-008, ERR-13-012 (400)
+```
+
+#### US-13-062 · Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
+
+Là cán bộ ATTT, tôi muốn khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu, để chuỗi kiểm toán liền lại bằng đúng các bản ghi gốc đã kiểm chứng; không bản ghi nào bị sửa hay dựng mới.
+
+*Epic* EP-13-B · *Ưu tiên* C · *Đợt* Đợt sau · *Wave* Sau G5 · *Điểm* 3 · *FR* FR-13-062 · *UC* UC-13-43.
+
+*Truy vết* REQ-13; FR-13-011, 012, 013, 014, 015; BR-13-002, BR-13-033; UC-13-43; D03-03-PH13 §7.2; D03-07 §8. *Màn hình, API* Không có màn hình hay API; thủ tục vận hành ghi ở sổ tay vận hành của PH-18.
+
+```gherkin
+@US-13-062 @FR-13-062 @C
+Kịch bản: US-13-062 dương · Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
+  Biết sự cố mất dữ liệu đã được xác nhận theo quy trình ứng cứu; PostgreSQL đã khôi phục (PITR hoặc bản sao DR) và mở ở chế độ chỉ đọc; bộ tiếp nhận `ingest` chưa cho ghi; biên bản mở và cửa sổ bảo trì được SO và TA duyệt
+  Khi SO yêu cầu đội vận hành chạy thủ tục sau khi sự cố mất dữ liệu được xác nhận
+  Thì biên bản khôi phục có chữ ký; báo cáo xác minh toàn chuỗi; bản ghi `AUDIT.CHAIN.RESTORE`
+  Và chuỗi của tenant `OPEN` và xác minh đạt; biên bản lưu ở `dh-evidence`
+  Và nhật ký kiểm toán ghi nhận thao tác
+
+@US-13-062 @FR-13-062 @C @âm
+Kịch bản: US-13-062 âm 1 · Băm lô hoặc băm bản ghi không khớp neo
+  Biết sự cố mất dữ liệu đã được xác nhận theo quy trình ứng cứu; PostgreSQL đã khôi phục (PITR hoặc bản sao DR) và mở ở chế độ chỉ đọc; bộ tiếp nhận `ingest` chưa cho ghi; biên bản mở và cửa sổ bảo trì được SO và TA duyệt
+  Khi băm lô hoặc băm bản ghi không khớp neo
+  Thì dừng ngay, không chèn thêm, xử lý như đứt chuỗi theo FR-13-015 và quy trình ứng cứu sự cố
 ```
 
 ### 14.3. EP-13-C · Tra cứu kiểm toán và bằng chứng
@@ -24647,7 +24733,7 @@ Kịch bản: US-13-053 dương · Xử lý cảnh báo an ninh, đề xuất t�
   Khi người dùng mở UI-13-15 hoặc nhấn liên kết trong thông báo
   Thì hệ thống trả `200`: cảnh báo sau cập nhật (`status`, `assignee`, `verdict`, `verdictNote`, `proposedAction`, `incidentRef`)
   Và cảnh báo `CLOSED` có kết luận; đề xuất tạm ngừng ghi vết
-  Và sự kiện được phát: EVT-13-04 khi đề xuất tạm ngừng
+  Và sự kiện được phát: EVT-13-04 khi cảnh báo được phát hiện (đề xuất tạm ngừng không phát sự kiện mà gọi API-01-089)
   Và nhật ký kiểm toán ghi nhận thao tác
 
 @US-13-053 @FR-13-053 @M @âm
@@ -30651,7 +30737,7 @@ Kịch bản: US-17-014 âm 1 · Không kết nối được nhà cung cấp
 
 ### 18.3. EP-17-C · Kho tri thức và lập chỉ mục
 
-Epic gồm 7 story, 22 điểm.
+Epic gồm 7 story, 24 điểm.
 
 #### US-17-015 · Khai báo nguồn tri thức
 
@@ -30755,7 +30841,7 @@ Kịch bản: US-17-017 âm 2 · Không có mô hình nhúng
 
 Là quản trị tỉnh, tôi muốn hệ thống cắt đoạn, nhúng, lưu vector có tenant_id và phạm vi quyền đọc, để mỗi đoạn truy hồi được, có quyền đi kèm, không lẫn tenant.
 
-*Epic* EP-17-C · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W5 · *Điểm* 3 · *FR* FR-17-018 · *UC* UC-17-13.
+*Epic* EP-17-C · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W5 · *Điểm* 5 · *FR* FR-17-018 · *UC* UC-17-13.
 
 *Truy vết* REQ-17; SEC-49; ADR-170 (đề xuất); ADR-003; SEC-81. *Màn hình, API* UI-17-08; API-17-076, API-17-077, API-17-078.
 
@@ -31683,7 +31769,7 @@ Kịch bản: US-17-048 âm 2 · Cố bật tự áp dụng qua tham số
 
 ### 18.8. EP-17-H · Quản trị AI, đánh giá và chất lượng
 
-Epic gồm 6 story, 22 điểm.
+Epic gồm 6 story, 24 điểm.
 
 #### US-17-049 · Quản lý mẫu chỉ dẫn hệ thống có phiên bản, duyệt bốn mắt
 
@@ -31788,7 +31874,7 @@ Kịch bản: US-17-051 âm 2 · Có ca lọt
 
 Là quản trị tỉnh, tôi muốn phản hồi của người dùng và hàng xử lý phản hồi, để người dùng thấy "Cảm ơn phản hồi"; quản trị có hàng xử lý theo hạn.
 
-*Epic* EP-17-H · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W5 · *Điểm* 3 · *FR* FR-17-052 · *UC* UC-17-30.
+*Epic* EP-17-H · *Ưu tiên* M · *Đợt* Đợt 3 · *Wave* W5 · *Điểm* 5 · *FR* FR-17-052 · *UC* UC-17-30.
 
 *Truy vết* REQ-17; SEC-49; NFR-17-013. *Màn hình, API* UI-17-01, UI-17-14; API-17-155, API-17-156, API-17-157, API-17-158, API-17-159, API-17-160.
 
@@ -31810,11 +31896,11 @@ Kịch bản: US-17-052 âm 1 · Phản hồi trùng
   Và người dùng thấy thông báo "Bạn đã gửi phản hồi cho câu trả lời này."
 
 @US-17-052 @FR-17-052 @M @âm
-Kịch bản: US-17-052 âm 2 · Ghi chú quá dài
+Kịch bản: US-17-052 âm 2 · Sửa quá 10 phút hoặc phản hồi đã được phân loại
   Biết có câu trả lời của trợ lý
-  Khi ghi chú quá dài
-  Thì hệ thống từ chối với ERR-17-003 (400)
-  Và người dùng thấy thông báo "Dữ liệu không hợp lệ: ghi chú tối đa 1.000 ký tự."
+  Khi sửa quá 10 phút hoặc phản hồi đã được phân loại
+  Thì hệ thống từ chối với ERR-17-006 (409)
+  Và người dùng thấy thông báo "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 ```
 
 #### US-17-053 · Chỉ số chất lượng và cảnh báo suy giảm
@@ -36457,7 +36543,7 @@ Kịch bản: US-20-007 âm 2 · Vượt sức chứa (mục `CAPACITY`)
 
 ### 21.2. EP-20-B · Saga khởi tạo
 
-Epic gồm 10 story, 36 điểm.
+Epic gồm 10 story, 38 điểm.
 
 #### US-20-008 · Chạy saga khởi tạo tenant
 
@@ -36623,14 +36709,14 @@ Kịch bản: US-20-012 âm 2 · Ca `CROSS_TENANT_LEAK` trả khác `404`
 
 Là quản trị nền tảng, tôi muốn hệ thống kích hoạt tenant và bàn giao cho quản trị tỉnh, để quản trị tỉnh nhận thư, đăng nhập `dh-console` của tỉnh và bắt đầu làm việc.
 
-*Epic* EP-20-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W2 · *Điểm* 3 · *FR* FR-20-013 · *UC* UC-20-07.
+*Epic* EP-20-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W2 · *Điểm* 5 · *FR* FR-20-013 · *UC* UC-20-07.
 
 *Truy vết* REQ-20; BO-06; KPI-12; D03-10 §5.2 bước `S17_ACTIVATE`. *Màn hình, API* UI-20-04; API-20-023.
 
 ```gherkin
 @US-20-013 @FR-20-013 @M
 Kịch bản: US-20-013 dương · Kích hoạt tenant và bàn giao cho quản trị tỉnh
-  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
+  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
   Khi bộ thực thi tới `S17_ACTIVATE`; hoặc PA bấm "Kích hoạt" ở UI-20-04 khi mẫu yêu cầu kích hoạt tay (ví dụ chờ lễ khai trương)
   Thì hệ thống trả `200`; tenant `ACTIVE`, `activatedAt`, `handoverDelivery` (`SENT`, `FAILED`)
   Và tenant `ACTIVE`; lần chạy `SUCCEEDED`
@@ -36639,17 +36725,17 @@ Kịch bản: US-20-013 dương · Kích hoạt tenant và bàn giao cho quản 
 
 @US-20-013 @FR-20-013 @M @âm
 Kịch bản: US-20-013 âm 1 · Kiểm tra khói chưa đạt
-  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
+  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
   Khi kiểm tra khói chưa đạt
   Thì hệ thống từ chối với ERR-20-020 (422)
   Và người dùng thấy thông báo "Kiểm tra khói chưa đạt ({số} ca lỗi). Không thể kích hoạt tenant."
 
 @US-20-013 @FR-20-013 @M @âm
-Kịch bản: US-20-013 âm 2 · Trạng thái không phù hợp
-  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
-  Khi trạng thái không phù hợp
-  Thì hệ thống từ chối với ERR-20-006 (409)
-  Và người dùng thấy thông báo "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}."
+Kịch bản: US-20-013 âm 2 · Chưa đủ hai quản trị tỉnh
+  Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
+  Khi chưa đủ hai quản trị tỉnh
+  Thì hệ thống từ chối với ERR-20-021 (422)
+  Và người dùng thấy thông báo "Cần đủ đầu mối {vai trò} trước khi {thao tác}."
 ```
 
 #### US-20-014 · Đo và báo thời gian khởi tạo tenant (KPI-12) cho PH-16
@@ -38393,3 +38479,4 @@ Kịch bản: US-20-070 âm 1 · Tenant không phải kiểm thử
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, sinh tự động từ SRS và 20 FRS |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Sinh lại sau khi tách mã API trùng của PH-04, PH-07: dẫn chiếu API trong FRS đổi theo mã mới |

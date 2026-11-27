@@ -4300,6 +4300,7 @@ paths:
               reason: Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ
               incidentRef: SEC-ALERT-2026-0142
       x-datahub-errors:
+      - ERR-01-001
       - ERR-01-003
       - ERR-01-005
       - ERR-01-048
@@ -4328,6 +4329,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
   /access-reviews:

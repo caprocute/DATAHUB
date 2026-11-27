@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH13
 ten: Đặc tả use case phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, đội vận hành nền tảng, cán bộ an toàn thông tin, kiểm toán viên, kiểm thử viên
 phan_he: PH-13
@@ -2221,7 +2221,7 @@ Chương này đặc tả 43 use case theo tám nhóm giống FRS: thu thập d�
 1. Dũng mở cảnh báo UC-SEC-10 của `HT-QLVB` ở UI-13-15; giao diện hiện luật, nguồn, chủ thể, bằng chứng (liên kết tới bản ghi kiểm toán và log), mức, thời điểm phát hiện và runbook điều tra (API-13-057).
 2. Dũng bấm "Tiếp nhận" (API-13-058). Hệ thống chuyển `ACKNOWLEDGED`, ghi người xử lý, dừng leo thang tới Giang và ghi `SECURITY.ALERT.ACK`.
 3. Dũng điều tra qua UC-13-12 (lọc `actor = HT-QLVB`), UC-13-17 và UC-13-18, và thấy `HT-QLVB` gọi hàng loạt bằng tài khoản dịch vụ nghi bị lộ.
-4. Dũng bấm "Đề xuất tạm ngừng HTTT", chọn `HT-QLVB` và nhập lý do "Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ". UI gọi API-13-060; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do, gửi đề xuất sang PH-01 bằng API-01-089; PH-01 tạo việc khẩn cho SO (xem Q13-12 của FRS, đã chốt 27/11/2026).
+4. Với cảnh báo mức Cao hoặc Nghiêm trọng, Dũng bấm "Đề xuất tạm ngừng HTTT" (nút không hiện ở mức thấp hơn), chọn `HT-QLVB` và nhập lý do "Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ". UI gọi API-13-060; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do, lấy `alertId`, `severity`, `incidentRef` và liên kết sâu `evidenceUrl` từ cảnh báo gốc rồi gửi đề xuất sang PH-01 bằng API-01-089; PH-01 tạo việc khẩn cho SO (xem Q13-12 của FRS, đã chốt 27/11/2026).
 5. Người có `PERM-01-suspend` (Giang hoặc Dũng) mở việc ở PH-01 và tạm ngừng `HT-QLVB` bằng thao tác khẩn (FR-01-032), hoặc đóng việc không tạm ngừng; PH-13 chỉ ghi liên kết và kết quả.
 6. Dũng đóng cảnh báo (API-13-059) với kết luận `CONFIRMED_INCIDENT` và ghi chú; hệ thống ghi `SECURITY.ALERT.CLOSE`.
 7. Kết luận `CONFIRMED_INCIDENT` mở hồ sơ sự cố theo quy trình ứng cứu (D03-07 §8) và gợi ý lập báo cáo (UC-13-37).
@@ -2239,6 +2239,9 @@ Chương này đặc tả 43 use case theo tám nhóm giống FRS: thu thập d�
 - **E3. PH-01 không khả dụng khi đề xuất (bước 4).** ERR-13-014 (503): "Dịch vụ PH-01 tạm thời không khả dụng. Thử lại sau."; đề xuất chưa gửi, Dũng thử lại.
 - **E4. HTTT không thuộc tenant (bước 4).** ERR-13-001 (404): "Không tìm thấy HTTT {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."
 - **E5. Thiếu quyền (bước 2).** ERR-13-009 (403): "Bạn không có quyền thực hiện thao tác này."
+- **E6. Cảnh báo mức thấp hơn Cao (bước 4).** Nút đề xuất ẩn; nếu vẫn gọi API-13-060 thì ERR-13-003 (400): "Chỉ cảnh báo mức Cao hoặc Nghiêm trọng mới đề xuất tạm ngừng HTTT được."; đề xuất chưa gửi.
+- **E7. HTTT đã bị tạm ngừng (bước 4).** PH-01 trả ERR-01-048 (409); PH-13 coi đề xuất đã được đáp ứng, không báo lỗi và không thử lại.
+- **E8. HTTT không ở trạng thái cho phép tạm ngừng (bước 4).** PH-01 trả ERR-01-005 (409); PH-13 báo Dũng: "HTTT {mã} không ở trạng thái cho phép tạm ngừng."
 
 **Quy tắc áp dụng.** BR-13-022, 024.
 
@@ -2694,4 +2697,5 @@ Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 42 use case (UC-13-01…42) phủ đủ 61 FR, mỗi use case một khối 15 mục kèm câu thông báo lấy từ FRS §9.2; sáu hình sơ đồ use case tổng; ba bảng truy vết (FR, màn hình và API, REQ-quy trình-hệ cũ); 7 luồng phụ dùng chung; 5 câu hỏi mở Q13-45…49; đề nghị đồng bộ cho FRS, API, màn hình, test case, SDD |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: bảng 5.2 liệt kê đủ API và UI như trường "Màn hình, API" của từng use case; thêm đoạn mở cho mục 5.1, 5.2 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q390, Q419 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | UC-13-35: nút đề xuất chỉ ở mức Cao, Nghiêm trọng; thêm luồng ngoại lệ E6 (ERR-13-003), E7 (ERR-01-048), E8 (ERR-01-005) theo FR-13-053 |
 

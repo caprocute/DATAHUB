@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH12
 ten: Đặc tả yêu cầu chức năng phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, kỹ sư hạ tầng định danh, cán bộ ATTT, kiểm thử viên
@@ -938,18 +938,19 @@ Hình cho thấy quản trị tỉnh không bao giờ thấy hay đặt mật kh
 1. Người dùng chọn hành động và nhập lý do trong hộp xác nhận (FR-00-050).
 2. Hệ thống kiểm tra người thao tác không phải chính tài khoản đó (ERR-12-013) và lý do không rỗng (ERR-12-014).
 3. Hệ thống kiểm tra chuyển trạng thái hợp lệ (ERR-12-006), ví dụ `ACTIVE`, `LOCKED`, `BLOCKED` sang `DISABLED`.
+   Với tài khoản đang giữ `TENANT_ADMIN` của tenant đã kích hoạt, hệ thống đếm các TA hiệu lực khác (BR-12-033); nếu "Khóa" hoặc "Vô hiệu" làm số TA hiệu lực xuống dưới hai thì dừng ở ERR-12-046.
 4. Với "Khóa", "Vô hiệu": hệ thống đặt trạng thái ở Keycloak, hủy mọi phiên, thu hồi refresh token và đẩy danh sách chặn theo FR-12-040.
 5. Với "Kích hoạt lại" từ `DISABLED`: hệ thống đặt trạng thái `PENDING_ACTIVATION`, buộc đặt lại mật khẩu và đăng ký lại yếu tố thứ hai nếu thuộc nhóm bắt buộc, gửi liên kết (FR-12-006).
 6. Hệ thống ghi kiểm toán kèm lý do, phát EVT-12-02, trả `200`.
 
-**Luồng thay thế.** "Mở khóa" một tài khoản `LOCKED`: xóa bộ đếm sai và bộ đếm khóa tạm của 24 giờ. Tài khoản thuộc nhóm `_ADMIN`: chỉ SO hoặc quản trị cấp trên thực hiện được (TA không khóa được TA khác của cùng tenant ngoài SO).
+**Luồng thay thế.** "Mở khóa" một tài khoản `LOCKED`: xóa bộ đếm sai và bộ đếm khóa tạm của 24 giờ. Tài khoản thuộc nhóm `_ADMIN`: chỉ SO hoặc quản trị cấp trên thực hiện được (TA không khóa được TA khác của cùng tenant ngoài SO). Ngoại lệ của ERR-12-046: "Khóa" kèm `incidentRef` (mã sự cố ATTT do SO mở) và trạng thái `BLOCKED` do Keycloak đặt sau ba lần khóa tạm (FR-12-021) vẫn thực hiện khi tenant xuống dưới hai TA; hệ thống phát cảnh báo khẩn cho SO và PA ngay (kênh FR-00-061), tạo việc "Bổ sung quản trị tỉnh" cho PA và ghi kiểm toán mã lý do `TA_BELOW_MIN`. Vô hiệu thủ công không có ngoại lệ này.
 
 **Luồng ngoại lệ.**
 
 - Tự thao tác: ERR-12-013 (403); "Anh/chị không thể tự khóa hoặc vô hiệu tài khoản của mình."
 - Thiếu lý do: ERR-12-014 (400); "Nhập lý do (ít nhất 10 ký tự)."
 - Chuyển trạng thái sai: ERR-12-006 (409); "Tài khoản đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
-- Vô hiệu quản trị tỉnh cuối cùng: ERR-12-046 (409); "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động."
+- Khóa hoặc vô hiệu làm tenant còn dưới hai quản trị tỉnh (không thuộc ngoại lệ trên): ERR-12-046 (409); "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện."
 
 **Đầu ra.** `200`, tài khoản với `state` mới.
 
@@ -1084,7 +1085,7 @@ Hình cho thấy quản trị tỉnh không bao giờ thấy hay đặt mật kh
 
 1. Tác vụ liệt kê người dùng `ACTIVE` có đăng nhập cuối cũ hơn ngưỡng (45 ngày; 30 ngày với vai trò `_ADMIN` và vai trò nền tảng) và client `ENABLED` có lần gọi cuối cũ hơn 90 ngày.
 2. Bảy ngày trước ngưỡng, hệ thống gửi cảnh báo tới cán bộ và TA ("Tài khoản sẽ bị vô hiệu vào {ngày} nếu không đăng nhập").
-3. Với người dùng vượt ngưỡng, hệ thống chuyển `DISABLED` theo cách của FR-12-005 (lý do hệ thống `INACTIVE_{n}_DAYS`); với client vượt ngưỡng, chuyển `SUSPENDED` theo FR-12-031.
+3. Với người dùng vượt ngưỡng, hệ thống chuyển `DISABLED` theo cách của FR-12-005 (lý do hệ thống `INACTIVE_{n}_DAYS`); với client vượt ngưỡng, chuyển `SUSPENDED` theo FR-12-031. Tài khoản đang giữ `TENANT_ADMIN` là ngoại lệ của ERR-12-046 (BR-12-033): hệ thống vẫn vô hiệu theo TCVN 14423:2026 dù tenant xuống dưới hai TA, rồi phát cảnh báo khẩn cho SO và PA, tạo việc "Bổ sung quản trị tỉnh" cho PA và ghi kiểm toán mã lý do `TA_BELOW_MIN`. Bảy ngày trước ngưỡng, cảnh báo ở bước 2 của TA mà việc vô hiệu sẽ làm tenant xuống dưới hai TA được gửi kèm cho SO và PA để bổ sung TA trước.
 4. Hệ thống gửi thông báo tới TA, tới đầu mối kỹ thuật của HTTT, và ghi kiểm toán.
 5. Hệ thống ghi số lượng đã xử lý vào chỉ số `iam_inactive_disabled_total`.
 
@@ -1312,14 +1313,14 @@ Hình cho thấy mọi con đường tạo ra quyền đều qua cổng kiểm t
 6. Hệ thống lưu bản gán, cập nhật vai trò ở Keycloak, yêu cầu tái sinh dữ liệu gói chính sách (FR-12-051), ghi kiểm toán, phát EVT-12-03, trả `201`.
 7. Với vai trò thuộc nhóm `mfa-required`, hệ thống đặt cờ buộc người dùng đăng ký yếu tố thứ hai ở lần đăng nhập kế tiếp (FR-12-022); với `TENANT_ADMIN`, `SECURITY_OFFICER`, hệ thống thông báo cho các cán bộ ATTT của tỉnh.
 
-**Luồng thay thế.** Gỡ vai trò: bước 3–5 bỏ qua, hệ thống kiểm tra không gỡ quản trị tỉnh cuối cùng (ERR-12-046) và thu hồi mọi phiên của người dùng nếu là hạ quyền (BR-12-036). Gán có hiệu lực sau (`validFrom` tương lai) hoặc tự hết hạn (`validTo`): hệ thống tự bật, tự gỡ bằng tác vụ định kỳ 30 giây một lần.
+**Luồng thay thế.** Gỡ vai trò: bước 3–5 bỏ qua, hệ thống kiểm tra việc gỡ `TENANT_ADMIN` không làm tenant đã kích hoạt còn dưới hai TA hiệu lực (ERR-12-046, BR-12-033) và thu hồi mọi phiên của người dùng nếu là hạ quyền (BR-12-036). Gán có hiệu lực sau (`validFrom` tương lai) hoặc tự hết hạn (`validTo`): hệ thống tự bật, tự gỡ bằng tác vụ định kỳ 30 giây một lần. Với gán `TENANT_ADMIN` sắp hết hạn mà việc hết hạn làm tenant xuống dưới hai TA, hệ thống không để hết hạn im lặng: bảy ngày trước hạn cảnh báo TA, SO và PA, và đến hạn thì không đặt `EXPIRED` mà giữ gán, báo ERR-12-046 trên cảnh báo và yêu cầu gia hạn hoặc bổ sung TA khác.
 
 **Luồng ngoại lệ.**
 
 - Tự gán hoặc gỡ cho chính mình: ERR-12-013 (403); "Anh/chị không thể tự gán hoặc gỡ vai trò của mình."
 - Vai trò hoặc phạm vi sai: ERR-12-010 (422); "Vai trò {vai trò} không gán được với phạm vi {phạm vi} cho người dùng này."
 - Xung đột tách nhiệm vụ: ERR-12-009 (409); "Anh/chị không được giữ cùng lúc {vai trò A} và {vai trò B}: {lý do}. Có thể đề nghị ngoại lệ có thời hạn."
-- Gỡ quản trị tỉnh cuối cùng: ERR-12-046 (409); "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động."
+- Gỡ hoặc để hết hạn gán `TENANT_ADMIN` làm tenant còn dưới hai quản trị tỉnh: ERR-12-046 (409); "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện."
 - Thiếu lý do: ERR-12-014 (400); "Nhập lý do gán hoặc gỡ vai trò."
 
 **Đầu ra.** `201` (gán) hoặc `204` (gỡ); thân gồm `assignmentId`, vai trò, phạm vi, hiệu lực.
@@ -1888,7 +1889,7 @@ Hình cho thấy ba điểm: mật khẩu chỉ đi giữa người dùng và Ke
 2. Mật khẩu lưu dạng băm `argon2` hoặc `pbkdf2-sha512` từ 210.000 vòng.
 3. Mỗi lần đăng nhập sai, Keycloak tăng bộ đếm theo tài khoản và theo địa chỉ nguồn; thời gian phản hồi và thông báo giống nhau cho "sai tên" và "sai mật khẩu" (BR-12-017).
 4. Sau 5 lần sai liên tiếp, tài khoản chuyển `LOCKED` 15 phút và Keycloak gửi thư thông báo cho chủ tài khoản.
-5. Sau 3 lần khóa tạm trong 24 giờ, tài khoản chuyển `BLOCKED`, chỉ TA hoặc SO mở được; hệ thống phát cảnh báo an ninh (FR-12-059).
+5. Sau 3 lần khóa tạm trong 24 giờ, tài khoản chuyển `BLOCKED`, chỉ TA hoặc SO mở được; hệ thống phát cảnh báo an ninh (FR-12-059). Với tài khoản `TENANT_ADMIN`, đây là khóa do sự cố ATTT nên vẫn thực hiện dù tenant xuống dưới hai TA (ngoại lệ của ERR-12-046, BR-12-033): hệ thống phát cảnh báo khẩn cho SO và PA và tạo việc bổ sung TA.
 6. Địa chỉ nguồn vượt `12.alert.login-fail-per-minute` lần sai mỗi phút bị lớp biên (WAF, giới hạn tần suất) chặn tạm và phát cảnh báo; thông điệp "quá nhiều yêu cầu" áp dụng cho cả tài khoản đúng và sai.
 7. Đăng nhập đúng đặt lại bộ đếm sai (không đặt lại bộ đếm khóa tạm 24 giờ).
 
@@ -2172,7 +2173,7 @@ Hình cho thấy quyết định "cần xác thực lại" do OPA đưa ra theo 
 4. SO duyệt kích hoạt (khác TA).
 5. Hệ thống tạo liên kết ở Keycloak ở chế độ chỉ-đọc: xác thực chuyển thẳng tới LDAP, mật khẩu không được sao chép; đồng bộ gia tăng mỗi 15 phút và đồng bộ đầy đủ mỗi ngày.
 6. Người dùng thuộc cơ sở tìm kiếm được nhập thành tài khoản `authSource=LDAP` với đơn vị lấy theo bảng ánh xạ OU sang `orgCode`; vai trò không tự gán từ nhóm LDAP trừ vai trò không đặc quyền trong bảng ánh xạ đã duyệt.
-7. Người dùng bị vô hiệu ở LDAP chuyển `DISABLED` ở Datahub không quá 15 phút sau; hệ thống thu hồi phiên theo FR-12-040.
+7. Người dùng bị vô hiệu ở LDAP chuyển `DISABLED` ở Datahub không quá 15 phút sau; hệ thống thu hồi phiên theo FR-12-040. Với tài khoản `TENANT_ADMIN`, việc đồng bộ từ danh bạ không bị ERR-12-046 chặn (cán bộ đã nghỉ thì không giữ quyền), nhưng xử lý như ngoại lệ ATTT của BR-12-033: cảnh báo khẩn cho SO và PA, tạo việc bổ sung TA. Cách xử lý này là đề xuất của PH-12 ngoài hai ngoại lệ của Q403, đang chờ chủ đầu tư chốt (câu hỏi Q453 ở D00-03-01).
 
 **Luồng thay thế.** Tỉnh không có LDAP: dùng tài khoản cục bộ. LDAP chỉ để xác thực, không nhập người dùng: chế độ "chỉ xác thực" cho tài khoản đã tạo ở FR-12-003. Đồng bộ thủ công theo yêu cầu ở UI-12-11.
 
@@ -4377,7 +4378,7 @@ Bốn mươi lăm quy tắc dưới đây là các ràng buộc nghiệp vụ v�
 | BR-12-030 | Cặp vai trò xung đột (D02-08 §4) bị chặn khi gán; ngoại lệ do TA đề nghị, SO duyệt, có lý do, tối đa 90 ngày, tự gỡ khi hết hạn; cặp có AUDITOR đối với quyền ghi của PH-19 không có ngoại lệ | 003, 009, 012, 013, 015, 019, 051 |
 | BR-12-031 | Vai trò `PLATFORM_*` chỉ gán ở tenant `PLATFORM`; nhân sự nền tảng vào tenant khác chỉ bằng quyền có thời hạn | 011, 012, 017, 027, 041 |
 | BR-12-032 | Quyền có thời hạn tối đa 4 giờ, kèm lý do và mã phiếu hỗ trợ, có người duyệt thứ hai, thông báo cho quản trị tỉnh bị truy cập, ghi kiểm toán trong chuỗi của tenant đó; tự hết hạn và OPA kiểm tra hạn ở mọi quyết định | 017, 027 |
-| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant luôn còn ít nhất một TENANT_ADMIN hoạt động, và theo quyết định của chủ đầu tư ngày 27/11/2026 phải có tối thiểu hai TENANT_ADMIN hoạt động khi kích hoạt (PH-20 kiểm bằng `GET /users` lọc `roleCode`, `state`); xuống dưới hai sau đó chỉ cảnh báo SO và PA (sự kiện an ninh), còn xuống không thì chặn như cũ | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
+| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant có tối thiểu hai TENANT_ADMIN hiệu lực (quyết định Q403 của chủ đầu tư, chốt 27/11/2026). PH-20 kiểm điều kiện này bằng `GET /users` lọc `roleCode`, `state` khi kích hoạt tenant; với tenant đã kích hoạt, mọi thao tác làm số TA hiệu lực xuống dưới hai (thu hồi vai trò, khóa, vô hiệu, hết hạn gán vai trò, xóa tài khoản TA) bị chặn bằng ERR-12-046 (409). TA hiệu lực là người giữ gán `TENANT_ADMIN` còn hạn mà tài khoản ở `ACTIVE`, `LOCKED` (khóa tạm do nhập sai, tự mở) hoặc `PENDING_ACTIVATION`. Ngoại lệ duy nhất: tự động vô hiệu do không dùng quá ngưỡng (FR-12-008, TCVN 14423) và khóa do sự cố ATTT vẫn thực hiện, nhưng phát cảnh báo khẩn cho SO và PA và tạo việc bổ sung TA. Luồng thay thế khi cần đổi TA là bổ sung TA mới trước rồi mới gỡ TA cũ, TA khác của tenant xác nhận | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
 | BR-12-034 | Đặt lại yếu tố thứ hai chỉ do quản trị cao hơn một cấp, sau khi xác minh danh tính bằng kênh khác; tài khoản quản trị cần SO duyệt | 024 |
 | BR-12-035 | Tài khoản không bị xóa vật lý: kết thúc là `DISABLED`, giữ truy vết | 005, 008 |
 | BR-12-036 | Hạ quyền (gỡ vai trò, thu hẹp phạm vi) thu hồi phiên và có hiệu lực ở OPA trong 60 giây; nâng quyền có hiệu lực khi có token mới (tối đa 5 phút) vì OPA lấy giao của token và dữ liệu gói | 004, 012, 046, 051 |
@@ -4537,7 +4538,7 @@ Khóa tham số bắt đầu bằng `12.`, lưu ở kho tham số của PH-18 th
 | ERR-12-043 | 422 | Vượt trần tham số hoặc giới hạn số lượng |
 | ERR-12-044 | 412 | Phiên bản đối tượng đã thay đổi (`If-Match`) |
 | ERR-12-045 | 422 | `Idempotency-Key` đã dùng với thân khác |
-| ERR-12-046 | 409 | Không thể gỡ hoặc vô hiệu quản trị tỉnh cuối cùng |
+| ERR-12-046 | 409 | Không thể gỡ, khóa hoặc vô hiệu quản trị tỉnh khi tenant sẽ còn dưới hai quản trị tỉnh hiệu lực |
 | ERR-12-047 | 422 | Trường do danh bạ LDAP quản lý, chỉ đọc |
 | ERR-12-101 | 400 | Yêu cầu quyết định thiếu trường bắt buộc hoặc sai cấu trúc |
 | ERR-12-102 | 401 | Bên gọi quyết định chưa xác thực hoặc thiếu scope `iam:decide` |
@@ -4610,7 +4611,7 @@ Mỗi mã lỗi mà người dùng có thể gặp trên màn hình được chu
 | ERR-12-039 | "Kho bí mật tạm thời không khả dụng; chưa lưu hoặc chưa xoay. Thử lại sau." | Hộp cảnh báo lỗi |
 | ERR-12-043 | "Giá trị vượt giới hạn cho phép ({tối thiểu} đến {tối đa})." | Dưới trường tham số |
 | ERR-12-044 | "Thông tin này vừa được người khác sửa. Tải lại trang để xem bản mới nhất." | Thông báo nổi |
-| ERR-12-046 | "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động." | Hộp xác nhận |
+| ERR-12-046 | "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện." | Hộp xác nhận |
 | ERR-12-111 | "Tên đăng nhập hoặc mật khẩu không đúng." | Trang đăng nhập |
 | ERR-12-112 | "Tài khoản tạm khóa do đăng nhập sai nhiều lần. Thử lại sau {n} phút." | Trang đăng nhập |
 | ERR-12-113 | "Tài khoản đã bị khóa. Liên hệ quản trị tỉnh." | Trang đăng nhập |
@@ -5156,4 +5157,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-12: 62 FR đủ khối 17 mục (52 M, 9 S, 1 C) trong tám nhóm; 45 BR, 33 NFR, 38 tham số `12.*`, 66 mã lỗi (47 điều khiển, 19 runtime), 16 sự kiện, 111 API, 19 màn hình, 2 ảnh hi-fi; ma trận truy vết 12 mục LGC và ánh xạ mã cũ sang mã mới cho 19 FR, 30 NFR, 17 BR của repo; 15 câu hỏi mở (Q12-01…15); đề nghị đồng bộ D02-08 (14 quyền, 7 scope) |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412, Q403 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403 (chủ đầu tư chốt 27/11/2026): tenant đã kích hoạt luôn có tối thiểu hai TA; chặn cứng bằng ERR-12-046 (đổi từ "TA cuối cùng" sang "dưới hai") ở FR-12-005, FR-12-012 và BR-12-033; ngoại lệ tự vô hiệu không dùng (FR-12-008) và khóa do sự cố ATTT (FR-12-005, FR-12-021, FR-12-026) kèm cảnh báo khẩn và việc bổ sung TA |
 

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH07
 ten: Đặc tả use case phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển PH-07, đội kiểm thử, hội đồng thẩm định
@@ -1018,7 +1018,7 @@ Hệ cũ cho phép xuất danh mục ra Excel và CSV từ màn chi tiết. Data
 - **E2. Mã không tồn tại tại thời điểm tra (bước 5).** ERR-07-007 "Không tìm thấy mã 99999 trong danh mục DVHC tại ngày 22/11/2026." HTTT có thể thử tra lịch sử bằng `at` cũ hơn hoặc dùng UC-07-12 chuyển mã.
 - **E3. Không có phiên bản hiệu lực tại thời điểm tra (bước 4).** ERR-07-006 "Danh mục không có phiên bản hiệu lực tại ngày 01/01/2020." (ví dụ thời điểm trước phiên bản đầu tiên).
 - **E4. Danh mục đã ngừng hiệu lực (bước 3).** ERR-07-031 "Danh mục LINH_VUC_CU đã ngừng hiệu lực từ 01/07/2026." Tra với `at` trước ngày ngừng vẫn trả dữ liệu.
-- **E5. Danh mục `RESTRICTED`, HTTT chưa được cấp quyền (bước 3).** ERR-07-030 "Hệ thống thông tin chưa được cấp quyền khai thác danh mục hạn chế này." Kỹ sư của HTTT liên hệ quản trị tỉnh để được cấp quyền (API-07-075).
+- **E5. Danh mục `RESTRICTED`, HTTT chưa được cấp quyền (bước 3).** ERR-07-030 "Hệ thống thông tin chưa được cấp quyền khai thác danh mục hạn chế này." Kỹ sư của HTTT liên hệ quản trị tỉnh để được cấp quyền (API-07-079).
 - **E6. Lô vượt kích thước (luồng 1a).** ERR-07-026. Thông báo: "Số lượng vượt mức tối đa cho một lần ({max}). Chia nhỏ danh sách rồi thực hiện lại."
 - **E7. Con trỏ không hợp lệ hoặc hết hạn (luồng 1b).** Lỗi 400 "Con trỏ phân trang không hợp lệ, vui lòng bắt đầu lại từ trang đầu."
 - **E8. Vượt hạn mức gọi (bước 2).** Cổng API trả 429 kèm `Retry-After` theo chính sách gói sử dụng (PH-03).
@@ -1766,3 +1766,4 @@ Bảng dưới tổng hợp các câu hỏi mở phát sinh trong tài liệu, c
 | 0.1 | 2026-11-21 | Nhóm phân hệ PH-07 | Bản đầu, 17 use case |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 15 mục cho mọi use case, câu thông báo theo mã lỗi, tóm tắt cho hội đồng, người đọc, sơ đồ tổng chia hai hình, chú thích bảng và hình |
 | 0.3 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: sửa mã FR của SRS dẫn sai thành FR-07-050, BR-07-041; UC-07-11 trỏ UC-14-15 |
+| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, dẫn chiếu đã đổi theo ngữ cảnh |

@@ -535,17 +535,24 @@ Tính năng: PH-06 · Dữ liệu chủ
 
   @US-06-027 @FR-06-027 @M
   Kịch bản: US-06-027 dương · Tạo mục hàng đợi và tính mức ưu tiên
-    Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi
-    Khi nhóm C, FR-06-033, FR-06-016
+    Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
+    Khi nhóm C, FR-06-033, FR-06-016; PH-08 gọi API-06-126 (FR-08-046) bằng scope `mdm:steward-intake`
     Thì mục hàng đợi nội bộ
     Và mục `OPEN`; bản ghi vàng liên quan không bị khóa (chỉ khóa khi chờ duyệt)
     Và sự kiện được phát: EVT-06-08
 
   @US-06-027 @FR-06-027 @M @âm
   Kịch bản: US-06-027 âm 1 · Hàng đợi vượt `06.queue.max-open` (mặc định 500)
-    Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi
+    Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
     Khi hàng đợi vượt `06.queue.max-open` (mặc định 500)
     Thì vẫn tạo, cảnh báo quá tải (FR-06-032)
+
+  @US-06-027 @FR-06-027 @M @âm
+  Kịch bản: US-06-027 âm 2 · `DQ_FINDING` có `goldenId` không tồn tại hoặc không thuộc domain
+    Biết có `match_result` kết luận `POSSIBLE_MATCH` hoặc `CONFLICT`, hoặc xung đột thuộc tính quan trọng từ sống sót, hoặc bản ghi vàng mồ côi, hoặc PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (`DQ_FINDING`)
+    Khi `DQ_FINDING` có `goldenId` không tồn tại hoặc không thuộc domain
+    Thì hệ thống từ chối với ERR-06-050 (404)
+    Và người dùng thấy thông báo "Không có bản ghi vàng cho {nguồn}/{khóa}."
 
   @US-06-028 @FR-06-028 @M
   Kịch bản: US-06-028 dương · Liệt kê, nhận việc và phân công mục hàng đợi

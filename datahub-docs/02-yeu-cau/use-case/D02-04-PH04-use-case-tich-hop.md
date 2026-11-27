@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH04
 ten: Đặc tả use case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển PH-04, đội kiểm thử, hội đồng thẩm định
@@ -292,15 +292,15 @@ Luồng phụ dùng chung ở mục 7: tham số PH-04 và đóng băng thay đ�
 | UC-04-06 | UI-04-07 | API-04-033; PH-06, PH-07 |
 | UC-04-07 | UI-04-08, 09, 10 | API-04-022, 030 |
 | UC-04-08 | UI-04-11, 12 | API-04-040…043 |
-| UC-04-09 | UI-04-13 | API-04-044 |
+| UC-04-09 | UI-04-13 | API-04-044, 101, 102, 103 |
 | UC-04-10 | UI-04-04 (hộp gửi duyệt) | API-04-030, 050, 051 |
 | UC-04-11 | UI-04-14, 16 | API-04-025, 030, 052, 053 |
-| UC-04-12 | UI-04-15 | API-04-054, 056 |
+| UC-04-12 | UI-04-15 | API-04-054, 104, 105, 106, 056 |
 | UC-04-13 | UI-04-15 | API-04-055 |
 | UC-04-14, 15 | UI-04-02, 15 | API-04-060, 061 |
 | UC-04-16 | UI-04-01, 02 | API-04-014, 015, 016, 023 |
 | UC-04-17…19 | Không có (runtime) | Điểm vào của luồng qua APISIX; topic Kafka |
-| UC-04-20 | UI-04-18 | API-04-028 |
+| UC-04-20 | UI-04-18 | API-04-028, 097 |
 | UC-04-21 | UI-04-17 | API-04-070…074 |
 | UC-04-22 | UI-04-17 | API-04-073 |
 
@@ -363,7 +363,7 @@ Bus cũ phân quyền theo `Project`, `Group`, `Project_group.access_level` (LGC
 1. TA (Vũ Thị Hà) mở UI-04-21; hệ thống liệt kê không gian (API-04-001).
 2. TA chọn "Tạo không gian", nhập mã `so-tu-phap`, tên "Sở Tư pháp", đơn vị chủ quản, mô tả.
 3. Hệ thống kiểm tra mã duy nhất trong tenant, ghi không gian (API-04-002). Mã trùng: ERR-04-028.
-4. TA mở tab Thành viên, thêm Nguyễn Văn An mức `EDIT`, Trần Thị Bình mức `EDIT`, Lê Văn Cường mức `MAINTAIN`, nhóm PH-12 "Phòng HCTP" mức `VIEW` (API-04-004).
+4. TA mở tab Thành viên, thêm Nguyễn Văn An mức `EDIT`, Trần Thị Bình mức `EDIT`, Lê Văn Cường mức `MAINTAIN`, nhóm PH-12 "Phòng HCTP" mức `VIEW` (API-04-096).
 5. Hệ thống lưu, mở rộng nhóm thành người dùng lúc kiểm tra quyền, trả danh sách hiệu lực.
 
 **Luồng thay thế.**
@@ -394,7 +394,7 @@ sequenceDiagram
     INT->>INT: Kiểm tra mã duy nhất trong T68
     INT-->>UI: 201 (trùng thì 409 ERR-04-028)
     TA->>UI: Thêm An, Bình (EDIT), Cường (MAINTAIN), nhóm Phòng HCTP (VIEW)
-    UI->>INT: API-04-004
+    UI->>INT: API-04-096
     INT->>KC: Mở rộng nhóm thành người dùng
     KC-->>INT: Danh sách thành viên nhóm
     INT-->>UI: Danh sách hiệu lực, ghi kiểm toán thêm, bớt
@@ -919,7 +919,7 @@ Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại
 1. An mở UI-04-11, chọn chế độ `MOCK`, chọn bản tin mẫu "Khai sinh hợp lệ", thời gian chờ 30 giây, bật `captureBodies`.
 2. Hệ thống gửi API-04-040 (`Idempotency-Key`); máy chủ kiểm tra mức `DESIGN` (lỗi: ERR-04-009), kiểm tra hạn mức đồng thời của tenant (`04.test.max-concurrent` = 5, vượt: ERR-04-019), ghi lần chạy `QUEUED`, trả `202` và đường dẫn SSE.
 3. Sandbox nhận định nghĩa đúng băm, thay mọi điểm gọi ra ngoài bằng mô phỏng (theo trả lời mẫu của chặng hoặc mặc định 200 rỗng), chạy bản tin; trạng thái `RUNNING`.
-4. Trình thiết kế nhận sự kiện SSE (API-04-042): chặng sáng lần lượt theo vết, mỗi chặng có thời gian, trạng thái, trước và sau (đã che).
+4. Trình thiết kế nhận sự kiện SSE (API-04-099): chặng sáng lần lượt theo vết, mỗi chặng có thời gian, trạng thái, trước và sau (đã che).
 5. Sandbox chạy các khẳng định của lần chạy (mặc định `STATUS` = 200), kết thúc `PASSED` trong 1,8 giây.
 6. Hệ thống ghi kết quả gắn `definitionHash`, phát EVT-04-10; nút "Gửi duyệt" bật nếu đủ điều kiện BR-04-004 (tiếp UC-04-10).
 7. An bấm một chặng trên sơ đồ để xem trước, sau ở bảng dưới; bấm "So sánh với lần chạy trước" để thấy khác biệt.
@@ -1005,7 +1005,7 @@ Hình cho thấy kết quả chạy thử gắn với `definitionHash`: chỉ l�
 3. An thêm ca "KS-02 thiếu số định danh" với bản tin thiếu trường, khẳng định `STATUS` = 400, `ERROR_CODE` = ERR-04-101, `STEP_NOT_VISITED` "Gọi hộ tịch".
 4. An thêm ca "KS-03 NDXP lỗi" với trả lời mô phỏng 503 tại chặng "Gọi hộ tịch", khẳng định `DLQ_SENT` và `ENDPOINT_CALLED` lần thứ 3 (thử lại).
 5. An bấm "Chạy tất cả"; hệ thống tạo ba lần chạy (API-04-040 theo ca), bảng tổng hợp 3/3 đạt.
-6. Hệ thống lưu ca (API-04-044); điều kiện BR-04-004 giờ yêu cầu cả ba ca đạt trên băm hiện tại.
+6. Hệ thống lưu ca (API-04-101, 102); điều kiện BR-04-004 giờ yêu cầu cả ba ca đạt trên băm hiện tại.
 
 **Luồng thay thế.**
 
@@ -1030,7 +1030,7 @@ sequenceDiagram
     participant INT as dh-integration
     participant SB as dh-runtime-sandbox
     IE->>UI: Lưu ca KS-01, thêm KS-02, KS-03
-    UI->>INT: Lưu ca (API-04-044)
+    UI->>INT: Lưu ca (API-04-101, 102)
     IE->>UI: Chạy tất cả
     loop mỗi ca
         UI->>INT: API-04-040 theo ca
@@ -1229,9 +1229,9 @@ Sơ đồ trạng thái cho thấy chỉ có một đường vào `APPROVED` là
 **Luồng chính.**
 
 1. Cường chọn "Phát hành lên TEST"; hộp xác nhận hiện hồ sơ runtime suy ra (`core-native`), số bản sao, thay đổi so với bản đang chạy ở TEST.
-2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-t68` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
+2. Hệ thống gọi API-04-104 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-t68` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
 3. Argo CD đồng bộ; triển khai `SYNCING` rồi `SYNCED` khi runtime báo phiên bản v8 qua nhịp tim của đủ bản sao.
-4. Trình duyệt nhận SSE tiến trình (API-04-054); thẻ TEST "v8 · Đồng bộ · Khỏe".
+4. Trình duyệt nhận SSE tiến trình (API-04-106); thẻ TEST "v8 · Đồng bộ · Khỏe".
 5. Nếu luồng có `rest`, PH-02 nhận EVT-04-07 (triển khai `SYNCED`) để cập nhật đặc tả API ở môi trường tương ứng.
 6. Sau khi kiểm thử ở TEST xong, Cường chọn "Nâng lên PROD" (API-04-056); máy chủ kiểm tra v8 đã `SYNCED`, `HEALTHY` ở TEST (và đủ `04.env.soak-minutes.STAGING` nếu tỉnh dùng STAGING), commit nhánh `env/prod`.
 7. PROD đồng bộ xong; v7 thành `SUPERSEDED`, luồng `ACTIVE`; EVT-04-07 phát cho PH-13, PH-15.
@@ -1254,7 +1254,7 @@ Sơ đồ trạng thái cho thấy chỉ có một đường vào `APPROVED` là
 
 **Quy tắc áp dụng.** BR-04-012, 014, 018, 019, 022. Phi chức năng: NFR-04-009. Tần suất: 10–60 lần mỗi tháng mỗi tenant (GĐ).
 
-**Màn hình, API.** UI-04-14, 15; API-04-054, 056.
+**Màn hình, API.** UI-04-14, 15; API-04-054, 104, 105, 106, 056.
 :::
 
 ```{.mermaid caption="Trình tự nâng phiên bản lên PROD qua GitOps"}
@@ -1814,7 +1814,7 @@ Hình cho thấy kiểm toán hai phía: pgaudit ở CSDL nguồn và bản ghi 
 
 **Quy tắc áp dụng.** BR-04-003, 014. Tần suất: theo đợt di trú; ước 30–120 chương trình mỗi tỉnh (GĐ).
 
-**Màn hình, API.** UI-04-18, 03; API-04-028.
+**Màn hình, API.** UI-04-18, 03; API-04-028, 097.
 :::
 
 ```{.mermaid caption="Trình tự chuyển gói Camel XML của Bus cũ"}
@@ -1860,8 +1860,8 @@ Hình cho thấy mật khẩu cũ bị gỡ ngay ở bước chuyển đổi tr�
 **Luồng chính.**
 
 1. An mở UI-04-17, lọc nhóm "Tệp", xem chi tiết `sftp`: mô tả, cú pháp URI, thuộc tính theo nhóm, mức native `SUPPORTED`, hồ sơ `files-native`, trạng thái "Được phép".
-2. An tìm `smb`, thấy "Cấm, lý do: chưa có trong chính sách nền"; bấm "Đề xuất cho phép" kèm lý do nghiệp vụ (API-04-074).
-3. Đỗ Quang Khải (PA) xem đề xuất, tham khảo SO, chọn "Cần duyệt từng luồng" (API-04-072); lần lưu tăng `policyVersion`, phiên bản catalog và chính sách hiện hành xem ở API-04-073.
+2. An tìm `smb`, thấy "Cấm, lý do: chưa có trong chính sách nền"; bấm "Đề xuất cho phép" kèm lý do nghiệp vụ (API-04-110).
+3. Đỗ Quang Khải (PA) xem đề xuất, tham khảo SO, chọn "Cần duyệt từng luồng" (API-04-109); lần lưu tăng `policyVersion`, phiên bản catalog và chính sách hiện hành xem ở API-04-073.
 4. Hệ thống ghi kiểm toán, cập nhật chỉ mục catalog theo tenant.
 
 **Luồng thay thế.**
@@ -1887,11 +1887,11 @@ sequenceDiagram
     participant INT as dh-integration
     actor PA as Đỗ Quang Khải
     actor SO as Hoàng Minh Đức
-    IE->>INT: Đề xuất cho phép smb (API-04-074)
+    IE->>INT: Đề xuất cho phép smb (API-04-110)
     INT-)PA: Đề xuất mới
     PA->>SO: Tham khảo rủi ro
     SO-->>PA: Ý kiến
-    PA->>INT: Cần duyệt từng luồng (API-04-072)
+    PA->>INT: Cần duyệt từng luồng (API-04-109)
     INT->>INT: Tăng policyVersion, cập nhật chỉ mục catalog
     INT-->>IE: Trạng thái mới ở bảng thành phần (API-04-070)
 ```
@@ -2087,3 +2087,4 @@ Theo chỉ đạo ngày 25/11/2026, câu hỏi thiếu dữ liệu thật đư�
 | 0.1 | 25/11/2026 | Bản đầu: 22 use case, luồng phụ, ma trận BR, câu hỏi mở | Nhóm phân tích |
 | 0.2 | 26/11/2026 | Chuẩn kết hợp K-TRINH-BAY, K-UC: tóm tắt, chương Giới thiệu đủ mục; sơ đồ tổng hai hình; bảng UC, REQ, quy trình; 22 use case thành khối đặc tả 15 mục, giữ mọi bước, nhánh, mã lỗi của bản 0.1; ngoại lệ có HTTP và câu thông báo (D03-06-PH04 §5.3, D03-04-PH04 §6); mọi use case có sơ đồ trình tự; mục 8.4 Đề nghị đồng bộ | Nhóm viết tài liệu (Claude) |
 | 0.3 | 27/11/2026 | Đồng bộ chéo cuối: tiêu đề dh-dlq-error-code, mức phân loại Hạn chế | Nhóm viết tài liệu (Claude) |
+| 0.4 | 27/11/2026 | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8) | Nhóm viết tài liệu (Claude) |

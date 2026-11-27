@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH07
 ten: Đặc tả chức năng phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Chủ đầu tư, nhóm phân tích nghiệp vụ, kiến trúc sư, đội phát triển dh-data, đội kiểm thử, đội di trú dữ liệu
@@ -4338,7 +4338,7 @@ Danh mục mã hành động kiểm toán của PH-07 gồm: `RDM_CATALOG_CREATE
 
 **Kích hoạt.** TA mở tab "Quyền khai thác" ở UI-07-02 của danh mục `RESTRICTED`, thêm hoặc bỏ HTTT rồi bấm "Lưu".
 
-**Đầu vào.** Đầu vào của API-07-075 PUT là mảng `grants` (0…500 phần tử), mỗi phần tử gồm `memberSystemId` (T-ID, HTTT `ACTIVE` của tenant), `scopes` (tập con khác rỗng của `rdm.read`, `rdm.query`), `expiresAt` (T-TS, tùy chọn, sau thời điểm hiện tại); kèm `If-Match` và `reason` (10…1.000 ký tự).
+**Đầu vào.** Đầu vào của API-07-079 PUT là mảng `grants` (0…500 phần tử), mỗi phần tử gồm `memberSystemId` (T-ID, HTTT `ACTIVE` của tenant), `scopes` (tập con khác rỗng của `rdm.read`, `rdm.query`), `expiresAt` (T-TS, tùy chọn, sau thời điểm hiện tại); kèm `If-Match` và `reason` (10…1.000 ký tự).
 
 **Luồng xử lý chính.**
 
@@ -4358,7 +4358,7 @@ Danh mục mã hành động kiểm toán của PH-07 gồm: `RDM_CATALOG_CREATE
 - Tenant tỉnh thay danh sách của `COMMON` cho HTTT quốc gia: ERR-07-003 (403). "Danh mục này chỉ đọc với tỉnh của bạn. Danh mục quốc gia chỉ cập nhật qua đồng bộ; danh mục dùng chung chỉ quản trị nền tảng sửa. Muốn bổ sung bản ghi địa phương, hãy tạo danh mục mở rộng."
 - ETag không khớp: ERR-07-018 (412). "Dữ liệu đã được người khác cập nhật trong lúc bạn đang sửa. Xem khác biệt rồi chọn "Ghi đè" hoặc "Tải lại"."
 
-**Đầu ra.** API-07-075 GET: danh sách cấp quyền (`memberSystemId`, tên HTTT tra PH-01, `scopes`, `grantedBy`, `grantedAt`, `expiresAt`). API-07-075 PUT: danh sách mới kèm ETag.
+**Đầu ra.** API-07-075 GET: danh sách cấp quyền (`memberSystemId`, tên HTTT tra PH-01, `scopes`, `grantedBy`, `grantedAt`, `expiresAt`). API-07-079 PUT: danh sách mới kèm ETag.
 
 **Kết quả.** Chỉ HTTT được cấp quyền mới khai thác được danh mục hạn chế; các HTTT khác nhận lỗi rõ ràng.
 
@@ -4370,7 +4370,7 @@ Danh mục mã hành động kiểm toán của PH-07 gồm: `RDM_CATALOG_CREATE
 
 **Quy tắc nghiệp vụ.** BR-07-019.
 
-**Màn hình, API.** UI-07-02; API-07-075.
+**Màn hình, API.** UI-07-02; API-07-075, 079.
 :::
 
 #### FR-07-053 · Tham số PH-07 theo tenant
@@ -4796,3 +4796,4 @@ PH-07 được nghiệm thu khi đạt đủ các tiêu chí dưới đây. Mỗ
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất token, route với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn kết hợp 17 mục cho mọi FR; thêm danh sách chức năng, mục tiêu đo được, vị trí kiến trúc, luồng chính, sơ đồ nhóm và trình tự, thông báo theo mã lỗi, giao diện tiêu biểu; sắp chương theo K-FRS |
 | 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bỏ chữ giả định scope provision, dòng tích hợp PH-08 và PH-14; Chốt câu hỏi mở đợt đồng bộ: Q421, Q442, Q443 |
+| 0.5 | 2026-11-27 | Nhóm phân hệ PH-07 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, dẫn chiếu đã đổi theo ngữ cảnh |

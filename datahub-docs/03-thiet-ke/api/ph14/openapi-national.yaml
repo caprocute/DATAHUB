@@ -2891,7 +2891,7 @@ paths:
       - oauth2User: []
       - oauth2Service:
         - national.sync.trigger
-      description: Đợt 3 (PH-06). Thiếu ánh xạ ở PH-07 ERR-14-125; PH-09 chặn ERR-14-126.
+      description: Đợt 3 (PH-06). Thiếu ánh xạ ở PH-07 ERR-14-125; PH-09 chặn ERR-14-126; PH-09 không trả lời thì không gửi, ERR-14-132 (503).
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2929,12 +2929,15 @@ paths:
           $ref: '#/components/responses/InternalError'
         '502':
           $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
       x-datahub-errors:
       - ERR-14-003
       - ERR-14-026
       - ERR-14-027
       - ERR-14-125
       - ERR-14-126
+      - ERR-14-132
   /api/national/v1/sync/runs/{runId}:retry:
     post:
       tags:
@@ -2999,7 +3002,8 @@ paths:
       - FR-14-045
       x-datahub-permission:
         permission: PERM-14-sync
-      description: Đợt 3. Lần công bố đầu của một tập cần duyệt bốn mắt (BR-14-022). PH-09 chặn trường không được công bố (ERR-14-126).
+      description: Đợt 3. Lần công bố đầu của một tập cần duyệt bốn mắt (BR-14-022). PH-09 chặn trường không được công bố (ERR-14-126); PH-09
+        không trả lời thì không công bố, ERR-14-132 (503).
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -3035,11 +3039,14 @@ paths:
           $ref: '#/components/responses/InternalError'
         '502':
           $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
       x-datahub-errors:
       - ERR-14-003
       - ERR-14-026
       - ERR-14-027
       - ERR-14-126
+      - ERR-14-132
   /api/national/v1/open-datasets/{datasetCode}:withdraw:
     post:
       tags:

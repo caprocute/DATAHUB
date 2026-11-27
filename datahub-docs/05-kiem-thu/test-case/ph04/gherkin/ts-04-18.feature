@@ -39,7 +39,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-112 @P1 @Âm @Khả @dụng
   Kịch bản: TC-04-112 Một bản sao không xác nhận, gửi lại
-    # Truy vết: FR-04-050 · API-04-061 · ERR-04-024.
+    # Truy vết: FR-04-050 · API-04-061, 107, 108 · ERR-04-024.
     Biết chaos Mesh cắt mạng Kafka của bản sao thứ hai.
     Khi TO gửi `PAUSE`.
     Và sau 30 giây đọc lệnh.

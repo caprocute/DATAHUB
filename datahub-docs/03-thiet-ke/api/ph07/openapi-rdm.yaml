@@ -3273,7 +3273,7 @@ paths:
       description: |
         Thay thế toàn bộ danh sách (PUT, cần `If-Match` theo ETag danh sách). HTTT bị gỡ mất quyền
         ngay ở lượt gọi kế tiếp (bộ đệm quyết định quyền ≤ 60 giây). Mỗi thay đổi ghi kiểm toán.
-      x-datahub-id: API-07-075
+      x-datahub-id: API-07-079
       x-datahub-fr: [FR-07-052]
       x-datahub-permission:
         permission: PERM-07-grant

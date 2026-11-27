@@ -171,7 +171,7 @@ Tính năng: PH-05 · Bộ điều hợp và kết nối
 
   @US-05-009 @FR-05-009 @M
   Kịch bản: US-05-009 dương · Cấp và thu hồi quyền sử dụng kết nối
-    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
     Khi người dùng bấm "+ Cấp" ở tab Cấp sử dụng của UI-05-02, hoặc ở bước 5 của trình hướng dẫn tạo kết nối
     Thì hệ thống trả `201` cấp mới hoặc `200` cấp sẵn có; thu hồi `204`, kèm danh sách luồng bị ảnh hưởng
     Và có bản ghi cấp sử dụng; trình thiết kế của không gian thấy kết nối (FR-04-016)
@@ -180,15 +180,15 @@ Tính năng: PH-05 · Bộ điều hợp và kết nối
 
   @US-05-009 @FR-05-009 @M @âm
   Kịch bản: US-05-009 âm 1 · Không gian hoặc luồng không tồn tại
-    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
     Khi không gian hoặc luồng không tồn tại
     Thì hệ thống từ chối với ERR-05-033 (422)
 
   @US-05-009 @FR-05-009 @M @âm
   Kịch bản: US-05-009 âm 2 · Phạm vi không hợp lệ với loại kết nối
-    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04
+    Biết kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383)
     Khi phạm vi không hợp lệ với loại kết nối
-    Thì hệ thống từ chối với ERR-05-003 (400)
+    Thì hệ thống từ chối với ERR-05-003, ERR-05-003 (400)
     Và người dùng thấy thông báo "Kết nối CSDL cho luồng chỉ cấp được cho từng luồng."
 
   @US-05-010 @FR-05-010 @M

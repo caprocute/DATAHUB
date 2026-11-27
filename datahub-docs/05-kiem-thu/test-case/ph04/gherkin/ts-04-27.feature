@@ -23,7 +23,7 @@ Tính năng: TS-04-27 · Tham số PH-04 và đóng băng thay đổi
 
   @TC-04-155 @P2 @Dương @Âm
   Kịch bản: TC-04-155 Biến môi trường không chứa bí mật
-    # Truy vết: FR-04-084 · API-04-090 · ERR-04-010.
+    # Truy vết: FR-04-084 · API-04-113 · ERR-04-010.
     Biết U-T68-TA.
     Khi `PUT /settings/env-vars` với `ma-co-quan` có giá trị khác nhau cho TEST, STAGING, PROD.
     Và `PUT` với `api-token` có giá trị dạng JWT.

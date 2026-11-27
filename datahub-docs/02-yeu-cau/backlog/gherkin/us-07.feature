@@ -467,7 +467,7 @@ Tính năng: PH-07 · Danh mục dùng chung
   Kịch bản: US-07-023 dương · Nhập bản ghi qua API theo lô, idempotent
     Biết danh mục không `NATIONAL`, không `RETIRED`; có bản nháp `DRAFT`, hoặc `createDraftIfMissing = true`
     Khi HTTT nguồn hoặc người dùng gọi API-07-031 với lô bản ghi và `Idempotency-Key`
-    Thì hệ thống trả `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp; `207 Multi-Status` không dùng, kết quả từng thao tác nằm trong thân
+    Thì hệ thống trả `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp …
     Và với `atomic = true` (mặc định): tất cả thao tác được áp hoặc không thao tác nào; với `atomic = false`: thao tác hợp lệ được áp, thao tác lỗi được báo
 
   @US-07-023 @FR-07-023 @M @âm

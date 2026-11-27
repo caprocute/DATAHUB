@@ -137,7 +137,7 @@ Tính năng: PH-09 · Quyền riêng tư
   Kịch bản: US-09-007 dương · Chặn dữ liệu bí mật nhà nước đi qua Datahub
     Biết nhãn `STATE_SECRET` nạp ở FR-09-001; danh mục nhãn của tenant do cán bộ bảo vệ bí mật nhà nước cung cấp (Q09-06)
     Khi gán nhãn ở UI-09-03; bản tin vào chặng `schema` của PH-04 hoặc PH-14 gọi kiểm tra
-    Thì kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết
+    Thì kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết; với `egressScope` là `OUT_OF_PROVINCE` thêm `egressBlocked`, `egressBlockedFields[]`, p95 ≤ 200 ms (NFR-09-027)
     Và nhãn có hiệu lực trong chỉ mục phân loại ≤ 60 giây
     Và sự kiện được phát: EVT-09-14
     Và nhật ký kiểm toán ghi nhận thao tác

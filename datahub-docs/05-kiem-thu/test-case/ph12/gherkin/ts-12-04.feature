@@ -24,6 +24,15 @@ Tính năng: TS-12-04 · Đặt lại mật khẩu, tác vụ định kỳ và �
     Khi chạy tác vụ ở ngày 45; chạy lại ở ngày 46.
     Thì VW 46 ngày và PA 31 ngày (ngưỡng quản trị 30) thành `DISABLED` không quá 24 giờ sau ngưỡng; U-T68-OLD còn `ACTIVE` ở ngày 44; báo cáo lượt chạy ở UI-12-15; chạy lại không đổi thêm.
 
+  @TC-12-130 @P1 @Dương @Biên @Bảo
+  Kịch bản: TC-12-130 Tự vô hiệu TA không dùng quá ngưỡng khi tenant còn hai TA
+    # Truy vết: FR-12-008 · UC-12-07 · UI-12-15 · BR-12-020 · BR-12-033 · ERR-12-046 · CMP-LAW-08
+    Biết T68 có đúng hai TA hiệu lực; TA2 có đăng nhập cuối cách đây 31 ngày (ngưỡng quản trị 30), TA1 vừa đăng nhập.
+    Khi chạy tác vụ tự vô hiệu; kiểm trạng thái TA2 và thư cảnh báo bảy ngày trước ngưỡng.
+    Và kiểm cảnh báo khẩn và việc bổ sung TA sau lượt chạy.
+    Và cập nhật bằng SQL trực tiếp TA1 sang `DISABLED` với lý do `MANUAL` (kiểm DB).
+    Thì bước 1 TA2 thành `DISABLED` (lý do `INACTIVE_30D_ADMIN`) không bị ERR-12-046 chặn dù tenant xuống còn một TA; hệ thống đã gửi trước đó cảnh báo bảy ngày tới SO và PA nêu việc vô hiệu làm tenant dưới hai TA; bước 2 SO và PA nhận cảnh báo khẩn, PA có việc "Bổ sung quản trị tỉnh", kiểm toán ghi mã lý do `TA_BELOW_MIN`, chỉ số `iam_inactive_disabled_total` tăng; bước 3 CSDL từ chối `P1246` (vô hiệu thủ công không có ngoại lệ).
+
   @TC-12-021 @P2 @Biên
   Kịch bản: TC-12-021 Tạm ngừng client không gọi 90 ngày
     # Truy vết: FR-12-008 · BR-12-020 · UC-12-07 · API-12-060

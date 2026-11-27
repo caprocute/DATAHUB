@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH04
 ten: Thiết kế giao diện màn hình phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện dh-console, thiết kế UX/UI, phân tích nghiệp vụ, kiểm thử, kiến trúc sư
@@ -166,7 +166,7 @@ Tab đang mở, phiên bản đang xem, route đang mở trong tệp, chặng đ
 
 ### 2.7. Tác vụ dài chạy nền
 
-Chạy thử, kiểm tra mức gửi duyệt, phát hành (chờ đồng bộ), nhập XML hệ cũ có thể vượt 3 giây. Giao diện hiện tiến độ, cho rời màn, đưa tác vụ vào `CMP-BackgroundTaskTray` và báo khi xong qua trung tâm thông báo (FR-00-054, FR-00-060). Kết quả chạy thử cập nhật trực tiếp qua luồng sự kiện máy chủ (SSE, API-04-042 `Accept: text/event-stream`); tiến trình triển khai qua SSE của API-04-054.
+Chạy thử, kiểm tra mức gửi duyệt, phát hành (chờ đồng bộ), nhập XML hệ cũ có thể vượt 3 giây. Giao diện hiện tiến độ, cho rời màn, đưa tác vụ vào `CMP-BackgroundTaskTray` và báo khi xong qua trung tâm thông báo (FR-00-054, FR-00-060). Kết quả chạy thử cập nhật trực tiếp qua luồng sự kiện máy chủ (SSE, API-04-099 `Accept: text/event-stream`); tiến trình triển khai qua SSE của API-04-106.
 
 ### 2.8. Bàn phím trước, chuột sau
 
@@ -2043,7 +2043,7 @@ Bảng các lần chạy với chế độ MOCK, SANDBOX_LIVE, SIMULATED, cờ d
 
 **Quyền.** Xem `PERM-04-read`; soạn, chạy `PERM-04-update` + mức `EDIT`.
 
-**API.** API-04-044 (danh sách, tạo, sửa, xóa), 040 (chạy ca).
+**API.** API-04-044 (danh sách), 101 (tạo), 102 (sửa), 103 (xóa), 040 (chạy ca).
 
 **Trạng thái màn.** Rỗng "Chưa có ca kiểm thử. Lưu một lần chạy đạt thành ca để bắt đầu."; đang tải skeleton 4 dòng; lỗi ST-05; chỉ đọc khi không có quyền.
 
@@ -2160,7 +2160,7 @@ Nhóm hộp và drawer của màn này đưa phiên bản vào vận hành thậ
 
 **Quyền.** Theo mục 20.3 và chương 28 (`publish`, `promote`, `operate`, `emergency-stop`, `delete`).
 
-**API.** API-04-054 (triển khai, SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển).
+**API.** API-04-054 (danh sách triển khai), 104 (phát hành), 105 (chi tiết), 106 (SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển), 107 (trạng thái lệnh), 108 (gửi lại lệnh).
 
 **Trạng thái đối tượng.** Triển khai `PENDING`, `SYNCING`, `SYNCED`, `OUT_OF_SYNC`, `FAILED`; lệnh `ISSUED`…`RECONCILED`, `PARTIAL`, `REJECTED` (mục 5.1).
 
@@ -2189,7 +2189,7 @@ Nhóm hộp và drawer của màn này đưa phiên bản vào vận hành thậ
 
 ### 20.2. Theo dõi triển khai
 
-Sau khi gửi, drawer theo dõi hiện các bước dạng `CMP-Steps` dọc, cập nhật qua SSE của API-04-054:
+Sau khi gửi, drawer theo dõi hiện các bước dạng `CMP-Steps` dọc, cập nhật qua SSE của API-04-106:
 
 | Bước | Nội dung hiển thị | Lỗi |
 |---|---|---|
@@ -2374,7 +2374,7 @@ FR-04-080, 081. PTN-08: cây trái là nhóm nghiệp vụ hoặc loại (compon
 |---|---|---|
 | Đổi "Được phép" | PA | Hộp lý do ≥ 10 ký tự; tạo yêu cầu SO duyệt; luồng đang dùng thành phần bị cấm nhận ERR-04-011 ở lần kiểm tra sau |
 | Sửa bản dịch, nhóm nghiệp vụ | PA | Ghi `palette-groups.json`, bản dịch; áp ở lần tải catalog sau |
-| "Đề xuất thành phần mới", "Đề xuất cho phép" | Mọi người | Hộp tên, lý do, luồng cần dùng; tạo đề xuất (API-04-074) |
+| "Đề xuất thành phần mới", "Đề xuất cho phép" | Mọi người | Hộp tên, lý do, luồng cần dùng; tạo đề xuất (API-04-110) |
 | Quyết định đề xuất | PA | Chấp nhận hoặc từ chối kèm ý kiến |
 
 : UI-04-17 · Hành động
@@ -2413,7 +2413,7 @@ Màn nhập phục vụ di trú từ LGSP cũ: chuyển XML Camel của Bus, Too
 
 **Quyền.** `PERM-04-create` + mức `EDIT` ở không gian đích.
 
-**API.** API-04-028 (tạo tác vụ, đọc kết quả), 011 (tạo luồng), PH-05 (chọn kết nối).
+**API.** API-04-028 (tạo tác vụ), 097 (đọc kết quả), 011 (tạo luồng), PH-05 (chọn kết nối).
 
 **Trạng thái màn.** Mục 23.4.
 
@@ -2508,7 +2508,7 @@ FR-04-025. Lưới thẻ: mã, tên, sơ đồ thu nhỏ (ảnh minh họa của
 | Bộ lọc | Nhóm (`CMP-SegmentedControl`), loại (`ROUTE`, `KAMELET`, `PIPE`), phạm vi, ô tìm | Ghi URL |
 | Drawer chi tiết | Sơ đồ chỉ đọc, bảng tham số `${tpl.*}` (tên, kiểu, bắt buộc, mô tả), YAML, lịch sử phiên bản khuôn | API-04-081 |
 | "Dùng khuôn này" | Mở UI-04-03 bước 2 với `khuon={mã}` | Nút chính |
-| "Ngừng dùng" | TA với khuôn tỉnh; PA với khuôn nền; lý do bắt buộc | API-04-082 `:deprecate` |
+| "Ngừng dùng" | TA với khuôn tỉnh; PA với khuôn nền; lý do bắt buộc | API-04-112 `:deprecate` |
 | "Khuôn của tỉnh" | Chọn một phiên bản `APPROVED`, đặt mã `tpl-…`, khai tham số | Hoặc "Lưu làm khuôn mẫu" ở UI-04-02 |
 
 : UI-04-19 · Thẻ, chi tiết và hành động
@@ -2540,7 +2540,7 @@ Lưới thẻ tám khuôn: bảy khuôn nền tảng và một khuôn của tỉ
 
 **Quyền.** Xem `PERM-04-read`; sửa `PERM-04-admin`.
 
-**API.** API-04-090.
+**API.** API-04-090, 113.
 
 **Trạng thái màn.** Theo màn tham số PH-18; giá trị ngoài miền báo tại ô.
 
@@ -2623,7 +2623,7 @@ FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không
 | Hành động | Điều kiện | Kết quả, thông điệp |
 |---|---|---|
 | Tạo, sửa | `PERM-04-admin` | "Đã lưu không gian {tên}." |
-| Lưu thành viên | `PERM-04-admin` hoặc `MAINTAIN` | Thay cả danh sách (API-04-004 `PUT`), ghi kiểm toán |
+| Lưu thành viên | `PERM-04-admin` hoặc `MAINTAIN` | Thay cả danh sách (API-04-096 `PUT`), ghi kiểm toán |
 | Lưu trữ | Không còn luồng | Hộp xác nhận gõ lại mã; còn luồng thì ERR-04-017 kèm danh sách |
 | Cấp kết nối | Ở PH-05 | Tab chỉ đọc, nút "Mở PH-05" |
 
@@ -2669,7 +2669,7 @@ Dải thông tin nói rõ giới hạn đang bật; bảng không gian bên trá
 - Trạng thái mô hình soạn: kho Zustand riêng cho mỗi phiên bản đang mở (mô hình, vùng chọn, ngăn hoàn tác, trạng thái lưu); không đặt mô hình vào TanStack Query để tránh vẽ lại toàn cục.
 - Trạng thái giao diện cục bộ (kích thước ngăn, thu gọn, thu phóng): `localStorage` có tiền tố `dh.int.`, bọc try/catch.
 - Bản nháp cục bộ: IndexedDB (mục 10.16.2).
-- Sự kiện trực tiếp: SSE của API-04-042 (một lần chạy thử) và API-04-054 (một lần triển khai), mở khi cần, đóng khi xong, tự nối lại có lùi dần; người đang mở và `catalogVersion` lấy qua nhịp API-04-034.
+- Sự kiện trực tiếp: SSE của API-04-099 (một lần chạy thử) và API-04-106 (một lần triển khai), mở khi cần, đóng khi xong, tự nối lại có lùi dần; người đang mở và `catalogVersion` lấy qua nhịp API-04-034.
 
 ### 27.3. Thành phần design system mới cần bổ sung vào D03-05-04
 
@@ -2768,3 +2768,4 @@ Bản 0.2 không đổi mã đã có và không tạo mã mới ngoài các mụ
 |---|---|---|---|
 | 0.1 | 2026-11-25 | Nhóm phân hệ PH-04 | Bản đầu: 21 màn, UI-04-04 siêu chi tiết |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-04 | Chuẩn kết hợp: thêm Giới thiệu đủ mục (người đọc, thuật ngữ, cấu trúc); khối đặc tả đầu mỗi màn; viết đủ UI-04-09, 16, 17, 18, 19, 21; §5.3 thêm câu cho 16 mã lỗi; ảnh hi-fi cho cả 21 màn (`ph04/hifi`); giữ nguyên mọi nội dung của bản 0.1, nhất là UI-04-04 |
+| 0.3 | 2026-11-27 | Nhóm viết tài liệu (Claude) | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8) |

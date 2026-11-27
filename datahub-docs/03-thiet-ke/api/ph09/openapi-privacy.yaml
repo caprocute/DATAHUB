@@ -14044,7 +14044,7 @@ paths:
         permission: scope privacy:decide
       description: 'Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope`
         là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh;
-        p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026).'
+        p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026). `egressScope` ngoài `NONE`, `OUT_OF_PROVINCE` trả ERR-09-106 (400).'
       security:
       - oauth2Machine:
         - privacy:decide

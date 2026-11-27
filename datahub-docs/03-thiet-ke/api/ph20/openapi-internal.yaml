@@ -33,7 +33,7 @@ paths:
       tags:
       - Registry tenant
       operationId: getTenants162
-      summary: Registry tenant (`?status=ACTIVE` cho tác vụ nền)
+      summary: Registry tenant (`?status=ACTIVE` cho tác vụ nền
       description: Registry cho phân hệ khác; `?status=ACTIVE` cho tác vụ nền. Kết quả được đệm tối đa `20.registry.cache-seconds` giây.
       x-datahub-id: API-20-162
       x-datahub-fr:

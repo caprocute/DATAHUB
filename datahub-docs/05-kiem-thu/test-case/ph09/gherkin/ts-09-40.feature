@@ -51,3 +51,13 @@ Tính năng: TS-09-40 · Hiệu năng, quy mô và quan sát
     Biết T95 đồng hồ giả; 500 yêu cầu mô phỏng với phân bố xử lý giả định.
     Khi chạy mô phỏng; `GET /subject-request-reports`.
     Thì tỷ lệ báo cáo khớp số tính độc lập; nhắc trước 3 ngày làm việc đạt 100 %.
+
+  @TC-09-158 @P1 @Hiệu @năng
+  Kịch bản: TC-09-158 Kiểm cấm gửi ra ngoài tỉnh và ropaActivityId p95 ≤ 200 ms
+    # Truy vết: NFR-09-027 · BR-09-063 · API-09-231, 227
+    # Mục đích: Đo NFR-09-027: `classification:check` với `egressScope = OUT_OF_PROVINCE` (lô 200 trường) và `purpose:decide` khi trả `ropaActivityId`.
+    Biết T97; 3 bản sao data plane; hợp đồng 200 trường, 40 trường bật `noEgress`; 3.000 chấp thuận, 500 hợp đồng thuộc hoạt động `ACTIVE`; S-T90-PEP-04 tương đương ở T97.
+    Khi k6 1.000 lượt mỗi giây 15 phút `classification:check` 200 trường với `egressScope = OUT_OF_PROVINCE`.
+    Và k6 1.000 lượt mỗi giây 15 phút `purpose:decide` cho hợp đồng có `ropaActivityId`.
+    Và lặp hai bước ở 3.000 lượt mỗi giây 10 phút.
+    Thì bước 1 và 2: p95 ≤ 200 ms, `egressBlockedFields` đúng 40 trường ở mọi lượt, 0 lỗi `5xx`. Bước 3: p95 vẫn ≤ 200 ms. Kiểm bằng cách so kết quả với kết quả tính độc lập.

@@ -316,14 +316,37 @@ def ep(method, path, aid, op, tag, summary, fr, perm, ws=None, params=(), body=N
     E.append(dict(method=method, path=path, aid=aid, op=op, tag=tag, summary=summary, fr=fr, perm=perm, ws=ws, params=list(params),
                   body=body, ok=ok, errs=list(errs), idem=idem, desc=desc, etag_out=etag_out, sse=sse))
 
+# Mã cũ dùng chung nhiều operation (trước 27/11/2026) và mã mới của operation tách ra; phục vụ bảng ánh xạ trong D03-04-PH04.
+MA_CU = {
+    "API-04-095": "API-04-002",
+    "API-04-096": "API-04-004",
+    "API-04-097": "API-04-028",
+    "API-04-098": "API-04-034",
+    "API-04-099": "API-04-042",
+    "API-04-100": "API-04-042",
+    "API-04-101": "API-04-044",
+    "API-04-102": "API-04-044",
+    "API-04-103": "API-04-044",
+    "API-04-104": "API-04-054",
+    "API-04-105": "API-04-054",
+    "API-04-106": "API-04-054",
+    "API-04-107": "API-04-061",
+    "API-04-108": "API-04-061",
+    "API-04-109": "API-04-072",
+    "API-04-110": "API-04-074",
+    "API-04-111": "API-04-074",
+    "API-04-112": "API-04-082",
+    "API-04-113": "API-04-090",
+}
+
 F, V = "FlowCodePath", "VersionNoPath"
 # ---- Workspace
 ep("get", "/workspaces", "API-04-001", "listWorkspaces", "Không gian làm việc", "Danh sách không gian làm việc", ["FR-04-007"], "PERM-04-read", ok=(200, "WorkspaceList"))
 ep("post", "/workspaces", "API-04-002", "createWorkspace", "Không gian làm việc", "Tạo không gian làm việc", ["FR-04-007"], "PERM-04-admin", body="WorkspaceCreate", ok=(201, "Workspace"), errs=["Conflict"], idem=True, desc="Mã trùng trả ERR-04-028.")
-ep("patch", "/workspaces/{workspaceCode}", "API-04-002", "updateWorkspace", "Không gian làm việc", "Sửa không gian làm việc", ["FR-04-007"], "PERM-04-admin", ws="MAINTAIN", params=["WorkspacePath", "IfMatch"], body="WorkspaceUpdate", ok=(200, "Workspace"), errs=["NotFound", "PreconditionFailed", "PreconditionRequired"])
+ep("patch", "/workspaces/{workspaceCode}", "API-04-095", "updateWorkspace", "Không gian làm việc", "Sửa không gian làm việc", ["FR-04-007"], "PERM-04-admin", ws="MAINTAIN", params=["WorkspacePath", "IfMatch"], body="WorkspaceUpdate", ok=(200, "Workspace"), errs=["NotFound", "PreconditionFailed", "PreconditionRequired"])
 ep("post", "/workspaces/{workspaceCode}:archive", "API-04-003", "archiveWorkspace", "Không gian làm việc", "Lưu trữ không gian làm việc", ["FR-04-007"], "PERM-04-admin", params=["WorkspacePath", "IfMatch"], ok=(200, "Workspace"), errs=["NotFound", "Conflict", "PreconditionFailed"], desc="Không gian còn luồng chưa gỡ vẫn lưu trữ được (ẩn khỏi ô chọn khi tạo luồng). Xóa hẳn không có API; xóa khi còn luồng trả ERR-04-017.")
 ep("get", "/workspaces/{workspaceCode}/members", "API-04-004", "listWorkspaceMembers", "Không gian làm việc", "Danh sách thành viên", ["FR-04-007"], "PERM-04-read", ws="VIEW", params=["WorkspacePath"], ok=(200, "WorkspaceMembers"), errs=["NotFound"])
-ep("put", "/workspaces/{workspaceCode}/members", "API-04-004", "replaceWorkspaceMembers", "Không gian làm việc", "Thay danh sách thành viên", ["FR-04-007"], "PERM-04-admin", ws="MAINTAIN", params=["WorkspacePath", "IfMatch"], body="WorkspaceMembers", ok=(200, "WorkspaceMembers"), errs=["NotFound", "PreconditionFailed", "PreconditionRequired"], desc="TA hoặc thành viên mức MAINTAIN. Kiểm toán ghi danh sách thêm, bớt.")
+ep("put", "/workspaces/{workspaceCode}/members", "API-04-096", "replaceWorkspaceMembers", "Không gian làm việc", "Thay danh sách thành viên", ["FR-04-007"], "PERM-04-admin", ws="MAINTAIN", params=["WorkspacePath", "IfMatch"], body="WorkspaceMembers", ok=(200, "WorkspaceMembers"), errs=["NotFound", "PreconditionFailed", "PreconditionRequired"], desc="TA hoặc thành viên mức MAINTAIN. Kiểm toán ghi danh sách thêm, bớt.")
 # ---- Flow
 ep("get", "/flows", "API-04-010", "listFlows", "Luồng", "Danh sách luồng", ["FR-04-001"], "PERM-04-read",
    params=[{"name": "q", "in": "query", "schema": STR(100, minLength=2), "description": "Tìm không dấu trên mã, tên, mô tả."},
@@ -374,10 +397,10 @@ ep("post", "/flows/{flowCode}/versions/{versionNo}:import-yaml", "API-04-027", "
    errs=["NotFound", "Conflict", "PreconditionFailed", "Unprocessable", "PayloadTooLarge"], etag_out=True)
 ep("post", "/legacy-imports", "API-04-028", "startLegacyImport", "Di trú", "Chuyển Camel XML của Bus cũ", ["FR-04-082"], "PERM-04-create", ws="EDIT", body=None, ok=(202, "LegacyImportJob"),
    errs=["Unprocessable", "PayloadTooLarge", "UnsupportedMediaType"], idem=True, desc="multipart/form-data: `file` (≤ 2 MiB, XML hoặc ZIP gói xuất Context), `workspaceCode`, `connectionMap` (JSON). Tệp không hợp lệ ERR-04-032.")
-ep("get", "/legacy-imports/{jobId}", "API-04-028", "getLegacyImport", "Di trú", "Kết quả chuyển đổi", ["FR-04-082"], "PERM-04-read", params=[{"name": "jobId", "in": "path", "required": True, "schema": UUID}], ok=(200, "LegacyImportJob"), errs=["NotFound"])
+ep("get", "/legacy-imports/{jobId}", "API-04-097", "getLegacyImport", "Di trú", "Kết quả chuyển đổi", ["FR-04-082"], "PERM-04-read", params=[{"name": "jobId", "in": "path", "required": True, "schema": UUID}], ok=(200, "LegacyImportJob"), errs=["NotFound"])
 ep("put", "/flows/{flowCode}/versions/{versionNo}/session", "API-04-034", "heartbeatSession", "Phiên bản", "Nhịp phiên soạn", ["FR-04-024"], "PERM-04-update", ws="EDIT", params=[F, V], ok=(200, "SessionState"), errs=["NotFound"],
    desc="Gọi mỗi 30 giây khi tab đang hiện; hết hạn sau 120 giây. Không khóa; chỉ thông tin người khác đang mở và catalogVersion hiện hành.")
-ep("delete", "/flows/{flowCode}/versions/{versionNo}/session", "API-04-034", "endSession", "Phiên bản", "Kết thúc phiên soạn", ["FR-04-024"], "PERM-04-update", params=[F, V], ok=(204, None), errs=["NotFound"])
+ep("delete", "/flows/{flowCode}/versions/{versionNo}/session", "API-04-098", "endSession", "Phiên bản", "Kết thúc phiên soạn", ["FR-04-024"], "PERM-04-update", params=[F, V], ok=(204, None), errs=["NotFound"])
 # ---- Validation & tools
 ep("post", "/flows/{flowCode}/versions/{versionNo}:validate", "API-04-030", "validateVersion", "Kiểm tra hợp lệ", "Kiểm tra hợp lệ phiên bản", ["FR-04-023"], "PERM-04-read", ws="VIEW", params=[F, V], body="ValidateRequest", ok=(200, "ValidationResult"), errs=["NotFound"])
 ep("post", "/validation:check", "API-04-031", "validateYaml", "Kiểm tra hợp lệ", "Kiểm tra YAML chưa lưu", ["FR-04-023", "FR-04-003"], "PERM-04-create", body="StatelessValidateRequest", ok=(200, "ValidationResult"), errs=["PayloadTooLarge"],
@@ -394,16 +417,16 @@ ep("get", "/flows/{flowCode}/test-runs", "API-04-041", "listTestRuns", "Chạy t
    params=[F, {"name": "versionNo", "in": "query", "schema": INT(minimum=1)}, {"name": "status", "in": "query", "schema": arr(R("TestRunStatus")), "style": "form", "explode": False},
            {"name": "testCaseId", "in": "query", "schema": UUID}, "Cursor", "Limit"], ok=(200, "TestRunPage"), errs=["NotFound"])
 ep("get", "/flows/{flowCode}/test-runs/{runId}", "API-04-042", "getTestRun", "Chạy thử", "Kết quả lần chạy thử", ["FR-04-030"], "PERM-04-read", ws="VIEW", params=[F, "RunIdPath"], ok=(200, "TestRun"), errs=["NotFound"])
-ep("get", "/flows/{flowCode}/test-runs/{runId}/events", "API-04-042", "streamTestRun", "Chạy thử", "Luồng sự kiện lần chạy thử (SSE)", ["FR-04-030"], "PERM-04-read", ws="VIEW", params=[F, "RunIdPath"], ok=(200, None), errs=["NotFound"], sse=True,
+ep("get", "/flows/{flowCode}/test-runs/{runId}/events", "API-04-099", "streamTestRun", "Chạy thử", "Luồng sự kiện lần chạy thử (SSE)", ["FR-04-030"], "PERM-04-read", ws="VIEW", params=[F, "RunIdPath"], ok=(200, None), errs=["NotFound"], sse=True,
    desc="Sự kiện `status` (TestRun rút gọn), `step` (TestRunStep), `completed` (TestRun đầy đủ), `heartbeat` mỗi 15 giây. Đóng sau `completed`. Mất kết nối thì client hỏi API-04-042 mỗi 2 giây.")
-ep("get", "/flows/{flowCode}/test-runs/{runId}/steps/{seqNo}/body", "API-04-042", "getTestRunBody", "Chạy thử", "Thân bản tin đầy đủ của một chặng", ["FR-04-030"], "PERM-04-update", ws="EDIT",
+ep("get", "/flows/{flowCode}/test-runs/{runId}/steps/{seqNo}/body", "API-04-100", "getTestRunBody", "Chạy thử", "Thân bản tin đầy đủ của một chặng", ["FR-04-030"], "PERM-04-update", ws="EDIT",
    params=[F, "RunIdPath", {"name": "seqNo", "in": "path", "required": True, "schema": INT(minimum=0)}, {"name": "side", "in": "query", "required": True, "schema": enum("in", "out")}], ok=(200, None), errs=["NotFound"],
    desc="Chỉ khi lần chạy bật captureBodies và chưa quá 04.test.body-retention-days; trả 404 khi đã xóa. Nội dung đã che theo BR-04-013.")
 ep("post", "/flows/{flowCode}/test-runs/{runId}:cancel", "API-04-043", "cancelTestRun", "Chạy thử", "Hủy lần chạy thử", ["FR-04-030"], "PERM-04-update", ws="EDIT", params=[F, "RunIdPath"], ok=(200, "TestRun"), errs=["NotFound", "Conflict"])
 ep("get", "/flows/{flowCode}/test-cases", "API-04-044", "listTestCases", "Chạy thử", "Danh sách ca kiểm thử", ["FR-04-031"], "PERM-04-read", ws="VIEW", params=[F], ok=(200, "TestCaseList"), errs=["NotFound"])
-ep("post", "/flows/{flowCode}/test-cases", "API-04-044", "createTestCase", "Chạy thử", "Tạo ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F], body="TestCase", ok=(201, "TestCase"), errs=["NotFound", "Conflict", "Unprocessable", "PayloadTooLarge"], idem=True, etag_out=True)
-ep("put", "/flows/{flowCode}/test-cases/{caseId}", "API-04-044", "updateTestCase", "Chạy thử", "Sửa ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F, "CaseIdPath", "IfMatch"], body="TestCase", ok=(200, "TestCase"), errs=["NotFound", "PreconditionFailed", "Unprocessable"], etag_out=True)
-ep("delete", "/flows/{flowCode}/test-cases/{caseId}", "API-04-044", "deleteTestCase", "Chạy thử", "Xóa (ngừng dùng) ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F, "CaseIdPath", "IfMatch"], ok=(204, None), errs=["NotFound", "PreconditionFailed"])
+ep("post", "/flows/{flowCode}/test-cases", "API-04-101", "createTestCase", "Chạy thử", "Tạo ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F], body="TestCase", ok=(201, "TestCase"), errs=["NotFound", "Conflict", "Unprocessable", "PayloadTooLarge"], idem=True, etag_out=True)
+ep("put", "/flows/{flowCode}/test-cases/{caseId}", "API-04-102", "updateTestCase", "Chạy thử", "Sửa ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F, "CaseIdPath", "IfMatch"], body="TestCase", ok=(200, "TestCase"), errs=["NotFound", "PreconditionFailed", "Unprocessable"], etag_out=True)
+ep("delete", "/flows/{flowCode}/test-cases/{caseId}", "API-04-103", "deleteTestCase", "Chạy thử", "Xóa (ngừng dùng) ca kiểm thử", ["FR-04-031"], "PERM-04-update", ws="EDIT", params=[F, "CaseIdPath", "IfMatch"], ok=(204, None), errs=["NotFound", "PreconditionFailed"])
 # ---- Review
 ep("post", "/flows/{flowCode}/versions/{versionNo}:submit", "API-04-050", "submitVersion", "Duyệt", "Gửi duyệt", ["FR-04-040"], "PERM-04-submit", ws="EDIT", params=[F, V, "IfMatch"], body="SubmitRequest", ok=(200, "VersionDetail"),
    errs=["NotFound", "Conflict", "Unprocessable", "PreconditionFailed", "PreconditionRequired", "BadRequest"], etag_out=True,
@@ -417,11 +440,11 @@ ep("get", "/reviews", "API-04-053", "listReviewQueue", "Duyệt", "Hàng đợi 
            {"name": "mine", "in": "query", "schema": BOOL, "description": "Chỉ yêu cầu gợi ý tôi duyệt."}, "Cursor", "Limit"], ok=(200, "ReviewQueue"))
 # ---- Deploy
 ep("get", "/flows/{flowCode}/deployments", "API-04-054", "listDeployments", "Triển khai", "Lịch sử triển khai", ["FR-04-042"], "PERM-04-read", ws="VIEW", params=[F, {"name": "environment", "in": "query", "schema": R("Environment")}], ok=(200, "DeploymentList"), errs=["NotFound"])
-ep("post", "/flows/{flowCode}/deployments", "API-04-054", "releaseVersion", "Triển khai", "Phát hành phiên bản lên môi trường", ["FR-04-042", "FR-04-075"], "PERM-04-publish", ws="VIEW", params=[F], body="ReleaseRequest", ok=(202, "Deployment"),
+ep("post", "/flows/{flowCode}/deployments", "API-04-104", "releaseVersion", "Triển khai", "Phát hành phiên bản lên môi trường", ["FR-04-042", "FR-04-075"], "PERM-04-publish", ws="VIEW", params=[F], body="ReleaseRequest", ok=(202, "Deployment"),
    errs=["NotFound", "Conflict", "Unprocessable", "Locked", "BadGateway"], idem=True,
    desc="Chỉ APPROVED (BR-04-012). Kiểm tra mức PUBLISH (ERR-04-009), thứ tự môi trường (ERR-04-023), đóng băng với PROD (ERR-04-041), hồ sơ runtime (ERR-04-029). Ghi Git sau giao dịch; lỗi ghi Git thành triển khai FAILED ERR-04-022. Phát EVT-04-06.")
-ep("get", "/flows/{flowCode}/deployments/{deploymentId}", "API-04-054", "getDeployment", "Triển khai", "Chi tiết triển khai", ["FR-04-042"], "PERM-04-read", ws="VIEW", params=[F, "DeploymentIdPath"], ok=(200, "Deployment"), errs=["NotFound"])
-ep("get", "/flows/{flowCode}/deployments/{deploymentId}/events", "API-04-054", "streamDeployment", "Triển khai", "Tiến trình triển khai (SSE)", ["FR-04-042"], "PERM-04-read", ws="VIEW", params=[F, "DeploymentIdPath"], ok=(200, None), errs=["NotFound"], sse=True,
+ep("get", "/flows/{flowCode}/deployments/{deploymentId}", "API-04-105", "getDeployment", "Triển khai", "Chi tiết triển khai", ["FR-04-042"], "PERM-04-read", ws="VIEW", params=[F, "DeploymentIdPath"], ok=(200, "Deployment"), errs=["NotFound"])
+ep("get", "/flows/{flowCode}/deployments/{deploymentId}/events", "API-04-106", "streamDeployment", "Triển khai", "Tiến trình triển khai (SSE)", ["FR-04-042"], "PERM-04-read", ws="VIEW", params=[F, "DeploymentIdPath"], ok=(200, None), errs=["NotFound"], sse=True,
    desc="Sự kiện `status` (Deployment), `replica` (bản sao báo phiên bản), `completed`. Đóng khi SYNCED, FAILED hoặc sau 04.deploy.timeout-minutes.")
 ep("post", "/flows/{flowCode}/deployments:rollback", "API-04-055", "rollbackDeployment", "Triển khai", "Quay lui về phiên bản đã duyệt trước", ["FR-04-044"], "PERM-04-publish", params=[F], body="RollbackRequest", ok=(202, "Deployment"),
    errs=["NotFound", "Conflict", "BadRequest", "BadGateway"], idem=True, desc="Không cần duyệt lại; vẫn kiểm tra mức PUBLISH. Được phép khi đóng băng. Thành phần nay bị cấm ERR-04-040.")
@@ -432,8 +455,8 @@ ep("get", "/flows/{flowCode}/runtime", "API-04-060", "getRuntimeStatus", "Vận 
 ep("post", "/flows/{flowCode}/runtime/commands", "API-04-061", "issueCommand", "Vận hành", "Tạm dừng, tiếp tục, dừng khẩn", ["FR-04-050"], "PERM-04-operate", params=[F], body="CommandRequest", ok=(202, "Command"),
    errs=["NotFound", "Conflict", "BadRequest", "Forbidden"], idem=True,
    desc="EMERGENCY_STOP cần PERM-04-emergency-stop. Thiếu lý do ERR-04-025; chưa triển khai ở môi trường ERR-04-023. Lệnh khẩn đi trước Git (ADR-065).")
-ep("get", "/flows/{flowCode}/runtime/commands/{commandId}", "API-04-061", "getCommand", "Vận hành", "Trạng thái lệnh", ["FR-04-050"], "PERM-04-read", ws="VIEW", params=[F, "CommandIdPath"], ok=(200, "Command"), errs=["NotFound"])
-ep("post", "/flows/{flowCode}/runtime/commands/{commandId}:resend", "API-04-061", "resendCommand", "Vận hành", "Gửi lại lệnh chưa đủ xác nhận", ["FR-04-050"], "PERM-04-operate", params=[F, "CommandIdPath"], ok=(202, "Command"), errs=["NotFound", "Conflict"],
+ep("get", "/flows/{flowCode}/runtime/commands/{commandId}", "API-04-107", "getCommand", "Vận hành", "Trạng thái lệnh", ["FR-04-050"], "PERM-04-read", ws="VIEW", params=[F, "CommandIdPath"], ok=(200, "Command"), errs=["NotFound"])
+ep("post", "/flows/{flowCode}/runtime/commands/{commandId}:resend", "API-04-108", "resendCommand", "Vận hành", "Gửi lại lệnh chưa đủ xác nhận", ["FR-04-050"], "PERM-04-operate", params=[F, "CommandIdPath"], ok=(202, "Command"), errs=["NotFound", "Conflict"],
    desc="Chỉ với PARTIAL; ký lại với hạn mới, cùng commandId gốc trong `resendOf`.")
 ep("get", "/flows/{flowCode}/endpoints", "API-04-062", "listEndpoints", "Vận hành", "Điểm kết nối và số liệu", ["FR-04-052"], "PERM-04-read", ws="VIEW", params=[F, {"name": "environment", "in": "query", "schema": R("Environment")}], ok=(200, "EndpointList"), errs=["NotFound"])
 ep("get", "/flows/{flowCode}/metrics", "API-04-063", "getFlowMetrics", "Vận hành", "Số liệu theo luồng (từ PH-13)", ["FR-04-053"], "PERM-04-read", ws="VIEW",
@@ -447,21 +470,21 @@ ep("get", "/catalog/{kind}/{name}", "API-04-071", "getComponentSchema", "Danh m�
            {"name": "name", "in": "path", "required": True, "schema": STR(128)}, {"name": "catalogVersion", "in": "query", "schema": STR(64)}],
    ok=(200, "ComponentSchema"), errs=["NotFound"], desc="ERR-04-035 khi không có trong catalog của phiên bản yêu cầu.")
 ep("get", "/catalog/policies", "API-04-072", "listPolicies", "Danh mục thành phần", "Chính sách thành phần (nền + tỉnh)", ["FR-04-080"], "PERM-04-read", ok=(200, "PolicyList"))
-ep("patch", "/catalog/policies", "API-04-072", "updatePolicies", "Danh mục thành phần", "Sửa chính sách thành phần", ["FR-04-080"], "PERM-04-catalog-admin", params=["IfMatch"], body="PolicyUpdate", ok=(200, "PolicyList"),
+ep("patch", "/catalog/policies", "API-04-109", "updatePolicies", "Danh mục thành phần", "Sửa chính sách thành phần", ["FR-04-080"], "PERM-04-catalog-admin", params=["IfMatch"], body="PolicyUpdate", ok=(200, "PolicyList"),
    errs=["Forbidden", "PreconditionFailed", "Unprocessable"], desc="PA sửa chính sách nền (phiên PLATFORM); TA (PERM-04-admin) chỉ thu hẹp cho tỉnh: ALLOWED từ tỉnh bị từ chối (403). Luồng dùng thành phần vừa cấm được đánh dấu.")
 ep("get", "/catalog/versions", "API-04-073", "getCatalogVersions", "Danh mục thành phần", "Phiên bản catalog và hồ sơ runtime", ["FR-04-081", "FR-04-075"], "PERM-04-read", ok=(200, "CatalogVersions"))
 ep("get", "/catalog/proposals", "API-04-074", "listProposals", "Danh mục thành phần", "Đề xuất thành phần", ["FR-04-080"], "PERM-04-read", params=[{"name": "status", "in": "query", "schema": enum("OPEN", "ACCEPTED", "REJECTED", "WITHDRAWN")}], ok=(200, "ProposalList"))
-ep("post", "/catalog/proposals", "API-04-074", "createProposal", "Danh mục thành phần", "Đề xuất cho phép hoặc bổ sung thành phần", ["FR-04-080"], "PERM-04-read", body="ProposalCreate", ok=(201, "Proposal"), errs=["Conflict"], idem=True)
-ep("post", "/catalog/proposals/{proposalId}:decide", "API-04-074", "decideProposal", "Danh mục thành phần", "Quyết định đề xuất", ["FR-04-080"], "PERM-04-catalog-admin", params=[{"name": "proposalId", "in": "path", "required": True, "schema": UUID}], body="ProposalDecision", ok=(200, "Proposal"), errs=["NotFound", "Conflict"])
+ep("post", "/catalog/proposals", "API-04-110", "createProposal", "Danh mục thành phần", "Đề xuất cho phép hoặc bổ sung thành phần", ["FR-04-080"], "PERM-04-read", body="ProposalCreate", ok=(201, "Proposal"), errs=["Conflict"], idem=True)
+ep("post", "/catalog/proposals/{proposalId}:decide", "API-04-111", "decideProposal", "Danh mục thành phần", "Quyết định đề xuất", ["FR-04-080"], "PERM-04-catalog-admin", params=[{"name": "proposalId", "in": "path", "required": True, "schema": UUID}], body="ProposalDecision", ok=(200, "Proposal"), errs=["NotFound", "Conflict"])
 # ---- Templates
 ep("get", "/templates", "API-04-080", "listTemplates", "Khuôn mẫu", "Danh sách khuôn mẫu", ["FR-04-025"], "PERM-04-read", params=[{"name": "resourceKind", "in": "query", "schema": R("ResourceKind")}], ok=(200, "TemplateList"))
 ep("get", "/templates/{templateCode}", "API-04-081", "getTemplate", "Khuôn mẫu", "Chi tiết khuôn và lược đồ tham số", ["FR-04-025"], "PERM-04-read", params=[{"name": "templateCode", "in": "path", "required": True, "schema": STR(64)}], ok=(200, "TemplateDetail"), errs=["NotFound"])
 ep("post", "/templates", "API-04-082", "createTemplate", "Khuôn mẫu", "Tạo khuôn của tỉnh từ phiên bản đã duyệt", ["FR-04-025"], "PERM-04-admin", body="TemplateCreate", ok=(201, "TemplateDetail"), errs=["Conflict", "NotFound", "Unprocessable"], idem=True)
-ep("post", "/templates/{templateCode}:deprecate", "API-04-082", "deprecateTemplate", "Khuôn mẫu", "Ngừng dùng khuôn của tỉnh", ["FR-04-025"], "PERM-04-admin", params=[{"name": "templateCode", "in": "path", "required": True, "schema": STR(64)}, "IfMatch"], ok=(200, "Template"), errs=["NotFound", "Forbidden"])
+ep("post", "/templates/{templateCode}:deprecate", "API-04-112", "deprecateTemplate", "Khuôn mẫu", "Ngừng dùng khuôn của tỉnh", ["FR-04-025"], "PERM-04-admin", params=[{"name": "templateCode", "in": "path", "required": True, "schema": STR(64)}, "IfMatch"], ok=(200, "Template"), errs=["NotFound", "Forbidden"])
 # ---- Params, history
 ep("get", "/settings", "API-04-090", "getSettings", "Tham số", "Tham số 04.*, khoảng đóng băng, biến môi trường", ["FR-04-084"], "PERM-04-read", ok=(200, "Settings"),
    desc="Chỉ đọc; sửa tham số qua màn tham số chung của PH-18 (UI-04-20 nhúng).")
-ep("put", "/settings/env-vars", "API-04-090", "replaceEnvVars", "Tham số", "Thay biến môi trường {{dh.env.*}}", ["FR-04-084"], "PERM-04-admin", params=["IfMatch"], body="EnvVarList", ok=(200, "EnvVarList"), errs=["PreconditionFailed", "Unprocessable"],
+ep("put", "/settings/env-vars", "API-04-113", "replaceEnvVars", "Tham số", "Thay biến môi trường {{dh.env.*}}", ["FR-04-084"], "PERM-04-admin", params=["IfMatch"], body="EnvVarList", ok=(200, "EnvVarList"), errs=["PreconditionFailed", "Unprocessable"],
    desc="Giá trị giống bí mật bị từ chối (ERR-04-010); bí mật dùng {{vault:}}.")
 ep("get", "/flows/{flowCode}/history", "API-04-091", "getFlowHistory", "Tham số", "Lịch sử thao tác của luồng (từ PH-13)", ["FR-04-083"], "PERM-04-read", ws="VIEW",
    params=[F, {"name": "action", "in": "query", "schema": arr(STR(64)), "style": "form", "explode": False}, {"name": "actor", "in": "query", "schema": STR(64)}, "Cursor", "Limit"],

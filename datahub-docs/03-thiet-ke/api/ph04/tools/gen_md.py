@@ -104,8 +104,19 @@ for key, code, addr, payload, summ, ten, days, parts in ga.EV:
     L += ["**Ví dụ payload.**", "", "```json", gon(msg["examples"][0]["payload"]), "```", ":::", ""]
 events = "\n".join(L)
 
+# ---------------------------------------------------------------- ánh xạ mã cũ sang mã mới
+byid = {e["aid"]: e for e in g.E}
+ml = ["| Mã mới | Mã cũ | Phương thức, đường dẫn | Nội dung |", "|---|---|---|---|"]
+for moi, cu in g.MA_CU.items():
+    e = byid[moi]
+    ml.append(f"| {moi} | {cu} | `{e['method'].upper()} {e['path']}` | {e['summary']} |")
+ml += ["", ": Ánh xạ mã API cũ dùng chung sang mã mới"]
+mapping = "\n".join(ml)
+
 s = open(DOC, encoding="utf-8").read()
 s = thay(s, "endpoints", endpoints)
+if "<!-- gen:ma-cu-moi:start -->" in s:
+    s = thay(s, "ma-cu-moi", mapping)
 if "<!-- gen:dac-ta-evt:start -->" in s:
     s = thay(s, "dac-ta-evt", events)
 open(DOC, "w", encoding="utf-8").write(s)

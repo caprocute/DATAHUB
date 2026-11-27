@@ -290,22 +290,51 @@ DO $$ BEGIN
 EXCEPTION WHEN unique_violation THEN RAISE NOTICE 'PASS 11e một gán hiệu lực cho mỗi (người, vai trò, phạm vi)';
 END $$;
 
--- 12. Luôn còn ít nhất một TENANT_ADMIN hoạt động (BR-12-033, ERR-12-046)
+-- 12. Luôn còn ít nhất hai TENANT_ADMIN hiệu lực (BR-12-033, Q403, ERR-12-046)
 DO $$ BEGIN
   UPDATE ph12_iam.role_assignment SET state = 'REVOKED', revoked_at = now(), revoked_by = pg_temp.u('T68:so1')::text
    WHERE tenant_id = 'T68' AND role_code = 'TENANT_ADMIN';
   RAISE EXCEPTION 'FAIL 12a';
-EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12a không gỡ được quản trị tỉnh cuối cùng';
+EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12a không gỡ được quản trị tỉnh khi tenant chỉ có một TA';
 END $$;
 DO $$ BEGIN
   UPDATE ph12_iam.user_account SET state = 'DISABLED', disabled_reason = 'MANUAL', disabled_at = now() WHERE id = pg_temp.u('T68:adm1');
   RAISE EXCEPTION 'FAIL 12b';
-EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12b không vô hiệu được quản trị tỉnh cuối cùng';
+EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12b không vô hiệu được quản trị tỉnh khi tenant chỉ có một TA';
 END $$;
 SELECT pg_temp.assign('adm2', 'TENANT_ADMIN', pg_temp.u('T68:adm1')::text);
+DO $$ BEGIN
+  UPDATE ph12_iam.role_assignment SET state = 'REVOKED', revoked_at = now(), revoked_by = pg_temp.u('T68:so1')::text
+   WHERE tenant_id = 'T68' AND role_code = 'TENANT_ADMIN' AND user_id = pg_temp.u('T68:adm1');
+  RAISE EXCEPTION 'FAIL 12c';
+EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12c còn hai TA thì gỡ một TA bị chặn (sẽ còn dưới hai)';
+END $$;
+DO $$ BEGIN
+  UPDATE ph12_iam.user_account SET state = 'DISABLED', disabled_reason = 'MANUAL', disabled_at = now() WHERE id = pg_temp.u('T68:adm2');
+  RAISE EXCEPTION 'FAIL 12d';
+EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12d còn hai TA thì vô hiệu thủ công một TA bị chặn';
+END $$;
+DO $$ BEGIN
+  UPDATE ph12_iam.user_account SET state = 'BLOCKED' WHERE id = pg_temp.u('T68:adm2');
+  RAISE EXCEPTION 'FAIL 12e';
+EXCEPTION WHEN sqlstate 'P1246' THEN RAISE NOTICE 'PASS 12e còn hai TA thì khóa hẳn thủ công một TA bị chặn';
+END $$;
+-- Ngoại lệ ATTT: khóa hẳn vẫn thực hiện, rồi mở lại để các bước sau không bị lệch
+SET LOCAL ph12.ta_floor_exception = 'ATTT_INCIDENT';
+UPDATE ph12_iam.user_account SET state = 'BLOCKED' WHERE id = pg_temp.u('T68:adm2');
+SET LOCAL ph12.ta_floor_exception = '';
+UPDATE ph12_iam.user_account SET state = 'ACTIVE' WHERE id = pg_temp.u('T68:adm2');
+DO $$ BEGIN RAISE NOTICE 'PASS 12f khóa do sự cố ATTT vẫn thực hiện khi tenant xuống dưới hai TA'; END $$;
+-- Ngoại lệ không dùng quá ngưỡng: lý do INACTIVE_45D được miễn, rồi kích hoạt lại
+UPDATE ph12_iam.user_account SET state = 'DISABLED', disabled_reason = 'INACTIVE_45D', disabled_at = now() WHERE id = pg_temp.u('T68:adm2');
+UPDATE ph12_iam.user_account SET state = 'ACTIVE', disabled_reason = NULL, disabled_at = NULL WHERE id = pg_temp.u('T68:adm2');
+DO $$ BEGIN RAISE NOTICE 'PASS 12g tự vô hiệu do không dùng 45 ngày vẫn thực hiện khi tenant xuống dưới hai TA'; END $$;
+-- Có TA thứ ba thì gỡ được một TA, còn lại hai
+SELECT pg_temp.mkuser('adm3');
+SELECT pg_temp.assign('adm3', 'TENANT_ADMIN', pg_temp.u('T68:adm1')::text);
 UPDATE ph12_iam.role_assignment SET state = 'REVOKED', revoked_at = now(), revoked_by = pg_temp.u('T68:adm2')::text
  WHERE tenant_id = 'T68' AND role_code = 'TENANT_ADMIN' AND user_id = pg_temp.u('T68:adm1');
-DO $$ BEGIN RAISE NOTICE 'PASS 12c có quản trị thứ hai thì gỡ được quản trị đầu'; END $$;
+DO $$ BEGIN RAISE NOTICE 'PASS 12h có ba TA thì gỡ được một TA, tenant còn hai'; END $$;
 
 -- 13. Nhóm tổ chức: cây ltree, cấm vòng lặp, đổi cha cập nhật cây con
 INSERT INTO ph12_iam.org_group (id, tenant_id, code, name, created_by, updated_by) VALUES (pg_temp.u('g_root'), 'T68', 'VP_UBND', 'Văn phòng UBND', 'u1', 'u1');

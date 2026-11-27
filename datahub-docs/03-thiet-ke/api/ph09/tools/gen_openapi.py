@@ -198,7 +198,7 @@ NOTE = {
     228: 'Kế hoạch che theo trường cho (hợp đồng, mục đích, kênh); bộ đệm `09.plan.cache-seconds`; không lập được thì `failMode` `CLOSED` hoặc `PUBLIC_ONLY` (ERR-09-105).',
     229: 'Áp kế hoạch che cho bản tin JSON ≤ 1 MiB; lô lớn hơn thì ERR-09-107; không ghi được nhật ký che thì từ chối (ERR-09-110); không lưu bản tin.',
     230: 'Giả danh hóa theo lô ≤ 500 giá trị; `HMAC_SHA256` tính cục bộ, `TOKEN_TRANSIT` dùng OpenBao (ERR-09-108 khi không khả dụng); không lưu giá trị vào, không lưu ánh xạ.',
-    231: 'Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope` là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh; p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026).',
+    231: 'Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope` là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh; p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026). `egressScope` ngoài `NONE`, `OUT_OF_PROVINCE` trả ERR-09-106 (400).',
     232: 'Bản chụp chỉ mục phân loại; hỗ trợ `If-None-Match` và `304`.',
     233: 'Bundle OPA đã ký hiện hành; `ETag` là `bundleNo`; hỗ trợ `If-None-Match` và `304`; dùng cho OPA (PH-12) và điểm thực thi.',
     234: 'Kết quả đệm `09.consent.cache-seconds` (60) giây; kèm cờ `restrictionActive` của chủ thể.',

@@ -415,7 +415,7 @@ Tính năng: PH-02 · Danh mục dịch vụ
 
   @US-02-022 @FR-02-022 @M
   Kịch bản: US-02-022 dương · Khai báo backend của API
-    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
     Khi người dùng bấm "+ Thêm backend" ở tab Backend của UI-02-02, hoặc ở bước 4 của UI-02-03
     Thì hệ thống trả `201`, tiêu đề `Location`; chi tiết backend: `backendCode`, loại, `targetRef`, `weight`, `status`, cấu hình mặc định
     Và backend lưu, gắn với phiên bản; chưa ảnh hưởng gateway cho tới khi công bố (hoặc duyệt thay đổi)
@@ -424,14 +424,14 @@ Tính năng: PH-02 · Danh mục dịch vụ
 
   @US-02-022 @FR-02-022 @M @âm
   Kịch bản: US-02-022 âm 1 · Kết nối hoặc luồng không tồn tại hoặc khác HTTT
-    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
     Khi kết nối hoặc luồng không tồn tại hoặc khác HTTT
     Thì hệ thống từ chối với ERR-02-020 (422)
     Và người dùng thấy thông báo "Backend không hợp lệ: {lý do}."
 
   @US-02-022 @FR-02-022 @M @âm
   Kịch bản: US-02-022 âm 2 · Đích ngoài danh sách cho phép
-    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
+    Biết phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04
     Khi đích ngoài danh sách cho phép
     Thì hệ thống từ chối với ERR-02-020 (422)
     Và người dùng thấy thông báo "Đích {máy chủ} chưa có trong danh sách đích cho phép. Đề nghị quản trị tenant bổ sung."

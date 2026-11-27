@@ -5,7 +5,7 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
 
   @TC-04-096 @P1 @Dương
   Kịch bản: TC-04-096 Phát hành lên TEST tới SYNCED
-    # Truy vết: FR-04-042 · BR-04-012 · API-04-054 · UI-04-15 · UC-04-12 · EVT-04-06, 07, 12.
+    # Truy vết: FR-04-042 · BR-04-012 · API-04-104, 106 · UI-04-15 · UC-04-12 · EVT-04-06, 07, 12.
     Biết F-HT v4 `APPROVED`; IA1.
     Khi gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"TEST"}` và `Idempotency-Key`.
     Và mở SSE `.../deployments/{id}/events`.
@@ -43,7 +43,7 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
 
   @TC-04-100 @P1 @Âm @Khả @dụng
   Kịch bản: TC-04-100 Lỗi ghi Git
-    # Truy vết: FR-04-042 · API-04-054 · ERR-04-022.
+    # Truy vết: FR-04-042 · API-04-104 · ERR-04-022.
     Biết gitea trả `500` cho mọi lệnh đẩy (Chaos Mesh hoặc WireMock trước Gitea).
     Khi phát hành F-HT v4 lên TEST.
     Thì `202`; sau ba lần thử lại giãn cách, triển khai `FAILED`, `errorCode = ERR-04-022`; phiên bản vẫn `APPROVED`; nút "Thử lại" có trên UI-04-15. Runtime vẫn chạy phiên bản cũ.
@@ -74,7 +74,7 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
 
   @TC-04-195 @P1 @Âm
   Kịch bản: TC-04-195 Phát hành khi kiểm tra mức PUBLISH còn lỗi hoặc catalog cũ
-    # Truy vết: FR-04-042, 081 · UC-04-12 · API-04-054 · UI-04-15 · ERR-04-009, 042.
+    # Truy vết: FR-04-042, 081 · UC-04-12 · API-04-104 · UI-04-15 · ERR-04-009, 042.
     Biết U-T68-IA1; F-HT v4 `APPROVED` nhưng chặng `deliver` dùng topic vừa bị thu hồi quyền (VR-05 mức `PUBLISH` thành `ERROR`); F-SOAP v3 `APPROVED` soạn trên `cv-1` trong khi catalog hiện hành là `cv-2`.
     Khi gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"TEST"}`.
     Và gọi `POST /flows/bhxh-soap/deployments` với `{"versionNo":3,"environment":"TEST"}`.
@@ -83,7 +83,7 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
 
   @TC-04-196 @P1 @Dương
   Kịch bản: TC-04-196 Đầu cuối phát hành lên PROD tới SYNCED theo trình tự SDD
-    # Truy vết: FR-04-042, 045 · BR-04-012 · UC-04-12 · API-04-054 · EVT-04-06, 07, 12 · NFR-04-009.
+    # Truy vết: FR-04-042, 045 · BR-04-012 · UC-04-12 · API-04-104, 106 · EVT-04-06, 07, 12 · NFR-04-009.
     Biết U-T68-IA1; F-HT v4 `APPROVED`, đã `SYNCED`, `HEALTHY` ở TEST và STAGING đủ thời gian ổn định; nhánh `env/prod` của `dh-flows-t68` được bảo vệ; có thể giữ nhịp tim của runtime PROD 60 giây (D03-02-PH04 §5.5, hình phát hành tới SYNCED).
     Khi gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"PROD"}` và `Idempotency-Key`.
     Và đọc `deployment`, `ph04.outbox` ngay sau phản hồi.

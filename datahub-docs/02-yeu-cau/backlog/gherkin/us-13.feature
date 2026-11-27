@@ -400,6 +400,20 @@ Tính năng: PH-13 · Giám sát và kiểm toán
     Khi bản ghi thiếu lý do ở thao tác bắt buộc lý do
     Thì hệ thống từ chối với ERR-13-008, ERR-13-012 (400)
 
+  @US-13-062 @FR-13-062 @C
+  Kịch bản: US-13-062 dương · Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
+    Biết sự cố mất dữ liệu đã được xác nhận theo quy trình ứng cứu; PostgreSQL đã khôi phục (PITR hoặc bản sao DR) và mở ở chế độ chỉ đọc; bộ tiếp nhận `ingest` chưa cho ghi; biên bản mở và cửa sổ bảo trì được SO và TA duyệt
+    Khi SO yêu cầu đội vận hành chạy thủ tục sau khi sự cố mất dữ liệu được xác nhận
+    Thì biên bản khôi phục có chữ ký; báo cáo xác minh toàn chuỗi; bản ghi `AUDIT.CHAIN.RESTORE`
+    Và chuỗi của tenant `OPEN` và xác minh đạt; biên bản lưu ở `dh-evidence`
+    Và nhật ký kiểm toán ghi nhận thao tác
+
+  @US-13-062 @FR-13-062 @C @âm
+  Kịch bản: US-13-062 âm 1 · Băm lô hoặc băm bản ghi không khớp neo
+    Biết sự cố mất dữ liệu đã được xác nhận theo quy trình ứng cứu; PostgreSQL đã khôi phục (PITR hoặc bản sao DR) và mở ở chế độ chỉ đọc; bộ tiếp nhận `ingest` chưa cho ghi; biên bản mở và cửa sổ bảo trì được SO và TA duyệt
+    Khi băm lô hoặc băm bản ghi không khớp neo
+    Thì dừng ngay, không chèn thêm, xử lý như đứt chuỗi theo FR-13-015 và quy trình ứng cứu sự cố
+
   # ---- EP-13-C · Tra cứu kiểm toán và bằng chứng
 
   @US-13-020 @FR-13-020 @M
@@ -1055,7 +1069,7 @@ Tính năng: PH-13 · Giám sát và kiểm toán
     Khi người dùng mở UI-13-15 hoặc nhấn liên kết trong thông báo
     Thì hệ thống trả `200`: cảnh báo sau cập nhật (`status`, `assignee`, `verdict`, `verdictNote`, `proposedAction`, `incidentRef`)
     Và cảnh báo `CLOSED` có kết luận; đề xuất tạm ngừng ghi vết
-    Và sự kiện được phát: EVT-13-04 khi đề xuất tạm ngừng
+    Và sự kiện được phát: EVT-13-04 khi cảnh báo được phát hiện (đề xuất tạm ngừng không phát sự kiện mà gọi API-01-089)
     Và nhật ký kiểm toán ghi nhận thao tác
 
   @US-13-053 @FR-13-053 @M @âm

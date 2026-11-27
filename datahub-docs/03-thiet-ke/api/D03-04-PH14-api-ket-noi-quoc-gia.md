@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH14
 ten: Đặc tả API và sự kiện phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, APISIX; đơn vị kết nối (PH-02, PH-04, PH-07); ATTT; hội đồng thẩm định
@@ -632,7 +632,7 @@ Trả cho HTTT, luồng PH-04, PH-07 qua API-14-075…083 và cho nền tảng q
 | ERR-14-129 | 404 | Không tìm thấy yêu cầu bất đồng bộ | Nghiệp vụ | 077, 078 |
 | ERR-14-130 | 409 | Không hủy được yêu cầu đã gửi | Nghiệp vụ | 078 |
 | ERR-14-131 | 502 | Không tải được đặc tả hoặc WSDL từ xa, dùng bản đã lưu | Tạm thời, dùng bản đã lưu | 014, 019, 036 |
-| ERR-14-132 | 503 | Không kiểm tra được mục đích (OPA hoặc PH-09 không khả dụng), từ chối an toàn | An ninh, đóng an toàn | 075 |
+| ERR-14-132 | 503 | Không kiểm tra được mục đích (OPA hoặc PH-09 không khả dụng), từ chối an toàn | An ninh, đóng an toàn | 056, 075, 087 |
 
 : Mã lỗi mặt phẳng dữ liệu ERR-14
 <!-- gen:errors:end -->
@@ -3131,3 +3131,4 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập API PH-14: 92 operation ở ba mặt phẳng, 17 sự kiện và ba chủ đề nội bộ, 72 mã lỗi, theo khuôn K-API và chuẩn trình bày K-TRINH-BAY. Giữ nguyên 90 mã API-14-001…090 do FRS đề xuất, thêm API-14-091 (cấu hình runtime, SDD) và API-14-092 (xóa chứng thư), thêm ERR-14-133. OpenAPI 3.1 và AsyncAPI 3.0 sinh từ `ph14/tools`. Có 5 câu hỏi mở (Q14-55…59) và mục Đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag 412, cổng PH-09, PH-01, PH-16, phân trang keyset, trường bảng điều khiển, sinh lại từ OpenAPI; chốt Q448, Q415, Q416: thêm API-14-093, 094 (duyệt bốn mắt chung, 94 operation); ghi quyết định PH-02 nhận bản nháp dịch vụ quốc gia và PH-03 thêm tuyến /inbound/v1; chốt câu hỏi mở đợt đồng bộ: Q393 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | API-14-056, API-14-087 thêm 503 ERR-14-132 khi PH-09 không trả lời (FR-14-044, FR-14-045); sinh lại từ nguồn |

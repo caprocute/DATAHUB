@@ -15,7 +15,7 @@ Tính năng: TS-04-01 · Không gian làm việc và thành viên
 
   @TC-04-002 @P2 @Âm
   Kịch bản: TC-04-002 Tạo không gian trùng mã, sửa không gian không tồn tại
-    # Truy vết: FR-04-007 · API-04-002 · ERR-04-027, 028.
+    # Truy vết: FR-04-007 · API-04-002, 095 · ERR-04-027, 028.
     Biết U-T68-TA.
     Khi gọi `POST /workspaces` với `code = "ho-tich"`.
     Và gọi `PATCH /workspaces/khong-co` có `If-Match`.
@@ -24,7 +24,7 @@ Tính năng: TS-04-01 · Không gian làm việc và thành viên
 
   @TC-04-003 @P1 @Dương
   Kịch bản: TC-04-003 Thay danh sách thành viên và hiệu lực ngay
-    # Truy vết: FR-04-007 · BR-04-021 · API-04-004, 022 · UC-04-01.
+    # Truy vết: FR-04-007 · BR-04-021 · API-04-004, 096, 022 · UC-04-01.
     Biết U-T68-IA1 (mức `MAINTAIN` trên WS-HOTICH); F-HT v4 `DRAFT`.
     Khi U-T68-IE3 gọi `PUT /flows/tra-cuu-ho-tich/versions/4/draft` với nội dung hợp lệ.
     Và U-T68-IA1 gọi `PUT /workspaces/ho-tich/members`, thêm IE3 mức `EDIT`.
