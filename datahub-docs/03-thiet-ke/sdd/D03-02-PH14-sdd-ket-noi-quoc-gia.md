@@ -680,7 +680,7 @@ Có bốn điểm thiết kế cần nêu.
 
 `transactionCode` có dạng `{TENANT}-{yyyyMMdd}-{10 ký tự}` (ví dụ `T68-20261126-0000184320`). Dãy số lấy từ `INCR` Valkey mỗi tenant mỗi ngày; khi Valkey mất, dùng 10 ký tự cuối của ULID để không trùng giữa các bản sao. Mã này làm mã đối soát với trung ương (BR-14-020).
 
-Lỗi trả theo RFC 9457 `application/problem+json`: `type` là `urn:dh:err:ERR-14-104`, `title`, `status`, `detail` (câu tiếng Việt có thể hiển thị cho cán bộ HTTT), `traceId`, `transactionCode`, và trường riêng của mã (ví dụ `resetAt`, `cache.available` với ERR-14-104). `detail` không bao giờ chứa nội dung kỹ thuật của trung ương hay thông tin cấu hình nội bộ.
+Lỗi trả theo RFC 9457 `application/problem+json`: `type` là `https://datahub.gov.vn/errors/ERR-14-104`, `title`, `status`, `detail` (câu tiếng Việt có thể hiển thị cho cán bộ HTTT), `traceId`, `transactionCode`, và trường riêng của mã (ví dụ `resetAt`, `cache.available` với ERR-14-104). `detail` không bao giờ chứa nội dung kỹ thuật của trung ương hay thông tin cấu hình nội bộ.
 
 ### 4.5. Kiểm tra mục đích và định tuyến
 
@@ -2201,6 +2201,6 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập SDD PH-14 theo khuôn K-SDD và chuẩn trình bày K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã hai đơn vị triển khai, mô hình miền và 18 thành phần (khối 10 mục), 10 sơ đồ trình tự, 12 máy trạng thái, nhất quán và suy giảm, bảo mật đối chiếu SEC, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, 10 rủi ro, 8 câu hỏi mở (Q14-20…27) và mục Đề nghị đồng bộ. Căn cứ: FRS và use case PH-14, SAD §4, ADR-057, D03-07, D03-10 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số; `type` lỗi RFC 9457 theo mẫu `https://datahub.gov.vn/errors/` |
 
 
