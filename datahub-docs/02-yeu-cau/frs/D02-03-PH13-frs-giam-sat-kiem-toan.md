@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH13
 ten: Đặc tả yêu cầu chức năng phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, đội vận hành nền tảng, cán bộ an toàn thông tin, kiểm toán viên, kiểm thử viên
 phan_he: PH-13
@@ -275,7 +275,8 @@ PH-13 không thêm DU mới: phần ứng dụng là hai package trong `dh-platf
 | Kho WORM | Hệ lưu trữ riêng, Ceph RGW (Q306) | Bucket `dh-worm-audit`, tiền tố `{tenant}/`, Object Lock chế độ tuân thủ | B |
 | Bộ phát hiện bất thường | `dh-platform` | Truy vấn tổng hợp mỗi phút trên phân vùng nóng của bảng kiểm toán, đẩy vào Alertmanager | G |
 | Grafana | `dh-obs`, CSDL `pg-infra` | Tổ chức theo tenant, dashboard khai báo bằng mã, đăng nhập qua Keycloak | E, F |
-| Bộ xuất SIEM | Collector gateway | Syslog RFC 5424 trên TLS hoặc OTLP, ánh xạ ECS hoặc OCSF | G |
+| Bộ xuất SIEM | Deployment `otel-siem` | Syslog RFC 5424 trên TLS hoặc OTLP, ánh xạ ECS hoặc OCSF | G |
+| `alert-relay` | `dh-obs`, 2 bản sao | Kênh cảnh báo `CRITICAL` độc lập, không dùng PH-18, `pg-core` hay Kafka | F |
 
 : Thành phần và công nghệ của PH-13
 
@@ -422,7 +423,7 @@ Tác nhân gồm mười vai trò người theo D02-08 và các nhóm hệ thố
 
 ### 3.2. Ma trận quyền
 
-Ma trận dùng ký hiệu của D02-08 §3 (● có, ○ có trong phạm vi tổ chức của mình, — không). Năm quyền đầu đã có ở D02-08 và được dùng nguyên; ba quyền cuối (`PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin`) là quyền mới, ghi ở §3.4.
+Ma trận dùng ký hiệu của D02-08 §3 (● có, ○ có trong phạm vi tổ chức của mình, — không). Năm quyền đầu đã có ở D02-08 và được dùng nguyên; ba quyền cuối (`PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin`) là quyền mới, đã có ở D02-08 bản 0.5 và đối chiếu ở §3.4.
 
 | Quyền | Ý nghĩa | PA | PO | TA | TO | SO | IE | IA | SV | VW | AU |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -460,7 +461,7 @@ Chiều ngược lại, tài khoản của `dh-platform` giữ scope `event:metr
 
 ### 3.4. Đề nghị đồng bộ D02-08
 
-Các quyền và scope dưới đây chưa có hoặc cần chỉnh ở D02-08; tập này dùng như đề nghị cho tới khi D02-08 cập nhật. Tập này không sửa D02-08.
+Các quyền và scope dưới đây đã được thêm hoặc chỉnh ở D02-08 bản 0.5 (§3, §5 và ghi chú về `ROLE-PLATFORM_AUDITOR`); bảng giữ lại làm vết đối chiếu giữa hai tài liệu. Tập này không sửa D02-08.
 
 | Đề nghị | Nội dung |
 |---|---|
@@ -511,31 +512,31 @@ Bảng dưới định nghĩa các khái niệm nghiệp vụ mà chương 5 đ�
 
 ### 4.2. Thực thể
 
-Thực thể ở mức logic; định nghĩa cột, kiểu, chỉ mục ở D03-03-PH13. Mọi bảng có `id`, `tenant_id`, `created_at`, `updated_at`, `version` theo D00-04 §4, trừ bảng kiểm toán chỉ-thêm (không có `updated_at`, `version`). Schema PostgreSQL là `ph13_audit` cho nhóm kiểm toán và `ph13_obs` cho nhóm quan sát, cùng trên `pg-core`.
+Thực thể ở mức logic; định nghĩa cột, kiểu, chỉ mục ở D03-03-PH13. Mọi bảng có `id`, `tenant_id`, `created_at`, `updated_at`, `version` theo D00-04 §4, trừ bảng kiểm toán chỉ-thêm (không có `updated_at`, `version`). Schema PostgreSQL là `ph13_audit` cho nhóm kiểm toán và `ph13_obs` cho nhóm quan sát, cùng trên `pg-core`. 22 thực thể dưới đây được hiện thực bằng 33 bảng; 11 bảng còn lại là bảng hỗ trợ do SDD D03-02-PH13 yêu cầu, nêu ở đầu chương 3 của D03-03-PH13.
 
 | Mã | Thực thể | Bảng | Trường chính | Vòng đời |
 |---|---|---|---|---|
 | EN-13-01 | Bản ghi kiểm toán | `ph13_audit.audit_event` | Trường ở mục 4.7 | Chỉ-thêm; trực tuyến 12 tháng; WORM 5 năm |
-| EN-13-02 | Neo | `ph13_audit.audit_anchor` | `tenant_id`, `seq_last`, `hash_last`, `anchored_at`, `signature`, `key_version`, `worm_object`, `siem_ack_at` | Chỉ-thêm; vĩnh viễn |
+| EN-13-02 | Neo | `ph13_audit.audit_anchor` | `tenant_id`, `seq_last`, `hash_last`, `anchored_at`, `signature`, `key_version`, `kind` (`HOURLY`, `BOUNDARY`, `FINAL`) | Chỉ-thêm; vĩnh viễn; việc công bố (`worm_object`, `siem_ack_at`) ghi ở bảng riêng `audit_anchor_publish` để bảng neo thuần chỉ-thêm |
 | EN-13-03 | Chuỗi kiểm toán | `ph13_audit.audit_chain` | `tenant_id`, `genesis_hash`, `head_seq`, `head_hash`, `status` (`OPEN`, `CLOSED`), `closed_at`, `closed_reason` | Tạo khi khởi tạo tenant; `CLOSED` khi tenant ngừng hoặc sáp nhập |
 | EN-13-04 | Lượt xác minh toàn vẹn | `ph13_audit.audit_verification` | `tenant_id`, `scope` (`DAILY`, `ON_DEMAND`), `from_seq`, `to_seq`, `status` (`RUNNING`, `PASSED`, `FAILED`), `first_break_seq`, `checked_count`, `requested_by` | Giữ 5 năm |
-| EN-13-05 | Yêu cầu xuất bằng chứng | `ph13_audit.audit_export` | `tenant_id`, `filter`, `reason`, `basis`, `status`, `record_count`, `file_object`, `file_hash`, `signature`, `expires_at` | Theo mục 4.6; giữ siêu dữ liệu 5 năm, tệp 7 ngày |
+| EN-13-05 | Yêu cầu xuất bằng chứng | `ph13_audit.audit_export` | `tenant_id`, `filter`, `reason`, `basis`, `status`, `record_count`, `file_object`, `file_hash`, `signature`, `manifest_signature`, `key_version`, `scope_hash`, `reauth_at`, `download_count`, `expires_at` | Theo mục 4.6; giữ siêu dữ liệu 5 năm, tệp 7 ngày |
 | EN-13-06 | Lượt đối chiếu số lượng | `ph13_audit.audit_reconciliation` | `tenant_id`, `du_code`, `day`, `emitted`, `received`, `diff`, `status` | Giữ 5 năm |
 | EN-13-07 | Luật cảnh báo | `ph13_obs.alert_rule` | `rule_code`, `name`, `expr`, `for_seconds`, `severity`, `runbook_id`, `scope` (`PLATFORM`, `TENANT`), `status`, `owner` | Theo mục 4.5; xóa mềm |
 | EN-13-08 | Runbook | `ph13_obs.runbook` | `runbook_code`, `title`, `meaning`, `first_checks`, `common_causes`, `remediation`, `escalation_when` | Vĩnh viễn (xóa mềm) |
-| EN-13-09 | Cảnh báo | `ph13_obs.alert` | `rule_code`, `status`, `severity`, `labels` (JSON), `summary`, `started_at`, `ended_at`, `group_key`, `escalation_level`, `resolution` | Theo mục 4.3; giữ 2 năm |
-| EN-13-10 | Lượt gửi thông báo | `ph13_obs.alert_notification` | `alert_id`, `channel_code`, `recipient`, `status`, `attempt`, `sent_at`, `error` | Giữ 2 năm |
+| EN-13-09 | Cảnh báo | `ph13_obs.alert` | `rule_code`, `status`, `severity`, `labels` (JSON), `summary`, `started_at`, `ended_at`, `group_key`, `escalation_level`, `resolution`, `fingerprint`, `silence_reason`, `acknowledged_by`, `acknowledged_at` | Theo mục 4.3; giữ 2 năm |
+| EN-13-10 | Lượt gửi thông báo | `ph13_obs.alert_notification` | `alert_id` hoặc `security_alert_id` (thông báo của cảnh báo an ninh), `channel_code`, `recipient`, `status`, `attempt`, `sent_at`, `error` | Giữ 2 năm |
 | EN-13-11 | Thao tác xử lý cảnh báo | `ph13_obs.alert_action` | `alert_id`, `action` (`ACK`, `RESOLVE`, `SILENCE`, `ESCALATE`), `actor`, `at`, `cause`, `measure`, `outcome` (`FIXED`, `NO_ACTION`, `EXTERNAL`), `silence_until`, `reason` | Giữ 2 năm |
 | EN-13-12 | Lịch trực | `ph13_obs.oncall_schedule` | `schedule_code`, `group`, `rotation` (JSON ca), `escalation_order`, `timezone` | Vĩnh viễn |
 | EN-13-13 | Kênh thông báo | `ph13_obs.notification_channel` | `channel_code`, `kind` (`EMAIL`, `SMS`, `WEBHOOK`, `INAPP`), `target`, `secret_ref`, `enabled`, `last_test_at` | Vĩnh viễn; bí mật ở OpenBao |
-| EN-13-14 | Luật phát hiện | `ph13_obs.detection_rule` | `rule_code` (`UC-SEC-nn`), `source`, `threshold` (JSON), `threshold_limit` (JSON), `severity`, `enabled`, `can_disable` | Nạp từ D03-07; sửa ngưỡng ghi kiểm toán |
+| EN-13-14 | Luật phát hiện | `ph13_obs.detection_rule` | `rule_code` (`UC-SEC-nn`), `source`, `impl`, `threshold` (JSON), `threshold_default` (JSON), `threshold_limit` (JSON), `severity`, `recipients`, `enabled`, `can_disable` | Nạp từ D03-07; sửa ngưỡng ghi kiểm toán |
 | EN-13-15 | Cảnh báo an ninh | `ph13_obs.security_alert` | `rule_code`, `status`, `severity`, `subject`, `evidence` (JSON), `detected_at`, `verdict`, `verdict_note` | Theo mục 4.4; giữ 3 năm |
 | EN-13-16 | Mục tiêu SIEM | `ph13_obs.siem_target` | `target_code`, `protocol` (`SYSLOG_TLS`, `OTLP`), `endpoint`, `schema` (`ECS`, `OCSF`), `filter`, `enabled` | Vĩnh viễn |
 | EN-13-17 | Bộ dashboard | `ph13_obs.dashboard_set` | `set_code`, `version`, `grafana_org`, `synced_at`, `status` | Vĩnh viễn |
 | EN-13-18 | Truy vấn đã lưu | `ph13_obs.saved_query` | `kind` (`LOG`, `AUDIT`, `ACCESS`), `name`, `query`, `shared`, `owner` | Xóa cứng khi chủ sở hữu xóa |
 | EN-13-19 | Cấu hình quan sát của tenant | `ph13_obs.tenant_obs_config` | `tenant_id`, `params` (JSON `13.*`), `quota` (JSON), `provisioned_at`, `grafana_org_id` | Tạo khi khởi tạo tenant |
 | EN-13-20 | Kiểm tra tổng hợp | `ph13_obs.probe_definition` | `probe_code`, `target_api`, `interval_seconds`, `expected_status`, `timeout_ms`, `enabled` | Vĩnh viễn |
-| EN-13-21 | Phân vùng kiểm toán | `ph13_audit.audit_partition` | `tenant_id` hoặc chung, `month`, `status` (`OPEN`, `SEALED`, `ARCHIVED`), `record_count`, `worm_verified_at`, `archived_at` | Theo mục 4.7 |
+| EN-13-21 | Phân vùng kiểm toán | `ph13_audit.audit_partition` | `tenant_id` (luôn `PLATFORM`, phân vùng chung theo tháng), `month`, `status` (`OPEN`, `SEALED`, `ARCHIVED`), `record_count`, `worm_verified_at`, `archive_after`, `archived_at` | Theo mục 4.7 |
 | EN-13-22 | Báo cáo sự cố | `ph13_obs.incident_report` | `report_code`, `kind` (`CYBER`, `DLCN_BREACH`), `template`, `content`, `status` (`DRAFT`, `FINAL`), `created_by` | Giữ 5 năm |
 
 : Thực thể nghiệp vụ của PH-13
@@ -679,6 +680,8 @@ stateDiagram-v2
 | `reason`, `purpose` | T-TEXT, T-CODE | Khi bắt buộc | `reason` 10…500 ký tự cho thao tác FR-00-050, xem Nhạy cảm, liên tenant |
 | `trace_id` | T-TRACE | Có | 32 ký tự thập lục phân; nối với trace |
 | `source_du` | T-CODE | Có (PH-13 điền theo chứng thư) | DU nguồn, dùng đối chiếu số lượng |
+| `clock_skew` | boolean | Có (PH-13 gán) | Đúng khi `occurred_at` lệch quá 2 giây về tương lai so với giờ PH-13 (ERR-13-126); vẫn ghi |
+| `hash_version` | smallint | Có (PH-13 gán) | Phiên bản thuật toán chuẩn hóa và băm; để đổi thuật toán mà vẫn kiểm lại được chuỗi cũ |
 | `prev_hash`, `hash` | char(64) | Có (PH-13 gán) | `hash = SHA-256(prev_hash ‖ canonical_json(bản ghi không gồm hash))` |
 
 : Định dạng bản ghi kiểm toán EN-13-01
@@ -696,6 +699,7 @@ Số chuỗi hoạt động của Mimir tăng theo số tổ hợp nhãn, nên P
 | `api`, `method`, `status_class` | Chỉ số lượt gọi API | `status_class` ∈ `2xx`, `3xx`, `4xx`, `5xx` |
 | `topic`, `subscription` | Chỉ số sự kiện | Từ PH-10 |
 | `node`, `pod`, `severity` | Hạ tầng, cảnh báo | Pod chỉ ở chỉ số hạ tầng, giới hạn theo hạn mức |
+| `result`, `decision`, `reason`, `backend`, `channel`, `probe`, `step`, `day` | Chỉ số kỹ thuật của `dh-platform` và thư viện `dh-audit` (`du` = `dh-platform` hoặc `dh-audit`) | Nhãn kỹ thuật có miền giá trị đóng (danh sách giá trị cố định ở D03-02-PH13); giá trị ngoài miền bị loại như nhãn lạ |
 | Cấm làm nhãn chỉ số | `trace_id`, `user_id`, `client_ip`, đường dẫn đầy đủ, `request_id`, bất kỳ giá trị có số lượng không giới hạn | Các giá trị này chỉ ở log, trace, ClickHouse |
 
 : Nhãn chuẩn và nhãn bị cấm của chỉ số
@@ -1400,7 +1404,7 @@ Sơ đồ cho thấy một đường thẳng từ tiếp nhận tới ghi, rồi
 **Luồng xử lý chính.**
 
 1. Bộ tiếp nhận (một consumer cho mỗi phân vùng của topic tenant) nhận lô tối đa 500 bản ghi.
-2. Hệ thống xác định `source_du` từ danh tính Kafka (chứng thư của KafkaUser) và kiểm tra DU đó được phép ghi cho tenant; không được thì cách ly (ERR-13-103).
+2. Hệ thống xác định `source_du` từ tiêu đề ký `dh-du`, `dh-kid`, `dh-mac` của bản tin (kiểm lại HMAC bằng khóa nguồn) kết hợp ACL của topic, vì Kafka không cho bên tiêu thụ đọc danh tính bên sản xuất, rồi kiểm tra DU đó được phép ghi cho tenant; không được thì cách ly (ERR-13-103).
 3. Hệ thống kiểm tra lược đồ và đủ trường bắt buộc; thiếu trường thì cách ly (ERR-13-101).
 4. Hệ thống kiểm tra `tenant_id` của bản ghi khớp tiền tố topic; không khớp thì cách ly (ERR-13-104).
 5. Hệ thống tra `id` đã có trong chuỗi chưa; có rồi thì bỏ qua và coi là đã nhận (ERR-13-102, idempotent).
@@ -1611,7 +1615,7 @@ Hình cho thấy thứ tự thật của một lần ghi: đọc đầu chuỗi,
 
 **Luồng xử lý chính.**
 
-1. Hệ thống chọn điểm xuất phát là neo đã xác minh gần nhất (hoặc genesis) và điểm cuối là `head_seq`; tạo bản ghi lượt kiểm tra `RUNNING`.
+1. Hệ thống chọn điểm xuất phát và điểm cuối là `head_seq`, rồi tạo bản ghi lượt kiểm tra `RUNNING`. Lượt `DAILY` kiểm lại toàn bộ chuỗi trực tuyến từ bản ghi đầu của phân vùng trực tuyến cũ nhất, để bản ghi cũ bị sửa khi đoạn mới còn nguyên vẫn bị phát hiện; tầng gia tăng chạy sau mỗi lần neo và lấy neo đã xác minh gần nhất (hoặc genesis) làm điểm xuất phát; lượt `ON_DEMAND` lấy điểm xuất phát theo `fromDate`.
 2. Hệ thống đọc chuỗi theo `seq` từ bản sao chỉ-đọc của `pg-core` để không ảnh hưởng ghi, tính lại `hash` từng bản ghi và so với `hash` lưu và `prev_hash` của bản ghi kế.
 3. Hệ thống kiểm tra `seq` liên tục, không khoảng trống.
 4. Hệ thống xác minh chữ ký từng neo trong đoạn bằng khóa công khai theo `key_version`.
@@ -1715,7 +1719,7 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 ::: dac-ta
 **Mục đích.** Bảo đảm không mất bản ghi kiểm toán và không chặn người dùng khi PH-13, Kafka, PostgreSQL, OpenBao hoặc kho WORM tạm ngừng, bằng cách giữ bản ghi ở khâu trước tới khi khâu sau xác nhận. Ngoại lệ duy nhất là dữ liệu Nhạy cảm không bảo đảm được ghi vết ở nguồn.
 
-**Tác nhân, quyền.** Hệ thống; PO, TO xem tình trạng đệm (`PERM-13-dashboard`).
+**Tác nhân, quyền.** Hệ thống; PO xem tình trạng đệm ở UI-13-18 (`PERM-13-dashboard`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -1763,7 +1767,7 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 ::: dac-ta
 **Mục đích.** Chứng minh rằng 100% thao tác thuộc FR-00-040 có bản ghi, bằng cách so số bản ghi mỗi DU báo đã phát với số PH-13 đã nhận; chênh lệch dù nhỏ là dấu hiệu có thao tác không được ghi vết hoặc bản ghi bị xóa trên đường đi. Đây là điểm nghiệm thu quan trọng của phân hệ.
 
-**Tác nhân, quyền.** Hệ thống; PO, SO, AU xem kết quả (`PERM-13-audit-read`).
+**Tác nhân, quyền.** Hệ thống; SO, AU xem bảng đối chiếu chi tiết theo DU (`PERM-13-audit-read`); PO xem trạng thái đối chiếu tổng `MATCH` hoặc `MISMATCH` (`PERM-13-dashboard`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -1828,7 +1832,7 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 
 1. Hệ thống tạo trước phân vùng của 3 tháng tới.
 2. Sang tháng mới, hệ thống đổi phân vùng tháng trước sang `SEALED` khi mọi lô WORM của tháng đã sao và đối chiếu số lượng đã `MATCH`.
-3. Với phân vùng `SEALED` quá 12 tháng, hệ thống kiểm tra mọi lô của phân vùng có trên WORM, băm khớp và thời hạn giữ còn đủ.
+3. Phân vùng là phân vùng chung theo tháng của mọi tenant. Với phân vùng `SEALED` quá 12 tháng, hệ thống chỉ lưu trữ khi mọi tenant có bản ghi trong tháng đó đều đủ điều kiện: mọi lô của tenant có trên WORM, băm khớp và thời hạn giữ còn đủ.
 4. Đạt thì vai trò `ph13_archive` tách phân vùng, đổi sang `ARCHIVED`, ghi biên bản và phát EVT-13-11; bản ghi từ đó chỉ còn trên WORM.
 5. Khi Object Lock của một lô hết hạn, kho WORM xóa lô theo vòng đời; hệ thống ghi biên bản xóa (tenant, dải `seq`, ngày) vào chuỗi `PLATFORM`.
 
@@ -1913,6 +1917,9 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 | `ALERT.ACK`, `ALERT.RESOLVE`, `ALERT.SILENCE` | Xử lý cảnh báo (FR-13-047) | Có với đóng, tạm ẩn |
 | `SECURITY.ALERT.ACK`, `SECURITY.ALERT.CLOSE`, `SECURITY.RULE.TUNE` | Xử lý cảnh báo an ninh, tinh chỉnh ngưỡng (FR-13-051, 053) | Có |
 | `OBS.CROSS_TENANT_ATTEMPT` | Truy vấn chạm tenant khác (FR-13-009) | Không (hệ thống) |
+| `AUDIT.QUERY.RESULT`, `AUDIT.WORM.EXPIRE` | Kết quả của một lần tra cứu (FR-13-020); lô WORM hết hạn Object Lock và bị xóa (FR-13-018) | Không (hệ thống) |
+| `OBS.CROSS_TENANT_ACCESS`, `OBS.SETTINGS.UPDATE` | Một lần truy cập trong phiên liên tenant, ghi hai chuỗi (FR-13-025); đổi cài đặt quan sát (FR-13-061) | Có với truy cập liên tenant |
+| `SECURITY.ALERT.PROPOSE_SUSPENSION` | Đề xuất tạm ngừng HTTT từ cảnh báo an ninh (FR-13-053) | Không (hệ thống) |
 | `ONCALL.UPDATE`, `CHANNEL.UPDATE`, `SIEM.TARGET.UPDATE`, `DASHBOARDSET.SYNC`, `SETTINGS.UPDATE`, `CHAIN.CLOSE`, `PROBE.UPDATE` | Cấu hình PH-13 (FR-13-008, 041, 048, 054, 060, 061) | Có với đóng chuỗi |
 
 : Thao tác của PH-13 phải ghi kiểm toán
@@ -3281,7 +3288,7 @@ Sơ đồ cho thấy một đường chính từ luật tới xử lý và một
 
 1. PA đề xuất thay đổi luật chuẩn bằng yêu cầu hợp nhất ở kho Git; CI kiểm tra mọi luật có runbook đủ năm mục, biểu thức hợp lệ, mức độ hợp lệ (ERR-13-017, 018 ở CI).
 2. Người thứ hai duyệt hợp nhất (bốn mắt theo quy trình Git, SEC-07).
-3. Argo CD áp luật vào Ruler: luật hạ tầng ở tổ chức `platform`; luật data plane nhân bản cho mỗi tenant bằng khuôn có nhãn `tenant`.
+3. Argo CD triển khai nguồn luật chuẩn dưới dạng ConfigMap và áp vào Ruler: luật hạ tầng ở tổ chức `platform`; luật data plane nhân bản cho mỗi tenant bằng khuôn có nhãn `tenant`.
 4. PH-13 đồng bộ bảng `alert_rule` với `scope = PLATFORM`, trạng thái chỉ-đọc, để UI-13-11 hiển thị.
 5. Tenant xem được từng luật chuẩn, biểu thức, runbook và lịch sử phát; nhân bản thành luật riêng để chỉnh ngưỡng (FR-13-042).
 
@@ -3531,7 +3538,7 @@ Hình cho thấy Ruler chỉ báo khi điều kiện đã duy trì đủ lâu, A
 4. Khi cần ẩn, người dùng bấm "Tạm ẩn" và nhập thời hạn và lý do; hệ thống kiểm tra tối đa 7 ngày, Nghiêm trọng tối đa 24 giờ (ERR-13-021), chuyển `SILENCED`, tạo silence ở Alertmanager.
 5. Mỗi hành động ghi bản ghi kiểm toán và thao tác `alert_action`; giao diện có liên kết nhanh sang trace và log liên quan (FR-13-029).
 
-**Luồng thay thế.** Tạm ẩn hết hạn mà điều kiện còn thì cảnh báo trở về `FIRING` và gửi lại. Điều kiện hết khi đang tạm ẩn thì cảnh báo tự đóng. Xác nhận hàng loạt nhiều cảnh báo cùng nhóm được hỗ trợ ở danh sách.
+**Luồng thay thế.** Tạm ẩn hết hạn mà điều kiện còn thì cảnh báo trở về `FIRING` và gửi lại. Điều kiện hết khi đang tạm ẩn thì cảnh báo tự đóng. Xác nhận hàng loạt nhiều cảnh báo cùng nhóm được hỗ trợ ở danh sách, tối đa 50 cảnh báo mỗi lần; giao diện gọi API-13-032 lần lượt cho từng cảnh báo và hiện kết quả riêng.
 
 **Luồng ngoại lệ.**
 
@@ -4426,7 +4433,7 @@ Chương này nêu các chỉ tiêu chất lượng đo được của PH-13, th
 | NFR-13-027 | Độ phủ đo lường | 100% DU và thành phần có chỉ số sức khỏe, `trace_id`, log JSON (NFR-00-050, 051) | Quét danh mục DU |
 | NFR-13-028 | Chất lượng cảnh báo | 100% luật có runbook đủ năm mục; tỷ lệ cảnh báo giả ≤ 30% sau 30 ngày chạy | Thống kê FR-13-050 |
 | NFR-13-029 | Khả năng truy cập | WCAG 2.2 AA; 0 lỗi axe-core mức A, AA ở mọi màn; biểu đồ không chỉ dùng màu (NFR-00-040, 041) | axe-core và NVDA trên mười luồng chính |
-| NFR-13-030 | Thời gian áp dụng thay đổi | Luật, ngưỡng, tham số có hiệu lực ≤ 60 giây (NFR-00-052) | Đo từ lúc lưu |
+| NFR-13-030 | Thời gian áp dụng thay đổi | Luật, ngưỡng, tham số có hiệu lực ≤ 60 giây (NFR-00-052); ngoại lệ ≤ 3 phút cho tham số tác động tới Collector vì phải nạp lại cấu hình Collector | Đo từ lúc lưu |
 | NFR-13-031 | Xuất bằng chứng | 1 triệu bản ghi hoàn tất ≤ 15 phút; gói tự xác minh được ngoại tuyến bằng script đi kèm | Gói khoảng 200 MB nén |
 
 : Yêu cầu phi chức năng của PH-13
@@ -4698,6 +4705,8 @@ Quan sát `/api/observability/v1`, kiểm toán `/api/audit/v1`, liên tenant `/
 
 : Danh mục API của PH-13
 
+Ghi chú cho danh mục: API-13-084 có thể trả ERR-13-026 (503) khi không kiểm lại được chữ ký trước khi phát tệp; API-13-077 cần `PERM-13-audit-export` (đúng ma trận §3.2) nên UI-13-14 ẩn nút "Kiểm tra toàn vẹn" với người không có quyền này; phản hồi danh sách cảnh báo, cảnh báo an ninh, luật cảnh báo và yêu cầu xuất có thêm `allowedActions` để giao diện bật, tắt nút.
+
 ## 10. Giao diện
 
 Chương này liệt kê 18 màn hình của PH-13 ở mức chức năng và giới thiệu ba giao diện tiêu biểu. Đặc tả bố cục, trường, trạng thái và ảnh hi-fi đủ 18 màn ở D03-06-PH13. Màn hình nằm trong nhóm menu "Giám sát và kiểm toán" của D03-06-00 §2.3 (các mục Bảng giám sát, Cảnh báo, Tra log, Truy vết, Nhật ký kiểm toán); các route con dưới đây là đề nghị bổ sung cho D03-06-00 (mục 12.4). Tab "Lịch sử" của các màn chi tiết thuộc phân hệ chủ, không phải màn của PH-13 (FR-13-022).
@@ -4919,12 +4928,31 @@ Bảng dưới liệt kê các thành phần mà PH-13 dựa vào, mức phụ t
 | PH-02, PH-03 | Mềm | Danh mục API quan trọng, trạng thái cấu hình gateway | Kiểm tra tổng hợp và bảng gateway hiện "Chưa có dữ liệu" |
 | PH-10 | Dùng PH-13, mềm | Lag, lưu lượng sự kiện; topic nền tảng | Thiếu dải lưu lượng ở UI-10-01; PH-13 tạo topic qua cấp phát của PH-10 |
 | PH-18 | Mềm | Gửi thư, SMS (IF-09); ngữ cảnh DLQ | Dùng webhook trực tiếp từ Alertmanager; PH-18 không có ngữ cảnh |
-| PH-20 | Cứng khi khởi tạo tenant | Saga khởi tạo, đóng chuỗi | Saga chờ bước PH-13 (FR-13-059) |
+| PH-20 | Cứng khi khởi tạo tenant | Saga khởi tạo, đóng chuỗi | Saga chờ bước `S08_OBSERVABILITY` của PH-13 (FR-13-059) |
 | Grafana | Mềm | Khám phá sâu, dashboard chuẩn | Bảng điều khiển trong `dh-console` vẫn chạy |
 | SIEM, SOC | Mềm | Nhận log, neo | Hàng đợi đĩa tối đa 1 GB; cảnh báo ERR-13-122 |
 | Nhịp tim ngoài site | Cứng với phát hiện tự giám sát | Watchdog | Không phát hiện được hỏng toàn bộ giám sát; ghi vào rủi ro |
 
 : Phụ thuộc của PH-13 và hành vi khi không khả dụng
+
+Ngoài các phụ thuộc trên, các tập của phân hệ khác đã nêu những điểm giao tiếp mà PH-13 tiếp nhận hoặc cung cấp. Bảng dưới ghi nhận từng điểm để các tập của PH-13 xử lý cùng nhịp; chi tiết luật, nhãn và lược đồ được chốt ở FR tương ứng của tập này và ở tập của phân hệ nêu yêu cầu.
+
+| Phân hệ | Điểm giao tiếp PH-13 tiếp nhận | Căn cứ ở PH-13 |
+|---|---|---|
+| PH-02 | Truy vấn cho `MetricsReadPort`: p99 theo (API, kỳ), số lượt theo nhóm mã trạng thái, ngày có dữ liệu, lượt cao nhất mỗi giờ, mức dùng theo thao tác và theo bên khai thác; quy tắc ghi tổng hợp theo ngày từ chỉ số `apisix_http_*` | FR-13-035, 056 |
+| PH-03 | Luật cảnh báo `GW-A01…A13` của cổng; cột `synthetic` trong lược đồ ClickHouse siêu dữ liệu lượt gọi; truy vấn thống kê cho UI-03-01, UI-03-09; đọc trạng thái cấu hình bằng scope `gateway:read-state`; nghe EVT-03-01…12; gom số đo theo API từ quy ước tên route `{apiCode}:v{major}:{operationId}` | FR-13-006, 030, 035, 042 |
+| PH-08 | Tiêu thụ EVT-08-02…14 để hiển thị chất lượng dữ liệu ở bảng điều khiển nghiệp vụ. Lịch ngày làm việc và ngày lễ theo tenant do PH-18 giữ (`WorkingCalendarApi`), không do PH-13 cấp | FR-13-039 |
+| PH-09 | Tra nhật ký theo `subjectHash` và ghi kiểm toán đồng bộ trong 100 ms | FR-13-010, 020 |
+| PH-12 | Nhận EVT-12-01…16 và nhật ký quyết định theo đường log; nhận nghĩa vụ ghi vết ở FR-12-056, 057 | FR-13-010, 052 |
+| PH-14 | Nhận chỉ số `national_*` và EVT-14-01…17; đọc API-14-058, 060, 073 bằng scope `national.health-read`; nạp bộ luật cảnh báo của PH-14 | FR-13-042, 056 |
+| PH-15 | Scope `metrics:portal-read`, nhãn `app_code`, ghi kiểm toán đồng bộ cho cổng nhà phát triển | FR-13-010, 056 |
+| PH-16 | Chỉ số sẵn sàng tháng, độ trễ gateway p95, MTTD, MTTR mức 1, tỷ lệ nhật ký khai thác đủ qua API-13-067, 068; sự kiện trạng thái sức khỏe đối tượng giám sát | FR-13-056 |
+| PH-17 | Danh mục sự kiện kiểm toán `assist.*`; ghi đồng bộ trong 300 ms; tra cứu có lý do cho nhật ký hội thoại | FR-13-010, 020 |
+| PH-18 | Nhận EVT-18-04 để cập nhật danh sách egress; nhận luật cảnh báo `ops.*` vào bảng điều khiển; cung cấp lịch trực cho quy tắc thông báo | FR-13-042, 048 |
+| PH-19 | Thêm luật cho giao dịch tồn quá 10 phút chưa xử lý và cho trạng thái khởi tạo hạ tầng tenant | FR-13-042 |
+| PH-20 | Nhận EVT-20-12 (`platform.tenant.merge-completed.v1`); nhãn `tenant` cho chỉ số `dh_tenant_*`; thử lại khi gặp ERR-13-014 | FR-13-059, 060 |
+
+: Điểm giao tiếp PH-13 tiếp nhận từ các phân hệ khác
 
 ### 12.2. Giả định
 
@@ -5045,4 +5073,5 @@ PH-13 được nghiệm thu khi đạt đủ mười tiêu chí dưới đây tr
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 61 yêu cầu chức năng theo tám nhóm viết ở dạng khối đặc tả 17 mục; 35 quy tắc nghiệp vụ; 31 yêu cầu phi chức năng; 25 tham số `13.*`; 70 mã lỗi, 14 sự kiện, 90 API; 18 màn hình; truy vết 20 hàng `LGC` của D00-03 cùng 2 hàng `LGC-NFR` và ánh xạ mã SRS repo; 19 câu hỏi mở Q13-01…19; đề nghị đồng bộ D02-08, D02-02, D03-07, D03-09, D03-10, D03-06-00, D03-05 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: cột UI, API, UC của mục 5 khớp mục 9.4, 10.1 và D02-04; thêm UC vào trường "Truy vết" của 61 FR; FR-13-005, 006 gắn UI-13-06, 09; FR-13-040 thống nhất quyền với D03-04 và D03-06; ghi đề nghị đồng bộ danh sách ngoại lệ kiểm tra mã |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, bước S08_OBSERVABILITY, quyền theo D02-08 0.5, khớp DDL mục 4.2 và 4.7, nhãn kỹ thuật, giới hạn xác nhận hàng loạt 50 |
 

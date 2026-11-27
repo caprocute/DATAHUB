@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH13
 ten: Đặc tả API và sự kiện phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, giao diện, PH-16, PH-18, PH-20, kiểm thử viên, ATTT, hội đồng thẩm định
 phan_he: PH-13
@@ -116,7 +116,7 @@ Quy ước dưới đây áp cho cả ba nhóm đường gốc để người d�
 | Phiên bản | Đường dẫn `v1`; thay đổi phá vỡ sang `v2`, chạy song song ≥ 6 tháng (oasdiff ở CI-5 chặn thay đổi phá vỡ trong `v1`) |
 | Tenant | Lấy từ token (`tenant` claim), không bao giờ từ đường dẫn hay thân. Ngoại lệ có kiểm soát: người dùng nền tảng có phiên liên tenant đặt `targetTenant`; thiếu phiên trả ERR-13-036; tài khoản máy chỉ chạm tenant được cấp (ERR-13-044) |
 | Hành động | Hậu tố `:{hành-động}` trên tài nguyên (`:acknowledge`, `:resolve`, `:silence`, `:close`, `:test`, `:sync`) theo AIP-136; truy vấn có thân dùng `:search`, `:query` |
-| Khóa lạc quan | `GET` trả `ETag`; `PATCH` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả ERR-13-007 (412). Thao tác chạy thử (`:test`), đồng bộ (`:sync`) và xóa truy vấn đã lưu không cần `If-Match` |
+| Khóa lạc quan | `GET` trả `ETag`; `PATCH` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả ERR-13-007 (412). Thao tác chạy thử (`:test`), đồng bộ (`:sync`) và xóa truy vấn đã lưu không cần `If-Match`; `ETag` đúng bằng cột `version` của bảng; lỗi do CSDL chốt (`CHECK`, trigger) được ánh xạ sang ERR-13 theo D03-03-PH13 mục 4.4, và enum, độ dài, mẫu của DTO khớp `CHECK` ở chương 3 của tài liệu đó |
 | Chống trùng | `POST` tạo mới bắt buộc `Idempotency-Key` (16…128 ký tự, lưu 24 giờ); cùng khóa khác nội dung trả ERR-13-037 (409). API-13-089 lũy đẳng theo `id` bản ghi nên không dùng khóa này |
 | Phân trang danh sách | `page` (từ 1), `size` (mặc định 50, tối đa 200; vượt trả ERR-13-038); phản hồi `page` gồm `page`, `size`, `total`, `hasMore`; sắp xếp `sort=trường:asc\|desc` |
 | Phân trang tra cứu lớn | Tra log, nhật ký truy cập API, nhật ký kiểm toán dùng con trỏ: `cursor`, `size`; phản hồi `page.next`, `page.hasMore`. Không trả tổng chính xác; kiểm toán trả `totalEstimate` (Q13-55) |
@@ -795,7 +795,7 @@ Mã `Q13-55…59` theo dải tập API (D00-04 §3.1). Mỗi câu có đề xu�
 | Q13-55 | FRS §6.1 giới hạn tra kiểm toán 31 ngày mỗi lần, còn NFR-13-009 đo khoảng 12 tháng p95 ≤ 10 giây. Một lần tra có được vượt 31 ngày không | Giữ 31 ngày mỗi lần ở API (ERR-13-005); khoảng dài hơn dùng xuất bằng chứng (API-13-082). Kiểm thử NFR-13-009 chạy bằng nhiều lượt 31 ngày nối nhau. `totalEstimate` lấy từ thống kê phân vùng, không `COUNT` chính xác trên 36,5 triệu bản ghi |
 | Q13-56 | Có công bố API-13-067, 068, 069 cho PH-16, PH-18 qua APISIX không, hay chỉ gọi trong cụm | Không công bố; gọi trong cụm, mTLS lưới dịch vụ (giống Q05-61). Khi PH-16 hoặc PH-18 tách hạ tầng mới tính lại |
 | Q13-57 | Cách truyền yêu cầu xác thực lại (step-up) từ máy chủ qua BFF tới giao diện | Dùng RFC 9470: ERR-13-028 trả 403 kèm `WWW-Authenticate` có `acr_values`; PH-12 chốt giá trị `acr` và thời hạn "vừa xác thực" (giả định 10 phút) |
-| Q13-58 | Phiên liên tenant truyền thế nào: tham số `targetTenant` hay claim trong token | Cả hai: token mang claim `xt_session` do PH-12 cấp, API nhận `targetTenant` và so khớp với claim; lệch trả ERR-13-036. PH-12 xác nhận |
+| Q13-58 | Phiên liên tenant truyền thế nào: tham số `targetTenant` hay tiêu đề mang mã quyền có thời hạn | Kết hợp tham số và tiêu đề: yêu cầu mang tiêu đề `X-DH-Grant-Id` chứa `grantId` của quyền có thời hạn do PH-12 cấp (API-12-038…040; OPA tra quyền theo dữ liệu, không tin tiêu đề), API nhận `targetTenant` và so khớp với tenant đích của quyền đó; lệch trả ERR-13-036 |
 | Q13-59 | SSE của API-13-021 qua BFF và APISIX gặp giới hạn thời gian nhàn rỗi của proxy | Gửi `heartbeat` mỗi 15 giây (giả định, nhỏ hơn mức 60 giây thường gặp); đo ở kiểm thử tải; giao diện đóng luồng khi tab ẩn và mở lại khi hiện |
 
 : Câu hỏi mở của tập API PH-13
@@ -3020,3 +3020,4 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước chung, xác thực, danh mục 90 endpoint, 14 sự kiện và hai topic vào, hợp đồng với phân hệ khác, bảng mã lỗi, kiểm tra hợp đồng, ánh xạ hệ cũ, 5 câu hỏi mở (Q13-55…59), chương đặc tả từng endpoint sinh từ OpenAPI, đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tiêu đề X-DH-Grant-Id thay claim xt_session, ETag và ánh xạ lỗi CSDL, sessionId, spansTotal, quarantineCount |

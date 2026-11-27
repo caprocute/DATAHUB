@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH12
 ten: Thiết kế giao diện màn hình phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-12
@@ -311,7 +311,7 @@ Bảng này là nguồn chuẩn cho mọi câu hiển thị của PH-12. Câu n�
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
 | ERR-12-001 | "Không tìm thấy {đối tượng} {mã}. Có thể đã bị xóa hoặc không thuộc tỉnh của anh/chị." | Trang ST-08 |
-| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." | Dưới trường nhập |
+| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." Với mã nhóm trùng: "Mã nhóm này đã được dùng. Chọn mã khác." | Dưới trường nhập |
 | ERR-12-003 | "Có {n} trường chưa hợp lệ. Sửa các trường được đánh dấu." | `CMP-Alert` đầu biểu mẫu, liên kết nhảy tới trường |
 | ERR-12-004 | "Đơn vị {mã} không tồn tại hoặc đã hết hiệu lực." | Dưới trường đơn vị |
 | ERR-12-005 | "Thư điện tử phải thuộc miền {danh sách miền} của tỉnh." | Dưới trường thư |
@@ -2039,3 +2039,4 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập màn hình PH-12: 19 màn UI-12-01…19 theo mẫu PH-05 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thông báo ERR-12-002 theo FRS |

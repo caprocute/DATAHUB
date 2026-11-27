@@ -5593,6 +5593,8 @@ components:
           $ref: '#/components/schemas/TraceId'
         partial: *id003
         truncated: *id003
+        spansTotal:
+          type: integer
         durationMs:
           type: integer
         spans:
@@ -7476,6 +7478,7 @@ components:
           maxLength: 255
         targetTenant:
           $ref: '#/components/schemas/TenantCode'
+        sessionId: *id001
       additionalProperties: false
       required:
       - from
@@ -7923,6 +7926,14 @@ components:
           type: integer
         bufferedRecords:
           type: integer
+        quarantineCount:
+          type: integer
+        reasons:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          description: Lý do còn bản ghi trong kho cách ly hoặc chuỗi nghi vấn.
       required:
       - tenantId
       - status

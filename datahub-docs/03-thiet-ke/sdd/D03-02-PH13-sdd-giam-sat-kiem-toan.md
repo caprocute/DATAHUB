@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH13
 ten: Thiết kế chi tiết phần mềm phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư nền tảng quan sát, ATTT, vận hành, kiến trúc sư, hội đồng thẩm định
 phan_he: PH-13
@@ -780,7 +780,7 @@ Hai lớp chống ghi đồng thời: khóa tư vấn mức giao dịch (ngườ
 
 Kiểm thử thuộc tính (jqwik) bắt buộc: với mọi bản ghi sinh ngẫu nhiên, `JCS(đọc từ jsonb(JCS(x))) = JCS(x)`; và một bộ vector cố định (20 bản ghi, giá trị băm đã chốt) chạy ở Java, SQL và script xác minh để chặn sai lệch thư viện.
 
-**Chặn sửa xóa ở CSDL.** `audit_event` thuộc vai trò chủ `ph13_owner` (không đăng nhập được, chỉ dùng cho di trú Flyway trong đường ống triển khai có `pgaudit` ghi DDL). Trigger `BEFORE UPDATE OR DELETE` (mức hàng) và `BEFORE TRUNCATE` (mức câu lệnh) ném lỗi cho mọi vai trò trừ `ph13_archive` khi tách phân vùng. `ph13_app` chỉ có `INSERT`, `SELECT` trên `audit_event` và `audit_anchor`, và `UPDATE` giới hạn theo cột (`head_seq`, `head_hash`, `last_recorded_at`, `status`, `integrity`) trên `audit_chain`. Thử `UPDATE`, `DELETE`, `TRUNCATE` hoặc `ALTER TABLE ... DISABLE TRIGGER` được `pgaudit` ghi lại và `TamperProbe` (§4.7) phát UC-SEC-20. Tài khoản CSDL là tài khoản động của OpenBao (TTL 1 giờ, SEC-33), không cấp cho người (BR-13-019).
+**Chặn sửa xóa ở CSDL.** `audit_event` thuộc vai trò chủ `ph13_owner` (không đăng nhập được, chỉ dùng cho di trú Flyway trong đường ống triển khai có `pgaudit` ghi DDL). Trigger `BEFORE UPDATE OR DELETE` (mức hàng) và `BEFORE TRUNCATE` (mức câu lệnh) ném lỗi cho mọi vai trò trừ `ph13_archive` khi tách phân vùng. `ph13_app` chỉ có `INSERT`, `SELECT` trên `audit_event` và `audit_anchor`, và `UPDATE` giới hạn theo cột (`head_seq`, `head_hash`, `last_recorded_at`, `status`, `integrity`) trên `audit_chain`. Thử `UPDATE`, `DELETE`, `TRUNCATE` hoặc `ALTER TABLE ... DISABLE TRIGGER` được `pgaudit` ghi lại và `TamperProbe` (§4.7) phát UC-SEC-20. Tài khoản CSDL là tài khoản động của OpenBao (TTL 1 giờ, SEC-33), không cấp cho người (BR-13-019). Ngoài `ChainWriter`, CSDL có hai lớp chốt bổ sung: trigger `tg_audit_chain_guard` (trước `UPDATE` ở `audit_chain`) bảo đảm đầu chuỗi chỉ tăng, đoạn mới liền kề và nối đúng, và constraint trigger hoãn `tg_audit_event_covered` bảo đảm bản ghi chỉ cam kết khi đầu chuỗi đã bao phủ `seq` của nó, nên không có bản ghi mồ côi.
 
 ### 4.5. Neo băm ký hằng giờ
 
@@ -915,7 +915,7 @@ Chi tiết thiết kế:
 
 **Đối chiếu.** Với ngày `D` theo múi giờ `Asia/Ho_Chi_Minh`, mỗi cặp (DU, tenant): `emitted` đọc từ `dh_audit_emitted_day{day=D}` (giá trị lớn nhất trong giờ cuối của ngày kế tiếp, vì bộ đếm chỉ tăng); `received` đếm `audit_event` có `source_du = du` và `occurred_at ∈ D` cộng bản cách ly cùng điều kiện. Vì bảng phân vùng theo `recorded_at` còn `occurred_at` có thể muộn tới nhiều giờ khi có tồn đọng, truy vấn quét phân vùng của tháng `D` và tháng kế tiếp, dùng chỉ mục `(tenant_id, source_du, occurred_at)` (đề nghị cho D03-03-PH13). `diff > 0` thì chờ 2 giờ rồi đếm lại; còn lệch thì `MISMATCH`, EVT-13-09, cảnh báo `CRITICAL` cho DU nguồn; `diff < 0` thì `SURPLUS` cảnh báo vì bộ đếm có thể sai. Vì bộ đếm của DU nằm trong cùng giao dịch với hộp thư đi (§4.2) nên một thao tác mất giữa DU và PH-13 luôn làm `diff > 0`.
 
-**Phân vùng.** `PartitionManager` tạo trước 3 phân vùng tháng, chốt `SEALED` khi mọi lô WORM của tháng đã sao, đã so khớp và đối chiếu số lượng của tháng đều `MATCH`; đồng thời ký neo `BOUNDARY` (§4.5). Lưu trữ cho phân vùng `SEALED` quá `13.audit.online-months`: `ArchiveService.preflight` kiểm mọi lô trên WORM của dải `seq`, băm khớp bản trong bảng (đọc đủ cả hai phía), thời hạn giữ còn đủ; đạt thì mở phiên vai trò `ph13_archive` (OpenBao động, TTL 15 phút, chỉ `DETACH PARTITION CONCURRENTLY` và `DROP` trên `audit_event`), tách và xóa phân vùng, ghi `AUDIT.PARTITION.ARCHIVE` và EVT-13-11. Không đạt: giữ `SEALED`, ERR-13-125. Sau khi lưu trữ, điểm xuất phát của kiểm tra hằng ngày dời tới neo `BOUNDARY` của tháng cũ nhất còn trực tuyến.
+**Phân vùng.** `PartitionManager` tạo trước 3 phân vùng tháng, chốt `SEALED` khi mọi lô WORM của tháng đã sao, đã so khớp và đối chiếu số lượng của tháng đều `MATCH`; đồng thời ký neo `BOUNDARY` (§4.5). Lưu trữ cho phân vùng `SEALED` quá `13.audit.online-months`: `ArchiveService.preflight` kiểm mọi lô trên WORM của dải `seq`, băm khớp bản trong bảng (đọc đủ cả hai phía), thời hạn giữ còn đủ; đạt thì mở phiên vai trò `ph13_archive` (OpenBao động, TTL 15 phút, chỉ `EXECUTE` thủ tục `p_archive_partition`, không quyền bảng), gọi thủ tục để tách và xóa phân vùng (thủ tục dùng `DETACH PARTITION` thường vì `CONCURRENTLY` không chạy được trong thủ tục; khóa ngắn chấp nhận được vì phân vùng đã `SEALED`, Q13-51), ghi `AUDIT.PARTITION.ARCHIVE` và EVT-13-11. Không đạt: giữ `SEALED`, ERR-13-125. Sau khi lưu trữ, điểm xuất phát của kiểm tra hằng ngày dời tới neo `BOUNDARY` của tháng cũ nhất còn trực tuyến.
 
 ### 4.9. Tra cứu kiểm toán, lịch sử đối tượng và truy cập liên tenant
 
@@ -1863,7 +1863,7 @@ sequenceDiagram
     AS-->>PM: Giữ SEALED, ERR-13-125
   else Đủ điều kiện
     AS->>OB: Xin vai trò ph13_archive TTL 15 phút
-    AS->>PG: DETACH PARTITION CONCURRENTLY rồi DROP
+    AS->>PG: CALL p_archive_partition (tách rồi xóa phân vùng)
     AS->>PG: ARCHIVED, AUDIT.PARTITION.ARCHIVE, EVT-13-11
   end
 ```
@@ -1943,9 +1943,9 @@ Ba quyền `PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin` và sáu sco
 | Vai trò hoặc khóa | Quyền | Cấp |
 |---|---|---|
 | `ph13_owner` | Chủ bảng; không đăng nhập; chỉ di trú Flyway trong đường ống triển khai, DDL ghi bởi `pgaudit` | Không cấp cho người |
-| `ph13_app` | `INSERT`, `SELECT` trên `audit_event`, `audit_anchor`; `UPDATE` theo cột trên `audit_chain` và các bảng trạng thái | OpenBao động, TTL 1 giờ |
+| `ph13_app` | `INSERT`, `SELECT` trên `audit_event`, `audit_anchor`; `INSERT` (theo cột) và `UPDATE` theo cột trên `audit_chain`; `UPDATE` trên các bảng trạng thái | OpenBao động, TTL 1 giờ |
 | `ph13_verify` | Chỉ `SELECT`, kết nối tới bản sao đọc | OpenBao động |
-| `ph13_archive` | Chỉ `DETACH PARTITION`, `DROP` phân vùng đã chốt | OpenBao động, TTL 15 phút, chỉ khi `preflight` đạt |
+| `ph13_archive` | Chỉ `EXECUTE` thủ tục `p_archive_partition` (không quyền bảng) | OpenBao động, TTL 15 phút, chỉ khi `preflight` đạt |
 | `ph13_obs_app` | CRUD trên `ph13_obs` | OpenBao động |
 | `dh-audit-sign` | ECDSA P-256, ký, không xuất | Transit, xoay 12 tháng |
 | `dh-{tenant}-audit-hmac` | `HMAC-SHA256`, không xuất | Transit; DU và `dh-platform` chỉ có `update` trên đường `hmac` |
@@ -2440,4 +2440,5 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, vị trí trong kiến trúc, cấu trúc mã hai module và thư viện `dh-audit`, 21 thành phần với bảng đặc tả 10 mục, mười sơ đồ trình tự, đa tenant, bảo mật, máy trạng thái và lỗi, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, rủi ro, 8 câu hỏi mở (Q13-20…27), đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: p_archive_partition thay DETACH CONCURRENTLY, quyền INSERT theo cột của ph13_app, trigger tg_audit_chain_guard và tg_audit_event_covered |
 

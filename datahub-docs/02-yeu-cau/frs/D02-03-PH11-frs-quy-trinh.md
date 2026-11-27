@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH11
 ten: Đặc tả yêu cầu chức năng phân hệ PH-11 Quy trình liên thông
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ nghiệp vụ một cửa liên thông, kỹ sư dh-platform, kiểm thử viên
 phan_he: PH-11
@@ -4133,8 +4133,8 @@ Tham số ở FR-11-062 là nguồn duy nhất cho các ngưỡng nêu trong ch�
 **Luồng xử lý chính.**
 
 1. Hệ thống dựng ngữ cảnh chỉ gồm trường biểu mẫu và biến được phép (không `SENSITIVE` trừ khi PH-09 cho phép mục đích).
-2. Hệ thống gọi PH-17 với thời gian chờ `11.ai.timeoutSeconds`; quá hạn: ERR-11-124, việc vẫn xử lý thủ công bình thường.
-3. Hệ thống hiện gợi ý có nhãn "Gợi ý của AI", người dùng chấp nhận từng phần; khi hoàn thành ghi `aiAssisted = true`.
+2. Hệ thống gọi PH-17 qua API-17-190 (`POST /assist/v1/process-suggestions`, mTLS, scope `assist:infer`) kèm `purpose`, `dataClass` và loại bước hỗ trợ đã khai báo ở mô hình, với thời gian chờ `11.ai.timeoutSeconds`; quá hạn: ERR-11-124, việc vẫn xử lý thủ công bình thường.
+3. Hệ thống hiện gợi ý có nhãn "Gợi ý của AI", người dùng chấp nhận từng phần; khi hoàn thành ghi `aiAssisted = true` và báo quyết định cuối của người (đồng ý, sửa, bác) cho PH-17 qua API-17-191 (`:record-decision` theo `suggestionId`).
 
 **Luồng thay thế.** Không.
 
@@ -4979,3 +4979,4 @@ Bản 0.2 hấp thụ đề nghị của sáu tập (UC, SDD, CSDL, API, MH, TC)
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị đồng bộ của sáu tập: 10 API (128…137), ERR-11-051, 125, EVT-11-21, EN-11-28, bốn tham số, enum nội tuyến; chọn nguyên tử về hiệu ứng cho engine và `ph11_bpm`; Phụ lục C |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 66 FR đủ 17 mục chia mười nhóm, mở rộng từ 16 FR của SRS cũ; sáu máy trạng thái; 38 BR, 24 NFR, 32 tham số, 74 mã lỗi, 20 sự kiện, 127 API, 23 màn hình, 27 thực thể; Phụ lục A nguồn chuẩn enum; truy vết LGC gián tiếp và ánh xạ mã cũ |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: FR-11-066 gọi API-17-190 và báo quyết định qua API-17-191 |

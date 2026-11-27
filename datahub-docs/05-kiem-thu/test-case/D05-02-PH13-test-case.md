@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH13
 ten: Kịch bản và test case phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, kiểm toán viên, chủ đầu tư (UAT)
 phan_he: PH-13
@@ -97,7 +97,7 @@ Bộ ca được phân theo các mức kiểm thử ở bảng dưới; cột "K
 |---|---|---|---|
 | Đơn vị | UT | JUnit 5, Vitest | Tính băm chuỗi, chuẩn hóa JSON, quy tắc luật, che dữ liệu, máy trạng thái cảnh báo |
 | Tích hợp | IT | Testcontainers (PostgreSQL 16, Kafka, OpenBao, MinIO có Object Lock, ClickHouse) | Tiếp nhận, neo, WORM, đối chiếu |
-| CSDL | DB | `psql` với `ph13_isolation_test.sql` | RLS, vai trò chỉ `INSERT`, `SELECT`, chặn `UPDATE`, `DELETE`, `TRUNCATE` |
+| CSDL | DB | `psql` với `ph13_isolation_test.sql` (171 khối kiểm); ca rò rỉ T90, T91 cho ClickHouse viết riêng vì bài kiểm PostgreSQL chưa phủ | RLS, vai trò chỉ `INSERT`, `SELECT`, chặn `UPDATE`, `DELETE`, `TRUNCATE`; nhóm ca cô lập tenant, bất biến nhật ký, tách nhiệm |
 | Hợp đồng | CT | `check_contracts.py`, Spectral, `@asyncapi/parser` | OpenAPI, AsyncAPI |
 | API | API | REST Assured | Mọi API-13 |
 | Đầu cuối | E2E | Playwright | UI-13-* |
@@ -2009,3 +2009,4 @@ Các đề nghị dưới đây thuộc tài liệu dùng chung hoặc tập c�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 41 kịch bản, 12 UAT, ma trận truy vết sinh tự động, công cụ `ph13/tools/` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: chương 0 tách thành các mục theo khuôn; thêm UC-13-08 vào TC-13-027, 028, 029; thêm chú thích và đoạn mở cho bảng ma trận (bộ sinh `gen_matrix.py`, `fill_doc.py` đã sửa để giữ chú thích khi sinh lại) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph13_isolation_test.sql và ca rò rỉ ClickHouse T90, T91 |

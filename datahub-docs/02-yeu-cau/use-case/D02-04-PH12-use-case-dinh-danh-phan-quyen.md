@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH12
 ten: Đặc tả use case phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-12
@@ -1902,7 +1902,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 **Truy vết.** REQ-12; REQ-20; LGC-IAM-002; SEC-20, SEC-65; THR-38; BP-08; NFR-00-057.
 
-**Tiền điều kiện.** Bản ghi tenant `T68` đã tạo ở bước 1 của saga (D03-10 §5.2); mẫu `dh-realm-template` có ở kho cấu hình; chưa có realm `dh-t68`.
+**Tiền điều kiện.** Bản ghi tenant `T68` đã tạo ở bước `S01_RECORD` của saga (D03-10 §5.2); mẫu `dh-realm-template` có ở kho cấu hình; chưa có realm `dh-t68`.
 
 **Kích hoạt.** PH-20 gọi API tạo realm kèm mã tenant; về sau là đồng hồ hằng giờ, hoặc Hà bấm "Đối chiếu ngay" ở UI-12-19, hoặc yêu cầu hợp nhất thay đổi mẫu được duyệt.
 
@@ -2656,3 +2656,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc tập khác do lu�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, 42 use case khối 15 mục phủ 62 FR của FRS 0.1, bảy sơ đồ use case tổng, ba bảng truy vết (FR, UI và API, REQ, BP và LGC), bảy luồng phụ dùng chung, năm câu hỏi mở (Q12-45…49) |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên bước S01_RECORD theo D03-10 |

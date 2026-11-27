@@ -89,7 +89,7 @@ SCHEMAS = {
   "UserSummary": ent({"userId": UUID, "username": STR(64), "fullName": STR(160), "email": STR(254, format="email"), "orgCode": STR(64), "orgName": STR(255),
                       "state": R("UserState"), "authSource": R("AuthSource"), "roles": arr(STR(64)), "mfaEnabled": BOOL, "lastLoginAt": NTS},
                      req=["userId", "username", "fullName", "state"]),
-  "UserPage": items("UserSummary", {"facets": obj({"state": CNT, "orgCode": CNT})}),
+  "UserPage": items("UserSummary", {"facets": obj({"state": CNT, "orgCode": CNT, "mfaRequiredMissing": INT(), "inactivitySoon": INT()})}),
   "UserDetail": None,  # ghép từ UserSummary bên dưới (additionalProperties=false không dùng được với allOf)
   "UserCreate": obj({
       "username": STR(64, pattern="^[a-z0-9._-]{3,64}$"), "fullName": STR(160, minLength=2), "email": STR(254, format="email"), "orgCode": STR(64),
@@ -160,7 +160,7 @@ SCHEMAS = {
                                           "reason": "Điều tra sự cố Kafka theo phiếu hỗ trợ của tỉnh", "ticketRef": "HT-20431"}]),
   "PrivilegedGrant": ent({"grantId": UUID, "type": enum("TENANT_ACCESS", "PRIVILEGE"), "requesterId": UUID, "homeTenant": R("TenantCode"), "targetTenant": R("TenantCode"),
                           "roleCode": STR(64), "state": enum("REQUESTED", "ACTIVE", "REJECTED", "CANCELLED", "EXPIRED", "REVOKED"), "durationMinutes": INT(), "ticketRef": STR(16),
-                          "reason": STR(1000), "approverId": UUID, "decidedAt": NTS, "activeFrom": NTS, "expiresAt": NTS},
+                          "reason": STR(1000), "approverId": UUID, "decidedAt": NTS, "activeFrom": NTS, "expiresAt": NTS, "remainingSeconds": {"type": ["integer", "null"], "minimum": 0, "description": "Số giây còn lại tới `expiresAt`, tính ở máy chủ để giao diện đếm ngược không phụ thuộc đồng hồ máy."}},
                          req=["grantId", "type", "targetTenant", "roleCode", "state"]),
   "PrivilegedGrantPage": items("PrivilegedGrant"),
   "CampaignCreate": obj({"scopeType": enum("TENANT", "ORG", "ROLE_GROUP"), "scopeRef": STR(64), "deadlineDays": INT(minimum=7, maximum=30),
@@ -303,7 +303,7 @@ SCHEMAS = {
   # ---- nhật ký, cảnh báo, báo cáo
   "DecisionLogEntry": obj({"decisionId": UUID, "time": TS, "traceId": STR(32), "subjectType": STR(16), "subjectId": STR(128), "action": STR(32), "permission": STR(64),
                            "resourceType": STR(64), "resourceId": STR(128), "classification": CLS, "allow": BOOL, "reason": R("DecisionReason"), "matchedPolicy": STR(64),
-                           "bundleRevision": STR(64), "sampled": BOOL}, req=["decisionId", "time", "allow", "reason"]),
+                           "bundleRevision": STR(64), "sampled": BOOL, "maskedFields": arr(STR(64), description="Tên trường đã che trong bản ghi trả về.")}, req=["decisionId", "time", "allow", "reason"]),
   "DecisionPage": items("DecisionLogEntry"),
   "SecurityEvent": obj({"eventId": UUID, "time": TS, "type": STR(48), "userId": STR(64), "clientId": STR(64), "result": enum("SUCCESS", "FAILURE"), "errorCode": STR(16, pattern="^ERR-12-[0-9]{3}$"),
                         "ip": STR(45), "acr": ACR, "detail": ANYOBJ}, req=["eventId", "time", "type"]),
@@ -376,7 +376,7 @@ PAGED = {"001", "014", "019", "025", "032", "037", "056", "089", "101", "103", "
 
 # mã: (operationId, body, resp, [ERR số], mô tả)
 X = {
- "001": ("listUsers", None, "UserPage", [], "Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`, `LOCKED` xếp đầu khi không có `sort`."),
+ "001": ("listUsers", None, "UserPage", [], "`facets` kèm số người dùng thuộc nhóm bắt buộc MFA mà chưa có (`mfaRequiredMissing`) và số tài khoản sắp bị vô hiệu vì không dùng (`inactivitySoon`); lọc theo MFA bằng tham số `mfa`. Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`, `LOCKED` xếp đầu khi không có `sort`."),
  "002": ("getUser", None, "UserDetail", [], "Trả `factors[]` chỉ gồm loại và nhãn; quyền `PERM-12-read` không xem được bí mật yếu tố xác thực."),
  "003": ("createUser", "UserCreate", "UserDetail", [2, 4, 5, 10, 37, 38, 40, 43], "Tạo ở Keycloak (`PENDING_ACTIVATION`) và gửi liên kết kích hoạt hiệu lực 24 giờ; phản hồi không có mật khẩu hay liên kết."),
  "004": ("updateUser", "UserUpdate", "UserDetail", [4, 5, 38, 40, 47], "Đổi đơn vị làm vai trò phạm vi đơn vị cũ hết hiệu lực; phát EVT-12-02."),
@@ -455,7 +455,7 @@ X = {
  "077": ("revokeToken", "RevokeTokenRequest", None, [117], "RFC 7009; luôn trả 200 với token hợp lệ hay không để không lộ thông tin."),
  "078": ("getUserinfo", None, "Userinfo", [116], ""),
  "079": ("getRevocationFeed", None, "RevocationFeed", [], "APISIX kéo mỗi 10 giây; báo phiên bản đã áp dụng bằng tiêu đề `X-DH-Applied-Version` và nút bằng `X-DH-Node`. `ETag` là `version`."),
- "080": ("provisionRealm", "RealmProvision", "Accepted", [2, 41, 43, 38, 39, 40], "PH-20 gọi ở bước 2 của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở."),
+ "080": ("provisionRealm", "RealmProvision", "Accepted", [2, 41, 43, 38, 39, 40], "PH-20 gọi ở bước `S03_REALM` của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở."),
  "081": ("getRealm", None, "Realm", [], ""),
  "082": ("getRealmDrift", None, "RealmDrift", [41], ""),
  "083": ("reconcileRealm", None, "Accepted", [41, 42, 38], "Áp lại mẫu cấu hình; ghi đè thay đổi lệch."),
@@ -479,7 +479,7 @@ X = {
  "101": ("listPolicyBundles", None, "BundleReleasePage", [], "Kèm số nút OPA đã xác nhận nạp."),
  "102": ("regeneratePolicyData", "PolicyDataRegenerate", "Accepted", [24, 40], "Sinh lại `data.dh.roles`, `assignments`… từ ma trận D02-08 và gán vai trò hiện tại."),
  "103": ("listDecisions", None, "DecisionPage", [], "Quyết định từ chối và mức Hạn chế, Nhạy cảm ghi 100%; mức Công khai, Nội bộ lấy mẫu theo `12.decision.sample-ratio`."),
- "104": ("getDecision", None, "DecisionLogEntry", [], ""),
+ "104": ("getDecision", None, "DecisionLogEntry", [], "Mỗi lượt xem dữ liệu đã che được ghi vết sang PH-13 (FR-12-057); phản hồi liệt kê `maskedFields`."),
  "105": ("listSecurityEvents", None, "SecurityEventPage", [], "Sự kiện xác thực và quản trị định danh (EVT-12-16 và kiểm toán)."),
  "106": ("listAlerts", None, "AlertPage", [], ""),
  "107": ("acknowledgeAlert", "AlertAck", "Alert", [14], ""),
