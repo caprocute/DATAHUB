@@ -164,7 +164,7 @@ CREATE TABLE ph14_national.cache_stats (
 ) PARTITION BY RANGE (hour_start);
 CALL ph14_national.p_ensure_month_partitions('ph14_national.cache_stats', current_date - 31, 5);
 CALL ph14_national.p_enable_rls('ph14_national.cache_stats', 'P');
-COMMENT ON TABLE ph14_national.cache_stats IS 'Thống kê đệm tổng hợp theo giờ và dịch vụ, ghi từ EVT-14-11 (FR-14-035, 036, 037, 057). Phân vùng tháng, giữ 13 tháng (giả định: đủ so sánh cùng kỳ năm trước). Tỷ lệ trúng đệm = hits / (hits + misses) (NFR-14-005).';
+COMMENT ON TABLE ph14_national.cache_stats IS 'Thống kê đệm tổng hợp theo giờ và dịch vụ, ghi từ EVT-14-11 (FR-14-035, 036, 037, 057). Phân vùng tháng, giữ 13 tháng (đủ so sánh cùng kỳ năm trước; chủ đầu tư chốt 27/11/2026). Tỷ lệ trúng đệm = hits / (hits + misses) (NFR-14-005).';
 -- @rollback DROP TABLE IF EXISTS ph14_national.cache_stats CASCADE;
 
 -- @file 14-0031-async-inbound.sql
@@ -216,7 +216,7 @@ CREATE INDEX ix_async_request_system ON ph14_national.async_request (tenant_id, 
 CREATE INDEX ix_async_request_expiry ON ph14_national.async_request (finished_at) WHERE finished_at IS NOT NULL;
 CREATE TRIGGER tg_async_request_touch BEFORE UPDATE ON ph14_national.async_request FOR EACH ROW EXECUTE FUNCTION ph14_national.tg_touch();
 CALL ph14_national.p_enable_rls('ph14_national.async_request', 'P');
-COMMENT ON TABLE ph14_national.async_request IS 'EN-14-13 Yêu cầu gọi bất đồng bộ (FR-14-016, 038). Kafka là nguồn sự thật của việc chấp nhận, bảng là bản dẫn xuất do AsyncStateConsumer ghi lũy đẳng theo id. Thao tác ghi bắt buộc Idempotency-Key ULID (BR-14-030). Giữ 90 ngày sau khi kết thúc (giả định), siêu dữ liệu giao dịch nằm ở national_transaction 5 năm.';
+COMMENT ON TABLE ph14_national.async_request IS 'EN-14-13 Yêu cầu gọi bất đồng bộ (FR-14-016, 038). Kafka là nguồn sự thật của việc chấp nhận, bảng là bản dẫn xuất do AsyncStateConsumer ghi lũy đẳng theo id. Thao tác ghi bắt buộc Idempotency-Key ULID (BR-14-030). Giữ 90 ngày sau khi kết thúc (chủ đầu tư chốt 27/11/2026), siêu dữ liệu giao dịch nằm ở national_transaction 5 năm.';
 COMMENT ON COLUMN ph14_national.async_request.id IS 'requestId trả cho HTTT; khóa Kafka của hàng chờ.';
 COMMENT ON COLUMN ph14_national.async_request.payload_hash IS 'SHA-256 nội dung yêu cầu để phát hiện cùng khóa khác nội dung (ERR-14-116); không lưu nội dung.';
 COMMENT ON COLUMN ph14_national.async_request.result_ref IS 'Khóa đối tượng kết quả mã hóa trong dh-nat-payload dạng {tenant}/async/{id}.res.enc, giữ 72 giờ.';

@@ -2998,32 +2998,34 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/AuditRecordedData'
+    BlockLabel:
+      type: string
+      enum:
+      - STATE_SECRET
+    GrantStatus:
+      type: string
+      enum:
+      - SCHEDULED
+      - ACTIVE
+      - SUSPENDED
+      - REVOKED
+      - EXPIRED
+    LegalHoldStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - RELEASED
     MaskPolicyScope:
       type: string
       enum:
       - TENANT
       - CONTRACT
-    RetentionAction:
+    SubjectHash:
       type: string
-      enum:
-      - DELETE
-      - PSEUDONYMIZE
-      - ANONYMIZE
-      - ARCHIVE
-    TargetKind:
-      type: string
-      enum:
-      - ELEMENT
-      - API
-      - TOPIC
-      - FLOW
-    DatasetStatus:
-      type: string
-      enum:
-      - READY
-      - PUBLISHED
-      - WITHDRAWN
-      - EXPIRED
+      contentEncoding: base64
+      minLength: 43
+      maxLength: 44
+      description: HMAC-SHA256 32 byte (base64) của định danh đã chuẩn hóa, khóa riêng tenant; không đảo ngược được (BR-09-045).
     VersionStatus:
       type: string
       enum:
@@ -3033,40 +3035,6 @@ components:
       - SUPERSEDED
       - REJECTED
       - RETIRED
-    BlockLabel:
-      type: string
-      enum:
-      - STATE_SECRET
-    DsrType:
-      type: string
-      enum:
-      - ACCESS
-      - RECTIFY
-      - ERASE
-      - RESTRICT
-      - OBJECT
-      - WITHDRAW_CONSENT
-      - INFO
-    NotificationRecipient:
-      type: string
-      enum:
-      - A05
-      - SUBJECT
-      - CONTROLLER
-    AnomalyType:
-      type: string
-      enum:
-      - QUOTA_EXCEEDED
-      - BULK_ACCESS
-      - OFF_PURPOSE
-      - OFF_HOURS
-      - DORMANT_REUSE
-    ContractKind:
-      type: string
-      enum:
-      - API
-      - TOPIC
-      - FLOW
     ScanStatus:
       type: string
       enum:
@@ -3075,74 +3043,13 @@ components:
       - COMPLETED
       - FAILED
       - CANCELLED
-    Code:
-      type: string
-      pattern: ^[A-Z][A-Z0-9_-]{1,47}$
-      description: Mã nghiệp vụ chữ hoa, số, `_`, `-`.
-    AccessRequestKind:
+    TargetKind:
       type: string
       enum:
-      - NEW
-      - RENEWAL
-    KeyVersionStatus:
-      type: string
-      enum:
-      - ACTIVE
-      - DECRYPT_ONLY
-      - DISABLED
-      - DESTROYED
-    DsrOutcome:
-      type: string
-      enum:
-      - FULFILLED
-      - PARTIAL
-      - REFUSED
-    ConsentChannel:
-      type: string
-      enum:
-      - WEB
-      - APP
-      - COUNTER
-      - DOCUMENT
-    BreachSource:
-      type: string
-      enum:
-      - PERSON
-      - INCIDENT_PH18
-      - AUDIT_PH13
-      - ANOMALY
-    DataClass:
-      type: string
-      enum:
-      - PUBLIC
-      - INTERNAL
-      - RESTRICTED
-      - SENSITIVE
-    PersonalDataType:
-      type: string
-      enum:
-      - NONE
-      - BASIC
-      - SENSITIVE
-    GrantStatus:
-      type: string
-      enum:
-      - SCHEDULED
-      - ACTIVE
-      - SUSPENDED
-      - REVOKED
-      - EXPIRED
-    SubjectHash:
-      type: string
-      contentEncoding: base64
-      minLength: 43
-      maxLength: 44
-      description: HMAC-SHA256 32 byte (base64) của định danh đã chuẩn hóa, khóa riêng tenant; không đảo ngược được (BR-09-045).
-    LegalHoldStatus:
-      type: string
-      enum:
-      - ACTIVE
-      - RELEASED
+      - ELEMENT
+      - API
+      - TOPIC
+      - FLOW
     RetentionTaskStatus:
       type: string
       enum:
@@ -3158,3 +3065,96 @@ components:
       - COUNTER
       - DOCUMENT
       - EMAIL
+    NotificationRecipient:
+      type: string
+      enum:
+      - A05
+      - SUBJECT
+      - CONTROLLER
+    KeyVersionStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DECRYPT_ONLY
+      - DISABLED
+      - DESTROYED
+    PersonalDataType:
+      type: string
+      enum:
+      - NONE
+      - BASIC
+      - SENSITIVE
+    RetentionAction:
+      type: string
+      enum:
+      - DELETE
+      - PSEUDONYMIZE
+      - ANONYMIZE
+      - ARCHIVE
+    BreachSource:
+      type: string
+      enum:
+      - PERSON
+      - INCIDENT_PH18
+      - AUDIT_PH13
+      - ANOMALY
+    DatasetStatus:
+      type: string
+      enum:
+      - READY
+      - PUBLISHED
+      - WITHDRAWN
+      - EXPIRED
+    AccessRequestKind:
+      type: string
+      enum:
+      - NEW
+      - RENEWAL
+    Code:
+      type: string
+      pattern: ^[A-Z][A-Z0-9_-]{1,47}$
+      description: Mã nghiệp vụ chữ hoa, số, `_`, `-`.
+    AnomalyType:
+      type: string
+      enum:
+      - QUOTA_EXCEEDED
+      - BULK_ACCESS
+      - OFF_PURPOSE
+      - OFF_HOURS
+      - DORMANT_REUSE
+    DsrType:
+      type: string
+      enum:
+      - ACCESS
+      - RECTIFY
+      - ERASE
+      - RESTRICT
+      - OBJECT
+      - WITHDRAW_CONSENT
+      - INFO
+    DsrOutcome:
+      type: string
+      enum:
+      - FULFILLED
+      - PARTIAL
+      - REFUSED
+    DataClass:
+      type: string
+      enum:
+      - PUBLIC
+      - INTERNAL
+      - RESTRICTED
+      - SENSITIVE
+    ConsentChannel:
+      type: string
+      enum:
+      - WEB
+      - APP
+      - COUNTER
+      - DOCUMENT
+    ContractKind:
+      type: string
+      enum:
+      - API
+      - TOPIC
+      - FLOW

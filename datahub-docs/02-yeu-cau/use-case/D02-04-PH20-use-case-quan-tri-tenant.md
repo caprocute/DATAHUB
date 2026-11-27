@@ -510,7 +510,7 @@ Khai báo là bước ghi hồ sơ, chưa tạo tài nguyên thật. Wizard năm
 2. Hệ thống kiểm mã theo `^T\d{2}$`, chưa từng dùng kể cả tenant `DECOMMISSIONED`, `MERGED`; kiểm ĐVHC là cấp tỉnh còn hiệu lực và chưa có tenant.
 3. Hà chọn chế độ cách ly `SHARED`, hồ sơ quy mô `QM-VUA`, hồ sơ triển khai `HT-B` ở bước "Cách ly và quy mô".
 4. Hà chọn mẫu `tinh-chuan` phiên bản 3, xem phân hệ bật sẵn và hạn mức mặc định; bỏ chọn phân hệ không lõi nếu cần.
-5. Hà nhập tối thiểu đầu mối `TENANT_ADMIN` và `TECHNICAL` kèm thư công vụ.
+5. Hà nhập tối thiểu hai đầu mối `TENANT_ADMIN` (hai thư công vụ khác nhau) và một `TECHNICAL` kèm thư công vụ; mỗi tenant có ít nhất hai quản trị tỉnh (chủ đầu tư chốt 27/11/2026).
 6. Ở bước "Rà soát", hệ thống chạy kiểm tra sẵn sàng song song (mã trùng, ĐVHC, sức chứa nền tảng, tài nguyên cụm, mẫu, phân hệ đích), mỗi mục tối đa 10 giây, kết quả `PASS`, `WARN` hoặc `BLOCKER`.
 7. Hà bấm "Lưu khai báo"; hệ thống tạo tenant `PROVISIONING`, ghi lịch sử trạng thái và kiểm toán, trả `201` kèm `Location`.
 
@@ -559,7 +559,7 @@ Hồ sơ hành chính đổi theo thực tế (đổi tên theo quyết định,
 
 **Kích hoạt.** "Sửa hồ sơ" ở tab Tổng quan, hoặc "+ Đầu mối", "+ Hợp đồng", "Gia hạn" ở tab Hợp đồng và đầu mối của UI-20-03.
 
-**Đảm bảo tối thiểu.** `tenantCode`, `realm`, `kind` không đổi; luôn còn ít nhất một đầu mối `TENANT_ADMIN` và một `TECHNICAL` hoạt động; tên cũ vẫn truy được.
+**Đảm bảo tối thiểu.** `tenantCode`, `realm`, `kind` không đổi; luôn còn ít nhất hai đầu mối `TENANT_ADMIN` và một `TECHNICAL` hoạt động; tên cũ vẫn truy được.
 
 **Đảm bảo thành công.** Hồ sơ mới, `ETag` mới, phiên bản cấu hình mới (`tenant.yaml`) và kiểm toán trong chuỗi tenant.
 
@@ -794,7 +794,7 @@ Tenant chỉ `ACTIVE` khi chứng minh được dùng được và cách ly đú
 2. Ca `LOGIN_ADMIN`: lấy token quản trị tỉnh đầu tiên, kiểm claim `tenant = T68`. Ca `API_SAMPLE`: gọi `GET /api/tenant/v1/context` qua APISIX bằng host của tenant, kỳ vọng `200`.
 3. Ca `EVENT_SAMPLE`: phát và đọc lại một sự kiện trong 30 giây. Ca `CROSS_TENANT_LEAK`: token `T68` đọc tài nguyên cài sẵn của `T99`, kỳ vọng `404`.
 4. Cả bốn ca đạt: hệ thống lưu kết quả (EN-20-12), xóa tài khoản tạm, bước `S16` `SUCCEEDED`.
-5. Bước `S17`: hệ thống chuyển tenant `ACTIVE`, phát EVT-20-03 và EVT-20-04, gửi thư bàn giao mẫu `ph20-handover` tới đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`.
+5. Bước `S17`: hệ thống kiểm tenant có ít nhất hai tài khoản quản trị tỉnh hoạt động (thiếu: ERR-20-021), chuyển tenant `ACTIVE`, phát EVT-20-03 và EVT-20-04, gửi thư bàn giao mẫu `ph20-handover` tới đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`.
 6. Hệ thống tính `provisionMinutes` và `leadTimeWorkingHours` (từ `declaredAt` tới `activatedAt` theo giờ làm việc), gọi API-16-030 với `idempotencyRef = {runId}`.
 7. Tuấn xem thời gian khởi tạo theo tenant, theo bước (trung vị, p95) ở UI-20-20.
 
@@ -1955,7 +1955,7 @@ Người dùng và HTTT của tỉnh nguồn được tạo lại ở tỉnh đ�
 6. Hệ thống theo dõi 60 phút đầu tỷ lệ lỗi lượt gọi chuyển tiếp; vượt 1% thì cảnh báo Hà.
 
 **Luồng thay thế.**
-- **3a. Tổ chức kế thừa.** PH-01 nhận EVT-20-13 và tự tạo đề nghị đổi chủ quản HTTT chờ TA đích duyệt hàng loạt.
+- **3a. Tổ chức kế thừa.** PH-01 nhận EVT-20-13 và tự tạo đề nghị đổi chủ quản HTTT chờ TA đích duyệt hàng loạt (FR-01-054, UC-01-23; chủ đầu tư chốt 27/11/2026).
 - **5a. Không nhận EVT-03-10 sau 15 phút.** Cảnh báo PO.
 
 **Luồng ngoại lệ.**
@@ -2472,6 +2472,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Claude | Bản đầu: 36 use case phủ 70 FR (51 M, 19 S), 12 sơ đồ trình tự, sáu luồng phụ, câu hỏi mở Q20-45…49, 10 đề nghị đồng bộ |
 | 0.2 | 2026-11-27 | Claude | Đồng bộ với FRS 0.2: tên ca kiểm tra khói theo OpenAPI, cửa sổ bảo trì 2 đến 6 giờ, 29 tham số, `RESOLVED`, mã KPI-12 `thoi-gian-khoi-tao-tenant`, cột FR của UI-20-20 (đóng A-01) |
-| 0.3 | 2026-11-27 | Claude | Đồng bộ chéo cuối: dẫn API-18-150, mã kế hoạch `SN-yyyy-nnn`; chốt Q407: mã BP-15, BP-16 cho sáp nhập tenant và phát hành sản phẩm |
+| 0.3 | 2026-11-27 | Claude | Đồng bộ chéo cuối: dẫn API-18-150, mã kế hoạch `SN-yyyy-nnn`; chốt Q407: mã BP-15, BP-16 cho sáp nhập tenant và phát hành sản phẩm; chốt câu hỏi mở đợt đồng bộ: Q401, Q403 |
 
 : Lịch sử phiên bản

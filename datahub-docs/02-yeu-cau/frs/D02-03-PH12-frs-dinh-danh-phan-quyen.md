@@ -505,6 +505,66 @@ Mỗi token người dùng mang claim `acr` (mức xác thực) và `auth_time`.
 
 : Ba mức xác thực của PH-12
 
+Danh sách thao tác đòi xác thực bước lên (`acr` tối thiểu) do cán bộ ATTT và quản trị nền tảng duyệt, chủ đầu tư chốt 27/11/2026. Bảng lấy nguyên từ khóa `x-datahub-acr` của OpenAPI `openapi-iam.yaml` (53 thao tác: 40 ở mức 2, 13 ở mức 3); sửa OpenAPI thì sửa bảng này theo. Token phải đạt mức `acr` tối thiểu và có `auth_time` không quá 5 phút (`12.mfa.stepup-minutes`); thiếu một trong hai thì trả ERR-12-120.
+
+| API | Thao tác | Đường dẫn | Mức `acr` tối thiểu |
+|---|---|---|---|
+| API-12-003 | Tạo tài khoản người dùng | `POST /users` | 2 |
+| API-12-004 | Sửa thông tin, chuyển đơn vị người dùng | `PATCH /users/{userId}` | 2 |
+| API-12-005 | Khóa tài khoản | `POST /users/{userId}:lock` | 2 |
+| API-12-006 | Mở khóa tài khoản | `POST /users/{userId}:unlock` | 2 |
+| API-12-007 | Vô hiệu tài khoản | `POST /users/{userId}:disable` | 2 |
+| API-12-008 | Kích hoạt lại tài khoản | `POST /users/{userId}:enable` | 2 |
+| API-12-009 | Gửi lại liên kết kích hoạt | `POST /users/{userId}:resend-activation` | 2 |
+| API-12-010 | Tải tệp nhập người dùng để kiểm tra | `POST /user-imports` | 2 |
+| API-12-012 | Ghi nhận tệp nhập, tạo tài khoản | `POST /user-imports/{importId}:commit` | 2 |
+| API-12-015 | Đặt lại yếu tố thứ hai | `POST /users/{userId}:reset-mfa` | 2 |
+| API-12-017 | Buộc đăng xuất mọi phiên | `POST /users/{userId}:sign-out` | 2 |
+| API-12-018 | Thu hồi truy cập tức thời của người dùng | `POST /users/{userId}:revoke-access` | 2 |
+| API-12-022 | Tạo vai trò tùy biến (Đợt 2) | `POST /roles` | 2 |
+| API-12-023 | Sửa vai trò tùy biến (Đợt 2) | `PATCH /roles/{roleCode}` | 2 |
+| API-12-024 | Ngừng dùng vai trò tùy biến (Đợt 2) | `POST /roles/{roleCode}:retire` | 2 |
+| API-12-026 | Gán vai trò cho người dùng | `POST /role-assignments` | 2 |
+| API-12-027 | Gỡ vai trò | `DELETE /role-assignments/{assignmentId}` | 2 |
+| API-12-029 | Đề nghị ngoại lệ tách nhiệm vụ | `POST /sod-exceptions` | 2 |
+| API-12-030 | Duyệt hoặc từ chối ngoại lệ tách nhiệm vụ | `POST /sod-exceptions/{exceptionId}:decide` | 2 |
+| API-12-031 | Thu hồi ngoại lệ tách nhiệm vụ | `POST /sod-exceptions/{exceptionId}:revoke` | 2 |
+| API-12-033 | Tạo nhóm | `POST /groups` | 2 |
+| API-12-034 | Sửa nhóm | `PATCH /groups/{groupId}` | 2 |
+| API-12-035 | Đặt danh sách thành viên nhóm | `PUT /groups/{groupId}/members` | 2 |
+| API-12-036 | Đề nghị quyền có thời hạn | `POST /privileged-grants` | 2 |
+| API-12-038 | Duyệt quyền có thời hạn | `POST /privileged-grants/{grantId}:approve` | 3 |
+| API-12-039 | Từ chối quyền có thời hạn | `POST /privileged-grants/{grantId}:reject` | 3 |
+| API-12-040 | Thu hồi quyền có thời hạn | `POST /privileged-grants/{grantId}:revoke` | 3 |
+| API-12-041 | Mở chiến dịch rà soát quyền | `POST /recertification-campaigns` | 2 |
+| API-12-044 | Đóng chiến dịch rà soát | `POST /recertification-campaigns/{campaignId}:close` | 2 |
+| API-12-048 | Khai báo liên kết LDAP, AD | `PUT /ldap-federations/{federationCode}` | 2 |
+| API-12-049 | Kiểm tra liên kết LDAP, AD | `POST /ldap-federations/{federationCode}:test` | 2 |
+| API-12-050 | Chạy đồng bộ LDAP, AD | `POST /ldap-federations/{federationCode}:sync` | 2 |
+| API-12-052 | Đăng ký ứng dụng SAML | `POST /saml-clients` | 2 |
+| API-12-053 | Sửa ứng dụng SAML | `PATCH /saml-clients/{samlClientCode}` | 2 |
+| API-12-055 | Gỡ liên kết VNeID | `DELETE /users/{userId}/vneid-link` | 2 |
+| API-12-059 | Sửa client | `PATCH /clients/{clientId}` | 2 |
+| API-12-060 | Tạm ngừng client | `POST /clients/{clientId}:suspend` | 2 |
+| API-12-061 | Tiếp tục client | `POST /clients/{clientId}:resume` | 2 |
+| API-12-062 | Thu hồi client vĩnh viễn | `POST /clients/{clientId}:revoke` | 3 |
+| API-12-064 | Đăng ký chứng thư mTLS của client | `PUT /clients/{clientId}/credentials/certificate` | 2 |
+| API-12-065 | Đăng ký khóa công khai (JWKS) của client | `PUT /clients/{clientId}/credentials/jwks` | 2 |
+| API-12-066 | Xoay bí mật client | `POST /clients/{clientId}/credentials/secret:rotate` | 2 |
+| API-12-070 | Tạo tài khoản dịch vụ nội bộ | `POST /service-accounts` | 3 |
+| API-12-071 | Xoay thông tin xác thực của tài khoản dịch vụ | `POST /service-accounts/{accountCode}/credentials:rotate` | 3 |
+| API-12-083 | Áp lại cấu hình mẫu cho realm | `POST /realms/{tenantCode}:reconcile` | 3 |
+| API-12-084 | Tạm ngừng realm | `POST /realms/{tenantCode}:suspend` | 3 |
+| API-12-085 | Khôi phục realm | `POST /realms/{tenantCode}:resume` | 3 |
+| API-12-097 | Duyệt và phát hành phiên bản chính sách | `POST /policies/{policyCode}/versions/{versionNo}:approve` | 3 |
+| API-12-098 | Từ chối phiên bản chính sách | `POST /policies/{policyCode}/versions/{versionNo}:reject` | 3 |
+| API-12-099 | Thu hồi phiên bản đang chạy | `POST /policies/{policyCode}/versions/{versionNo}:revoke` | 3 |
+| API-12-100 | Quay lui về gói chính sách đã từng chạy | `POST /policy-bundles:rollback` | 3 |
+| API-12-111 | Sửa tham số phân hệ trong trần | `PUT /settings` | 2 |
+| API-12-112 | Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu) | `PUT /policies/{policyCode}/versions/{versionNo}` | 2 |
+
+: Mức xác thực bước lên theo thao tác của PH-12
+
 ## 5. Danh sách chức năng
 
 PH-12 có 62 chức năng chia tám nhóm. Bảng dưới liệt kê toàn bộ chức năng kèm nhóm, mức ưu tiên, đợt phát hành, màn hình và use case hiện thực (cột UC theo D02-04-PH12 mục 5.1); đặc tả chi tiết ở chương 6. Nhóm: A Tài khoản người dùng; B Vai trò, nhóm và quyền; C Xác thực người dùng; D Danh tính HTTT và token; E Realm theo tenant; F Ủy quyền; G Ghi vết và giám sát; H Quản trị.
@@ -3000,7 +3060,7 @@ Hình cho thấy realm được tạo một lần từ mẫu, sau đó được 
 3. Hệ thống tạo khóa ký ES256 cho realm, client `dh-console`, `dh-portal` (bí mật, PKCE `S256`, `redirect_uri` khớp tên miền tenant) và ghi bí mật client vào OpenBao.
 4. Hệ thống tạo 22 vai trò chuẩn (mọi vai trò trừ `PLATFORM_*`, chỉ có ở `dh-platform`), nhóm `mfa-required` ánh xạ theo vai trò, vai trò tùy biến `realm-user-admin` và tài khoản dịch vụ của `dh-platform` chỉ có vai trò đó (không có `manage-realm`, `manage-clients`, `manage-authorization`); riêng việc cấp client cho HTTT dùng client `dh-client-provisioner` có `manage-clients` giới hạn theo thuộc tính `dh_managed`, còn `dh-platform-iam` vẫn chỉ có `realm-user-admin`.
 5. Hệ thống cấu hình nhà môi giới nền tảng (FR-12-027) ở trạng thái ẩn và bắt buộc `kc_idp_hint`.
-6. Hệ thống tạo quản trị tỉnh đầu tiên ở `PENDING_ACTIVATION`, gán `TENANT_ADMIN`, buộc đặt mật khẩu và đăng ký WebAuthn, gửi liên kết kích hoạt.
+6. Hệ thống tạo quản trị tỉnh đầu tiên ở `PENDING_ACTIVATION`, gán `TENANT_ADMIN`, buộc đặt mật khẩu và đăng ký WebAuthn, gửi liên kết kích hoạt. Quản trị tỉnh thứ hai (mỗi tenant có tối thiểu hai TA, chủ đầu tư chốt 27/11/2026) do PA tạo bằng FR-12-003 từ thư công vụ của đầu mối `TENANT_ADMIN` thứ hai trước khi PH-20 kích hoạt tenant; PH-12 không đặt thêm tham số cho API-12-080.
 7. Hệ thống đặt realm `ACTIVE`, nạp dữ liệu gói chính sách của tenant (FR-12-051), ghi kiểm toán, phát EVT-12-13 và trả kết quả cho PH-20.
 
 **Luồng thay thế.** Gọi lại cùng `idempotencyKey` khi saga thử lại: hệ thống tiếp tục từ bước đang dở, không tạo trùng. Bù trừ: PH-20 gọi xóa realm đang ở `PROVISIONING`.
@@ -4317,7 +4377,7 @@ Bốn mươi lăm quy tắc dưới đây là các ràng buộc nghiệp vụ v�
 | BR-12-030 | Cặp vai trò xung đột (D02-08 §4) bị chặn khi gán; ngoại lệ do TA đề nghị, SO duyệt, có lý do, tối đa 90 ngày, tự gỡ khi hết hạn; cặp có AUDITOR đối với quyền ghi của PH-19 không có ngoại lệ | 003, 009, 012, 013, 015, 019, 051 |
 | BR-12-031 | Vai trò `PLATFORM_*` chỉ gán ở tenant `PLATFORM`; nhân sự nền tảng vào tenant khác chỉ bằng quyền có thời hạn | 011, 012, 017, 027, 041 |
 | BR-12-032 | Quyền có thời hạn tối đa 4 giờ, kèm lý do và mã phiếu hỗ trợ, có người duyệt thứ hai, thông báo cho quản trị tỉnh bị truy cập, ghi kiểm toán trong chuỗi của tenant đó; tự hết hạn và OPA kiểm tra hạn ở mọi quyết định | 017, 027 |
-| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant luôn còn ít nhất một TENANT_ADMIN hoạt động | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
+| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant luôn còn ít nhất một TENANT_ADMIN hoạt động, và theo quyết định của chủ đầu tư ngày 27/11/2026 phải có tối thiểu hai TENANT_ADMIN hoạt động khi kích hoạt (PH-20 kiểm bằng `GET /users` lọc `roleCode`, `state`); xuống dưới hai sau đó chỉ cảnh báo SO và PA (sự kiện an ninh), còn xuống không thì chặn như cũ | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
 | BR-12-034 | Đặt lại yếu tố thứ hai chỉ do quản trị cao hơn một cấp, sau khi xác minh danh tính bằng kênh khác; tài khoản quản trị cần SO duyệt | 024 |
 | BR-12-035 | Tài khoản không bị xóa vật lý: kết thúc là `DISABLED`, giữ truy vết | 005, 008 |
 | BR-12-036 | Hạ quyền (gỡ vai trò, thu hẹp phạm vi) thu hồi phiên và có hiệu lực ở OPA trong 60 giây; nâng quyền có hiệu lực khi có token mới (tối đa 5 phút) vì OPA lấy giao của token và dữ liệu gói | 004, 012, 046, 051 |
@@ -5095,5 +5155,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-12: 62 FR đủ khối 17 mục (52 M, 9 S, 1 C) trong tám nhóm; 45 BR, 33 NFR, 38 tham số `12.*`, 66 mã lỗi (47 điều khiển, 19 runtime), 16 sự kiện, 111 API, 19 màn hình, 2 ảnh hi-fi; ma trận truy vết 12 mục LGC và ánh xạ mã cũ sang mã mới cho 19 FR, 30 NFR, 17 BR của repo; 15 câu hỏi mở (Q12-01…15); đề nghị đồng bộ D02-08 (14 quyền, 7 scope) |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412, Q403 |
 

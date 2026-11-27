@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH09
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -429,6 +429,7 @@ Cột khác: `scope` v(16) ElementScope; `target` v(512); `contract_ref` v(255);
 |---|---|---|
 | `mask_pattern` | `varchar(24), NULL` | Mẫu che mặc định của trường (MaskPatternKind). Enum `MaskPatternKind`. |
 | `never_reveal` | `boolean, mặc định false` | Trường không có đường xem đầy đủ (BR-09-026). |
+| `no_egress` | `boolean, mặc định false` | Trường không được gửi ra ngoài tỉnh (BR-09-063, chủ đầu tư chốt 27/11/2026); bản chưa CONFIRMED xử lý như bật. |
 | `basis` | `varchar(255), NULL` | Số văn bản căn cứ của phân loại. |
 
 : Cột của bảng `element_classification`
@@ -461,7 +462,7 @@ Cột khác: `element_id` uuid; `data_class` v(16) DataClass; `personal_data_typ
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `proposed` | `jsonb` | Trạng thái phân loại đề xuất (dataClass, personalDataType, categoryCode, identifiability, maskPattern, neverReveal). |
+| `proposed` | `jsonb` | Trạng thái phân loại đề xuất (dataClass, personalDataType, categoryCode, identifiability, maskPattern, neverReveal, noEgress). |
 | `confirmed_by_2` | `varchar(64), NULL` | Người xác nhận thứ hai khi hạ mức (BR-09-002). |
 
 : Cột của bảng `classification_change`
@@ -2154,3 +2155,4 @@ Người điều phối cần chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-CSDL và K-TRINH-BAY: 55 bảng cho 51 thực thể, DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 160 khối PASS, đối chiếu Phụ lục A sạch; ERD sáu nhóm; mã hóa envelope và HMAC, không bảng ánh xạ bí danh; lịch lưu giữ của PH-09; ánh xạ EN, FR sang bảng; năm câu hỏi mở Q09-50…54 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: cột `request_kind`, `renews_grant_id` và hai CHECK của `access_request`, 43 khóa `ck_tenant_setting_key`, mã EN-09-52…55 cho bốn bảng ngoài danh mục, 55 bảng cho 55 thực thể, 165 khối kiểm PASS, 374 CHECK, 40 khóa ngoại; mục 9.2 thành bảng đồng bộ |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q393 |

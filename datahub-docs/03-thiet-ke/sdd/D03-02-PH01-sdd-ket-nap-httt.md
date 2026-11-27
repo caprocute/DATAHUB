@@ -555,7 +555,7 @@ Chi tiết thiết kế:
 
 Chi tiết thiết kế:
 
-*Phân công và bốn mắt.* `PERM-01-read` là quyền nền, `PERM-01-approve` là quyền phân công (D02-08), nên IE và SO không có quyền ghi riêng. `ReviewAssignmentService` ghi `assigneeId` cho từng bước; khi người thẩm định ghi kết luận, PEP nạp phân công từ CSDL rồi gửi OPA `input = {actor, action, stepType, assigneeId, createdBy, submittedBy, priorReviewers}`; chính sách Rego trả `allow` hay lý do từ chối (SEC-26). `FourEyesGuard` là lớp duy nhất tính tập "người đã tham gia" của một hồ sơ (người lập, nộp, mọi người thẩm định, người đề nghị chấm dứt) và được gọi lại trong aggregate khi `approve`, `activate`, `terminate.decide`, nên kiểm tra không phụ thuộc OPA (kiểm hai lớp, SEC-26). Vi phạm trả ERR-01-017 và ghi sự kiện an ninh.
+*Phân công và bốn mắt.* `PERM-01-read` là quyền nền, `PERM-01-approve` là quyền phân công (D02-08), nên IE và SO không có quyền ghi riêng. `ReviewAssignmentService` ghi `assigneeId` cho từng bước; IE và SO tự nhận bước đúng vai trò bằng API-01-028 bỏ trống `assigneeId` với `PERM-01-review-claim` (đã chốt 27/11/2026, Q408), OPA vẫn kiểm đúng vai trò và bốn mắt; khi người thẩm định ghi kết luận, PEP nạp phân công từ CSDL rồi gửi OPA `input = {actor, action, stepType, assigneeId, createdBy, submittedBy, priorReviewers}`; chính sách Rego trả `allow` hay lý do từ chối (SEC-26). `FourEyesGuard` là lớp duy nhất tính tập "người đã tham gia" của một hồ sơ (người lập, nộp, mọi người thẩm định, người đề nghị chấm dứt) và được gọi lại trong aggregate khi `approve`, `activate`, `terminate.decide`, nên kiểm tra không phụ thuộc OPA (kiểm hai lớp, SEC-26). Vi phạm trả ERR-01-017 và ghi sự kiện an ninh.
 
 *Đồng hồ thẩm định.* `ReviewClock` tính hạn theo ngày làm việc từ lịch của PH-18 (`WorkingCalendarPort`, đệm 24 giờ, Q01-23); cột `paused_millis` cộng dồn thời gian ở `CONSULTING` và thời gian chờ đơn vị bổ sung (BR-01-032). Khi tiếp tục, `dueAt = now + (hạn gốc − đã dùng)`. `EscalationJob` (mỗi 15 phút, mục 4.15) tìm bước quá hạn `escalate.afterWorkingDays` ngày làm việc, gửi TA và PO, tăng `onboarding_review_overdue_total`.
 
@@ -742,6 +742,10 @@ Chi tiết thiết kế:
 
 *Thao tác khẩn.* `EmergencyService.act` (API-01-054) cho SO (hoặc TA) tạm ngừng hoặc thu hồi ngay, không chờ ai duyệt trước, nhưng vẫn bắt buộc lý do và xác thực lại; ghi `EmergencyAction(status = PENDING_CONFIRM, confirmBy = now + emergency.confirmHours)` và đi cùng đường cắt quyền. TA xác nhận bổ sung ở API-01-055 (khác người thực hiện). `EmergencyConfirmationJob` (mỗi 5 phút) đánh dấu `OVERDUE` các thao tác quá hạn, phát EVT-01-15 và cảnh báo mức cao tới TA, PO; **không tự hoàn tác** (BR-01-010). Thao tác xác nhận lần hai trả ERR-01-036.
 
+*Đề xuất tạm ngừng từ PH-13.* `SuspensionProposalService` (API-01-089, scope `onboarding:suspension-proposal`, FR-01-053) nhận đề xuất của PH-13, kiểm HTTT `ACTIVE` (ERR-01-005, ERR-01-048), kiểm lũy đẳng theo `(systemCode, alertId)` bằng `idempotency_record`, rồi ghi `notify_outbox` loại việc khẩn `ph01.review-suspension-proposal` cho mọi SO của tenant qua `TaskInboxApi` (cùng giao dịch, thử lại tới 24 giờ). Dịch vụ này không đổi trạng thái HTTT và không có đường tạm ngừng tự động: SO mở việc rồi gọi `EmergencyService.act` (API-01-054) với `incidentRef` lấy từ đề xuất, hoặc đóng việc "Không tạm ngừng" kèm lý do (ghi kiểm toán). Không cần bảng mới (đã chốt 27/11/2026, Q13-12).
+
+*Kế thừa tổ chức giải thể, sáp nhập.* `OrgSuccessionService` (FR-01-054, đã chốt 27/11/2026, Q01-10) nghe EVT-20-13; với mỗi HTTT `ACTIVE`, `SUSPENDED`, `APPROVED` của tổ chức giải thể hoặc sáp nhập, tạo `ChangeRequest OWNER_CHANGE` `PENDING` sang `successorCode` (người đề nghị `system:ph01-org-successor`, `owner_confirmed_by = system:ph20-successor`, `diff.source = EVT-20-13` kèm mã lô). HTTT đã có yêu cầu `PENDING` khác (chỉ mục duy nhất) vào danh sách "chờ tạo lại" của lô và TA được nhắc. Một việc `ph01.approve-change` gom cả lô; TA duyệt hàng loạt bằng cách giao diện gọi API-01-059 từng yêu cầu, lỗi một HTTT không chặn các HTTT còn lại. Không cần bảng hay cột mới.
+
 *Thay đổi hồ sơ theo mức.* `ChangeClassifier` đặt mức theo trường bị đổi (BR-01-025): mức `NONE` (đầu mối, mô tả) áp dụng ngay và không tạo yêu cầu; mức `TECHNICAL` (địa chỉ, IP, hạn mức, cấp độ ATTT) cần TA duyệt kỹ thuật; `OWNER_CHANGE` cần tổ chức mới xác nhận rồi TA duyệt (BR-01-029); `FULL` (mở rộng phạm vi) đi qua thẩm định pháp lý lại. Một HTTT chỉ có một yêu cầu `PENDING` (ERR-01-038). Khi duyệt, `diff` được áp vào aggregate trong một giao dịch và phát EVT-01-04.
 
 *Mở rộng trần phạm vi.* `ScopeExpansionService` (API-01-060) tạo `ChangeRequest FULL` kèm các dòng nhu cầu mới ở trạng thái chờ, mở lại bước `LEGAL` (và `SECURITY` nếu mức phân loại tăng) cho vòng thẩm định mới; sửa trần bằng đường thay đổi thường bị chặn ở ERR-01-037 (BR-01-012). Khi duyệt, `ScopeCeilingFactory` thêm hoặc mở rộng `ScopeCeiling` và phát EVT-01-11.
@@ -802,7 +806,7 @@ Dự toán độ trễ cho NFR-01-008 (giả định, đo ở D05-02-PH01): comm
 
 **Dữ liệu.** `outbox`, `inbox` (sự kiện đã xử lý), `member_system`.
 
-**Sự kiện.** EVT-01-03, 04, 11 và ảnh chụp đối chiếu (`snapshot = true`); tiêu thụ ba loại sự kiện từ PH-12, PH-18, PH-20.
+**Sự kiện.** EVT-01-03, 04, 11 và ảnh chụp đối chiếu (`snapshot = true`); tiêu thụ bốn loại sự kiện từ PH-12, PH-18, PH-20 (tenant tạm ngừng; EVT-20-13 tổ chức giải thể, sáp nhập).
 
 **Lỗi và xử lý.** Kafka ngừng: outbox giữ, phát bù khi trở lại; bản ghi hỏng lược đồ: đưa vào hàng đợi lỗi, cảnh báo, không chặn các bản ghi sau; token thiếu scope: `403`.
 
@@ -817,7 +821,7 @@ Chi tiết thiết kế:
 
 *API đọc bản sao.* `ReplicaService` phân trang theo con trỏ `nextUpdatedSince` là cặp `(updated_at, id)` mã hóa opaque, nên các bản ghi cùng mili giây không bị bỏ sót (`size ≤ 500`). Bản ghi rút gọn theo `MemberSystemView`; tenant lấy từ token dịch vụ, không từ tham số (SEC-80); đối tượng khác tenant trả `404` (BR-01-030). Số lượt gọi ghi theo `caller` (từ `azp`) để PH-13 phát hiện khai thác bất thường, không ghi kiểm toán từng lượt.
 
-*Tiêu thụ sự kiện vào.* `InboundEventHandler` xử lý ba loại sự kiện: tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức (PH-12) đặt `Contact` về `INACTIVE` và chạy lại kiểm tra ERR-01-050; thư bị trả lại (PH-18) đánh dấu đầu mối không hoạt động (BR-01-028); tenant tạm ngừng (PH-20) chỉ ghi nhận, không đổi từng HTTT. Mỗi sự kiện có bản ghi `inbox(event_id)` duy nhất để xử lý lũy đẳng; lỗi lặp lại ba lần đưa vào hàng đợi lỗi của PH-18.
+*Tiêu thụ sự kiện vào.* `InboundEventHandler` xử lý bốn loại sự kiện: tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức (PH-12) đặt `Contact` về `INACTIVE` và chạy lại kiểm tra ERR-01-050; thư bị trả lại (PH-18) đánh dấu đầu mối không hoạt động (BR-01-028); tenant tạm ngừng (PH-20) chỉ ghi nhận, không đổi từng HTTT; EVT-20-13 với `change = DISSOLVED` hoặc `MERGED` chuyển cho `OrgSuccessionService` (FR-01-054, đã chốt 27/11/2026, Q01-10), xem mục 4.9. Mỗi sự kiện có bản ghi `inbox(event_id)` duy nhất để xử lý lũy đẳng; lỗi lặp lại ba lần đưa vào hàng đợi lỗi của PH-18.
 
 ### 4.12. Rà soát quyền định kỳ
 
@@ -1720,4 +1724,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, vị trí kiến trúc và hiện trạng mã, cấu trúc gói `vn.datahub.connect.onboarding`, mô hình miền và 15 thành phần có bảng đặc tả 10 mục, 7 sơ đồ trình tự (kết nạp, saga, bàn giao, cắt quyền, kích hoạt, xoay vòng, rà soát), 11 máy trạng thái, xử lý lỗi và nhất quán, cấu hình và cờ tính năng, quan sát, hiệu năng và khả năng mở rộng, kiểm thử, lộ trình, 8 rủi ro, 10 câu hỏi mở (Q01-20…29), 11 đề nghị đồng bộ. Nguồn: D02-03-PH01, D02-04-PH01, D03-01 §4 và §7.3, D03-07, D03-10, ADR-001, 003, 006, 007, 012, 031, 032, 041, 042, 056, 058, 069, mã hiện trạng `apps/control` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: sửa lỗi lũy đẳng thành ERR-01-051, 054; callback saga là API-01-087 (ERR-01-053); xuất tệp nền API-01-088; mở bàn giao không dùng Idempotency-Key; số liệu 88 API, 54 mã lỗi; thêm đoạn mở các mục |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (PH-12 không nghe EVT-01-11), Q389, Q426, Q428 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (PH-12 không nghe EVT-01-11), Q389, Q426, Q428, Q390, Q401, Q408 |

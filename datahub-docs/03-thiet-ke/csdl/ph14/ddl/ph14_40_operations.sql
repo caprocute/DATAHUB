@@ -219,7 +219,7 @@ CALL ph14_national.p_ensure_month_partitions('ph14_national.usage_hourly', curre
 CREATE INDEX ix_usage_hourly_system ON ph14_national.usage_hourly (tenant_id, system_code, hour_start DESC);
 CREATE INDEX ix_usage_hourly_service ON ph14_national.usage_hourly (tenant_id, service_code, hour_start DESC);
 CALL ph14_national.p_enable_rls('ph14_national.usage_hourly', 'P');
-COMMENT ON TABLE ph14_national.usage_hourly IS 'Tổng hợp lượt gọi theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) cho báo cáo sử dụng và đường chuẩn phát hiện bất thường (FR-14-052, 053, 057). UsageAggregator chỉ cộng khi dòng giao dịch vừa được chèn nên đúng cả khi Kafka giao lại. Phân vùng tháng, giữ 24 tháng (giả định, khớp mức dùng hạn mức 2 năm NFR-14-021).';
+COMMENT ON TABLE ph14_national.usage_hourly IS 'Tổng hợp lượt gọi theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) cho báo cáo sử dụng và đường chuẩn phát hiện bất thường (FR-14-052, 053, 057). UsageAggregator chỉ cộng khi dòng giao dịch vừa được chèn nên đúng cả khi Kafka giao lại. Phân vùng tháng, giữ 24 tháng (khớp mức dùng hạn mức 2 năm NFR-14-021; chủ đầu tư chốt 27/11/2026).';
 COMMENT ON COLUMN ph14_national.usage_hourly.purpose_code IS 'Chuỗi rỗng khi lượt không khai mục đích (bị từ chối); là một phần khóa nên không dùng NULL.';
 -- @rollback DROP TABLE IF EXISTS ph14_national.usage_hourly CASCADE;
 

@@ -617,6 +617,7 @@ Ba mươi bốn use case xếp theo nhóm A đến K của FRS. Mức ưu tiên 
 **Luồng thay thế.**
 - **1a. Gỡ nhãn.** Một người đề nghị kèm số và ngày văn bản giải mật (API-09-005); người thứ hai duyệt (API-09-006); nhãn gỡ có hiệu lực khi đủ hai người (LP-09-01).
 - **3a. Không xác định được phân loại.** Xử lý như `SENSITIVE` và cảnh báo cấu hình.
+- **3b. Kiểm cấm gửi ra ngoài tỉnh (PH-14).** Khi `egressScope` là `OUT_OF_PROVINCE`, hệ thống kiểm cờ `noEgress` của từng trường và trả `egressBlocked`, `egressBlockedFields[]`; PH-14 không gửi lô (FR-09-007, BR-09-063, NFR-09-027; chủ đầu tư chốt 27/11/2026).
 
 **Luồng ngoại lệ.**
 - **E1. Có nhãn khi đăng ký phần tử (UC-09-02).** ERR-09-018 (422): "Dữ liệu mang nhãn bí mật nhà nước không được đưa vào Datahub."
@@ -2059,4 +2060,4 @@ D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 34 use case phủ 64 FR của FRS 0.1, bốn sơ đồ use case, năm sơ đồ trình tự (chấp thuận mục đích, xem đầy đủ, ẩn danh hóa, yêu cầu chủ thể, vi phạm 72 giờ), ma trận truy vết hai chiều, sáu đề nghị cho FRS |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: tên thư viện `dh-privacy-client`, nhánh ngừng phần tử, rút yêu cầu, gia hạn hạn trả lời, đề nghị gia hạn `RENEWAL`, tra đồng ý theo định danh, API-09-238 đến 245 vào bảng truy vết, ERR-09-079, 080, 082, BR-09-062, NFR-09-024 đến 026, đồng hồ 72 giờ dừng khi đã thông báo, mục 8.2 thành bảng kết quả |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q388 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q388, Q393 |

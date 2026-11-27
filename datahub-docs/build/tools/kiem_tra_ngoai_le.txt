@@ -5,18 +5,11 @@ THIEU	ADR-015	không có tệp 00-chung/adr/ADR-015-*.md
 THIEU	ADR-016	không có tệp 00-chung/adr/ADR-016-*.md
 THIEU	ADR-017	không có tệp 00-chung/adr/ADR-017-*.md
 THIEU	ADR-019	không có tệp 00-chung/adr/ADR-019-*.md
-THIEU	API-03-097	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH03-api-cong-api.md
-THIEU	API-04-092	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH04-api-tich-hop.md
-THIEU	API-04-093	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH04-api-tich-hop.md
-THIEU	API-06-126	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH06-api-du-lieu-chu.md
 THIEU	API-07-076	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH07-api-danh-muc.md
-THIEU	API-12-112	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH12-api-dinh-danh-phan-quyen.md
-THIEU	API-14-093	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH14-api-ket-noi-quoc-gia.md
 THIEU	CMP-Dropdown	chưa định nghĩa trong 03-thiet-ke/uiux/D03-05-03-thanh-phan-nguyen-tu.md, 03-thiet-ke/uiux/D03-05-04-thanh-phan-phuc-hop.md
 THIEU	CMP-FileDropzone	chưa định nghĩa trong 03-thiet-ke/uiux/D03-05-03-thanh-phan-nguyen-tu.md, 03-thiet-ke/uiux/D03-05-04-thanh-phan-phuc-hop.md
 THIEU	EVT-04-15	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH04-api-tich-hop.md
 THIEU	EVT-07-11	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH07-api-danh-muc.md
-THIEU	PERM-01-review-claim	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
 THIEU	PERM-13-read	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
 TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-002	ô đầu hai hàng cùng bảng
 TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-004	ô đầu hai hàng cùng bảng

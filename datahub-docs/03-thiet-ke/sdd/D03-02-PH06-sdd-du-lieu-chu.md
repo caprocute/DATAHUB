@@ -1279,7 +1279,7 @@ spec:
 
 : Hồ sơ tài nguyên của Job mdm-splink
 
-`NetworkPolicy` của Job: từ chối mặc định (SEC-14), chỉ ra tới PgBouncer của `pg-core` (`dh-db`, cổng 6432) và Garage (`dh-s3`); `dh-data` cần quyền `create`, `get`, `list`, `watch`, `delete` trên `jobs` và `get`, `list` trên `pods` chỉ trong `dh-control`, qua `Role` riêng của `ServiceAccount` `dh-data` (ngoại lệ có chủ đích so với SEC-53, cần ATTT duyệt, Q06-24).
+`NetworkPolicy` của Job: từ chối mặc định (SEC-14), chỉ ra tới PgBouncer của `pg-core` (`dh-db`, cổng 6432) và Garage (`dh-s3`); `dh-data` cần quyền `create`, `get`, `list`, `watch`, `delete` trên `jobs` và `get`, `list` trên `pods` chỉ trong `dh-control`, qua `Role` riêng của `ServiceAccount` `dh-data`, giới hạn trong namespace `dh-control` và chỉ tài nguyên `jobs`, `pods` như trên (ngoại lệ có ghi của SEC-53 ở D03-07 mục 5.7, kiến trúc sư ATTT duyệt manifest; chủ đầu tư chốt 27/11/2026, Q06-24; RBAC của `dh-control` ghi ở D03-09 mục 4.2).
 
 ## 10. Quan sát
 
@@ -1408,7 +1408,7 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 | FRS 8.2 | Thêm `06.sync.reconcile-batch-size` (1.000) và `06.match.timeout-ms` (800) | Hai hằng số của thiết kế |
 | D03-03-PH06 CSDL | (a) Thêm `block_keys varchar(72)[]` cộng GIN cho `golden_record`; (b) vai `ph06_splink` chỉ `SELECT match_staging` và `INSERT match_result`; (c) FRS ghi bảng `stg_match_{jobId}` nhưng DDL dùng `match_staging` có `job_id`, FRS cần sửa theo DDL | Đối sánh trực tuyến B4 và nhất quán hai đường; quyền tối thiểu của Job |
 | D03-09 | `ResourceQuota` và `PriorityClass dh-batch-low` cho Job ở `dh-control`; cân nhắc pool `batch` | Job 8 vCPU, 32 GB cạnh API (Q06-25) |
-| D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 | Q06-24 |
+| D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 | Q06-24 (đã ghi ở D03-07 mục 5.7, chốt 27/11/2026) |
 | PH-10 | Đăng ký 15 topic `{tenant}.mdm.*`; Debezium Outbox Event Router cho `ph06_mdm.outbox_event` | Phát sự kiện |
 | PH-09 | Danh mục phân loại trường `ph06_mdm.*`, API chính sách che có độ trễ ≤ 50 ms | Ngân sách resolve |
 
@@ -1424,7 +1424,7 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 
 > **Câu hỏi mở Q06-23:** Kiểu đặt dấu thanh chuẩn của tên trên CCCD (`hòa` hay `hoà`) để `canonicalTone` mặc định `OLD` hay `NEW` đúng với dữ liệu quốc gia.
 
-> **Câu hỏi mở Q06-24:** `dh-data` có được cấp `Role` tạo, xem, xóa `Job` ở `dh-control` (ngoại lệ so với SEC-53), hay Job nên do một bộ điều phối riêng (ví dụ Argo Workflows) tạo.
+> **Q06-24 (đã chốt 27/11/2026):** `dh-data` được giữ `Role` chỉ tạo, đọc, xóa `Job` (và đọc `pods`) trong namespace `dh-control`, là ngoại lệ có ghi của SEC-53 (D03-07 mục 5.7, D03-09 mục 4.2); kiến trúc sư ATTT duyệt manifest; không dùng bộ điều phối riêng. *Câu hỏi gốc:* `dh-data` có được cấp `Role` tạo, xem, xóa `Job` ở `dh-control` (ngoại lệ so với SEC-53), hay Job nên do một bộ điều phối riêng (ví dụ Argo Workflows) tạo.
 
 > **Câu hỏi mở Q06-25:** Job Splink có cần node pool riêng (`batch`) thay vì `control`, nếu đo thấy tranh chấp tài nguyên với API trực tuyến.
 
@@ -1441,4 +1441,4 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc module `mdm`, mô hình miền, 11 thành phần với khối đặc tả 10 mục, thuật toán chuẩn hóa tên, blocking, Fellegi–Sunter, sống sót, đồng thời, mã hóa và băm, bảy sơ đồ trình tự, ánh xạ ERR-06, chỉ số `datahub_mdm_*`, cấu hình Job K8s, năm ADR đề xuất số 080 đến 084, câu hỏi mở Q06-20…29 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q387, Q424 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q387, Q424, Q385, Q423 |

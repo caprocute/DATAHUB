@@ -1238,7 +1238,7 @@ Trạng thái và thông báo: ERR-13-025 "Đã có yêu cầu xuất bằng ch�
 | 3 | Chi tiết | `CMP-Drawer`, `CMP-DescriptionList`, `CMP-Timeline`, `CMP-DataTable` | Bằng chứng: các bản ghi kiểm toán kích hoạt (liên kết UI-13-13, mỗi lần mở ghi vết); lịch sử trạng thái | API-13-057 |
 | 4 | Tiếp nhận | `CMP-Button` | Gán người điều tra là người bấm; mức Nghiêm trọng gửi TA sau 15 phút nếu chưa tiếp nhận | API-13-058 |
 | 5 | Đóng | `CMP-ReasonDialog` | Kết luận bắt buộc: Sự cố thật, Báo nhầm, Chấp nhận rủi ro (ghi chú bắt buộc); ERR-13-023 | API-13-059 |
-| 6 | Đề xuất tạm ngừng HTTT | `CMP-ConfirmDialog` | Chỉ khi kết luận "Sự cố thật"; ghi chú "PH-01 quyết định, PH-13 chỉ đề xuất" (Q13-12); liên kết sâu tới màn tạm ngừng của PH-01 | API-13-060 |
+| 6 | Đề xuất tạm ngừng HTTT | `CMP-ConfirmDialog` | Chỉ khi kết luận "Sự cố thật"; ghi chú "PH-01 quyết định, PH-13 chỉ đề xuất" (Q13-12, đã chốt 27/11/2026: đề xuất gửi bằng API-01-089, SO nhận việc khẩn ở PH-01); liên kết sâu tới việc của SO ở PH-01 | API-13-060 |
 | 7 | Bảng luật phát hiện | `CMP-DataTable`, `CMP-NumberInput`, `CMP-Switch` | Mã UC-SEC, Mô tả, Ngưỡng (nới trong biên), Bật tắt; luật bắt buộc không tắt được (ERR-13-024) | API-13-054, 055 |
 | 8 | Báo cáo sự cố | `CMP-Button` | Sinh mẫu từ cảnh báo, tải bản nháp; không tự gửi cơ quan | API-13-065, 066 |
 
@@ -1572,4 +1572,4 @@ Các câu hỏi dưới đây chưa có trả lời chốt; tập này dùng gi�
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-13 (Claude) | Bản đầu: 18 màn hình, điều hướng, thông báo ERR-13, ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: bổ sung UC hiện thực của UI-13-01, 12, 13, 17, 18 theo D02-04 mục 5.2; FR của UI-13-06, 09 thêm FR-13-005, 006; thêm đoạn mở cho các mục con |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: allowedActions, dải ghi vết tra cứu, lý do đóng SSE, tên CMP theo D03-05-04 |
-| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A.1 ghi `OnCallGrid`, `QueryBar` là thành phần cục bộ của PH-13; chốt câu hỏi mở đợt đồng bộ: Q447 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A.1 ghi `OnCallGrid`, `QueryBar` là thành phần cục bộ của PH-13; chốt câu hỏi mở đợt đồng bộ: Q447, Q390 |

@@ -24,7 +24,7 @@ READ = {
     'DataElement': 'scope!:#ElementScope, target!:s, contractRef:s, ownerOrgId!:s, source!:#ClassificationSource, status!:#ElementStatus, '
                    'declaredClass:#DataClass, classification:#ElementClassification, retiredAt:ts',
     'ElementClassification': 'elementId!:u, dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, identifiability!:#IdentifiabilityType, '
-                             'maskPattern:#MaskPatternKind, neverReveal!:b, status!:#ClassificationStatus, source!:#ClassificationSource, basis:s, '
+                             'maskPattern:#MaskPatternKind, neverReveal!:b, noEgress!:b, status!:#ClassificationStatus, source!:#ClassificationSource, basis:s, '
                              'confirmedBy:s, confirmedAt:ts',
     'ClassificationChange': 'elementId!:u, fromClass:#DataClass, toClass!:#DataClass, fromPersonalDataType:#PersonalDataType, toPersonalDataType!:#PersonalDataType, '
                             'status!:#ClassificationStatus, basis:s, reason:s, proposedBy!:s, confirmedBy:s, confirmedAt:ts, confirmedBy2:s, confirmedAt2:ts, '
@@ -140,7 +140,7 @@ INPUT = {
     'ElementRegisterItem': 'scope!:#ElementScope, target!:s, contractRef:s, ownerOrgId!:s, declaredClass:#DataClass',
     'ImportSchemaInput': 'format!:e(OPENAPI|JSON_SCHEMA|AVRO), contractKind!:#ContractKind, contractId!:s, ownerOrgId!:s, content!:s',
     'ImportDeclarationsInput': 'contractKind!:#ContractKind, contractId!:s, ownerOrgId!:s, declarations!:[o]',
-    'ClassificationProposalInput': 'dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, identifiability!:#IdentifiabilityType, maskPattern:#MaskPatternKind, basis:s, reason:s',
+    'ClassificationProposalInput': 'dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, identifiability!:#IdentifiabilityType, maskPattern:#MaskPatternKind, noEgress:b, basis:s, reason:s',
     'ClassificationConfirmInput': 'comment:s',
     'ClassificationBulkConfirmInput': 'changeIds!:[u], comment:s',
     'RejectInput': 'reason!:s20',
@@ -232,7 +232,7 @@ INPUT = {
 # --- data plane
 DATA_PLANE = {
     'PurposeDecideRequest': 'htttId!:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, fields:[s], subjectHash:hash, channel:#MaskChannel',
-    'PurposeDecideResponse': 'allow!:b, reason!:e(GRANTED|NO_GRANT|BLOCK_LABEL|RESTRICTED_SUBJECT|SENSITIVE_NO_PURPOSE), grantId:u, allowedFields:[s], '
+    'PurposeDecideResponse': 'allow!:b, reason!:e(GRANTED|NO_GRANT|BLOCK_LABEL|RESTRICTED_SUBJECT|SENSITIVE_NO_PURPOSE), grantId:u, ropaActivityId:u, allowedFields:[s], '
                              'conditions:[#GrantCondition], bundleNo!:i, ttlSeconds!:i',
     'MaskPlanRequest': 'contractKind!:#ContractKind, contractId!:s, purposeCode!:code, channel!:#MaskChannel, roles:[s], fields:[s]',
     'MaskPlanResponse': 'planId!:s, bundleNo!:i, failMode!:#FailMode, rules!:[#MaskPlanRule], ttlSeconds!:i',
@@ -242,11 +242,11 @@ DATA_PLANE = {
     'PseudonymIssueRequest': 'domainCode!:code, identifierKind!:#IdentifierKind, values!:[s]',
     'PseudonymIssueResponse': 'domainCode!:code, keyVersion!:i, method!:#PseudonymMethod, items!:[#PseudonymItem]',
     'PseudonymItem': 'index!:i, pseudonym!:s',
-    'ClassificationCheckRequest': 'contractKind!:#ContractKind, contractId!:s, fields!:[s]',
-    'ClassificationCheckResponse': 'blocked!:b, blockLabel:#BlockLabel, effectiveClass!:#DataClass, fields!:[#FieldClass]',
-    'FieldClass': 'field!:s, dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, status!:#ClassificationStatus',
+    'ClassificationCheckRequest': 'contractKind!:#ContractKind, contractId!:s, fields!:[s], egressScope:#EgressScope',
+    'ClassificationCheckResponse': 'blocked!:b, blockLabel:#BlockLabel, effectiveClass!:#DataClass, egressBlocked!:b, egressBlockedFields:[s], fields!:[#FieldClass]',
+    'FieldClass': 'field!:s, dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, noEgress!:b, status!:#ClassificationStatus',
     'ClassificationIndex': 'bundleNo!:i, generatedAt!:ts, entries!:[#ClassificationIndexEntry]',
-    'ClassificationIndexEntry': 'target!:s, dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, neverReveal!:b, blocked!:b',
+    'ClassificationIndexEntry': 'target!:s, dataClass!:#DataClass, personalDataType!:#PersonalDataType, categoryCode:code, neverReveal!:b, noEgress!:b, blocked!:b',
     'ConsentCheckRequest': 'templateCode!:code, subjectHash!:hash',
     'ConsentCheckResponse': 'status!:e(GIVEN|WITHDRAWN|EXPIRED|NONE), templateVersion:i, givenAt:ts, restrictionActive!:b, cacheSeconds!:i',
     'SubjectHashRequest': 'identifierType!:#SubjectIdentifierType, identifiers!:[s]',

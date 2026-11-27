@@ -1180,7 +1180,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 ### 3.18. `cache_stats`
 
 ::: dac-ta
-**Mục đích.** Thống kê đệm tổng hợp theo giờ và dịch vụ, ghi từ EVT-14-11 (FR-14-035, 036, 037, 057). Phân vùng tháng, giữ 13 tháng (giả định: đủ so sánh cùng kỳ năm trước). Tỷ lệ trúng đệm = hits / (hits + misses) (NFR-14-005).
+**Mục đích.** Thống kê đệm tổng hợp theo giờ và dịch vụ, ghi từ EVT-14-11 (FR-14-035, 036, 037, 057). Phân vùng tháng, giữ 13 tháng (đủ so sánh cùng kỳ năm trước; chủ đầu tư chốt 27/11/2026). Tỷ lệ trúng đệm = hits / (hits + misses) (NFR-14-005).
 
 **FR phục vụ.** FR-14-035, 036, 037, 057.
 
@@ -1196,7 +1196,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 
 **Cách ly tenant.** RLS mẫu P (FORCE): chỉ thấy và ghi dòng có `tenant_id = app.tenant_id` của phiên (hoặc dòng `COMMON` khi phiên là `PLATFORM`); chính sách `rls_cache_stats_*` (mục 1.2).
 
-**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `hour_start` (thủ tục `p_ensure_month_partitions`); Lưu giữ 13 tháng (giả định), DETACH phân vùng quá hạn.
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `hour_start` (thủ tục `p_ensure_month_partitions`); Lưu giữ 13 tháng (chủ đầu tư chốt 27/11/2026), DETACH phân vùng quá hạn.
 
 **Ghi chú.** Khóa tự nhiên (tenant, dịch vụ, giờ); không có `id`, `version`.
 :::
@@ -1217,7 +1217,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 ### 3.19. `async_request`
 
 ::: dac-ta
-**Mục đích.** EN-14-13 Yêu cầu gọi bất đồng bộ (FR-14-016, 038). Kafka là nguồn sự thật của việc chấp nhận, bảng là bản dẫn xuất do AsyncStateConsumer ghi lũy đẳng theo id. Thao tác ghi bắt buộc Idempotency-Key ULID (BR-14-030). Giữ 90 ngày sau khi kết thúc (giả định), siêu dữ liệu giao dịch nằm ở national_transaction 5 năm.
+**Mục đích.** EN-14-13 Yêu cầu gọi bất đồng bộ (FR-14-016, 038). Kafka là nguồn sự thật của việc chấp nhận, bảng là bản dẫn xuất do AsyncStateConsumer ghi lũy đẳng theo id. Thao tác ghi bắt buộc Idempotency-Key ULID (BR-14-030). Giữ 90 ngày sau khi kết thúc (chủ đầu tư chốt 27/11/2026), siêu dữ liệu giao dịch nằm ở national_transaction 5 năm.
 
 **FR phục vụ.** FR-14-016, 038.
 
@@ -1233,7 +1233,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 
 **Cách ly tenant.** RLS mẫu P (FORCE): chỉ thấy và ghi dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_async_request_*` (mục 1.2).
 
-**Phân vùng, chỉ thêm.** Lưu giữ 90 ngày sau khi kết thúc (giả định), tác vụ dọn xóa theo `finished_at`.
+**Phân vùng, chỉ thêm.** Lưu giữ 90 ngày sau khi kết thúc (chủ đầu tư chốt 27/11/2026), tác vụ dọn xóa theo `finished_at`.
 
 **Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
 :::
@@ -1560,7 +1560,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 ### 3.26. `usage_hourly`
 
 ::: dac-ta
-**Mục đích.** Tổng hợp lượt gọi theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) cho báo cáo sử dụng và đường chuẩn phát hiện bất thường (FR-14-052, 053, 057). UsageAggregator chỉ cộng khi dòng giao dịch vừa được chèn nên đúng cả khi Kafka giao lại. Phân vùng tháng, giữ 24 tháng (giả định, khớp mức dùng hạn mức 2 năm NFR-14-021).
+**Mục đích.** Tổng hợp lượt gọi theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) cho báo cáo sử dụng và đường chuẩn phát hiện bất thường (FR-14-052, 053, 057). UsageAggregator chỉ cộng khi dòng giao dịch vừa được chèn nên đúng cả khi Kafka giao lại. Phân vùng tháng, giữ 24 tháng (khớp mức dùng hạn mức 2 năm NFR-14-021; chủ đầu tư chốt 27/11/2026).
 
 **FR phục vụ.** FR-14-033, 052, 053, 057.
 
@@ -1576,7 +1576,7 @@ Số thứ tự ở bảng trên trùng với số mục `3.n+1` bên dưới (S
 
 **Cách ly tenant.** RLS mẫu P (FORCE): chỉ thấy và ghi dòng có `tenant_id = app.tenant_id` của phiên (hoặc dòng `COMMON` khi phiên là `PLATFORM`); chính sách `rls_usage_hourly_*` (mục 1.2).
 
-**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `hour_start` (thủ tục `p_ensure_month_partitions`); Lưu giữ 24 tháng (giả định), DETACH phân vùng quá hạn.
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `hour_start` (thủ tục `p_ensure_month_partitions`); Lưu giữ 24 tháng (chủ đầu tư chốt 27/11/2026), DETACH phân vùng quá hạn.
 
 **Ghi chú.** Khóa tự nhiên; chỉ cộng dồn khi dòng giao dịch vừa được chèn mới (đúng khi Kafka giao lại).
 :::
@@ -2275,15 +2275,15 @@ Mỗi bảng có thời hạn lưu giữ và cơ chế dọn riêng. Bảng kh�
 | Đối tượng | Lưu giữ | Cơ chế dọn |
 |---|---|---|
 | `national_transaction` | 12 tháng trực tuyến; WORM 5 năm (BR-14-020, SEC-62) | `LedgerArchiver` xuất phân vùng quá 12 tháng sang bucket WORM kèm chuỗi băm, xác minh rồi `DETACH` và `DROP` dưới `ph14_owner` |
-| `usage_hourly` | 24 tháng (giả định) | `DETACH` phân vùng quá hạn |
+| `usage_hourly` | 24 tháng (chủ đầu tư chốt 27/11/2026) | `DETACH` phân vùng quá hạn |
 | `quota_usage` | 2 năm (NFR-14-021) | `DETACH` phân vùng quá hạn |
-| `cache_stats` | 13 tháng (giả định) | `DETACH` phân vùng quá hạn |
+| `cache_stats` | 13 tháng (chủ đầu tư chốt 27/11/2026) | `DETACH` phân vùng quá hạn |
 | `health_sample` | 90 ngày; gộp theo giờ sau 7 ngày | `HealthRollupJob` 01:30; `DETACH` phân vùng quá hạn |
 | `parallel_sample` | 90 ngày (FR-14-055) | `DETACH` phân vùng quá hạn |
 | `signature_incident`, `anomaly_alert` | 5 năm, không xóa | Không dọn; trigger chặn xóa |
 | `national_certificate`, `trust_anchor` | Vĩnh viễn, kể cả hết hạn (BR-14-019) | Không dọn; trigger chặn xóa |
 | `sync_run` và `sync_record`, `reconcile_run`, `platform_outage`, `legacy_import` | 3 năm | `RetentionJob` 02:40 xóa theo `finished_at` (kéo theo `sync_record` bằng `ON DELETE CASCADE`) |
-| `async_request` | 90 ngày sau khi kết thúc (giả định) | `RetentionJob` 02:40 |
+| `async_request` | 90 ngày sau khi kết thúc (chủ đầu tư chốt 27/11/2026) | `RetentionJob` 02:40 |
 | `worker_command` | 30 ngày (giả định) | `RetentionJob` 02:40 |
 | `outbox` | 3 ngày | Sau khi Debezium đã gửi |
 | `national_platform`, `national_service`, `service_spec`, `routing_rule`, `quota_policy`, `credential_rotation`, `approval_request`, `parallel_run` | Vĩnh viễn | Không dọn |
@@ -2416,7 +2416,7 @@ Bảng liệt kê từng thực thể và cột của SRS cũ, kèm chuyển đ�
 
 > **Câu hỏi mở Q14-53:** Dòng `COMMON` của bảng mẫu P (sổ giao dịch, chứng thư, hạn mức, sức khỏe của cổng `COMMON`) chỉ ghi được khi `app.tenant_id = 'PLATFORM'`, nên `LedgerConsumer` và các tác vụ nền phải đặt `PLATFORM` cho lô `COMMON`; vai trò có quyền rộng hơn mức cần. Có cần vai trò riêng giới hạn (ví dụ `ph14_common_writer` chỉ ghi dòng `COMMON`) hay chấp nhận `PLATFORM`? Đề xuất tạm: chấp nhận `PLATFORM` vì phiên này không dùng được từ API người dùng (token tenant không đặt được), kèm kiểm thử rò rỉ chéo ở CI (SEC-87). Cần ATTT xác nhận.
 
-> **Câu hỏi mở Q14-54:** Các thời hạn lưu giữ ghi "giả định" ở bảng §7.1 (`usage_hourly` 24 tháng, `cache_stats` 13 tháng, `async_request` 90 ngày sau khi kết thúc, `worker_command` 30 ngày, `platform_outage` và `legacy_import` 3 năm, `health_sample` 90 ngày thay cho 1 năm của SRS cũ) chưa có văn bản hay quyết định chủ đầu tư. Đề xuất tạm: dùng như bảng; mọi giá trị là tham số của tác vụ dọn, đổi không cần đổi cấu trúc bảng. Cần chủ đầu tư và ATTT xác nhận trước khi chốt NFR-14-021.
+> **Câu hỏi mở Q14-54 (đã chốt một phần 27/11/2026):** Chủ đầu tư chốt 27/11/2026: `usage_hourly` giữ 24 tháng, `cache_stats` giữ 13 tháng, `async_request` giữ 90 ngày sau khi kết thúc; ba giá trị này đã vào NFR-14-021 và không còn là giả định. Các thời hạn còn ghi "giả định" (`worker_command` 30 ngày, `platform_outage` và `legacy_import` 3 năm, `health_sample` 90 ngày thay cho 1 năm của SRS cũ) vẫn dùng như bảng cho tới khi có quyết định riêng; mọi giá trị là tham số của tác vụ dọn, đổi không cần đổi cấu trúc bảng.
 
 ## Đề nghị đồng bộ
 
@@ -2445,7 +2445,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập CSDL PH-14 theo khuôn K-CSDL và chuẩn trình bày K-TRINH-BAY: chiến lược lưu trữ, 36 bảng (khối 10 mục sinh từ DDL), bốn sơ đồ thực thể, DDL sáu tệp 47 changeset, 85 khối kiểm cô lập đạt, kho ngoài PostgreSQL, lưu giữ và dung lượng, ánh xạ hệ cũ, 5 câu hỏi mở (Q14-50…54) và mục Đề nghị đồng bộ. Căn cứ: FRS, use case, SDD PH-14, SAD §4, ADR-003, 046, 047, 057, D03-10 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Số tham số 51 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Số tham số 51; chốt câu hỏi mở đợt đồng bộ: Q420 |
 
 
 

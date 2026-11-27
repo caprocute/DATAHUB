@@ -177,7 +177,7 @@ PH-12 vừa là nơi cấp định danh vừa là một dịch vụ cần đư�
 
 Người dùng đăng nhập bằng OIDC Authorization Code với PKCE `S256` qua BFF của `dh-console` (SEC-21); trình duyệt không giữ token. BFF gắn access token (ES256, sống tối đa 5 phút) vào lời gọi `/api/iam/v1`. Quyền gọi là mã `PERM-12-*` suy từ vai trò của người dùng theo ma trận D02-08; ánh xạ vai trò sang quyền nằm ở dữ liệu của OPA, không ở mã của `dh-platform`.
 
-Thao tác ghi cần mức xác thực tối thiểu: **mức 2** (mật khẩu cộng TOTP hoặc WebAuthn) cho 39 operation ghi quản trị; **mức 3** (WebAuthn, `userVerification=required`) cho 13 operation có rủi ro cao (phát hành, thu hồi, quay lui chính sách; tạo, xoay tài khoản dịch vụ; khóa realm, áp lại cấu hình; duyệt quyền có thời hạn; thu hồi client). Token phải có `auth_time` không quá `12.mfa.stepup-minutes` (5 phút). Thiếu một trong hai: `401` ERR-12-120 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", acr_values="…"`; BFF chuyển người dùng sang xác thực bước lên rồi gọi lại. Mức tối thiểu của từng operation ở khóa `x-datahub-acr` của OpenAPI.
+Thao tác ghi cần mức xác thực tối thiểu: **mức 2** (mật khẩu cộng TOTP hoặc WebAuthn) cho 40 operation ghi quản trị; **mức 3** (WebAuthn, `userVerification=required`) cho 13 operation có rủi ro cao (phát hành, thu hồi, quay lui chính sách; tạo, xoay tài khoản dịch vụ; khóa realm, áp lại cấu hình; duyệt quyền có thời hạn; thu hồi client). Token phải có `auth_time` không quá `12.mfa.stepup-minutes` (5 phút). Thiếu một trong hai: `401` ERR-12-120 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", acr_values="…"`; BFF chuyển người dùng sang xác thực bước lên rồi gọi lại. Mức tối thiểu của từng operation ở khóa `x-datahub-acr` của OpenAPI, và danh sách đã được cán bộ ATTT cùng quản trị nền tảng duyệt, ghi thành bảng ở D02-03-PH12 mục 4.8 (chủ đầu tư chốt 27/11/2026).
 
 ### 2.2. Máy gọi máy
 
@@ -972,7 +972,7 @@ PH-12 phủ tám mục `LGC-IAM` của hệ cũ (D00-03 §4.8) và API quyết �
 
 > **Câu hỏi mở Q12-58:** Khi gói dữ liệu của tenant vượt ngưỡng chế độ đẩy (Q12-20 của SDD), OPA chuyển sang chế độ kéo bằng scope `iam:policy-data-read`, nhưng bản này chưa công bố API tương ứng. Cần xác nhận sau khi đo có cần thêm `GET /policy-data` (một operation mới ở mã kế tiếp của dải, trả gói theo `If-None-Match`) hay chỉ chia dữ liệu theo đơn vị mà vẫn đẩy qua bucket.
 
-> **Câu hỏi mở Q12-59:** Mức xác thực bước lên của từng operation (39 operation mức 2, 13 mức 3, khóa `x-datahub-acr`) là đề xuất của tập này dựa trên FRS §4.8, chưa có bảng chính thức ở FRS hay D02-08. Cần cán bộ ATTT và quản trị nền tảng duyệt danh sách (đặc biệt mức 3 cho thu hồi client và duyệt quyền có thời hạn) trước khi thư viện PEP áp dụng, vì mức 3 buộc khóa FIDO2 (GĐ-12-07).
+> **Câu hỏi Q12-59 (đã chốt 27/11/2026):** Chủ đầu tư chốt 27/11/2026: danh sách mức xác thực bước lên của từng operation (40 operation mức 2, 13 mức 3, khóa `x-datahub-acr`) do cán bộ ATTT cùng quản trị nền tảng duyệt, rồi ghi thành bảng ở D02-03-PH12 mục 4.8 lấy từ `x-datahub-acr` của OpenAPI. *Câu hỏi gốc:* ai duyệt danh sách mức xác thực bước lên trước khi thư viện PEP áp dụng, đặc biệt mức 3 cho thu hồi client và duyệt quyền có thời hạn.
 
 ## 10. Đặc tả từng endpoint
 
@@ -3758,4 +3758,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và K-TRINH-BAY |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412 |

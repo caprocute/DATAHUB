@@ -68,9 +68,9 @@ FR_BANG = {
 # Giữ lưu và dọn dữ liệu (NFR-14-021 và giả định ghi trong COMMENT)
 RETENTION = {
     'national_transaction': '12 tháng trực tuyến rồi xuất WORM 5 năm kèm chuỗi băm (LedgerArchiver) trước khi DETACH (SEC-62)',
-    'usage_hourly': 'Giữ 24 tháng (giả định), DETACH phân vùng quá hạn',
+    'usage_hourly': 'Giữ 24 tháng (chủ đầu tư chốt 27/11/2026), DETACH phân vùng quá hạn',
     'quota_usage': 'Giữ 2 năm (NFR-14-021), DETACH phân vùng quá hạn',
-    'cache_stats': 'Giữ 13 tháng (giả định), DETACH phân vùng quá hạn',
+    'cache_stats': 'Giữ 13 tháng (chủ đầu tư chốt 27/11/2026), DETACH phân vùng quá hạn',
     'health_sample': 'Giữ 90 ngày, gộp theo giờ sau 7 ngày (HealthRollupJob), DETACH phân vùng quá hạn',
     'parallel_sample': 'Giữ 90 ngày (FR-14-055), DETACH phân vùng quá hạn',
     'sync_run': 'Giữ 3 năm (EN-14-10), tác vụ dọn xóa phiên quá hạn (kéo theo sync_record)',
@@ -78,7 +78,7 @@ RETENTION = {
     'reconcile_run': 'Giữ 3 năm (FR-14-007)',
     'signature_incident': 'Giữ 5 năm (EN-14-12), không xóa',
     'anomaly_alert': 'Giữ 5 năm (EN-14-14), không xóa',
-    'async_request': 'Giữ 90 ngày sau khi kết thúc (giả định), tác vụ dọn xóa theo `finished_at`',
+    'async_request': 'Giữ 90 ngày sau khi kết thúc (chủ đầu tư chốt 27/11/2026), tác vụ dọn xóa theo `finished_at`',
     'worker_command': 'Giữ 30 ngày (giả định), tác vụ dọn xóa theo `finished_at`',
     'outbox': 'Dọn sau 3 ngày khi Debezium đã gửi',
     'platform_outage': 'Giữ 3 năm (giả định)',

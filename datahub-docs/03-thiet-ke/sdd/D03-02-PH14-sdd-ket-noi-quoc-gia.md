@@ -225,7 +225,7 @@ Bảng dưới liệt kê các module cùng đơn vị triển khai và các ph�
 | PH-02 | `national` được gọi | Cổng `NationalCatalogPort` (`upsert`, `withdraw` lũy đẳng theo khóa dịch vụ, kết quả `NOT_CONFIGURED` khi tenant chưa cấu hình kênh, lý do từ chối kèm mã) | Đồng bộ danh mục dịch vụ lên kênh quốc gia |
 | PH-03 | PH-03 gắn tuyến | APISIX theo sự kiện của PH-02 | Tuyến API cung cấp lại; tuyến chiều vào theo EVT-14-13 |
 | PH-07 | PH-07 gọi cổng; cổng đọc PH-07 | REST nội bộ API-14-079…083; `CatalogLookupApi` (đệm 5 phút) | Danh mục dùng chung quốc gia; danh mục mục đích, mã thủ tục hành chính |
-| PH-09 | Cổng gọi | REST kiểm tra mục đích, kiểm tra lô; thời hạn 200 ms, đóng an toàn | FR-14-011, 044, 045 |
+| PH-09 | Cổng gọi | REST `purpose:decide` (trả `ropaActivityId`) và `classification:check` với `egressScope` là `OUT_OF_PROVINCE`; thời hạn 200 ms (NFR-09-027), đóng an toàn; chủ đầu tư chốt 27/11/2026 | FR-14-011, 044, 045 |
 | PH-12 | Cổng đọc | JWKS Keycloak (làm mới 10 phút), bó OPA `national/*` | Xác thực token, kiểm tra mục đích |
 | PH-13 | PH-14 phát | Chỉ số Prometheus `national_*`, EVT-14-* | Cảnh báo, SIEM |
 | PH-18 | `national` đọc | `ParameterApi` có đệm 60 giây; ảnh chụp cấu hình mang giá trị đã giải | Tham số `14.*` |
@@ -1135,7 +1135,7 @@ Chi tiết thiết kế:
 
 **Nghĩa vụ tuân thủ.** `ComplianceWatcher` hằng ngày tính số ngày từ lần thành công gần nhất; quá `14.sync.stale-alert-days` thì đặt `national_sync_lag_days`, gửi thông báo cho TA, SO và lãnh đạo (BR-14-026). Phiên thất vì hệ thống của Bộ không phản hồi được thử lại theo độ trễ tăng dần trong 24 giờ; người dùng chạy tay trong lúc đó nhận ERR-14-103.
 
-**Dữ liệu chủ và dữ liệu mở (Đợt 3).** `MasterDataBridge` và `OpenDatasetService` tái dùng đường trên, thêm hai cổng trước khi lập lô: kiểm đủ ánh xạ ở PH-07 (thiếu: ERR-14-125) và kiểm PH-09 lô không chứa trường cấm gửi ra ngoài tỉnh hay công bố (chặn: ERR-14-126), tương ứng BR-14-010. Lần công bố đầu của một tập dữ liệu mở qua `FourEyesGuard` (BR-14-022); rút công bố qua API-14-088. Định dạng, kênh và tần suất đồng bộ dữ liệu chủ chưa được trung ương công bố (Q14-13 của FRS), nên phần này mới thiết kế ở mức khung, chưa chốt lược đồ lô.
+**Dữ liệu chủ và dữ liệu mở (Đợt 3).** `MasterDataBridge` và `OpenDatasetService` tái dùng đường trên, thêm hai cổng trước khi lập lô: kiểm đủ ánh xạ ở PH-07 (thiếu: ERR-14-125) và kiểm PH-09 lô không chứa trường cấm gửi ra ngoài tỉnh hay công bố bằng `classification:check` với `egressScope` là `OUT_OF_PROVINCE` (chặn: ERR-14-126; không trả lời: ERR-14-132, không gửi), tương ứng BR-14-010. Lần công bố đầu của một tập dữ liệu mở qua `FourEyesGuard` (BR-14-022); rút công bố qua API-14-088. Định dạng, kênh và tần suất đồng bộ dữ liệu chủ chưa được trung ương công bố (Q14-13 của FRS), nên phần này mới thiết kế ở mức khung, chưa chốt lược đồ lô.
 
 ### 4.16. Sổ giao dịch, nội dung bản tin, đối soát và nhật ký khai thác
 
@@ -2168,7 +2168,7 @@ Bảng dưới ghi các rủi ro riêng của PH-14 kèm mức và biện pháp 
 
 > **Câu hỏi mở Q14-25:** FR-14-028 bước 3 viết "hệ thống ký thử qua `transit/sign`", trong khi BR-14-004 chỉ cho cổng của đúng tenant gọi `sign`. Thiết kế tách hai lớp (đọc khóa công khai ở `dh-integration`, ký thử ở `worker`); cần xác nhận chỉnh lời FR-14-028 và cho `dh-integration` quyền đọc khóa công khai của `transit/keys/dh-{tenant}-nat-sign-*`.
 
-> **Câu hỏi mở Q14-26:** Hợp đồng nội bộ với PH-02 (tạo API nháp loại dịch vụ quốc gia, sự kiện đã công bố, danh sách dịch vụ chia sẻ), PH-07 (`CatalogLookupApi` cho danh mục mục đích khai thác và danh mục thủ tục), PH-09 (kiểm tra mục đích, kiểm lô, thời hạn 200 ms) chưa có tập API tương ứng; tập này giả định tên và thời hạn ở mục 2.3 và 8.3. Cần ba nhóm phân hệ đó xác nhận.
+> **Câu hỏi mở Q14-26:** Hợp đồng nội bộ với PH-02 (tạo API nháp loại dịch vụ quốc gia, sự kiện đã công bố, danh sách dịch vụ chia sẻ), PH-07 (`CatalogLookupApi` cho danh mục mục đích khai thác và danh mục thủ tục), PH-09 (kiểm tra mục đích, kiểm lô, thời hạn 200 ms) chưa có tập API tương ứng; tập này giả định tên và thời hạn ở mục 2.3 và 8.3. Cần ba nhóm phân hệ đó xác nhận. Phần PH-09 đã chốt 27/11/2026 (chủ đầu tư chốt): dùng `purpose:decide` (API-09-227, thêm `ropaActivityId`) và `classification:check` (API-09-231, thêm `egressScope` và cờ `noEgress`), p95 ≤ 200 ms; còn lại PH-02 và PH-07.
 
 > **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-133, mã đã cấp ở D03-04-PH14, còn chờ chốt phương án). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
 
@@ -2209,6 +2209,6 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập SDD PH-14 theo khuôn K-SDD và chuẩn trình bày K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã hai đơn vị triển khai, mô hình miền và 18 thành phần (khối 10 mục), 10 sơ đồ trình tự, 12 máy trạng thái, nhất quán và suy giảm, bảo mật đối chiếu SEC, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, 10 rủi ro, 8 câu hỏi mở (Q14-20…27) và mục Đề nghị đồng bộ. Căn cứ: FRS và use case PH-14, SAD §4, ADR-057, D03-07, D03-10 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số; `type` lỗi RFC 9457 theo mẫu `https://datahub.gov.vn/errors/` |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14; chốt Q425, Q416: PH-02 nhận bản nháp dịch vụ quốc gia, PH-03 thêm tuyến /inbound/v1 và bộ lọc vân tay |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14; chốt Q425, Q416: PH-02 nhận bản nháp dịch vụ quốc gia, PH-03 thêm tuyến /inbound/v1 và bộ lọc vân tay; chốt câu hỏi mở đợt đồng bộ: Q393 |
 
 

@@ -6,7 +6,7 @@ ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, giao diện, kỹ sư các phân hệ gọi PH-01; ATTT; kiểm thử viên; hội đồng thẩm định
 phan_he: PH-01
-mo_ta: Đặc tả 88 endpoint REST, 15 sự kiện Kafka và 54 mã lỗi ERR-01 của phân hệ Kết nạp hệ thống thông tin, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
+mo_ta: Đặc tả 89 endpoint REST, 15 sự kiện Kafka và 54 mã lỗi ERR-01 của phân hệ Kết nạp hệ thống thông tin, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
 tai_lieu_lien_quan: D02-03-PH01 FRS; D02-04-PH01 Use case; D03-02-PH01 SDD; D03-03-PH01 CSDL; D03-06-PH01 Màn hình; D04-01 Quy ước mã
 ---
 
@@ -16,11 +16,11 @@ tai_lieu_lien_quan: D02-03-PH01 FRS; D02-04-PH01 Use case; D03-02-PH01 SDD; D03-
 
 **Mục tiêu.** PH-01 là cửa vào của mọi hệ thống thông tin (HTTT) muốn dùng Datahub: đơn vị nộp hồ sơ, tỉnh thẩm định và phê duyệt, hệ thống cấp danh tính kỹ thuật, bàn giao bí mật một lần, rồi quản lý vòng đời thành viên đến khi chấm dứt. Tài liệu này chốt hợp đồng giao tiếp của phân hệ để kỹ sư giao diện, kỹ sư các phân hệ khác và kiểm thử viên làm việc song song mà không phải đọc mã.
 
-**Phạm vi.** Phân hệ công bố 88 operation REST (API-01-001…088) dưới `/api/onboarding/v1`, 15 sự kiện Kafka (EVT-01-01…15) và 54 mã lỗi (ERR-01-001…054). 51 chức năng của [FRS](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md) đều có API (không chức năng nào "chỉ giao diện"). Danh sách 86 API, 15 sự kiện và 50 mã lỗi đã chốt ở FRS §9; tập này thêm hai API (087 nhận kết quả bất đồng bộ của saga, 088 tra tác vụ nền xuất tệp) và bốn mã lỗi dùng chung (051…054), ghi ở chương 11.
+**Phạm vi.** Phân hệ công bố 89 operation REST (API-01-001…089) dưới `/api/onboarding/v1`, 15 sự kiện Kafka (EVT-01-01…15) và 54 mã lỗi (ERR-01-001…054). 53 chức năng của [FRS](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md) đều có API (không chức năng nào "chỉ giao diện"). Danh sách 86 API, 15 sự kiện và 50 mã lỗi đã chốt ở FRS §9; tập này thêm hai API (087 nhận kết quả bất đồng bộ của saga, 088 tra tác vụ nền xuất tệp) và bốn mã lỗi dùng chung (051…054), ghi ở chương 11; ngày 27/11/2026 thêm API-01-089 (nhận đề xuất tạm ngừng HTTT từ PH-13, FR-01-053) theo quyết định của chủ đầu tư về Q390.
 
 **Hợp đồng máy đọc được.**
 
-- [`ph01/openapi-onboarding.yaml`](ph01/openapi-onboarding.yaml): OpenAPI 3.1, 88 operation, 77 đường dẫn, 152 lược đồ; đã qua `openapi-spec-validator` và Spectral (bộ `spectral:oas`, 0 lỗi, 0 cảnh báo); 217 ví dụ đã kiểm khớp lược đồ bằng [`check_contracts.py`](ph01/tools/check_contracts.py).
+- [`ph01/openapi-onboarding.yaml`](ph01/openapi-onboarding.yaml): OpenAPI 3.1, 89 operation, 78 đường dẫn, 154 lược đồ; đã qua `openapi-spec-validator` và Spectral (bộ `spectral:oas`, 0 lỗi, 0 cảnh báo); 221 ví dụ đã kiểm khớp lược đồ bằng [`check_contracts.py`](ph01/tools/check_contracts.py).
 - [`ph01/asyncapi-onboarding.yaml`](ph01/asyncapi-onboarding.yaml): AsyncAPI 3.0, 15 kênh, 30 operation (gửi, nhận); đã qua `@asyncapi/parser` 3, không lỗi, không cảnh báo (chỉ một gợi ý nâng lên bản 3.1).
 
 Cả hai sinh từ bảng mã [`ph01/tools/spec.py`](ph01/tools/spec.py) bằng `gen_openapi.py`, `gen_asyncapi.py`; các bảng ở chương 2, 3, 4, 6 của tài liệu này sinh bằng `gen_md.py`; chương 10 sinh bằng `build/tools/sinh_dac_ta_api.py`. Vì thế bảng, ví dụ và đặc tả không lệch với hợp đồng.
@@ -30,7 +30,7 @@ Cả hai sinh từ bảng mã [`ph01/tools/spec.py`](ph01/tools/spec.py) bằng 
 **Năm nguyên tắc hợp đồng.**
 
 1. **Chỉ một API trả giá trị bí mật.** API-01-040 (mở liên kết bàn giao) là nơi duy nhất `clientSecret` xuất hiện, một lần, kèm `Cache-Control: no-store`, chỉ cho đúng đầu mối đã xác thực hai yếu tố. Kiểm tra hợp đồng chặn trường bí mật ở mọi lược đồ khác, kể cả sự kiện.
-2. **Người dùng và phân hệ khác dùng hai đường tách nhau.** Người dùng đi qua BFF với `PERM-01-*`, `PERM-18-*`; phân hệ khác dùng token dịch vụ với ba scope `onboarding:internal-read`, `onboarding:provision-callback`, `onboarding:reconcile` (4 API `/internal/*`), không dùng token của người.
+2. **Người dùng và phân hệ khác dùng hai đường tách nhau.** Người dùng đi qua BFF với `PERM-01-*`, `PERM-18-*`; phân hệ khác dùng token dịch vụ với bốn scope `onboarding:internal-read`, `onboarding:provision-callback`, `onboarding:reconcile`, `onboarding:suspension-proposal` (5 API `/internal/*`), không dùng token của người.
 3. **Sửa và đổi trạng thái hồ sơ, định danh đều có `If-Match`** (21 API, trong đó 3 thao tác khẩn của Cán bộ ATTT để tùy chọn) và **lệnh tạo, lệnh có tác dụng phụ đều có `Idempotency-Key`** (19 API; riêng mở bàn giao không dùng vì mã chỉ mở được một lần).
 4. **Không lộ đối tượng ngoài phạm vi.** Đối tượng thuộc tenant khác hoặc ngoài phạm vi vai trò trả cùng một thân `404` (ERR-01-001) như đối tượng không tồn tại; liên kết đã dùng, hết hạn hay bị hủy trả cùng một thân `410`.
 5. **Hiệu lực cắt quyền nhìn thấy được.** Lệnh thu hồi, tạm ngừng trả `enforcement` (`PENDING` rồi `DONE`) và phát EVT-01-03, EVT-01-07 qua outbox; mục tiêu cổng API từ chối HTTT trong ≤ 60 giây (NFR-01-008).
@@ -39,7 +39,7 @@ Cả hai sinh từ bảng mã [`ph01/tools/spec.py`](ph01/tools/spec.py) bằng 
 
 | Chỉ số | Giá trị |
 |---|---|
-| Operation REST | 88 (GET 33, POST 46, PUT 4, PATCH 2, DELETE 3) |
+| Operation REST | 89 (GET 33, POST 47, PUT 4, PATCH 2, DELETE 3) |
 | Operation cho người dùng, cho phân hệ khác | 84, 4 |
 | Chức năng FRS được phủ | 51 trên 51 |
 | Sự kiện Kafka | 15 (3 phân vùng, giữ 7 ngày) |
@@ -49,7 +49,7 @@ Cả hai sinh từ bảng mã [`ph01/tools/spec.py`](ph01/tools/spec.py) bằng 
 
 : Con số chính của hợp đồng API và sự kiện PH-01
 
-**Những điểm hội đồng cần lưu ý.** (1) Hai API và bốn mã lỗi mới nằm ngoài danh sách đã chốt ở FRS nên cần FRS, UC đồng bộ ở đợt cuối (chương 11). (2) Cơ chế callback bất đồng bộ của saga (API-01-087) phụ thuộc quyết định của PH-12, PH-03 (Q01-56); mặc định tắt bằng cờ `onboarding.saga.async-callback`. (3) Hạn mức tốc độ gọi ở chương 1 là giả định có cơ sở, chốt ở D03-09. (4) Tên topic của ba loại sự kiện PH-01 tiêu thụ do phân hệ phát chốt (Q01-13 của FRS), nên tệp AsyncAPI chưa có kênh nhận cho chúng.
+**Những điểm hội đồng cần lưu ý.** (1) Hai API và bốn mã lỗi mới nằm ngoài danh sách đã chốt ở FRS nên cần FRS, UC đồng bộ ở đợt cuối (chương 11); API-01-089 đã có FR-01-053 ở FRS. (2) Cơ chế callback bất đồng bộ của saga (API-01-087) phụ thuộc quyết định của PH-12, PH-03 (Q01-56); mặc định tắt bằng cờ `onboarding.saga.async-callback`. (3) Hạn mức tốc độ gọi ở chương 1 là giả định có cơ sở, chốt ở D03-09. (4) Tên topic của bốn loại sự kiện PH-01 tiêu thụ do phân hệ phát chốt (Q01-13 của FRS), nên tệp AsyncAPI chưa có kênh nhận cho chúng.
 
 ## 0. Giới thiệu
 
@@ -59,7 +59,7 @@ Tài liệu đặc tả giao diện lập trình của PH-01 ở mặt phẳng �
 
 ### 0.2. Phạm vi
 
-Trong phạm vi: 88 operation của module `onboarding` trong `dh-connect`, 15 sự kiện EVT-01, mã lỗi ERR-01-001…054, giao diện PH-01 gọi sang phân hệ khác ở mức hợp đồng (chương 5). Ngoài phạm vi: API của PH-12, PH-03, OpenBao, PH-13, PH-14, PH-18, PH-20 (do tập của phân hệ đó đặc tả); đường dữ liệu nghiệp vụ của HTTT (PH-03, PH-04, PH-10); thiết kế bên trong (SDD) và bảng dữ liệu (CSDL).
+Trong phạm vi: 89 operation của module `onboarding` trong `dh-connect`, 15 sự kiện EVT-01, mã lỗi ERR-01-001…054, giao diện PH-01 gọi sang phân hệ khác ở mức hợp đồng (chương 5). Ngoài phạm vi: API của PH-12, PH-03, OpenBao, PH-13, PH-14, PH-18, PH-20 (do tập của phân hệ đó đặc tả); đường dữ liệu nghiệp vụ của HTTT (PH-03, PH-04, PH-10); thiết kế bên trong (SDD) và bảng dữ liệu (CSDL).
 
 ### 0.3. Người đọc
 
@@ -107,7 +107,7 @@ Tài liệu gồm mười một chương theo thứ tự người đọc cần: 
 |---|---|
 | 1 | Quy ước chung: đường gốc, phiên bản, phân trang, khóa lạc quan, lũy đẳng, lỗi |
 | 2 | Xác thực và phân quyền: người dùng, token dịch vụ, xác thực lại hai yếu tố |
-| 3 | Danh mục 88 endpoint, ví dụ yêu cầu và phản hồi, bảng use case → API |
+| 3 | Danh mục 89 endpoint, ví dụ yêu cầu và phản hồi, bảng use case → API |
 | 4 | Danh mục 15 sự kiện, cấu trúc nội dung, chính sách tương thích |
 | 5 | Hợp đồng với phân hệ khác và bên ngoài |
 | 6 | Bảng mã lỗi ERR-01, thông điệp, trường bổ sung của thân lỗi |
@@ -173,6 +173,7 @@ Mỗi loại người gọi có một cơ chế xác thực riêng, chọn theo 
 | Phân hệ khác (PH-02, 03, 04, 05, 10, 13, 14, 15) | OAuth 2.1 `client_credentials` + mTLS hoặc `private_key_jwt` | Scope `onboarding:internal-read`; token sống 5 phút; kiểm `azp` và `tenant`; không cấp cho người |
 | PH-12, PH-03 (trả kết quả saga) | Như trên | Scope `onboarding:provision-callback` (API-01-087) |
 | Tác vụ đối chiếu | Như trên | Scope `onboarding:reconcile` (API-01-062) |
+| PH-13 (đề xuất tạm ngừng) | Như trên | Scope `onboarding:suspension-proposal` (API-01-089) |
 | Đầu mối nhận liên kết (bàn giao, phiếu xác nhận) | Đăng nhập Keycloak của tenant + liên kết một lần | API-01-040 yêu cầu `acr` hai yếu tố mới đăng nhập; API-01-070, 071 yêu cầu đúng tổ chức |
 
 : Xác thực theo loại người gọi
@@ -196,11 +197,13 @@ PH-01 dùng sáu quyền đã có ở D02-08 và mượn hai quyền của PH-18
 | `PERM-18-migration` | 3 | 080, 081, 082 |
 | Quyền cơ sở người dùng nội bộ tenant | 4 | 020, 021, 076, 077 |
 | `PERM-01-read` kèm phân công bước thẩm định | 4 | 024, 025, 026, 029 |
+| `PERM-01-review-claim` | 1 | 028 |
 | `PERM-01-read` (hoặc được phân công) | 2 | 030, 031 |
 | Đầu mối nhận liên kết (đăng nhập, MFA) | 3 | 040, 070, 071 |
 | Token dịch vụ `onboarding:reconcile` | 1 | 062 |
 | Token dịch vụ `onboarding:internal-read` | 2 | 063, 064 |
 | Token dịch vụ `onboarding:provision-callback` | 1 | 087 |
+| Token dịch vụ `onboarding:suspension-proposal` | 1 | 089 |
 
 : Quyền và điều kiện của từng API
 <!-- gen:perm:end -->
@@ -228,7 +231,7 @@ Thao tác nhạy cảm yêu cầu xác thực hai yếu tố **mới** trong `mf
 
 ## 3. Danh mục endpoint
 
-Mỗi operation có đúng một mã `API-01-nnn`, không dùng chung mã cho hai operation. Mã 001…086 giữ nguyên theo [FRS §9.4](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md); mã 087, 088 do tập này thêm. Đường dẫn trong bảng bỏ tiền tố `/api/onboarding/v1`; `{systemCode}` là mã HTTT (chữ hoa, số, gạch ngang). Cột "FR" là số của `FR-01-nnn`; cột "Thành công" là mã HTTP khi thành công, `200/202` nghĩa là có thể đồng bộ hoặc bất đồng bộ.
+Mỗi operation có đúng một mã `API-01-nnn`, không dùng chung mã cho hai operation. Mã 001…086 giữ nguyên theo [FRS §9.4](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md); mã 087, 088 do tập này thêm; mã 089 thêm ngày 27/11/2026 (Q390). Đường dẫn trong bảng bỏ tiền tố `/api/onboarding/v1`; `{systemCode}` là mã HTTT (chữ hoa, số, gạch ngang). Cột "FR" là số của `FR-01-nnn`; cột "Thành công" là mã HTTP khi thành công, `200/202` nghĩa là có thể đồng bộ hoặc bất đồng bộ.
 
 Các endpoint chia mười một nhóm theo việc người dùng làm, không theo bảng dữ liệu:
 
@@ -270,7 +273,7 @@ Các endpoint chia mười một nhóm theo việc người dùng làm, không t
 |---|---|---|---|---|---|---|
 | API-01-006 | `GET /systems/{systemCode}/attachments` | Danh sách tài liệu đính kèm | 005 | `PERM-01-read` |  | 200 |
 | API-01-007 | `POST /systems/{systemCode}/attachments` | Tải tài liệu đính kèm | 005 | `PERM-01-create` | có | 201 |
-| API-01-008 | `GET /systems/{systemCode}/attachments/{attachmentId}/content` | Tải nội dung tài liệu | 005 | `PERM-01-read` |  | 200 |
+| API-01-008 | `GET /systems/{systemCode}/attachments/{attachmentId}/content` | Tải nội dung tài liệu | 005 | `PERM-01-read` |  | 200/206 |
 | API-01-009 | `DELETE /systems/{systemCode}/attachments/{attachmentId}` | Xóa tài liệu đính kèm | 005 | `PERM-01-create` |  | 204 |
 | API-01-020 | `GET /templates` | Danh sách mẫu văn bản và hướng dẫn kết nạp | 010 | Quyền cơ sở (người dùng nội bộ) |  | 200 |
 | API-01-021 | `GET /templates/{templateCode}/content` | Tải nội dung mẫu văn bản | 010 | Quyền cơ sở (người dùng nội bộ) |  | 200 |
@@ -309,7 +312,7 @@ Các endpoint chia mười một nhóm theo việc người dùng làm, không t
 | API-01-025 | `POST /systems/{systemCode}/reviews/{reviewKind}` | Ghi kết luận thẩm định pháp lý hoặc ATTT | 014 | `PERM-01-read` + được phân công |  | 200 |
 | API-01-026 | `POST /systems/{systemCode}/reviews/quota-impact` | Đánh giá tác động tới hạn mức dữ liệu quốc gia | 015 | `PERM-01-read` + được phân công |  | 200 |
 | API-01-027 | `GET /review-queue` | Hàng đợi thẩm định | 016 | `PERM-01-read` |  | 200 |
-| API-01-028 | `POST /systems/{systemCode}/reviews:assign` | Phân công người thẩm định | 016 | `PERM-01-approve` |  | 200 |
+| API-01-028 | `POST /systems/{systemCode}/reviews:assign` | Phân công người thẩm định | 016 | `PERM-01-approve` hoặc `PERM-01-review-claim` |  | 200 |
 | API-01-029 | `POST /systems/{systemCode}/reviews:consult` | Gửi tham vấn, tạm dừng đồng hồ hạn | 016 | `PERM-01-read` + được phân công |  | 200 |
 | API-01-030 | `POST /systems/{systemCode}/reviews:resume` | Kết thúc tham vấn, chạy lại đồng hồ hạn | 016 | `PERM-01-read` + được phân công |  | 200 |
 | API-01-031 | `POST /systems/{systemCode}:return` | Trả bổ sung hồ sơ | 017 | `PERM-01-read` + được phân công |  | 200 |
@@ -354,7 +357,7 @@ Các endpoint chia mười một nhóm theo việc người dùng làm, không t
 | API-01-056 | `GET /systems/{systemCode}/impact` | Phân tích tác động phụ thuộc | 033 | `PERM-01-read` |  | 200 |
 | API-01-057 | `POST /systems/{systemCode}/change-requests` | Đề nghị thay đổi hồ sơ HTTT đã kết nạp | 034 | `PERM-01-create` | có | 200/202 |
 | API-01-058 | `GET /systems/{systemCode}/change-requests` | Danh sách đề nghị thay đổi | 034 | `PERM-01-read` |  | 200 |
-| API-01-059 | `POST /change-requests/{changeRequestId}:decide` | Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt | 031, 034 | `PERM-01-approve` |  | 200 |
+| API-01-059 | `POST /change-requests/{changeRequestId}:decide` | Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt | 031, 034, 035 | `PERM-01-approve` |  | 200 |
 | API-01-060 | `POST /systems/{systemCode}/scope-expansions` | Đề nghị mở rộng trần phạm vi khai thác | 035 | `PERM-01-create` | có | 202 |
 
 : Danh mục endpoint, nhóm Vòng đời thành viên
@@ -367,6 +370,7 @@ Các endpoint chia mười một nhóm theo việc người dùng làm, không t
 | API-01-063 | `GET /internal/systems` | Bản sao đọc danh sách HTTT cho phân hệ khác | 038 | Token dịch vụ `onboarding:internal-read` |  | 200 |
 | API-01-064 | `GET /internal/systems/{systemCode}` | Bản sao đọc một HTTT cho phân hệ khác | 038 | Token dịch vụ `onboarding:internal-read` |  | 200 |
 | API-01-087 | `POST /internal/provisioning-callbacks` | Nhận kết quả bất đồng bộ của bước saga | 020 | Token dịch vụ `onboarding:provision-callback` |  | 200 |
+| API-01-089 | `POST /internal/suspension-proposals` | Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO | 053 | Token dịch vụ `onboarding:suspension-proposal` |  | 202 |
 
 : Danh mục endpoint, nhóm Nội bộ (phân hệ khác)
 
@@ -1776,6 +1780,33 @@ Phản hồi `200`:
 }
 ```
 
+**API-01-089 · Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO**
+
+```http
+POST /api/onboarding/v1/internal/suspension-proposals
+Content-Type: application/json
+
+{
+  "systemCode": "HT-QLVB",
+  "alertId": "0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80",
+  "severity": "HIGH",
+  "reason": "Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ",
+  "incidentRef": "SEC-ALERT-2026-0142"
+}
+```
+
+Phản hồi `202` (tiêu đề `Location`):
+
+```json
+{
+  "systemCode": "HT-QLVB",
+  "alertId": "0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80",
+  "taskId": "0194f2d1-0b32-7d44-8a55-6c7d8e9fa0b1",
+  "accepted": true,
+  "duplicate": false
+}
+```
+
 **Rà soát quyền định kỳ**
 
 **API-01-065 · Mở kỳ rà soát quyền**
@@ -2157,6 +2188,7 @@ Phản hồi `200`:
       "min": 1,
       "max": 10,
       "platformCeiling": null,
+      "securityRelated": false,
       "description": "Hạn mỗi bước thẩm định (ngày làm việc)",
       "version": 3,
       "updatedAt": "2026-10-01T00:00:00Z",
@@ -2185,6 +2217,7 @@ Phản hồi `200` (tiêu đề `ETag`):
   "min": 1,
   "max": 10,
   "platformCeiling": null,
+  "securityRelated": false,
   "description": "Hạn mỗi bước thẩm định (ngày làm việc)",
   "version": 4,
   "updatedAt": "2026-12-03T03:00:00Z",
@@ -2683,9 +2716,10 @@ Phân hệ khác gọi PH-01 qua hai đường: trong tiến trình khi cùng đ
 | Bên gọi | API | Scope | Mục đích | Tần suất (giả định) |
 |---|---|---|---|---|
 | PH-02, PH-03 (cùng DU `dh-connect`) | `MemberSystemQueryApi` trong tiến trình, cùng cấu trúc với API-01-063, 064; PH-02 còn `checkWithinCeiling` kiểm đăng ký sử dụng không vượt trần (Q01-02) | Không cần (cùng tiến trình) | Tra HTTT khi đăng ký sử dụng, khi tạo consumer | Theo lượt đăng ký, không đáng kể |
-| PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 | API-01-063, 064; PH-15 còn hai API đọc nội bộ về lược đồ biểu mẫu kết nạp và định danh production chỉ đọc (mã cấp số tiếp theo sau API-01-088, bổ sung hợp đồng ở Đợt 2 cùng PH-15; đã chốt 27/11/2026) | `onboarding:internal-read` | Khởi tạo và đối chiếu bản sao `external_system`; xác minh bên phát, bên nhận, bên gọi | Khởi tạo một lần, đối chiếu ≤ 1 lần mỗi giờ mỗi phân hệ; cơ sở: bản sao ≤ 1.000 HTTT, 2 trang 500 dòng |
+| PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 | API-01-063, 064; PH-15 còn hai API đọc nội bộ về lược đồ biểu mẫu kết nạp và định danh production chỉ đọc (mã cấp từ API-01-090 trở đi, vì API-01-089 đã cấp cho đề xuất tạm ngừng của PH-13; bổ sung hợp đồng ở Đợt 2 cùng PH-15; đã chốt 27/11/2026) | `onboarding:internal-read` | Khởi tạo và đối chiếu bản sao `external_system`; xác minh bên phát, bên nhận, bên gọi | Khởi tạo một lần, đối chiếu ≤ 1 lần mỗi giờ mỗi phân hệ; cơ sở: bản sao ≤ 1.000 HTTT, 2 trang 500 dòng |
 | PH-12, PH-03 | API-01-087 | `onboarding:provision-callback` | Trả kết quả bước saga khi chọn kiểu bất đồng bộ | Mỗi bước một lần, chờ tối đa 5 phút (giả định) |
 | Tác vụ đối chiếu, vận hành | API-01-062 | `onboarding:reconcile` | Phát ảnh chụp theo yêu cầu sau sự cố | Hiếm |
+| PH-13 | API-01-089 | `onboarding:suspension-proposal` | Gửi đề xuất tạm ngừng HTTT từ cảnh báo an ninh (API-13-060); PH-01 tạo việc khẩn cho SO, SO quyết định bằng API-01-054 (đã chốt 27/11/2026, Q13-12) | Hiếm, theo cảnh báo mức cao |
 
 : Hợp đồng phân hệ khác gọi PH-01
 
@@ -2693,13 +2727,14 @@ Phân hệ nghe thay đổi dùng sự kiện (chương 4) thay vì gọi lại 
 
 ### 5.3. Sự kiện PH-01 tiêu thụ
 
-PH-01 tiêu thụ ba loại sự kiện và không đăng ký mã mới; tên topic do phân hệ phát chốt ở D03-04 của phân hệ đó (Q01-13). Xử lý lũy đẳng nhờ bảng `inbox(event_id)` duy nhất, giữ 30 ngày.
+PH-01 tiêu thụ bốn loại sự kiện và không đăng ký mã mới; tên topic do phân hệ phát chốt ở D03-04 của phân hệ đó (Q01-13). Xử lý lũy đẳng nhờ bảng `inbox(event_id)` duy nhất, giữ 30 ngày.
 
 | Nguồn | Sự kiện | PH-01 làm gì |
 |---|---|---|
 | PH-12 | Tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức | Đặt `hasAccount = false` và đầu mối `INACTIVE` nếu đổi tổ chức; phát EVT-01-13; nhắc TA, và nếu đó là đầu mối kỹ thuật cuối cùng thì ghi vào danh sách thiếu đầu mối (API-01-078) |
 | PH-18 | Thư thông báo bị trả lại | Đánh dấu đầu mối cần xác nhận lại thư điện tử; hiện ở API-01-078 (`staleContacts`) |
 | PH-20 | Tenant bị tạm ngừng | Không đổi trạng thái từng HTTT (PH-03 chặn ở mức tenant); dừng tác vụ định kỳ của tenant |
+| PH-20 | EVT-20-13 `{tenant}.tenant.org.changed.v1` với `change = DISSOLVED` hoặc `MERGED` và `successorCode` | Với mỗi HTTT `ACTIVE`, `SUSPENDED` của tổ chức giải thể, sáp nhập, tạo sẵn một đề nghị đổi chủ quản (`change_class = OWNER_CHANGE`) sang tổ chức kế thừa, chờ TA duyệt hàng loạt bằng API-01-059 (FR-01-054, đã chốt 27/11/2026, Q01-10) |
 
 : Sự kiện PH-01 tiêu thụ
 
@@ -2779,7 +2814,7 @@ Năm mươi mã đầu (001…050) giữ nguyên theo [FRS §9.1](../../02-yeu-c
 | ERR-01-002 | 409 | Mã HTTT đã dùng (kể cả HTTT đã chấm dứt hoặc bị từ chối) | 004 |
 | ERR-01-003 | 400 | Dữ liệu không hợp lệ theo lược đồ, kèm danh sách lỗi theo trường | Mọi API có thân hoặc tham số |
 | ERR-01-004 | 422 | Tổ chức chủ quản không có hoặc không hoạt động ở danh mục tổ chức | 004, 022 |
-| ERR-01-005 | 409 | Chuyển trạng thái, thao tác không hợp lệ với trạng thái hiện tại | 005, 007, 009, 010, 012, 018, 019, 022 và 10 API khác |
+| ERR-01-005 | 409 | Chuyển trạng thái, thao tác không hợp lệ với trạng thái hiện tại | 005, 007, 009, 010, 012, 018, 019, 022 và 11 API khác |
 | ERR-01-006 | 403 | Người nộp không thuộc tổ chức đã khai báo | 004 |
 | ERR-01-007 | 412 | Hồ sơ đã được người khác sửa (`If-Match` không khớp) | Mọi lệnh có `If-Match` |
 | ERR-01-008 | 422 | Hồ sơ chưa đủ điều kiện nộp, kèm danh sách đầy đủ thiếu sót | 023 |
@@ -2822,7 +2857,7 @@ Năm mươi mã đầu (001…050) giữ nguyên theo [FRS §9.1](../../02-yeu-c
 | ERR-01-045 | 429 | Vượt giới hạn tốc độ tra cứu danh bạ | 076, 077, 079 |
 | ERR-01-046 | 503 | Phụ thuộc không khả dụng (danh mục tổ chức, PH-02, PH-13, PH-14, kho tệp, quét mã độc) | 002, 007, 008, 023, 026, 042, 056, 068 |
 | ERR-01-047 | 422 | Cấp độ ATTT hoặc phương thức xác thực thấp hơn yêu cầu của mức phân loại dữ liệu | 024, 060 |
-| ERR-01-048 | 409 | HTTT đang tạm ngừng, không thực hiện được thao tác | 039, 040, 041 |
+| ERR-01-048 | 409 | HTTT đang tạm ngừng, không thực hiện được thao tác | 039, 040, 041, 089 |
 | ERR-01-049 | 422 | Địa chỉ cơ sở không phải `https` hoặc dải IP sai dạng | 004, 005, 057 |
 | ERR-01-050 | 409 | HTTT phải còn ít nhất một đầu mối kỹ thuật | 015, 016, 017 |
 | ERR-01-051 | 409 | `Idempotency-Key` đã dùng với thân yêu cầu khác (type `idempotency-mismatch`) | 004, 007, 015, 023, 035, 039, 041, 042 và 11 API khác |
@@ -2909,7 +2944,7 @@ Hợp đồng chỉ có giá trị khi máy kiểm được. Mọi kiểm tra d�
 | OpenAPI hợp lệ | `openapi-spec-validator` | Tệp đúng OpenAPI 3.1 | Đạt |
 | Quy tắc thiết kế | Spectral, bộ `spectral:oas` (`ph01/.spectral.yaml`) | Mô tả, tham số, ví dụ, thành phần không dùng | 0 lỗi, 0 cảnh báo |
 | Ví dụ khớp lược đồ | `tools/check_contracts.py` | 217 ví dụ (thân yêu cầu, phản hồi, lược đồ, ví dụ lỗi) khớp JSON Schema 2020-12 | Đạt |
-| Đủ mã, không trùng | `tools/check_contracts.py` | 88 mã `API-01-001…088` liên tục, khớp `spec.py`; mỗi operation có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors` | Đạt |
+| Đủ mã, không trùng | `tools/check_contracts.py` | 89 mã `API-01-001…089` liên tục, khớp `spec.py`; mỗi operation có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors` | Đạt |
 | Lệnh ghi an toàn | `tools/check_contracts.py` | `PUT`, `PATCH`, `DELETE` có `If-Match`; lệnh đánh dấu lũy đẳng có `Idempotency-Key` | Đạt |
 | Bảng lỗi khớp FRS | `tools/check_contracts.py` | 50 mã ERR-01 đầu có cùng mã HTTP với [FRS §9.1](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md); mã lỗi của mọi operation đều có trong bảng | Đạt |
 | Không lộ bí mật | `tools/check_contracts.py` | `clientSecret` và các trường bí mật chỉ ở `HandoverOpenResult` (`readOnly`); không có `secret_ref`; sự kiện không có trường bí mật | Đạt |
@@ -3284,17 +3319,17 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **FR hiện thực.** FR-01-005.
 
-**Tham số.** `systemCode` (path, SystemCode, bắt buộc); `attachmentId` (path, string, bắt buộc).
+**Tham số.** `systemCode` (path, SystemCode, bắt buộc); `attachmentId` (path, string, bắt buộc); `disposition` (query, string, tùy chọn); `Range` (header, string, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, string; `302`; tiêu đề `Location`.
+**Phản hồi thành công.** `200` thành công, string; tiêu đề `Accept-Ranges`; `206`, string; tiêu đề `Content-Range`, `Accept-Ranges`; `302`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `503`; mã lỗi của thao tác: ERR-01-001, ERR-01-046, ERR-01-052 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `416`, `503`; mã lỗi của thao tác: ERR-01-001, ERR-01-046, ERR-01-052 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Tệp nhị phân (`Content-Disposition: attachment`), hoặc `302` tới liên kết ký 5 phút của kho tệp. Ghi kiểm toán lượt tải.
+**Ghi chú.** Tệp nhị phân (`Content-Disposition: attachment` mặc định), hoặc `302` tới liên kết ký 5 phút của kho tệp. Đã chốt 27/11/2026 (Q408): có `disposition=inline` để xem trước PDF trong khung cô lập (phản hồi kèm `Content-Security-Policy: sandbox`, `X-Content-Type-Options: nosniff`) và hỗ trợ `Range` (một khoảng byte, trả `206` kèm `Content-Range`, luôn có `Accept-Ranges: bytes`). `Range` sai cú pháp trả ERR-01-003; ngoài kích thước tệp trả `416` kèm `Content-Range: bytes */{size}`. Chỉ tệp đã quét sạch (`scanStatus = CLEAN`) mới trả `inline`. Ghi kiểm toán lượt tải, không ghi từng lượt `Range`.
 :::
 
 #### API-01-009 · Xóa tài liệu đính kèm
@@ -3718,13 +3753,13 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `POST /systems/{systemCode}/reviews:assign`.
 
-**Quyền.** `PERM-01-approve`.
+**Quyền.** `PERM-01-approve` hoặc `PERM-01-review-claim`.
 
 **FR hiện thực.** FR-01-016.
 
 **Tham số.** `systemCode` (path, SystemCode, bắt buộc).
 
-**Thân yêu cầu.** application/json: `AssignRequest`; trường bắt buộc: `stepType`, `assigneeId`.
+**Thân yêu cầu.** application/json: `AssignRequest`; trường bắt buộc: `stepType`.
 
 **Chống trùng.** Không.
 
@@ -4605,6 +4640,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** PH-12, PH-03 trả kết quả bước saga ở trạng thái `ACCEPTED` khi `onboarding.saga.async-callback = true` (SDD §4.6). Kiểm token dịch vụ, `sagaId` và tenant của token; lũy đẳng theo `(sagaId, step)` (lặp trả `duplicate = true`). Quá 5 phút không có callback thì bước coi như thất bại.
 :::
 
+#### API-01-089 · Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+
+::: dac-ta
+**Mục đích.** Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO.
+
+**Phương thức, đường dẫn.** `POST /internal/suspension-proposals`.
+
+**Quyền.** Token dịch vụ, scope `onboarding:suspension-proposal`.
+
+**FR hiện thực.** FR-01-053.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `SuspensionProposal`; trường bắt buộc: `systemCode`, `alertId`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SuspensionProposalAck`; trường bắt buộc: `systemCode`, `alertId`, `accepted`, `duplicate`; tiêu đề `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`; mã lỗi của thao tác: ERR-01-003, ERR-01-005, ERR-01-048, ERR-01-052 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** PH-13 gửi đề xuất tạm ngừng HTTT từ cảnh báo an ninh (FR-13-053, API-13-060); PH-01 không đổi trạng thái HTTT. Kiểm token dịch vụ và tenant của token; HTTT phải `ACTIVE` (đang `SUSPENDED` trả ERR-01-048, trạng thái khác ERR-01-005). Tạo một việc khẩn trong hộp việc cho mọi SO của tenant (loại `ph01.review-suspension-proposal`, mức khẩn, liên kết tới UI-01-11 hành động khẩn) qua `notify_outbox`; lũy đẳng theo `(systemCode, alertId)` (lặp trả `duplicate = true`, không tạo việc thứ hai). SO quyết định bằng thao tác khẩn API-01-054 (FR-01-032) với `incidentRef` của đề xuất, hoặc đóng việc không tạm ngừng; thao tác khẩn vẫn do SO tự quyết, không có đường tự động.
+:::
+
 ### Rà soát quyền định kỳ
 
 #### API-01-065 · Mở kỳ rà soát quyền
@@ -5201,4 +5260,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác c�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 88 endpoint REST, 15 sự kiện Kafka, 54 mã lỗi ERR-01, ánh xạ từ hệ cũ, 5 câu hỏi mở, đề nghị đồng bộ; OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script, đã kiểm trong CI |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: API-01-059 thêm FR-01-035; ghi trạng thái đồng bộ các đề nghị 1 đến 5; thêm đề nghị 16 về bảy đề nghị bổ sung API của tập màn hình (OpenAPI cập nhật x-datahub-fr của API-01-059) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12; chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (EVT-01-11 không còn bên nghe PH-12); Q395 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12; chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (EVT-01-11 không còn bên nghe PH-12); Q395, Q390, Q401, Q408 |

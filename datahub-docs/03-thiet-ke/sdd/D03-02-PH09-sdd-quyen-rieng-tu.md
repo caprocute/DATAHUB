@@ -161,7 +161,7 @@ Bảng ghi hướng gọi, nội dung trao đổi và hành vi khi phụ thuộc
 | PH-06 | Hai chiều | PH-06 đăng ký phân loại trường, nhận sự kiện đổi phân loại, hỏi kế hoạch che, nhận tác vụ DSR | PH-06 dùng đệm 5 phút rồi chỉ `PUBLIC` |
 | PH-04 | Vào | `mask-plans:resolve`, `messages:apply`, `classification:check` | Dùng kế hoạch đệm, hết đệm thì đóng an toàn |
 | PH-02, PH-03 | Hai chiều | Đăng ký sử dụng, kích hoạt hợp đồng `SENSITIVE` (FR-09-022), nhận EVT chấp thuận | Chặn kích hoạt khi PH-09 không trả lời |
-| PH-14, PH-19 | Vào, ra | Báo lượt khai thác, tra theo băm, tác vụ DSR | Hàng chờ thử lại, cảnh báo sau 24 giờ |
+| PH-14, PH-19 | Vào, ra | Báo lượt khai thác, tra theo băm, tác vụ DSR; PH-14 gọi thêm `purpose:decide` (lấy `ropaActivityId`) và `classification:check` với `egressScope` là `OUT_OF_PROVINCE` trước khi gửi ra ngoài tỉnh, p95 ≤ 200 ms (NFR-09-027) | Hàng chờ thử lại, cảnh báo sau 24 giờ; kiểm ra ngoài tỉnh không trả lời thì PH-14 không gửi |
 | PH-11 | Ra | Hạn xử lý DSR nếu tenant bật | Đồng hồ nội bộ |
 | PH-17, PH-20 | Ra | Tập ẩn danh cho AI, xóa mật mã tenant | Không phát hành, giữ trạng thái chờ |
 | PH-18 | Hai chiều | Nhận sự cố có DLCN, nhận EVT vi phạm | Nhập tay vụ việc |
@@ -329,7 +329,7 @@ Sơ đồ chỉ nêu quan hệ chính. Bốn bất biến xuyên suốt, kiểm 
 
 `StateSecretGuard` giữ danh mục nhãn `STATE_SECRET` do cán bộ bảo vệ bí mật nhà nước nhập (Q09-06). Khác các phân loại khác, nhãn chặn toàn bản tin, không lọc từng trường; thân lỗi ERR-09-101 không nêu trường nào mang nhãn (BR-09-005). Gỡ nhãn cần số và ngày văn bản giải mật cùng hai người (ERR-09-019), và là thao tác đặc quyền bị từ chối khi không ghi được kiểm toán (BR-09-057).
 
-`ClassificationIndexBuilder` dựng bản chụp `classification-index` gồm `{path -> dataClass, personalDataType, neverReveal}` theo hợp đồng, có `ETag` là băm nội dung. Bản chụp này dùng cho `GET /privacy/v1/classification-index` (API-09-232) và cho bundle.
+`ClassificationIndexBuilder` dựng bản chụp `classification-index` gồm `{path -> dataClass, personalDataType, neverReveal, noEgress}` theo hợp đồng, có `ETag` là băm nội dung. Bản chụp này dùng cho `GET /privacy/v1/classification-index` (API-09-232) và cho bundle.
 
 ### 4.3. Quét phát hiện trường nghi DLCN (`scanner`)
 
@@ -625,7 +625,9 @@ Mẫu đồng ý dùng vòng đời `VersionStatus`; mẫu đã có người đ�
 
 Data plane trả lời từ một **bản chụp bất biến trong bộ nhớ** (`PolicySnapshot`) gồm ba chỉ mục: chấp thuận `ACTIVE` theo (HTTT, mục đích, hợp đồng), kế hoạch theo (vai trò, mục đích, kênh, hợp đồng) và mức phân loại theo đường dẫn trường. Bản chụp được thay nguyên khối bằng hoán đổi tham chiếu nguyên tử khi nhận sự kiện hoặc khi `snapshot_version` ở CSDL đổi (thăm dò 5 giây), nên lời gọi quyết định không đọc CSDL (p95 ≤ 50 ms trực tiếp, NFR-09-001). Khởi động nguội nạp bản chụp từ CSDL trước khi báo `ready`; dịch vụ không phục vụ yêu cầu khi chưa có bản chụp (kiểm tra `readiness`).
 
-`PurposeDecisionService.decide` làm đúng bốn bước của FR-09-019: nhãn chặn (ERR-09-101, trả `DENY` lý do `STATE_SECRET`), mức hợp đồng tra từ chỉ mục, kiểm theo mức (BR-09-019) và chủ thể bị hạn chế (BR-09-047). Kết quả là `200` với `decision` `ALLOW` hoặc `DENY`, `reasonCode`, `allowedFields[]`, `obligations[]` (ví dụ `MASK_REQUIRED`, `NO_EXPORT`), `grantId`, `planVersion`. Thiếu mục đích thì ERR-09-103, bên gọi ngoài danh sách thì ERR-09-111. `DecisionAuditor` ghi kiểm toán tổng hợp theo lô mỗi 5 giây, riêng quyết định `SENSITIVE` ghi từng lượt (NFR-09-013).
+`PurposeDecisionService.decide` làm đúng bốn bước của FR-09-019: nhãn chặn (ERR-09-101, trả `DENY` lý do `STATE_SECRET`), mức hợp đồng tra từ chỉ mục, kiểm theo mức (BR-09-019) và chủ thể bị hạn chế (BR-09-047). Kết quả là `200` với `decision` `ALLOW` hoặc `DENY`, `reasonCode`, `allowedFields[]`, `obligations[]` (ví dụ `MASK_REQUIRED`, `NO_EXPORT`), `grantId`, `planVersion`, `ropaActivityId`. `ropaActivityId` lấy từ `activity_link` (đích `API`, `TOPIC` hoặc `FLOW` trùng hợp đồng) của hoạt động xử lý `ACTIVE`, vắng khi không có, và đọc từ bản chụp bộ nhớ nạp cùng bundle nên không thêm truy vấn CSDL (chủ đầu tư chốt 27/11/2026). Thiếu mục đích thì ERR-09-103, bên gọi ngoài danh sách thì ERR-09-111. `DecisionAuditor` ghi kiểm toán tổng hợp theo lô mỗi 5 giây, riêng quyết định `SENSITIVE` ghi từng lượt (NFR-09-013).
+
+`ClassificationCheckService` (cùng `DataPlaneController`) xử lý `classification:check`: nhãn chặn như cũ; khi `egressScope` là `OUT_OF_PROVINCE`, tra cờ `noEgress` của từng trường trong bản chụp chỉ mục và trả `egressBlocked`, `egressBlockedFields[]`. Trường chưa `CONFIRMED` hoặc chưa có trong chỉ mục xử lý như `noEgress` bật (BR-09-063). Lời gọi p95 ≤ 200 ms cho 200 trường (NFR-09-027); PH-09 không khả dụng thì PH-14 không gửi (ERR-14-132). Đây là quyết định của chủ đầu tư ngày 27/11/2026.
 
 `MessageMaskService.apply` thực hiện FR-09-028: kiểm nhãn chặn và kích thước (≤ 1 MiB, ERR-09-107); áp `PARTIAL`, `REPLACE`, `GENERALIZE`, `DROP` bằng `MaskEngine` dùng chung; chuyển `KEYED_HASH`, `TOKENIZE` cho `Pseudonymizer` theo lô; trường chưa phân loại bị `DROP`. Ghi kiểm toán số lượng theo trường trước khi trả kết quả (ERR-09-110 nếu không ghi được). Không ghi bản tin, không đưa giá trị vào log hay trace (BR-09-025). Lời gọi `messages:apply` p95 ≤ 30 ms với bản tin 10 KB không băm có khóa (NFR-09-003).
 
@@ -1376,4 +1378,4 @@ Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì t�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc module `privacy`, mô hình miền, 15 thành phần và thư viện `dh-privacy-client` với khối đặc tả 10 mục, chín sơ đồ trình tự, bảng trạng thái theo enum FRS, đệm và đóng an toàn ở PEP, ánh xạ ERR-09, chỉ số `privacy_*`, bốn ADR đề xuất số 090 đến 093, đề nghị cho FRS, câu hỏi mở Q09-20…29 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thư viện `dh-privacy-client` chốt, đệm `DENY` 5 giây theo BR-09-062, `09.decision.cache-seconds`, `09.mask.reveal-alert-per-hour`, hai khóa hạn mức API, ERR-09-001…082, NFR-09-024, đồng hồ vi phạm dừng duy nhất khi đã thông báo Cục A05, mục 13.5 thành kết quả đồng bộ |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: `ClassificationLookupApi` thêm PH-08; chế độ `ClassificationOnly` của `dh-privacy-client` cho PH-17; PH-18 chuyển sự cố qua API-09-203 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: `ClassificationLookupApi` thêm PH-08; chế độ `ClassificationOnly` của `dh-privacy-client` cho PH-17; PH-18 chuyển sự cố qua API-09-203; chốt câu hỏi mở đợt đồng bộ: Q393 |

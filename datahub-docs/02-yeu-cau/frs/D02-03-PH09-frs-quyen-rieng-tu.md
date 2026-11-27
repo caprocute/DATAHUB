@@ -33,8 +33,8 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH09 Use case; D03-02-PH09 Thiết kế c
 | Chỉ số | Giá trị |
 |---|---|
 | Yêu cầu chức năng | 64 (M: 42, S: 18, C: 4) |
-| Quy tắc nghiệp vụ | 62 (BR-09-001…62) |
-| Yêu cầu phi chức năng | 26 (NFR-09-001…26) |
+| Quy tắc nghiệp vụ | 63 (BR-09-001…63) |
+| Yêu cầu phi chức năng | 27 (NFR-09-001…27) |
 | Màn hình | 22 (UI-09-01…22) |
 | API | 245 operation dự kiến (234 control plane, 11 data plane), 32 sự kiện (EVT-09-01…32) |
 | Mã lỗi | 82 control (ERR-09-001…082), 13 data plane (ERR-09-101…113); lỗi `401`, `403` do thiếu quyền chức năng, `428` dùng mã nền ERR-00-401, 403, 428 |
@@ -413,7 +413,7 @@ PH-09 có 55 thực thể mức logic, tất cả mang `tenant_id` và bật RLS
 | EN-09-02 | `BlockLabel` | Nhãn chặn `STATE_SECRET` gắn vào phần tử hoặc hợp đồng, kèm văn bản căn cứ, người gán, trạng thái gỡ |
 | EN-09-03 | `PersonalDataCategory` | Loại dữ liệu cá nhân (số định danh, sức khỏe, sinh trắc…), `personal_data_type` `BASIC` hoặc `SENSITIVE`, căn cứ pháp lý |
 | EN-09-04 | `DataElement` | Phần tử dữ liệu (trường) với `scope` (`INTERNAL_ENTITY`, `API_SCHEMA`, `EVENT_SCHEMA`), `target`, chủ sở hữu, nguồn đăng ký |
-| EN-09-05 | `ElementClassification` | Phân loại hiện hành của phần tử (DD-09): mức, loại DLCN, loại định danh, `mask_pattern`, `neverReveal`, trạng thái |
+| EN-09-05 | `ElementClassification` | Phân loại hiện hành của phần tử (DD-09): mức, loại DLCN, loại định danh, `mask_pattern`, `neverReveal`, `noEgress` (cấm gửi ra ngoài tỉnh, chủ đầu tư chốt 27/11/2026), trạng thái |
 | EN-09-06 | `ClassificationChange` | Đề xuất hoặc thay đổi phân loại: mức cũ, mới, căn cứ, người đề xuất, người xác nhận thứ nhất, thứ hai |
 | EN-09-07 | `DetectorRule` | Mẫu phát hiện: loại (số định danh, điện thoại, thư điện tử, kiểm tổng), biểu thức, ngưỡng tin cậy |
 | EN-09-08 | `ScanRun` | Lượt quét: phạm vi, mẫu dòng, trạng thái, số trường nghi ngờ |
@@ -861,7 +861,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 
 **Kích hoạt.** Người dùng bấm "Đề xuất phân loại" ở UI-09-03 hoặc "Xác nhận" ở UI-09-02; PH-06 đăng ký phân loại thuộc tính ở `PROPOSED` (FR-06-004).
 
-**Đầu vào.** `dataClass`, `personalDataType`, `categoryCode`, `identifiability`, `maskPattern`, `neverReveal`, `basis` (số văn bản căn cứ), `reason`.
+**Đầu vào.** `dataClass`, `personalDataType`, `categoryCode`, `identifiability`, `maskPattern`, `neverReveal`, `noEgress` (không bắt buộc, mặc định `false`), `basis` (số văn bản căn cứ), `reason`.
 
 **Luồng xử lý chính.**
 
@@ -869,6 +869,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 2. Người đề xuất lưu `ClassificationChange` ở `PROPOSED`; hệ thống gợi ý mức theo loại DLCN và bảng mặc định.
 3. Người xác nhận (khác người đề xuất, đúng tổ chức) bấm xác nhận; nếu là hạ mức, hệ thống đòi `basis` (ERR-09-013) và người xác nhận thứ hai (ERR-09-005).
 4. Hệ thống chuyển bản cũ sang `SUPERSEDED`, bản mới sang `CONFIRMED`, tính lại mức hợp đồng, ghi vào bundle và phát sự kiện.
+5. Thuộc tính `noEgress` (chủ đầu tư chốt 27/11/2026) đánh dấu trường không được gửi ra ngoài tỉnh; bật hoặc tắt đi qua cùng luồng đề xuất và xác nhận như mức phân loại, và tắt một trường đang bật được coi như hạ mức (đòi `basis` và người xác nhận thứ hai). Trường chưa `CONFIRMED` xử lý như `noEgress` bật (BR-09-063).
 
 **Luồng thay thế.** Xác nhận hàng loạt các đề xuất nâng mức hoặc mới nhập MVP sau khi người xác nhận duyệt mẫu; từ chối đề xuất ghi lý do, trạng thái `REJECTED`.
 
@@ -990,7 +991,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 ::: dac-ta
 **Mục đích.** Chặn tuyệt đối dữ liệu mang nhãn bí mật nhà nước đi qua Datahub, độc lập với quyết định của OPA, theo hai lớp: không cho đăng ký phần tử mang nhãn và chặn toàn bộ bản tin khi gặp trên đường dữ liệu.
 
-**Tác nhân, quyền.** TA, SO, DO gán và gỡ nhãn (`PERM-09-classify`); PH-04, PH-14, PH-17 gọi kiểm tra (`privacy:decide`).
+**Tác nhân, quyền.** TA, SO, DO gán và gỡ nhãn (`PERM-09-classify`); PH-04, PH-14, PH-17 gọi kiểm tra (`privacy:decide`). PH-14 gọi thêm kiểm tra cấm gửi ra ngoài tỉnh trước khi gửi lô hoặc công bố nguồn lên hệ thống quốc gia (chủ đầu tư chốt 27/11/2026).
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -1000,7 +1001,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 
 **Kích hoạt.** Gán nhãn ở UI-09-03; bản tin vào chặng `schema` của PH-04 hoặc PH-14 gọi kiểm tra.
 
-**Đầu vào.** Gán nhãn: `targetKind`, `targetId`, `legalDoc`. Kiểm tra: `contractId` hoặc `elementIds[]`, `sample` (không bắt buộc).
+**Đầu vào.** Gán nhãn: `targetKind`, `targetId`, `legalDoc`. Kiểm tra: `contractId` hoặc `elementIds[]`, `sample` (không bắt buộc), `egressScope` (`NONE` mặc định, hoặc `OUT_OF_PROVINCE` khi bên gọi sắp gửi dữ liệu ra ngoài tỉnh).
 
 **Luồng xử lý chính.**
 
@@ -1009,7 +1010,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 3. Hệ thống ghi cảnh báo an ninh mức nghiêm trọng và phát sự kiện cho SO.
 4. Gỡ nhãn: một người đề nghị kèm văn bản giải mật, người thứ hai duyệt (ERR-09-019, ERR-09-005).
 
-**Luồng thay thế.** Không xác định được phân loại của phần tử trong bản tin: xử lý như `SENSITIVE`, không như bí mật nhà nước, kèm cảnh báo cấu hình.
+**Luồng thay thế.** Không xác định được phân loại của phần tử trong bản tin: xử lý như `SENSITIVE`, không như bí mật nhà nước, kèm cảnh báo cấu hình. Khi `egressScope` là `OUT_OF_PROVINCE`, hệ thống kiểm thêm thuộc tính `noEgress` của từng trường trong `fields[]`; có trường bật thì trả `200` với `egressBlocked` là `true` và `egressBlockedFields[]` liệt kê tên trường (khác với nhãn bí mật nhà nước, tên trường được nêu để bên gọi báo lỗi cho người dùng), bên gọi không gửi (BR-09-063).
 
 **Luồng ngoại lệ.**
 
@@ -1017,7 +1018,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 - Chặn trên đường dữ liệu: ERR-09-101 (403); "Dữ liệu bị chặn theo quy định bảo vệ bí mật nhà nước."
 - Gỡ nhãn thiếu văn bản: ERR-09-019 (422); "Gỡ nhãn bí mật nhà nước cần số và ngày văn bản giải mật."
 
-**Đầu ra.** Kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết.
+**Đầu ra.** Kiểm tra: `200` với `{blocked:false}` hoặc `403` ERR-09-101 không nêu chi tiết; với `egressScope` là `OUT_OF_PROVINCE` thêm `egressBlocked`, `egressBlockedFields[]`, p95 ≤ 200 ms (NFR-09-027).
 
 **Kết quả.** Không có dữ liệu mật nào lọt qua Datahub; SO biết ngay nơi cấu hình sai.
 
@@ -1027,7 +1028,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 
 **Kiểm toán.** Có: gán, gỡ, từng lần chặn (đích, hợp đồng, không ghi nội dung).
 
-**Quy tắc nghiệp vụ.** BR-09-005; BR-09-057.
+**Quy tắc nghiệp vụ.** BR-09-005; BR-09-057; BR-09-063.
 
 **Màn hình, API.** UI-09-03; API-09-003, API-09-004, API-09-005, API-09-006; API-09-231.
 :::
@@ -1592,7 +1593,7 @@ Nhóm C hiện thực SEC-37 và chống THR-51. Danh mục mục đích (FR-09-
 1. Hệ thống kiểm nhãn chặn; có nhãn thì trả DENY lý do `STATE_SECRET` (BR-09-005).
 2. Hệ thống tra mức hợp đồng; `PUBLIC`, `INTERNAL` cho phép và ghi mục đích; `RESTRICTED` kiểm mục đích thuộc danh mục (và chấp thuận nếu tenant bật); `SENSITIVE` đòi chấp thuận `ACTIVE` phủ đủ trường và điều kiện (BR-09-019).
 3. Chủ thể đang bị hạn chế: chỉ mục đích `statutory` được phép (BR-09-047).
-4. Hệ thống trả `{decision, reasonCode, allowedFields[], obligations[], grantId, planVersion}`; điểm thực thi trả `403` ERR-09-102 cho bên khai thác khi DENY.
+4. Hệ thống trả `{decision, reasonCode, allowedFields[], obligations[], grantId, planVersion, ropaActivityId}`; điểm thực thi trả `403` ERR-09-102 cho bên khai thác khi DENY. `ropaActivityId` là mã hoạt động xử lý `ACTIVE` ở sổ hoạt động xử lý (FR-09-010, 011) đang liên kết với hợp đồng được gọi; vắng khi hợp đồng chưa thuộc hoạt động nào, để PH-14 kiểm tra "mục đích nằm trong sổ hoạt động xử lý" (chủ đầu tư chốt 27/11/2026).
 
 **Luồng thay thế.** Điểm thực thi dùng OPA cục bộ cho kết quả tương đương (NFR-09-008) và chỉ gọi API này khi cần giải thích. Thư viện `dh-privacy-client` đệm quyết định `ALLOW` tối đa `09.decision.cache-seconds` (15 giây) và `DENY` tối đa 5 giây (BR-09-062); sự kiện thu hồi, tạm dừng xóa đệm ngay để chặn lời gọi trong 15 giây (NFR-09-024).
 
@@ -3806,6 +3807,7 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | BR-09-060 | Mọi bảng PH-09 mang `tenant_id` và bật RLS; khóa mật mã theo tenant; điểm thực thi chỉ nhận dữ liệu của tenant mình. | 008, 062, 063 |
 | BR-09-061 | Mọi POST tạo hoặc chuyển trạng thái ở control plane nhận `Idempotency-Key` (ADR-041); gọi lặp cùng khóa cùng thân trả cùng kết quả, khác thân trả ERR-09-081. Data plane không dùng khóa này: các POST tra cứu của nó chỉ đọc, kết quả thuần theo đầu vào và bundle. | 045 |
 | BR-09-062 | Điểm thực thi đệm quyết định `ALLOW` tối đa `09.decision.cache-seconds` (mặc định và trần 15 giây) và quyết định `DENY` tối đa 5 giây (hoặc ít hơn nếu tham số nhỏ hơn) để chống dò từng trường; sự kiện thu hồi hoặc tạm dừng xóa đệm ngay. | 019 |
+| BR-09-063 | Trường có thuộc tính `noEgress` bật, hoặc chưa `CONFIRMED`, không được gửi ra ngoài tỉnh; bên gửi (PH-14) phải gọi `classification:check` với `egressScope` là `OUT_OF_PROVINCE` trước mỗi lần gửi lô hoặc công bố nguồn ra ngoài tỉnh, bị chặn thì không gửi; tắt `noEgress` đòi bốn mắt như hạ mức phân loại (chủ đầu tư chốt 27/11/2026). | 004, 007 |
 
 : Quy tắc nghiệp vụ BR-09
 
@@ -3843,6 +3845,7 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | NFR-09-024 | Độ trễ thu hồi tại điểm thực thi | p95 và tối đa ≤ 15 giây từ khi phát EVT-09-08 (thu hồi) hoặc EVT-09-07 (tạm dừng) đến khi điểm thực thi bắt đầu từ chối; nếu sự kiện đẩy mất thì chậm nhất 60 giây qua bundle (BR-09-017) | Đo từ EVT phát đến lời gọi bị từ chối đầu tiên, 3 điểm thực thi |
 | NFR-09-025 | Tự hết hạn chấp thuận | Điểm thực thi từ chối chấp thuận quá `validTo` trong ≤ 60 giây; `GrantStatus` chuyển `EXPIRED` trong ≤ 5 phút sau `validTo` | Kiểm thử với đồng hồ giả lập |
 | NFR-09-026 | Cảnh báo khai thác bất thường | Cảnh báo tới DO và SO ≤ 5 phút sau khi lượt khai thác vượt hạn ngạch, ngoài trường hoặc ngưỡng hàng loạt (BR-09-020) | Bộ đếm giả lập 1.000 lượt mỗi giờ |
+| NFR-09-027 | Độ trễ kiểm cấm gửi ra ngoài tỉnh | p95 ≤ 200 ms cho `classification:check` với `egressScope` là `OUT_OF_PROVINCE` (lô tối đa 200 trường) và cho `purpose:decide` khi trả `ropaActivityId`; PH-14 gọi trước mỗi lần gửi ra ngoài tỉnh (chủ đầu tư chốt 27/11/2026) | Kiểm thử tải như NFR-09-001, 200 trường mỗi lời gọi |
 
 : Yêu cầu phi chức năng NFR-09
 
@@ -4587,6 +4590,7 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-09 (UC, SDD, CSDL, API,
 | `MaskPatternKind` | `KEEP_FIRST_N`, `KEEP_LAST_N`, `KEEP_FIRST_LAST`, `KEEP_FIRST_TOKEN`, `KEEP_DOMAIN`, `YEAR_ONLY`, `ADMIN_LEVEL` | FR-023 |
 | `MaskChannel` | `UI`, `API`, `EXPORT`, `LOG`, `FLOW` | FR-024 |
 | `FailMode` | `PUBLIC_ONLY`, `CLOSED` | FR-027 |
+| `EgressScope` | `NONE`, `OUT_OF_PROVINCE` | FR-007 |
 | `RevealStatus` | `ISSUED`, `VERIFIED`, `EXPIRED` | FR-029 |
 | `PseudonymMethod` | `HMAC_SHA256`, `TOKEN_TRANSIT` | FR-031 |
 | `IdentifierKind` | `NATIONAL_ID`, `TAX_ID`, `SOCIAL_INSURANCE_ID`, `PHONE`, `EMAIL`, `GENERIC` | FR-032 |
@@ -4731,4 +4735,4 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 64 FR đủ 17 mục chia 11 nhóm, mở rộng từ 11 FR của SRS cũ; 62 BR, 26 NFR, 82 + 13 mã lỗi, 32 sự kiện, 245 API dự kiến, 22 màn hình, 55 thực thể, 43 tham số |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, MH, SDD, CSDL, API, TC (bảng ở Phụ lục C): rank 1 đến 4, tên thư viện `dh-privacy-client`, 4 mã lỗi mới (ERR-09-079 đến 082), 8 API mới, 3 NFR mới, 7 tham số mới, 15 enum mới, 4 thực thể mới |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm PH-08 và PH-17 vào bên dùng phân loại (FR-09-003, EVT-09-01, EVT-09-03, NFR-09-002 tra phân loại p95 ≤ 100 ms), cho PH-18 gọi API-09-203 bằng scope `privacy:register` (FR-09-058); chốt câu hỏi mở đợt đồng bộ: Q388 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm PH-08 và PH-17 vào bên dùng phân loại (FR-09-003, EVT-09-01, EVT-09-03, NFR-09-002 tra phân loại p95 ≤ 100 ms), cho PH-18 gọi API-09-203 bằng scope `privacy:register` (FR-09-058); chốt câu hỏi mở đợt đồng bộ: Q388, Q393 |

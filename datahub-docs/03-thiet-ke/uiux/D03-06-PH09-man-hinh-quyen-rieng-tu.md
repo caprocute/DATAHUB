@@ -538,6 +538,7 @@ Trường của Drawer "Đề xuất phân loại" (nhập tay) và các thao t�
 | Mức phân loại | `CMP-RadioCard` `DataClass` | Có | Hạ mức: ERR-09-013 "Hạ mức phân loại cần nêu số văn bản căn cứ và lý do." |
 | Loại dữ liệu cá nhân | `CMP-Select` `PersonalDataCategory` | Có khi `BASIC` hoặc `SENSITIVE` | ERR-09-012 "Trường {tên} là dữ liệu cá nhân, cần chọn loại dữ liệu cá nhân phù hợp." |
 | Nhận dạng | `CMP-Select` `IdentifiabilityType` | Có | ERR-09-003 theo lược đồ |
+| Cấm gửi ra ngoài tỉnh (`noEgress`) | `CMP-Switch` | Không, mặc định tắt | Tắt một trường đang bật là hạ mức: ERR-09-013 và người xác nhận thứ hai (BR-09-063) |
 | Số văn bản căn cứ, lý do | `CMP-Input`, `CMP-TextArea` | Có khi hạ mức | ERR-09-013; lý do dưới 20 ký tự: ERR-09-007 "Nhập lý do tối thiểu 20 ký tự." |
 | Tệp lược đồ (OpenAPI, JSON Schema, Avro) | `CMP-FileDropzone` | Có (nhập lược đồ) | ERR-09-015 "Không đọc được lược đồ: {lý do}." |
 | Phần tử trùng | — | — | ERR-09-014 "Phần tử {đích} đã được đăng ký." |
@@ -2075,4 +2076,4 @@ Bảng ghi tài liệu chung cần sửa theo kết quả thiết kế màn và 
 
 : Lịch sử phiên bản D03-06-PH09
 | 0.2 | 26/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ FRS 0.2: vai trò UI-09-01, 03, 20 (bỏ TO ở UI-09-20), FR-09-063 ở UI-09-21, loại yêu cầu `RENEWAL`, API-09-238, 241 đến 245 vào các màn, ERR-09-003, 079, 080, 081, 082 theo câu của §9.1, `serverTime` và `remainingThisHour` ở UI-09-22, đồng hồ vi phạm dừng khi đã thông báo, Phụ lục B có trạng thái, đề nghị cho FRS thành bảng kết quả |
-| 0.3 | 27/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ chéo cuối: Phụ lục A ghi thành phần chuẩn của D03-05 thay cho phần dùng tạm (RevealDialog, DeadlineClock, ApprovalChain, RiskMeter, RuleTable, MaskedValue); không nhận CountdownRing |
+| 0.3 | 27/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ chéo cuối: Phụ lục A ghi thành phần chuẩn của D03-05 thay cho phần dùng tạm (RevealDialog, DeadlineClock, ApprovalChain, RiskMeter, RuleTable, MaskedValue); không nhận CountdownRing; chốt câu hỏi mở đợt đồng bộ: Q393 |

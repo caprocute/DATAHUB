@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH01 Use case; D03-02-PH01 Thiết kế c
 
 **Mục tiêu.** PH-01 là cửa vào duy nhất để một hệ thống thông tin (HTTT) của sở, ngành, huyện, xã trở thành thành viên của Datahub. Phân hệ thay chuỗi công văn và thao tác thủ công ở hệ cũ (hai đến bốn tuần, ba mô hình định danh rời nhau cho Application của APIM, publisher và subscriber của Hub) bằng một hồ sơ duy nhất: đơn vị khai hồ sơ, người có thẩm quyền thẩm định và phê duyệt ngay trên hệ thống, hệ thống cấp định danh ứng dụng qua kho bí mật, bàn giao một lần, rồi theo dõi HTTT suốt vòng đời: kiểm thử, kích hoạt, tạm ngừng, chấm dứt, rà soát quyền định kỳ. Mục tiêu đo được là rút thời gian từ lúc nộp hồ sơ đến lúc HTTT gọi được API ở môi trường thật xuống không quá 5 ngày làm việc (KPI-05, NFR-01-020), không để lộ bí mật ở bất kỳ đâu ngoài lần bàn giao (NFR-01-009) và cắt quyền của HTTT trong không quá 60 giây khi có sự cố (NFR-01-008).
 
-**Phạm vi.** 51 yêu cầu chức năng chia bảy nhóm: hồ sơ HTTT và đầu mối, kiểm tra nộp và thẩm định, định danh ứng dụng và bàn giao, vòng đời thành viên, rà soát quyền định kỳ, danh bạ đầu mối, di trú và quản trị. PH-01 quản lý quy trình hành chính và hồ sơ; việc tạo client OAuth thuộc PH-12, cấu hình consumer và hạn mức thuộc PH-03, đăng ký sử dụng API thuộc PH-02. Phân hệ chạy trong đơn vị triển khai `dh-connect` (mặt phẳng điều khiển, Spring Boot, vùng Z3), schema `ph01_onboarding`.
+**Phạm vi.** 53 yêu cầu chức năng chia bảy nhóm: hồ sơ HTTT và đầu mối, kiểm tra nộp và thẩm định, định danh ứng dụng và bàn giao, vòng đời thành viên, rà soát quyền định kỳ, danh bạ đầu mối, di trú và quản trị. PH-01 quản lý quy trình hành chính và hồ sơ; việc tạo client OAuth thuộc PH-12, cấu hình consumer và hạn mức thuộc PH-03, đăng ký sử dụng API thuộc PH-02. Phân hệ chạy trong đơn vị triển khai `dh-connect` (mặt phẳng điều khiển, Spring Boot, vùng Z3), schema `ph01_onboarding`.
 
 **Căn cứ pháp lý.** CMP-LAW-03 (NĐ 278/2025 về kết nối, chia sẻ dữ liệu: đầu mối, căn cứ khai thác; kế thừa yêu cầu của NĐ 47/2020); CMP-LAW-09 (Công văn 631/THH-THHT: mọi trao đổi qua LGSP, chỉ HTTT đã kết nạp mới có định danh); CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026, TCVN 14423:2026 cấp độ 3: quản lý tài khoản, bí mật, rà soát quyền, nhật ký); CMP-LAW-05 (Luật BVDLCN 91/2025: dữ liệu liên hệ đầu mối là dữ liệu cá nhân mức Hạn chế); CMP-LAW-01 (Luật Dữ liệu số: phân loại dữ liệu, chia sẻ có căn cứ).
 
@@ -26,11 +26,11 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH01 Use case; D03-02-PH01 Thiết kế c
 
 | Chỉ số | Giá trị |
 |---|---|
-| Yêu cầu chức năng | 51 (M: 41, S: 9, C: 1) |
+| Yêu cầu chức năng | 53 (M: 42, S: 10, C: 1) |
 | Quy tắc nghiệp vụ | 34 (BR-01-001…034) |
 | Yêu cầu phi chức năng | 22 (NFR-01-001…022) |
 | Màn hình | 17 (UI-01-01…17) |
-| API | 88 operation (API-01-001…088), 15 sự kiện (EVT-01-01…15), 54 mã lỗi (ERR-01-001…054) |
+| API | 89 operation (API-01-001…089), 15 sự kiện (EVT-01-01…15), 54 mã lỗi (ERR-01-001…054) |
 | Chức năng hệ cũ được phủ | 4 mục `LGC` (LGC-APIM-019; 020, LGC-HUB-010, 011) và 15 FR của SRS cũ trong repo |
 | Mức đợt | MVP; bốn FR (036, 044, 047, 051) sang Đợt 2 |
 
@@ -310,7 +310,7 @@ Bảng dưới liệt kê người và hệ thống tương tác với PH-01, k�
 
 ### 3.2. Ma trận quyền
 
-Ma trận dưới đây dùng ký hiệu của D02-08 §3 (● có quyền, ○ chỉ với đối tượng thuộc tổ chức của mình, — không có quyền). PH-01 dùng đúng sáu quyền đã có ở D02-08 cho PH-01, và mượn hai quyền đã có của PH-18 cho tham số và nhập từ hệ cũ; tập này **không đề xuất mã quyền mới**. Những việc cần phân quyền mịn hơn (thẩm định theo phân công, rà soát quyền, danh bạ) được hiện thực bằng phân công và quy tắc OPA như mô tả dưới bảng; nếu hội đồng muốn tách quyền riêng thì ghi ở chương 15. Cột DS, DA (cán bộ danh mục, người duyệt danh mục) không có quyền nào của PH-01 nên bỏ khỏi bảng.
+Ma trận dưới đây dùng ký hiệu của D02-08 §3 (● có quyền, ○ chỉ với đối tượng thuộc tổ chức của mình, — không có quyền). PH-01 dùng bảy quyền đã có ở D02-08 cho PH-01 (kể cả `PERM-01-review-claim`, thêm ngày 27/11/2026 theo Q408), và mượn hai quyền đã có của PH-18 cho tham số và nhập từ hệ cũ. Những việc cần phân quyền mịn hơn (rà soát quyền, danh bạ) được hiện thực bằng phân công và quy tắc OPA như mô tả dưới bảng; nếu hội đồng muốn tách quyền riêng thì ghi ở chương 15. Cột DS, DA (cán bộ danh mục, người duyệt danh mục) không có quyền nào của PH-01 nên bỏ khỏi bảng.
 
 | Quyền | Ý nghĩa | PA | PO | TA | TO | SO | IE | IA | SV | CA | OR | DO | VW | AU |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -318,6 +318,7 @@ Ma trận dưới đây dùng ký hiệu của D02-08 §3 (● có quyền, ○ 
 | PERM-01-create | Tạo hồ sơ nháp; khai kỹ thuật, nhu cầu, đầu mối, tài liệu; sửa hồ sơ, đầu mối của HTTT đã kết nạp; đề nghị thay đổi, đề nghị mở rộng phạm vi | — | — | ● | — | — | — | — | — | — | ○ | — | — | — |
 | PERM-01-submit | Nộp hồ sơ, nộp lại, rút hồ sơ | — | — | ● | — | — | — | — | — | — | ○ | — | — | — |
 | PERM-01-approve | Phê duyệt hoặc từ chối kết nạp; duyệt thay đổi và đề nghị chấm dứt; xác nhận thao tác khẩn; xác nhận kích hoạt PRODUCTION; phân công người thẩm định | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-01-review-claim | Tự nhận bước thẩm định đúng vai trò (IE: kỹ thuật; SO: ATTT) bằng API-01-028 khi bỏ trống `assigneeId`; không giao việc cho người khác | — | — | — | — | ● | ● | — | — | — | — | — | — | — |
 | PERM-01-credential | Cấp, xoay vòng, thu hồi, bật lại định danh; tạo lại liên kết bàn giao; đăng ký khóa, CSR | — | — | ● | — | — | — | — | — | — | ○ | — | — | — |
 | PERM-01-suspend | Tạm ngừng, khôi phục, chấm dứt HTTT; thu hồi khẩn; mở kỳ rà soát quyền, xử lý kết quả, thu hồi hoặc thu hẹp phạm vi | — | — | ● | — | ● | — | — | — | — | — | — | — | — |
 | PERM-18-config | Sửa tham số cấu hình (dùng cho tham số `onboarding.*`, FR-01-049) | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
@@ -325,13 +326,13 @@ Ma trận dưới đây dùng ký hiệu của D02-08 §3 (● có quyền, ○ 
 
 : Ma trận quyền của PH-01
 
-Bốn quy tắc bổ sung do OPA thực thi (SEC-26) trên nền ma trận: (1) **Thẩm định theo phân công**: người thẩm định chỉ ghi được kết luận cho bước đã được TA phân công cho mình (IE cho bước kỹ thuật, SO cho bước ATTT, TA hoặc người TA chỉ định cho bước pháp lý); quyền nền là `PERM-01-read`, quyền phân công là `PERM-01-approve`, nên IE và SO không cần quyền ghi riêng. (2) **Danh bạ đầu mối**: mọi người dùng đã đăng nhập thuộc một tổ chức của tenant tra được đầu mối công khai của mọi tổ chức (BR-01-027); đây là quyền cơ sở của người dùng nội bộ tenant, không cần mã quyền riêng; đầu mối `SECURITY` chỉ TA, SO xem. (3) **Rà soát quyền** dùng `PERM-01-suspend` vì bản chất là thu hồi hoặc thu hẹp quyền; AU, VW xem kết quả bằng `PERM-01-read`. (4) **Xuất danh sách** dùng `PERM-01-read` kèm kiểm toán xuất; xuất toàn bộ tenant dành cho TA, AU, PA. Với OR, dấu ○ nghĩa là chỉ tổ chức của người đó (theo `owner_org_id`, bản chiếu từ DD-06). Với DO, ○ nghĩa là hồ sơ có nhu cầu khai thác thuộc dữ liệu của tổ chức mình.
+Bốn quy tắc bổ sung do OPA thực thi (SEC-26) trên nền ma trận: (1) **Thẩm định theo phân công**: người thẩm định chỉ ghi được kết luận cho bước đã được TA phân công cho mình (IE cho bước kỹ thuật, SO cho bước ATTT, TA hoặc người TA chỉ định cho bước pháp lý); quyền nền là `PERM-01-read`, quyền phân công là `PERM-01-approve`, nên IE và SO không cần quyền ghi riêng; IE và SO còn tự nhận được bước đúng vai trò bằng `PERM-01-review-claim` (đã chốt 27/11/2026, Q408), OPA vẫn kiểm đúng vai trò và bốn mắt. (2) **Danh bạ đầu mối**: mọi người dùng đã đăng nhập thuộc một tổ chức của tenant tra được đầu mối công khai của mọi tổ chức (BR-01-027); đây là quyền cơ sở của người dùng nội bộ tenant, không cần mã quyền riêng; đầu mối `SECURITY` chỉ TA, SO xem. (3) **Rà soát quyền** dùng `PERM-01-suspend` vì bản chất là thu hồi hoặc thu hẹp quyền; AU, VW xem kết quả bằng `PERM-01-read`. (4) **Xuất danh sách** dùng `PERM-01-read` kèm kiểm toán xuất; xuất toàn bộ tenant dành cho TA, AU, PA. Với OR, dấu ○ nghĩa là chỉ tổ chức của người đó (theo `owner_org_id`, bản chiếu từ DD-06). Với DO, ○ nghĩa là hồ sơ có nhu cầu khai thác thuộc dữ liệu của tổ chức mình.
 
 ### 3.3. Tách nhiệm vụ và tài khoản máy
 
-Nguyên tắc bốn mắt (FR-00-071) áp dụng ở bốn điểm: (1) người lập hoặc nộp hồ sơ không được thẩm định hay phê duyệt hồ sơ đó; (2) người đã thẩm định hồ sơ ở bước nào không được phê duyệt chính hồ sơ ấy (BR-01-017); (3) thao tác khẩn của SO phải được TA xác nhận bổ sung (BR-01-010); (4) người kích hoạt PRODUCTION không phải người nộp hồ sơ. Cặp loại trừ IE và IA của D02-08 §4 vẫn áp dụng: một người không giữ cả hai vai trò trong cùng tenant. Tenant nhỏ chỉ có một TA vẫn dùng được: TA không thẩm định hồ sơ mình sẽ phê duyệt, việc thẩm định giao cho IE và SO; nếu tenant không đủ người, TA phải mời người thứ hai theo quy trình ở PH-12 (Q01-01).
+Nguyên tắc bốn mắt (FR-00-071) áp dụng ở bốn điểm: (1) người lập hoặc nộp hồ sơ không được thẩm định hay phê duyệt hồ sơ đó; (2) người đã thẩm định hồ sơ ở bước nào không được phê duyệt chính hồ sơ ấy (BR-01-017); (3) thao tác khẩn của SO phải được TA xác nhận bổ sung (BR-01-010); (4) người kích hoạt PRODUCTION không phải người nộp hồ sơ. Cặp loại trừ IE và IA của D02-08 §4 vẫn áp dụng: một người không giữ cả hai vai trò trong cùng tenant. Mỗi tenant bắt buộc có tối thiểu hai TA hoạt động (điều kiện kích hoạt tenant ở FR-20-013; đã chốt 27/11/2026, Q01-47), nên thao tác khẩn và đề nghị chấm dứt luôn có TA khác xác nhận hoặc duyệt; PA không xác nhận thay vì không giữ `PERM-01-approve`. TA không thẩm định hồ sơ mình sẽ phê duyệt, việc thẩm định giao cho IE và SO; nếu tenant không đủ người thẩm định, TA mời thêm người theo quy trình ở PH-12 (Q01-01).
 
-Các phân hệ gọi PH-01 bằng token dịch vụ, không dùng tài khoản người. Scope `onboarding:internal-read` cho PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 đọc bản sao HTTT (FR-038); `onboarding:provision-callback` cho PH-12 và PH-03 trả kết quả bất đồng bộ của saga (FR-020); `onboarding:reconcile` cho tác vụ đối chiếu. Scope cấp cho tài khoản dịch vụ khi triển khai, không cấp cho người. Khi gọi PH-12, PH-03, PH-13, PH-14, PH-20, PH-01 dùng tài khoản dịch vụ của `dh-connect`, không chuyển tiếp token của người dùng.
+Các phân hệ gọi PH-01 bằng token dịch vụ, không dùng tài khoản người. Scope `onboarding:internal-read` cho PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 đọc bản sao HTTT (FR-038); `onboarding:provision-callback` cho PH-12 và PH-03 trả kết quả bất đồng bộ của saga (FR-020); `onboarding:reconcile` cho tác vụ đối chiếu; `onboarding:suspension-proposal` cho PH-13 gửi đề xuất tạm ngừng HTTT (FR-053). Scope cấp cho tài khoản dịch vụ khi triển khai, không cấp cho người. Khi gọi PH-12, PH-03, PH-13, PH-14, PH-20, PH-01 dùng tài khoản dịch vụ của `dh-connect`, không chuyển tiếp token của người dùng.
 
 ## 4. Khái niệm và mô hình nghiệp vụ
 
@@ -441,7 +442,7 @@ stateDiagram-v2
 
 ## 5. Danh sách chức năng
 
-PH-01 có 51 chức năng chia bảy nhóm. Bảng dưới liệt kê toàn bộ chức năng kèm nhóm, mức ưu tiên, đợt phát hành và màn hình hiện thực; đặc tả chi tiết ở chương 6. Nhóm: A Hồ sơ HTTT và đầu mối; B Kiểm tra, nộp và thẩm định; C Định danh ứng dụng và bàn giao; D Vòng đời thành viên; E Rà soát quyền định kỳ; F Danh bạ đầu mối; G Di trú và quản trị.
+PH-01 có 53 chức năng chia bảy nhóm. Bảng dưới liệt kê toàn bộ chức năng kèm nhóm, mức ưu tiên, đợt phát hành và màn hình hiện thực; đặc tả chi tiết ở chương 6. Nhóm: A Hồ sơ HTTT và đầu mối; B Kiểm tra, nộp và thẩm định; C Định danh ứng dụng và bàn giao; D Vòng đời thành viên; E Rà soát quyền định kỳ; F Danh bạ đầu mối; G Di trú và quản trị.
 
 | Mã | Nhóm | Chức năng | Mức | Đợt | Màn hình |
 |---|---|---|---|---|---|
@@ -483,6 +484,8 @@ PH-01 có 51 chức năng chia bảy nhóm. Bảng dưới liệt kê toàn bộ
 | FR-01-036 | D | Tự tạm ngừng định danh không hoạt động | S | Đợt 2 | UI-01-04 |
 | FR-01-037 | D | Đồng bộ trạng thái HTTT tới phân hệ khác | M | MVP | — |
 | FR-01-038 | D | Cung cấp bản sao đọc HTTT cho phân hệ khác | M | MVP | — |
+| FR-01-053 | D | Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO | M | MVP | UI-01-11 |
+| FR-01-054 | D | Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập | S | MVP | UI-01-04, UI-01-07 |
 | FR-01-039 | E | Mở kỳ rà soát quyền định kỳ | M | MVP | UI-01-12 |
 | FR-01-040 | E | Tổng hợp mức sử dụng từng phạm vi | M | MVP | UI-01-12 |
 | FR-01-041 | E | Gửi xác nhận cho đơn vị chủ quản và theo dõi phản hồi | M | MVP | UI-01-12, UI-01-13 |
@@ -783,7 +786,7 @@ flowchart TB
 3. Hệ thống xác định kiểu tệp theo nội dung (Apache Tika), chỉ nhận PDF, DOCX, XLSX, PNG, JPG (khác: ERR-01-013, 415).
 4. Hệ thống gửi tệp qua dịch vụ quét mã độc; nhiễm hoặc không quét được: ERR-01-014 (422), tệp bị loại, không lưu.
 5. Hệ thống lưu tệp vào bucket của tenant ở kho đối tượng với mã hóa phía máy chủ, tính SHA-256, ghi siêu dữ liệu DD-12 (`scanStatus = CLEAN`).
-6. Hệ thống trả mô tả tài liệu; khi xem, hệ thống cấp liên kết tải ký ngắn hạn (60 giây) sau khi kiểm tra quyền; tài liệu PDF mở ngay trong màn hình.
+6. Hệ thống trả mô tả tài liệu; khi xem, hệ thống cấp liên kết tải ký ngắn hạn (60 giây) sau khi kiểm tra quyền; tài liệu PDF mở ngay trong màn hình. Đã chốt 27/11/2026 (Q408): API-01-008 hỗ trợ `disposition=inline` (kèm `Content-Security-Policy: sandbox`, chỉ tệp `CLEAN`) và `Range` một khoảng byte (`206`), để xem trước PDF trong khung cô lập mà không tải cả tệp.
 
 **Luồng thay thế.** Xóa tài liệu: chỉ ở `DRAFT`, xóa mềm 30 ngày (FR-00-051); tài liệu đã được người thẩm định trích dẫn làm căn cứ ở vòng trước không xóa được (ERR-01-005), chỉ thay bản mới.
 
@@ -1459,7 +1462,7 @@ Hình cho thấy mọi thay đổi trạng thái, bước thẩm định và s�
 ::: dac-ta
 **Mục đích.** Bảo đảm mọi hồ sơ đã nộp có người xử lý và có hạn: tự giao việc, nhắc khi gần hạn, leo thang khi quá hạn, và cho phép dừng đồng hồ khi cần hỏi ý kiến chuyên môn khác. Nhờ đó đơn vị không phải gọi điện hỏi thăm và KPI-05 đạt được.
 
-**Tác nhân, quyền.** TA (`PERM-01-approve`) phân công; người thẩm định (IE, SO) nhận việc; hệ thống nhắc.
+**Tác nhân, quyền.** TA (`PERM-01-approve`) phân công; người thẩm định (IE, SO) tự nhận việc bằng `PERM-01-review-claim` (đã chốt 27/11/2026, Q408); hệ thống nhắc.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -1469,7 +1472,7 @@ Hình cho thấy mọi thay đổi trạng thái, bước thẩm định và s�
 
 **Kích hoạt.** Nộp hồ sơ (FR-01-012) tạo việc cho nhóm; TA vào hàng đợi UI-01-05 để phân công; tác vụ nhắc việc chạy mỗi giờ.
 
-**Đầu vào.** Phân công: `stepType`, `assigneeId`. Tham vấn: `consulteeId`, `question`, `expectedBy`. Hàng đợi: bộ lọc `stepType`, `overdue`.
+**Đầu vào.** Phân công: `stepType`, `assigneeId` (bỏ trống nghĩa là người gọi tự nhận bước, cần `PERM-01-review-claim` và đúng vai trò của bước). Tham vấn: `consulteeId`, `question`, `expectedBy`. Hàng đợi: bộ lọc `stepType`, `overdue`.
 
 **Luồng xử lý chính.**
 
@@ -2416,7 +2419,7 @@ Hình cho thấy việc chặn ở cổng được làm trước khi gọi PH-12
 
 **Tiền điều kiện.** HTTT `ACTIVE`, `SUSPENDED` hoặc `APPROVED`.
 
-**Kích hoạt.** SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07.
+**Kích hoạt.** SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07; hoặc SO mở việc đề xuất tạm ngừng do PH-13 gửi (FR-01-053) và chọn "Xử lý khẩn", khi đó `incidentRef` lấy sẵn từ đề xuất.
 
 **Đầu vào.** `mode` (`SUSPEND`, `TERMINATE`); `reason` (T-TEXT, bắt buộc); `incidentRef` (T-TEXT, mã sự cố, tùy chọn).
 
@@ -2430,7 +2433,7 @@ Hình cho thấy việc chặn ở cổng được làm trước khi gọi PH-12
 6. TA xem lý do và tác động rồi **xác nhận** hoặc **đảo ngược** (chỉ với chế độ `SUSPEND`: khôi phục theo FR-01-030, cần SO đồng ý); hệ thống ghi `CONFIRMED`.
 7. Quá hạn xác nhận: hệ thống đặt `OVERDUE`, phát cảnh báo mức cao tới TA và PO; thao tác vẫn có hiệu lực (không tự hoàn tác) vì hoàn tác tự động có thể mở lại lỗ hổng.
 
-**Luồng thay thế.** TA vắng: PA hoặc TA khác xác nhận. Khi chế độ `TERMINATE`, xác nhận là xác nhận không đảo ngược; muốn lập lại HTTT phải lập hồ sơ mới với mã mới (BR-01-018).
+**Luồng thay thế.** TA vắng: TA khác của tenant xác nhận; mỗi tenant bắt buộc có tối thiểu hai TA hoạt động nên luôn có người xác nhận, và PA không xác nhận thay vì không giữ `PERM-01-approve` (đã chốt 27/11/2026, Q01-47). Khi chế độ `TERMINATE`, xác nhận là xác nhận không đảo ngược; muốn lập lại HTTT phải lập hồ sơ mới với mã mới (BR-01-018).
 
 **Luồng ngoại lệ.**
 
@@ -2729,7 +2732,7 @@ Hình cho thấy thứ tự quyền lực: cắt trước, hỏi sau, nhưng b�
 ::: dac-ta
 **Mục đích.** Cho phân hệ khác tra HTTT thành viên (đang `ACTIVE` không, cấp độ ATTT, vai trò, client OAuth, nhóm) qua API chỉ-đọc và sự kiện, thay cho việc mỗi phân hệ tự giữ danh sách HTTT. Đây là đường mà PH-10, PH-04, PH-05 xác minh bên phát, bên nhận, bên gọi.
 
-**Tác nhân, quyền.** PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 (scope `onboarding:internal-read`). Đã chốt 27/11/2026: PH-01 cung cấp cho PH-15 thêm hai API đọc nội bộ cùng scope `onboarding:internal-read`, một trả lược đồ biểu mẫu kết nạp và một trả định danh môi trường production chỉ đọc (không bí mật). Mã API được cấp (số tiếp theo sau API-01-088) cùng đợt đó; hợp đồng OpenAPI, bảng §9.4, use case và test case được bổ sung cùng đợt triển khai PH-15 (Đợt 2).
+**Tác nhân, quyền.** PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 (scope `onboarding:internal-read`). Đã chốt 27/11/2026: PH-01 cung cấp cho PH-15 thêm hai API đọc nội bộ cùng scope `onboarding:internal-read`, một trả lược đồ biểu mẫu kết nạp và một trả định danh môi trường production chỉ đọc (không bí mật). Mã API được cấp từ API-01-090 trở đi (API-01-089 đã cấp cho đề xuất tạm ngừng của PH-13, FR-01-053) cùng đợt đó; hợp đồng OpenAPI, bảng §9.4, use case và test case được bổ sung cùng đợt triển khai PH-15 (Đợt 2).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -2769,6 +2772,104 @@ Hình cho thấy thứ tự quyền lực: cắt trước, hỏi sau, nhưng b�
 **Quy tắc nghiệp vụ.** BR-01-030.
 
 **Màn hình, API.** Không có màn hình; API-01-063, API-01-064.
+:::
+
+#### FR-01-053 · Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+
+::: dac-ta
+**Mục đích.** Cho PH-13 chuyển một đề xuất tạm ngừng HTTT, phát sinh từ cảnh báo an ninh đã được cán bộ an ninh kết luận là sự cố thật (FR-13-053), tới Cán bộ ATTT (SO) của tenant dưới dạng việc khẩn. PH-13 chỉ đề xuất và không tự tạm ngừng; quyết định thuộc SO ở PH-01 bằng thao tác khẩn FR-01-032, để quyền đổi trạng thái HTTT chỉ nằm ở một nơi.
+
+**Tác nhân, quyền.** PH-13 (token dịch vụ, scope `onboarding:suspension-proposal`); xử lý đề xuất: SO (`PERM-01-suspend`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-01, REQ-13; FR-01-032; FR-13-053, API-13-060; BR-01-009, BR-01-010; Q13-12 (đã chốt 27/11/2026).
+
+**Tiền điều kiện.** HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT.
+
+**Kích hoạt.** Cán bộ an ninh ở PH-13 kết luận "Sự cố thật" và bấm "Đề xuất tạm ngừng HTTT" (API-13-060); PH-13 gọi API-01-089.
+
+**Đầu vào.** `systemCode`; `alertId` (mã cảnh báo ở PH-13); `severity` (`HIGH`, `CRITICAL`); `reason` (T-TEXT, tối thiểu 10 ký tự); `evidenceUrl` (liên kết sâu tới cảnh báo ở PH-13, tùy chọn); `incidentRef` (mã sự cố, tùy chọn).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm token dịch vụ, scope và tenant của token (sai: `403`, ERR-01-052).
+2. Hệ thống kiểm HTTT tồn tại trong tenant (ERR-01-001) và đang `ACTIVE` (đang `SUSPENDED`: ERR-01-048; trạng thái khác: ERR-01-005).
+3. Hệ thống kiểm lũy đẳng theo `(systemCode, alertId)`; đã có thì trả `duplicate = true` và không tạo việc thứ hai.
+4. Trong cùng giao dịch, hệ thống ghi bản ghi `notify_outbox` loại việc khẩn `ph01.review-suspension-proposal` cho mọi SO của tenant, kèm lý do, mức nghiêm trọng, liên kết tới UI-01-11 "Xử lý khẩn" và liên kết sâu về cảnh báo ở PH-13; việc đi tới hộp việc chung của PH-18 (thử lại tới 24 giờ nếu PH-18 lỗi, không mất đề xuất).
+5. Hệ thống ghi kiểm toán (bên gửi, `alertId`, HTTT, lý do) và trả `202` kèm `taskId`.
+6. SO mở việc, xem lý do và tác động phụ thuộc (FR-01-033) rồi chọn một trong hai: "Xử lý khẩn", chuyển sang FR-01-032 với `incidentRef` của đề xuất, việc tự đóng khi thao tác khẩn được ghi; hoặc "Không tạm ngừng" kèm lý do, việc đóng, ghi kiểm toán và trạng thái HTTT không đổi.
+
+**Luồng thay thế.** Đề xuất lặp (cùng `alertId`) khi PH-13 thử lại: trả `202` với `duplicate = true`. Khi HTTT đã bị SO tạm ngừng trước khi đề xuất tới: ERR-01-048 và PH-13 coi đề xuất đã được đáp ứng. PH-13 không nhận phản hồi quyết định; trạng thái HTTT mới đi qua EVT-01-03 và EVT-01-15 mà PH-13 đã nghe.
+
+**Luồng ngoại lệ.**
+
+- Không thấy HTTT hoặc thuộc tenant khác: ERR-01-001 (404).
+- HTTT không `ACTIVE`: ERR-01-005 (409); đang tạm ngừng: ERR-01-048 (409).
+- Thân yêu cầu sai lược đồ: ERR-01-003 (400).
+- Thiếu hoặc sai scope: ERR-01-052 (403).
+
+**Đầu ra.** `202`; `{ "systemCode", "alertId", "taskId", "accepted", "duplicate" }`.
+
+**Kết quả.** SO có việc khẩn với đủ bối cảnh để quyết định trong vài phút; PH-13 không giữ quyền đổi trạng thái HTTT.
+
+**Hậu điều kiện.** Trạng thái HTTT không đổi; một việc khẩn mở cho SO của tenant.
+
+**Sự kiện phát ra.** Không (việc đi qua `notify_outbox`, không có mã EVT-01 mới).
+
+**Kiểm toán.** Có: bên gửi, `alertId`, lý do, người đóng việc và quyết định.
+
+**Quy tắc nghiệp vụ.** BR-01-009, BR-01-010.
+
+**Màn hình, API.** UI-01-11 (mở từ việc); API-01-089; thao tác khẩn dùng API-01-054.
+:::
+
+#### FR-01-054 · Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập
+
+::: dac-ta
+**Mục đích.** Khi tổ chức chủ quản bị giải thể hoặc sáp nhập, PH-01 tự tạo sẵn đề nghị đổi chủ quản cho từng HTTT của tổ chức đó sang tổ chức kế thừa, để TA duyệt hàng loạt thay vì đề nghị từng HTTT theo FR-01-034. Không HTTT nào bị bỏ sót hoặc mang chủ quản đã không còn.
+
+**Tác nhân, quyền.** Hệ thống (nghe EVT-20-13 của PH-20); duyệt: TA (`PERM-01-approve`).
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-01; FR-01-034; BR-01-029; FR-20-054; EVT-20-13; Q01-10 (đã chốt 27/11/2026).
+
+**Tiền điều kiện.** Tổ chức có `change = DISSOLVED` hoặc `MERGED` kèm `successorCode` của tổ chức `ACTIVE` (PH-20 đã giải chuỗi kế thừa).
+
+**Kích hoạt.** PH-01 nhận EVT-20-13 (`{tenant}.tenant.org.changed.v1`) có `change` là `DISSOLVED` hoặc `MERGED`.
+
+**Đầu vào.** Nội dung sự kiện: `orgCode`, `change`, `successorCode`, `effectiveTo`, mã sự kiện.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống ghi `inbox(event_id)` để xử lý lũy đẳng; sự kiện lặp bị bỏ qua.
+2. Hệ thống tìm mọi HTTT có `ownerOrgId = orgCode` ở trạng thái `ACTIVE`, `SUSPENDED` hoặc `APPROVED`.
+3. Với mỗi HTTT, hệ thống tạo yêu cầu thay đổi (EN-01-13) loại `OWNER_CHANGE` `PENDING` sang `successorCode`; người đề nghị là tài khoản hệ thống `system:ph01-org-successor`; việc PH-20 chỉ định tổ chức kế thừa được ghi làm xác nhận của tổ chức mới (`owner_confirmed_by = system:ph20-successor`, BR-01-029); `diff` ghi `source = EVT-20-13` và mã sự kiện làm mã lô.
+4. HTTT đang có yêu cầu thay đổi khác ở `PENDING` (chỉ mục duy nhất của EN-01-13) không được tạo thêm; hệ thống đưa vào danh sách "chờ tạo lại" của lô và nhắc TA xử lý yêu cầu cũ trước.
+5. Hệ thống tạo một việc `ph01.approve-change` cho TA, gom mọi yêu cầu cùng lô, kèm số HTTT và tổ chức kế thừa.
+6. TA mở lô ở UI-01-07, xem danh sách HTTT và tác động, rồi bấm "Duyệt cả lô" hoặc chọn từng HTTT; giao diện gọi API-01-059 cho từng yêu cầu và hiện kết quả riêng từng HTTT (một HTTT lỗi không chặn các HTTT khác).
+7. Yêu cầu được duyệt thì hệ thống áp dụng `ownerOrgId` mới như FR-01-034 bước 5 và phát EVT-01-04; yêu cầu bị từ chối thì HTTT giữ chủ quản cũ, hiện cờ "chủ quản đã giải thể" và nhắc TA chọn chủ quản theo FR-01-034.
+
+**Luồng thay thế.** Tổ chức kế thừa chưa `ACTIVE` hoặc sự kiện thiếu `successorCode`: hệ thống không tạo yêu cầu, nhắc TA đổi chủ quản từng HTTT theo FR-01-034. Tổ chức không có HTTT: không phát sinh việc. Đầu mối của tổ chức giải thể vẫn thuộc HTTT; đầu mối nào mất tài khoản thì vào danh sách thiếu đầu mối theo FR-01-046.
+
+**Luồng ngoại lệ.**
+
+- Yêu cầu đã được TA khác duyệt hoặc hủy trước: ERR-01-005 (409) ở dòng đó; các dòng khác tiếp tục.
+
+**Đầu ra.** Không có API riêng cho bước tạo; lô gồm các yêu cầu `OWNER_CHANGE` `PENDING` xem bằng API-01-058; duyệt trả kết quả của API-01-059.
+
+**Kết quả.** Mọi HTTT của tổ chức giải thể, sáp nhập có sẵn đề nghị đổi chủ quản chờ TA duyệt một lượt.
+
+**Hậu điều kiện.** Yêu cầu `OWNER_CHANGE` `PENDING` cho từng HTTT thuộc diện; chưa HTTT nào đổi chủ quản cho tới khi TA duyệt.
+
+**Sự kiện phát ra.** EVT-01-04 (khi duyệt và áp dụng).
+
+**Kiểm toán.** Có: sự kiện nguồn, từng yêu cầu được tạo, người duyệt hoặc từ chối.
+
+**Quy tắc nghiệp vụ.** BR-01-017, BR-01-029.
+
+**Màn hình, API.** UI-01-04, UI-01-07; API-01-058, API-01-059; nghe EVT-20-13.
 :::
 
 ### 6.6. Nhóm E · Rà soát quyền định kỳ
@@ -3322,7 +3423,7 @@ flowchart TB
 2. Người dùng sửa giá trị và nhập lý do.
 3. Hệ thống kiểm tra giá trị trong miền và không vượt trần của nền tảng (ngoài: ERR-01-044).
 4. Hệ thống lưu phiên bản giá trị mới kèm người đổi, thời điểm, lý do; hiệu lực trong ≤ 60 giây (đệm tham số theo PH-18).
-5. Tham số liên quan an ninh (thời hạn định danh, bàn giao, số lần mở sai) yêu cầu xác thực lại hai yếu tố và chỉ được siết chặt tự do; nới lỏng cần lý do và ghi kiểm toán mức cao.
+5. Tham số liên quan an ninh (thời hạn định danh, bàn giao, số lần mở sai; danh sách ở §8.2, cờ `securityRelated` trả ở API-01-083, 084 theo quyết định 27/11/2026, Q408) yêu cầu xác thực lại hai yếu tố và chỉ được siết chặt tự do; nới lỏng cần lý do và ghi kiểm toán mức cao.
 
 **Luồng thay thế.** Khôi phục mặc định: nút "Đặt lại" quay về giá trị của nền tảng.
 
@@ -3554,6 +3655,8 @@ Khóa đầy đủ có tiền tố `onboarding.`; các FR ở chương 6 viết 
 
 : Tham số theo tenant của PH-01
 
+Cờ `securityRelated` (API-01-083, 084) bằng `true` cho các khóa liên quan an ninh sau: `handover.ttlHours`, `handover.maxFailedOpens`, `credential.maxLifetimeDays`, `credential.secretMaxLifetimeDays`, `credential.rotationOverlapDays`, `inactivity.autoSuspendDays`, `emergency.confirmHours`, `security.minLevelRestricted`, `security.minLevelSensitive`, `mfa.stepUpMinutes`; các khóa khác bằng `false`. Cờ do hệ thống tính từ danh sách này; việc yêu cầu xác thực lại và ghi kiểm toán mức cao khi nới lỏng do phía máy chủ thực thi (FR-01-049 bước 5), giao diện MVP chưa bắt buộc dùng cờ (đã chốt 27/11/2026, Q408).
+
 ## 9. Mã lỗi, thông báo, sự kiện và API
 
 ### 9.1. Mã lỗi
@@ -3705,7 +3808,7 @@ Chủ đề theo quy ước D00-04 §4, miền `connect` của `dh-connect`; ph�
 
 : Sự kiện phát ra của PH-01
 
-PH-01 tiêu thụ ba loại sự kiện từ phân hệ khác, không đăng ký mã mới: tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức (PH-12), thư thông báo bị trả lại (PH-18), tenant bị tạm ngừng (PH-20).
+PH-01 tiêu thụ bốn loại sự kiện từ phân hệ khác, không đăng ký mã mới: tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức (PH-12), thư thông báo bị trả lại (PH-18), tenant bị tạm ngừng (PH-20) và tổ chức giải thể, sáp nhập (EVT-20-13 của PH-20, FR-01-054, đã chốt 27/11/2026, Q01-10).
 
 ### 9.4. Danh mục API
 
@@ -3801,10 +3904,11 @@ PH-01 tiêu thụ ba loại sự kiện từ phân hệ khác, không đăng ký
 | API-01-086 | `GET /statistics` | 051 |
 | API-01-087 | `POST /internal/provisioning-callbacks` | 020 |
 | API-01-088 | `GET /jobs/{jobId}` | 044, 047, 050 |
+| API-01-089 | `POST /internal/suspension-proposals` | 053 |
 
 : Danh mục API của PH-01
 
-Danh sách trên gom 88 operation; API-01-087 (nhận kết quả bất đồng bộ của bước saga, chỉ trong cụm, bằng token dịch vụ `onboarding:provision-callback`) và API-01-088 (tra tác vụ nền xuất tệp, báo cáo) do tập D03-04-PH01 bổ sung khi đặc tả hợp đồng. Hai chức năng không có API riêng vì chạy nền: tự vô hiệu định danh không dùng (FR-01-036, chỉ có API bật lại) và nhắc việc (FR-01-016, FR-01-027, FR-01-046 dùng các API đọc ở trên).
+Danh sách trên gom 89 operation; API-01-087 (nhận kết quả bất đồng bộ của bước saga, chỉ trong cụm, bằng token dịch vụ `onboarding:provision-callback`) và API-01-088 (tra tác vụ nền xuất tệp, báo cáo) do tập D03-04-PH01 bổ sung khi đặc tả hợp đồng; API-01-089 (nhận đề xuất tạm ngừng HTTT từ PH-13, chỉ trong cụm, scope `onboarding:suspension-proposal`) thêm ngày 27/11/2026 cho FR-01-053. Hai chức năng không có API riêng vì chạy nền: tự vô hiệu định danh không dùng (FR-01-036, chỉ có API bật lại) và nhắc việc (FR-01-016, FR-01-027, FR-01-046 dùng các API đọc ở trên).
 
 ## 10. Giao diện
 
@@ -3934,9 +4038,9 @@ Bảng dưới nối các nhóm FR với yêu cầu nghiệp vụ REQ trong D02-
 
 | FR | REQ | Ghi chú |
 |---|---|---|
-| 001…047, 049…051 | REQ-01 | Hồ sơ HTTT thành viên, đầu mối, cấp độ ATTT, trạng thái, quy trình kết nạp có duyệt |
+| 001…047, 049…051, 054 | REQ-01 | Hồ sơ HTTT thành viên, đầu mối, cấp độ ATTT, trạng thái, quy trình kết nạp có duyệt |
 | 020…028 | REQ-01, REQ-12 (qua PH-12) | Cấp, xoay vòng, thu hồi định danh; phần Keycloak ở PH-12 |
-| 029…033, 036, 037 | REQ-01, REQ-13 | Tạm ngừng, chấm dứt, phát sự kiện, cảnh báo |
+| 029…033, 036, 037, 053 | REQ-01, REQ-13 | Tạm ngừng, chấm dứt, phát sự kiện, cảnh báo |
 | 039…044 | REQ-01, REQ-12 | Rà soát quyền định kỳ (SEC-27) |
 | 048 | REQ-01, REQ-22 | Di trú, không mang thông tin xác thực cũ (FR-00-093) |
 | 013, 015 | REQ-01, REQ-14 | Hạn mức dữ liệu quốc gia (PH-14) |
@@ -4024,7 +4128,7 @@ Bảng dưới liệt kê các ràng buộc pháp lý, kỹ thuật và dự án
 
 > **Câu hỏi mở Q01-09:** Hạn xử lý mặc định 2 ngày cho mỗi bước thẩm định, 1 ngày phê duyệt (GĐ-01-04) suy ra từ KPI-05; có khớp quy chế tiếp nhận hồ sơ của tỉnh không. Hệ cũ dùng 10 ngày làm việc phê duyệt và leo thang sau 15 ngày.
 
-> **Câu hỏi mở Q01-10:** Khi tổ chức giải thể, sáp nhập (DD-02 có `successor_id`), HTTT chuyển chủ quản thế nào: tự động theo tổ chức kế thừa hay phải đề nghị từng HTTT theo FR-01-034 (đổi chủ quản). Đề xuất: PH-20 phát sự kiện, PH-01 tạo sẵn đề nghị đổi chủ quản chờ TA duyệt hàng loạt.
+> **Q01-10 (đã chốt 27/11/2026):** khi tổ chức giải thể, sáp nhập (DD-02 có `successor_id`), PH-20 phát EVT-20-13 và PH-01 tạo sẵn đề nghị đổi chủ quản cho từng HTTT chờ TA duyệt hàng loạt (FR-01-054). *Câu hỏi gốc:* Khi tổ chức giải thể, sáp nhập (DD-02 có `successor_id`), HTTT chuyển chủ quản thế nào: tự động theo tổ chức kế thừa hay phải đề nghị từng HTTT theo FR-01-034 (đổi chủ quản). Đề xuất: PH-20 phát sự kiện, PH-01 tạo sẵn đề nghị đổi chủ quản chờ TA duyệt hàng loạt.
 
 > **Câu hỏi mở Q01-11:** HTTT loại `NATIONAL`, `MINISTRY`, `EXTERNAL` (của bộ, ngành, nhà cung cấp ngoài tỉnh) kết nối vào tenant: ai nộp hồ sơ (tổ chức không thuộc tenant), ai duyệt, có cần cấp độ ATTT. Đề xuất: TA nhập hộ với văn bản của bộ, ngành làm căn cứ, kết nối qua PH-14.
 
@@ -4090,4 +4194,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo chuẩn trình bày kết hợp: tóm tắt cho hội đồng, giới thiệu sáu ý, 51 yêu cầu chức năng theo khối đặc tả 17 mục, 34 quy tắc nghiệp vụ, 22 yêu cầu phi chức năng, 50 mã lỗi, 15 sự kiện, 86 API, 17 màn hình, truy vết 4 mục LGC và 15 FR của SRS cũ, 16 câu hỏi mở và 16 đề nghị đồng bộ. Nguồn: D02-02 SRS, D03-01 SAD §4, D02-07 (DD-03…05), D02-08, D03-07, D00-03 phần A, `docs/07-srs/SRS-PH-01-onboarding.md` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo bảy tập: thêm API-01-087, 088 và ERR-01-051…054 (88 API, 54 mã lỗi); bổ sung 21 câu thông báo ở §9.2 cho khớp D03-06; FR-01-001, 020, 024, 034, 035, 044, 047, 050 cập nhật đầu ra và API theo D03-04 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1; chốt câu hỏi mở đợt đồng bộ: Q380 (PH-12 không nghe EVT-01-11), Q381 (nhật ký SANDBOX lấy từ PH-13), Q382 (Q01-02), Q389 (Q01-14); Q395 (hai API đọc nội bộ cho PH-15, mã dự trữ) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1; chốt câu hỏi mở đợt đồng bộ: Q380 (PH-12 không nghe EVT-01-11), Q381 (nhật ký SANDBOX lấy từ PH-13), Q382 (Q01-02), Q389 (Q01-14); Q395 (hai API đọc nội bộ cho PH-15, mã dự trữ), Q390, Q401, Q403, Q408 |

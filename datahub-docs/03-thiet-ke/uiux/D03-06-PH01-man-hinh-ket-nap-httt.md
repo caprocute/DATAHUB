@@ -2230,13 +2230,13 @@ Chênh lệch giữa giao diện và D03-04-PH01 hiện tại; mỗi dòng kèm 
 
 | # | Đề nghị | Màn | Xử lý tạm thời |
 |---|---|---|---|
-| 1 | Thêm thao tác tự nhận việc thẩm định: mở rộng API-01-028 cho người có đúng vai trò của bước (IE kỹ thuật, SO ATTT, TA pháp lý) khi `assigneeId` là chính họ, hoặc thêm `POST /systems/{systemCode}/reviews:claim`; hiện API-01-028 chỉ cho `PERM-01-approve` (TA) | UI-01-05 | Đã chốt 27/11/2026 (Q01-35): giữ TA phân công ở MVP, chỉ TA có nút "Phân công"; IE, SO nhận việc do TA giao. Tự nhận việc để Đợt 2 kèm quy tắc OPA, không mở rộng API-01-028 và không thêm `reviews:claim` ở MVP |
+| 1 | Thêm thao tác tự nhận việc thẩm định: mở rộng API-01-028 cho người có đúng vai trò của bước (IE kỹ thuật, SO ATTT, TA pháp lý) khi `assigneeId` là chính họ, hoặc thêm `POST /systems/{systemCode}/reviews:claim`; hiện API-01-028 chỉ cho `PERM-01-approve` (TA) | UI-01-05 | Đã chốt 27/11/2026 (Q01-35): giữ TA phân công ở MVP, chỉ TA có nút "Phân công"; IE, SO nhận việc do TA giao. Tự nhận việc để Đợt 2 kèm quy tắc OPA, không thêm `reviews:claim` ở MVP. Chủ đầu tư chốt thêm 27/11/2026 (Q408): hợp đồng D03-04-PH01 đã cho API-01-028 bỏ trống `assigneeId` để tự nhận với quyền mới `PERM-01-review-claim` (D02-08); giao diện MVP giữ cách xử lý tạm này, nút "Nhận việc" bật từ Đợt 2 |
 | 2 | API-01-069 nhận tùy chọn `orgIds[]` (tên chuẩn ở D03-04-PH01; bản đầu của tập này ghi `organizationIds[]`) để gửi nhắc, gửi lại phiếu cho các đơn vị chưa phản hồi. Đã có ở API-01-069, màn dùng `orgIds[]` | UI-01-12 | Đã chốt 27/11/2026 (Q01-36): API-01-069 nhận tham số tùy chọn `orgIds[]` (đã có ở OpenAPI); ảnh hi-fi giữ nút "Gửi nhắc đơn vị" |
 | 3 | Phản hồi API-01-002 và API-01-001 có `flags[]`, `waitingOn` (bản đầu ghi `waitingFor`), `dueAt`, `allowedActions`, `disabledReasons` thống nhất tên với D03-04-PH01 §1. Đã có ở OpenAPI; màn dùng `waitingOn` | UI-01-02, 03, 04 | Dựa vào mô tả §1; xác nhận khi sinh client |
-| 4 | Xem trước PDF trong khung cô lập: API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` với `Content-Security-Policy: sandbox` | UI-01-06 R7 | Đã chốt 27/11/2026 (Q01-31): không hỗ trợ `Range` và `inline` ở MVP; tải cả tệp qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt |
+| 4 | Xem trước PDF trong khung cô lập: API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` với `Content-Security-Policy: sandbox` | UI-01-06 R7 | Đã chốt 27/11/2026 (Q01-31): giao diện MVP không xem trước nội tuyến; tải cả tệp qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt. Chủ đầu tư chốt thêm 27/11/2026 (Q408): API-01-008 đã hỗ trợ `Range` và `disposition=inline` (kèm CSP `sandbox`) ở D03-04-PH01 để dùng khi bật xem trước |
 | 5 | Phản hồi API-01-013 có cờ `stateSecret` cho mục thuộc danh mục bí mật nhà nước | UI-01-01, 06 | Đã chốt 27/11/2026 (Q01-32): không thêm cờ `stateSecret`; giữ chặn sau khi gửi bằng ERR-01-016 cho tới khi pháp chế chốt danh mục |
 | 6 | Phản hồi API-01-045 trả `handoverToken` khi người xoay vòng chính là đầu mối kỹ thuật, để mở UI-01-09 ngay | UI-01-08 | Đã chốt 27/11/2026 (Q01-34): API-01-045 không trả `handoverToken`; chỉ gửi liên kết bàn giao qua thư |
-| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng, đã có dưới tên `platformCeiling` ở lược đồ `Setting`; màn dùng tên này) và `securityRelated` (cờ tham số an ninh, chưa có, chờ chốt) cho từng khóa | UI-01-16 | Đã chốt 27/11/2026: không thêm `securityRelated`; giao diện dùng `platformCeiling` có sẵn và hiện ERR-01-044 sau khi lưu |
+| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng, đã có dưới tên `platformCeiling` ở lược đồ `Setting`; màn dùng tên này) và `securityRelated` (cờ tham số an ninh, chưa có, chờ chốt) cho từng khóa | UI-01-16 | Đã chốt 27/11/2026: giao diện MVP dùng `platformCeiling` có sẵn và hiện ERR-01-044 sau khi lưu. Chủ đầu tư chốt thêm 27/11/2026 (Q408): API-01-083, 084 trả thêm cờ `securityRelated` (danh sách khóa ở FRS §8.2); giao diện chưa bắt buộc dùng |
 
 : Phụ lục B. Đề nghị bổ sung API
 
@@ -2272,7 +2272,7 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 
 > **Câu hỏi mở Q01-30:** Trang bàn giao và trang xác nhận của đơn vị đặt ở miền nào: cùng miền của `dh-console` hay miền con riêng. Giả định: cùng miền của tenant, đường dẫn `/ket-noi/ban-giao/{token}` và `/ket-noi/xac-nhan/{token}` định tuyến ở APISIX tới gói tĩnh `apps/handover/`, không nạp mã của console; nếu có miền riêng thì chỉ đổi cấu hình định tuyến. Người trả lời: chủ đầu tư, kỹ sư nền tảng.
 
-> **Đã chốt 27/11/2026 (Q01-31):** không xem trước PDF nội tuyến ở MVP; UI-01-06 tải qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt, API-01-008 không hỗ trợ `Range` và `Content-Disposition: inline`. Người trả lời: Cán bộ ATTT (đề xuất kỹ thuật được áp).
+> **Đã chốt 27/11/2026 (Q01-31):** không xem trước PDF nội tuyến ở giao diện MVP; UI-01-06 tải qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt. Chủ đầu tư chốt thêm 27/11/2026 (Q408): API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` ở hợp đồng. Người trả lời: Cán bộ ATTT (đề xuất kỹ thuật được áp).
 
 > **Đã chốt 27/11/2026 (Q01-32):** giữ chặn sau khi gửi bằng ERR-01-016 cho tới khi pháp chế chốt danh mục bí mật nhà nước; API-01-013 chưa trả cờ `stateSecret`.
 
@@ -2280,7 +2280,7 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 
 > **Đã chốt 27/11/2026 (Q01-34):** luôn gửi liên kết bàn giao qua thư, kể cả khi người xoay vòng là đầu mối kỹ thuật; API-01-045 không trả `handoverToken`, không có nút "Nhận thông tin mới ngay".
 
-> **Đã chốt 27/11/2026 (Q01-35):** giữ TA phân công ở MVP; IE, SO nhận việc thẩm định do TA giao. Tự nhận việc (mở rộng API-01-028 hoặc `reviews:claim`) để Đợt 2 kèm quy tắc OPA.
+> **Đã chốt 27/11/2026 (Q01-35):** giữ TA phân công ở MVP; IE, SO nhận việc thẩm định do TA giao. Tự nhận việc để Đợt 2 kèm quy tắc OPA. Chủ đầu tư chốt thêm 27/11/2026 (Q408): hợp đồng đã mở API-01-028 cho `PERM-01-review-claim` (bỏ trống `assigneeId`), quyền thêm ở D02-08; giao diện bật nút "Nhận việc" từ Đợt 2.
 
 > **Đã chốt 27/11/2026 (Q01-36):** API-01-069 nhận tham số tùy chọn `orgIds[]` (đã có ở OpenAPI) để nhắc, gửi lại phiếu cho đơn vị chưa phản hồi; nút "Gửi nhắc đơn vị" giữ ở UI-01-12; nhắc tối đa 2 lần mỗi kỳ.
 
@@ -2297,4 +2297,4 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-01-01…17 kèm ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm mục 1.6 Cấu trúc tài liệu, đoạn mở cho 65 mục, câu thông báo cho kích hoạt 202, ghi tình trạng Phụ lục B so với API 0.2 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng waitingOn theo API-01 |
-| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên chuẩn `CMP-SegmentedControl`, `CMP-OrganizationSelect` và dẫn D03-05 cho biến thể `bare`, `verdict`; Phụ lục A ghi đã thêm vào design system; Phụ lục B ghi `orgIds`, `waitingOn`, `platformCeiling` đã có ở D03-04-PH01; chốt câu hỏi mở đợt đồng bộ: Q431 (Q01-35), Q432 (Q01-36), Q433 (Q01-31), Q434 (Q01-32), Q435 (Q01-34), Q436 (securityRelated) |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên chuẩn `CMP-SegmentedControl`, `CMP-OrganizationSelect` và dẫn D03-05 cho biến thể `bare`, `verdict`; Phụ lục A ghi đã thêm vào design system; Phụ lục B ghi `orgIds`, `waitingOn`, `platformCeiling` đã có ở D03-04-PH01; chốt câu hỏi mở đợt đồng bộ: Q431 (Q01-35), Q432 (Q01-36), Q433 (Q01-31), Q434 (Q01-32), Q435 (Q01-34), Q436 (securityRelated), Q408 |

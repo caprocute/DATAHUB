@@ -492,7 +492,7 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `dh-cdc` | Cụm Strimzi `KafkaConnect` `dh-cdc-{tenant}` với Debezium cho CDC hệ di sản (ADR-059) | Data | Z4 | Chỉ tạo cho tenant bật `adapter.cdc.enabled`; tách khỏi Kafka Connect chuyển outbox |
 | `dh-iam` | Keycloak | Phụ thuộc data | Z6 | |
 | `dh-cache` | Valkey | Phụ thuộc data | Z5 | |
-| `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | Z3 | |
+| `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | Z3 | Có một `Role` ngoại lệ cho `ServiceAccount` `dh-data` (xem đoạn RBAC sau bảng) |
 | `dh-batch` | Job nặng và CronJob của PH-18: ảnh `dh-ops-worker` (`dh-tenant-restore`, `dh-tenant-export`, `dh-migrate`), CronJob `dh-backup-reporter`, cụm tạm kiểm tra khôi phục | Control | Z3 | `ResourceQuota` cho tối đa 3 Job nặng cùng lúc; priority class `dh-batch`; tài khoản dịch vụ `dh-platform-ops-jobs` chỉ có quyền Job ở namespace này |
 | `dh-restore-{tenant}-{mã ngắn}` | Cụm CloudNativePG tạm dựng bằng PITR cho khôi phục một tenant (mục 8.5) | Dữ liệu | Z5 | Tạo và xóa theo từng yêu cầu khôi phục; `NetworkPolicy` từ chối mọi kết nối trừ pod của Job và kho sao lưu |
 | `dh-sandbox` | `dh-runtime-sandbox` của PH-04: chạy thử định nghĩa luồng chưa phát hành bằng Camel thật | Data | Z4 | Chính sách mạng riêng: không có đường tới kho dữ liệu của tenant, egress chỉ tới đích thử đã duyệt (đề xuất của SDD PH-04, Q04-20) |
@@ -508,6 +508,8 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `istio-system`, `kube-system` | Istio ambient, Cilium, CSI | Nền tảng | Z7 | |
 
 : Namespace của cụm workload, mặt, vùng tin cậy Z1 đến Z7 và ghi chú
+
+**RBAC trong `dh-control`.** Theo SEC-53 của D03-07, mỗi đơn vị triển khai dùng một `ServiceAccount` riêng và không giữ `Role` nào trên API Kubernetes. Ngoại lệ duy nhất ở `dh-control` là `ServiceAccount` `dh-data` của PH-06: một `Role` và `RoleBinding` chỉ nằm trong namespace `dh-control`, chỉ cấp `create`, `get`, `list`, `watch`, `delete` trên tài nguyên `jobs` và `get`, `list` trên `pods`, để module `mdm` tạo, theo dõi và xóa Job `mdm-splink`. Không có `ClusterRole`, không có quyền trên `secrets`, `configmaps` hay namespace khác, và `Role` này không được dùng lại cho đơn vị khác. Kiến trúc sư ATTT duyệt manifest; ngoại lệ được ghi ở bảng ngoại lệ của SEC-53 trong D03-07 mục 5.7 (chủ đầu tư chốt 27/11/2026, Q06-24). Kyverno kiểm tra rằng `Role` này không chứa động từ hay tài nguyên ngoài danh sách trên.
 
 Bảng trên là danh sách namespace chuẩn, được D03-07 (SEC-13) dẫn chiếu. Việc chia mịn theo từng loại kho giúp áp hạn mức tài nguyên, PodDisruptionBudget và quyền vận hành riêng cho từng loại. Mỗi namespace mang nhãn `dh.gov.vn/zone` bằng mã vùng ở cột trên. Network policy và chính sách Kyverno được viết theo nhãn vùng, nhờ đó khớp với mô hình tám vùng của D03-07.
 
@@ -1709,4 +1711,4 @@ Danh sách dưới đây tập hợp các câu hỏi mở của tài liệu, d�
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: hai hồ sơ triển khai, cụm Kubernetes, định cỡ, HA, DR, sao lưu, quan sát, pipeline, gói air-gapped |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm Tóm tắt cho hội đồng thẩm định, các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc), đoạn mở cho năm mục còn thiếu, viết lại chú thích 40 bảng, thêm sáu sơ đồ (namespace theo vùng Z0 đến Z7, quy trình RBK-01, luồng sao lưu bất biến, thứ tự RBK-03, pipeline GitOps, sync wave) kèm thuyết minh. Giữ nguyên nội dung kỹ thuật của bản 0.1 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mục 5.9 (Deployment, bucket, topic Kafka, schema và dung lượng bổ sung theo phân hệ), namespace `dh-batch`, `dh-restore-*`, `dh-sandbox`, bảng khóa transit theo phân hệ (4.7), tuyến và địa chỉ dịch vụ (4.4), cấu trúc bucket ảnh chụp gateway và chỉ tiêu PH-02 (6.1), lấy mẫu nhật ký OPA theo FR-12-057, lô WORM 5 phút và neo hằng giờ, ánh xạ `object_code` (8.2), đối tượng hạ tầng khôi phục một tenant (8.5) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mục 5.9 (Deployment, bucket, topic Kafka, schema và dung lượng bổ sung theo phân hệ), namespace `dh-batch`, `dh-restore-*`, `dh-sandbox`, bảng khóa transit theo phân hệ (4.7), tuyến và địa chỉ dịch vụ (4.4), cấu trúc bucket ảnh chụp gateway và chỉ tiêu PH-02 (6.1), lấy mẫu nhật ký OPA theo FR-12-057, lô WORM 5 phút và neo hằng giờ, ánh xạ `object_code` (8.2), đối tượng hạ tầng khôi phục một tenant (8.5); chốt câu hỏi mở đợt đồng bộ: Q385, Q423 |

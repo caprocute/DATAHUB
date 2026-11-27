@@ -27,12 +27,12 @@ tai_lieu_lien_quan: D02-03-PH01 FRS; D03-04-PH01 API; D03-06-PH01 Màn hình; D0
 | Chỉ số | Giá trị |
 |---|---|
 | Use case | 34 (UC-01-01…34), 5 nhóm: hồ sơ và thẩm định, định danh và bàn giao, vòng đời, rà soát và danh bạ, di trú và quản trị |
-| FR được phủ | 51 trên 51 (M 41, S 9, C 1); UC-01-20 và UC-01-21 dùng chung FR-01-033 |
-| Luồng chính, thay thế, ngoại lệ | 34 luồng chính, 105 nhánh thay thế, 158 nhánh ngoại lệ (đếm ở chương 6) |
+| FR được phủ | 53 trên 53 (M 42, S 10, C 1); UC-01-20 và UC-01-21 dùng chung FR-01-033; FR-01-053 và FR-01-054 (thêm 27/11/2026) được phủ bằng nhánh thay thế của UC-01-22 và UC-01-23 |
+| Luồng chính, thay thế, ngoại lệ | 34 luồng chính, 106 nhánh thay thế, 158 nhánh ngoại lệ (đếm ở chương 6) |
 | Luồng phụ dùng chung | 8 (LP-01-01…08) |
-| Độ phủ mã của FRS | 88 trên 88 API, 17 trên 17 màn hình, 15 trên 15 sự kiện, 54 trên 54 mã lỗi `ERR-01-nnn` đều xuất hiện ở ít nhất một UC (API-01-087, 088 và ERR-01-051…054 do tập API bổ sung, đã đồng bộ ở bản 0.2) |
+| Độ phủ mã của FRS | 89 trên 89 API, 17 trên 17 màn hình, 15 trên 15 sự kiện, 54 trên 54 mã lỗi `ERR-01-nnn` đều xuất hiện ở ít nhất một UC (API-01-087, 088 và ERR-01-051…054 do tập API bổ sung, đã đồng bộ ở bản 0.2; API-01-089 thêm 27/11/2026) |
 | Sơ đồ | 5 hình (4 hình use case theo nhóm, 1 hình đặt UC lên vòng đời HTTT), 2 sơ đồ trình tự |
-| Câu hỏi mở | 5 (Q01-45…49) |
+| Câu hỏi mở | 4 (Q01-45, 46, 48, 49); Q01-47 đã chốt 27/11/2026 |
 
 : Con số chính của tập use case PH-01
 
@@ -365,6 +365,7 @@ Bảng dưới đối chiếu ngược: mỗi FR của FRS thuộc UC nào, đ�
 | FR-01-015 | UC-01-09 | FR-01-032 | UC-01-22 | FR-01-049 | UC-01-33 |
 | FR-01-016 | UC-01-08 | FR-01-033 | UC-01-20, UC-01-21 | FR-01-050 | UC-01-01 |
 | FR-01-017 | UC-01-11 | FR-01-034 | UC-01-23 | FR-01-051 | UC-01-34 |
+| FR-01-053 | UC-01-22 | FR-01-054 | UC-01-23 | — | — |
 
 : Độ phủ FR theo use case
 
@@ -977,7 +978,7 @@ Các mục dưới đây đặc tả từng UC theo khối 15 mục của chươ
 
 **Luồng ngoại lệ.**
 
-- **E1. Người duyệt đã lập, nộp hoặc thẩm định hồ sơ (bước 3).** ERR-01-017 (403); "Anh/chị đã tham gia hồ sơ này nên không duyệt được. Nhờ người khác." Với tenant chỉ có một TA, xem Q01-47.
+- **E1. Người duyệt đã lập, nộp hoặc thẩm định hồ sơ (bước 3).** ERR-01-017 (403); "Anh/chị đã tham gia hồ sơ này nên không duyệt được. Nhờ người khác." Mỗi tenant có tối thiểu hai TA nên luôn có TA khác duyệt (đã chốt 27/11/2026, Q01-47).
 - **E2. Hồ sơ chưa đủ kết luận (bước 1, 3).** ERR-01-020 (409); "Hồ sơ chưa đủ kết luận thẩm định."
 - **E3. Từ chối thiếu lý do (bước 2a).** ERR-01-033 (400); "Nhập lý do từ chối."
 - **E4. Quá thời hạn xác thực lại (bước 2).** ERR-01-035 (403); "Cần xác thực lại hai yếu tố để tiếp tục."
@@ -1494,7 +1495,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 **Luồng ngoại lệ.**
 
 - **E1. Còn phụ thuộc chưa xác nhận (bước 2).** ERR-01-034 (409); "Có {n} đối tượng phụ thuộc. Xem danh sách và xác nhận."
-- **E2. Người duyệt trùng người đề nghị (bước 4).** ERR-01-017 (403); "Anh/chị đã đề nghị nên không duyệt được. Nhờ quản trị khác." Tenant chỉ có một TA: xem Q01-47.
+- **E2. Người duyệt trùng người đề nghị (bước 4).** ERR-01-017 (403); "Anh/chị đã đề nghị nên không duyệt được. Nhờ quản trị khác." Mỗi tenant có tối thiểu hai TA nên luôn có TA khác duyệt (đã chốt 27/11/2026, Q01-47).
 - **E3. Thiếu lý do (bước 2).** ERR-01-033 (400); "Nhập lý do chấm dứt."
 - **E4. Giao dịch còn xử lý sau thời gian chờ (bước 5).** Hệ thống vẫn cắt; các giao dịch đó nhận lỗi `401` từ cổng; cảnh báo PH-13 "Cắt {n} giao dịch đang xử lý".
 - **E5. PH-12 hoặc PH-03 lỗi (bước 6).** Trạng thái vẫn đặt, `enforcement = PENDING`, thử lại và cảnh báo Dũng (BR-01-023).
@@ -1516,13 +1517,13 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 
 **Mức ưu tiên.** M · MVP.
 
-**FR hiện thực.** FR-01-032.
+**FR hiện thực.** FR-01-032; FR-01-053 (khi việc bắt đầu từ đề xuất của PH-13).
 
 **Truy vết.** REQ-01, REQ-13; BP-07; LGC-HUB-010, LGC-HUB-011.
 
 **Tiền điều kiện.** HTTT `ACTIVE`, `SUSPENDED` hoặc `APPROVED`; Dũng có `PERM-01-suspend`.
 
-**Kích hoạt.** Dũng bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố.
+**Kích hoạt.** Dũng bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố; hoặc Dũng mở việc đề xuất tạm ngừng do PH-13 gửi qua API-01-089 (FR-01-053) và chọn "Xử lý khẩn", khi đó mã sự cố lấy sẵn từ đề xuất; Dũng cũng có thể đóng việc bằng "Không tạm ngừng" kèm lý do.
 
 **Đảm bảo tối thiểu.** Hiệu lực ngay, không chờ phê duyệt hay giao dịch đang xử lý; quá hạn xác nhận thì cảnh báo mức cao nhưng không tự hoàn tác (hoàn tác tự động có thể mở lại lỗ hổng).
 
@@ -1542,7 +1543,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 
 - **1a. Chế độ `TERMINATE`.** Xác nhận ở bước 6 là xác nhận không đảo ngược; muốn lập lại HTTT phải lập hồ sơ mới với mã mới (BR-01-018).
 - **6a. TA đảo ngược (chỉ chế độ `SUSPEND`).** Minh khôi phục theo UC-01-20, cần Dũng đồng ý (BR-01-010).
-- **6b. TA vắng.** TA khác xác nhận; FRS còn nêu PA nhưng ma trận quyền chỉ cấp `PERM-01-approve` cho TA (Q01-47).
+- **6b. TA vắng.** TA khác của tenant xác nhận; mỗi tenant bắt buộc có tối thiểu hai TA hoạt động, và PA không xác nhận thay vì không giữ `PERM-01-approve` (đã chốt 27/11/2026, Q01-47).
 - **6c. Quá hạn xác nhận.** Hệ thống đặt `OVERDUE`, phát cảnh báo mức cao tới Minh và PO; thao tác vẫn có hiệu lực.
 
 **Luồng ngoại lệ.**
@@ -1594,6 +1595,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 - **2a. Đổi cấp độ ATTT, địa chỉ cơ sở hoặc hạn mức.** Mức `TECHNICAL`, xử lý như bước 4, 5.
 - **2b. Đổi phạm vi dữ liệu.** Mức `FULL`: hệ thống chuyển sang UC-01-24 và không áp dụng trực tiếp.
 - **2c. Đổi chủ quản.** Cần OR của tổ chức mới xác nhận và Minh duyệt (BR-01-029).
+- **2c1. Tổ chức chủ quản giải thể, sáp nhập.** Không cần OR đề nghị: PH-01 nghe EVT-20-13 và tạo sẵn yêu cầu `OWNER_CHANGE` cho từng HTTT sang tổ chức kế thừa (FR-01-054, đã chốt 27/11/2026, Q01-10); Minh mở lô ở UI-01-07 và duyệt hàng loạt bằng API-01-059, mỗi HTTT có kết quả riêng.
 - **2d. Thay đổi không có hiệu lực thực.** Giá trị trùng: trả `200`, không tạo yêu cầu.
 - **5a. Minh từ chối.** Yêu cầu bị từ chối kèm lý do; giá trị đang chạy không đổi; Lan nhận thông báo.
 
@@ -1998,7 +2000,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 
 **Luồng thay thế.**
 
-- **1a. Tổ chức giải thể, sáp nhập.** Minh chuyển HTTT sang tổ chức kế thừa bằng UC-01-23 (đổi chủ quản); tổ chức mới thừa hưởng đầu mối (Q01-10).
+- **1a. Tổ chức giải thể, sáp nhập.** PH-01 nhận EVT-20-13 và tạo sẵn đề nghị đổi chủ quản cho từng HTTT (FR-01-054); Minh duyệt hàng loạt bằng UC-01-23; tổ chức mới thừa hưởng đầu mối (đã chốt 27/11/2026, Q01-10).
 
 **Luồng ngoại lệ.**
 
@@ -2186,7 +2188,7 @@ Tập này không tạo mã FR, API, ERR, EVT, UI mới; mọi mã đó lấy t�
 
 > **Câu hỏi mở Q01-46:** UC-01-15 chỉ tạo được liên kết bàn giao khi đầu mối kỹ thuật đã có tài khoản người dùng ở tenant (ERR-01-003), nhưng UC-01-05 cho thêm đầu mối chưa có tài khoản. Cần chốt ai tạo tài khoản cho đầu mối (nhân sự nhà thầu, Q01-05) và trong bao lâu, vì bước này nằm trong chuỗi KPI-05 (NFR-01-020, thành phần PH-01 ≤ 3 ngày làm việc). Đề xuất: UC-01-05 tự gửi yêu cầu tạo tài khoản sang PH-12 ngay khi thêm đầu mối kỹ thuật mới, và UC-01-06 cảnh báo (mức `WARNING`) khi đầu mối kỹ thuật chưa có tài khoản.
 
-> **Câu hỏi mở Q01-47:** UC-01-21 và UC-01-22 cho "TA khác hoặc PA" xác nhận khi TA vắng (FR-01-032), nhưng ma trận D02-08 chỉ cấp `PERM-01-approve` cho TA; PA không có quyền này, và PA vốn không thuộc tenant. Tenant nhỏ chỉ có một TA không thể duyệt chấm dứt (ERR-01-017) hay xác nhận thao tác khẩn khi chính TA đó đề nghị. Cần quyết định: cấp `PERM-01-approve` cho PA trong ngữ cảnh truy cập chéo tenant có kiểm toán, hay buộc tenant luôn có tối thiểu hai TA. Giả định của tập: mỗi tenant có tối thiểu hai TA.
+> **Q01-47 (đã chốt 27/11/2026):** buộc mỗi tenant có tối thiểu hai TA hoạt động (điều kiện kích hoạt tenant ở FR-20-013); luồng thay thế của FR-01-032 là "TA khác xác nhận"; không cấp `PERM-01-approve` cho PA. *Câu hỏi gốc:* UC-01-21 và UC-01-22 cho "TA khác hoặc PA" xác nhận khi TA vắng (FR-01-032), nhưng ma trận D02-08 chỉ cấp `PERM-01-approve` cho TA; PA không có quyền này, và PA vốn không thuộc tenant. Tenant nhỏ chỉ có một TA không thể duyệt chấm dứt (ERR-01-017) hay xác nhận thao tác khẩn khi chính TA đó đề nghị. Cần quyết định: cấp `PERM-01-approve` cho PA trong ngữ cảnh truy cập chéo tenant có kiểm toán, hay buộc tenant luôn có tối thiểu hai TA. Giả định của tập: mỗi tenant có tối thiểu hai TA.
 
 > **Câu hỏi mở Q01-48:** UC-01-32 nhập HTTT từ hệ cũ ở trạng thái `DRAFT`; trong giai đoạn chạy song song (strangler), Application của hệ cũ vẫn gọi API ở hệ cũ trong khi hồ sơ mới ở Datahub chưa được duyệt. Cần xác định có thêm cờ (ví dụ `legacy_active`) để TA ưu tiên duyệt các HTTT đang hoạt động ở hệ cũ và để thống kê KPI-05 không tính nhầm thời gian chờ của chúng hay không. Đề xuất: thêm cờ chỉ đọc theo `legacy_ref`, không thêm trạng thái mới cho DD-03.
 
@@ -2217,4 +2219,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác, n�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn trình bày K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước, tác nhân, năm sơ đồ use case, bốn bảng truy vết (UC với FR, UI và API, REQ, BP, LGC; độ phủ FR), 34 use case theo khối 15 mục kèm hai sơ đồ trình tự, 8 luồng phụ dùng chung, 5 câu hỏi mở và 8 đề nghị đồng bộ. Nguồn: D02-03-PH01 (bảng FR, API, UI, ERR, BR và các FR liên quan), D02-08, D02-01, D00-03 phần A |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: đồng bộ API-01-087, 088, 059 vào bảng UC với API, ghi bốn lỗi chung ERR-01-051…054 ở chương 7, thêm mục 1.4 Cấu trúc tài liệu và đoạn mở cho các mục thiếu |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q380 (PH-02 gọi API-12-068 thay tập scope) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q380 (PH-02 gọi API-12-068 thay tập scope), Q390, Q401, Q403 |
