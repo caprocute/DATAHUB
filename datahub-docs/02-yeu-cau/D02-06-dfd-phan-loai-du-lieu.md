@@ -226,10 +226,10 @@ flowchart TB
   U1 <-->|"DF-01 thao tác, kết quả · CN2"| DH
   U2 <-->|"DF-02 tài liệu, khóa ứng dụng · CK, BM"| DH
   IF01 <-->|"DF-03 lượt gọi API, sự kiện · theo hợp đồng"| DH
-  IF02 <-->|"DF-04 dữ liệu nguồn · theo hợp đồng"| DH
-  IF03 <-->|"DF-05 tra cứu quốc gia · CN2"| DH
+  DH <-->|"DF-04 dữ liệu nguồn · theo hợp đồng"| IF02
+  DH <-->|"DF-05 tra cứu quốc gia · CN2"| IF03
   IF04 -->|"DF-06 danh mục quốc gia · CK"| DH
-  IF05 <-->|"DF-07 giao dịch, IPN, đối soát · TC"| DH
+  DH <-->|"DF-07 giao dịch, IPN, đối soát · TC"| IF05
   IF06 -->|"DF-08 định danh công dân · CN1"| DH
   IF07 -->|"DF-09 dữ liệu di trú · CN1, TC"| DH
   DH -->|"DF-10 nhật ký an ninh · NB"| IF08
@@ -285,12 +285,13 @@ flowchart TB
   P2 -->|"tra cứu danh mục · CK"| P3
   P3 -->|"chính sách che, mục đích · NB"| P2
   P4 -->|"vai trò, chính sách · NB"| P1
-  P1 & P2 & P3 & P5 -->|"bản ghi kiểm toán · NB, băm CN"| A
+  K -->|"sự kiện kiểm toán · NB, băm CN"| P4
+  P4 -->|"bản ghi kiểm toán · NB"| A
   P4 <-->|"xử lý lại · đến CN2"| D
-  P1 & P2 & P3 & P4 -->|"mô tả dịch vụ, nhật ký đã che · CK, NB"| P6
+  K -->|"sự kiện thay đổi đã che · CK, NB"| P6
 ```
 
-Hình làm rõ ba điều. Thứ nhất, Kafka (DS-09) là trục nối các miền, nên mức của topic quyết định mức của mọi miền tiêu thụ nó. Thứ hai, chỉ miền 2.0 và 4.0 chạm vào DLQ, là kho duy nhất có thể chứa bản sao dữ liệu đi qua. Thứ ba, mọi mũi tên vào 6.0 chỉ mang CK hoặc NB: trợ lý AI chỉ được lập chỉ mục mô tả dịch vụ, tài liệu và nhật ký đã che (SEC-49).
+Hình làm rõ ba điều. Thứ nhất, Kafka (DS-09) là trục nối các miền, nên mức của topic quyết định mức của mọi miền tiêu thụ nó. Thứ hai, chỉ miền 2.0 và 4.0 chạm vào DLQ, là kho duy nhất có thể chứa bản sao dữ liệu đi qua. Thứ ba, mọi miền gửi bản ghi kiểm toán và sự kiện thay đổi qua Kafka, nên PH-13 (trong 4.0) và trợ lý AI (6.0) chỉ nhận dữ liệu từ topic; mũi tên vào 6.0 chỉ mang CK hoặc NB vì bộ lập chỉ mục theo sự kiện (ADR-174) chỉ nhận mô tả dịch vụ, tài liệu và nhật ký đã che (SEC-49).
 
 ### 4.2. Miền 1.0 Kết nối và API
 
@@ -417,6 +418,8 @@ flowchart TB
   P44 -->|"chỉ tiêu tổng hợp · NB"| DS04
   P45 <-->|"mục lỗi · theo hợp đồng"| DS19
   P46 -->|"cấu hình tỉnh · NB"| DS04
+  DS04 ~~~ P43
+  DS07 ~~~ P45
 ```
 
 PH-11 là nơi dữ liệu hồ sơ thủ tục có thể vào biến quy trình; các biến gắn nhãn Nhạy cảm được mã hóa trường và lưu ở bucket `dh-{tenant}-bpm-pii` khi lớn. PH-12 không giữ mật khẩu ngoài Keycloak (DS-07). PH-13 chỉ ghi băm có khóa của khóa nghiệp vụ nhạy cảm (`object_key_hmac`), không ghi giá trị (D03-07 §7).

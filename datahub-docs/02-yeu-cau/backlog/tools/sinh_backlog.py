@@ -323,8 +323,9 @@ def epic_name(data, s):
     return data[s["ph"]]["groups"].get(s["group"], "")
 
 
-def md_table(head, rows, caption):
-    L = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
+def md_table(head, rows, caption, widths=None):
+    sep = "|" + "|".join("-" * w for w in widths) + "|" if widths else "|" + "---|" * len(head)
+    L = ["| " + " | ".join(head) + " |", sep]
     L += ["| " + " | ".join(str(c).replace("|", "/") for c in r) + " |" for r in rows]
     L += ["", f": {caption}"]
     return L
@@ -409,10 +410,10 @@ def write_main(data, stories):
             body += [f"#### {ep} · {en}", "",
                      f"Epic gồm {len(es)} story, {sum(s['pts'] for s in es)} điểm "
                      f"({sum(1 for s in es if s['prio'] == 'M')} story mức M).", ""]
-            rows = [[s["us"], s["story"], f"{s['prio']} · {s['dot']}", s["pts"] if not s["split"] else f"{s['pts']}*",
-                     s["wave"], s["fr"] + (f"; {uc_short(s['uc'])}" if s["uc"] else "")] for s in es]
-            body += md_table(["US", "Câu chuyện người dùng", "Ưu tiên, đợt", "Điểm", "Wave", "FR; UC"], rows,
-                             f"Story của epic {ep} {en}") + [""]
+            rows = [[s["us"], s["story"], s["prio"], s["pts"] if not s["split"] else f"{s['pts']}*",
+                     f"{s['dot']}, {s['wave']}", s["fr"] + (f"; {uc_short(s['uc'])}" if s["uc"] else "")] for s in es]
+            body += md_table(["US", "Câu chuyện người dùng", "ƯT", "Điểm", "Đợt, wave", "FR; UC"], rows,
+                             f"Story của epic {ep} {en}", [11, 48, 4, 8, 11, 14]) + [""]
     text = region(text, "danh-sach", body)
     MAIN.write_text(text, encoding="utf-8")
 
