@@ -85,7 +85,7 @@ frs_scope = set(re.findall(r"`(event:[a-z-]+)`", APPX))
 used_scope = set(re.findall(r"event:[a-z]+(?:-[a-z]+)*", yaml.safe_dump(oa["components"]["securitySchemes"]) + yaml.safe_dump(oa["paths"])))
 for p in sorted(used_scope - frs_scope): bad += 1; print("LỆCH scope không có ở A.4:", p)
 # ---- API: mã 001…091 khớp FRS §8.3 (đường dẫn của operation đầu tiên trong dòng)
-sec83 = FRS[FRS.index("### 8.3."):FRS.index("## 9.")]
+sec83 = FRS[FRS.index("### 9.4."):FRS.index("## 10.")]
 frs_api = dict(re.findall(r"^\| (API-10-\d{3}) \| `([A-Z]+ [^`]+)`", sec83, re.M))
 ops = {o[0]: o for o in spec.OPS}
 for a, mp in frs_api.items():

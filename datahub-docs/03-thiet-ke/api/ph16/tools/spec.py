@@ -434,9 +434,10 @@ obj("ReportingPeriod", "Kỳ báo cáo (kpi_reporting_period).", PC, ("periodTyp
 page("PeriodPage", "ReportingPeriod")
 obj("PeriodCreate", "Tạo kỳ ngoài lịch tự sinh (FR-16-017); mã sai mẫu, trùng, ở tương lai trả ERR-16-024.", ("periodCode!", "pcode", "Q-2026-Q3"), ("reason", "str", "Kỳ quý cho báo cáo gửi Bộ.", {"maxLength": 500}))
 obj("RunCounts", "Số đếm của lần tổng hợp.", ("indicatorTotal!", "int", 24), ("indicatorComputed!", "int", 22), ("noData", "int", 2))
+obj("RunStage", "Một bước của lần tổng hợp (sáu bước), dùng cho lưới tác vụ.", ("stage!", "str", "COLLECT", {"maxLength": 32}), ("state!", "str", "SUCCEEDED", {"maxLength": 16}), ("durationMs", "int", 1200))
 obj("Run", "Lần tổng hợp (kpi_aggregation_run).", ("runId!", "uuid"), PC, ("trigger!", "E:RunTrigger", "MANUAL"), ("state!", "E:RunState", "SUCCEEDED"), ("requestedBy", "str", "nguyen.thi.lan"),
     ("reason", "str", "Chạy lại sau khi PH-19 đẩy số trễ."), ("startedAt", "ts"), ("finishedAt", "ts"), ("completeness", "ratio"), ("flags", "[E:RunFlag]", ["MANUAL_PENDING"]), ("counts", "$RunCounts"),
-    ("errorCode", "str", "ERR-16-110", {"pattern": "^ERR-16-[0-9]{3}$"}))
+    ("errorCode", "str", "ERR-16-110", {"pattern": "^ERR-16-[0-9]{3}$"}), ("stages", "[$RunStage]"))
 page("RunPage", "Run")
 obj("RunCreate", "Chạy tổng hợp thủ công (FR-16-018); kỳ đã chốt trả ERR-16-022, đang chạy trả ERR-16-023.", ("trigger", "E:RunTrigger", "MANUAL"), ("indicatorCodes", "[code]", ["mttd", "mttr-muc-1"]),
     ("reason", "str", "Chạy lại sau khi PH-13 bổ sung chỉ số sự cố.", {"maxLength": 2000}))
@@ -469,11 +470,12 @@ obj("TemplatePreview", "Liên kết PDF tạm, hết hạn sau 1 giờ.", ("temp
 obj("ReportSectionText", "Thuyết minh một phần báo cáo.", ("sectionId!", "str", "s1"), ("content!", "str", "Trong tháng 10, số HTTT kết nối tăng 6 hệ thống.", {"maxLength": 20000}))
 obj("Explanation", "Giải trình chỉ tiêu chệch (FR-16-027).", IND, ("cause!", "str", "Hai HTTT chưa hoàn tất nâng cấp giao thức kết nối."), ("action!", "str", "Hoàn tất nâng cấp trước ngày 15/12."), ("dueDate", "date", "2026-12-15"))
 obj("Signature", "Chữ ký số của bản công bố.", ("signer!", "str", "tran.van.nam"), ("signedAt!", "ts"), ("certificateSerial", "str", "5F3A9C01"), ("format", "str", "PAdES-B-LT"))
+obj("SubmitCheck", "Một điều kiện gửi duyệt của báo cáo.", ("check!", "str", "completeness", {"maxLength": 32}), ("passed!", "bool", True), ("message", "str", "Đủ giải trình cho chỉ tiêu bắt buộc."))
 obj("Report", "Báo cáo (kpi_report và phiên bản hiện hành).", RC, ("title!", "str", "Báo cáo chỉ tiêu tháng 10/2026"), ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode"),
     ("rangeFrom", "date", "2026-05-01"), ("rangeTo", "date", "2026-10-31"), ("templateCode", "code", "bao-cao-thang-mau"), ("state!", "E:ReportState", "DRAFT"), ("latestVersion!", "int", 1),
     ("publishedVersion", "int", 1), ("runId", "uuid"), ("completeness", "E:Completeness", "COMPLETE"), ("requiredExplanations", "[code]", ["api-dat-sla-ty-le"]), ("missingExplanations", "[code]", []),
     ("sections", "[$ReportSectionText]"), ("explanations", "[$Explanation]"), ("preparedBy", "str", "nguyen.thi.lan"), ("submittedBy", "str", "nguyen.thi.lan"), ("reviewedBy", "str", "tran.van.nam"),
-    ("comment", "str", "Đồng ý công bố."), ("publishedAt", "ts"), ("contentHash", "sha"), ("signature", "$Signature"), ("wormRef", "str", "kpi-reports/t68/bc-thang-2026-10/v1.pdf"),
+    ("comment", "str", "Đồng ý công bố."), ("publishedAt", "ts"), ("contentHash", "sha"), ("signature", "$Signature"), ("wormRef", "str", "kpi-reports/t68/bc-thang-2026-10/v1.pdf"), ("newerRunId", "uuid"), ("submitChecks", "[$SubmitCheck]"),
     ("documentNumber", "str", "125/BC-STTTT", {"maxLength": 64}), ("recipientsNote", "str", "UBND tỉnh; Bộ KH&CN.", {"maxLength": 2000}), ("needsCorrection", "bool", False), *AUD)
 obj("ReportSummary", "Dòng danh sách báo cáo.", RC, ("title!", "str", "Báo cáo chỉ tiêu tháng 10/2026"), ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode"),
     ("state!", "E:ReportState", "PUBLISHED"), ("latestVersion!", "int", 1), ("publishedAt", "ts"), ("needsCorrection", "bool", False))
@@ -495,8 +497,9 @@ obj("ReportVersion", "Phiên bản báo cáo.", ("version!", "int", 1), ("state!
     ("contentHash", "sha"), ("correctionOf", "int", 1), ("correctionReason", "str", "Sửa số liệu mttd."))
 page("ReportVersionPage", "ReportVersion")
 obj("ReviewItem", "Việc chờ duyệt hoặc xác nhận của người dùng.", ("itemType!", "E:ReviewItemType", "REPORT"), ("ref!", "str", "bc-thang-2026-10"), ("title!", "str", "Báo cáo chỉ tiêu tháng 10/2026"),
-    ("submittedBy", "str", "nguyen.thi.lan"), ("submittedAt", "ts"), ("periodCode", "pcode", "M-2026-10"), ("link", "str", "/giam-sat/chi-tieu/duyet"))
-page("ReviewQueuePage", "ReviewItem")
+    ("submittedBy", "str", "nguyen.thi.lan"), ("submittedAt", "ts"), ("periodCode", "pcode", "M-2026-10"), ("link", "str", "/giam-sat/chi-tieu/duyet"), ("ownedByMe", "bool", False))
+obj("ReviewFacets", "Số việc chờ theo loại.", ("INDICATOR_VERSION", "int", 2), ("MANUAL_VALUE", "int", 5), ("REPORT", "int", 1))
+obj("ReviewQueuePage", "Trang việc chờ duyệt; `facets` đếm theo loại việc, `ownedByMe` khóa nút bốn mắt ngay ở danh sách.", ("items!", "[$ReviewItem]"), ("page!", "int", 0), ("size!", "int", 20), ("totalElements!", "int", 1), ("facets", "$ReviewFacets"))
 
 # --- xuất, phân phối (nhóm E)
 obj("ExportRef", "Đối tượng cần xuất.", ("reportCode", "rcode"), ("version", "int", 1), ("periodCode", "pcode", "M-2026-10"), ("filter", "obj", {"groupCode": "KET_NOI"}),
@@ -536,11 +539,11 @@ obj("CompareItem", "So sánh hai kỳ (FR-16-040).", IND, ("valueA", "num", 82.5
     ("statusB", "E:ValueStatus", "AT_RISK"), ("definitionChanged", "bool", False))
 obj("Dashboard", "Bảng điều khiển năm nhóm (FR-16-038); `view` `OFFICIAL` chỉ kỳ đã chốt, `LATEST` gồm số tạm.", PC, ("view!", "E:DashboardView", "LATEST"), ("overallScore", "pct", 76.4),
     ("groups!", "[$GroupScore]"), ("statusCounts!", "$StatusCounts"), ("attention", "[$AttentionItem]"), ("series", "[$SeriesPoint]"), ("flags", "[E:RunFlag]", ["MANUAL_PENDING"]), ("provisional!", "bool", True),
-    ("comparison", "[$CompareItem]"))
+    ("comparison", "[$CompareItem]"), ("periodState", "E:PeriodState", "COMPUTED"), ("staleSources", "[code]", ["ph08-dq-kpi"]), ("yoy", "[$CompareItem]"))
 obj("Series", "Chuỗi thời gian một chỉ tiêu (FR-16-039).", IND, ("definition", "$IndicatorVersion"), ("series!", "[$SeriesPoint]"), ("targetLine", "num", 90), ("lineage", "[$Lineage]"))
 obj("ComparisonDistribution", "Phân bố giá trị giữa các tenant.", ("min", "num", 40), ("p25", "num", 55), ("median", "num", 68), ("p75", "num", 80), ("max", "num", 92))
 obj("ComparisonTenant", "Giá trị một tenant, ẩn danh.", ("alias!", "str", "Tỉnh A"), ("value", "num", 68), ("status", "E:ValueStatus", "AT_RISK"))
-obj("Comparison", "So sánh liên tenant ẩn danh (FR-16-041); dưới `16.compare.min-tenants` trả ERR-16-038.", IND, PC, ("distribution!", "$ComparisonDistribution"), ("tenants!", "[$ComparisonTenant]"), ("tenantCount!", "int", 5))
+obj("Comparison", "So sánh liên tenant ẩn danh (FR-16-041); dưới `16.compare.min-tenants` trả ERR-16-038.", IND, PC, ("distribution!", "$ComparisonDistribution"), ("tenants!", "[$ComparisonTenant]"), ("tenantCount!", "int", 5), ("rank", "int", 2), ("peerCount", "int", 4))
 obj("StatusTally", "Số đếm theo trạng thái.", ("ACTIVE", "int", 20), ("STALE", "int", 1), ("FAILED", "int", 0), ("PAUSED", "int", 1))
 obj("ExportTally", "Số đếm việc xuất.", ("running", "int", 0), ("failed24h", "int", 0))
 obj("NationalTally", "Số đếm gói quốc gia.", ("pending", "int", 0), ("failed", "int", 0), ("lastAcknowledgedAt", "ts"))

@@ -496,8 +496,8 @@ channels:
   opsDlq:
     address: '{tenant}.ops.dlq.v1'
     title: Tiêu thụ · ops.dlq.v1
-    description: 'Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013). Bên phát: Mọi nguồn (PH-04 runtime và
-      nguồn khác). Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    description: 'Topic DLQ hạ tầng: PH-18 là chủ topic; nguồn ghi bản tin lỗi kèm header ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013). Bên phát:
+      Mọi nguồn (PH-04 runtime và nguồn khác). Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
     messages:
       DlqRecord:
         $ref: '#/components/messages/DlqRecord'
@@ -898,7 +898,7 @@ operations:
     channel:
       $ref: '#/channels/opsDlq'
     summary: Tiêu thụ {tenant}.ops.dlq.v1
-    description: 'Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013).'
+    description: 'Topic DLQ hạ tầng: PH-18 là chủ topic; nguồn ghi bản tin lỗi kèm header ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013).'
     messages:
     - $ref: '#/channels/opsDlq/messages/DlqRecord'
   receiveEventDeadLettered:
@@ -1415,8 +1415,8 @@ components:
           time: '2026-11-27T09:15:02+07:00'
           tenantid: T68
           data:
-            mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
-            module: ph01_onboarding
+            mergePlanId: SN-2026-001
+            module: PH-01
             from: RUNNING
             to: SUCCEEDED
             rows: 18240
@@ -2893,10 +2893,9 @@ components:
       type: object
       properties:
         mergePlanId:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/MergePlanId'
         module:
-          type: string
+          $ref: '#/components/schemas/ModuleCode'
         from:
           $ref: '#/components/schemas/JobStatus'
         to:
@@ -3344,80 +3343,6 @@ components:
       - dlqResolved
       - incidentsOpened
       - incidentsClosed
-    ErrorCode:
-      type: string
-      pattern: ^ERR-[0-9]{2}-[0-9]{3}$
-      description: Mã lỗi của phân hệ nguồn hoặc của PH-18.
-    CutoverStatus:
-      type: string
-      enum:
-      - PARALLEL
-      - SHADOW_OK
-      - PARTIAL_CUTOVER
-      - CUT_OVER
-      - ROLLED_BACK
-    TaskTypeCode:
-      type: string
-      pattern: ^ph[0-9]{2}\.[a-z0-9.-]+$
-      description: Loại việc có tiền tố `ph{nn}.` (FR-18-042).
-    RunMode:
-      type: string
-      enum:
-      - DRY_RUN
-      - REAL
-    ModuleCode:
-      type: string
-      pattern: ^PH-[0-9]{2}$
-      description: Mã phân hệ, ví dụ `PH-04`.
-    MigrationRunStatus:
-      type: string
-      enum:
-      - PENDING_APPROVAL
-      - QUEUED
-      - RUNNING
-      - SUCCEEDED
-      - SUCCEEDED_WITH_ERRORS
-      - FAILED
-      - CANCELLED
-    CredentialKind:
-      type: string
-      enum:
-      - OAUTH_CLIENT
-      - CLIENT_CERT
-      - API_KEY_LEGACY
-      - PASSWORD
-    EgressPurpose:
-      type: string
-      enum:
-      - DEV_PORTAL_BACKEND
-      - GIT_REPO
-      - WEBHOOK
-      - MODEL_PROVIDER
-      - OTHER
-    Channel:
-      type: string
-      enum:
-      - EMAIL
-      - SMS
-      - IN_APP
-    Environment:
-      type: string
-      enum:
-      - PROD
-      - STAGING
-      - TEST
-    TaskStatus:
-      type: string
-      enum:
-      - OPEN
-      - IN_PROGRESS
-      - DONE
-      - CANCELLED
-      - EXPIRED
-    SourceCode:
-      type: string
-      pattern: ^[a-z0-9-]{3,40}$
-      description: Mã nguồn DLQ (FR-18-012).
     ReplayJobStatus:
       type: string
       enum:
@@ -3431,6 +3356,114 @@ components:
       - FAILED
       - CANCELLED
       - REJECTED
+    RunMode:
+      type: string
+      enum:
+      - DRY_RUN
+      - REAL
+    Sha256:
+      type: string
+      pattern: ^[0-9a-f]{64}$
+      description: Tổng kiểm tra SHA-256 dạng hex.
+    CutoverStatus:
+      type: string
+      enum:
+      - PARALLEL
+      - SHADOW_OK
+      - PARTIAL_CUTOVER
+      - CUT_OVER
+      - ROLLED_BACK
+    HealthState:
+      type: string
+      enum:
+      - UP
+      - DEGRADED
+      - DOWN
+    BackupTool:
+      type: string
+      enum:
+      - CNPG_BARMAN
+      - DH_TENANT_EXPORT
+      - RCLONE
+      - OPENBAO_RAFT
+      - VELERO
+      - VELERO_KOPIA
+      - GIT_MIRROR
+      - HARBOR_REPLICATION
+      - CLICKHOUSE_BACKUP
+      - PH13_WORM
+      - SHAMIR_OFFLINE
+    TaskStatus:
+      type: string
+      enum:
+      - OPEN
+      - IN_PROGRESS
+      - DONE
+      - CANCELLED
+      - EXPIRED
+    TaskTypeCode:
+      type: string
+      pattern: ^ph[0-9]{2}\.[a-z0-9.-]+$
+      description: Loại việc có tiền tố `ph{nn}.` (FR-18-042).
+    ParamKey:
+      type: string
+      pattern: ^[a-z0-9][a-z0-9.-]{2,127}$
+      description: Khóa tham số có tiền tố không gian tên, ví dụ `18.dlq.replay.batch-max`.
+    MigrationRunStatus:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - SUCCEEDED_WITH_ERRORS
+      - FAILED
+      - CANCELLED
+    EgressPurpose:
+      type: string
+      enum:
+      - DEV_PORTAL_BACKEND
+      - GIT_REPO
+      - WEBHOOK
+      - MODEL_PROVIDER
+      - OTHER
+    IncidentStatus:
+      type: string
+      enum:
+      - OPEN
+      - INVESTIGATING
+      - MITIGATED
+      - RESOLVED
+      - CLOSED
+    RestoreStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - APPROVED
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+      - ROLLED_BACK
+      - REJECTED
+      - CANCELLED
+    FlagKey:
+      type: string
+      pattern: ^ff\.[a-z0-9-]+\.[a-z0-9-]+$
+      description: Cờ tính năng `ff.{module}.{tính-năng}` (FR-18-009).
+    ModuleCode:
+      type: string
+      pattern: ^PH-[0-9]{2}$
+      description: Mã phân hệ, ví dụ `PH-04`.
+    JobStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - SUCCEEDED_WITH_ERRORS
+      - FAILED
+      - CANCELLED
     RecipientRef:
       type: object
       properties:
@@ -3448,28 +3481,39 @@ components:
       - SEV2
       - SEV3
       - SEV4
-    RestoreStatus:
-      type: string
-      enum:
-      - DRAFT
-      - PENDING_APPROVAL
-      - APPROVED
-      - RUNNING
-      - SUCCEEDED
-      - FAILED
-      - ROLLED_BACK
-      - REJECTED
-      - CANCELLED
-    HealthState:
-      type: string
-      enum:
-      - UP
-      - DEGRADED
-      - DOWN
     ReplayIdempotencyKey:
       type: string
       pattern: ^[0-9a-f-]{36}:[0-9]+$
       description: Khóa lũy đẳng phát lại `dlqId:revision` (ADR-182).
+    SourceCode:
+      type: string
+      pattern: ^[a-z0-9-]{3,40}$
+      description: Mã nguồn DLQ (FR-18-012).
+    CredentialKind:
+      type: string
+      enum:
+      - OAUTH_CLIENT
+      - CLIENT_CERT
+      - API_KEY_LEGACY
+      - PASSWORD
+    ErrorCode:
+      type: string
+      pattern: ^ERR-[0-9]{2}-[0-9]{3}$
+      description: Mã lỗi của phân hệ nguồn hoặc của PH-18.
+    Environment:
+      type: string
+      enum:
+      - PROD
+      - STAGING
+      - TEST
+    MergePlanId:
+      type: string
+      pattern: ^SN-[0-9]{4}-[0-9]{3}$
+      description: Mã kế hoạch sáp nhập do PH-20 cấp, ví dụ `SN-2026-001`.
+    TemplateCode:
+      type: string
+      pattern: ^[a-z0-9.-]{3,80}$
+      description: Mã mẫu thông báo (FR-18-035).
     DlqStatus:
       type: string
       enum:
@@ -3482,53 +3526,12 @@ components:
       - DISCARDED
       - POISON
       - EXPIRED
-    ParamKey:
-      type: string
-      pattern: ^[a-z0-9][a-z0-9.-]{2,127}$
-      description: Khóa tham số có tiền tố không gian tên, ví dụ `18.dlq.replay.batch-max`.
-    TemplateCode:
-      type: string
-      pattern: ^[a-z0-9.-]{3,80}$
-      description: Mã mẫu thông báo (FR-18-035).
-    IncidentStatus:
+    Channel:
       type: string
       enum:
-      - OPEN
-      - INVESTIGATING
-      - MITIGATED
-      - RESOLVED
-      - CLOSED
-    JobStatus:
-      type: string
-      enum:
-      - QUEUED
-      - RUNNING
-      - SUCCEEDED
-      - SUCCEEDED_WITH_ERRORS
-      - FAILED
-      - CANCELLED
-    BackupTool:
-      type: string
-      enum:
-      - CNPG_BARMAN
-      - DH_TENANT_EXPORT
-      - RCLONE
-      - OPENBAO_RAFT
-      - VELERO
-      - VELERO_KOPIA
-      - GIT_MIRROR
-      - HARBOR_REPLICATION
-      - CLICKHOUSE_BACKUP
-      - PH13_WORM
-      - SHAMIR_OFFLINE
-    Sha256:
-      type: string
-      pattern: ^[0-9a-f]{64}$
-      description: Tổng kiểm tra SHA-256 dạng hex.
-    FlagKey:
-      type: string
-      pattern: ^ff\.[a-z0-9-]+\.[a-z0-9-]+$
-      description: Cờ tính năng `ff.{module}.{tính-năng}` (FR-18-009).
+      - EMAIL
+      - SMS
+      - IN_APP
     RecipientKind:
       type: string
       enum:

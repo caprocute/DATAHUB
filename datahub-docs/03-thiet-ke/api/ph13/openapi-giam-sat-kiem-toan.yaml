@@ -5593,6 +5593,8 @@ components:
           $ref: '#/components/schemas/TraceId'
         partial: *id003
         truncated: *id003
+        spansTotal:
+          type: integer
         durationMs:
           type: integer
         spans:
@@ -7476,6 +7478,7 @@ components:
           maxLength: 255
         targetTenant:
           $ref: '#/components/schemas/TenantCode'
+        sessionId: *id001
       additionalProperties: false
       required:
       - from
@@ -7502,6 +7505,29 @@ components:
       required:
       - items
       - page
+      examples:
+      - items:
+        - id: 0192f3a4-7b1c-7d2e-9a10-5c3e8f1b2a44
+          tenantId: T68
+          seq: 184213
+          occurredAt: '2026-11-26T03:15:00Z'
+          recordedAt: '2026-11-26T03:15:01Z'
+          actorType: USER
+          actorId: u-an.nv
+          actorName: Nguyễn Văn An
+          action: CATALOG.PUBLISH
+          objectType: catalog
+          objectId: DM_GIOI_TINH
+          outcome: SUCCESS
+          traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+          sourceDu: dh-data
+          prevHash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          hash: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        page:
+          next: eyJzZXEiOjE4NDIxM30
+          hasMore: true
+        totalEstimate: 1240
+        queryId: 0192f3b0-3333-7000-8000-000000000003
     AuditRecordDetail:
       type: object
       properties:
@@ -7524,6 +7550,30 @@ components:
       required:
       - record
       - verification
+      examples:
+      - record:
+          id: 0192f3a4-7b1c-7d2e-9a10-5c3e8f1b2a44
+          tenantId: T68
+          seq: 184213
+          occurredAt: '2026-11-26T03:15:00Z'
+          recordedAt: '2026-11-26T03:15:01Z'
+          actorType: USER
+          actorId: u-an.nv
+          actorName: Nguyễn Văn An
+          action: CATALOG.PUBLISH
+          objectType: catalog
+          objectId: DM_GIOI_TINH
+          outcome: SUCCESS
+          traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+          sourceDu: dh-data
+          prevHash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          hash: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        verification:
+          hashValid: true
+          linkedToPrev: true
+          anchorId: 0192f3b0-4444-7000-8000-000000000004
+          anchorSignatureValid: true
+          wormMatched: true
     ObjectHistoryPage:
       type: object
       properties:
@@ -7923,6 +7973,14 @@ components:
           type: integer
         bufferedRecords:
           type: integer
+        quarantineCount:
+          type: integer
+        reasons:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          description: Lý do còn bản ghi trong kho cách ly hoặc chuỗi nghi vấn.
       required:
       - tenantId
       - status

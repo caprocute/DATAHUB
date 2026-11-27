@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH18
 ten: Thiết kế chi tiết phần mềm phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ dùng tham số, DLQ, thông báo và hộp việc, DBA, vận hành nền tảng, ATTT, kiểm thử viên, kiến trúc sư, hội đồng thẩm định
@@ -108,7 +108,7 @@ Sơ đồ C4 mức 3 dưới cho thấy các thành phần của PH-18 trong `dh
 
 ```{.mermaid caption="Sơ đồ thành phần C4 mức 3 của PH-18 trong dh-platform và dh-batch"}
 flowchart TB
-  CON["dh-console<br/>/van-hanh/*, /ca-nhan/viec"]
+  CON["dh-console<br/>/van-hanh/*, /viec-cua-toi"]
   PHX["DU phân hệ khác<br/>dh-ops-client, mTLS"]
   P20["PH-20 Quản trị tenant"]
   subgraph Z2["Z2 · dh-gateway"]
@@ -754,7 +754,7 @@ Lớp phụ `OpsDlqWriter`, `OpsNotifications`, `OpsTasks`, `OpsCalendar` chỉ 
 
 **Bộ tiêu thụ.** `DlqTopicConsumer` là bộ nghe Spring Kafka theo lô (`max.poll.records = 500`, `enable.auto.commit = false`, `AckMode.MANUAL`), đồng thời 3 luồng mỗi bản sao, tối đa 6 phân vùng mỗi topic tenant (NFR-18-001 tính 200 bản tin mỗi giây mỗi phân vùng). Giải mã bằng `ErrorHandlingDeserializer`: bản ghi không giải mã được vẫn đi tiếp dạng byte thô với cờ `undecodable` (ERR-18-101), không làm kẹt phân vùng. Với mỗi bản ghi của lô, bộ tiêu thụ gọi `DlqIngestService.ingest` trong một giao dịch riêng; lô chỉ được `acknowledge` khi mọi bản ghi đã commit. Lỗi hạ tầng (CSDL, Garage) làm bộ tiêu thụ `pause` phân vùng, lùi 5, 10, 30, 60 giây rồi `resume` và đọc lại từ offset chưa commit, nên không bản tin nào mất (NFR-18-002, BR-18-011).
 
-**Chuẩn hóa header.** `HeaderNormalizer` đổi tên header về bộ chuẩn của FRS bảng 4.1b trước khi kiểm: `dh-error-code` thành `dh-dlq-error-code`, `dh-attempts` thành `dh-dlq-attempts`, `dhtenant` thành `dh-tenant`, `routeId` thành `dh-flow`, và rút `traceparent` thành `trace_id` 32 ký tự hex. Bảng đổi tên là cấu hình, bị gỡ khi PH-04 và D04-01 CC-CAMEL-05 đã sửa (mục 13.6). Header `authorization`, `cookie` và các header xác thực khác bị loại trước khi lưu (`ck_dlq_message_headers`).
+**Chuẩn hóa header.** `HeaderNormalizer` đổi tên header về bộ chuẩn của FRS bảng 4.1b trước khi kiểm: `dh-error-code` thành `dh-dlq-error-code`, `dh-attempts` thành `dh-dlq-attempts`, `dhtenant` thành `dh-tenant`, `routeId` thành `dh-flow`, và rút `traceparent` thành `trace_id` 32 ký tự hex. PH-18 là chủ topic DLQ chung; PH-04 và D04-01 CC-CAMEL-05 đã đổi sang `{tenant}.ops.dlq.v1` và bộ header chuẩn, nên bảng đổi tên chỉ còn là cấu hình tương thích nguồn cũ, tắt mặc định và gỡ khi hết nguồn cũ (mục 13.6). Header `authorization`, `cookie` và các header xác thực khác bị loại trước khi lưu (`ck_dlq_message_headers`).
 
 **Kiểm ngữ cảnh.** `ContextContractValidator` kiểm theo thứ tự: tenant ở header khớp tiền tố topic (lệch: lưu dưới tenant của topic với trạng thái `POISON`, `missing_context = {dh-tenant}`, ERR-18-103); nguồn đã đăng ký và `ACTIVE` (chưa đăng ký: vẫn lưu `POISON` để không mất, tạo nguồn tạm `UNREGISTERED`); đủ trường bắt buộc, trong đó `dh-flow`, `dh-version` chỉ bắt buộc với nguồn `KAFKA_TOPIC` (thiếu: `POISON`, ERR-18-102). Qua API thì cùng bộ kiểm nhưng thiếu trường trả ERR-18-024 (422) cho bên gọi sửa, vì bên gọi API có mặt để sửa còn bản tin trên topic thì không (FR-18-014). Mỗi mục `POISON` phát EVT-18-06; số mục `POISON` mỗi giờ đưa vào `ThresholdEvaluator` (§4.12).
 
@@ -954,6 +954,8 @@ Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT`
 **Bỏ qua và mở lại.** Bỏ qua cần mã lý do và mô tả ≥ 10 ký tự (ERR-18-007, BR-18-023); hàng loạt tới 1.000 mục chung một lý do. Mục `DISCARDED` mở lại được về `TRIAGED` tới khi `EXPIRED` (ERR-18-034, BR-18-024).
 
 **Lưu giữ.** `RetentionJob` lặp tenant, chọn mục đã đóng có `closed_at` quá `18.dlq.retention.closed-days` và không có liên kết sự cố mở hay lệnh giữ pháp lý (BR-18-025), xóa đối tượng Garage trước rồi mới đặt `payload_location = PURGED`, `status = EXPIRED` (thứ tự này để không bao giờ có dòng `PURGED` mà đối tượng còn). Mục mở quá `18.dlq.retention.open-max-days` không bị dọn mà phát EVT-18-08 loại `AGE`. `PartitionMaintenanceJob` giữ hai tháng phân vùng phía trước và tách, xóa phân vùng khi không còn mục mở và quá `18.dlq.retention.metadata-days` (D03-03-PH18 §3.58).
+
+**Bảng phân vùng và dọn lưu giữ của phân hệ khác.** `PartitionMaintenanceJob` còn gọi hằng ngày `ph20_tenant.p_ensure_partitions('ph20_tenant.usage_snapshot', ngày, 3)` để tạo trước ba tháng phân vùng (thủ tục của PH-20, danh tính dịch vụ của job được PH-20 cấp `EXECUTE`; danh sách bảng ngoài PH-18 là cấu hình `PartitionTarget`). `DETACH` và `DROP` phân vùng cũ vẫn do `ph20_owner` chạy theo `20.usage.retention-months`. Việc dọn `outbox`, `inbox_event`, `idempotency_key`, `file_object`, `usage_report`, `org_import_*` của PH-20 và dọn lưu giữ của PH-01 do từng phân hệ chạy trong tác vụ nền của mình bằng vai chủ schema đó; PH-18 không ghi vào schema phân hệ khác, ngoài lời gọi thủ tục này và công cụ chuyển sáp nhập (FR-18-057).
 
 **Ngưỡng và chỉ số.** `ThresholdEvaluator` mỗi phút tính theo (tenant, nguồn): số mục chưa xử lý so `18.dlq.threshold.depth`, tuổi mục cũ nhất so `18.dlq.threshold.age-hours`, số `POISON` một giờ so `18.dlq.threshold.poison-per-hour`. Vượt thì phát EVT-18-08 một lần khi chuyển từ dưới lên trên ngưỡng (có độ trễ 10% để không dao động), không phát lại mỗi phút. PH-18 không tự làm luật cảnh báo (BR-18-026); `DlqMetricsBinder` đẩy cùng các số đo thành chỉ số Prometheus để PH-13 đặt luật (§10). Thống kê API-18-081 đọc bảng tổng hợp theo giờ do `DlqStatsService` cập nhật cùng tác vụ, không quét bảng gốc.
 
@@ -1232,7 +1234,7 @@ Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT`
 
 **Xuất.** `ExportPurposePolicy` kiểm trạng thái tenant khớp mục đích (bàn giao chỉ khi `DECOMMISSIONED` hoặc đang ngừng, chuyển ô chỉ khi `SUSPENDED`; sai: ERR-18-059). Job đọc từng bảng bằng vai chỉ đọc `NOBYPASSRLS` với `SET LOCAL app.tenant_id`, `COPY … TO STDOUT (FORMAT binary)` theo luồng thẳng lên Garage (multipart), không qua đĩa tạm; `ManifestWriter` ghi danh sách tệp, số dòng, SHA-256 từng tệp và chữ ký transit (BR-18-048). Liên kết tải có hạn `18.export.link-ttl-hours`, gói giữ `18.export.retention-days`. Ở 200 GB, luồng song song 8 bảng với tốc độ giả định 40 MB/giây mỗi luồng cho thời gian khoảng 1 giờ, trong chỉ tiêu 2 giờ (NFR-18-011, giả định đo ở đợt kiểm thử tải).
 
-**Chuyển sáp nhập.** PH-20 gọi API-18-150 với `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`. `MergeTransferService` lũy đẳng theo `mergePlanId:module` (thân khác: ERR-18-061), kiểm hai tenant đang trong kế hoạch sáp nhập ở registry PH-20 và không có tác vụ nặng khác ở cả hai (ERR-18-057, ERR-18-060), tạo dòng `merge_transfer` thuộc tenant đích rồi tạo Job `dh-tenant-export merge-load`. Job đọc dòng của tenant nguồn trong các schema của phân hệ (phiên `app.tenant_id` = nguồn), `OriginTenantRewriter` đổi `tenant_id` thành đích, giữ `id` gốc, ghi `origin_tenant_id` = nguồn, áp bảng ánh xạ mã từ `mappingRef` cho khóa nghiệp vụ trùng, rồi ghi bằng phiên `app.tenant_id` = đích (RLS chặn ghi nhầm tenant khác). Chạy thử chỉ đếm và kiểm xung đột khóa. `Ph20ProgressReporter` đọc tiến độ từ `merge_transfer` và báo PH-20 với khóa lũy đẳng `transferId:sequence`, lỗi thì thử lại và đặt `report_status = REPORT_FAILED` (ERR-18-123). Chuyển sáp nhập ghi thẳng schema phân hệ đích, khác nguyên tắc "ghi qua API nhập" của di trú hệ cũ (ADR-183); lý do và câu hỏi ở Q18-29.
+**Chuyển sáp nhập.** PH-20 gọi API-18-150 bằng tài khoản máy (client credentials qua `apisix-int`, scope `ops:merge-transfer`) với `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`. `MergeTransferService` lũy đẳng theo `mergePlanId:module:mode` (`mode` là `FULL` mặc định hoặc `DELTA` cho lượt bù cuối trước cutover, chỉ trích dòng có `updated_at` từ `since`; thân khác: ERR-18-061), kiểm hai tenant đang trong kế hoạch sáp nhập ở registry PH-20 và không có tác vụ nặng khác ở cả hai (ERR-18-057, ERR-18-060), tạo dòng `merge_transfer` thuộc tenant đích rồi tạo Job `dh-tenant-export merge-load`. Job đọc dòng của tenant nguồn trong các schema của phân hệ (phiên `app.tenant_id` = nguồn), `OriginTenantRewriter` đổi `tenant_id` thành đích, giữ `id` gốc, ghi `origin_tenant_id` = nguồn, áp bảng ánh xạ mã từ `mappingRef` cho khóa nghiệp vụ trùng, rồi ghi bằng phiên `app.tenant_id` = đích (RLS chặn ghi nhầm tenant khác). Chạy thử chỉ đếm và kiểm xung đột khóa. `Ph20ProgressReporter` đọc tiến độ từ `merge_transfer` và báo PH-20 với khóa lũy đẳng `transferId:sequence`, lỗi thì thử lại và đặt `report_status = REPORT_FAILED` (ERR-18-123). Chuyển sáp nhập ghi thẳng schema phân hệ đích, khác nguyên tắc "ghi qua API nhập" của di trú hệ cũ (ADR-183); lý do và câu hỏi ở Q18-29.
 
 ### 4.22. Di trú: nguồn, kế hoạch, lần chạy (`migration.source`, `migration.plan`, `migration.run`, `opsworker.migrate`)
 
@@ -2012,7 +2014,7 @@ Bảng ghi khóa lũy đẳng ở từng đường vào và cửa sổ giữ kh�
 | Sự cố | `sourceRef` | Khi còn mở | Thêm mốc thời gian |
 | Sao lưu | (`object_code`, `tool_run_id`) | Theo hạn giữ | Cập nhật bản ghi |
 | Di trú | `legacySystem:objectType:legacyKey` ở đích | Suốt dự án | Đích trả bản ghi đã có |
-| Chuyển sáp nhập | `mergePlanId:module` | Suốt kế hoạch | Trả chuyển đã có; thân khác thì ERR-18-061 |
+| Chuyển sáp nhập | `mergePlanId:module:mode` | Suốt kế hoạch | Trả chuyển đã có; thân khác thì ERR-18-061 |
 | Sự kiện tiêu thụ | `eventId` ở `inbox_event` | 7 ngày | Bỏ qua |
 | `POST` người dùng | `Idempotency-Key` (`IdempotencyFilter`) | 24 giờ | Trả phản hồi cũ |
 
@@ -2344,6 +2346,8 @@ Ngoài mười điểm trên, `merge_transfer` cùng hướng chuyển sáp nh�
 
 ### 13.6. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì tập này không tự sửa các tài liệu đó. Bốn dòng đầu (D03-03-PH18, D02-03-PH18, D03-04-PH18, ADR-181) là đồng bộ nội bộ PH-18 và đã hấp thụ ở 0.2; các dòng còn lại liên phân hệ, giữ cho đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
@@ -2394,6 +2398,7 @@ Mười câu hỏi dưới đánh số Q18-20…29 theo dải của tập SDD.
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-18 là chủ topic DLQ, merge-transfers qua apisix-int và lượt bù DELTA, route `/viec-cua-toi`, phân vùng và dọn lưu giữ của phân hệ khác |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18: đánh dấu chín điểm lệch §13.5 và bốn dòng đề nghị §13.6 đã hấp thụ ở FRS, CSDL, API 0.2 và ADR-181; dùng API-18-188 cho nguồn `KAFKA_TOPIC`; Q18-21 chốt 14 ngày |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.platform.ops` tám module và `common`, thư viện `dh-ops-client`, mô hình miền, 25 thành phần với khối đặc tả 10 mục, worker `dh-ops-worker` ba công cụ, mười lăm sơ đồ trình tự, bốn sơ đồ trạng thái, outbox và lũy đẳng, đa tenant, bảo mật, quan sát `dh_ops_*`, triển khai, kiểm thử, mười điểm lệch, đề nghị đồng bộ, câu hỏi mở Q18-20…29 |
 

@@ -72,14 +72,14 @@ obj('LimitChangedIn', 'Hạn mức đã áp ở gateway (EVT-03-11).', 'tenantCo
 SEC = '0193a0c3-0000-7000-8000-%012d'
 # (mã, kênh, topic, dữ liệu, ce_type hậu tố, khóa phân vùng, bên nhận, mô tả, tenant của tiêu đề)
 OUTS = [
-    ('EVT-20-01', 'tenantCreated', 'platform.tenant.created.v1', 'TenantCreatedData', 'tenantCode', 'PH-10, PH-03, PH-04, PH-06, PH-13', 'Khai báo xong, saga bắt đầu (`PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166.'),
+    ('EVT-20-01', 'tenantCreated', 'platform.tenant.created.v1', 'TenantCreatedData', 'tenantCode', 'PH-10, PH-03, PH-04, PH-06, PH-13, PH-18', 'Phát sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008, tenant còn `PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166; PH-18 gieo tham số mặc định.'),
     ('EVT-20-02', 'tenantProvisioningFailed', 'platform.tenant.provisioning-failed.v1', 'ProvisioningFailedData', 'tenantCode', 'PH-13, PH-18', 'Saga dừng `FAILED`; PH-18 mở việc xử lý, PH-13 cảnh báo.'),
     ('EVT-20-03', 'tenantActivated', 'platform.tenant.activated.v1', 'TenantActivatedData', 'tenantCode', 'mọi DU, PH-16', 'Tenant `ACTIVE`; PH-16 ghi nhận thời gian khởi tạo.'),
-    ('EVT-20-04', 'tenantStatusChanged', 'platform.tenant.status-changed.v1', 'TenantStatusChangedData', 'tenantCode', 'PH-01, PH-03, PH-04, PH-12, PH-13, PH-19', 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`).'),
+    ('EVT-20-04', 'tenantStatusChanged', 'platform.tenant.status-changed.v1', 'TenantStatusChangedData', 'tenantCode', 'PH-01, PH-03, PH-04, PH-12, PH-13, PH-18, PH-19', 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`).'),
     ('EVT-20-05', 'tenantQuotaChanged', 'platform.tenant.quota-changed.v1', 'QuotaChangedData', 'tenantCode', 'PH-03, PH-04, PH-10, PH-12', 'Hạn mức hợp đồng hoặc ghi đè đổi; nơi thực thi xác nhận bằng EVT-03-11.'),
     ('EVT-20-06', 'tenantQuotaThresholdReached', 'platform.tenant.quota-threshold-reached.v1', 'QuotaThresholdReachedData', 'tenantCode', 'PH-13, PH-18', 'Sử dụng chạm 80% hoặc 100% hạn mức.'),
-    ('EVT-20-07', 'tenantModuleEnabled', 'platform.tenant.module-enabled.v1', 'ModuleEnabledData', 'tenantCode', 'phân hệ được bật', 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166.'),
-    ('EVT-20-08', 'tenantModuleDisabled', 'platform.tenant.module-disabled.v1', 'ModuleDisabledData', 'tenantCode', 'phân hệ bị tắt', 'Tắt hoặc tạm ngừng phân hệ cho tenant.'),
+    ('EVT-20-07', 'tenantModuleEnabled', 'platform.tenant.module-enabled.v1', 'ModuleEnabledData', 'tenantCode', 'phân hệ được bật (PH-19, PH-17, PH-11, PH-14, PH-15)', 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166.'),
+    ('EVT-20-08', 'tenantModuleDisabled', 'platform.tenant.module-disabled.v1', 'ModuleDisabledData', 'tenantCode', 'phân hệ bị tắt (PH-19, PH-17, PH-11, PH-14, PH-15)', 'Tắt hoặc tạm ngừng phân hệ cho tenant.'),
     ('EVT-20-09', 'tenantConfigChanged', 'platform.tenant.config-changed.v1', 'ConfigChangedData', 'tenantCode', 'PH-03, PH-12, dh-console', 'Cấu hình nền tảng hoặc cài đặt tỉnh đổi, kèm số phiên bản cấu hình.'),
     ('EVT-20-10', 'tenantMergeStarted', 'platform.tenant.merge-started.v1', 'MergeStartedData', 'mergePlanId', 'phân hệ có dữ liệu, PH-18', 'Sáp nhập được duyệt, bắt đầu chuyển dữ liệu; khóa phân vùng là `mergePlanId`.'),
     ('EVT-20-11', 'tenantMergeCutover', 'platform.tenant.merge-cutover.v1', 'MergeCutoverData', 'mergePlanId', 'PH-03, PH-12, PH-01', 'Tenant nguồn `MERGED`, chuyển tiếp lượt gọi bật.'),

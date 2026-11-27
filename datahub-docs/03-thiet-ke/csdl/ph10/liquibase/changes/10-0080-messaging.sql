@@ -54,7 +54,7 @@ CREATE TABLE ph10_event.inbox_event (
   CONSTRAINT pk_inbox_event PRIMARY KEY (tenant_id, consumer, event_id),
   CONSTRAINT ck_inbox_event_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_inbox_event_consumer CHECK (consumer ~ '^[A-Z][A-Za-z0-9]+$'),
-  CONSTRAINT ck_inbox_event_prefix CHECK (split_part(source_topic, '.', 1) = ph10_event.f_topic_prefix(tenant_id))
+  CONSTRAINT ck_inbox_event_prefix CHECK (split_part(source_topic, '.', 1) = ph10_event.f_topic_prefix(tenant_id) OR (tenant_id = 'COMMON' AND split_part(source_topic, '.', 1) = 'platform'))
 );
 CREATE INDEX ix_inbox_event_received ON ph10_event.inbox_event (received_at);
 CALL ph10_event.p_enable_rls('ph10_event.inbox_event', 'P');

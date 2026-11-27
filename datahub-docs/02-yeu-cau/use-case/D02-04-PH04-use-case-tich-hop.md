@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH04
 ten: Đặc tả use case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển PH-04, đội kiểm thử, hội đồng thẩm định
 phan_he: PH-04
@@ -1576,7 +1576,7 @@ Use case hệ thống: mô tả hành vi của `dh-runtime` với một lượt 
 
 **Kích hoạt.** `POST /ho-tich/khai-sinh` tới APISIX ngoài, định tuyến vào `apisix-int`.
 
-**Đảm bảo tối thiểu.** Tenant đặt một lần, bất biến (BR-04-010); log, vết không chứa dữ liệu Cá nhân, Nhạy cảm; lỗi phân loại đúng và không lộ chi tiết nội bộ.
+**Đảm bảo tối thiểu.** Tenant đặt một lần, bất biến (BR-04-010); log, vết không chứa dữ liệu Hạn chế, Nhạy cảm; lỗi phân loại đúng và không lộ chi tiết nội bộ.
 
 **Đảm bảo thành công.** Bên gọi nhận `200` với thân đã che theo nghĩa vụ; nhật ký kết nối lên `{tenant}.audit.connection-log.v1`.
 
@@ -1679,7 +1679,7 @@ Hình cho thấy tenant được đặt một lần ở `receive` từ tiêu đ�
 
 **Luồng ngoại lệ.**
 
-- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101 (tiêu đề `dh-error-code`; câu "Bản tin không đúng lược đồ {schemaRef}: {n} lỗi.").
+- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101 (tiêu đề `dh-dlq-error-code`; câu "Bản tin không đúng lược đồ {schemaRef}: {n} lỗi.").
 - **E2. Lỗi nghiệp vụ, dữ liệu.** DLQ, không thử lại; mã ERR-04-108 hoặc ERR-04-109 theo loại lỗi.
 - **E3. Luồng bị tạm dừng.** Ngừng tiêu thụ (ERR-04-110, consumer dừng); độ trễ nhóm tăng, PH-13 cảnh báo theo ngưỡng.
 
@@ -1748,7 +1748,7 @@ Offset chỉ ghi nhận ở bước cuối, sau khi phát xong; nếu runtime d�
 
 - **E1. Câu lệnh vi phạm (ghép chuỗi, `UPDATE`, hai câu lệnh, schema `ph04`).** VR-13 lỗi; ERR-04-031 (422) khi gửi duyệt; "Câu lệnh SQL ở chặng "Đọc CSDL" không được phép: {reason}. Luồng chỉ được đọc dữ liệu." kèm liên kết quy định Q359.
 - **E2. Kết nối không phải loại chỉ đọc cho luồng.** ERR-04-013 (422); "Kết nối "{connection}" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
-- **E3. Quá thời gian hoặc vượt số dòng (runtime).** ERR-04-108 (422); bất đồng bộ vào DLQ với tiêu đề `dh-error-code`; TO thấy ở PH-18.
+- **E3. Quá thời gian hoặc vượt số dòng (runtime).** ERR-04-108 (422); bất đồng bộ vào DLQ với tiêu đề `dh-dlq-error-code`; TO thấy ở PH-18.
 - **E4. Không cấp được tài khoản động.** Lỗi tạm thời, thử lại theo `dh-default-config`; cảnh báo TO ở PH-13.
 
 **Quy tắc áp dụng.** BR-04-015, 010. Tần suất: ước 10–30% luồng của tỉnh trong giai đoạn đầu (GĐ), giảm khi HTTT có API.
@@ -2044,6 +2044,8 @@ Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (
 
 ### 8.4. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Câu thông báo của mọi ngoại lệ lấy từ D02-03-PH04 §9.2 (nguồn chuẩn) và giống nguyên văn ở D03-06-PH04 §5.3 và D03-04-PH04 §6. Các câu dưới đây từng là đề nghị bổ sung vào D03-06-PH04 §5.3 vì giao diện khi đó hiện `title`; bản 0.2 của D03-06-PH04 đã có đủ, nên đề nghị đã hấp thụ. Riêng ERR-04-042, câu đề nghị cũ ("Phiên bản được soạn trên danh mục thành phần cũ…") được thay bằng câu của FRS §9.2.
 
 | Mã | HTTP | Câu thông báo (theo FRS §9.2) | Dùng ở | Trạng thái |
@@ -2084,3 +2086,4 @@ Theo chỉ đạo ngày 25/11/2026, câu hỏi thiếu dữ liệu thật đư�
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu: 22 use case, luồng phụ, ma trận BR, câu hỏi mở | Nhóm phân tích |
 | 0.2 | 26/11/2026 | Chuẩn kết hợp K-TRINH-BAY, K-UC: tóm tắt, chương Giới thiệu đủ mục; sơ đồ tổng hai hình; bảng UC, REQ, quy trình; 22 use case thành khối đặc tả 15 mục, giữ mọi bước, nhánh, mã lỗi của bản 0.1; ngoại lệ có HTTP và câu thông báo (D03-06-PH04 §5.3, D03-04-PH04 §6); mọi use case có sơ đồ trình tự; mục 8.4 Đề nghị đồng bộ | Nhóm viết tài liệu (Claude) |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: tiêu đề dh-dlq-error-code, mức phân loại Hạn chế | Nhóm viết tài liệu (Claude) |

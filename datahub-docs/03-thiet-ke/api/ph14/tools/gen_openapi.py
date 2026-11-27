@@ -34,7 +34,7 @@ PARAMS = {
   "RemoteCodePath": {"name": "remoteCode", "in": "path", "required": True, "schema": STR(64)},
   "Page": {"name": "page", "in": "query", "schema": INT(minimum=1, default=1)},
   "Size": {"name": "size", "in": "query", "schema": INT(minimum=1, maximum=100, default=25), "description": "Vượt 100 trả ERR-14-003 kèm `max`."},
-  "IfMatch": {"name": "If-Match", "in": "header", "required": True, "schema": STR(128), "description": "ETag hiện tại; lệch trả ERR-14-004 (409) kèm `currentEtag`."},
+  "IfMatch": {"name": "If-Match", "in": "header", "required": True, "schema": STR(128), "description": "ETag hiện tại; lệch trả ERR-14-004 (412) kèm `currentEtag`."},
   "IfNoneMatch": {"name": "If-None-Match", "in": "header", "schema": STR(128)},
   "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": True, "schema": STR(128, minLength=16), "description": "Lưu 24 giờ; cùng khóa khác thân trả ERR-14-116."},
   "IdempotencyKeyOpt": {"name": "Idempotency-Key", "in": "header", "schema": STR(128, minLength=16), "description": "Bắt buộc khi dịch vụ có `operationType = WRITE` (thiếu: ERR-14-003); cùng khóa khác nội dung trả ERR-14-116."},
@@ -58,7 +58,8 @@ HTTP_RESP = {  # HTTP → (tên response dùng chung, mô tả)
   "401": ("Unauthorized", "Thiếu token hoặc token hết hạn; chứng thư mTLS sai (ERR-14-120)."),
   "403": ("Forbidden", "Không đủ quyền, sai tenant, bốn mắt (ERR-14-007), chưa xác thực lại (ERR-14-030), mục đích hoặc nguồn bị chặn (ERR-14-106, 119, 126)."),
   "404": ("NotFound", "Không tìm thấy hoặc thuộc tenant khác (ERR-14-001, 031, 129, 102)."),
-  "409": ("Conflict", "Trạng thái không cho phép, trùng mã, `ETag` lệch, chạy trùng (ERR-14-002, 004, 006, 010, 013, 023, 026, 033, 116, 122, 130)."),
+  "409": ("Conflict", "Trạng thái không cho phép, trùng mã, chạy trùng (ERR-14-002, 004, 006, 010, 013, 023, 026, 033, 116, 122, 130)."),
+  "412": ("PreconditionFailed", "`If-Match` lệch `ETag` hiện tại (ERR-14-004), kèm `currentEtag`."),
   "422": ("Unprocessable", "Lỗi nghiệp vụ theo dữ liệu; mã cụ thể trong `code`."),
   "429": ("TooManyRequests", "Vượt giới hạn tần suất hoặc hạn mức (ERR-14-029, 104, 123); kèm `retryAfterSeconds` hoặc `resetAt`."),
   "500": ("InternalError", "Lỗi nội bộ (ERR-14-127), kèm `traceId`; `detail` chung chung."),
@@ -68,16 +69,16 @@ HTTP_RESP = {  # HTTP → (tên response dùng chung, mô tả)
 }
 RESPONSES = {n: {"description": d, "content": {"application/problem+json": {"schema": R("ProblemDetails"),
     "example": {"type": f"https://datahub.gov.vn/errors/ERR-14-{ex}", "title": d.split("(")[0].strip().rstrip(";,."), "status": int(st), "code": f"ERR-14-{ex}", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}
-    for st, (n, d), ex in [(k, v, {"400": "003", "401": "003", "403": "007", "404": "001", "409": "004", "422": "016", "429": "104", "500": "127", "502": "101", "503": "103", "504": "115"}[k]) for k, v in HTTP_RESP.items()]}
+    for st, (n, d), ex in [(k, v, {"400": "003", "401": "003", "403": "007", "404": "001", "409": "004", "412": "004", "422": "016", "429": "104", "500": "127", "502": "101", "503": "103", "504": "115"}[k]) for k, v in HTTP_RESP.items()]}
 RESPONSES["Unauthorized"]["content"]["application/problem+json"]["example"] = {"type": "about:blank", "title": "Chưa xác thực", "status": 401, "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}
 RESPONSES["NotModified"] = {"description": "Không đổi (If-None-Match khớp)."}
 ERR_HTTP = {c: [x.strip() for x in h.split(",")] for c, h, _ in spec.ERRS}
 
 IFM = {"004", "005", "006", "007", "008", "009", "013", "016", "017", "020", "022", "026", "027", "032", "033", "034", "038", "045", "050", "052", "068", "071", "090", "092"}
-SVC_ALSO = {"054": "national.sync.trigger", "056": "national.sync.trigger", "058": "national.health-read", "060": "national.health-read", "073": "national.health-read"}
+SVC_ALSO = {"054": "national.sync.trigger", "056": "national.sync.trigger", "058": "national.health-read", "060": "national.health-read", "073": "national.health-read", "043": "national.health-read"}
 SCOPES = {"national.invoke": "Gọi dịch vụ quốc gia; thực tế dùng `national.invoke.{nhóm}` (vd `national.invoke.lltp`)",
           "national.runtime-config": "Đọc ảnh chụp cấu hình không bí mật (`dh-runtime`)",
-          "national.health-read": "Đọc chỉ số sức khỏe (PH-13)",
+          "national.health-read": "Đọc chỉ số sức khỏe (PH-13) và mức dùng hạn mức (PH-01)",
           "national.catalog.read": "Đọc danh mục dùng chung quốc gia (PH-07)",
           "national.catalog.propose": "Gửi đề xuất bổ sung danh mục (PH-07)",
           "national.sync.trigger": "Kích hoạt đồng bộ (PH-02, PH-06)",
@@ -127,7 +128,7 @@ X = {
   "038": ("transitionSignatureIncident", "IncidentTransition", "SignatureIncident", ["004"], "`RELEASE_HOLD` giải trừ `securityHold` của nền tảng; chỉ SO (`PERM-14-operate` và vai trò SO).", []),
   "039": ("rotatePlatformCredentials", "RotateCredentialRequest", "RotationStatus", ["004", "034", "035"], "Điều phối chuyển tiếp ở cổng; bí mật mới ghi ở PH-05. Kiểm tra token bằng thông tin mới trước khi chuyển; thất bại thì hủy (FR-14-025).", []),
   "040": ("testPlatformToken", None, "TokenTestResult", ["004", "029", "034", "035"], "Lấy token ở `worker`, không lưu. Tối đa `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).", [ENVQ]),
-  "041": ("listQuotas", None, "QuotaList", [], None, [Q("platformCode", R("PlatformCode")), Q("serviceCode", R("ServiceCode"))]),
+  "041": ("listQuotas", None, "QuotaList", [], "Tham số tùy chọn `history = true` trả thêm các phiên bản hạn mức đã bị thay thế, xếp theo `effectiveFrom` giảm dần, cho tab Lịch sử hạn mức của UI-14-09 (`CMP-VersionTimeline`).", [Q("platformCode", R("PlatformCode")), Q("serviceCode", R("ServiceCode")), Q("history", BOOL)]),
   "042": ("createQuota", "QuotaCreate", "Quota", ["016", "017"], "Môi trường thật tạo yêu cầu duyệt (hộp \"Việc của tôi\"). Thiếu căn cứ văn bản ERR-14-016 (BR-14-011). Phát EVT-14-08.", []),
   "043": ("getQuotaUsage", None, "QuotaUsage", [], "Đọc từ bộ đếm ở Valkey; ngưỡng cảnh báo theo `14.quota.warn-levels`.", [Q("platformCode", R("PlatformCode"))]),
   "044": ("listQuotaAllocations", None, "AllocationList", [], None, [Q("serviceCode", R("ServiceCode")), Q("period", enum("HOUR", "DAY", "MONTH"))]),
@@ -150,8 +151,8 @@ X = {
   "058": ("getHealth", None, "HealthList", [], "PH-13 gọi bằng token dịch vụ `national.health-read`. Có `ETag`.", [Q("platformCode", R("PlatformCode"))]),
   "059": ("probePlatform", None, "ProbeResult", ["004", "029", "035"], "Chạy ở `worker`: DNS, TLS, token, gọi thăm dò, chữ ký. Không quá `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).", [ENVQ]),
   "060": ("getDashboard", None, "Dashboard", [], "Một lời gọi dựng màn tổng quan (UI-14-01).", []),
-  "061": ("listTransactions", None, "TransactionPage", [], "Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che.",
-          [Q("from", TS), Q("to", TS), Q("systemCode", R("SystemCode")), Q("serviceCode", R("ServiceCode")), QA("state", R("TxnState")), Q("direction", R("Direction")), Q("caseCode", STR(64)), Q("transactionCode", STR(64)), Q("fromCache", BOOL), *PG]),
+  "061": ("listTransactions", None, "TransactionPage", [], "Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che. Tham số tùy chọn `after` là con trỏ keyset theo (`started_at`, `transaction_code`): khi có `after`, `page` bị bỏ qua và phản hồi trả `nextCursor`, dùng cho khoảng thời gian lớn (Q14-59). `asyncState` lọc theo trạng thái yêu cầu bất đồng bộ (hàng chờ ở UI-14-12), `stale` lọc lượt trả dữ liệu đệm quá hạn.",
+          [Q("from", TS), Q("to", TS), Q("systemCode", R("SystemCode")), Q("serviceCode", R("ServiceCode")), QA("state", R("TxnState")), Q("direction", R("Direction")), Q("caseCode", STR(64)), Q("transactionCode", STR(64)), Q("fromCache", BOOL), Q("stale", BOOL), QA("asyncState", R("AsyncState")), Q("after", STR(256)), *PG]),
   "062": ("getTransaction", None, "TransactionDetail", ["031"], "Siêu dữ liệu và dòng thời gian; không có nội dung (dùng API-14-063).", []),
   "063": ("revealTransactionPayload", "RevealRequest", "RevealResult", ["030", "031", "035"], "Chỉ SO, bắt buộc lý do và `acr` nhiều yếu tố trong 15 phút. Mỗi lần xem ghi vết; vượt `14.reveal.max-per-day` sinh EVT-14-16. Hết hạn lưu ERR-14-031.", []),
   "064": ("exportTransactionEvidence", "ExportEvidenceRequest", "JobAccepted", ["030", "031"], "Gói bằng chứng có chữ ký, giữ 7 ngày; giao cho AU qua kênh có kiểm soát.", []),

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH12
 ten: Thiết kế giao diện màn hình phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-12
@@ -311,7 +311,7 @@ Bảng này là nguồn chuẩn cho mọi câu hiển thị của PH-12. Câu n�
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
 | ERR-12-001 | "Không tìm thấy {đối tượng} {mã}. Có thể đã bị xóa hoặc không thuộc tỉnh của anh/chị." | Trang ST-08 |
-| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." | Dưới trường nhập |
+| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." Với mã nhóm trùng: "Mã nhóm này đã được dùng. Chọn mã khác." | Dưới trường nhập |
 | ERR-12-003 | "Có {n} trường chưa hợp lệ. Sửa các trường được đánh dấu." | `CMP-Alert` đầu biểu mẫu, liên kết nhảy tới trường |
 | ERR-12-004 | "Đơn vị {mã} không tồn tại hoặc đã hết hiệu lực." | Dưới trường đơn vị |
 | ERR-12-005 | "Thư điện tử phải thuộc miền {danh sách miền} của tỉnh." | Dưới trường thư |
@@ -1973,6 +1973,8 @@ Bộ 19 ảnh nằm ở `ph12/hifi/` (`ui-12-01.png`…`ui-12-19.png`), sinh b�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng sau tổng hợp các đề nghị bổ sung cho D03-05 và D03-06-00 mà việc thiết kế màn PH-12 phát hiện, kèm lý do, để đợt đồng bộ tài liệu chung xử lý.
 
 | Tài liệu | Đề nghị | Lý do |
@@ -1983,11 +1985,13 @@ Bảng sau tổng hợp các đề nghị bổ sung cho D03-05 và D03-06-00 mà
 | D03-05-04 `CMP-CodeEditor` | Xác nhận ngôn ngữ Rego, chế độ trình đọc màn hình, tab nhiều tệp, bảng màu cú pháp đạt tương phản AA | UI-12-12 |
 | D03-05-02 | Mục "xuất token cho theme Keycloak" (biến CSS tối thiểu cho trang xác thực) | UI-12-18 ngoài `dh-console` |
 | D03-06-00 §4 | Ghi nhận biến thể PTN-07 "trình soạn mã" (ba cột, bảng dưới, thanh trạng thái) khác canvas luồng | UI-12-12 |
-| Cài đặt cá nhân `/ca-nhan/cai-dat` | Tùy chọn tắt hoặc đổi phím tắt một ký tự | WCAG 2.1.4 |
+| Cài đặt cá nhân `/ca-nhan/cai-dat` | Tùy chọn tắt hoặc đổi phím tắt một ký tự | WCAG 2.1.4. Đã có: route ở D03-06-00 và công tắc "Bật phím tắt một ký tự" của PTN-12 và `CMP-ShortcutSheet` (D03-05-04 §12.9); không cần thêm |
 
 : Đề nghị bổ sung cho D03-05 và D03-06-00
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Bảng sau tổng hợp các API mà màn PH-12 cần nhưng D03-04-PH12 chưa có, kèm màn sử dụng, để đồng bộ với tập API.
 
@@ -2003,6 +2007,8 @@ Bảng sau tổng hợp các API mà màn PH-12 cần nhưng D03-04-PH12 chưa c
 : Đề nghị bổ sung API
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu trách nhiệm; tập này chỉ ghi lại.
 
@@ -2039,3 +2045,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập màn hình PH-12: 19 màn UI-12-01…19 theo mẫu PH-05 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thông báo ERR-12-002 theo FRS |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi đã có công tắc phím tắt một ký tự (D03-05-04 §12.9, PTN-12) |

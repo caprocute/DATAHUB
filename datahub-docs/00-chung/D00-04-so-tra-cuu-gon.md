@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D00-04
 ten: Sổ tra cứu gọn cho người viết tài liệu phân hệ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Người viết tài liệu phân hệ (người và Claude), kiểm thử viên, kỹ sư
 mo_ta: Sổ tra cứu gọn cho người viết tài liệu phân hệ về mã đã dùng, số kế tiếp, quy ước đặt tên và các quyết định đã chốt, để không phải đọc lại tài liệu gốc.
@@ -26,7 +26,7 @@ tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D00-02 Sổ ADR; D00-03
 | Chỉ số | Giá trị |
 |---|---|
 | Phân hệ | 20 (12 MVP, 4 đợt 2, 4 đợt 3) |
-| Phân hệ đã đủ bảy tập | 4 (PH-04, 05, 07, 10) |
+| Phân hệ đã đủ bảy tập | 20 (cả 20 phân hệ) |
 | Chủ đề quyết định đã chốt | 9 |
 
 : Con số chính của sổ tra cứu gọn
@@ -94,13 +94,13 @@ Bảng sau cho biết khi cần một chi tiết thì mở tài liệu nào, m�
 
 ## 2. Phân hệ, DU và tài liệu đã có
 
-Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và tình trạng tài liệu ngày 26/11/2026. Package Java là `vn.datahub.{du}.{module}`.
+Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và tình trạng tài liệu ngày 27/11/2026. Package Java là `vn.datahub.{du}.{module}`.
 
 | PH | Tên | DU | Đợt | Tài liệu |
 |---|---|---|---|---|
-| 01 | Kết nạp HTTT | `dh-connect` | MVP | chưa |
-| 02 | Danh mục dịch vụ | `dh-connect` | MVP | chưa |
-| 03 | Cổng API | `apisix`, `dh-connect` | MVP | chưa |
+| 01 | Kết nạp HTTT | `dh-connect` | MVP | đủ bảy tập (FRS 0.2) |
+| 02 | Danh mục dịch vụ | `dh-connect` | MVP | đủ bảy tập (FRS 0.2) |
+| 03 | Cổng API | `apisix`, `dh-connect` | MVP | đủ bảy tập (FRS 0.1) |
 | 04 | Lõi tích hợp, trình thiết kế luồng | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.2 |
 | 05 | Bộ điều hợp | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.1 |
 | 06 | Dữ liệu chủ | `dh-data` | Đợt 3 | đủ bảy tập (FRS 0.2) |
@@ -109,14 +109,14 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 09 | Quyền riêng tư | `dh-data` | Đợt 2 | đủ bảy tập (FRS 0.2) |
 | 10 | Sự kiện | `dh-integration`, `dh-runtime`, `kafka` | MVP | đủ bảy tập (FRS 0.3) |
 | 11 | Quy trình liên thông | `dh-platform` | Đợt 2 | đủ bảy tập (FRS 0.2, CSDL 0.4) |
-| 12 | Định danh và phân quyền | `keycloak`, `opa`, `dh-platform` | MVP | chưa |
-| 13 | Giám sát và kiểm toán | `dh-platform`, LGTM | MVP | chưa |
-| 14 | Kết nối quốc gia | `dh-runtime`, `dh-integration` | MVP | chưa |
-| 15 | Cổng nhà phát triển | `dh-portal`, `dh-connect` | Đợt 2 | chưa |
+| 12 | Định danh và phân quyền | `keycloak`, `opa`, `dh-platform` | MVP | đủ bảy tập (FRS 0.1) |
+| 13 | Giám sát và kiểm toán | `dh-platform`, LGTM | MVP | đủ bảy tập (FRS 0.2) |
+| 14 | Kết nối quốc gia | `dh-runtime`, `dh-integration` | MVP | đủ bảy tập (FRS 0.1) |
+| 15 | Cổng nhà phát triển | `dh-portal`, `dh-connect` | Đợt 2 | đủ bảy tập (FRS 0.3) |
 | 16 | Báo cáo chỉ tiêu và sổ kiến trúc | `dh-platform` | Đợt 3 | đủ bảy tập (FRS 0.2) |
 | 17 | Trợ lý AI | `dh-assist` | Đợt 3 | đủ bảy tập (FRS 0.2) |
 | 18 | Vận hành và xử lý lỗi | `dh-platform` | MVP | đủ bảy tập (FRS 0.2) |
-| 19 | Thanh toán | `dh-payment` | Đợt 2 | BRD, khung truy vết (luồng riêng) |
+| 19 | Thanh toán | `dh-payment` | Đợt 2 | đủ bảy tập (FRS 0.2), BRD và khung truy vết |
 | 20 | Quản trị tenant | `dh-platform` | MVP | đủ bảy tập 0.2 |
 
 : Phân hệ, DU triển khai, đợt và tình trạng tài liệu
@@ -129,14 +129,16 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 
 | Họ | Dải | Ghi chú |
 |---|---|---|
-| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 · 080–084 PH-06 · 085–089 PH-08 · 090–094 PH-09 (đề xuất, chưa có tệp) · 160–164 PH-16 (đề xuất, chưa có tệp) · 180–184 PH-18 · 200–204 PH-20 (đề xuất, chưa có tệp) | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
+| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 · 075–079 PH-14 · 080–084 PH-06 · 085–089 PH-08 · 090–094 PH-09 · 095–099 PH-15 · 110–114 PH-11 · 160–164 PH-16 · 170–174 PH-17 · 180–184 PH-18 · 200–204 PH-20 (mọi dải chưa có tệp đều là đề xuất, nội dung ở D00-02 §4.1) | 014–019, 024–029, 039, 074 còn trống; ADR-170…174 và 180…184 đã có tệp. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
 | SEC | 01–09 quản trị · 10–19 mạng · 20–29 IAM · 30–39 dữ liệu · 40–49 ứng dụng · 50–59 nền tảng · 60–67 giám sát · 70–75 sự cố · 80–88 tenant · 90–99 cấp độ 4 | Định nghĩa ở D03-07; tập phân hệ chỉ tham chiếu, không tạo mới |
-| ERR-{PH} | 001–099 control plane · 101–199 runtime/data plane | Theo cách PH-04 (ERR-04-001…049, 101…112) |
-| Câu hỏi mở | `Q{PH}-nn` theo tập: 01–19 FRS · 20–29 SDD · 30–39 màn hình · 40–44 test · 45–49 UC · 50–54 CSDL · 55–59 API | Theo cách PH-04. Câu hỏi cấp hệ thống: Q300–313 D03-07, Q320–329 D03-08, Q330–349 D03-09, Q350–359 D04, Q360–369 D05-01 |
-| Giả định | GĐ-01…07 (sổ ở phụ lục D02-01): tỉnh T01 quy mô vừa, 200 HTTT | Thiếu số liệu thật thì dùng giả định có ghi cơ sở, không hỏi người dùng |
+| ERR-{PH} | 001–099 control plane · 101–199 runtime/data plane; mã cổng trả cho bên gọi (ví dụ gateway) cũng nằm ở 101–199 | Theo cách PH-04 (ERR-04-001…049, 101…112), PH-03 (ERR-03-101…199) |
+| ERR-00 | Mã lỗi dùng chung mọi phân hệ, chưa có tài liệu gốc riêng; danh mục định nghĩa ở mục 4 (hàng "Lỗi nền ERR-00"): `003` (tenant không khớp), `401`, `403`, `412` (`If-Match` lệch), `422`, `428`, `500`; số theo mã HTTP | Lỗi chung khác thì ghi mã HTTP và câu thông báo, chờ cấp mã; mã lỗi riêng của phân hệ (ví dụ ERR-01-007) ưu tiên khi hợp đồng phân hệ đã định nghĩa |
+| Câu hỏi mở | `Q{PH}-nn` theo tập: 01–19 FRS · 20–29 SDD · 30–39 màn hình · 40–44 test · 45–49 UC · 50–54 CSDL · 55–59 API | Theo cách PH-04. Câu hỏi cấp hệ thống: Q300–313 D03-07, Q320–329 D03-08, Q330–349 D03-09, Q350–359 D04, Q360–369 D05-01, Q370–374 D02-05, Q375–379 D02-06 |
+| Tham số cấu hình | Khóa `{PH}.{nhóm}.{tên}` (ví dụ `18.dlq.dedup-window-days`) do mục 8.2 của FRS phân hệ chủ định nghĩa; giá trị lưu ở kho tham số tập trung PH-18 (ADR-180); bộ đệm phía phân hệ dùng tối đa 60 giây (`18.param.cache-ttl-seconds`, BR-18-006) | Phân hệ khác không đặt bộ đệm tham số dài hơn 60 giây |
+| Giả định | GĐ-01…07 (sổ ở phụ lục D02-01): tỉnh T01 quy mô vừa, 200 HTTT; GĐ-BL-01…04 (D02-05); GĐ-DFD-01…03 (D02-06) | Thiếu số liệu thật thì dùng giả định có ghi cơ sở, không hỏi người dùng |
 | Cổng | `CI-1…9` cổng CI (D04-02) · `RG-1…5` cổng phát hành kiểm thử (D05-01) · `G0…G5` cổng quản lý dự án (D01-02) | Không dùng G1/G2 cho cổng CI |
 | Hạ tầng | `Z0…Z7` vùng mạng · `QM-NHO/VUA/LON/CHUNG` quy mô · `HT-A` on-prem, `HT-B` cloud dùng chung · `TPH-n` tầng phục hồi | D03-07, D03-09 |
-| Tenant | Ví dụ trong tài liệu: `T68` (topic chữ thường `t68.`), `T01` cho giả định; `T90…T99` dành cho kiểm thử; `COMMON` là tenant toàn quốc | Không dùng tên tỉnh làm mã |
+| Tenant | Ví dụ trong tài liệu: `T68` (topic chữ thường `t68.`), `T01` cho giả định; `T90…T99` dành cho kiểm thử (gồm kiểm thử rò rỉ); `T01…T34` chỉ là 34 tenant tổng hợp để đo hiệu năng (NFR-20-005, `testTenant = true`); `COMMON` là tenant toàn quốc | Không dùng tên tỉnh làm mã |
 | Mẫu màn | `PTN-01…14` (D03-06-00 §4): 01 Danh sách · 02 Chi tiết · 03 Biểu mẫu trang · 04 Biểu mẫu nhanh · 05 Wizard · 06 Dashboard · 07 Designer · 08 Cây + bảng · 09 Nhập có xem trước · 10 Hộp việc, duyệt · 11 Giám sát, tra log · 12 Cài đặt · 13 Trang lỗi · 14 Tài liệu cổng | Tập màn phân hệ không tạo PTN mới |
 | Thành phần | `CMP-*`: 44 nguyên tử (D03-05-03), 75 phức hợp (D03-05-04), 2 nền = 121 | Tập màn phân hệ không tự đặt CMP hay token; cần thêm thì ghi vào phụ lục "Đề nghị bổ sung cho D03-05" |
 
@@ -232,6 +234,27 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | UC | 18 | 40 | `UC-18-01` | `UC-18-40` | `UC-18-41` |
 | UC | 19 | 29 | `UC-19-01` | `UC-19-29` | `UC-19-30` |
 | UC | 20 | 36 | `UC-20-01` | `UC-20-36` | `UC-20-37` |
+| US | 00 | 40 | `US-00-001` | `US-00-093` | `US-00-094` |
+| US | 01 | 51 | `US-01-001` | `US-01-051` | `US-01-052` |
+| US | 02 | 62 | `US-02-001` | `US-02-062` | `US-02-063` |
+| US | 03 | 59 | `US-03-001` | `US-03-059` | `US-03-060` |
+| US | 04 | 60 | `US-04-001` | `US-04-084` | `US-04-085` |
+| US | 05 | 62 | `US-05-001` | `US-05-062` | `US-05-063` |
+| US | 06 | 60 | `US-06-001` | `US-06-060` | `US-06-061` |
+| US | 07 | 53 | `US-07-001` | `US-07-053` | `US-07-054` |
+| US | 08 | 61 | `US-08-001` | `US-08-061` | `US-08-062` |
+| US | 09 | 64 | `US-09-001` | `US-09-064` | `US-09-065` |
+| US | 10 | 76 | `US-10-001` | `US-10-076` | `US-10-077` |
+| US | 11 | 66 | `US-11-001` | `US-11-066` | `US-11-067` |
+| US | 12 | 62 | `US-12-001` | `US-12-062` | `US-12-063` |
+| US | 13 | 61 | `US-13-001` | `US-13-061` | `US-13-062` |
+| US | 14 | 57 | `US-14-001` | `US-14-057` | `US-14-058` |
+| US | 15 | 62 | `US-15-001` | `US-15-062` | `US-15-063` |
+| US | 16 | 58 | `US-16-001` | `US-16-058` | `US-16-059` |
+| US | 17 | 62 | `US-17-001` | `US-17-062` | `US-17-063` |
+| US | 18 | 72 | `US-18-001` | `US-18-072` | `US-18-073` |
+| US | 19 | 69 | `US-19-001` | `US-19-069` | `US-19-070` |
+| US | 20 | 70 | `US-20-001` | `US-20-070` | `US-20-071` |
 | API | 01 | 88 | `API-01-001` | `API-01-088` | `API-01-089` |
 | API | 02 | 98 | `API-02-001` | `API-02-098` | `API-02-099` |
 | API | 03 | 96 | `API-03-001` | `API-03-096` | `API-03-097` |
@@ -345,14 +368,14 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | TC | 11 | 171 | `TC-11-001` | `TC-11-171` | `TC-11-172` |
 | TC | 12 | 127 | `TC-12-001` | `TC-12-127` | `TC-12-128` |
 | TC | 13 | 126 | `TC-13-001` | `TC-13-126` | `TC-13-127` |
-| TC | 14 | 156 | `TC-14-001` | `TC-14-156` | `TC-14-157` |
+| TC | 14 | 157 | `TC-14-001` | `TC-14-157` | `TC-14-158` |
 | TC | 15 | 208 | `TC-15-001` | `TC-15-208` | `TC-15-209` |
 | TC | 16 | 124 | `TC-16-001` | `TC-16-124` | `TC-16-125` |
 | TC | 17 | 163 | `TC-17-001` | `TC-17-163` | `TC-17-164` |
 | TC | 18 | 171 | `TC-18-001` | `TC-18-171` | `TC-18-172` |
 | TC | 19 | 187 | `TC-19-001` | `TC-19-836` | `TC-19-837` |
 | TC | 20 | 233 | `TC-20-001` | `TC-20-233` | `TC-20-234` |
-| ADR | — | 70 | `ADR-001` | `ADR-184` | theo dải nhóm, §3 |
+| ADR | — | 75 | `ADR-001` | `ADR-204` | theo dải nhóm, §3 |
 | SEC | — | 92 | `SEC-01` | `SEC-99` | theo dải nhóm, §3 |
 | PTN | — | 14 | `PTN-01` | `PTN-14` | `PTN-15` |
 | LGC-APIM | — | 27 | `LGC-APIM-001` | `LGC-APIM-027` | `LGC-APIM-028` |
@@ -365,8 +388,8 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | LGC-PAY | — | 26 | `LGC-PAY-001` | `LGC-PAY-026` | `LGC-PAY-027` |
 | LGC-TOOL | — | 29 | `LGC-TOOL-001` | `LGC-TOOL-029` | `LGC-TOOL-030` |
 | REQ | — | 31 | `REQ-01` | `REQ-99` | `REQ-100` |
-| CMP-LAW | — | 33 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
-| PERM | 01…20 | 240 | — | — | động từ theo D02-08 |
+| CMP-LAW | — | 34 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
+| PERM | 01…20 | 253 | — | — | động từ theo D02-08 |
 
 : Dải mã đã dùng thực tế trong bộ tài liệu (sinh tự động)
 
@@ -381,11 +404,18 @@ Bảng sau tóm tắt D00-01 §6, §8 và D03-06-00 §2.4 ở mức đủ để 
 | Tệp tập phân hệ | `{nhóm}/{loại}/D0x-0y-PH{nn}-{loai}-{ten-khong-dau}.md` | `02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md` |
 | Metadata đầu tệp | sáu trường `ma_tai_lieu`, `ten`, `phien_ban`, `ngay`, `trang_thai`, `nguoi_doc`; thêm `phan_he` | tiêu đề `# D02-03-PH07 · …` |
 | Mở đầu tài liệu | Mục "Tóm tắt cho hội đồng thẩm định" (mục tiêu, phạm vi, căn cứ pháp lý) trước phần kỹ thuật | mọi tập PH-07 |
-| Schema PostgreSQL | `ph{nn}_{tên ngắn}` | `ph07_rdm` (PH-04 đang dùng `ph04`, chờ đợt đồng bộ) |
+| Schema PostgreSQL | `ph{nn}_{tên ngắn}`; một phân hệ có thể có nhiều schema khi tách theo nhóm (PH-13 dùng `ph13_audit`, `ph13_obs`) | `ph07_rdm` (PH-04 đang dùng `ph04`, chờ đợt đồng bộ) |
+| Vai CSDL | Vai sở hữu `ph{nn}_owner` (không đăng nhập), vai ứng dụng `ph{nn}_app`, `ph{nn}_platform_app` khi có truy cập liên tenant, vai đọc `ph{nn}_ro`; vai kiểm thử dùng chung `dh_platform_app`, `dh_platform_ctl`, `dh_report_ro` (PH-20 đặt ở bài kiểm cách ly, khối `ELSE GRANT`) | `ph20_owner`, `ph20_app`, `ph20_platform_app`, `ph20_ro` |
 | Bảng, cột | `snake_case`, tiếng Anh, số ít; luôn có `id`, `tenant_id`, `created_*`, `updated_*`, `version` | `catalog_item` |
-| REST | `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}`, lỗi RFC 9457, phân trang `page`/`size` | `/api/rdm/v1`, `/api/integration/v1` |
+| REST | `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}`, lỗi RFC 9457, phân trang `page`/`size`. Nhóm đang dùng: `onboarding`, `catalog`, `gateway`, `integration`, `adapter`, `mdm`, `rdm`, `dq`, `privacy`, `event`, `bpm`, `iam`, `observability`, `audit`, `national`, `portal`, `kpi`, `assist`, `ops`, `payment`, `platform`, `tenant`; đường nội bộ dạng `/ops/internal/v1`, `/internal/tenant/v1` | `/api/rdm/v1`, `/api/integration/v1`, `/api/gateway/v1`, `/api/ops/v1` |
+| Lỗi REST | RFC 9457, `type` = `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}` cho mọi phân hệ (không dùng `urn:dh:err:` hay `…/problems/{nhóm}/…`) | `https://datahub.gov.vn/errors/ERR-07-026` |
+| Lỗi nền ERR-00 | Khung lỗi chung mọi phân hệ, `code` trong thân RFC 9457, không cấp mã riêng cho cùng lỗi: `ERR-00-003` (`tenant_id` trong thân khác ngữ cảnh xác thực, FR-00-010, từ chối khi không bỏ qua), `ERR-00-401` (401, chưa xác thực hoặc token hết hạn, mọi operation), `ERR-00-403` (403, thiếu quyền chức năng `PERM-{PH}-*` hoặc scope máy; `403` do phạm vi dữ liệu hay nghiệp vụ dùng mã riêng của phân hệ), `ERR-00-412` (412, `If-Match` lệch `version`, chỉ khi hợp đồng phân hệ chưa có mã riêng, D04-01 CC-ERR-04), `ERR-00-422-IDEMPOTENCY` (422, cùng `Idempotency-Key` khác thân, D04-01 CC-TX-06), `ERR-00-428` (428, thiếu `If-Match` hoặc `Idempotency-Key` bắt buộc), `ERR-00-500` (500, lỗi không lường trước, D04-01 CC-ERR-03) | `https://datahub.gov.vn/errors/ERR-00-401` |
 | Hành động REST | `POST …/{ma}:{động-từ}` | `POST /workspaces/{workspaceCode}:archive` |
-| Topic Kafka | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}`, chữ thường | `t68.rdm.catalog.published.v1` |
+| Topic Kafka | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}`, chữ thường; tên do phân hệ phát sự kiện đặt, bên nghe theo. Miền đang dùng: `catalog`, `connect`, `gateway`, `integration`, `adapter`, `national`, `mdm`, `rdm`, `dq`, `privacy`, `event`, `bpm`, `iam`, `obs`, `audit`, `portal`, `kpi`, `assist`, `ops`, `payment`, `tenant` | `t68.rdm.catalog.published.v1`, `t68.obs.audit.recorded.v1` |
+| Topic cấp nền tảng | Không có tiền tố tenant, bắt đầu bằng `platform`; tenant `PLATFORM` của họ `obs` cũng dùng tiền tố `platform` | `platform.tenant.created.v1`, `platform.tenant.module-enabled.v1` (EVT-20-07 do PH-20 phát, PH-19 và các bên nghe dùng đúng tên này), `platform.obs.audit.recorded.v1` |
+| Topic DLQ | `{tenant}.ops.dlq.v1` kèm bộ header theo bảng 4.1b của FRS PH-18; `HeaderNormalizer` của PH-04 chỉ giữ để tương thích hệ cũ | `t68.ops.dlq.v1` |
+| Tiêu đề CloudEvents | Chế độ nhị phân, tiêu đề Kafka `ce_*`; `ce_dhtenant` mang mã tenant bị tác động, `PLATFORM` với sự kiện cấp nền tảng, tenant đích với sự kiện sáp nhập; tên lược định danh `vn.datahub.{...}` của Apicurio không phải tên topic | `ce_dhtenant: T68` |
+| Khóa Valkey, OpenBao, bucket | Valkey `{tenant}:{mã-ngắn}:*` (`dq`, `kpi`, `evt`, `nat`, `bpm`, `privacy`, `mdm`, `iam`, `assist`, `portal`, `payment`, `rdm`); khóa OpenBao và bucket `dh-{tenant}-{mô-đun}-{mục-đích}`, kho cấu hình `dh-flows-{tenant}`, `dh-config-{tenant}` (ADR-068) | `{tenant}:dq:*`, `dh-{tenant}-dq-hmac`, `dh-{tenant}-dq-sign`, `dh-{tenant}-portal`, `dh-{tenant}-portal-render` |
 | Route giao diện | `/{nhóm}/{tài-nguyên}/{ma}/{màn-con}` tiếng Việt không dấu; màn con `/moi`, `/{ma}`, `/{ma}/sua`, `/{ma}/thiet-ke`, `/{ma}/lich-su`, `/nhap` | `/du-lieu/danh-muc/DM_GIOI_TINH`, `/tich-hop/luong/{ma-luong}/thiet-ke` |
 | Query giao diện | `q`, `trang` (từ 1), `co` (10/20/50/100), `sap-xep=truong:tang\|giam`, `tu`/`den`, `khoang`, `chon`, `bo-loc` | `?trang=2&sap-xep=ngay-tao:giam` |
 | Design token | CSS `--dh-{nhóm}-{vai trò}-{biến thể}`, mã `TKN-{nhóm}-{tên}`; chỉ dùng tầng ngữ nghĩa | `--dh-color-text-primary`, `color-diff-*`, `color-source-*` |
@@ -436,3 +466,5 @@ python3 datahub-docs/build/tools/kiem_tra_ma.py --dai-ma     # in dải mã đã
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: cách dùng, phân hệ và DU, dải mã, quy ước đặt tên, quyết định đã chốt, kiểm tra tự động |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định và phần Giới thiệu tài liệu ngắn gọn (sáu ý); viết lại chú thích bảng cho cụ thể; không sửa khối sinh tự động |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: cập nhật tình trạng tài liệu của cả 20 phân hệ ở mục 2; mục 3.1 thêm dải ADR của PH-14, 15, 11, 17, dải ERR-00, tham số cấu hình, dải câu hỏi mở Q370 đến Q379, giả định GĐ-BL, GĐ-DFD, tenant đo hiệu năng; mục 4 thêm quy ước vai CSDL, nhóm REST, type của lỗi, miền topic, topic nền tảng, topic DLQ, tiêu đề CloudEvents, khóa Valkey và OpenBao; không sửa khối sinh tự động |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm hàng "Lỗi nền ERR-00" ở mục 4 định nghĩa các mã `ERR-00-003`, `401`, `403`, `412`, `422-IDEMPOTENCY`, `428`, `500` mà các phân hệ đang dẫn; không sửa khối sinh tự động |

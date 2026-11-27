@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH04
 ten: Đặc tả chức năng phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Chủ đầu tư, hội đồng thẩm định, nhóm phân tích nghiệp vụ, kiến trúc sư, đội phát triển dh-integration và dh-runtime, đội giao diện dh-console, đội kiểm thử, đội di trú
 phan_he: PH-04
@@ -995,7 +995,7 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
    - `BLANK` với `ROUTE`: một route có chặng đầu trống và, nếu luồng đối ngoại, chín khối chặng chuẩn rỗng (mục 4.6) kèm `routeConfiguration` tham chiếu cấu hình xử lý lỗi nền (FR-04-070).
    - `BLANK` với `KAMELET`, `PIPE`, `TEST`: khung tối thiểu hợp lệ của loại đó.
    - `TEMPLATE`: điền tham số vào khuôn mẫu (FR-04-025); khuôn không tồn tại hoặc không được phép: ERR-04-039.
-   - `API_SPEC`: đọc OpenAPI từ PH-02, sinh `rest` DSL với mỗi thao tác một route `direct:{operationId}` có khung chín chặng, lược đồ yêu cầu và phản hồi gắn vào chặng `schema`.
+   - `API_SPEC`: đọc OpenAPI từ PH-02, sinh `rest` DSL với mỗi thao tác một route `direct:{operationId}` có khung chín chặng, lược đồ yêu cầu và phản hồi gắn vào chặng `schema`. Việc tạo luồng từ đặc tả là lũy đẳng theo `apiRef`, và đây chính là cơ chế PH-02 gọi để sinh khung route cho API đi từ đặc tả (FR-02-026).
    - `YAML_FILE`: phân tích (lỗi cú pháp: ERR-04-008; vượt kích thước: ERR-04-033), xác định loại tài nguyên từ nội dung; loại khác `resourceKind` khai báo trả ERR-04-009.
 5. Hệ thống chạy kiểm tra hợp lệ (FR-04-023) ở chế độ thiết kế; lỗi không chặn việc tạo, được lưu kèm phiên bản.
 6. Hệ thống ghi luồng, phiên bản 1, chỉ mục endpoint và route, outbox EVT-04-01 trong một giao dịch.
@@ -2107,7 +2107,7 @@ Quy tắc chức năng của trình ánh xạ:
 | `tpl-db-poll-to-kafka` | Đọc định kỳ CSDL chỉ đọc → Kafka | Đồng bộ dữ liệu từ CSDL hệ cũ (Q359) |
 | `tpl-kafka-to-rest` | Nhận sự kiện Kafka → gọi REST HTTT | Đẩy thông báo cho HTTT nhận |
 | `tpl-sftp-to-kafka` | Đọc tệp SFTP định kỳ → tách dòng → Kafka | Tệp CSV trao đổi định kỳ |
-| `tpl-ndxp-proxy` | Gọi dịch vụ quốc gia qua PH-14 | Tra cứu CSDL quốc gia |
+| `tpl-ndxp-proxy` | Gọi dịch vụ quốc gia qua PH-14 bằng Kamelet nền `dh-national-invoke` (gọi điểm gọi chung của PH-14, kèm mục đích và mã hồ sơ; gửi `X-DH-Parallel-Run` và băm trường tới API-14-089 khi cắt chuyển; không tự thử lại, việc thử lại theo `dh-default-config`) | Tra cứu CSDL quốc gia |
 | `tpl-cdm-normalize` | Chuẩn hóa về CDM có chuyển mã PH-07 | Dữ liệu dân cư, tổ chức |
 
 : Bộ khuôn mẫu nền tối thiểu
@@ -2981,7 +2981,7 @@ Lệnh đi hai đường song song: topic có ký để có hiệu lực ngay, v
 
 **Luồng ngoại lệ.** Không tìm thấy luồng: ERR-04-001 (404). PH-13 không sẵn sàng: ERR-04-047 (503) cho phần số liệu; "Chưa lấy được số liệu từ hệ thống giám sát. Thử lại sau."
 
-**Đầu ra.** `200`; điểm vào, ra của luồng: chiều, thành phần, URI đã che, phương thức, đường dẫn, HTTT liên quan, API PH-02 công bố điểm vào này (nếu có), topic PH-10; số lượt, lỗi, độ trễ p95, lần gọi gần nhất, lỗi gần nhất trong khoảng thời gian chọn (lấy từ PH-13).
+**Đầu ra.** `200`; API này cũng là API đọc điểm vào REST của luồng mà PH-02 dùng khi khai backend loại `FLOW` (FR-02-022); điểm vào, ra của luồng: chiều, thành phần, URI đã che, phương thức, đường dẫn, HTTT liên quan, API PH-02 công bố điểm vào này (nếu có), topic PH-10; số lượt, lỗi, độ trễ p95, lần gọi gần nhất, lỗi gần nhất trong khoảng thời gian chọn (lấy từ PH-13).
 
 **Kết quả.** Người dùng biết điểm kết nối nào đang lỗi hoặc chậm.
 
@@ -3001,7 +3001,7 @@ Lệnh đi hai đường song song: topic có ký để có hiệu lực ngay, v
 ::: dac-ta
 **Mục đích.** Cho người dùng xem biểu đồ vận hành của luồng ngay trên màn chi tiết, thay biểu đồ lượng bản tin, CPU, bộ nhớ, log của Bus cũ, mà PH-04 không phải lưu số liệu.
 
-**Tác nhân, quyền.** `PERM-04-read` và `PERM-13-read`.
+**Tác nhân, quyền.** `PERM-04-read` và `PERM-13-dashboard`.
 
 **Mức ưu tiên, đợt.** S · Đợt 2 (MVP liên kết sang PH-13).
 
@@ -3019,7 +3019,7 @@ Lệnh đi hai đường song song: topic có ký để có hiệu lực ngay, v
 2. PH-04 truyền bộ lọc `tenant`, `flow`, `version`, `environment` cho bảng điều khiển theo luồng của PH-13; không lưu số liệu.
 3. Tab hiển thị thông lượng, tỷ lệ lỗi, độ trễ p50, p95, p99 theo route; CPU, bộ nhớ của các bản sao chạy luồng; log lọc theo `dh-flow`; danh sách vết gần nhất.
 
-**Luồng thay thế.** Người dùng thiếu `PERM-13-read`: tab hiện liên kết sang PH-13 thay vì nhúng.
+**Luồng thay thế.** Người dùng thiếu `PERM-13-dashboard`: tab hiện liên kết sang PH-13 thay vì nhúng.
 
 **Luồng ngoại lệ.** PH-13 không sẵn sàng: ERR-04-047 (503); "Chưa lấy được số liệu từ hệ thống giám sát. Thử lại sau."
 
@@ -3116,6 +3116,8 @@ Mọi chặng nằm trong một `routeConfiguration` nền chung (FR-04-070): l�
 | respond | `dh-respond-action` | `contentType` | Áp nghĩa vụ che của OPA và chính sách PH-09; đặt mã HTTP |
 
 : Kamelet nền của chín chặng (theo D03-02-PH04 §4.2)
+
+Ngoài chín chặng, thư viện nền còn các Kamelet nền nghiệp vụ do phân hệ khác yêu cầu, do PH-05 đăng ký trong danh mục Kamelet nền (FRS PH-05 mục 6.2, bảng "Kamelet nền nghiệp vụ của nền tảng"): `dh-kafka-source` và `dh-kafka-sink` (PH-10), `dh-mdm-ingest-sink` và `dh-mdm-resolve` (PH-06), `dh-dq-check` (PH-08), `dh-national-invoke` (PH-14), `dh-audit-sink` (PH-13, ghi bản ghi kiểm toán qua `KafkaAuditSender`), `dh-assist-action` (PH-17, đợt 3: bước phân loại văn bản hoặc trích thông tin gọi `/assist/v1`, khai `purpose` và `dataClass`). Các Kamelet này cũng được ký cùng ảnh runtime và nằm ngoài kiểm tra VR-04 như Kamelet nền của chín chặng.
 
 Mỗi chặng chuẩn có một Kamelet nền loại `action` (ví dụ `dh-receive-action`, `dh-schema-action`, `dh-authz-action`, `dh-audit-action`, `dh-respond-action`) và một `routeConfiguration` nền `dh-default-config` gồm xử lý lỗi, chặn `onCompletion` ghi vết. Người thiết kế kéo Kamelet nền vào khối chặng tương ứng hoặc dùng khuôn mẫu đã có sẵn. Luồng Java DSL hiện có (`TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute`) được viết lại bằng YAML dùng các Kamelet nền này (GAP-04-02, ADR-062). Kamelet nền tham chiếu processor Java bằng `#class:` không được phép trong luồng của người dùng; Kamelet nền nằm ngoài kiểm tra VR-04 vì được ký cùng ảnh runtime.
 
@@ -3221,7 +3223,9 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 
 **Luồng thay thế.** Luồng đang tạm dừng: consumer dừng, bản tin nằm lại trên topic (ERR-04-110, không nhận).
 
-**Luồng ngoại lệ.** Không có bên gọi chờ phản hồi; mã lỗi ghi vào tiêu đề `dh-error-code` của bản tin DLQ và nhật ký kết nối, người vận hành xem ở PH-18:
+Luồng tác vụ dịch vụ của PH-11 (`bpm.service.worker`): luồng nghe `{tenant}.bpm.service.requested.v1` (EVT-11-17) và chọn bước xử lý theo `intentCode` của lệnh; kết thúc thì phát `{tenant}.bpm.service.completed.v1` (EVT-11-18) hoặc `{tenant}.bpm.service.failed.v1` (EVT-11-19) tới `replyTopic`, luôn kèm `commandId` và `businessKey` làm khóa. Khóa chống trùng của chặng `receive` là `commandId` (FR-04-071), nên lệnh giao lại không chạy lần hai mà trả lại kết quả đã có. Giá trị dạng `bpm-secret:{id}` trong `payload` là tham chiếu: luồng đổi lấy giá trị thật bằng API nội bộ của PH-11 (hợp đồng do PH-11 định nghĩa) và không ghi giá trị đó vào log, vết hay DLQ.
+
+**Luồng ngoại lệ.** Không có bên gọi chờ phản hồi; mã lỗi ghi vào tiêu đề `dh-dlq-error-code` của bản tin DLQ và nhật ký kết nối, người vận hành xem ở PH-18:
 
 - Không giải tuần tự được: ERR-04-101 vào DLQ ngay; PH-18 hiện "Bản tin sai lược đồ {schemaRef}."
 - Lỗi xử lý ở chặng sau: theo FR-04-070.
@@ -3262,7 +3266,7 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 
 1. `dh-schema-action` kiểm tra thân theo JSON Schema 2020-12, XSD, hoặc lược đồ Avro/JSON của Apicurio theo mã lược đồ khai báo.
 2. Kiểm tra đính kèm: kiểu MIME trong danh sách cho phép của luồng, kích thước, quét mã độc qua dịch vụ DD-12 với tệp vượt 1 MiB.
-3. Hợp lệ: đặt `dh-data-classes` theo phân loại trường của lược đồ (PH-09) và chuyển tiếp.
+3. Hợp lệ: đặt tiêu đề `dh-data-classes` theo phân loại trường của lược đồ (PH-09): giá trị là ánh xạ từ đường dẫn trường sang một trong bốn mức `DataClass` của DD-08 (`PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE`); rồi chuyển tiếp.
 4. Không hợp lệ: dừng với ERR-04-101, kèm tối đa 20 lỗi theo đường dẫn trường (không lặp lại giá trị trường để tránh lộ dữ liệu).
 
 **Luồng thay thế.** Luồng bất đồng bộ: bản tin lỗi đưa DLQ thay vì trả bên gọi.
@@ -3431,19 +3435,19 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 
 **Luồng xử lý chính.**
 
-1. `dh-respond-action` (`MaskingProcessor`) đọc phân loại trường và nghĩa vụ.
+1. `dh-respond-action` (`MaskingProcessor`) đọc mức `DataClass` của từng trường từ tiêu đề `dh-data-classes` (bốn mức DD-08) và nghĩa vụ từ `dh-obligations`; kế hoạch che lấy từ PH-09 (FR-09-027), việc áp che cho luồng theo FR-09-028.
 2. Runtime áp từng biện pháp: che một phần, băm có khóa, mã hóa trường, bỏ trường.
 3. Runtime đặt mã HTTP, `contentType` và trả phản hồi (hoặc gửi đích).
 
-**Luồng thay thế.** PH-09 không sẵn sàng: runtime dùng chính sách đệm; không có chính sách đệm thì đóng an toàn (từ chối trả dữ liệu).
+**Luồng thay thế.** PH-09 không sẵn sàng: runtime dùng chính sách đệm; không có chính sách đệm thì đóng an toàn (từ chối trả dữ liệu). Runtime lấy chính sách qua thư viện `dh-privacy-client`, khai `FailMode = CLOSED` khi khởi tạo (chặng `respond`), và xóa đệm chính sách khi nhận EVT-09-07, EVT-09-08 (chấp thuận bị tạm dừng, thu hồi) và EVT-09-12 (chính sách che được kích hoạt).
 
-**Luồng ngoại lệ.** Không có chính sách để áp khi trường được phân loại Cá nhân, Nhạy cảm: ERR-04-109 (500); "Lỗi nội bộ khi xử lý yêu cầu. Mã truy vết {traceId}."; cảnh báo cho người vận hành ở PH-13.
+**Luồng ngoại lệ.** Không có chính sách để áp khi trường được phân loại Hạn chế (`RESTRICTED`) hoặc Nhạy cảm (`SENSITIVE`): ERR-04-109 (500); "Lỗi nội bộ khi xử lý yêu cầu. Mã truy vết {traceId}."; cảnh báo cho người vận hành ở PH-13.
 
 **Đầu ra.** Phản hồi hoặc bản tin gửi đích đã che.
 
 **Kết quả.** Bên nhận chỉ thấy dữ liệu được phép.
 
-**Hậu điều kiện.** Log và vết không bao giờ chứa giá trị trường phân loại Cá nhân hoặc Nhạy cảm.
+**Hậu điều kiện.** Log và vết không bao giờ chứa giá trị trường phân loại Hạn chế hoặc Nhạy cảm (DD-08).
 
 **Sự kiện phát ra.** Không.
 
@@ -3562,8 +3566,9 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 1. `ErrorClassifier` ánh xạ ngoại lệ và mã HTTP của đích sang lớp lỗi: `TransientException` (502, 503, 504, quá thời gian, mất kết nối; 429 theo `Retry-After`), `BusinessException` (400, 404, 409, 422 từ đích), `DataException` (lược đồ, chuyển đổi), `AuthzDeniedException`.
 2. Runtime thử lại theo bảng phân loại dưới (lỗi tạm thời 3 lần, trễ tăng dần 1 s, 4 s, 16 s, có nhiễu ±20%).
 3. Ngắt mạch (`circuitBreaker` Resilience4j) theo từng hệ đích: mở khi tỷ lệ lỗi ≥ 50% trên cửa sổ 20 lượt, nửa mở sau 30 giây.
-4. Hết lượt thử: `dhDlqEnvelope` mã hóa trường phân loại Cá nhân, Nhạy cảm bằng khóa DEK của tenant (OpenBao transit), thêm tiêu đề `dh-dlq-reason`, `dh-dlq-attempts`, `dh-dlq-stage`, `dh-dlq-error-code`, rồi gửi lên DLQ là topic `{tenant}.ops.dlq.v1` của PH-18.
+4. Hết lượt thử: `dhDlqEnvelope` mã hóa trường phân loại Hạn chế, Nhạy cảm (DD-08) bằng khóa DEK của tenant (OpenBao transit), thêm bộ tiêu đề theo bảng 4.1b của FRS PH-18 (`dh-tenant`, `dh-source-ph`, `dh-dlq-reason`, `dh-dlq-error-code`, `dh-dlq-stage`, `dh-dlq-attempts`, `dh-flow`, `dh-version`, `traceparent`, `dh-message-id`), rồi gửi lên DLQ là topic `{tenant}.ops.dlq.v1` của PH-18.
 5. Với luồng đồng bộ, `dhSyncErrorResponse` trả bên gọi lỗi RFC 9457 theo mã ERR-04-101…112.
+6. Khi người vận hành phát lại mục DLQ ở PH-18, PH-04 là nguồn có cổng phát lại `KAFKA_TOPIC` (`sourceCode` `PH-04`): `dh-runtime` nghe EVT-18-09 `{tenant}.ops.replay.requested.v1`, lấy nội dung cần phát lại qua API-18-188, đưa vào đúng lối vào theo `dh-flow` và `dh-version`, và khử trùng theo `idempotencyKey` của sự kiện.
 
 **Luồng thay thế.**
 
@@ -3584,7 +3589,7 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 
 **Hậu điều kiện.** Chỉ số `dh_flow_failures_total`, `dh_flow_dlq_total`, `dh_flow_circuit_state` được cập nhật.
 
-**Sự kiện phát ra.** Bản tin DLQ trên `{tenant}.ops.dlq.v1`.
+**Sự kiện phát ra.** Bản tin DLQ trên `{tenant}.ops.dlq.v1`. Sự kiện nghe: EVT-18-09 (phát lại).
 
 **Kiểm toán.** Có: nhật ký kết nối ghi mã lỗi, chặng lỗi.
 
@@ -3601,6 +3606,7 @@ Hình cho thấy runtime không tự xác thực bên gọi: xác thực và đ�
 | Dữ liệu | Sai lược đồ, lỗi chuyển đổi | Không | Trả bên gọi hoặc DLQ |
 | Ủy quyền | OPA từ chối | Không | Trả bên gọi; không đưa DLQ (không lưu bản tin bị từ chối) |
 | Nội bộ | Ngoại lệ không phân loại | 1 lần | DLQ, cảnh báo |
+| Chất lượng dữ liệu | Bước `dh-dq-check` (PH-08) trả `FAIL` với `onFail` mặc định `STOP_TO_DLQ` | Không | DLQ lý do `DQ_FAIL`, kèm tiêu đề `dh-dq-verdict` và `dh-dq-violations` (chỉ mã quy tắc, không giá trị trường); xử lý lại ở PH-18 sau khi sửa dữ liệu |
 
 : Phân loại lỗi và cách xử lý của `dh-default-config`
 
@@ -3622,7 +3628,7 @@ sequenceDiagram
     R->>T: Gọi lại
     T-->>R: 503
   end
-  R->>B: Mã hóa trường Cá nhân, Nhạy cảm (DEK tenant)
+  R->>B: Mã hóa trường Hạn chế, Nhạy cảm (DEK tenant)
   R->>K: Bản tin DLQ kèm dh-dlq-*
   K->>P: Bản tin lỗi chờ xử lý lại
   R-->>R: Đồng bộ: trả ERR-04-104 cho bên gọi
@@ -4184,7 +4190,7 @@ Chương này gom 22 quy tắc nghiệp vụ của PH-04; mỗi FR ở chương 
 | BR-04-010 | Tenant của bản tin đặt một lần ở chặng tiếp nhận từ nguồn tin cậy và bất biến trong suốt luồng | FR-04-061, 062, 073 |
 | BR-04-011 | Mã route duy nhất trong mỗi namespace runtime; đường dẫn HTTP duy nhất trong tenant | FR-04-005, 023 |
 | BR-04-012 | Chỉ phiên bản `APPROVED` được triển khai; không có kênh nào nạp định nghĩa vào runtime ngoài kho cấu hình (trừ sandbox chạy thử) | FR-04-042 |
-| BR-04-013 | Log, vết, chỉ số, nhật ký chạy thử không chứa giá trị trường phân loại Cá nhân, Nhạy cảm, Bí mật; thân bản tin chỉ lưu ở nhật ký chạy thử khi được bật và trong thời hạn lưu | FR-04-030, 032, 067, 074 |
+| BR-04-013 | Log, vết, chỉ số, nhật ký chạy thử không chứa giá trị trường phân loại Hạn chế, Nhạy cảm (DD-08), Bí mật; thân bản tin chỉ lưu ở nhật ký chạy thử khi được bật và trong thời hạn lưu | FR-04-030, 032, 067, 074 |
 | BR-04-014 | Luồng chỉ dùng thành phần được phép; thành phần không hỗ trợ native chỉ chạy trong hồ sơ JVM được phép cho tenant | FR-04-012, 075, 080 |
 | BR-04-015 | Truy cập CSDL trực tiếp theo Q359: tài khoản chỉ đọc riêng theo luồng khai báo ở PH-05, chỉ câu lệnh đọc, có kiểm toán, đặt `app.tenant_id`, không truy cập CSDL control plane | FR-04-072 |
 | BR-04-016 | Một luồng có tối đa một phiên bản mở; phiên bản đã gửi duyệt là bất biến | FR-04-011, 040 |
@@ -4264,7 +4270,7 @@ Bảng mã lỗi chính thức nằm ở D03-04-PH04 §6. Tóm tắt nhóm mã: 
 |---|---|---|---|
 | ERR-04-001…043 | Lỗi nghiệp vụ của API điều khiển | `dh-integration`, thân RFC 9457 có `code`, `traceId` | ERR-04-020, 024 là trạng thái của lần chạy thử, lệnh, không phải mã HTTP |
 | ERR-04-044…049 | Lỗi chung: xác thực (401), quyền (403), kiểu nội dung (415), phụ thuộc chưa sẵn sàng (503), tần suất (429), lược đồ yêu cầu (400) | Mọi API điều khiển | Theo FR-00-080 |
-| ERR-04-101…112 | Lỗi runtime trả bên gọi luồng hoặc ghi vào DLQ | `dh-runtime` qua APISIX; tiêu đề `dh-error-code` của DLQ | Thân lỗi không chứa dữ liệu nghiệp vụ; dải 113…120 để dành |
+| ERR-04-101…112 | Lỗi runtime trả bên gọi luồng hoặc ghi vào DLQ | `dh-runtime` qua APISIX; tiêu đề `dh-dlq-error-code` của DLQ | Thân lỗi không chứa dữ liệu nghiệp vụ; dải 113…120 để dành |
 
 : Nhóm mã lỗi ERR-04
 
@@ -4357,6 +4363,8 @@ Mỗi mã lỗi mà người dùng có thể gặp được chuyển thành mộ
 | EVT-04-13 | `dh.integration.runtime.command-ack.v1` | Xác nhận lệnh |
 | EVT-04-14 | `{tenant}.audit.connection-log.v1` | Nhật ký kết nối của chặng `audit` (chủ quản topic là PH-13) |
 : Sự kiện của PH-04
+
+EVT-04-02, EVT-04-04 và EVT-04-07 mang thêm trường tùy chọn `restOperations[]` (phương thức, đường dẫn, mô tả, mã lược đồ yêu cầu và phản hồi của từng điểm vào REST) khi luồng có điểm vào `platform-http`, để PH-02 tự đăng ký hoặc cập nhật API nguồn `FLOW` (FR-02-013). Để PH-16 tự đăng ký thành phần kiến trúc, EVT-04-01 và EVT-04-09 mang `flowCode` làm mã thành phần, còn EVT-04-07 mang thêm `versionNo` và trường tùy chọn `dependsOn[]` (mã kết nối, topic, API mà luồng phụ thuộc, lấy từ chỉ mục điểm kết nối).
 
 ### 9.4. Danh mục API theo FR
 
@@ -4581,7 +4589,7 @@ PH-04 phụ thuộc nhiều phân hệ khác; bảng dưới nêu cơ chế và 
 
 | Phân hệ | Hướng | Cơ chế | Khi không sẵn sàng |
 |---|---|---|---|
-| PH-01 Kết nạp HTTT | PH-04 dùng | Bản sao đọc `ph04.external_system` qua sự kiện, xác định luồng đối ngoại | Kiểm tra hiểu luồng là nội bộ (nới, không siết nhầm), cảnh báo |
+| PH-01 Kết nạp HTTT | PH-04 dùng | Bản sao đọc `ph04.external_system`: khởi tạo và đối chiếu bằng API-01-063, API-01-064 với token dịch vụ `onboarding:internal-read`, cập nhật qua EVT-01-03 (đổi trạng thái), EVT-01-04 (đổi thuộc tính) và EVT-01-11 (trần phạm vi đổi); xác định luồng đối ngoại | Kiểm tra hiểu luồng là nội bộ (nới, không siết nhầm), cảnh báo |
 | PH-02 Danh mục dịch vụ | Hai chiều | PH-04 đọc OpenAPI để sinh luồng; PH-02 công bố điểm vào của luồng làm backend | Không tạo được luồng từ API |
 | PH-03 APISIX | PH-04 dùng | Định tuyến lượt gọi đồng bộ tới `dh-runtime` | Luồng đồng bộ ngừng nhận (ngoài phạm vi) |
 | PH-05 Bộ điều hợp, kết nối | PH-04 dùng | Danh sách kết nối, Kamelet được duyệt, tài khoản CSDL chỉ đọc | Không chọn được kết nối mới; luồng đang chạy không ảnh hưởng |
@@ -4690,6 +4698,8 @@ Dải FR-04-031…040 của repo được tách từng mã dưới đây vì m�
 
 ## Phụ lục B. Đề nghị đồng bộ với tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cần sửa ở tài liệu khác trong đợt đồng bộ chung. Tài liệu này không sửa trực tiếp tài liệu khác.
 
 | # | Tài liệu | Đề nghị | Trạng thái |
@@ -4709,5 +4719,6 @@ Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cầ
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Nhóm phân hệ PH-04 | Bản đầu: 60 FR dạng bảng "Trường \| Nội dung", quy tắc, tham số, NFR, truy vết hệ cũ, màn hình mức chức năng |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Tổ chức lại theo K-FRS (Giới thiệu, Tổng quan có mục tiêu đo được, vị trí kiến trúc, sơ đồ trình tự luồng chính, quy trình nghiệp vụ, ma trận quyền, danh sách chức năng, thông báo hiển thị, giao diện tiêu biểu, Phụ lục B); chuyển 60 FR sang khối đặc tả 17 mục theo chuẩn kết hợp, giữ toàn bộ chi tiết kỹ thuật của bản 0.1; viết đủ nhóm F theo D03-02-PH04 §4; thêm sơ đồ trình tự cho FR-04-030, 040–042, 044, 050, 061, 070, 072, 082 và sơ đồ quan hệ chức năng cho từng nhóm; không đổi, không xóa mã |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: DLQ theo bảng 4.1b và replay EVT-18-09, dh-data-classes bốn mức, Kamelet nền, luồng BPM, PERM-13-dashboard |
 
 : Lịch sử phiên bản

@@ -21,7 +21,7 @@ Tính năng: TS-18-14 · Sửa payload có kiểm soát và duyệt bốn mắt
     Khi IE tạo bản sửa số 1 đổi `diaChiThuongTru`.
     Và IE `POST .../revisions/1:approve`.
     Và IE tạo bản sửa số 2 khi số 1 còn chờ.
-    Và TA2 mở việc `ph18.approve-revision` ở `/ca-nhan/viec`, duyệt.
+    Và TA2 mở việc `ph18.approve-revision` ở `/viec-cua-toi`, duyệt.
     Thì bước 1 `201` `PENDING_APPROVAL`. Bước 2 `403` ERR-18-005. Bước 3 `409` ERR-18-030. Bước 4 `200` `APPROVED`, mục sang `TRIAGED` nếu đang `POISON`, EVT-18-07; việc không hiện với IE.
 
   @TC-18-046 @P1 @Âm

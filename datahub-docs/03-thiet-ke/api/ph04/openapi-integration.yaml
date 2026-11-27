@@ -3924,7 +3924,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-049
+            type: https://datahub.gov.vn/errors/ERR-04-049
             title: Tham số hoặc thân sai
             status: 400
             code: ERR-04-049
@@ -3936,7 +3936,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-044
+            type: https://datahub.gov.vn/errors/ERR-04-044
             title: Thiếu hoặc hết hạn token
             status: 401
             code: ERR-04-044
@@ -3948,7 +3948,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-045
+            type: https://datahub.gov.vn/errors/ERR-04-045
             title: Thiếu quyền
             status: 403
             code: ERR-04-045
@@ -3960,7 +3960,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-001
+            type: https://datahub.gov.vn/errors/ERR-04-001
             title: Không tìm thấy hoặc không được xem
             status: 404
             code: ERR-04-001
@@ -3972,7 +3972,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-005
+            type: https://datahub.gov.vn/errors/ERR-04-005
             title: Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code`
             status: 409
             code: ERR-04-005
@@ -3984,7 +3984,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-006
+            type: https://datahub.gov.vn/errors/ERR-04-006
             title: ETag lệch
             status: 412
             code: ERR-04-006
@@ -3996,7 +3996,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-007
+            type: https://datahub.gov.vn/errors/ERR-04-007
             title: Thiếu If-Match
             status: 428
             code: ERR-04-007
@@ -4008,7 +4008,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-033
+            type: https://datahub.gov.vn/errors/ERR-04-033
             title: Thân quá lớn
             status: 413
             code: ERR-04-033
@@ -4020,7 +4020,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-046
+            type: https://datahub.gov.vn/errors/ERR-04-046
             title: Kiểu nội dung không hỗ trợ
             status: 415
             code: ERR-04-046
@@ -4032,7 +4032,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-009
+            type: https://datahub.gov.vn/errors/ERR-04-009
             title: Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings`
             status: 422
             code: ERR-04-009
@@ -4044,7 +4044,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-041
+            type: https://datahub.gov.vn/errors/ERR-04-041
             title: Đóng băng thay đổi
             status: 423
             code: ERR-04-041
@@ -4056,7 +4056,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-048
+            type: https://datahub.gov.vn/errors/ERR-04-048
             title: Vượt tần suất
             status: 429
             code: ERR-04-048
@@ -4068,7 +4068,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-022
+            type: https://datahub.gov.vn/errors/ERR-04-022
             title: Không ghi được kho cấu hình
             status: 502
             code: ERR-04-022
@@ -4080,7 +4080,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/integration/err-04-047
+            type: https://datahub.gov.vn/errors/ERR-04-047
             title: Phụ thuộc chưa sẵn sàng
             status: 503
             code: ERR-04-047

@@ -24,7 +24,7 @@ Tính năng: TS-19-28 · Cấu hình và khởi tạo tenant
   Kịch bản: TC-19-678 Khởi tạo khi PH-20 bật phân hệ
     # Truy vết: FR-19-064 · NFR-19-025
     Biết T50 chưa bật PH-19.
-    Khi phát sự kiện PH-20 `tenant.module.enabled` (PH-19, T50).
+    Khi phát sự kiện PH-20 `platform.tenant.module-enabled.v1` (PH-19, T50).
     Và phát lại sự kiện đó.
     Thì bước 1: cấu hình mặc định v1, topic `t50.payment.*`, bucket `dh-t50-payment`, `dh-t50-payment-worm`, đường dẫn OpenBao `kv/dh/t50/payment/` được tạo; API của T50 trả lời. Bước 2: không tạo trùng (xử lý một lần theo hộp nhận).
 
@@ -32,7 +32,7 @@ Tính năng: TS-19-28 · Cấu hình và khởi tạo tenant
   Kịch bản: TC-19-679 Tenant tạm ngừng phân hệ
     # Truy vết: FR-19-064 · ERR-19-049
     Biết T50 đã bật; có một giao dịch `PENDING`.
-    Khi PH-20 phát `tenant.module.suspended`.
+    Khi PH-20 phát `platform.tenant.module-disabled.v1`.
     Và đối tác của T50 gọi `P: POST /payments`.
     Và `PGSIM` gửi IPN cho giao dịch `PENDING`.
     Thì bước 2 trả `503` ERR-19-049. Bước 3: IPN vẫn được nhận, xử lý (không bỏ tiền người nộp đã trả); giao dịch `SUCCEEDED`; webhook gửi bình thường.

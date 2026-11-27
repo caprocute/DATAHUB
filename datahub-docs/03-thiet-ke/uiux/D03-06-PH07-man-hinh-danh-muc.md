@@ -2086,6 +2086,8 @@ Chromatic (hoặc Playwright `toHaveScreenshot` khi chạy hoàn toàn trên h�
 
 ## Phụ lục A. Đề nghị bổ sung cho design system D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 | Mã | Đề nghị | Lý do | Xử lý ở bản 0.3 |
 |---|---|---|---|
 | A-01 | Token nền glass thường, dày, thanh công cụ; nền đặc và nền đặc nổi | Phân lớp vật liệu ở mục 2.1 | Đã xử lý: dùng `glass-chrome`, `glass-overlay`, `glass-modal` (D03-05-01 §2); thanh công cụ dính là nền đặc; `color-surface-solid`, `color-surface-solid-2` |
@@ -2099,6 +2101,8 @@ Chromatic (hoặc Playwright `toHaveScreenshot` khi chạy hoàn toàn trên h�
 : Phụ lục A. Đề nghị bổ sung cho design system D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API cho giao diện
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Bảng dưới đây gom các đề nghị API đã nêu rải rác trong tài liệu, kèm tình trạng đối chiếu với `openapi-rdm.yaml` ngày 25/11/2026.
 

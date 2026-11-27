@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH04
 ten: Thiết kế chi tiết phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, trưởng nhóm PH-04, lập trình viên L-INT và L-RT, lập trình viên giao diện, kiểm thử viên, nhóm vận hành
 phan_he: PH-04
@@ -24,7 +24,7 @@ Bốn điểm thiết kế quyết định chất lượng của phân hệ:
 3. **Chạy thử bằng Camel thật trong sandbox cô lập.** Lần chạy thử nạp đúng định nghĩa (theo băm) vào `dh-runtime-sandbox` cùng phiên bản Camel, thay điểm gọi ra ngoài bằng mô phỏng, ghi vết từng chặng đã che dữ liệu. Gửi duyệt đòi một lần chạy đạt trên đúng băm (BR-04-004). Điều này thay lần chạy thử giả của mã hiện tại (GAP-04-04).
 4. **Khung chín chặng là thư viện, không phải quy ước.** Tiếp nhận, kiểm tra lược đồ, ủy quyền, chuyển đổi, làm giàu, định tuyến, gửi đích, ghi vết, phản hồi được hiện thực bằng Kamelet nền và processor Java có kiểm thử (ADR-062). Tenant của bản tin được đặt một lần và khóa (`TenantGuard`). Truy cập CSDL trực tiếp chỉ qua Kamelet nền chỉ đọc theo Q359 (ADR-067).
 
-Về an toàn thông tin: định nghĩa luồng không chứa bí mật (VR-03, chỉ tham chiếu kết nối PH-05 và OpenBao); thành phần nguy hiểm (`exec`, `ssh`, kịch bản) bị cấm theo chính sách; sandbox chạy trong namespace có chính sách mạng chỉ ra WireMock và môi trường TEST; log, vết không chứa dữ liệu Cá nhân, Nhạy cảm (BR-04-013); mọi thay đổi có kiểm toán qua PH-13. Thiết kế đáp ứng nhóm quản lý thay đổi và nhật ký của TCVN 14423:2026 cấp độ 3 (D03-07).
+Về an toàn thông tin: định nghĩa luồng không chứa bí mật (VR-03, chỉ tham chiếu kết nối PH-05 và OpenBao); thành phần nguy hiểm (`exec`, `ssh`, kịch bản) bị cấm theo chính sách; sandbox chạy trong namespace có chính sách mạng chỉ ra WireMock và môi trường TEST; log, vết không chứa dữ liệu Hạn chế, Nhạy cảm (BR-04-013); mọi thay đổi có kiểm toán qua PH-13. Thiết kế đáp ứng nhóm quản lý thay đổi và nhật ký của TCVN 14423:2026 cấp độ 3 (D03-07).
 
 Phạm vi: module `flow` trong đơn vị triển khai `dh-integration` (control plane), thư viện nền và bộ nạp luồng của `dh-runtime` (data plane), DU mới `dh-runtime-sandbox`, phần trình thiết kế của `dh-console`. Ngoài phạm vi: DDL chi tiết (D03-03-PH04), hợp đồng API (D03-04-PH04), màn hình (D03-06-PH04). Câu hỏi mở ở §16.
 
@@ -595,7 +595,7 @@ Mọi exchange trong `dh-runtime` mang bộ tiêu đề dưới đây. Tiêu đ�
 | `dh-subscription` | `receive` | `X-Dh-Subscription` | Có |
 | `dh-flow`, `dh-flow-version` | `receive` | Nhãn ConfigMap do Argo CD áp | Có |
 | `dh-stage` | Mỗi chặng | `StageMarker` | Không (đổi theo chặng) |
-| `dh-data-classes` | `schema` | Phân loại trường của lược đồ (PH-09) | Không |
+| `dh-data-classes` | `schema` | Ánh xạ đường dẫn trường sang mức `DataClass` (bốn mức DD-08) theo phân loại trường của lược đồ (PH-09) | Không |
 | `dh-obligations` | `authz` | Kết quả OPA | Không |
 | `dh-enrich-partial` | `enrich` | Khi làm giàu lỗi với `CONTINUE` | Không |
 | `traceparent` | `receive` | W3C; tạo mới nếu thiếu | Không |
@@ -724,7 +724,7 @@ Kamelet nền tham chiếu processor Java bằng `#class:` không được phép
             - process: { ref: dhStageMetricsFlush }
 ```
 
-`ErrorClassifier` ánh xạ ngoại lệ Camel và mã HTTP của đích sang bốn lớp ở FR-04-070: `TransientException` (502, 503, 504, quá thời gian, mất kết nối; 429 theo `Retry-After`), `BusinessException` (400, 404, 409, 422 từ đích), `DataException` (lược đồ, chuyển đổi), `AuthzDeniedException`. Ngoại lệ không phân loại thử lại một lần rồi DLQ và cảnh báo. `dhDlqEnvelope` mã hóa trường phân loại Cá nhân, Nhạy cảm bằng khóa DEK của tenant (OpenBao transit) trước khi đưa DLQ, thêm tiêu đề `dh-dlq-reason`, `dh-dlq-attempts`, `dh-dlq-stage`, `dh-dlq-error-code`.
+`ErrorClassifier` ánh xạ ngoại lệ Camel và mã HTTP của đích sang bốn lớp ở FR-04-070: `TransientException` (502, 503, 504, quá thời gian, mất kết nối; 429 theo `Retry-After`), `BusinessException` (400, 404, 409, 422 từ đích), `DataException` (lược đồ, chuyển đổi), `AuthzDeniedException`. Ngoại lệ không phân loại thử lại một lần rồi DLQ và cảnh báo. `dhDlqEnvelope` mã hóa trường phân loại Hạn chế, Nhạy cảm bằng khóa DEK của tenant (OpenBao transit) trước khi đưa DLQ, thêm tiêu đề `dh-dlq-reason`, `dh-dlq-attempts`, `dh-dlq-stage`, `dh-dlq-error-code`.
 
 
 ::: dac-ta
@@ -2096,6 +2096,8 @@ Các câu hỏi dưới đây đã có đề xuất tạm nên không chặn vi�
 
 ### 16.1. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
 
 | Tập | Đề nghị | Trạng thái |
@@ -2112,3 +2114,4 @@ Các điểm dưới cần tập khác đối chiếu; tài liệu này không s
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu | Nhóm phân hệ PH-04 |
 | 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-SDD: chương Giới thiệu, danh sách và bảng đặc tả 10 mục cho 28 thành phần, bốn sơ đồ trình tự, chú thích bảng và hình, đề nghị đồng bộ; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: mức phân loại Hạn chế, dh-data-classes | Nhóm viết tài liệu (Claude) |

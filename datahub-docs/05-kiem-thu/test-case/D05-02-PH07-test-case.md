@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH07
 ten: Kịch bản và test case phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-07, Kiến trúc sư, ATTT, Cán bộ nghiệp vụ nghiệm thu, Chủ đầu tư
 phan_he: PH-07
@@ -5300,7 +5300,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 2. Chạy `UPDATE ph07_rdm.catalog SET name = 'x' WHERE tenant_id = 'T68'`.
 3. Không đặt `app.tenant_id` rồi chạy `SELECT` bất kỳ.
 
-**Kết quả mong đợi.** Bước 1 chỉ đếm dòng của T01 và COMMON (bảng mẫu S, P). Bước 2 cập nhật 0 dòng. Bước 3 báo lỗi `unrecognized configuration parameter` (do `current_setting(..., false)`), không trả dữ liệu.
+**Kết quả mong đợi.** Bước 1 chỉ đếm dòng của T01 và COMMON (bảng mẫu S, P). Bước 2 cập nhật 0 dòng. Bước 3 không trả dữ liệu: coi cả hai dạng là thiếu tenant, hoặc báo lỗi `unrecognized configuration parameter` (kết nối chưa từng đặt biến), hoặc chuỗi rỗng từ `current_setting` (kết nối pool từng `SET LOCAL`, PostgreSQL 18) bị hàm lấy tenant của thư viện dùng chung từ chối (so khớp `tenant_id` không bao giờ đúng với chuỗi rỗng); kiểm thử không được dựa riêng vào dạng lỗi thứ nhất (D03-10, D04-01).
 :::
 
 #### TC-07-224 · Vai trò worker chỉ thấy cột hàng đợi
@@ -7523,5 +7523,6 @@ Tệp Gherkin dùng làm đặc tả có thể đọc được cho cán bộ ngh
 | 0.1 | 2026-11-25 | Bản đầu: 30 kịch bản TS-07-01…30, 320 test case, UAT, ma trận truy vết sinh tự động |
 | 0.2 | 2026-11-25 | Đồng bộ mã lỗi theo bảng ERR-07 của D03-04-PH07 |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp: mỗi test case một khối đặc tả bảy mục, công cụ `tc_parse.py` đọc khối mới, sinh lại ma trận, Gherkin và bảng tính |
+| 0.4 | 2026-11-27 | Đồng bộ chéo cuối: TC rò rỉ tenant coi chuỗi rỗng là thiếu tenant, sinh lại gherkin và xlsx |
 
 : Lịch sử phiên bản

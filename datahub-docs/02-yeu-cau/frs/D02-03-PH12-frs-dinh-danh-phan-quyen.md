@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH12
 ten: Đặc tả yêu cầu chức năng phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, kỹ sư hạ tầng định danh, cán bộ ATTT, kiểm thử viên
 phan_he: PH-12
@@ -507,72 +507,72 @@ Mỗi token người dùng mang claim `acr` (mức xác thực) và `auth_time`.
 
 ## 5. Danh sách chức năng
 
-PH-12 có 62 chức năng chia tám nhóm. Bảng dưới liệt kê toàn bộ chức năng kèm nhóm, mức ưu tiên, đợt phát hành và màn hình hiện thực; đặc tả chi tiết ở chương 6. Nhóm: A Tài khoản người dùng; B Vai trò, nhóm và quyền; C Xác thực người dùng; D Danh tính HTTT và token; E Realm theo tenant; F Ủy quyền; G Ghi vết và giám sát; H Quản trị.
+PH-12 có 62 chức năng chia tám nhóm. Bảng dưới liệt kê toàn bộ chức năng kèm nhóm, mức ưu tiên, đợt phát hành, màn hình và use case hiện thực (cột UC theo D02-04-PH12 mục 5.1); đặc tả chi tiết ở chương 6. Nhóm: A Tài khoản người dùng; B Vai trò, nhóm và quyền; C Xác thực người dùng; D Danh tính HTTT và token; E Realm theo tenant; F Ủy quyền; G Ghi vết và giám sát; H Quản trị.
 
-| Mã | Nhóm | Chức năng | Mức | Đợt | Màn hình |
-|---|---|---|---|---|---|
-| FR-12-001 | A | Liệt kê, tìm kiếm và lọc người dùng | M | MVP | UI-12-01 |
-| FR-12-002 | A | Xem chi tiết người dùng | M | MVP | UI-12-02 |
-| FR-12-003 | A | Tạo tài khoản người dùng | M | MVP | UI-12-03 |
-| FR-12-004 | A | Sửa thông tin và chuyển đơn vị của người dùng | M | MVP | UI-12-02, UI-12-03 |
-| FR-12-005 | A | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | M | MVP | UI-12-02, UI-12-03 |
-| FR-12-006 | A | Kích hoạt tài khoản lần đầu | M | MVP | UI-12-18 |
-| FR-12-007 | A | Đặt lại mật khẩu khi quên | M | MVP | UI-12-18 |
-| FR-12-008 | A | Tự vô hiệu tài khoản và tạm ngừng client không hoạt động | M | MVP | UI-12-15 |
-| FR-12-009 | A | Nhập người dùng hàng loạt và ánh xạ vai trò hệ cũ | M | MVP | UI-12-04 |
-| FR-12-010 | A | Đồng bộ thuộc tính người dùng từ danh mục đơn vị | S | MVP | UI-12-07 |
-| FR-12-011 | B | Xem danh mục vai trò chuẩn và quyền | M | MVP | UI-12-05 |
-| FR-12-012 | B | Gán và gỡ vai trò cho người dùng | M | MVP | UI-12-02, UI-12-06 |
-| FR-12-013 | B | Chặn cặp vai trò xung đột và duyệt ngoại lệ có thời hạn | M | MVP | UI-12-06, UI-12-17 |
-| FR-12-014 | B | Quản lý nhóm và đơn vị tổ chức | M | MVP | UI-12-07 |
-| FR-12-015 | B | Tạo vai trò tùy biến của tenant | S | Đợt 2 | UI-12-05 |
-| FR-12-016 | B | Xem quyền hiệu lực của người dùng | M | MVP | UI-12-02 |
-| FR-12-017 | B | Cấp quyền có thời hạn cho vai trò đặc quyền và truy cập liên tenant | M | MVP | UI-12-08, UI-12-17 |
-| FR-12-018 | B | Rà soát quyền định kỳ | S | Đợt 2 | UI-12-09, UI-12-17 |
-| FR-12-019 | B | Chuyển định danh và vai trò khi sáp nhập tenant | S | Đợt 2 | UI-12-19 |
-| FR-12-020 | C | Xác thực người dùng theo OIDC Authorization Code và PKCE | M | MVP | UI-12-18 |
-| FR-12-021 | C | Chống dò mật khẩu và khóa tài khoản | M | MVP | UI-12-18 |
-| FR-12-022 | C | Đăng ký và dùng yếu tố thứ hai TOTP, WebAuthn | M | MVP | UI-12-02, UI-12-18 |
-| FR-12-023 | C | Xác thực lại bước lên cho thao tác nhạy cảm | M | MVP | UI-12-18 |
-| FR-12-024 | C | Đặt lại yếu tố thứ hai khi mất thiết bị | M | MVP | UI-12-02, UI-12-17 |
-| FR-12-025 | C | Đăng nhập một lần bằng SAML 2 cho ứng dụng cũ | M | MVP | UI-12-11 |
-| FR-12-026 | C | Liên kết LDAP, Active Directory của tỉnh | M | MVP | UI-12-11 |
-| FR-12-027 | C | Đăng nhập liên tenant cho người dùng thuộc nhiều tenant | M | MVP | UI-12-18 |
-| FR-12-028 | C | Liên kết đăng nhập VNeID | C | Đợt 2 | UI-12-11, UI-12-18 |
-| FR-12-029 | C | Quản lý phiên: xem, buộc đăng xuất, hạn mức phiên | M | MVP | UI-12-02 |
-| FR-12-030 | D | Cấp client OAuth cho HTTT thành viên | M | MVP | UI-12-10 |
-| FR-12-031 | D | Quản lý vòng đời client: sửa, tạm ngừng, tiếp tục, thu hồi | M | MVP | UI-12-10 |
-| FR-12-032 | D | Cấp client cho ứng dụng nhà phát triển ở sandbox | S | Đợt 2 | UI-12-10 |
-| FR-12-033 | D | Đăng ký chứng thư mTLS và khóa công khai của client | M | MVP | UI-12-10 |
-| FR-12-034 | D | Xoay bí mật client | M | MVP | UI-12-10 |
-| FR-12-035 | D | Phát token cho HTTT bằng `client_credentials` | M | MVP | — |
-| FR-12-036 | D | Sinh scope của client từ dữ liệu đã duyệt | M | MVP | UI-12-10 |
-| FR-12-037 | D | Tài khoản dịch vụ nội bộ của đơn vị triển khai | M | MVP | UI-12-10 |
-| FR-12-038 | D | Vòng đời token: làm mới xoay vòng, phát hiện dùng lại | M | MVP | — |
-| FR-12-039 | D | Công bố JWKS và xoay khóa ký 90 ngày | M | MVP | UI-12-19 |
-| FR-12-040 | D | Thu hồi truy cập tức thời và phân phối danh sách chặn | M | MVP | UI-12-02, UI-12-10 |
-| FR-12-041 | E | Khởi tạo realm của tenant từ mẫu | M | MVP | UI-12-19 |
-| FR-12-042 | E | Cấu hình bảo mật realm bằng GitOps, phát hiện lệch | M | MVP | UI-12-19 |
-| FR-12-043 | E | Tạm ngừng, khôi phục, chuyển chỉ-đọc realm theo vòng đời tenant | M | MVP | UI-12-19 |
-| FR-12-044 | F | Quyết định ủy quyền theo hợp đồng PEP và PDP | M | MVP | — |
-| FR-12-045 | F | Quy tắc gốc: từ chối mặc định, từ chối thắng, cách ly tenant | M | MVP | — |
-| FR-12-046 | F | Phân quyền ba lớp: vai trò, phạm vi tổ chức, thuộc tính dữ liệu | M | MVP | — |
-| FR-12-047 | F | Tính mặt nạ trường và chế độ bảo vệ theo mục đích | M | MVP | — |
-| FR-12-048 | F | Bộ chuyển đổi XACML 3.0 | M | MVP | — |
-| FR-12-049 | F | Quyết định theo lô | S | MVP | — |
-| FR-12-050 | F | Bộ đệm quyết định | S | MVP | — |
-| FR-12-051 | F | Sinh dữ liệu vai trò–quyền cho OPA từ ma trận D02-08 | M | MVP | UI-12-12 |
-| FR-12-052 | F | Soạn và kiểm thử chính sách | M | MVP | UI-12-12 |
-| FR-12-053 | F | Chạy khô chính sách trên lưu lượng thật | M | MVP | UI-12-13 |
-| FR-12-054 | F | Duyệt bốn mắt và phát hành gói chính sách ký | M | MVP | UI-12-13, UI-12-17 |
-| FR-12-055 | F | Thu hồi và quay lui chính sách | M | MVP | UI-12-12 |
-| FR-12-056 | G | Ghi vết sự kiện xác thực và quản trị định danh | M | MVP | UI-12-15 |
-| FR-12-057 | G | Ghi vết quyết định ủy quyền | M | MVP | UI-12-14 |
-| FR-12-058 | G | Tra cứu nhật ký quyết định | M | MVP | UI-12-14 |
-| FR-12-059 | G | Phát hiện hành vi bất thường và cảnh báo | S | MVP | UI-12-15 |
-| FR-12-060 | G | Báo cáo tình trạng tài khoản và xác thực hai yếu tố | S | MVP | UI-12-15 |
-| FR-12-061 | H | Tham số phân hệ theo tenant | M | MVP | UI-12-16 |
-| FR-12-062 | H | Tra cứu danh bạ người dùng cho phân hệ khác | M | MVP | — |
+| Mã | Nhóm | Chức năng | Mức | Đợt | Màn hình | UC |
+|---|---|---|---|---|---|---|
+| FR-12-001 | A | Liệt kê, tìm kiếm và lọc người dùng | M | MVP | UI-12-01 | UC-12-01 |
+| FR-12-002 | A | Xem chi tiết người dùng | M | MVP | UI-12-02 | UC-12-01 |
+| FR-12-003 | A | Tạo tài khoản người dùng | M | MVP | UI-12-03 | UC-12-02 |
+| FR-12-004 | A | Sửa thông tin và chuyển đơn vị của người dùng | M | MVP | UI-12-02, UI-12-03 | UC-12-03 |
+| FR-12-005 | A | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | M | MVP | UI-12-02, UI-12-03 | UC-12-04 |
+| FR-12-006 | A | Kích hoạt tài khoản lần đầu | M | MVP | UI-12-18 | UC-12-02 |
+| FR-12-007 | A | Đặt lại mật khẩu khi quên | M | MVP | UI-12-18 | UC-12-06 |
+| FR-12-008 | A | Tự vô hiệu tài khoản và tạm ngừng client không hoạt động | M | MVP | UI-12-15 | UC-12-07 |
+| FR-12-009 | A | Nhập người dùng hàng loạt và ánh xạ vai trò hệ cũ | M | MVP | UI-12-04 | UC-12-05 |
+| FR-12-010 | A | Đồng bộ thuộc tính người dùng từ danh mục đơn vị | S | MVP | UI-12-07 | UC-12-07 |
+| FR-12-011 | B | Xem danh mục vai trò chuẩn và quyền | M | MVP | UI-12-05 | UC-12-08 |
+| FR-12-012 | B | Gán và gỡ vai trò cho người dùng | M | MVP | UI-12-02, UI-12-06 | UC-12-09 |
+| FR-12-013 | B | Chặn cặp vai trò xung đột và duyệt ngoại lệ có thời hạn | M | MVP | UI-12-06, UI-12-17 | UC-12-10 |
+| FR-12-014 | B | Quản lý nhóm và đơn vị tổ chức | M | MVP | UI-12-07 | UC-12-11 |
+| FR-12-015 | B | Tạo vai trò tùy biến của tenant | S | Đợt 2 | UI-12-05 | UC-12-12 |
+| FR-12-016 | B | Xem quyền hiệu lực của người dùng | M | MVP | UI-12-02 | UC-12-08 |
+| FR-12-017 | B | Cấp quyền có thời hạn cho vai trò đặc quyền và truy cập liên tenant | M | MVP | UI-12-08, UI-12-17 | UC-12-13 |
+| FR-12-018 | B | Rà soát quyền định kỳ | S | Đợt 2 | UI-12-09, UI-12-17 | UC-12-14 |
+| FR-12-019 | B | Chuyển định danh và vai trò khi sáp nhập tenant | S | Đợt 2 | UI-12-19 | UC-12-15 |
+| FR-12-020 | C | Xác thực người dùng theo OIDC Authorization Code và PKCE | M | MVP | UI-12-18 | UC-12-16 |
+| FR-12-021 | C | Chống dò mật khẩu và khóa tài khoản | M | MVP | UI-12-18 | UC-12-16 |
+| FR-12-022 | C | Đăng ký và dùng yếu tố thứ hai TOTP, WebAuthn | M | MVP | UI-12-02, UI-12-18 | UC-12-17 |
+| FR-12-023 | C | Xác thực lại bước lên cho thao tác nhạy cảm | M | MVP | UI-12-18 | UC-12-17 |
+| FR-12-024 | C | Đặt lại yếu tố thứ hai khi mất thiết bị | M | MVP | UI-12-02, UI-12-17 | UC-12-18 |
+| FR-12-025 | C | Đăng nhập một lần bằng SAML 2 cho ứng dụng cũ | M | MVP | UI-12-11 | UC-12-19 |
+| FR-12-026 | C | Liên kết LDAP, Active Directory của tỉnh | M | MVP | UI-12-11 | UC-12-19 |
+| FR-12-027 | C | Đăng nhập liên tenant cho người dùng thuộc nhiều tenant | M | MVP | UI-12-18 | UC-12-13 |
+| FR-12-028 | C | Liên kết đăng nhập VNeID | C | Đợt 2 | UI-12-11, UI-12-18 | UC-12-19 |
+| FR-12-029 | C | Quản lý phiên: xem, buộc đăng xuất, hạn mức phiên | M | MVP | UI-12-02 | UC-12-20 |
+| FR-12-030 | D | Cấp client OAuth cho HTTT thành viên | M | MVP | UI-12-10 | UC-12-21 |
+| FR-12-031 | D | Quản lý vòng đời client: sửa, tạm ngừng, tiếp tục, thu hồi | M | MVP | UI-12-10 | UC-12-23 |
+| FR-12-032 | D | Cấp client cho ứng dụng nhà phát triển ở sandbox | S | Đợt 2 | UI-12-10 | UC-12-21 |
+| FR-12-033 | D | Đăng ký chứng thư mTLS và khóa công khai của client | M | MVP | UI-12-10 | UC-12-24 |
+| FR-12-034 | D | Xoay bí mật client | M | MVP | UI-12-10 | UC-12-24 |
+| FR-12-035 | D | Phát token cho HTTT bằng `client_credentials` | M | MVP | — | UC-12-25 |
+| FR-12-036 | D | Sinh scope của client từ dữ liệu đã duyệt | M | MVP | UI-12-10 | UC-12-22 |
+| FR-12-037 | D | Tài khoản dịch vụ nội bộ của đơn vị triển khai | M | MVP | UI-12-10 | UC-12-26 |
+| FR-12-038 | D | Vòng đời token: làm mới xoay vòng, phát hiện dùng lại | M | MVP | — | UC-12-16 |
+| FR-12-039 | D | Công bố JWKS và xoay khóa ký 90 ngày | M | MVP | UI-12-19 | UC-12-27 |
+| FR-12-040 | D | Thu hồi truy cập tức thời và phân phối danh sách chặn | M | MVP | UI-12-02, UI-12-10 | UC-12-28 |
+| FR-12-041 | E | Khởi tạo realm của tenant từ mẫu | M | MVP | UI-12-19 | UC-12-29 |
+| FR-12-042 | E | Cấu hình bảo mật realm bằng GitOps, phát hiện lệch | M | MVP | UI-12-19 | UC-12-29 |
+| FR-12-043 | E | Tạm ngừng, khôi phục, chuyển chỉ-đọc realm theo vòng đời tenant | M | MVP | UI-12-19 | UC-12-30 |
+| FR-12-044 | F | Quyết định ủy quyền theo hợp đồng PEP và PDP | M | MVP | — | UC-12-31 |
+| FR-12-045 | F | Quy tắc gốc: từ chối mặc định, từ chối thắng, cách ly tenant | M | MVP | — | UC-12-31 |
+| FR-12-046 | F | Phân quyền ba lớp: vai trò, phạm vi tổ chức, thuộc tính dữ liệu | M | MVP | — | UC-12-31 |
+| FR-12-047 | F | Tính mặt nạ trường và chế độ bảo vệ theo mục đích | M | MVP | — | UC-12-31 |
+| FR-12-048 | F | Bộ chuyển đổi XACML 3.0 | M | MVP | — | UC-12-32 |
+| FR-12-049 | F | Quyết định theo lô | S | MVP | — | UC-12-32 |
+| FR-12-050 | F | Bộ đệm quyết định | S | MVP | — | UC-12-32 |
+| FR-12-051 | F | Sinh dữ liệu vai trò–quyền cho OPA từ ma trận D02-08 | M | MVP | UI-12-12 | UC-12-33 |
+| FR-12-052 | F | Soạn và kiểm thử chính sách | M | MVP | UI-12-12 | UC-12-34 |
+| FR-12-053 | F | Chạy khô chính sách trên lưu lượng thật | M | MVP | UI-12-13 | UC-12-34 |
+| FR-12-054 | F | Duyệt bốn mắt và phát hành gói chính sách ký | M | MVP | UI-12-13, UI-12-17 | UC-12-35 |
+| FR-12-055 | F | Thu hồi và quay lui chính sách | M | MVP | UI-12-12 | UC-12-36 |
+| FR-12-056 | G | Ghi vết sự kiện xác thực và quản trị định danh | M | MVP | UI-12-15 | UC-12-37 |
+| FR-12-057 | G | Ghi vết quyết định ủy quyền | M | MVP | UI-12-14 | UC-12-37 |
+| FR-12-058 | G | Tra cứu nhật ký quyết định | M | MVP | UI-12-14 | UC-12-38 |
+| FR-12-059 | G | Phát hiện hành vi bất thường và cảnh báo | S | MVP | UI-12-15 | UC-12-39 |
+| FR-12-060 | G | Báo cáo tình trạng tài khoản và xác thực hai yếu tố | S | MVP | UI-12-15 | UC-12-40 |
+| FR-12-061 | H | Tham số phân hệ theo tenant | M | MVP | UI-12-16 | UC-12-41 |
+| FR-12-062 | H | Tra cứu danh bạ người dùng cho phân hệ khác | M | MVP | — | UC-12-42 |
 
 : Danh sách chức năng của PH-12
 
@@ -1541,7 +1541,7 @@ Hình cho thấy việc gán chỉ thực hiện sau khi người thứ hai duy�
 3. Hệ thống tạo yêu cầu `REQUESTED` và đưa vào hộp việc của người có `PERM-12-jit-approve`.
 4. Người duyệt xác thực mức 3, xem lý do, phiếu và phạm vi rồi duyệt hoặc từ chối; không được là người đề nghị (ERR-12-008).
 5. Khi duyệt, hệ thống đặt quyền `ACTIVE` với `expiresAt = bây giờ + thời lượng`, tạo bản gán tạm trong dữ liệu gói chính sách (hiệu lực ≤ 60 giây) và cho phép người đề nghị đăng nhập vào realm tenant đích qua FR-12-027.
-6. Hệ thống ghi kiểm toán vào chuỗi của tenant bị truy cập, gửi thông báo tới các TA của tenant đó (nội dung: ai, vì sao, tới khi nào, mã phiếu), phát EVT-12-11.
+6. Hệ thống ghi kiểm toán vào chuỗi của tenant bị truy cập, gửi thông báo tới các TA của tenant đó (nội dung: ai, vì sao, tới khi nào, mã phiếu), phát EVT-12-11; tenant bị truy cập đọc được quyền có thời hạn đang mở vào mình nhờ chính sách RLS mẫu G ở CSDL (D03-03-PH12).
 7. Khi hết hạn (hoặc bị thu hồi), tác vụ chạy mỗi 30 giây gỡ quyền, thu hồi phiên liên tenant của người đó ở tenant đích và đẩy danh sách chặn; ngoài ra OPA kiểm tra `expiresAt` ở mọi quyết định nên quyền hết hạn không bao giờ dùng được dù tác vụ chậm.
 
 **Luồng thay thế.** Người duyệt từ chối: `REJECTED`, người đề nghị nhận ý kiến. Người đề nghị rút lại: `CANCELLED`. SO hoặc TA của tenant đích thu hồi sớm: `REVOKED`, phiên bị cắt ngay (FR-12-040). Cần thêm thời gian: đề nghị yêu cầu mới, không có gia hạn tự động (Q12-10). Trường hợp cần thao tác trực tiếp lên hạ tầng (cluster-admin, CSDL, master realm) dùng quy trình PAM, break-glass của SEC-28 ngoài PH-12.
@@ -2902,8 +2902,8 @@ Hình cho thấy `dh-platform` không bao giờ trả bí mật cho PH-01: bí m
 1. Người dùng chọn đối tượng, nhập lý do và xác nhận.
 2. Hệ thống kiểm tra lý do (ERR-12-014) và không phải tự thu hồi mình (ERR-12-013).
 3. Hệ thống vô hiệu hoặc tạm ngừng đối tượng ở Keycloak, hủy mọi phiên, thu hồi mọi refresh token.
-4. Hệ thống ghi một mục vào danh sách chặn: `sub` hoặc `client`, mốc `notBefore = bây giờ`, hạn giữ bằng thời hạn token lớn nhất cộng 30 giây; mọi token có `iat` trước mốc đều bị từ chối.
-5. Hệ thống phát EVT-12-05 để các DU nhận qua Kafka, và APISIX lấy danh sách qua API mỗi 10 giây bằng scope `iam:revocation-read`.
+4. Hệ thống ghi một mục vào danh sách chặn: `sub` hoặc `client`, mốc `notBefore = bây giờ`, cờ `blockAll` bật tới khi Keycloak xác nhận đã vô hiệu đối tượng, hạn giữ bằng thời hạn token lớn nhất cộng 30 giây; mọi token có `iat` trước mốc đều bị từ chối.
+5. Hệ thống phát EVT-12-05 để các DU nhận qua Kafka, và APISIX lấy danh sách qua API mỗi 10 giây bằng scope `iam:revocation-read`; ngoài ra hệ thống đẩy mục thu hồi sang PH-03 qua API-03-053 (`POST /revocations`, scope `gateway:revoke`) để `dh-connect` ghi vào Valkey, còn đường kéo là đường đối chiếu.
 6. Hệ thống hiển thị "Đã áp dụng ở {n}/{m} nút cổng" dựa trên số phiên bản danh sách mà các nút báo về.
 7. Hệ thống ghi kiểm toán kèm lý do và người thực hiện.
 
@@ -2981,13 +2981,13 @@ Hình cho thấy realm được tạo một lần từ mẫu, sau đó được 
 ::: dac-ta
 **Mục đích.** Tự động tạo không gian định danh cho tỉnh mới trong vài phút, đúng cấu hình bảo mật chuẩn, có sẵn 22 vai trò, ứng dụng đăng nhập và tài khoản quản trị tỉnh đầu tiên, để tỉnh bắt đầu làm việc trong ngày (KPI khởi tạo tenant ≤ 1 ngày).
 
-**Tác nhân, quyền.** PH-20 (scope `iam:realm-provision`) trong saga khởi tạo tenant (D03-10 §5.2, bước 2).
+**Tác nhân, quyền.** PH-20 (scope `iam:realm-provision`) trong saga khởi tạo tenant (D03-10 §5.2, bước `S03_REALM`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-12; REQ-20; LGC-IAM-002; SEC-20; BP-08; NFR-00-057.
 
-**Tiền điều kiện.** Bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên.
+**Tiền điều kiện.** Bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên.
 
 **Kích hoạt.** PH-20 gọi API tạo realm kèm mã tenant.
 
@@ -2998,7 +2998,7 @@ Hình cho thấy realm được tạo một lần từ mẫu, sau đó được 
 1. PH-20 gọi tạo realm; hệ thống kiểm tra bên gọi có scope `iam:realm-provision` và mã tenant hợp lệ.
 2. Hệ thống tạo realm `dh-{tenant}` từ mẫu ở trạng thái `PROVISIONING` bằng `keycloak-config-cli`: chính sách mật khẩu, phát hiện dò mật khẩu, thời hạn token, danh sách grant cho phép (chỉ `authorization_code` với PKCE, `client_credentials`, `refresh_token`), bật sự kiện đăng nhập và sự kiện quản trị đẩy ra SIEM.
 3. Hệ thống tạo khóa ký ES256 cho realm, client `dh-console`, `dh-portal` (bí mật, PKCE `S256`, `redirect_uri` khớp tên miền tenant) và ghi bí mật client vào OpenBao.
-4. Hệ thống tạo 22 vai trò chuẩn (mọi vai trò trừ `PLATFORM_*`, chỉ có ở `dh-platform`), nhóm `mfa-required` ánh xạ theo vai trò, vai trò tùy biến `realm-user-admin` và tài khoản dịch vụ của `dh-platform` chỉ có vai trò đó (không có `manage-realm`, `manage-clients`, `manage-authorization`).
+4. Hệ thống tạo 22 vai trò chuẩn (mọi vai trò trừ `PLATFORM_*`, chỉ có ở `dh-platform`), nhóm `mfa-required` ánh xạ theo vai trò, vai trò tùy biến `realm-user-admin` và tài khoản dịch vụ của `dh-platform` chỉ có vai trò đó (không có `manage-realm`, `manage-clients`, `manage-authorization`); riêng việc cấp client cho HTTT dùng client `dh-client-provisioner` có `manage-clients` giới hạn theo thuộc tính `dh_managed`, còn `dh-platform-iam` vẫn chỉ có `realm-user-admin`.
 5. Hệ thống cấu hình nhà môi giới nền tảng (FR-12-027) ở trạng thái ẩn và bắt buộc `kc_idp_hint`.
 6. Hệ thống tạo quản trị tỉnh đầu tiên ở `PENDING_ACTIVATION`, gán `TENANT_ADMIN`, buộc đặt mật khẩu và đăng ký WebAuthn, gửi liên kết kích hoạt.
 7. Hệ thống đặt realm `ACTIVE`, nạp dữ liệu gói chính sách của tenant (FR-12-051), ghi kiểm toán, phát EVT-12-13 và trả kết quả cho PH-20.
@@ -3191,7 +3191,7 @@ Hình cho thấy chính sách chỉ đi một chiều từ nửa vòng đời sa
 
 **Luồng xử lý chính.**
 
-1. PEP dựng `input` từ token đã xác minh (không từ tham số của bên gọi, BR-12-004): `tenant`, `subject` (loại, mã, vai trò, scope, đơn vị, `acr`, `auth_time`, mã quyền có thời hạn), `resource` (mã, loại, tenant, đơn vị chủ quản, mức phân loại, trạng thái, người tạo, người gửi duyệt), `action` (động từ chuẩn), `permission` (`PERM-{PH}-{động từ}`) và `context` (mục đích, mã hồ sơ, địa chỉ nguồn, thời điểm).
+1. PEP dựng `input` từ token đã xác minh (không từ tham số của bên gọi, BR-12-004): `tenant`, `subject` (loại, mã, vai trò, scope, đơn vị, `acr`, `auth_time`, mã quyền có thời hạn `grantId` chỉ để ghi vết, OPA tra quyền theo dữ liệu gói chứ không tin giá trị này), `resource` (mã, loại, tenant, đơn vị chủ quản, mức phân loại, trạng thái, người tạo, người gửi duyệt), `action` (động từ chuẩn), `permission` (`PERM-{PH}-{động từ}`) và `context` (mục đích, mã hồ sơ, địa chỉ nguồn, thời điểm).
 2. PEP gọi OPA cục bộ trong pod với thời gian chờ tối đa theo `12.pep.timeout-ms` (mặc định 50 ms).
 3. OPA đánh giá theo FR-12-045 và FR-12-046 rồi trả `allow`, `reason`, `matchedPolicy`, `bundleRevision`, `fieldMask`, `privacyMode`, `obligations[]`, `evaluationTimeMs`.
 4. Từ chối: PEP trả `403` nếu người gọi biết đối tượng tồn tại trong phạm vi của mình, hoặc `404` nếu đối tượng thuộc tenant hay tổ chức khác (D02-08 §7); mọi trường hợp ghi vết (FR-12-057).
@@ -3990,7 +3990,7 @@ Hình cho thấy ba nguồn đổ về hai nơi: sự kiện xác thực và tha
 2. Bộ thu che dữ liệu: giá trị trường Nhạy cảm không ghi (chỉ tên trường); mã tài nguyên mức Nhạy cảm thay bằng băm có khóa để tra được "ai đã truy cập đối tượng X" mà không lộ X (D03-07 §4).
 3. Hệ thống ghi 100% quyết định từ chối và 100% quyết định cho phép trên dữ liệu mức Hạn chế, Nhạy cảm; quyết định cho phép trên dữ liệu Công khai, Nội bộ lấy mẫu theo `12.decision.sample-ratio` (mặc định 0,1).
 4. Quyết định từ chối và quyết định mức Nhạy cảm cũng vào chuỗi băm kiểm toán của PH-13 (WORM 5 năm); phần còn lại ở Loki, nhãn `tenant`, giữ 12 tháng trực tuyến.
-5. Nếu tài nguyên mức Nhạy cảm mà đường ghi vết không khả dụng (bộ đệm cục bộ đầy hoặc bộ thu không nhận), PEP từ chối phục vụ với `AUDIT_UNAVAILABLE` (BR-12-013).
+5. Nếu tài nguyên mức Nhạy cảm mà đường ghi vết không khả dụng (bộ đệm cục bộ đầy, bộ thu không nhận, hoặc `AuditGate` thấy plugin `decision_logs` của OPA không hoạt động), PEP từ chối phục vụ với `AUDIT_UNAVAILABLE` (BR-12-013).
 
 **Luồng thay thế.** Đường ghi vết lỗi với dữ liệu thường: PEP vẫn phục vụ, bộ đệm cục bộ giữ tối đa 24 giờ, cảnh báo cho vận hành; quyết định sau khi khôi phục được gửi lại.
 
@@ -4491,7 +4491,7 @@ Khóa tham số bắt đầu bằng `12.`, lưu ở kho tham số của PH-18 th
 | ERR-12-117 | 401 | Xác thực client thất bại (`invalid_client`) |
 | ERR-12-118 | 403 | Client bị tạm ngừng hoặc thu hồi (`unauthorized_client`) |
 | ERR-12-119 | 400 | Scope giao rỗng (`invalid_scope`) |
-| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`) |
+| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`), dùng cho API quản trị của PH-12 chứ không chỉ cho Keycloak |
 | ERR-12-121 | 403 | Tenant tạm ngừng hoặc realm không hoạt động |
 | ERR-12-122 | 400 | Grant hoặc loại phản hồi bị cấm (`unsupported_grant_type`) |
 | ERR-12-123 | 400 | Yêu cầu XACML sai lược đồ (phản hồi `Indeterminate`) |
@@ -4527,7 +4527,7 @@ Mỗi mã lỗi mà người dùng có thể gặp trên màn hình được chu
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
-| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." | Dưới trường nhập |
+| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." Với mã nhóm trùng: "Mã nhóm này đã được dùng. Chọn mã khác." | Dưới trường nhập |
 | ERR-12-004 | "Đơn vị {mã} không tồn tại hoặc đã hết hiệu lực." | Dưới trường đơn vị |
 | ERR-12-005 | "Thư điện tử phải thuộc miền {danh sách miền} của tỉnh." | Dưới trường thư |
 | ERR-12-007 | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền." | Thông báo nổi hoặc trang PTN-13 |
@@ -4623,7 +4623,7 @@ Sự kiện phát qua outbox của `dh-platform` vào Kafka, định dạng Clou
 | API-12-027 | `DELETE /role-assignments/{assignmentId}` | PERM-12-user-admin | 012 |
 | API-12-028 | `GET /sod-rules` | PERM-12-read | 013 |
 | API-12-029 | `POST /sod-exceptions` | PERM-12-sod-exception | 013 |
-| API-12-030 | `POST /sod-exceptions/{exceptionId}:decide (duyệt hoặc từ chối)` | PERM-12-approve | 013 |
+| API-12-030 | `POST /sod-exceptions/{exceptionId}:decide` | PERM-12-approve (duyệt hoặc từ chối) | 013 |
 | API-12-031 | `POST /sod-exceptions/{exceptionId}:revoke` | PERM-12-approve | 013 |
 | API-12-032 | `GET /groups` | PERM-12-read | 014 |
 | API-12-033 | `POST /groups` | PERM-12-user-admin | 014 |
@@ -4665,14 +4665,14 @@ Sự kiện phát qua outbox của `dh-platform` vào Kafka, định dạng Clou
 | API-12-069 | `GET /service-accounts` | PERM-12-read | 037 |
 | API-12-070 | `POST /service-accounts` | PERM-12-realm-admin (kèm duyệt qua GitOps) | 037 |
 | API-12-071 | `POST /service-accounts/{accountCode}/credentials:rotate` | PERM-12-realm-admin | 037 |
-| API-12-072 | `GET /realms/dh-{tenant}/.well-known/openid-configuration (Keycloak)` | Công khai | 020 |
-| API-12-073 | `GET /realms/dh-{tenant}/protocol/openid-connect/auth (Keycloak)` | Công khai | 020, 023, 027 |
-| API-12-074 | `POST /realms/dh-{tenant}/protocol/openid-connect/token (Keycloak)` | Xác thực client hoặc refresh token | 020, 023, 027, 035, 038 |
-| API-12-075 | `GET /realms/dh-{tenant}/protocol/openid-connect/certs (Keycloak, JWKS)` | Công khai | 039 |
-| API-12-076 | `POST /realms/dh-{tenant}/protocol/openid-connect/logout (Keycloak)` | Phiên đăng nhập | 020 |
-| API-12-077 | `POST /realms/dh-{tenant}/protocol/openid-connect/revoke (Keycloak, RFC 7009)` | Xác thực client | 040 |
-| API-12-078 | `GET /realms/dh-{tenant}/protocol/openid-connect/userinfo (Keycloak)` | Bearer token | 020 |
-| API-12-079 | `GET /revocations` | Scope `iam:revocation-read` | 040 |
+| API-12-072 | `GET /realms/dh-{tenant}/.well-known/openid-configuration` | Công khai (Keycloak) | 020 |
+| API-12-073 | `GET /realms/dh-{tenant}/protocol/openid-connect/auth` | Công khai (Keycloak) | 020, 023, 027 |
+| API-12-074 | `POST /realms/dh-{tenant}/protocol/openid-connect/token` | Xác thực client hoặc refresh token (Keycloak) | 020, 023, 027, 035, 038 |
+| API-12-075 | `GET /realms/dh-{tenant}/protocol/openid-connect/certs` | Công khai (Keycloak, JWKS) | 039 |
+| API-12-076 | `POST /realms/dh-{tenant}/protocol/openid-connect/logout` | Phiên đăng nhập (Keycloak) | 020 |
+| API-12-077 | `POST /realms/dh-{tenant}/protocol/openid-connect/revoke` | Xác thực client (Keycloak, RFC 7009) | 040 |
+| API-12-078 | `GET /realms/dh-{tenant}/protocol/openid-connect/userinfo` | Bearer token (Keycloak) | 020 |
+| API-12-079 | `GET /revocations` | Scope `iam:revocation-read`; bên kéo gửi `X-DH-Applied-Version` và `X-DH-Node` | 040 |
 | API-12-080 | `POST /realms` | Scope `iam:realm-provision` | 041 |
 | API-12-081 | `GET /realms/{tenantCode}` | PERM-12-realm-admin | 042 |
 | API-12-082 | `GET /realms/{tenantCode}/drift` | PERM-12-realm-admin | 042 |
@@ -4744,11 +4744,11 @@ Phần dưới giới thiệu hai màn hình tiêu biểu: màn khởi đầu c�
 
 Màn danh sách người dùng (UI-12-01) là nơi quản trị tỉnh và cán bộ ATTT bắt đầu. Sáu thẻ số ở đầu trang vừa là số liệu vừa là bộ lọc nhanh: bấm "Nhóm bắt buộc chưa có MFA" để thấy ngay những tài khoản quyền cao còn thiếu yếu tố thứ hai, bấm "Sắp bị vô hiệu" để rà tài khoản gần ngưỡng 45 ngày. Tài khoản bị khóa luôn xếp đầu bảng. Cột "Yếu tố thứ hai" phân biệt WebAuthn, TOTP, "Chưa đăng ký" (bị buộc ở lần đăng nhập sau) và "Không bắt buộc"; không cột nào hiện giá trị bí mật của yếu tố.
 
-![UI-12-01 Danh sách người dùng](ph12/hifi/ui-12-01.png)
+![UI-12-01 Danh sách người dùng](../../03-thiet-ke/uiux/ph12/hifi/ui-12-01.png)
 
 Màn chạy khô và duyệt chính sách (UI-12-13) là nơi người duyệt thứ hai nhìn thấy hậu quả của một thay đổi quy tắc trước khi nó có hiệu lực. Bốn thẻ số tóm tắt tác động, thẻ "Đổi kết quả" chuyển đỏ khi vượt ngưỡng 20%; bảng bên dưới cho biết bên gọi nào bị ảnh hưởng nhiều nhất. Ngăn kéo bên phải liệt kê các điều kiện đã đạt (cú pháp, ca kiểm thử, độ phủ, bốn mắt, xác thực mức 3) và buộc người duyệt tích xác nhận bổ sung cùng ý kiến khi thay đổi lớn hoặc có trường hợp nới quyền. Nút "Phê duyệt và phát hành" chỉ sáng khi mọi điều kiện đạt; với chính người soạn nút bị vô hiệu (BR-12-008).
 
-![UI-12-13 Chạy khô và duyệt chính sách](ph12/hifi/ui-12-13.png)
+![UI-12-13 Chạy khô và duyệt chính sách](../../03-thiet-ke/uiux/ph12/hifi/ui-12-13.png)
 
 ## 11. Truy vết
 
@@ -4890,6 +4890,8 @@ Bảng dưới là bảng ánh xạ mặc định dùng khi nhập người dùn
 | `ARCHITECT` | Chưa có | Q12-05 |
 | `AI_GOVERNOR` | Chưa có | Thuộc PH-17 (Đợt 3); Q12-05 |
 | `LEADERSHIP` | Chưa có | Q12-05; tạm ánh xạ `ROLE-VIEWER` nếu người dùng chỉ xem |
+| `INTEGRATION_DEVELOPER` | Chưa có | Vai trò của realm `lgsp` ở môi trường compose; Q12-05 |
+| `INTEGRATION_ADMIN` | Chưa có | Vai trò của realm `lgsp` ở môi trường compose; Q12-05 |
 
 : Ánh xạ vai trò của repo sang vai trò chuẩn D02-08
 
@@ -4962,6 +4964,19 @@ PH-12 nằm trên đường dữ liệu (OPA, Keycloak), nên phụ thuộc đư
 
 : Phụ thuộc của PH-12
 
+Các tập của phân hệ khác đã nêu những điểm giao tiếp mà PH-12 tiếp nhận. Bảng dưới ghi nhận từng điểm để tập thiết kế và kiểm thử của PH-12 xử lý cùng nhịp; chi tiết hợp đồng nằm ở FR tương ứng của tập này và ở tập của phân hệ nêu yêu cầu.
+
+| Phân hệ | Điểm giao tiếp PH-12 tiếp nhận | Căn cứ ở PH-12 |
+|---|---|---|
+| PH-03 | PH-12 đẩy thu hồi qua API-03-053 (scope `gateway:revoke`); là nguồn của gói chính sách OPA và JWKS; claim `purpose`; khóa ký `ES256` hoặc `PS256` ở realm | FR-12-039, 040, 051 |
+| PH-09 | Máy chủ gói chính sách nạp gói của PH-09 (FR-09-018) với nguồn dữ liệu riêng; bộ ca chuẩn của PH-09 chạy ở CI của PH-12 | FR-12-051, 054 |
+| PH-14 | Gói OPA `national/*` cho mục đích, khung giờ và scope `national.invoke.*`; claim `acr`, `auth_time` cho xác thực lại; đăng ký cặp bốn mắt cho các loại duyệt của PH-14 vào danh sách "loại duyệt được đánh dấu" của FR-00-071 | FR-12-023, 045, 046 |
+| PH-15 | Client `portal-bff`, `portal-dev` (giới hạn Admin API) và `portal-try` qua token exchange; tự gán `ROLE-DEVELOPER`; trình xác thực `tenantGrants` cho `dh-dev` | FR-12-032 |
+| PH-17 | Token exchange RFC 8693 (`act` = `dh-assist`, `audience` theo API đích); client `dh-assist`; tài khoản `svc-assist-index` với scope `*.read-meta`; scope `assist:infer`, `assist:report` cho mTLS data plane | FR-12-030, 037 |
+| PH-20 | Scope `iam:realm-provision`; đọc API-20-165 khi cấp truy cập liên tenant; nghe EVT-20-04 và EVT-20-11; xác thực bước hai cho thao tác nguy hiểm của PH-20 qua `StepUpApi` (SDD §3.3) và ERR-12-120 | FR-12-017, 019, 041, 043 |
+
+: Điểm giao tiếp PH-12 tiếp nhận từ các phân hệ khác
+
 ### 12.2. Giả định
 
 Bảng sau liệt kê các giả định mà thiết kế PH-12 đặt ra, kèm cơ sở của từng giả định; nếu một giả định sai thì phải rà lại các FR liên quan.
@@ -5005,7 +5020,7 @@ Bảng sau liệt kê các ràng buộc mà PH-12 phải tuân thủ và nguồn
 
 > **Câu hỏi mở Q12-04:** Chính sách Rego của tỉnh chỉ được thêm luật từ chối (BR-12-007) và tỉnh mở rộng quyền chỉ bằng vai trò tùy biến (FR-12-015, Đợt 2). Có tỉnh nào cần luật cho phép đặc thù (ví dụ ngoại lệ mục đích khai thác) không; nếu có, đề xuất luật cho phép của tỉnh phải qua duyệt thêm ở cấp nền tảng.
 
-> **Câu hỏi mở Q12-05:** Năm vai trò của repo chưa có trong 22 vai trò chuẩn: `LEGAL_REVIEWER`, `ARCHITECT`, `AI_GOVERNOR`, `LEADERSHIP`, `DQ_ANALYST` (mục 11.4). Đề xuất `DQ_ANALYST` dùng `DATA_STEWARD` tới Đợt 3, `AI_GOVERNOR` thuộc PH-17, hai vai trò `LEGAL_REVIEWER`, `ARCHITECT` không cần ở MVP vì hồ sơ kết nạp do TA duyệt. Cần chủ đầu tư xác nhận, và `LEADERSHIP` có cần vai trò riêng không.
+> **Câu hỏi mở Q12-05:** Năm vai trò của repo chưa có trong 22 vai trò chuẩn: `LEGAL_REVIEWER`, `ARCHITECT`, `AI_GOVERNOR`, `LEADERSHIP`, `DQ_ANALYST` (mục 11.4); hai vai trò của realm `lgsp` ở môi trường compose là `INTEGRATION_DEVELOPER` và `INTEGRATION_ADMIN` cũng chưa có vai trò chuẩn tương ứng. Đề xuất `DQ_ANALYST` dùng `DATA_STEWARD` tới Đợt 3, `AI_GOVERNOR` thuộc PH-17, hai vai trò `LEGAL_REVIEWER`, `ARCHITECT` không cần ở MVP vì hồ sơ kết nạp do TA duyệt. Cần chủ đầu tư xác nhận, và `LEADERSHIP` có cần vai trò riêng không.
 
 > **Câu hỏi mở Q12-06:** D03-07 (SEC-23) gọi vai trò đối soát là `ROLE-PAY_RECONCILER`, còn D02-08 §2 gọi là `ROLE-PAYMENT_ACCOUNTANT`. Danh sách vai trò thuộc nhóm `mfa-required` do PH-12 sinh từ D02-08; đề xuất thống nhất tên theo D02-08 và sửa SEC-23.
 
@@ -5049,6 +5064,8 @@ Phân hệ PH-12 được coi là đạt khi thỏa các tiêu chí sau, kiểm 
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu trách nhiệm; tập này chỉ ghi lại để đợt đồng bộ cuối xử lý.
 
 | Tài liệu | Đề nghị |
@@ -5075,4 +5092,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-12: 62 FR đủ khối 17 mục (52 M, 9 S, 1 C) trong tám nhóm; 45 BR, 33 NFR, 38 tham số `12.*`, 66 mã lỗi (47 điều khiển, 19 runtime), 16 sự kiện, 111 API, 19 màn hình, 2 ảnh hi-fi; ma trận truy vết 12 mục LGC và ánh xạ mã cũ sang mã mới cho 19 FR, 30 NFR, 17 BR của repo; 15 câu hỏi mở (Q12-01…15); đề nghị đồng bộ D02-08 (14 quyền, 7 scope) |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi |
 

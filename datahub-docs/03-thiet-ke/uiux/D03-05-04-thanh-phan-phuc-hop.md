@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D03-05-04
 ten: Thành phần phức hợp và tổ chức
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã, Hội đồng thẩm định
 nguoi_lap: Luồng giao diện
-mo_ta: Đặc tả 75 thành phần phức hợp và tổ chức của gói giao diện dùng chung gồm biểu mẫu, điều hướng, phản hồi, lớp nổi, bảng dữ liệu, quy trình, canvas thiết kế và khung ứng dụng, làm nguồn lắp mọi mẫu màn hình của các phân hệ.
+mo_ta: Đặc tả 86 thành phần phức hợp và tổ chức của gói giao diện dùng chung gồm biểu mẫu, điều hướng, phản hồi, lớp nổi, bảng dữ liệu, quy trình, canvas thiết kế và khung ứng dụng, làm nguồn lắp mọi mẫu màn hình của các phân hệ.
 tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D03-05-02 Design token; D03-05-03 Thành phần nguyên tử; D03-06-00 IA, layout, mẫu màn hình; D00-01 Thuật ngữ và quy ước; D02-02 SRS; ADR-020
 ---
 
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D
 
 ## Tóm tắt cho hội đồng thẩm định
 
-**Mục tiêu.** Các phân hệ của Datahub có hàng trăm màn hình nhưng cùng một cách danh sách, lọc, xuất, xác nhận, xử lý xung đột, xem lịch sử, duyệt, thông báo và báo lỗi. Tài liệu đặc tả 75 thành phần phức hợp và tổ chức của gói `@datahub/ui` để mỗi hành vi dùng chung của FR-00 được hiện thực đúng một lần và mọi phân hệ kế thừa, thay vì mỗi nơi tự làm một kiểu.
+**Mục tiêu.** Các phân hệ của Datahub có hàng trăm màn hình nhưng cùng một cách danh sách, lọc, xuất, xác nhận, xử lý xung đột, xem lịch sử, duyệt, thông báo và báo lỗi. Tài liệu đặc tả 86 thành phần phức hợp và tổ chức của gói `@datahub/ui` để mỗi hành vi dùng chung của FR-00 được hiện thực đúng một lần và mọi phân hệ kế thừa, thay vì mỗi nơi tự làm một kiểu.
 
 **Phạm vi.** Tài liệu gồm quy tắc chung về vật liệu, trạng thái dữ liệu, quyền, lỗi và nội dung tiếng Việt (chương 2), mười một nhóm thành phần từ biểu mẫu, điều hướng, phản hồi, lớp nổi, bảng dữ liệu, mã và so sánh, quy trình, canvas thiết kế, khung ứng dụng đến dữ liệu chuyên dụng (chương 3 đến 13), và bảng tổng hợp, checklist nghiệm thu, truy vết (chương 14). Thành phần nguyên tử ở D03-05-03; vật liệu và token ở D03-05-01, D03-05-02.
 
@@ -26,8 +26,8 @@ tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D
 
 | Chỉ số | Giá trị |
 |---|---|
-| Thành phần phức hợp và tổ chức | 75 (77 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`) |
-| Quy mô design system | 121 thành phần (75 phức hợp, 44 nguyên tử, 2 nền tảng) |
+| Thành phần phức hợp và tổ chức | 86 (88 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`) |
+| Quy mô design system | 134 thành phần (86 phức hợp, 46 nguyên tử, 2 nền tảng) |
 | Nhóm thành phần | 11 (chương 3 đến 13) |
 | Thành phần trọng điểm có tiểu mục hành vi chi tiết | 17 |
 | Trạng thái dữ liệu dùng chung | 6 |
@@ -41,7 +41,7 @@ Các con số trên lấy từ chương 1, 2, 11 và 14 của tài liệu này.
 
 ## 1. Mục đích, phạm vi và cách đọc
 
-Tài liệu này đặc tả 75 thành phần phức hợp (composite) và thành phần tổ chức (organism) của design system Datahub, đóng gói trong `@datahub/ui`. Thành phần phức hợp là tổ hợp của các thành phần nguyên tử ở D03-05-03 (ví dụ `CMP-FormField` ghép nhãn, điều khiển, mô tả và thông báo lỗi); thành phần tổ chức là khối giao diện lớn mang nghiệp vụ dùng chung (ví dụ `CMP-DataTable`, `CMP-ApprovalPanel`) hoặc khung ứng dụng (`CMP-AppShell`, `CMP-Topbar`, `CMP-Sidebar`). Mẫu màn hình PTN-01…14 ở D03-06-00 được lắp hoàn toàn từ các thành phần trong tài liệu này, nên mọi hành vi dùng chung của FR-00 (danh sách, lọc, xuất, xác nhận, xung đột, lịch sử, duyệt, thông báo, lỗi) được hiện thực đúng một lần ở đây và mọi phân hệ kế thừa.
+Tài liệu này đặc tả 86 thành phần phức hợp (composite) và thành phần tổ chức (organism) của design system Datahub, đóng gói trong `@datahub/ui`. Thành phần phức hợp là tổ hợp của các thành phần nguyên tử ở D03-05-03 (ví dụ `CMP-FormField` ghép nhãn, điều khiển, mô tả và thông báo lỗi); thành phần tổ chức là khối giao diện lớn mang nghiệp vụ dùng chung (ví dụ `CMP-DataTable`, `CMP-ApprovalPanel`) hoặc khung ứng dụng (`CMP-AppShell`, `CMP-Topbar`, `CMP-Sidebar`). Mẫu màn hình PTN-01…14 ở D03-06-00 được lắp hoàn toàn từ các thành phần trong tài liệu này, nên mọi hành vi dùng chung của FR-00 (danh sách, lọc, xuất, xác nhận, xung đột, lịch sử, duyệt, thông báo, lỗi) được hiện thực đúng một lần ở đây và mọi phân hệ kế thừa.
 
 Tài liệu không định nghĩa lại giá trị. Mọi màu, bo góc, khoảng cách, cỡ chữ, thời lượng chuyển động lấy từ hợp đồng token D03-05-02 và được ghi bằng đúng tên token (ví dụ `color-surface-solid`, `radius-xl`). Vật liệu Liquid Glass, lớp `.dh-glass--*`, chế độ glass `full` / `lite` / `off` và thành phần nguyên thủy `CMP-GlassSurface` được đặc tả ở D03-05-01; tài liệu này chỉ quy định thành phần nào dùng vật liệu nào ở phần con nào.
 
@@ -78,7 +78,7 @@ Bảng dưới chỉ ra tài liệu này gồm những gì và phần nào thu�
 
 | Thuộc tài liệu này | Nằm ở tài liệu khác |
 |---|---|
-| 75 thành phần phức hợp và tổ chức, quy tắc chung chương 2 | 44 thành phần nguyên tử: D03-05-03 |
+| 86 thành phần phức hợp và tổ chức, quy tắc chung chương 2 | 46 thành phần nguyên tử: D03-05-03 |
 | Thành phần nào dùng vật liệu nào ở phần con nào | Định nghĩa vật liệu, lớp `.dh-glass--*`, chế độ `full`, `lite`, `off`, `CMP-GlassSurface`: D03-05-01 |
 | Tên token từng thành phần dùng | Giá trị và hợp đồng token: D03-05-02 |
 | Thành phần dùng chung của mẫu màn hình | Mẫu PTN-01…14, bố cục, IA: D03-06-00 |
@@ -141,7 +141,7 @@ Bảng nhóm thành phần ở đầu chương 1 đã nêu các chương 3 đế
 | 1 | Mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc |
 | 2 | Quy tắc vật liệu, mô hình trạng thái dữ liệu, mô hình quyền và hành động, mô hình lỗi, nội dung tiếng Việt, quy ước mã nguồn |
 | 3 đến 13 | Từng nhóm thành phần; mỗi thành phần có đoạn mở, bảng đặc tả, giao diện TypeScript và ví dụ TSX |
-| 14 | Bảng tổng hợp 75 thành phần, tên gọi khác, checklist nghiệm thu, truy vết, đề xuất bổ sung |
+| 14 | Bảng tổng hợp 86 thành phần, tên gọi khác, checklist nghiệm thu, truy vết, đề xuất bổ sung |
 
 : Cấu trúc tài liệu theo chương
 
@@ -520,7 +520,7 @@ export interface DhTabsProps {
 | Nền | `Pagination` của antd. Props cố định: `showSizeChanger`, `pageSizeOptions={[10,20,50,100]}`, `defaultPageSize={20}` (FR-00-021), `showQuickJumper` khi tổng số trang > 5 (CRUD-PAG-05), `showTotal`, `hideOnSinglePage={false}`. |
 | Giải phẫu | (1) Tổng số bản ghi sau lọc (CRUD-PAG-01); (2) nút trang trước; (3) các số trang với trang hiện tại nổi bật (CRUD-PAG-03); (4) nút trang sau; (5) bộ chọn số dòng mỗi trang; (6) ô nhảy trang. |
 | Vật liệu | Kế thừa nền đặc của bảng hoặc thẻ chứa nó. |
-| Biến thể | `full` (mặc định), `simple` (chỉ trước/sau và "Trang 3/12", cho Drawer hẹp). |
+| Biến thể | `full` (mặc định), `simple` (chỉ trước/sau và "Trang 3/12", cho Drawer hẹp), `cursor` (chỉ "Trước", "Sau" kèm số ước lượng "khoảng 12.000 bản ghi", dùng khi nguồn không có tổng chính xác như nhật ký ClickHouse của PH-03 UI-03-07, 09; không có ô nhảy trang và bộ chọn trang). |
 | Kích thước | Nút `size-control-sm` ở chế độ gọn, `size-control-md` ở chế độ chuẩn; đệm trên `space-3`. |
 | Trạng thái | Trang đầu (khóa nút trước, CRUD-PAG-04), trang cuối (khóa nút sau), đang tải trang mới (giữ số trang mới nổi bật, bảng ở trạng thái làm mới), tổng bằng 0 (ẩn số trang, giữ tổng "0 bản ghi"). |
 | Token | `color-fill-selected` + `color-accent-on-subtle` (trang hiện tại), `color-text-secondary` (tổng), `font-body`, `font-feature-tabular`. |
@@ -534,7 +534,8 @@ export interface DhTabsProps {
 export interface DhPaginationProps {
   page: number; size: number; total: number;
   onChange: (page: number, size: number) => void;
-  variant?: 'full' | 'simple';
+  variant?: 'full' | 'simple' | 'cursor';
+  estimatedTotal?: number; hasPrev?: boolean; hasNext?: boolean;   // chỉ cho variant 'cursor'
 }
 ```
 
@@ -573,6 +574,7 @@ Nhóm này quy định cách hệ thống nói với người dùng. Bảng dư�
 | Token | `color-{loại}-bg`, `color-{loại}-on-bg`, `color-text-secondary` (dòng kỹ thuật), `font-body-strong` (tiêu đề), `font-body`, `font-mono-sm` (mã), `radius-md`. |
 | Bàn phím, ARIA | Lỗi và cảnh báo xuất hiện sau thao tác dùng `role="alert"`; thông tin tĩnh dùng `role="status"` hoặc không có vai trò. Không chuyển focus vào Alert, trừ lỗi chung của biểu mẫu sau khi gửi. |
 | Nội dung | Tiêu đề nói điều gì sai bằng ngôn ngữ nghiệp vụ ("Không tải được danh sách dịch vụ"), mô tả nói cách khắc phục ("Kiểm tra kết nối mạng rồi bấm Thử lại. Nếu lỗi lặp lại, gửi mã truy vết cho bộ phận hỗ trợ."). |
+| Khe Trợ lý AI | Thuộc tính `explainSlot` đặt nút "Giải thích lỗi này" cạnh dòng mã lỗi của loại `error`, chỉ được truyền khi tenant bật Trợ lý AI và năng lực `EXPLAIN` bật; mặc định không có khe nên mọi phân hệ không cần sửa. Khe không chuyển focus và không chặn nút "Thử lại". |
 | Điều cấm | Không hiển thị stack trace, tên lớp Java, câu SQL hay thông điệp tiếng Anh thô; không dùng Alert cho kết quả thành công tạm thời (dùng Toast). |
 
 : Đặc tả của CMP-Alert
@@ -585,6 +587,7 @@ export interface DhAlertProps {
   error?: DhApiError;                 // tự dựng title/hint/mã lỗi/mã truy vết
   onRetry?: () => void;               // hiện nút "Thử lại" khi có
   action?: React.ReactNode;
+  explainSlot?: React.ReactNode;      // khe nút "Giải thích lỗi này" của Trợ lý AI (13.22), chỉ khi năng lực EXPLAIN bật
   dismissKey?: string;
 }
 ```
@@ -929,16 +932,17 @@ export interface DhTransferProps<K extends string = string> {
 
 | Khía cạnh | Đặc tả |
 |---|---|
-| Nền | `echarts/core` nhập theo nhu cầu (tree-shaking): `LineChart`, `BarChart`, `PieChart`, `HeatmapChart`, `GridComponent`, `TooltipComponent`, `LegendComponent`, `DataZoomComponent`, `AriaComponent`, `SVGRenderer` (mặc định) và `CanvasRenderer` (khi trên 5.000 điểm). Theme `datahub-light` và `datahub-dark` đăng ký bằng `echarts.registerTheme` từ `tokens.light`/`tokens.dark` của `@datahub/tokens`; đổi chế độ thì khởi tạo lại biểu đồ với theme mới. |
+| Nền | `echarts/core` nhập theo nhu cầu (tree-shaking): `LineChart`, `BarChart`, `PieChart`, `HeatmapChart`, `RadarChart`, `GridComponent`, `TooltipComponent`, `LegendComponent`, `DataZoomComponent`, `AriaComponent`, `SVGRenderer` (mặc định) và `CanvasRenderer` (khi trên 5.000 điểm). Theme `datahub-light` và `datahub-dark` đăng ký bằng `echarts.registerTheme` từ `tokens.light`/`tokens.dark` của `@datahub/tokens`; đổi chế độ thì khởi tạo lại biểu đồ với theme mới. |
 | Giải phẫu | (1) Tiêu đề và mô tả ngắn (nằm ngoài canvas biểu đồ, là chữ HTML); (2) thanh công cụ: chọn khoảng thời gian (`CMP-SegmentedControl` "1 giờ / 24 giờ / 7 ngày / 30 ngày"), nút "Xem dạng bảng", nút "Tải PNG/CSV"; (3) vùng vẽ; (4) nhãn trực tiếp ở cuối mỗi đường hoặc trên mỗi cột; (5) chú giải có ký hiệu hình dạng; (6) Tooltip; (7) bảng dữ liệu thay thế. |
 | Vật liệu | Vùng vẽ nền đặc `color-surface-solid` (biểu đồ nằm trong `CMP-Card`). Tooltip của ECharts dùng nền đảo đặc `color-surface-inverse` như `CMP-Tooltip`, không glass. |
-| Biến thể | `line`, `area`, `bar`, `stacked-bar`, `pie` (chỉ khi tối đa 5 phần và có nhãn phần trăm trực tiếp), `heatmap`, `spark` (không trục, không tương tác, cho KpiCard). |
+| Biến thể | `line`, `area`, `bar`, `stacked-bar`, `pie` (chỉ khi tối đa 5 phần và có nhãn phần trăm trực tiếp), `heatmap` (có chữ trong ô khi ô đủ rộng), `radar` (tối đa 8 chiều, mỗi chiều có nhãn chữ và giá trị bằng số ở bảng thay thế; dùng cho sáu chiều chất lượng của PH-08), `spark` (không trục, không tương tác, cho KpiCard). |
 | Kích thước | Cao mặc định 280px (`spark`: 40px); chữ trục `font-caption`; nhãn dữ liệu `font-caption` đậm 500. |
 | Trạng thái | Đang tải (Skeleton hình chữ nhật đúng chiều cao), rỗng ("Chưa có dữ liệu trong khoảng thời gian này"), lỗi (Alert `inline`), dữ liệu một phần (chú thích "Thiếu dữ liệu từ 10:00 đến 10:15" và khoảng trống trên đường, không nối giả). |
 | Token | `color-chart-1` … `color-chart-8` theo thứ tự ưu tiên (màu 8 dùng cuối), `color-text-secondary` (chữ trục), `color-border-subtle` (lưới), `color-surface-inverse` + `color-text-on-inverse` (Tooltip), `font-family-sans`, `font-caption`, `font-feature-tabular`, `motion-duration-base` (tắt khi giảm chuyển động). |
 | Bàn phím, ARIA | Phần tử chứa có `role="figure"` và `aria-labelledby` trỏ tiêu đề, `aria-describedby` trỏ đoạn tóm tắt sinh tự động (ví dụ "Lượt gọi tăng từ 12.300 lên 18.900 trong 7 ngày, cao nhất ngày 20/11/2026"). Tùy chọn `aria: { enabled: true, decal: { show: true } }` của ECharts bật hoa văn (decal) phân biệt chuỗi khi in hoặc khi người dùng bật chế độ tương phản. Nút "Xem dạng bảng" mở `<table>` HTML thật (có `<caption>`, `<th scope>`) thay thế vùng vẽ; bảng này luôn có trong DOM ở dạng ẩn trực quan để trình đọc màn hình truy cập. Tooltip mở được bằng bàn phím: khi vùng vẽ có focus, mũi tên trái/phải di chuyển giữa các điểm dữ liệu và giá trị được đọc qua `aria-live="polite"`. |
 | Nội dung | Số theo định dạng Việt Nam trong trục và Tooltip (`1.234.567`, `12,5%`); thời gian trục `HH:mm` hoặc `DD/MM`; tiêu đề nêu đại lượng và đơn vị ("Độ trễ p95 (ms)"). |
-| Điều cấm | Không dùng biểu đồ 3D, biểu đồ tròn trên 5 phần, hai trục tung khác đơn vị trừ khi có nhãn rõ; không phân biệt chuỗi chỉ bằng màu; không viết mã màu hex trong `option`. |
+| Ngưỡng, mục tiêu, điểm cuối | Thuộc tính `thresholds` (đường ngang `markLine` kèm nhãn chữ "Ngưỡng 80", "Mục tiêu 95%", nét đứt khác nét dữ liệu), `bands` (dải nền mờ theo vùng đạt, chú ý, không đạt, mỗi dải có nhãn chữ ở trục) và `highlightLast` (điểm cuối to hơn kèm nhãn giá trị) dùng chung cho xu hướng chất lượng dữ liệu PH-08 và xu hướng kỳ chỉ tiêu PH-16; giá trị ngưỡng do phân hệ truyền, thành phần không tự đặt. Ngưỡng và dải vào bảng dữ liệu thay thế dưới dạng cột "Ngưỡng". |
+| Điều cấm | Không dùng biểu đồ 3D, biểu đồ tròn trên 5 phần, hai trục tung khác đơn vị trừ khi có nhãn rõ; không phân biệt chuỗi chỉ bằng màu (từ ba chuỗi trở lên hoa văn `decal` luôn bật, không chờ người dùng bật, theo WCAG 1.4.1); không viết mã màu hex trong `option`. |
 
 : Đặc tả của CMP-Chart
 
@@ -961,12 +965,15 @@ for (const mode of ['light', 'dark'] as const) {
 }
 
 export interface DhChartProps {
-  kind: 'line' | 'area' | 'bar' | 'stacked-bar' | 'pie' | 'heatmap' | 'spark';
+  kind: 'line' | 'area' | 'bar' | 'stacked-bar' | 'pie' | 'heatmap' | 'radar' | 'spark';
   title: string; description?: string; unit?: string;
   series: Array<{ name: string; data: Array<[string | number, number | null]> }>;
   xType?: 'time' | 'category'; height?: number;
   loading?: boolean; error?: DhApiError; summary?: string; // ghi đè tóm tắt tự sinh
   onRangeChange?: (range: '1h' | '24h' | '7d' | '30d') => void;
+  thresholds?: Array<{ value: number; label: string }>;                       // markLine ngang, có nhãn chữ
+  bands?: Array<{ from: number; to: number; tone: 'success' | 'warning' | 'error'; label: string }>;
+  highlightLast?: boolean;
 }
 ```
 
@@ -1071,7 +1078,7 @@ export interface DhModalProps {
 | Nền | `Drawer` của antd v6. Props cố định: `placement="right"` (sidebar: `"left"`), `size` lấy `size-drawer-md` hoặc `size-drawer-lg`, `mask={{ blur: false, closable: true }}` cho xem nhanh và `closable: false` khi là biểu mẫu, `focusable={{ trap: true, focusTriggerAfterClose: true }}`, `destroyOnHidden`, `classNames={{ section: 'dh-glass--modal dh-drawer__frame', body: 'dh-drawer__well' }}` (khóa `content` đã lỗi thời, dùng `section`). `resizable` bật cho Drawer xem chi tiết, có phương án bàn phím (tay nắm nhận focus, mũi tên trái/phải đổi độ rộng 16px). |
 | Giải phẫu | (1) Lớp che `color-scrim`; (2) khung `glass-modal`, chỉ bo cạnh hở (`radius-xl` ở hai góc trái khi đặt bên phải), đệm `space-2`; (3) đầu: tiêu đề `font-title-3`, phụ đề, `CMP-StatusTag`, vùng `extra` (nút "Mở trang đầy đủ"), nút đóng; (4) giếng nội dung đặc bo 12px; (5) chân: thanh nút giống Modal. |
 | Vật liệu | Khung `glass-modal`; giếng `color-surface-solid`; footer trên khung glass chỉ chứa nút. |
-| Biến thể | `form`, `view` (xem nhanh, có Tabs thu gọn), `filter`, `nav` (sidebar dưới `bp-lg`). |
+| Biến thể | `form`, `view` (xem nhanh, có Tabs thu gọn), `filter`, `nav` (sidebar dưới `bp-lg`), `docked` (chỉ cho bảng bên Trợ lý AI dưới `bp-xl`: gắn vào khung bằng `getContainer`, không chặn nền, không `aria-modal`, xem 13.22). |
 | Kích thước | `md` = `size-drawer-md` (560px), `lg` = `size-drawer-lg` (880px); dưới `bp-md` chiếm toàn chiều rộng. |
 | Trạng thái | Như Modal; thêm trạng thái "đang xem bản ghi không còn tồn tại" (giếng hiển thị `CMP-EmptyState` với nội dung "Bản ghi đã bị xóa hoặc thay đổi" và nút "Tải lại danh sách"). |
 | Token | `glass-modal`, `radius-xl`, `space-2`, `color-surface-solid`, `color-scrim`, `shadow-4`, `size-drawer-md`, `size-drawer-lg`, `z-drawer`, `motion-duration-slow`, `motion-ease-emphasized`. |
@@ -1083,7 +1090,8 @@ export interface DhModalProps {
 
 ```ts
 export interface DhDrawerProps extends Omit<DhModalProps, 'size' | 'variant'> {
-  size?: 'md' | 'lg'; variant?: 'form' | 'view' | 'filter' | 'nav';
+  size?: 'md' | 'lg'; variant?: 'form' | 'view' | 'filter' | 'nav' | 'docked';
+  getContainer?: HTMLElement | false;   // chỉ variant 'docked'
   status?: React.ReactNode; fullPageHref?: string;
   onPrev?: () => void; onNext?: () => void; resizable?: boolean;
 }
@@ -1475,6 +1483,10 @@ export interface DhDataTableProps<T extends { id: string; allowedActions?: strin
   emptyAction={<DhButton type="primary" href="/services/new">Thêm dịch vụ</DhButton>} />
 ```
 
+#### 8.1.11. Biến thể thẻ dưới `bp-sm` (`card-list`)
+
+Ở `dh-portal` và các trang công khai, dưới `bp-sm` (576px) bảng chuyển sang biến thể `card-list`: mỗi dòng là một thẻ nền đặc, mỗi ô là một cặp "nhãn cột: giá trị" xếp dọc, cột hành động đưa xuống cuối thẻ; không cuộn ngang. Thứ tự ô theo thứ tự cột và cột định danh làm tiêu đề thẻ; chọn nhiều, sắp xếp và phân trang giữ nguyên, sắp xếp mở bằng nút "Sắp xếp" thay cho tiêu đề cột. Về ARIA, vùng chứa là `role="list"` và mỗi thẻ là `role="listitem"` có nhãn lấy từ ô định danh, nên phần tử `<table>` không còn dùng ở cỡ này; dữ liệu và trạng thái (đang tải, rỗng, lỗi) vẫn đúng sáu trạng thái mục 2.2. `dh-console` không bật biến thể này (D03-06-00 §3.4), vì ứng dụng quản trị chỉ bảo đảm đọc và thao tác cơ bản dưới 768px.
+
 ### 8.2. CMP-BulkActionBar
 
 `CMP-BulkActionBar` là thanh thao tác hàng loạt hiện khi người dùng chọn ít nhất một dòng trong DataTable. Thanh thay thế vùng cảnh báo mặc định của ProTable để thống nhất hành vi và hiển thị kết quả từng bản ghi. Không dùng ngoài DataTable.
@@ -1522,12 +1534,14 @@ Nhóm này hiển thị nội dung kỹ thuật dày đặc nên luôn dùng n�
 | Token | `font-mono`, `font-family-mono`, `color-surface-solid`, `color-surface-solid-2`, `color-border-subtle`, `color-error-text`, `color-warning-text`, `color-fill-selected` (dòng chọn), `radius-lg`. |
 | Bàn phím, ARIA | Monaco giữ Tab để thụt lề, nên thành phần phải công bố cách thoát: Ctrl+M bật chế độ Tab di chuyển focus (WCAG 2.1.2, không bẫy bàn phím); thông báo này đặt ở thanh công cụ và trong `aria-describedby`. Có nhãn `aria-label` theo trường ("Nội dung YAML của luồng"). F8 nhảy tới lỗi kế tiếp. |
 | Nội dung | Thông điệp chẩn đoán dịch sang tiếng Việt cho lỗi phổ biến; giữ thông điệp gốc trong Tooltip phụ. |
+| Bổ sung cho Rego, SecLang và nhiều tệp | (1) Ngôn ngữ `rego` (PH-12) và `seclang` (luật WAF của PH-03 UI-03-08) có tô cú pháp và báo lỗi cú pháp tiếng Việt qua `onValidate`. (2) `files` bật dải tab nhiều tệp trên vùng soạn (mẫu ARIA APG `tablist`, `Ctrl+PageUp/PageDown` đổi tab, chấm tròn cho tệp chưa lưu); mỗi tệp một mô hình soạn riêng. (3) Chế độ trình đọc màn hình: `accessibilitySupport` tự bật khi phát hiện trình đọc màn hình và nút "Chế độ trình đọc màn hình" trên thanh công cụ ép bật; khi bật, tắt gợi ý tự động và đọc từng chẩn đoán. (4) Bảng màu cú pháp `datahub-code-light` và `datahub-code-dark` sinh từ token, mọi cặp màu chữ-nền đạt tương phản AA 4,5:1 và có kiểm tra tự động như D03-05-02 §15. (5) Dấu hiệu ở lề phân ba mức `error`, `warning`, `info` bằng biểu tượng riêng (không chỉ màu); `revealRef.revealLine` cho danh sách phát hiện bên ngoài (PH-02 UI-02-03, 04, PH-05) nhảy tới dòng. |
+| Chẩn đoán từ máy chủ | Thuộc tính `markers` nhận danh sách phát hiện do máy chủ trả (kết quả kiểm tra API của PH-02, luật WAF của PH-03, kiểm tra luồng của PH-04, Kamelet của PH-05) gồm `line`, `column`, `severity`, `message`, `hint`. Thành phần hiển thị biểu tượng ở lề theo mức (hình khác nhau cho lỗi, cảnh báo, thông tin, không chỉ khác màu), tô nhạt nền dòng, và đưa vào bảng lỗi (4); bấm một dòng trong bảng lỗi hoặc gọi `revealRef.revealLine` nhảy tới dòng đó, `onMarkerSelect` báo cho màn để tô sáng hàng tương ứng trong `CMP-DataTable` danh sách phát hiện đặt cạnh khung mã. Đây là cách ghép chuẩn của "danh sách phát hiện gắn với khung mã"; màn không tự dựng bảng phát hiện riêng. `markers` và `onValidate` cùng tồn tại, gộp theo `line`. |
 | Điều cấm | Không tải Monaco từ CDN; không hiển thị bí mật trong trình soạn (bí mật luôn là `T-SECRET-REF`); không dùng Monaco cho trường văn bản thường. |
 
 : Đặc tả của CMP-CodeEditor
 
 ```ts
-export interface DhCodeEditorProps { language: 'yaml' | 'json' | 'xml' | 'sql' | 'rego' | 'markdown' | 'javascript'; value: string; onChange?: (v: string) => void; schemaUri?: string; variant?: 'edit' | 'readonly' | 'inline'; ariaLabel: string; height?: number; onValidate?: (markers: Array<{ line: number; message: string; severity: 'error' | 'warning' }>) => void }
+export interface DhCodeEditorProps { language: 'yaml' | 'json' | 'xml' | 'sql' | 'rego' | 'seclang' | 'markdown' | 'javascript'; value: string; onChange?: (v: string) => void; schemaUri?: string; variant?: 'edit' | 'readonly' | 'inline'; ariaLabel: string; height?: number; onValidate?: (markers: Array<{ line: number; message: string; severity: 'error' | 'warning' | 'info' }>) => void; files?: Array<{ key: string; name: string; value: string; dirty?: boolean }>; activeFile?: string; onActiveFileChange?: (key: string) => void; revealRef?: React.Ref<{ revealLine: (line: number) => void }>; markers?: Array<{ line: number; column?: number; severity: 'error' | 'warning' | 'info'; message: string; hint?: string }>; onMarkerSelect?: (m: { line: number }) => void }
 ```
 
 ```tsx
@@ -1647,7 +1661,7 @@ export interface DhDiffViewerProps {
 | Nền | `Steps` của antd v6 với `items` gồm `title`, `content` (thuộc tính `description` đã lỗi thời), `status`; `orientation="horizontal"` (dọc khi hẹp hơn `bp-md` hoặc trên 5 bước); `size="small"` ở chế độ gọn. |
 | Giải phẫu | (1) Chỉ báo bước: số thứ tự, dấu tích khi xong, biểu tượng lỗi khi lỗi; (2) tiêu đề bước; (3) mô tả ngắn hoặc người/thời điểm hoàn tất; (4) đường nối. |
 | Vật liệu | Không nền riêng; đặt trên nền đặc của thẻ wizard hoặc trên canvas. |
-| Biến thể | `wizard` (bước đã xong bấm được để quay lại sửa), `status` (chỉ đọc, thể hiện vòng đời). |
+| Biến thể | `wizard` (bước đã xong bấm được để quay lại sửa), `status` (chỉ đọc, thể hiện vòng đời), `checklist` (danh sách kiểm dọc: mỗi mục là một điều kiện hoặc một bước kiểm tra với trạng thái Đạt, Chưa đạt, Không đánh giá, Đang kiểm; kèm chi tiết thu gọn được, mã lỗi hoặc mã chốt khi chưa đạt, hướng dẫn khắc phục bằng chữ và nút sao chép; dùng cho kiểm tra kết nối PH-05, xác minh endpoint và lược đồ PH-10, điều kiện cửa vào PH-03 UI-03-03, 14; không có bước hiện tại và không bấm để sang bước). |
 | Kích thước | Chỉ báo 24px (gọn 20px); tiêu đề `font-body-strong`; mô tả `font-footnote`. |
 | Trạng thái từng bước | Chờ (`wait`), đang làm (`process`), xong (`finish`), lỗi (`error`, kèm chữ "Có lỗi" và số lỗi), vô hiệu. |
 | Token | `color-accent` (bước đang làm), `color-success-text` (xong), `color-error-text` (lỗi), `color-text-tertiary` (chờ), `color-border-subtle` (đường nối). |
@@ -1658,7 +1672,7 @@ export interface DhDiffViewerProps {
 : Đặc tả của CMP-Steps
 
 ```ts
-export interface DhStepsProps { variant?: 'wizard' | 'status'; current: number; items: Array<{ key: string; title: string; content?: string; status?: 'wait' | 'process' | 'finish' | 'error'; errorCount?: number }>; onStepClick?: (index: number) => void }
+export interface DhStepsProps { variant?: 'wizard' | 'status' | 'checklist'; current: number; items: Array<{ key: string; title: string; content?: string; status?: 'wait' | 'process' | 'finish' | 'error' | 'skipped'; errorCount?: number; errorCode?: string; remedy?: string }>; onStepClick?: (index: number) => void }
 ```
 
 ```tsx
@@ -1793,7 +1807,7 @@ Nhóm này là bộ khung của mẫu PTN-07 (D03-06-00 §4.10) và được dù
 
 ### 11.0. Quy tắc chung của canvas
 
-**Thư viện.** Canvas dùng `@xyflow/react` (XYFlow, React Flow 12) vì repo đã dùng ở `apps/console` và có giấy phép MIT. Bố cục tự động dùng `dagre` chạy trong Web Worker để không chặn luồng giao diện với sơ đồ trên 200 nút. Không dùng thư viện vẽ sơ đồ thứ hai ở bất kỳ phân hệ nào.
+**Thư viện.** Canvas dùng `@xyflow/react` (XYFlow, React Flow 12) vì repo đã dùng ở `apps/console` và có giấy phép MIT. Bố cục tự động dùng `dagre` chạy trong Web Worker để không chặn luồng giao diện với sơ đồ trên 200 nút. Không dùng thư viện vẽ sơ đồ thứ hai ở bất kỳ phân hệ nào, ngoại lệ duy nhất là `bpmn-js` cho trình thiết kế mô hình BPMN của PH-11: BPMN 2.0 và XML BPMNDI cần nhập xuất đúng chuẩn mà XYFlow không bảo đảm, nên PH-11 bọc `bpmn-js` trong một khung PTN-07 riêng (ADR 111 đề xuất ở D00-02). Ngoại lệ áp dụng cho tới khi ADR 111 được duyệt; ngoài PH-11 vẫn cấm, và khung bọc giữ nguyên quy tắc vật liệu, bàn phím, hoàn tác và chế độ danh sách của mục này, kèm logo bpmn.io đúng giấy phép.
 
 **Vật liệu.** Bề mặt canvas, nút, nhóm, bảng thành phần, Inspector, thanh công cụ trình thiết kế và bảng dưới là **nền đặc**, vì đây là nội dung dày cần tương phản ổn định và là vùng có nhiều thao tác kéo (một lớp `backdrop-filter` dưới nút đang kéo làm tụt khung hình dưới 30 khung/giây ở máy văn phòng). Chỉ các điều khiển **nổi trên** canvas (thu phóng, minimap, thanh chọn nhiều, dải kết quả chạy thử, ô tìm nổi, bảng chọn nhanh) dùng `glass-overlay`. Như vậy một màn trình thiết kế có tối đa hai phần tử kính lớn (sidebar, thanh trên của khung khi không ở chế độ toàn màn hình) cộng hai lớp nổi nhỏ, nằm trong giới hạn bốn lớp `backdrop-filter` của D03-05-01 §3.2.
 
@@ -1814,13 +1828,14 @@ Nhóm này là bộ khung của mẫu PTN-07 (D03-06-00 §4.10) và được dù
 | Nền | `ReactFlow` của `@xyflow/react` với `nodeTypes` đăng ký `CMP-FlowNode`, `CMP-GroupNode`, `CMP-StickyNote`; `proOptions={{ hideAttribution: true }}` chỉ khi đã có giấy phép phù hợp, nếu không giữ ghi công; `deleteKeyCode={null}` (xóa đi qua lệnh có hoàn tác, không để thư viện tự xóa). |
 | Giải phẫu | (1) Bề mặt có lưới chấm; (2) nút và nhóm; (3) cạnh có mũi tên và nhãn; (4) nút ⊕ trên cạnh và cuối nhánh; (5) lớp phủ (kết quả chạy thử, số liệu chạy thật, khác biệt, tìm kiếm); (6) điều khiển nổi `CMP-CanvasControls`, `CMP-Minimap`, `CMP-BulkActionBar` biến thể `floating`; (7) vùng thông báo `aria-live`. |
 | Vật liệu | Nền đặc `color-surface-solid-2`, lưới chấm 1px `color-border-subtle` cách 16px (ẩn dưới 40% thu phóng). Cạnh 1,5px `color-border-control`. |
-| Biến thể | `edit` (mặc định), `readonly` (xem phiên bản đã phát hành, sơ đồ PH-10: không kéo, không chèn, vẫn chọn, tìm, thu phóng), `diff` (so sánh hai phiên bản, tô trạng thái khác biệt), `run-overlay` (phủ kết quả một lần chạy). |
+| Biến thể | `edit` (mặc định), `readonly` (xem phiên bản đã phát hành, sơ đồ PH-10: không kéo, không chèn, vẫn chọn, tìm, thu phóng), `diff` (so sánh hai phiên bản, tô trạng thái khác biệt), `run-overlay` (phủ kết quả một lần chạy). Chế độ `layered` của `readonly` bố cục theo lớp (ELK phân lớp thay `dagre`): mỗi lớp một cột có tiêu đề dính mép trái (ví dụ bên phát, topic, bên nhận của PH-10; hệ thống đăng ký API của PH-02), thanh cuộn ngang chỉ cho vùng nội dung lớp. |
 | Hướng | Trái sang phải (mặc định) hoặc trên xuống dưới; người dùng đổi ở menu Xem, lưu theo người dùng. |
 | Thu phóng | 10–400%; bước theo nút: 25, 50, 75, 100, 150, 200, 400%; con lăn chuột kèm `Ctrl` thu phóng, không kèm thì cuộn khung nhìn. |
 | Trạng thái | Đang tải (khung xương ba nút nối nhau), rỗng (chỉ có điểm vào và lời mời "Kéo thành phần từ bảng bên trái hoặc nhấn ⊕ để thêm chặng"), lỗi tải (`CMP-Alert` giữa canvas có nút "Thử lại"), sơ đồ quá lớn (trên 500 nút: tự gợi ý chế độ danh sách), có lớp phủ cũ (lớp phủ mờ đi kèm dải "Cũ: nội dung đã đổi sau lần chạy này"). |
 | Token | `color-surface-solid-2`, `color-border-subtle`, `color-border-control`, `color-accent`, `color-focus-ring`, `color-success-text`, `color-error-text`, `motion-duration-base`. |
 | Bàn phím, ARIA | Canvas là `role="application"` có `aria-roledescription="sơ đồ"` và `aria-label` ("Sơ đồ route nhan-khai-sinh, 12 chặng"); `Tab` vào canvas focus nút đang chọn hoặc nút đầu; mũi tên di chuyển focus giữa các nút theo thứ tự cấu trúc (không theo tọa độ); `Enter` mở Inspector; `Delete` xóa có hoàn tác; `Ctrl+A` chọn tất cả; `Esc` bỏ chọn; `Shift+F10` mở menu ngữ cảnh; `+`/`−`/`0` thu phóng. Mỗi thay đổi cấu trúc đọc một câu qua `aria-live="polite"` ("Đã chèn chặng Ánh xạ dữ liệu sau Kiểm lược đồ"). |
 | Nội dung | Lời mời ở trạng thái rỗng nêu cả cách kéo và cách không kéo. |
+| Cạnh | Kiểu nét theo trạng thái, là thuộc tính chuẩn của mọi cạnh: liền (đang hoạt động), chấm (tạm dừng hoặc chờ), đứt (lỗi hoặc ngừng); độ dày 1,5px đến 4px theo mức lưu lượng (thang 4 nấc, có chú giải) để lớp phủ số liệu chạy thật của PH-04 và lớp phủ của PH-10 dùng chung quy ước; kiểu nét luôn đi kèm nhãn hoặc tooltip chữ. Nút và cạnh ngoài đường đi đang làm nổi dùng token `opacity-dimmed` (D03-05-02 §6), không dùng `opacity-disabled`. |
 | Điều cấm | Không vẽ cạnh tự do không suy ra từ cấu trúc; không đặt kính dưới nút; không lưu tọa độ vào cấu trúc đem triển khai; không chỉ hỗ trợ kéo thả. |
 
 : Đặc tả của CMP-FlowCanvas
@@ -1841,6 +1856,9 @@ export interface DhFlowCanvasProps {
   layout: DhFlowLayout;                          // tọa độ, ghim, thu gọn, ghi chú
   nodeTypes: DhFlowNodeTypeDescriptor[];
   mode?: 'edit' | 'readonly' | 'diff' | 'run-overlay';
+  layout?: 'free' | 'layered';                   // layered: chỉ với mode 'readonly', layers bắt buộc
+  layers?: Array<{ key: string; title: string }>;
+  edgeStyle?: (edgeId: string) => { line: 'solid' | 'dotted' | 'dashed'; weight?: 1 | 2 | 3 | 4; label?: string };
   direction?: 'LR' | 'TB';
   issues?: Record<string, { errors: number; warnings: number }>;
   overlay?: DhFlowOverlay;                       // kết quả chạy thử, số liệu, khác biệt
@@ -1874,6 +1892,7 @@ export interface DhFlowCanvasProps {
 | Token | `color-surface-solid`, `color-border-control`, `color-fill-hover`, `color-fill-control`, `color-accent`, `color-accent-subtle`, `color-error-text`, `color-error-bg`, `color-warning-text`, `color-success-text`, `color-info-text`, `color-text-secondary`, `color-chart-1…8` (dải nhóm), `shadow-1`, `radius-md`, `font-callout`, `font-caption`. |
 | Bàn phím, ARIA | `role="group"` với `aria-roledescription="chặng"`, `aria-label` gồm tên, loại và tình trạng ("Gọi hộ tịch, gọi HTTP, 2 lỗi"); `aria-selected`; cổng là nút có nhãn ("Cổng ra của Gọi hộ tịch"). |
 | Nội dung | Tên ưu tiên mô tả do người dùng đặt; không có thì tiêu đề tiếng Việt của loại nút. Tham số chứa biểu thức hiện dạng thẻ nhỏ. |
+| Biến thể `slot` | Ô trong dải tuyến tính của trình soạn Pipe (PH-04 UI-04-09): nút cùng giải phẫu nhưng không có cổng kéo nối, vị trí do dải quyết định, nhãn vai trò ở trên (Nguồn, Bước, Đích), ô rỗng hiện lời mời "Thả Kamelet vào đây hoặc nhấn Enter"; ô Bước đổi thứ tự bằng kéo hoặc `Alt+←/→`. Số lượng ô theo ràng buộc của cấu trúc, không theo người dùng. |
 | Điều cấm | Không chỉ dùng màu viền để báo lỗi (luôn có huy hiệu và chữ trong `aria-label`); không cổng nhỏ hơn vùng nhận 24×24; không chữ dưới 12px. |
 
 : Đặc tả của CMP-FlowNode
@@ -1990,6 +2009,7 @@ export interface DhFlowNodeData {
 | Vật liệu | `glass-overlay`, rộng 360px. |
 | Nội dung | Gợi ý do phân hệ tính (PH-04: theo nút trước; PH-11: theo loại phần tử BPMN); nhóm "Gợi ý" trên, "Kết quả" dưới. |
 | Bàn phím, ARIA | Mẫu combobox; `Esc` đóng và trả focus về nút ⊕; sau khi chèn, focus chuyển tới nút mới trên canvas. |
+| Chế độ "Nối tới…" | Ngoài chèn phần tử mới, bảng chọn có chế độ `connect` mở từ menu ngữ cảnh (`Shift+F10`) hoặc phím tắt "Nối tới…" của phần tử đang chọn: liệt kê các phần tử đích hợp lệ (tên, loại, vị trí trong chuỗi), `Enter` tạo cạnh từ phần tử đang chọn tới đích và trả focus về phần tử nguồn. Đây là phương án không kéo dây nối cho mọi canvas (PH-04, PH-11), đáp ứng WCAG 2.5.7; đích không hợp lệ bị ẩn như ở chế độ chèn. |
 | Điều cấm | Không chèn khi lựa chọn không hợp lệ ở vị trí (mục bị ẩn khỏi danh sách, không hiện vô hiệu). |
 
 : Đặc tả của CMP-QuickInsert
@@ -2005,6 +2025,7 @@ export interface DhFlowNodeData {
 | Kích thước | Cao 48px; điều khiển `size-control-sm`. Dưới 1280px, menu gộp vào "☰", nút chính chỉ còn biểu tượng có `aria-label`. |
 | Trạng thái | Bình thường, chỉ đọc (ẩn nút soạn, `CMP-SaveIndicator` "Chỉ đọc"), có vấn đề (bộ đếm "✕ 1 ⚠ 2"), hợp lệ ("✓ Hợp lệ" `color-success-text`), toàn màn hình (vẫn hiện). |
 | Bàn phím, ARIA | `role="toolbar"` có `aria-label="Thanh công cụ trình thiết kế"`; phím tắt ghi trong tooltip và trong `CMP-ShortcutSheet`. |
+| Khe Trợ lý AI | Thuộc tính `assistSlot` đặt nút "Gợi ý ánh xạ" (và các nút trợ lý tương tự) vào vùng soạn của thanh, chỉ khi Trợ lý AI bật; kết quả hiện ở `CMP-AssistantPanel` (13.22), không tự áp dụng vào cấu trúc. |
 | Điều cấm | Không quá một nút chính (thường là "Gửi duyệt" hoặc "Lưu"); không ẩn hành động bị vô hiệu do trạng thái (hiện vô hiệu kèm lý do, D03-05-04 §2.3). |
 
 : Đặc tả của CMP-DesignerToolbar
@@ -2065,7 +2086,7 @@ Nhóm này dựng khung chung của `dh-console`: lớp điều hướng Liquid 
 | Nền | `Layout` của antd chỉ dùng cho bố cục lưới; sidebar và thanh trên là `CMP-Sidebar`, `CMP-Topbar` (không dùng `Layout.Sider`, `Layout.Header` trực tiếp vì cần vật liệu kính và sidebar nổi cách mép, D03-06-00 §3.3). Bọc trong `CMP-ThemeProvider` (D03-05-01 §9.2) và `App` của antd. |
 | Giải phẫu | (1) Liên kết "Bỏ qua tới nội dung"; (2) dải liên tenant và dải thông báo hệ thống (khi có, `CMP-Banner`); (3) `CMP-Sidebar`; (4) `CMP-Topbar`; (5) `<main id="noi-dung">` cuộn độc lập; (6) bảng bên tùy chọn (Trợ lý AI); (7) vùng lớp phủ (portal của Modal, Drawer, Toast); (8) hai vùng `aria-live` (`polite`, `assertive`). |
 | Vật liệu | Canvas `color-canvas` + `color-canvas-wash`; sidebar `glass-chrome`; thanh trên `glass-chrome` → `glass-chrome-scrolled` + `glass-scroll-edge` khi `main` cuộn (D03-05-01 §5); vùng nội dung trong suốt, các khối bên trong nền đặc. |
-| Biến thể | `default`; `fullscreen` (ẩn sidebar và thanh trên, hiện `CMP-FullscreenBar`); `cross-tenant` (dải cảnh báo, viền trên 2px `color-warning-solid`, tiền tố tiêu đề tab); `kiosk` (dashboard trực ca chỉ đọc, PH-12 cấu hình). |
+| Biến thể | `default`; `fullscreen` (ẩn sidebar và thanh trên, hiện `CMP-FullscreenBar`); `cross-tenant` (dải cảnh báo, viền trên 2px `color-warning-solid`, tiền tố tiêu đề tab); `kiosk` (dashboard trực ca chỉ đọc, PH-12 cấu hình); `bare` (khung tối giản cho trang mở bằng liên kết một lần hoặc ngoài `dh-console`, như bàn giao thông tin xác thực và xác nhận nhu cầu quyền của PH-01 UI-01-09, 13: chỉ logo, tên tenant và menu tài khoản; không sidebar, không tìm kiếm toàn cục, không trung tâm thông báo, không `CMP-CommandPalette`, không Trợ lý AI, để giảm bề mặt tấn công). |
 | Responsive | Từ `bp-xl`: sidebar mở rộng; 1200–1365px: sidebar thu gọn mặc định; dưới `bp-lg`: sidebar thành `CMP-Drawer` mở bằng nút ≡ (D03-06-00 §3.4). |
 | Trạng thái | Đang khởi động (khung xương sidebar và thanh trên, không có màn trắng), sẵn sàng, mất kết nối (`CMP-Banner` ST-06), bảo trì (chuyển PTN-13), phiên sắp hết (`CMP-SessionTimeoutDialog`). |
 | Token | `color-canvas`, `color-canvas-wash`, `size-sidebar`, `size-sidebar-collapsed`, `size-topbar`, `space-2`, `space-6`, `z-sidebar`, `z-topbar`. |
@@ -2081,6 +2102,7 @@ export interface DhAppShellProps {
   crossTenant?: { tenantName: string; expiresAt: string; onEnd: () => void };
   systemBanners?: DhBannerMessage[];
   assistantEnabled?: boolean;
+  variant?: 'default' | 'fullscreen' | 'cross-tenant' | 'kiosk' | 'bare';
   children: React.ReactNode;
 }
 ```
@@ -2309,6 +2331,7 @@ export interface DhKeyValueEditorProps {
 |---|---|
 | Nền | `CMP-Form` + bộ dựng trường tự viết (không dùng thư viện biểu mẫu JSON Schema bên thứ ba vì cần đúng điều khiển của `@datahub/ui` và quy tắc truy cập). Kiểm tra bằng Ajv 8 trong Web Worker. |
 | Ánh xạ kiểu | `string` → `CMP-Input` (`maxLength` > 200 → `CMP-TextArea`); `string` `format: date` → `CMP-DatePicker`; `date-time` → `CMP-DatePicker` có giờ; `email`, `uri` → `CMP-Input` có kiểm tra; `integer`, `number` → `CMP-NumberInput`; `boolean` → `CMP-Checkbox`; `enum` → `CMP-Select` (dưới 6 → `CMP-Radio`); `x-dh-codeList` → `CMP-CodeListSelect`; `x-dh-secret: true` → `CMP-SecretRefField`; `object` → nhóm trường có tiêu đề; `array` của đối tượng → `CMP-EditableTable` nhỏ; `array` của chuỗi → `CMP-Select` `multiple` có `allowCreate`. |
+| Widget bổ sung | (1) `array` của đối tượng có `x-dh-ui.widget: table` → `CMP-EditableTable` (bảng lặp, thêm xóa dòng, tối đa theo `maxItems`); (2) `string` `format: binary` hoặc `x-dh-ui.widget: upload` → `CMP-Upload` (loại tệp và dung lượng theo `x-dh-upload`: `accept`, `maxSizeMb`; tệp lưu qua API tệp của phân hệ, giá trị là mã tham chiếu tệp, không là nội dung); (3) `date-time` → `CMP-DatePicker` có giờ, múi giờ Việt Nam; (4) `x-dh-codeList` → `CMP-CodeListSelect`; (5) phụ thuộc trường: `if`/`then`/`else`, `dependentRequired`, `dependentSchemas` của JSON Schema 2020-12 hiện hoặc ẩn trường tương ứng ngay khi giá trị đổi, trường ẩn không gửi và không kiểm tra, vùng đổi có `aria-live="polite"` thông báo "Hiện thêm {n} trường"; (6) chữ ký số chưa là widget của thành phần này (chờ PH-11 chốt Q11-35); trước mắt biểu mẫu chỉ hiện `CMP-Button` mở luồng ký riêng của phân hệ. |
 | Gợi ý giao diện | Khóa mở rộng `x-dh-ui`: `order`, `group`, `widget`, `help`, `placeholder`, `readOnly`, `hidden`, `span` (độ rộng cột trong lưới 2 cột), `sensitivity` (Công khai, Nội bộ, Hạn chế, Nhạy cảm; trường Nhạy cảm hiển thị bằng `CMP-MaskedValue` ở chế độ xem). Khóa lạ bị bỏ qua và ghi cảnh báo ở môi trường phát triển. |
 | Nhãn | `title` tiếng Việt của lược đồ là nhãn; thiếu `title` thì hiện mã trường kèm cảnh báo phát triển (không tự "dịch"). `description` là chữ trợ giúp. |
 | Thông điệp lỗi | Ánh xạ từ khóa Ajv sang tiếng Việt một lần ở `@datahub/ui/forms/ajv-vi.ts` (`required` → "Bắt buộc nhập {nhãn}.", `maxLength` → "{nhãn} tối đa {limit} ký tự.", `pattern` → "{nhãn} không đúng định dạng."…). |
@@ -2497,6 +2520,277 @@ export interface DhWizardStep<V> { key: string; title: string; description?: str
 export interface DhWizardProps<V> { steps: DhWizardStep<V>[]; initialValues?: Partial<V>; onSubmit: (v: V) => Promise<void>; onSaveDraft?: (v: Partial<V>) => Promise<void>; reviewStep?: boolean; testId?: string }
 ```
 
+### 13.14. CMP-TraceWaterfall
+
+`CMP-TraceWaterfall` là thác nước thời gian của một vết phân tán: cây các chặng (span) bên trái, thanh thời gian bên phải, vạch ngưỡng SLO (PH-13 UI-13-08; chặng của một lượt chạy luồng PH-04, dòng thời gian giao dịch PH-14).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-TreeGrid` biến thể `structure` cho cột cây (mục 13.5) ghép cột thời gian vẽ bằng SVG; ảo hóa hàng bằng `@tanstack/react-virtual` khi trên 200 span. |
+| Giải phẫu | (1) Thước thời gian có mốc; (2) hàng span: tên dịch vụ và thao tác, huy hiệu lỗi, thanh `[bắt đầu, kết thúc]` tô theo dịch vụ (`color-chart-*`) và chữ thời lượng bằng `CMP-Duration`; (3) vạch dọc SLO nét đứt có nhãn "SLO 800 ms"; (4) cột gộp: nhiều span liền kề cùng dịch vụ gộp một dải, bấm mở rộng. |
+| Vật liệu | Nền đặc `color-surface-solid`; không dùng kính. |
+| Trạng thái | Đang tải, rỗng ("Không tìm thấy vết này"), một phần (vết thiếu span cha: dải "Vết chưa đủ, thiếu {n} chặng"), lỗi, span lỗi (biểu tượng `error` và chữ, không chỉ màu). |
+| Token | `color-surface-solid`, `color-border-subtle`, `color-chart-1…8`, `color-error-text`, `color-warning-text`, `font-mono-sm`, `size-table-row`. |
+| Bàn phím, ARIA | Cột cây là `role="treegrid"` theo mẫu APG: mũi tên lên xuống đổi hàng, `→` mở, `←` thu, `Enter` mở chi tiết span ở Inspector hoặc Drawer; thanh thời gian `aria-hidden` vì cột chữ đã có bắt đầu và thời lượng; có nút "Xem dạng bảng" liệt kê span theo thứ tự thời gian. |
+| Điều cấm | Không dùng thanh thời gian làm kênh duy nhất của thời lượng; không tự gộp span lỗi vào dải gộp; không lộ giá trị thuộc tính span mức Hạn chế hoặc Nhạy cảm. |
+
+: Đặc tả của CMP-TraceWaterfall
+
+```ts
+export interface DhSpan { id: string; parentId?: string; service: string; operation: string; startUs: number; durationUs: number; error?: boolean }
+export interface DhTraceWaterfallProps {
+  spans: DhSpan[]; sloMs?: number; selectedId?: string; onSelect?: (id: string) => void;
+  groupAdjacent?: boolean; ariaLabel: string; testId?: string;
+}
+```
+
+### 13.15. CMP-HealthGrid
+
+`CMP-HealthGrid` là lưới ô trạng thái của nhiều thành phần cùng lúc (tên gọi trong tập PH-13 là `ComponentMap`): bảng điều khiển giám sát PH-13 UI-13-01, tổng quan nền tảng PH-20 UI-20-20, nút gateway PH-03.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Lưới CSS `grid` các ô; mỗi ô là `CMP-StatusDot` cộng tên thành phần cộng một chỉ số phụ (độ trễ, số lỗi) trong `CMP-Card` gọn. |
+| Giải phẫu | (1) Nhóm thành phần có tiêu đề (hạ tầng, nền tảng, phân hệ); (2) ô: chấm trạng thái, tên, chữ trạng thái đầy đủ ("Bình thường", "Suy giảm", "Ngừng") và chỉ số; (3) chú giải trạng thái với biểu tượng. |
+| Vật liệu | Nền đặc; ô trạng thái dùng nền nhẹ `color-{tone}-bg` và chữ `color-{tone}-on-bg`. |
+| Trạng thái | Đang tải (khung xương ô), rỗng, một phần (ô "Không có dữ liệu" xám khi nguồn đo mất), lỗi tải toàn lưới. |
+| Token | `color-success-bg`, `color-warning-bg`, `color-error-bg`, `color-neutral-bg` và `…-on-bg`, `space-3`, `radius-md`. |
+| Bàn phím, ARIA | `role="grid"` hoặc `role="list"` theo cấu hình; mỗi ô là nút (liên kết tới chi tiết) với `aria-label` ("Kafka, Suy giảm, độ trễ 320 ms"); thứ tự đọc theo nhóm. |
+| Điều cấm | Không biểu diễn trạng thái chỉ bằng màu ô; không sắp lại ô theo mức nghiêm trọng khi đang xem (làm người trực mất vị trí). |
+
+: Đặc tả của CMP-HealthGrid
+
+```ts
+export interface DhHealthCell { key: string; name: string; status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | 'UNKNOWN'; metric?: string; href?: string }
+export interface DhHealthGridProps { groups: Array<{ title: string; cells: DhHealthCell[] }>; ariaLabel: string; testId?: string }
+```
+
+### 13.16. CMP-RunbookPanel
+
+`CMP-RunbookPanel` hiển thị và soạn hướng dẫn xử lý gắn với một cảnh báo hoặc một mã lỗi theo đúng năm mục: ý nghĩa, kiểm tra đầu tiên, nguyên nhân thường gặp, cách xử lý, khi nào báo cấp trên (BR-13-008). Dùng ở luật cảnh báo PH-13 (UI-13-10, 11) và sổ tay xử lý lỗi của PH-18 (UI-18-07).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Card` chứa năm khối có tiêu đề cố định (`CMP-Heading` cấp 4); chế độ soạn dùng `CMP-TextArea` cho từng khối và `CMP-MarkdownViewer` (13.20) cho xem trước. |
+| Giải phẫu | (1) Tiêu đề runbook và phiên bản; (2) năm khối theo thứ tự cố định; (3) chân: người sửa cuối, thời điểm và liên kết lịch sử; (4) chế độ soạn có chỉ báo "đủ 5/5 mục". |
+| Vật liệu | Nền đặc. |
+| Trạng thái | Xem, soạn (đủ hoặc thiếu mục), đang lưu, lỗi lưu, chưa có runbook (cảnh báo bắt buộc, luật không lưu được: ERR-13-017). |
+| Token | `color-surface-solid`, `color-warning-text` (mục thiếu), `font-title-3`, `space-4`. |
+| Bàn phím, ARIA | Mỗi khối là `<section aria-labelledby>`; mục thiếu báo bằng `aria-invalid` và dòng chữ "Thiếu mục {tên mục}"; chuyển giữa khối bằng `Tab`. |
+| Điều cấm | Không cho lưu khi thiếu mục; không chèn bí mật hay địa chỉ nội bộ nhạy cảm vào nội dung. |
+
+: Đặc tả của CMP-RunbookPanel
+
+```ts
+export interface DhRunbook { meaning: string; firstCheck: string; commonCauses: string; resolution: string; escalation: string }
+export interface DhRunbookPanelProps { value: DhRunbook; mode: 'view' | 'edit'; onChange?: (v: DhRunbook) => void; version?: number; testId?: string }
+```
+
+### 13.17. CMP-IntegrityBadge
+
+`CMP-IntegrityBadge` là chỉ báo toàn vẹn của một chuỗi bản ghi hoặc một tệp bất biến: chuỗi kiểm toán PH-13 (UI-13-06, 13, 14, 18), báo cáo bất biến có khóa đối tượng của PH-16.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-StatusTag` kèm biểu tượng khiên và `CMP-Tooltip`; biến thể đỏ mở rộng thành `CMP-Alert` `block` ngay dưới tiêu đề màn. |
+| Biến thể | `verified` (chuỗi khớp, hiện thời điểm kiểm cuối), `unverified` (chưa kiểm hoặc đang kiểm), `suspect` (nghi vấn: đỏ, kèm dải "Phát hiện bất thường tại bản ghi #{số}", không đóng được cho tới khi có người xác nhận), `unavailable` (không kiểm được). |
+| Vật liệu | Nền đặc. |
+| Trạng thái | Bốn biến thể trên; đang kiểm có spinner nhỏ; mọi trạng thái có chữ ("Chuỗi toàn vẹn", "Nghi vấn toàn vẹn"). |
+| Token | `color-success-bg`, `color-warning-bg`, `color-error-bg` và `…-on-bg`, `size-icon-sm`. |
+| Bàn phím, ARIA | Biến thể `suspect` là `role="alert"` khi lần đầu xuất hiện, sau đó `role="status"`; tooltip mở bằng focus bàn phím; chữ đủ nghĩa nên biểu tượng `aria-hidden`. |
+| Điều cấm | Không hiện "toàn vẹn" khi chưa kiểm; không ẩn biến thể `suspect` bằng bộ lọc; không dùng làm chỉ báo bảo mật cho dữ liệu không có chuỗi băm. |
+
+: Đặc tả của CMP-IntegrityBadge
+
+```ts
+export interface DhIntegrityBadgeProps {
+  state: 'verified' | 'unverified' | 'suspect' | 'unavailable'; checkedAt?: string; brokenAt?: number;
+  onVerify?: () => void; testId?: string;
+}
+```
+
+### 13.18. CMP-ScoreMeter
+
+`CMP-ScoreMeter` là thang điểm có vùng và vạch ngưỡng: thanh điểm tổng của so sánh bản ghi (PH-06 UI-06-05), thẻ điểm chất lượng dữ liệu (PH-08 UI-08-01, 04), thang mức rủi ro (PH-09 UI-09-14).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | SVG tự vẽ trên nền `CMP-ProgressBar` `meter`; không dùng `Progress type="circle"` của antd. |
+| Biến thể | `bar` (thanh ngang chia vùng, vạch ngưỡng có nhãn số), `ring` (vòng tiến độ có số lớn ở giữa và nhãn phán quyết `CMP-StatusTag`; chỉ đặt trong `CMP-KpiCard`, đây là chỗ D03-05-03 §6.3 cho phép vòng tròn), `risk` (ba mức `LOW`, `MEDIUM`, `HIGH` có vạch ngưỡng, nhãn chữ trong mỗi vùng). |
+| Giải phẫu | (1) Rãnh chia vùng theo ngưỡng (vùng đạt, chú ý, không đạt); (2) phần đã đạt; (3) vạch ngưỡng và nhãn ("70", "80"); (4) giá trị bằng số và phán quyết bằng chữ. |
+| Vật liệu | Nền đặc. |
+| Trạng thái | Có giá trị, chưa có giá trị ("—", "Chưa đo"), dữ liệu cũ (nhãn "Cập nhật lúc …"). |
+| Token | `color-success-solid`, `color-warning-solid`, `color-error-solid`, `color-fill-control`, `font-title-2`, `font-footnote`. |
+| Bàn phím, ARIA | `role="meter"` với `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-valuetext` ("82 trên 100, đạt"); vòng và vùng màu không là kênh duy nhất, phán quyết luôn là chữ. |
+| Điều cấm | Không đổi màu mà không đổi chữ phán quyết; không đặt ngưỡng cố định trong thành phần (ngưỡng do phân hệ truyền); không dùng cho tiến độ thao tác (dùng `CMP-ProgressBar`). |
+
+: Đặc tả của CMP-ScoreMeter
+
+```ts
+export interface DhScoreMeterProps {
+  variant?: 'bar' | 'ring' | 'risk'; value: number | null; min?: number; max?: number;
+  zones: Array<{ from: number; to: number; tone: 'success' | 'warning' | 'error'; label: string }>;
+  thresholds?: number[]; verdictLabel?: string; ariaLabel: string; testId?: string;
+}
+```
+
+### 13.19. CMP-RetrySchedulePreview
+
+`CMP-RetrySchedulePreview` xem trước lịch thử lại sinh từ ba tham số giãn cách (khoảng đầu, hệ số nhân, khoảng tối đa) và số lần thử: webhook PH-10, Retry trong luồng PH-04, thử lại của bộ điều hợp PH-05.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Chuỗi thời lượng bằng `CMP-Duration` ("5 giây, 10 giây, 20 giây, 40 giây") cộng biểu đồ cột nhỏ `CMP-Chart` `bar` dạng `spark`; tính ở trình duyệt từ cùng công thức máy chủ. |
+| Giải phẫu | (1) Chuỗi chữ các lần thử; (2) biểu đồ cột; (3) tổng thời gian chờ ("Tổng 4 phút 35 giây, 6 lần thử"); (4) cảnh báo khi vượt hạn của phân hệ. |
+| Vật liệu | Nền đặc. |
+| Trạng thái | Hợp lệ, tham số sai (không hiện lịch, dòng lỗi chữ), vượt hạn (`CMP-Alert` cảnh báo). |
+| Token | `color-chart-1`, `color-text-secondary`, `font-mono-sm`. |
+| Bàn phím, ARIA | Phần chữ là nội dung chính, biểu đồ `aria-hidden`; vùng `aria-live="polite"` cập nhật tóm tắt khi tham số đổi (điều tiết 500 ms). |
+| Điều cấm | Không tính lịch khác công thức của máy chủ; không cho nhập lần thử quá trần của phân hệ. |
+
+: Đặc tả của CMP-RetrySchedulePreview
+
+```ts
+export interface DhRetrySchedulePreviewProps {
+  initialDelayMs: number; multiplier: number; maxDelayMs: number; maxAttempts: number;
+  limitTotalMs?: number; testId?: string;
+}
+```
+
+### 13.20. CMP-MarkdownViewer
+
+`CMP-MarkdownViewer` dựng nội dung Markdown thành HTML an toàn: trang hướng dẫn và nội dung cổng (PH-15 UI-15-07, 09, 21), câu trả lời của Trợ lý AI (13.22), xem trước runbook (13.16).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Bộ phân tích CommonMark qua bộ lọc `rehype-sanitize` với danh sách cho phép (không HTML thô, không `script`, `iframe`, `style` hay sự kiện nội tuyến); ảnh chỉ được tải từ kho nội dung của cổng, liên kết ngoài mở tab mới kèm `rel="noopener noreferrer"` và biểu tượng "liên kết ngoài". |
+| Giải phẫu | Tiêu đề có neo sao chép được; khối mã có nút `CMP-CopyButton`; bảng cuộn ngang trong vùng có nhãn; danh sách, trích dẫn, ảnh có chữ thay thế bắt buộc. |
+| Vật liệu | Nền đặc; chữ thân `font-callout`, độ dài dòng tối đa 80 ký tự (cột đọc `size-reading-max`). |
+| Trạng thái | Đang tải (Skeleton đoạn), rỗng, lỗi dựng một phần (hiện phần dựng được kèm dải "Một phần nội dung không hiển thị được"). |
+| Token | `size-reading-max`, `font-callout`, `font-mono`, `color-accent` (liên kết), `color-border-subtle`. |
+| Bàn phím, ARIA | Cấu trúc tiêu đề đúng thứ bậc `h2` trở xuống; bảng cuộn có `tabindex="0"`, `role="region"` và `aria-label`; khối mã không bẫy `Tab`. |
+| Điều cấm | Không bật HTML thô; không tải ảnh từ miền ngoài kho cổng; không dựng liên kết `javascript:`; không dùng cho nội dung của người dùng chưa qua bộ lọc. |
+
+: Đặc tả của CMP-MarkdownViewer
+
+```ts
+export interface DhMarkdownViewerProps { source: string; imageBase?: string; headingOffset?: 1 | 2; onLinkClick?: (href: string) => void; testId?: string }
+```
+
+### 13.21. CMP-TocNav
+
+`CMP-TocNav` là mục lục dính theo dõi vị trí đọc của trang tài liệu PTN-14 (D03-06-00 §4.17): tài liệu API và khung thử PH-15 (UI-15-05, 06), hướng dẫn (UI-15-07).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Danh sách liên kết lồng hai cấp, `position: sticky`, rộng `size-toc` (240px); theo dõi bằng `IntersectionObserver` trên các tiêu đề. |
+| Giải phẫu | (1) Bộ chọn phiên bản ở đầu (khi có); (2) các mục theo tiêu đề; (3) mục đang đọc tô `color-fill-selected` kèm vạch trái 2px `color-accent`. |
+| Vật liệu | Nền đặc. |
+| Trạng thái | Bình thường, mục đang đọc, mục có thu gọn, rỗng (không hiện mục lục khi dưới hai tiêu đề). Dưới `bp-lg` thành nút "Mục lục" mở `CMP-Drawer` `nav` bên trái. |
+| Token | `size-toc`, `color-fill-selected`, `color-accent`, `font-body`, `space-2`. |
+| Bàn phím, ARIA | `<nav aria-label="Mục lục">`; mục đang đọc `aria-current="location"`; bấm mục chuyển focus tới tiêu đề tương ứng (`tabindex="-1"`); URL đổi neo bằng `replace`. |
+| Điều cấm | Không dùng màu làm cách duy nhất báo mục đang đọc; không cuộn tự động khi người dùng đang gõ trong khung thử. |
+
+: Đặc tả của CMP-TocNav
+
+```ts
+export interface DhTocItem { id: string; title: string; level: 2 | 3; children?: DhTocItem[] }
+export interface DhTocNavProps { items: DhTocItem[]; activeId?: string; onSelect?: (id: string) => void; versionSlot?: React.ReactNode; testId?: string }
+```
+
+### 13.22. CMP-AssistantPanel
+
+`CMP-AssistantPanel` là bảng bên Trợ lý AI (PH-17, D03-06-00 §2.12) và các phần con dùng chung với nó, để mọi phân hệ chỉ gắn khe (`explainSlot` của `CMP-Alert` mục 5.1, `assistSlot` của `CMP-DesignerToolbar` mục 11.10) mà không tự dựng giao diện trợ lý.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Khung bảng bên rộng `size-assistant-panel` (400px) gắn mép phải vùng nội dung, đẩy nội dung thu hẹp chứ không phủ lên; dưới `bp-xl` chuyển thành `CMP-Drawer` biến thể `docked` (gắn trong khung bằng `getContainer`, không chặn nền). |
+| Giải phẫu | (1) Đầu: tiêu đề, trạng thái năng lực, nút đóng; (2) danh sách hội thoại; (3) câu trả lời: `CMP-MarkdownViewer` kèm `CMP-AiLabel` "Nội dung do AI tạo, cần kiểm tra lại" ở mọi câu trả lời, chip trích dẫn `[n]` (`CitationChip`) mở thẻ nguồn `CMP-Popover` (`SourcePopover`); (4) văn bản phát dần (`StreamingText`: `aria-busy="true"` trong lúc phát, thông báo `status` "Đang tra cứu API" và chỉ đọc nội dung khi xong, không đọc từng đoạn); (5) thẻ đề xuất (`SuggestionCard`: nội dung đề xuất, điểm tin cậy bằng chữ, `CMP-DiffTable` khác biệt, nút "Áp dụng" và "Bỏ qua"); (6) ô nhập. |
+| Vật liệu | Viền khung `glass-chrome` khi nằm trên canvas; nội dung hội thoại trong giếng nền đặc `color-surface-solid`. |
+| Trạng thái | Tắt (tenant chưa bật: không có nút mở), chưa xác nhận điều khoản, đang phát, lỗi, tắt khẩn (kill switch: ô nhập vô hiệu kèm lý do), rỗng. |
+| Token | `size-assistant-panel`, `glass-chrome`, `color-surface-solid`, `color-accent-subtle`, `font-body`, `radius-lg`. |
+| Bàn phím, ARIA | `<aside role="complementary" aria-label="Trợ lý AI">`; có liên kết "Bỏ qua tới Trợ lý AI" (D03-06-00 §3.6); `Esc` đóng và trả focus về nút mở; chip trích dẫn là nút có `aria-label` ("Nguồn 2: Danh mục API"). |
+| Điều cấm | Không tự thực hiện thao tác ghi (chỉ đề xuất, người dùng bấm áp dụng); không hiện câu trả lời thiếu nhãn AI; không đưa dữ liệu Hạn chế hoặc Nhạy cảm vào ngữ cảnh gửi đi ngoài những gì PH-17 cho phép. |
+
+: Đặc tả của CMP-AssistantPanel
+
+```ts
+export interface DhAssistantPanelProps {
+  open: boolean; onClose: () => void;
+  context: { route: string; objectId?: string; errorCode?: string };   // ngữ cảnh màn hình hiện tại
+  capabilities: Array<'ASK' | 'EXPLAIN' | 'MAPPING'>;
+  disabledReason?: string;                                              // tắt khẩn hoặc chưa xác nhận điều khoản
+  onApplySuggestion?: (id: string) => void; testId?: string;
+}
+```
+
+Các phần con `CMP-AiLabel`, `CitationChip`, `SourcePopover`, `StreamingText`, `SuggestionCard` là thành phần nội bộ của `CMP-AssistantPanel`, xuất từ `@datahub/ui/assistant` để màn hình PH-17 và khe `assistSlot` tái sử dụng, nhưng không có mã `CMP-` riêng trong bảng 14.1 (riêng nhãn AI có thể đặt ngoài panel, ví dụ cạnh nút "Giải thích lỗi này").
+
+### 13.23. CMP-CheckResult
+
+`CMP-CheckResult` hiển thị kết quả một lần kiểm tra gồm nhiều bước: xác minh endpoint webhook và xác minh lược đồ của PH-10, kiểm tra và chẩn đoán kết nối của PH-05 (UI-05-04), kiểm tra điều kiện trước khi chạy ở các màn cùng khuôn. Mỗi bước có trạng thái, chi tiết, hướng dẫn khắc phục và nút sao chép; người dùng đọc từ trên xuống là biết bước nào hỏng và phải làm gì. Không dùng cho tiến độ tác vụ nền (dùng `CMP-JobProgress`) hay danh sách phát hiện gắn với mã (dùng `markers` của `CMP-CodeEditor`).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Card` đặc chứa danh sách có thứ tự (`<ol>`); mỗi bước là một hàng có `CMP-StatusTag` (mã `PASS`, `WARN`, `FAIL`, `RUNNING`, `QUEUED`, `SKIPPED`), tên bước, thời lượng (`CMP-Duration`) và nút mở rộng. |
+| Giải phẫu | (1) Tiêu đề kết quả: \"Xác minh lúc {giờ}\" kèm `CMP-StatusTag` kết luận chung; (2) dòng hiệu lực \"Hiệu lực tới {giờ}\" khi kết quả có hạn; (3) danh sách bước; (4) vùng mở rộng của bước: chi tiết kỹ thuật (`CMP-CodeText`, đã che bí mật), nguyên nhân, hướng dẫn khắc phục bằng câu đầy đủ, mã lỗi ERR kèm `CMP-CopyButton`; (5) hành động chung: \"Kiểm tra lại\", \"Sao chép báo cáo\". |
+| Vật liệu | Nền đặc `color-surface-solid`; vùng mở rộng `color-surface-solid-2`, bo `radius-md`. Nằm được trong `CMP-Drawer` và `CMP-Card`. |
+| Biến thể | `default` (mọi bước, bước lỗi tự mở), `compact` (một dòng mỗi bước, dùng trong bước trình hướng dẫn). |
+| Trạng thái | Chưa chạy, đang chạy (bước hiện tại `RUNNING`, các bước sau `QUEUED`), đạt, có cảnh báo, không đạt (các bước sau lỗi chặn là `SKIPPED` kèm lý do), hết hiệu lực (`CMP-Alert` cảnh báo và nút \"Kiểm tra lại\"), lỗi chạy kiểm tra (`CMP-Alert` `error` kèm mã truy vết). |
+| Token | `color-surface-solid`, `color-surface-solid-2`, `color-border-subtle`, `color-success-text`, `color-warning-text`, `color-error-text`, `font-footnote`, `font-mono-sm`, `radius-md`, `space-3`. |
+| Bàn phím, ARIA | Mỗi bước là `<li>` có nút mở rộng `aria-expanded`; kết quả chung ở vùng `aria-live=\"polite\"` (\"Kiểm tra xong: 4 đạt, 1 không đạt\"); trạng thái luôn có chữ, không chỉ màu hay biểu tượng. `Enter` mở rộng, phím mũi tên đi giữa các bước. |
+| Nội dung | Tên bước nêu việc kiểm tra (\"Phân giải DNS\", \"Kiểm tra chứng thư TLS\"); hướng dẫn khắc phục nói việc cần làm, không nêu thông điệp kỹ thuật thô; chi tiết không chứa giá trị bí mật. |
+| Điều cấm | Không hiện kết quả đạt khi một bước bắt buộc chưa chạy; không để người dùng chỉ thấy kết luận chung mà không có bước; không lộ bí mật hay địa chỉ nội bộ trong chi tiết. |
+
+: Đặc tả của CMP-CheckResult
+
+```ts
+export interface DhCheckStep { key: string; label: string; status: 'PASS' | 'WARN' | 'FAIL' | 'RUNNING' | 'QUEUED' | 'SKIPPED'; durationMs?: number; detail?: string; remediation?: string; errorCode?: string }
+export interface DhCheckResultProps {
+  variant?: 'default' | 'compact';
+  overall: 'PASS' | 'WARN' | 'FAIL' | 'RUNNING' | null;
+  steps: DhCheckStep[]; checkedAt?: string; expiresAt?: string;
+  onRerun?: () => void; rerunDisabledReason?: string; testId?: string;
+}
+```
+
+```tsx
+<DhCheckResult overall={verify.result} steps={verify.steps} checkedAt={verify.checkedAt} expiresAt={verify.validUntil} onRerun={rerun} />
+```
+
+### 13.24. CMP-Calendar
+
+`CMP-Calendar` là lịch hiển thị ngày có loại (ngày nghỉ, ngày làm bù, bảo trì, đóng băng, kỳ đối soát) trên lưới tháng hoặc lưới năm: lịch làm việc của quy trình (PH-11 UI-11-18, lịch năm), lịch ngày lễ và cửa sổ bảo trì (PH-18 UI-18-16, lịch tháng), lịch đối soát (PH-19, chế độ Lịch). Không dùng để chọn một ngày trong biểu mẫu (dùng `CMP-DatePicker`) và không dùng cho tiến trình theo thời gian (dùng `CMP-Timeline`).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Tự dựng bằng lưới CSS 7 cột, không dùng `Calendar` của antd vì cần nhãn chữ trong từng ô và gộp sự kiện. |
+| Giải phẫu | (1) Thanh điều hướng: nút tháng trước, tháng sau, \"Hôm nay\", chọn tháng hoặc năm; (2) hàng thứ trong tuần (T2 đến CN); (3) lưới ngày; mỗi ô có số ngày, nền theo loại, ký hiệu và nhãn chữ ngắn của loại; (4) chú giải loại ngày; (5) ô có nhiều hơn hai sự kiện gộp thành \"+n\" mở `CMP-Popover` liệt kê. Chế độ `year` vẽ 12 lưới tháng thu nhỏ, mỗi ngày có loại chỉ hiện nền và ký hiệu, nhãn chữ nằm trong Tooltip và chú giải. |
+| Vật liệu | Nền đặc `color-surface-solid`; ô ngày nghỉ dùng nền theo loại, không glass. |
+| Biến thể | `month` (mặc định), `year` (12 tháng, chỉ đọc hoặc chọn nhiều ngày để gán loại), `compact` (dưới `bp-sm`: một cột danh sách ngày có sự kiện). |
+| Trạng thái | Đang tải (Skeleton lưới), rỗng (lịch không có ngày đặc biệt, vẫn hiện lưới), có sự kiện, ngày hôm nay (viền `color-accent` và chữ \"Hôm nay\"), ngày được chọn, chỉ đọc, lỗi tải (`CMP-Alert`). |
+| Token | `color-surface-solid`, `color-border-subtle`, `color-accent`, `color-info-bg`, `color-warning-bg`, `color-error-bg`, `color-neutral-bg`, `color-success-bg` (và cặp `…-on-bg`), `font-footnote`, `font-caption`, `space-2`, `radius-sm`. |
+| Bàn phím, ARIA | `role=\"grid\"` với `role=\"gridcell\"`, mỗi ô có nhãn đầy đủ (\"Thứ Năm 02/09/2027, Quốc khánh, ngày nghỉ\"); chỉ một ô có `tabindex=0` (roving tabindex); mũi tên di chuyển ngày, `Home`/`End` đầu và cuối tuần, `PageUp`/`PageDown` đổi tháng, `Shift+PageUp`/`Shift+PageDown` đổi năm, `Enter` mở ngày. Loại ngày luôn có nền, ký hiệu và chữ (WCAG 1.4.1); chế độ `year` vẫn có danh sách ngày đặc biệt dạng bảng thay thế. |
+| Nội dung | Tên tháng \"Tháng 11/2026\"; tuần bắt đầu thứ Hai; ngày theo `CMP-Timestamp` (`DD/MM/YYYY`). |
+| Điều cấm | Không phân biệt loại ngày chỉ bằng màu; không tự tính ngày lễ trong thành phần (dữ liệu do phân hệ truyền); không sửa ngày trực tiếp trong ô mà không qua hộp thoại xác nhận của phân hệ. |
+
+: Đặc tả của CMP-Calendar
+
+```ts
+export interface DhCalendarDay { date: string; kind: string; label: string; tone: 'success' | 'warning' | 'error' | 'info' | 'neutral'; symbol?: string }
+export interface DhCalendarProps {
+  variant?: 'month' | 'year' | 'compact'; month?: string; year?: number;
+  days: DhCalendarDay[];
+  legend: Array<{ kind: string; label: string; tone: DhCalendarDay['tone']; symbol: string }>;
+  onDayActivate?: (date: string) => void; onVisibleChange?: (range: { from: string; to: string }) => void;
+  readOnly?: boolean; loading?: boolean; ariaLabel: string; testId?: string;
+}
+```
+
+```tsx
+<DhCalendar variant="year" year={2027} ariaLabel="Lịch làm việc 2027" days={calendar.days} legend={calendar.legend} readOnly />
+```
+
 ## 14. Bảng tổng hợp, tên gọi khác và nghiệm thu
 
 ### 14.1. Bảng tổng hợp thành phần phức hợp và tổ chức
@@ -2580,10 +2874,21 @@ Bảng dưới là danh mục chính thức để đối chiếu Storybook khi n
 | 13.11 | `CMP-EnvCard` | `CMP-Card` | Đặc | M | PH-04 |
 | 13.12 | `CMP-EmbeddedDashboard` | `CMP-Chart` | Đặc | S | PH-04 |
 | 13.13 | `CMP-Wizard` | `CMP-Steps` + `CMP-Form` | Đặc | M | PH-01, PH-04, PH-07 |
+| 13.14 | `CMP-TraceWaterfall` | `CMP-TreeGrid` + SVG | Đặc | S | PH-13 |
+| 13.15 | `CMP-HealthGrid` | `CMP-Card` + `CMP-StatusDot` | Đặc | S | PH-13, PH-20 |
+| 13.16 | `CMP-RunbookPanel` | `CMP-Card` | Đặc | S | PH-13, PH-18 |
+| 13.17 | `CMP-IntegrityBadge` | `CMP-StatusTag` | Đặc | S | PH-13, PH-16 |
+| 13.18 | `CMP-ScoreMeter` | SVG + `CMP-ProgressBar` | Đặc | S | PH-06, PH-08, PH-09 |
+| 13.19 | `CMP-RetrySchedulePreview` | `CMP-Duration` + `CMP-Chart` | Đặc | S | PH-10, PH-04, PH-05 |
+| 13.20 | `CMP-MarkdownViewer` | CommonMark + `rehype-sanitize` | Đặc | S | PH-15, PH-17 |
+| 13.21 | `CMP-TocNav` | tự dựng | Đặc | S | PH-15 |
+| 13.22 | `CMP-AssistantPanel` | `CMP-Drawer` `docked` + tự dựng | `glass-chrome` viền, nền đặc nội dung | S | PH-17 |
+| 13.23 | `CMP-CheckResult` | `CMP-Card` + `CMP-StatusTag` | Đặc | S | PH-10, PH-05 |
+| 13.24 | `CMP-Calendar` | lưới CSS tự dựng | Đặc | S | PH-11, PH-18, PH-19 |
 
 : Danh mục thành phần phức hợp và tổ chức theo nền, vật liệu, mức và phân hệ dùng đầu tiên
 
-Tổng cộng 75 thành phần phức hợp và tổ chức (77 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`). Cộng 44 thành phần nguyên tử ở D03-05-03 và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`), design system có 121 thành phần.
+Tổng cộng 86 thành phần phức hợp và tổ chức (88 mã kể cả `CMP-EntityTab`, `CMP-EnumEditor`). Cộng 46 thành phần nguyên tử ở D03-05-03 và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`), design system có 134 thành phần.
 
 ### 14.2. Tên gọi khác đã gặp trong tài liệu phân hệ
 
@@ -2603,6 +2908,26 @@ Bảng dưới ánh xạ các tên thành phần mà tập phân hệ đã dùng
 | `CMP-FilterDrawer` | `CMP-FilterBar` biến thể `embedded` trong `CMP-Drawer` | PH-04 |
 | `CMP-ConflictDialog` | `CMP-DiffViewer` biến thể `conflict` trong `CMP-Modal` `lg` (mục 9.4.1) | PH-07 |
 | `CMP-DecisionPanel` | Đã thành thành phần chính thức (13.10) | |
+| `ScoreMeter` | `CMP-ScoreMeter` (13.18) | PH-06 |
+| `ScoreCard` | `CMP-KpiCard` chứa `CMP-ScoreMeter` biến thể `ring` | PH-08 |
+| `RiskMeter` | `CMP-ScoreMeter` biến thể `risk` | PH-09 |
+| `RangeSlider` | `CMP-RangeSlider` (D03-05-03 §7.19) | PH-06, PH-08 |
+| `TimePicker`, bộ chọn khung giờ | `CMP-TimeRangePicker` (D03-05-03 §7.20) | PH-20 |
+| `ComponentMap`, `HealthGrid` | `CMP-HealthGrid` (13.15) | PH-13 |
+| `TraceWaterfall`, `RunbookPanel`, `IntegrityBadge` | `CMP-TraceWaterfall`, `CMP-RunbookPanel`, `CMP-IntegrityBadge` (13.14, 13.16, 13.17) | PH-13 |
+| `MarkdownViewer`, `TocNav` | `CMP-MarkdownViewer`, `CMP-TocNav` (13.20, 13.21) | PH-15 |
+| `AssistantPanel`, `CitationChip`, `SourcePopover`, `StreamingText`, `AiLabel`, `SuggestionCard` | `CMP-AssistantPanel` và các phần con (13.22) | PH-17 |
+| `RevealDialog` | `CMP-MaskedValue` `revealable` cộng `CMP-ReasonDialog` (D03-05-03 §8.5) | PH-09 |
+| `ApprovalChain` | `CMP-ApprovalPanel` (trường `levels`, mục 10.2) | PH-09 |
+| `DeadlineClock` | `CMP-ProgressBar` biến thể `milestone` cộng `CMP-Duration` (D03-05-03 §6.3) | PH-09 |
+| `RuleTable` | `CMP-EditableTable` có `reorderable` (kéo hoặc `Alt+↑/↓`, mục 13.1) | PH-09 |
+| `PairCompare` | `CMP-DiffTable` hai cột (mục 13.6) | PH-06 |
+| `ScoreRing` | `CMP-ScoreMeter` biến thể `ring` trong `CMP-KpiCard` (mục 13.18) | PH-16 |
+| `TriStateSegment` | `CMP-SegmentedControl` biến thể `verdict` ba mục Đạt, Không đạt, Không áp dụng (D03-05-03 §7.10) | PH-16 |
+| `CalendarMonth`, `CalendarYear` | `CMP-Calendar` biến thể `month`, `year` (13.24) | PH-18, PH-11 |
+| `CountdownTimer`, `DueTag` | `CMP-StatusTag` biến thể `countdown` có `unit` (D03-05-03 §5.1) | PH-18, PH-11 |
+| `IndicatorCard` | `CMP-KpiCard` biến thể `with-spark` cộng `CMP-ScoreMeter` biến thể `bar` và `CMP-StatusTag` | PH-16 |
+| Khối kết quả kiểm tra theo bước | `CMP-CheckResult` (13.23) | PH-10, PH-05 |
 
 : Ánh xạ tên thành phần phức hợp đã dùng trong tập phân hệ sang tên chuẩn
 
@@ -2659,3 +2984,5 @@ Các đề xuất dưới đây cần chủ sở hữu tài liệu liên quan x�
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản trước: 75 thành phần phức hợp và tổ chức, quy tắc chung, bảng tổng hợp, tên gọi khác, checklist, truy vết, đề xuất (gồm biến thể `filter` của `CMP-KpiCard`, đổi tên trùng nghĩa) |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.1 đến 1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho các mục 14.2 đến 14.5; viết lại 91 chú thích bảng thành dạng cụ thể ("Đặc tả của CMP-…", "Các phần con của …"), không trùng; thêm metadata `mo_ta`, `tai_lieu_lien_quan` |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm 9 thành phần 13.14 đến 13.22 (`CMP-TraceWaterfall`, `CMP-HealthGrid`, `CMP-RunbookPanel`, `CMP-IntegrityBadge`, `CMP-ScoreMeter`, `CMP-RetrySchedulePreview`, `CMP-MarkdownViewer`, `CMP-TocNav`, `CMP-AssistantPanel`); biến thể `radar` của `CMP-Chart`, `cursor` của `CMP-Pagination`, `card-list` của `CMP-DataTable`, `checklist` của `CMP-Steps`, `layered` và kiểu cạnh của `CMP-FlowCanvas`, `slot` của `CMP-FlowNode`, `bare` của `CMP-AppShell`, `docked` của `CMP-Drawer`; khe `explainSlot`, `assistSlot`; mở rộng `CMP-CodeEditor`; ngoại lệ `bpmn-js` của PH-11; bí danh mới ở 14.2; 84 thành phần phức hợp, 132 thành phần design system |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm `CMP-CheckResult` (13.23) và `CMP-Calendar` (13.24); `CMP-CodeEditor` thêm `markers`, `onMarkerSelect`; `CMP-Chart` thêm `thresholds`, `bands`, `highlightLast`; `CMP-QuickInsert` thêm chế độ "Nối tới…"; `CMP-DynamicForm` thêm widget bảng lặp, tải tệp, phụ thuộc trường; bí danh mới ở 14.2; 86 thành phần phức hợp, 134 thành phần design system |

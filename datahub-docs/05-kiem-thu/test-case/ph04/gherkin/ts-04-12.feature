@@ -69,7 +69,7 @@ Tính năng: TS-04-12 · Chạy thử trên sandbox
     Và gọi `GET .../test-runs/{id}/steps/3/body?side=out` cho lần có `captureBodies`.
     Và trên UI-04-12, chọn hai lần chạy, bấm "So sánh".
     Và đặt đồng hồ hệ thống tới 8 ngày sau, chạy job dọn.
-    Thì bước 1: ba lần chạy, mỗi lần có `matchesCurrentHash`. Bước 2: thân đã che theo BR-04-013 (trường phân loại Cá nhân thay bằng `*`). Bước 3: bảng so sánh theo chặng, tô khác biệt thời gian và trạng thái. Bước 4: thân bị xóa khỏi RGW bucket `dh-int-testrun` (`04.test.body-retention-days = 7`), bước 2 nay trả `404`; metadata còn tới 90 ngày.
+    Thì bước 1: ba lần chạy, mỗi lần có `matchesCurrentHash`. Bước 2: thân đã che theo BR-04-013 (trường phân loại Hạn chế, Nhạy cảm thay bằng `*`). Bước 3: bảng so sánh theo chặng, tô khác biệt thời gian và trạng thái. Bước 4: thân bị xóa khỏi RGW bucket `dh-int-testrun` (`04.test.body-retention-days = 7`), bước 2 nay trả `404`; metadata còn tới 90 ngày.
 
   @TC-04-079 @P2 @Dương
   Kịch bản: TC-04-079 Chạy thử SANDBOX_LIVE gọi đích TEST

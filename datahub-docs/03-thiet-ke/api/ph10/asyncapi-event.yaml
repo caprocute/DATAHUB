@@ -39,7 +39,7 @@ channels:
   topicActivated:
     address: '{tenant}.event.topic.activated.v1'
     title: EVT-10-01
-    description: 'Topic sang `ACTIVE`. Truy vết FR-10-009, 066. Bên nhận: PH-04, PH-05, PH-02, PH-13.'
+    description: 'Topic sang `ACTIVE`. Truy vết FR-10-009, 066. Bên nhận: PH-04, PH-05, PH-02, PH-13, PH-16.'
     messages:
       topicActivated:
         $ref: '#/components/messages/topicActivated'
@@ -100,7 +100,7 @@ channels:
   topicRetired:
     address: '{tenant}.event.topic.retired.v1'
     title: EVT-10-04
-    description: 'Topic sang `RETIRED`. Truy vết FR-10-014. Bên nhận: PH-04, PH-05, PH-02, PH-13.'
+    description: 'Topic sang `RETIRED`. Truy vết FR-10-014. Bên nhận: PH-04, PH-05, PH-02, PH-13, PH-16.'
     messages:
       topicRetired:
         $ref: '#/components/messages/topicRetired'
@@ -140,7 +140,7 @@ channels:
   publicationActivated:
     address: '{tenant}.event.publication.activated.v1'
     title: EVT-10-06
-    description: 'Publication `ACTIVE`. Truy vết FR-10-031. Bên nhận: PH-04, PH-13.'
+    description: 'Publication `ACTIVE`. Truy vết FR-10-031. Bên nhận: PH-04, PH-13, PH-16.'
     messages:
       publicationActivated:
         $ref: '#/components/messages/publicationActivated'
@@ -439,7 +439,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/topicActivated'
-    title: PH-04, PH-05, PH-02, PH-13 nhận
+    title: PH-04, PH-05, PH-02, PH-13, PH-16 nhận
     messages:
     - $ref: '#/channels/topicActivated/messages/topicActivated'
   sendTopicChanged:
@@ -481,7 +481,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/topicRetired'
-    title: PH-04, PH-05, PH-02, PH-13 nhận
+    title: PH-04, PH-05, PH-02, PH-13, PH-16 nhận
     messages:
     - $ref: '#/channels/topicRetired/messages/topicRetired'
   sendSchemaVersionEnabled:
@@ -509,7 +509,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/publicationActivated'
-    title: PH-04, PH-13 nhận
+    title: PH-04, PH-13, PH-16 nhận
     messages:
     - $ref: '#/channels/publicationActivated/messages/publicationActivated'
   sendPublicationStateChanged:

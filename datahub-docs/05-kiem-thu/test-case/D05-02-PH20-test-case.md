@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH20
 ten: Đặc tả ca kiểm thử phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư dh-platform, quản trị nền tảng, quản trị tỉnh, cán bộ an toàn thông tin, chủ đầu tư (UAT), hội đồng thẩm định
@@ -39,7 +39,7 @@ Phần này nói tài liệu chứng minh điều gì, phủ đến đâu và nh
 - phát hành theo sóng: ngưỡng lỗi dừng sóng, quay lui, cửa sổ bảo trì (TS-20-32…34, 44);
 - hiệu năng saga ≤ 60 phút và các NFR-20 đo được (TS-20-41).
 
-Dữ liệu dùng giả định GĐ-01…07 (tỉnh `T01` quy mô vừa, 200 HTTT). Các phân hệ khác (PH-12, 13, 07, 10, 03, 18…) được giả lập bằng bản giả hợp đồng; PostgreSQL thật dùng cho kiểm RLS. Hợp đồng `merge-transfers` với PH-18 và nhiều điểm của kho GitOps còn là giả định (Q20-15, Q20-14 của FRS), nên các ca liên quan ghi rõ là ca theo hợp đồng giả định.
+Dữ liệu dùng giả định GĐ-01…07 (tỉnh `T01` quy mô vừa, 200 HTTT). Các phân hệ khác (PH-12, 13, 07, 10, 03, 18…) được giả lập bằng bản giả hợp đồng; PostgreSQL thật dùng cho kiểm RLS. Hợp đồng `merge-transfers` với PH-18 đã chốt (API-18-150…153), các ca liên quan chạy trên bản giả theo hợp đồng đó; nhiều điểm của kho GitOps còn là giả định (Q20-14 của FRS), nên các ca liên quan ghi rõ là ca theo hợp đồng giả định.
 
 ## 0. Giới thiệu
 
@@ -244,7 +244,7 @@ Phân hệ và hệ thống ngoài được giả lập như sau.
 | PH-13 (`obs-sim`) | WireMock | API-13-072 khởi tạo quan sát, API-13-073 đóng chuỗi kiểm toán, nhận bản ghi kiểm toán; phát `EVT-13-14`; Mimir giả cho số đo sử dụng |
 | PH-07 (`rdm-sim`) | WireMock | API-07-073 nạp gói danh mục nền; ĐVHC `COMMON`; phát `EVT-07-10` sắp xếp lại ĐVHC |
 | PH-10, PH-03, PH-04, PH-06, PH-19, PH-17 (`mod-sim`) | WireMock và bộ phát Kafka | Nghe EVT-20-01, 04, 05, 07, 08; báo tiến độ qua API-20-166 theo kịch bản F-SAGA; phát `EVT-03-10`, `EVT-03-11` |
-| PH-18 (`ops-sim`) | WireMock | `POST /api/ops/v1/merge-transfers` (giả định, có `dryRun`), báo API-20-167; `NotificationApi` gửi thư; đăng ký, đổi tham số `20.*`; việc xử lý lỗi |
+| PH-18 (`ops-sim`) | WireMock | `POST /api/ops/v1/merge-transfers` (API-18-150…153, có `dryRun`, scope `ops:merge-transfer`), báo API-20-167; `NotificationApi` gửi thư; đăng ký, đổi tham số `20.*`; việc xử lý lỗi |
 | PH-09 (`crypto-sim`) | WireMock và bộ phát Kafka | Xóa mật mã FR-09-043; phát `EVT-09-21` hoặc không phát |
 | PH-16 (`kpi-sim`) | WireMock | API-16-030 nhận thời gian khởi tạo; `503` |
 | PH-01, PH-08 (`org-reader-sim`) | Máy khách giả | Gọi API-20-169…171 với scope `tenant:org-read` |
@@ -3214,7 +3214,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. `GET P/merge-plans/{mergePlanId}`
 4. `PATCH P/merge-plans/{mergePlanId}` đổi `name` và `transitionMonths = 8`, kèm `If-Match`
 
-**Kết quả mong đợi.** Bước 1 `201`, mã `MG-2026-001`, `status = DRAFT`, phân hệ bật ở nguồn mà đích chưa bật được cảnh báo kèm gợi ý FR-20-034. Bước 2 có kế hoạch. Bước 3 `progress.modulesTotal` đúng số phân hệ, `allowedActions[]`. Bước 4 `200`, `transitionMonths = 8`. KT mọi thao tác ghi.
+**Kết quả mong đợi.** Bước 1 `201`, mã `SN-2026-001`, `status = DRAFT`, phân hệ bật ở nguồn mà đích chưa bật được cảnh báo kèm gợi ý FR-20-034. Bước 2 có kế hoạch. Bước 3 `progress.modulesTotal` đúng số phân hệ, `allowedActions[]`. Bước 4 `200`, `transitionMonths = 8`. KT mọi thao tác ghi.
 
 :::
 
@@ -3229,7 +3229,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-045 · API-20-086, 089 · BR-20-022, 025 · ERR-20-004, ERR-20-040, ERR-20-041, ERR-20-045.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`; `T90`, `T91` `ACTIVE`; `T92` `SUSPENDED`; `T93` đã thuộc `MG-2026-001` chưa kết thúc.
+**Tiền điều kiện, dữ liệu.** `U-PA1`; `T90`, `T91` `ACTIVE`; `T92` `SUSPENDED`; `T93` đã thuộc `SN-2026-001` chưa kết thúc.
 
 **Các bước.**
 
@@ -3241,7 +3241,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Kết quả mong đợi.** Bước 1, 2 `422` `ERR-20-040` (nguồn khác đích, đều `ACTIVE`, đều `PROVINCE`). Bước 3 `409` `ERR-20-041`. Bước 4 `422` `ERR-20-045`. Bước 5 `400` `ERR-20-004`. Không tạo kế hoạch.
 
-**Thông báo hiển thị.** ERR-20-041: "Tenant T93 đang thuộc kế hoạch sáp nhập MG-2026-001."; ERR-20-045: "Thời gian chuyển tiếp tối đa 12 tháng."
+**Thông báo hiển thị.** ERR-20-041: "Tenant T93 đang thuộc kế hoạch sáp nhập SN-2026-001."; ERR-20-045: "Thời gian chuyển tiếp tối đa 12 tháng."
 
 :::
 
@@ -3339,7 +3339,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-047 · UC-20-25 · API-20-097, 167 · BR-20-023 · UI-20-09, 10 · `PERM-20-merge`.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`; kế hoạch `DRAFT` T91→T90 đã đủ ánh xạ; `ops-sim` (hợp đồng `merge-transfers` giả định, `dryRun = true`).
+**Tiền điều kiện, dữ liệu.** `U-PA1`; kế hoạch `DRAFT` T91→T90 đã đủ ánh xạ; `ops-sim` (bản giả hợp đồng `merge-transfers`, API-18-150, `dryRun = true`).
 
 **Các bước.**
 
@@ -3470,7 +3470,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-048 · UC-20-26 · API-20-098, 099, 088, 167 · BR-20-023 · NFR-20-014 · EVT-20-04, 10 · UI-20-10 · `PERM-20-merge`.
 
-**Tiền điều kiện, dữ liệu.** STAGING; `U-PA1`; kế hoạch `APPROVED`; F-MERGE đã giải quyết ánh xạ; `ops-sim` giả định hợp đồng `merge-transfers` (Q20-15).
+**Tiền điều kiện, dữ liệu.** STAGING; `U-PA1`; kế hoạch `APPROVED`; F-MERGE đã giải quyết ánh xạ; `ops-sim` bản giả hợp đồng `merge-transfers` (API-18-150).
 
 **Các bước.**
 
@@ -7056,7 +7056,11 @@ Bảng nối chín tiêu chí ở FRS mục 14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị phát sinh khi viết ca; tập này chưa sửa tài liệu nào khác. Các ca liên quan chấp nhận kết quả hiện hành của hợp đồng và ghi chú đề nghị.
 
@@ -7080,7 +7084,7 @@ Các đề nghị phát sinh khi viết ca; tập này chưa sửa tài liệu n
 
 > **Câu hỏi mở Q20-40:** Bộ 34 tenant hiệu năng `T01…T34` dựng bằng bộ sinh giả hay sao chép từ tỉnh thí điểm đã ẩn danh; hiện dùng bộ sinh giả theo hạt cố định (liên quan ĐN-TC-07).
 
-> **Câu hỏi mở Q20-41:** Hợp đồng của PH-18 về `POST /api/ops/v1/merge-transfers` (có `dryRun`) và về báo tiến độ API-20-167 chưa có đặc tả; các ca TS-20-25, 26, 27 dùng bản giả theo giả định (liên quan Q20-15).
+> **Câu hỏi đã đóng Q20-41:** Hợp đồng của PH-18 về `POST /api/ops/v1/merge-transfers` (có `dryRun`) đã có đặc tả ở API-18-150…153 (PH-20 gọi bằng client credentials qua `apisix-int`, scope `ops:merge-transfer`); các ca TS-20-25, 26, 27 dùng bản giả theo đúng hợp đồng đó, báo tiến độ về API-20-167.
 
 > **Câu hỏi mở Q20-42:** Gitea và Argo CD thật có sẵn ở STAGING không, hay dùng bản giả `git-sim`, `argo-sim`; ca đo NFR-20-011 (áp cấu hình ≤ 5 phút) chỉ có ý nghĩa với Argo CD thật.
 
@@ -7094,5 +7098,6 @@ Các đề nghị phát sinh khi viết ca; tập này chưa sửa tài liệu n
 |---|---|---|
 | 0.1 | 2026-11-27 | Bản đầu: kịch bản TS-20-01…44, test case TC-20, ma trận truy vết, Gherkin, bảng tính |
 | 0.2 | 2026-11-27 | Đồng bộ với FRS 0.2: cửa sổ bảo trì 2…6 giờ, quyết định 403 và 404 đóng Q20-44, tên trường theo OpenAPI, thông báo lỗi nguyên văn FRS 9.2, 29 tham số; sinh lại số ca, ma trận, Gherkin, bảng tính |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, đóng Q20-41, mã kế hoạch `SN-yyyy-nnn` |
 
 : Lịch sử phiên bản

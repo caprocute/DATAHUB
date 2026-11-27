@@ -28,8 +28,8 @@ Tính năng: TS-18-42 · Phân quyền theo ma trận PERM-18 và bốn mắt xu
     # Mục đích: Chứng minh LP-18-01 nhất quán: tham số ★, gói tham số, bản sửa payload, lượt phát lại lớn, phiên bản mẫu, khôi phục tenant, chạy di trú thật, cắt chuyển đều trả ERR-18-005 và việc duyệt có `excludeUsers`.
     Biết tám đối tượng `PENDING_APPROVAL` do U-T90-TA1 tạo (TA1 có `PERM-18-approve`); dữ liệu theo các ca TS-18-03, 05, 14, 17, 20, 31, 36, 38.
     Khi TA1 gọi API duyệt của từng đối tượng.
-    Và TA1 mở `/ca-nhan/viec`.
-    Và TA2 mở `/ca-nhan/viec`.
+    Và TA1 mở `/viec-cua-toi`.
+    Và TA2 mở `/viec-cua-toi`.
     Thì bước 1 tám lần `403` ERR-18-005, không đối tượng nào đổi trạng thái. Bước 2 không có việc duyệt nào. Bước 3 có đủ tám việc; nút "Duyệt" trên màn đối tượng bị khóa với TA1.
 
   @TC-18-144 @P1 @Âm

@@ -31,5 +31,5 @@ Tính năng: TS-17-36 · Dùng tập dữ liệu đã ẩn danh của PH-09 cho 
     Biết hợp đồng OpenAPI `/api/assist/v1` và `/assist/v1`; mã nguồn `vn.datahub.assist`.
     Khi spectral duyệt hợp đồng, tìm đường dẫn chứa `train`, `fine-tune`, `finetune`.
     Và quét mã tìm lời gọi tới API huấn luyện của nhà cung cấp.
-    Và gọi `POST /eval-datasets` với `purpose = TRAINING`.
+    Và gọi `POST /eval-datasets` với `evalSetId` hợp lệ và `datasetRef` trỏ tập mà PH-09 khai mục đích huấn luyện (`purposeCode = TRAINING`).
     Thì bước 1 và 2 không có. Bước 3 `400` ERR-17-003 (mục đích duy nhất là đánh giá).

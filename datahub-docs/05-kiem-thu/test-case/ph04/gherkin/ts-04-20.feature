@@ -43,7 +43,7 @@ Tính năng: TS-04-20 · Data plane đồng bộ qua chín chặng
     Khi gọi F-HT với mục đích `THONG_KE`.
     Và gọi với mục đích `KHAC` không có trong chính sách.
     Và quét log runtime, vết, chỉ số, EVT-04-14 tìm `001099000001` và `Nguyễn Văn Thử`.
-    Thì bước 1: phản hồi có `soDinhDanh = "0001"`. Bước 2: mọi trường phân loại Cá nhân bị che toàn bộ (mặc định khi không có quy tắc). Bước 3: không xuất hiện ở bất kỳ nguồn nào, kể cả log DEBUG (log thân bản tin bị chặn bởi `dh-default-config`).
+    Thì bước 1: phản hồi có `soDinhDanh = "0001"`. Bước 2: mọi trường phân loại Hạn chế, Nhạy cảm bị che toàn bộ (mặc định khi không có quy tắc). Bước 3: không xuất hiện ở bất kỳ nguồn nào, kể cả log DEBUG (log thân bản tin bị chặn bởi `dh-default-config`).
 
   @TC-04-127 @P1 @Dương @Âm @Khả
   Kịch bản: TC-04-127 Đích quá thời gian, lỗi, ngắt mạch

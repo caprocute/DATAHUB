@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH01
 ten: Đặc tả API và sự kiện phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, giao diện, kỹ sư các phân hệ gọi PH-01; ATTT; kiểm thử viên; hội đồng thẩm định
 phan_he: PH-01
@@ -2660,7 +2660,7 @@ Bảng nêu từng hệ PH-01 phụ thuộc, giao diện cần dùng, cách ch�
 
 | Hệ | Giao diện PH-01 cần | Lũy đẳng | Chờ, thử lại, ngắt mạch | Khi lỗi |
 |---|---|---|---|---|
-| PH-12 (Keycloak, OPA) | Tạo client (`clientId = {tenant}-{systemCode}-sbx` hoặc `-prd`), vô hiệu client, thu hồi token, đăng ký khóa, bắt đầu xoay bí mật, gỡ scope | `Idempotency-Key = {sagaId}:{bước}` hoặc `{enforcementId}:{loại}` | 10 giây (tạo), 5 giây (vô hiệu, thu hồi); saga lùi 1, 2, 4, 8, 15 phút tới 24 giờ; ngắt mạch 50% trên 20 lượt, **không** ngắt đường cắt quyền | ERR-01-021 (503) giữ hồ sơ `APPROVED` và thử lại; client trùng ERR-01-022 (409) dừng saga, cảnh báo TA |
+| PH-12 (Keycloak, OPA) | Tạo client (API-12-058; `clientId = {tenant}-{systemCode}-sbx` hoặc `-prd`), sửa client (API-12-059), vô hiệu, tiếp tục, thu hồi client (API-12-060, 061, 062), thu hồi token, đăng ký khóa mTLS (API-12-064), bắt đầu xoay bí mật, gỡ scope (API-12-068) | `Idempotency-Key = {sagaId}:{bước}` hoặc `{enforcementId}:{loại}` | 10 giây (tạo), 5 giây (vô hiệu, thu hồi); saga lùi 1, 2, 4, 8, 15 phút tới 24 giờ; ngắt mạch 50% trên 20 lượt, **không** ngắt đường cắt quyền | ERR-01-021 (503) giữ hồ sơ `APPROVED` và thử lại; client trùng ERR-01-022 (409) dừng saga, cảnh báo TA |
 | PH-03 (APISIX) | Tạo, xóa, vô hiệu consumer; chặn client ≤ 60 giây; bỏ chặn; hạn mức; danh sách IP | Như trên | 10, 5, 5 giây; chặn luôn thử, không ngắt mạch | Bước saga `FAILED` tạm thời rồi thử lại; cắt quyền thử tới khi xong, cảnh báo sau 60 giây |
 | OpenBao | Bọc bí mật theo TTL, mở bọc (một lần), hủy phiên bản, ký CSR (`pki-clients`), transit mã hóa, giải mã | Bọc theo `secretRef`; mở bọc **không thử lại** | 2 giây, 2 lần (200 ms, 400 ms); mở bọc 5 giây; ngắt mạch 50% trên 10 lượt | ERR-01-023 (503), liên kết bàn giao chưa bị tiêu hao |
 | PH-13 | `sandboxActivity`, `usageByCredential`, `usageByScope` | Đọc | 3 giây, 1 lần; ngắt mạch thì kết quả `partial` | `partial = true` ở API-01-042, 068; không chặn |
@@ -5167,6 +5167,8 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác của PH-01 và phân hệ khác, nằm ngoài quyền sửa của tập này; ghi lại để đợt đồng bộ cuối thực hiện.
 
 | # | Tài liệu | Đề nghị |
@@ -5199,3 +5201,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác c�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 88 endpoint REST, 15 sự kiện Kafka, 54 mã lỗi ERR-01, ánh xạ từ hệ cũ, 5 câu hỏi mở, đề nghị đồng bộ; OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script, đã kiểm trong CI |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: API-01-059 thêm FR-01-035; ghi trạng thái đồng bộ các đề nghị 1 đến 5; thêm đề nghị 16 về bảy đề nghị bổ sung API của tập màn hình (OpenAPI cập nhật x-datahub-fr của API-01-059) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12 |

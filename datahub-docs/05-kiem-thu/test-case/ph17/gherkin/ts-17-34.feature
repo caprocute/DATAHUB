@@ -9,7 +9,7 @@ Tính năng: TS-17-34 · Suy luận nội bộ cho bước luồng PH-04 (phân 
     # Mục đích: Chứng minh data plane hoạt động qua cổng mô hình với vết lời gọi.
     Biết T90 bật; S-T90-PH04 có `assist:infer`, mTLS SPIFFE hợp lệ; `MV-CHAT-1` giả lập trả cố định 100 ms; văn bản tổng hợp 600 ký tự `INTERNAL`.
     Khi `GET /assist/v1/inference/tasks`.
-    Và `POST /assist/v1/inference/classify` với `purpose = MD-PHANLOAI`, `dataClass = INTERNAL`, `tenant = T90`.
+    Và `POST /assist/v1/inference/classify` với `purposeCode = MD-PHANLOAI`, `dataClass = INTERNAL`, `tenant = T90`.
     Và `POST /assist/v1/inference/extract`.
     Và đo thời gian thêm so với gọi thẳng mô hình (1.000 lần).
     Thì bước 1 liệt kê `CLASSIFY_TEXT`, `EXTRACT_FIELDS` kèm phiên bản lược đồ. Bước 2 và 3 `200`, đầu ra khớp lược đồ JSON của nhiệm vụ, vết lời gọi ghi mô hình, DU gọi. Bước 4 độ trễ thêm p95 ≤ 50 ms.
@@ -21,7 +21,7 @@ Tính năng: TS-17-34 · Suy luận nội bộ cho bước luồng PH-04 (phân 
     Biết S-T90-NOSCOPE, S-T90-PH04; `17.input.max-chars = 4.000`.
     Khi S-T90-NOSCOPE `POST /assist/v1/inference/classify`.
     Và gọi không có mTLS hợp lệ.
-    Và S-T90-PH04 gọi thiếu `purpose` hoặc `dataClass`.
+    Và S-T90-PH04 gọi thiếu `purposeCode` hoặc `dataClass`.
     Và gọi `POST /assist/v1/inference/translate`.
     Và gọi `extract` với trường `fields` sai kiểu.
     Và gọi `classify` văn bản 5.000 ký tự.

@@ -9,6 +9,15 @@ class NoAlias(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
+def _str_rep(dumper, s):
+    # Chuỗi chỉ gồm chữ số (CCCD, số điện thoại) luôn đặt nháy để trình đọc YAML 1.2 không hiểu thành số.
+    style = "'" if s.isdigit() else None
+    return dumper.represent_scalar("tag:yaml.org,2002:str", s, style=style)
+
+
+NoAlias.add_representer(str, _str_rep)
+
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import spec
 
@@ -92,10 +101,10 @@ def build():
     responses = {}
     for st, (n, title, code) in STATUS.items():
         responses[n] = {"description": title + ".", "content": {"application/problem+json": {"schema": ref("Problem"), "examples": {"vi-du": {"value": {
-            "type": "https://datahub.example.vn/errors/" + code, "title": title, "status": st, "detail": title + ".", "code": code,
+            "type": "https://datahub.gov.vn/errors/" + code, "title": title, "status": st, "detail": title + ".", "code": code,
             "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
     responses["PreconditionRequired"] = {"description": "Thiếu `If-Match`.", "content": {"application/problem+json": {"schema": ref("Problem"), "examples": {"vi-du": {"value": {
-        "type": "https://datahub.example.vn/errors/ERR-00-428", "title": "Thiếu If-Match", "status": 428, "code": "ERR-00-428", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
+        "type": "https://datahub.gov.vn/errors/ERR-00-428", "title": "Thiếu If-Match", "status": 428, "code": "ERR-00-428", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}}}}
     paths = {}
     for code, meth, path, act, frs_, _g in spec.ROWS:
         o = spec.OPS[code]

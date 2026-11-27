@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH16
 ten: Thiết kế giao diện màn hình phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ tổng hợp, quản trị tỉnh, lãnh đạo, kiểm thử viên, hội đồng thẩm định
@@ -2524,21 +2524,25 @@ Chương này nêu điểm kiểm thử giao diện riêng PH-16 và danh sách 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 (thành phần, token)
 
-PH-16 chỉ dùng `CMP-*` đã có; các mục dưới là đề nghị, chưa dùng như thành phần chính thức. Ảnh hi-fi dùng giá trị hex tương đương token; khi D03-05 chốt các đề nghị thì sinh lại ảnh.
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
-| Mã đề nghị | Nội dung | Dùng ở |
-|---|---|---|
-| A-01 | Thẻ chỉ tiêu (`IndicatorCard`): giá trị lớn, đơn vị, mục tiêu, thanh ngưỡng ba mức, nhãn trạng thái bằng chữ, đường xu hướng nhỏ (sparkline); biến thể của `CMP-KpiCard` | UI-16-01, 02 và thẻ `/tong-quan` (FR-16-037) |
-| A-02 | Thẻ điểm nhóm có vòng tiến độ (`ScoreRing`) kèm tỷ lệ phủ "có số x/y" | UI-16-01 |
-| A-03 | `CMP-Chart` thêm preset "xu hướng kỳ": line có `markLine` mục tiêu, dải ngưỡng nền mờ, điểm cuối nhấn, nút "Xem dạng bảng" (ECharts, ADR-023) | UI-16-01, 02, 15 |
-| A-05 | Biến thể `CMP-StatusTag` cho trạng thái chỉ tiêu (`ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `NO_DATA`) có biểu tượng ●, ▲, ✕, – | Mọi màn |
-| A-07 | Dải "kỳ chưa chốt" dạng `CMP-Alert` biến thể trạng thái kỳ (không đóng được, có hành động) | UI-16-01, 02, 11 |
-| A-08 | Vùng xem trước tài liệu A4 (`PagePreview`): nền trắng, đổ bóng nhẹ, font có chân, tỷ lệ 1:√2, hỗ trợ đánh dấu hàng chệch và ô giải trình nội tuyến | UI-16-11, 12 |
-| A-09 | Điều khiển ba trạng thái Đạt, Không đạt, Không áp dụng (`TriStateSegment`) có nhãn đọc rõ | UI-16-16 |
+PH-16 chỉ dùng `CMP-*` đã có; các mục dưới là đề nghị ban đầu, cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Ảnh hi-fi dùng giá trị hex tương đương token; khi sinh lại ảnh thì theo cột này.
+
+| Mã đề nghị | Nội dung | Dùng ở | Kết quả |
+|---|---|---|---|
+| A-01 | Thẻ chỉ tiêu (`IndicatorCard`): giá trị lớn, đơn vị, mục tiêu, thanh ngưỡng ba mức, nhãn trạng thái bằng chữ, đường xu hướng nhỏ (sparkline); biến thể của `CMP-KpiCard` | UI-16-01, 02 và thẻ `/tong-quan` (FR-16-037) | Không thêm biến thể: dựng bằng `CMP-KpiCard` `with-spark` cộng `CMP-ScoreMeter` `bar` (ngưỡng ba mức) và `CMP-StatusTag`, chỉ PH-16 dùng |
+| A-02 | Thẻ điểm nhóm có vòng tiến độ (`ScoreRing`) kèm tỷ lệ phủ "có số x/y" | UI-16-01 | Đã có: `CMP-ScoreMeter` biến thể `ring` trong `CMP-KpiCard` (D03-05-04 §13.18); tỷ lệ phủ "có số x/y" là chữ phụ của thẻ |
+| A-03 | `CMP-Chart` thêm preset "xu hướng kỳ": line có `markLine` mục tiêu, dải ngưỡng nền mờ, điểm cuối nhấn, nút "Xem dạng bảng" (ECharts, ADR-023) | UI-16-01, 02, 15 | Đã thêm: `thresholds`, `bands`, `highlightLast` của `CMP-Chart` (D03-05-04 §6.6), dùng chung với PH-08; nút "Xem dạng bảng" đã có sẵn |
+| A-05 | Biến thể `CMP-StatusTag` cho trạng thái chỉ tiêu (`ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `NO_DATA`) có biểu tượng ●, ▲, ✕, – | Mọi màn | Đã thêm: mã `ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `NO_DATA` trong bảng mã của `CMP-StatusTag` (D03-05-03 §5.1) |
+| A-07 | Dải "kỳ chưa chốt" dạng `CMP-Alert` biến thể trạng thái kỳ (không đóng được, có hành động) | UI-16-01, 02, 11 | Đã có: `CMP-Alert` loại `warning` với `action`, không đóng được (D03-05-04 §5.1); không cần biến thể |
+| A-08 | Vùng xem trước tài liệu A4 (`PagePreview`): nền trắng, đổ bóng nhẹ, font có chân, tỷ lệ 1:√2, hỗ trợ đánh dấu hàng chệch và ô giải trình nội tuyến | UI-16-11, 12 | Không thêm: chỉ PH-16 dùng, giữ `PagePreview` là thành phần cục bộ của PH-16 |
+| A-09 | Điều khiển ba trạng thái Đạt, Không đạt, Không áp dụng (`TriStateSegment`) có nhãn đọc rõ | UI-16-16 | Đã có: `CMP-SegmentedControl` biến thể `verdict` với sắc thái `neutral` cho "Không áp dụng" (D03-05-03 §7.10) |
 
 : Đề nghị bổ sung D03-05 từ PH-16
 
 ## Phụ lục B. Đề nghị bổ sung API và trường cho D03-04-PH16
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị dưới giúp màn dựng được mà không gọi thêm lần; chưa có ở FRS §9.4 nên cần xác nhận với chủ tập API. Đợt đồng bộ 26/11/2026 chưa hấp thụ B-01…B-07 (D03-04-PH16 0.2 giữ lược đồ phản hồi cũ); trường `documentNumber`, `recipientsNote` của báo cáo đã có ở API 0.2.
 
@@ -2553,6 +2557,8 @@ Các đề nghị dưới giúp màn dựng được mà không gọi thêm lầ
 : Đề nghị bổ sung API và trường từ PH-16
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS và tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập màn này không sửa tài liệu ngoài phạm vi; các điểm dưới cần chủ tài liệu tương ứng xác nhận và hấp thụ (FRS Phụ lục B nhận làm mục ĐN-MH). C-01…C-06 đã được FRS 0.2 hấp thụ (Phụ lục C của FRS, HT-28…33); C-07, C-08 còn chờ D03-06-00, D02-08.
 
@@ -2594,3 +2600,4 @@ Các câu hỏi nối tiếp Q16-01…19 của FRS; chủ đề cần quyết đ
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm phân hệ PH-16 | Bản đầu: 20 màn UI-16-01…20 theo FRS 0.2 gồm khối đặc tả, wireframe, thành phần, trường, hành động, trạng thái, thông báo ERR-16; 20 ảnh hi-fi (kèm `ui-16-01.png`, `ui-16-11.png` mà FRS §10.2 trỏ tới); phụ lục đề nghị đồng bộ D03-05, API, FRS; câu hỏi mở Q16-30…39 |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-16 | Đồng bộ với FRS 0.2: mục 5.2 theo câu chuẩn có tham số, thêm ERR-16-058…061; UI-16-11 thêm số ký hiệu, nơi nhận (ERR-16-061); UI-16-12 thêm "Trả về soạn" báo cáo `APPROVED` và ERR-16-059; thẻ Tổng quan theo `16.overview.pinned-indicators`; ghi kết quả hấp thụ C-01…C-06 và tình trạng Phụ lục B |
+| 0.3 | 27/11/2026 | Nhóm phân hệ PH-16 | Đồng bộ chéo cuối: Phụ lục A ghi kết quả A-01…A-09 (ScoreMeter, Chart ngưỡng, mã trạng thái chỉ tiêu, SegmentedControl verdict đã vào D03-05) |

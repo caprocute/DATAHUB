@@ -1844,7 +1844,7 @@ CREATE TABLE ph20_tenant.merge_plan (
   CONSTRAINT uq_merge_plan_code UNIQUE (plan_code),
   CONSTRAINT ck_merge_plan_tenant CHECK (tenant_id = 'PLATFORM'),
   CONSTRAINT ck_merge_plan_status CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DRY_RUN', 'TRANSFERRING', 'CONFLICT_REVIEW', 'IDENTITY_TRANSFER', 'CUTOVER', 'TRANSITION', 'COMPLETED', 'CANCELLED', 'FAILED')),
-  CONSTRAINT ck_merge_plan_code CHECK (plan_code ~ '^[a-z0-9][a-z0-9-]{2,47}$'),
+  CONSTRAINT ck_merge_plan_code CHECK (plan_code ~ '^SN-[0-9]{4}-[0-9]{3,}$'),
   CONSTRAINT ck_merge_plan_source CHECK (source_tenant_code ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_merge_plan_target CHECK (target_tenant_code ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_merge_plan_distinct CHECK (source_tenant_code <> target_tenant_code),
@@ -1867,7 +1867,7 @@ CREATE POLICY merge_party_read ON ph20_tenant.merge_plan FOR SELECT USING (curre
 COMMENT ON TABLE ph20_tenant.merge_plan IS 'EN-20-25 Kế hoạch sáp nhập (FR-20-045, 051, 052): tenant nguồn sáp nhập vào tenant đích (D03-10 §5.4). Dữ liệu nền tảng; hai tenant bên tham gia đọc được kế hoạch của mình. Mỗi tenant nguồn tối đa một kế hoạch đang mở; duyệt bốn mắt (người duyệt khác người lập).';
 COMMENT ON COLUMN ph20_tenant.merge_plan.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.merge_plan.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
-COMMENT ON COLUMN ph20_tenant.merge_plan.plan_code IS 'Mã kế hoạch dạng `sap-nhap-t68-t69`, dùng ở route `/nen-tang/sap-nhap/{ma}`.';
+COMMENT ON COLUMN ph20_tenant.merge_plan.plan_code IS 'Mã kế hoạch dạng `SN-2026-001` (cũng là `mergePlanId` ở API), dùng ở route `/nen-tang/sap-nhap/{ma}`.';
 COMMENT ON COLUMN ph20_tenant.merge_plan.name IS 'Tên kế hoạch.';
 COMMENT ON COLUMN ph20_tenant.merge_plan.status IS 'Trạng thái: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `DRY_RUN`, `TRANSFERRING`, `CONFLICT_REVIEW`, `IDENTITY_TRANSFER`, `CUTOVER`, `TRANSITION`, `COMPLETED`, `CANCELLED`, `FAILED`.';
 COMMENT ON COLUMN ph20_tenant.merge_plan.source_tenant_code IS 'Tenant nguồn (sẽ sang `MERGED`).';

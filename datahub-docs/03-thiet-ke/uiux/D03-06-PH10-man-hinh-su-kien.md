@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH10
 ten: Thiết kế giao diện màn hình phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, kỹ sư tích hợp, vận hành, ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-10
@@ -1167,7 +1167,7 @@ Tab Tổng quan của topic đang hoạt động: bốn thẻ số 24 giờ, lư
 | Bước | Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi máy chủ |
 |---|---|---|---|---|---|---|
 | 1 | Dự án | `projectCode` | `CMP-ResourceSelect` dự án `ACTIVE` | Có | | ERR-10-001, ERR-10-006 |
-| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
+| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`, `mdm`, `dq`, `bpm`, `kpi`, `portal` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
 | 1 | Thực thể | `entity` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$` | ERR-10-004 |
 | 1 | Sự kiện | `eventName` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$`; gợi ý mềm khi không bắt đầu bằng `da-` ("Nên dùng động từ quá khứ") | ERR-10-004 |
 | 1 | Tên topic | (ghép) | `CMP-Identifier` chỉ đọc | | `{tenant}.{domain}.{entity}.{eventName}.v1` chữ thường, ≤ 200 ký tự; kiểm tra còn trống bằng API-10-010 sau 400 ms ngừng gõ | ERR-10-002, ERR-10-005 |
@@ -1597,7 +1597,7 @@ Miền 100…60.000, 1…5, 1.000…3.600.000 của nhóm thử lại lấy từ
 #### 17.4.3. Xác minh endpoint
 
 1. Bấm "Xác minh" (hoặc `Enter` trong ô URL) gọi API-10-051 với `endpointUrl` và `subscriberCode`. Nút chuyển `loading` với nhãn "Đang xác minh…"; thời gian chờ tối đa bằng `push.timeoutMs` cộng 5 giây.
-2. Kết quả hiện trong `CMP-Card` đặc ngay dưới ô: tiêu đề "Xác minh lúc {giờ}" kèm `CMP-StatusTag` theo `result`; danh sách bước từ `steps[]` (phân giải DNS và kiểm tra dải địa chỉ, TLS và chứng thư, bắt tay `OPTIONS` với `WebHook-Request-Origin: event.{tenant}.datahub`, danh sách egress), mỗi bước một `CMP-StatusTag` và một dòng chi tiết.
+2. Kết quả hiện bằng `CMP-CheckResult` (D03-05-04 §13.23) ngay dưới ô: tiêu đề "Xác minh lúc {giờ}" kèm kết luận chung theo `result`; danh sách bước từ `steps[]` (phân giải DNS và kiểm tra dải địa chỉ, TLS và chứng thư, bắt tay `OPTIONS` với `WebHook-Request-Origin: event.{tenant}.datahub`, danh sách egress), mỗi bước một `CMP-StatusTag` và một dòng chi tiết.
 3. Bước không đạt hiện hướng dẫn khắc phục bằng tiếng Việt lấy từ `detail` của bước (ví dụ "Endpoint chưa trả lời OPTIONS. Bật xử lý OPTIONS và trả tiêu đề WebHook-Allowed-Origin." hoặc "Mở tường lửa từ địa chỉ egress {danh sách}."), cùng nút "Sao chép hướng dẫn" để gửi đơn vị chủ quản HTTT.
 4. Kết quả có hiệu lực 24 giờ: dòng phụ đếm ngược "Hiệu lực tới {giờ}". Hết hiệu lực trước khi gửi thì bước 6 hiện `CMP-Alert` và nút "Xác minh lại".
 5. Đổi URL sau khi xác minh: khối kết quả mờ đi, kèm "URL đã đổi, cần xác minh lại", nút "Tiếp tục" vô hiệu.
@@ -1718,7 +1718,7 @@ Mã ảnh hưởng tên nhóm tiêu thụ (`dh-sub-{tenant}-{subscriptionCode}` 
 
 Bước 3 chế độ Đẩy webhook: khối xác minh endpoint đạt bốn bước, ô số worker có dòng phụ nêu hai giới hạn, lịch thử lại vẽ trước dạng chuỗi thời lượng và cột, hai thẻ chính sách khi hết lượt thử với thẻ "Dừng lại chờ khắc phục" được chọn sẵn vì topic giữ thứ tự.
 
-Biểu mẫu trên `CMP-Card` đặc `color-surface-solid`, rộng tối đa `size-form-max`, nhóm trường ngăn bằng tiêu đề nhóm `font-footnote` chữ hoa `color-text-secondary` và `space-6` phía trên. Khối xác minh nền `color-surface-solid-2`, bo `radius-md`, các dòng bước dùng `CMP-StatusTag` cỡ nhỏ. Thanh hành động dính đáy theo `CMP-Wizard`, bóng `shadow-2` khi nội dung cuộn dưới.
+Biểu mẫu trên `CMP-Card` đặc `color-surface-solid`, rộng tối đa `size-form-max`, nhóm trường ngăn bằng tiêu đề nhóm `font-footnote` chữ hoa `color-text-secondary` và `space-6` phía trên. Khối xác minh là `CMP-CheckResult`, các dòng bước dùng `CMP-StatusTag` cỡ nhỏ. Thanh hành động dính đáy theo `CMP-Wizard`, bóng `shadow-2` khi nội dung cuộn dưới.
 
 ## 18. UI-10-12 Chi tiết subscription
 
@@ -2153,7 +2153,7 @@ Kéo nút có phương án không kéo (WCAG 2.5.7): chọn nút rồi dùng ph�
 
 ### 20.11. Làm nổi đường đi
 
-Chọn một nút làm nổi mọi nút, cạnh nằm trên đường đi qua nút đó: với bên phát là các topic nó phát và các bên nhận của những topic đó; với topic là bên phát và bên nhận của nó; với bên nhận là các topic nó nhận và bên phát của chúng. Nút, cạnh còn lại mờ đi (đề nghị token độ mờ ở Phụ lục A; tạm dùng `opacity-disabled` cho nút và `color-text-disabled` cho nhãn). Nút đang chọn có vòng focus kép `color-focus-ring`, `color-focus-ring-inner`. `Esc` bỏ làm nổi.
+Chọn một nút làm nổi mọi nút, cạnh nằm trên đường đi qua nút đó: với bên phát là các topic nó phát và các bên nhận của những topic đó; với topic là bên phát và bên nhận của nó; với bên nhận là các topic nó nhận và bên phát của chúng. Nút, cạnh còn lại mờ đi bằng token `opacity-dimmed` (D03-05-02), không dùng `opacity-disabled` vì không mang nghĩa vô hiệu; nhãn vẫn đọc được, không đổi sang `color-text-disabled`. Nút đang chọn có vòng focus kép `color-focus-ring`, `color-focus-ring-inner`. `Esc` bỏ làm nổi.
 
 ### 20.12. Drawer chi tiết (R8)
 
@@ -2699,18 +2699,24 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-| # | Đề nghị | Lý do | Tạm dùng |
-|---|---|---|---|
-| A1 | Token độ mờ cho nội dung không được làm nổi trên canvas (ví dụ một token ngữ nghĩa nhóm `opacity`) khác `opacity-disabled` | Làm nổi đường đi ở UI-10-14 và DependencyGraph cần mờ nút không liên quan mà không mang nghĩa "vô hiệu" cho trình đọc và người dùng | `opacity-disabled` cho nút, `color-text-disabled` cho nhãn |
-| A2 | Biến thể `readonly` của `CMP-FlowCanvas` có chế độ "lớp" (cột tiêu đề lớp dính mép, bố cục ELK phân lớp) | Sơ đồ ba lớp bên phát, topic, bên nhận; PH-02 (hệ thống đăng ký API) cũng có thể dùng | Ghép tiêu đề lớp bằng `CMP-Text` trong `CMP-FlowCanvas` |
-| A3 | Kiểu cạnh theo trạng thái (liền, chấm, đứt) và độ dày theo mức lưu lượng là thuộc tính chuẩn của cạnh trong `CMP-FlowCanvas` | Cùng quy ước cho lớp phủ số liệu chạy thật của PH-04 và lớp phủ PH-10 | Định nghĩa cục bộ trong `features/event` |
-| A4 | Thành phần "khối kết quả kiểm tra theo bước" (danh sách bước có trạng thái, chi tiết, hướng dẫn khắc phục, nút sao chép) | Dùng ở xác minh endpoint PH-10, kiểm tra kết nối PH-05 (UI-05-04), xác minh lược đồ | `CMP-Card` chứa danh sách `CMP-StatusTag` |
-| A5 | Thành phần "xem trước lịch thử lại" (chuỗi thời lượng và biểu đồ cột nhỏ từ ba tham số giãn cách) | Dùng ở PH-10 (webhook), PH-04 (Retry trong luồng), PH-05 | `CMP-Chart` cột nhỏ cộng `CMP-Duration` |
-| A6 | Biến thể `CMP-ResourceSelect` cho bên phát, bên nhận PH-10 (hiện loại, kiểu giao tiếp, trạng thái) | Hiện chỉ có `CMP-TopicSelect` cho PH-10 | `CMP-ResourceSelect` chung |
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
+Cột cuối ghi kết quả ở đợt đồng bộ cuối.
+
+| # | Đề nghị | Lý do | Tạm dùng | Kết quả |
+|---|---|---|---|---|
+| A1 | Token độ mờ cho nội dung không được làm nổi trên canvas (ví dụ một token ngữ nghĩa nhóm `opacity`) khác `opacity-disabled` | Làm nổi đường đi ở UI-10-14 và DependencyGraph cần mờ nút không liên quan mà không mang nghĩa "vô hiệu" cho trình đọc và người dùng | `opacity-disabled` cho nút, `color-text-disabled` cho nhãn | Đã có: token `opacity-dimmed` ở D03-05-02 |
+| A2 | Biến thể `readonly` của `CMP-FlowCanvas` có chế độ "lớp" (cột tiêu đề lớp dính mép, bố cục ELK phân lớp) | Sơ đồ ba lớp bên phát, topic, bên nhận; PH-02 (hệ thống đăng ký API) cũng có thể dùng | Ghép tiêu đề lớp bằng `CMP-Text` trong `CMP-FlowCanvas` | Đã có: chế độ `layered` của `CMP-FlowCanvas` `readonly` (D03-05-04 §11.1) |
+| A3 | Kiểu cạnh theo trạng thái (liền, chấm, đứt) và độ dày theo mức lưu lượng là thuộc tính chuẩn của cạnh trong `CMP-FlowCanvas` | Cùng quy ước cho lớp phủ số liệu chạy thật của PH-04 và lớp phủ PH-10 | Định nghĩa cục bộ trong `features/event` | Đã có: kiểu cạnh theo trạng thái và độ dày theo lưu lượng của `CMP-FlowCanvas` (D03-05-04 §11.1) |
+| A4 | Thành phần "khối kết quả kiểm tra theo bước" (danh sách bước có trạng thái, chi tiết, hướng dẫn khắc phục, nút sao chép) | Dùng ở xác minh endpoint PH-10, kiểm tra kết nối PH-05 (UI-05-04), xác minh lược đồ | `CMP-Card` chứa danh sách `CMP-StatusTag` | Đã thêm: `CMP-CheckResult` (D03-05-04 §13.23), dùng chung với PH-05 |
+| A5 | Thành phần "xem trước lịch thử lại" (chuỗi thời lượng và biểu đồ cột nhỏ từ ba tham số giãn cách) | Dùng ở PH-10 (webhook), PH-04 (Retry trong luồng), PH-05 | `CMP-Chart` cột nhỏ cộng `CMP-Duration` | Đã có: `CMP-RetrySchedulePreview` (D03-05-04 §13.19) |
+| A6 | Biến thể `CMP-ResourceSelect` cho bên phát, bên nhận PH-10 (hiện loại, kiểu giao tiếp, trạng thái) | Hiện chỉ có `CMP-TopicSelect` cho PH-10 | `CMP-ResourceSelect` chung | Không thêm: chỉ PH-10 dùng, bên phát và bên nhận dùng `CMP-ResourceSelect` chung và hiện loại, kiểu giao tiếp, trạng thái bằng `CMP-StatusTag` trong dòng chọn |
 
 : Phụ lục A. Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API (cho D03-04-PH10)
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Đã xử lý ở FRS bản 0.3 (D02-03-PH10 §14) theo cách D03-04-PH10 §10.3 nhận: tên chốt là `signingKeyPending` (thay `signingSecretPending`), `metricsCollectedAt` (thay `stats.collectedAt`), dashboard không có cờ `available` (chỉ `traffic` rỗng khi PH-13 lỗi), không có trạng thái worker riêng (tab Worker dùng API-10-055, 052), miễn xác minh làm sau khi tạo qua API-10-091.
 
@@ -2731,6 +2737,8 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục C. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Đã xử lý ở FRS bản 0.3 (§14): C1 vào A.6; C2, C3, C5 vào bảng tham số FR-10-035; C4 vào quy ước đầu §5 (10…500 ký tự); C6 chấp nhận, mặc định `BLOCK` cho topic `orderingRequired` và đóng Q10-15. Phụ lục A được chép sang FRS §12.4 cho D03-05.
 
 | # | Mục FRS | Đề nghị |
@@ -2745,6 +2753,8 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 : Phụ lục C. Đề nghị bổ sung cho FRS
 
 ## Phụ lục D. Đề nghị đồng bộ cho tập khác (bản 0.3)
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 | # | Tập | Đề nghị |
 |---|---|---|
@@ -2768,7 +2778,7 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 > **Câu hỏi mở Q10-34:** Người đề nghị subscription không còn ở đơn vị (nghỉ, chuyển công tác) trước khi xem khóa ký đầu: ai được xem? Đề xuất: người có `PERM-10-subscribe` trên bên nhận đó xoay khóa để lấy khóa mới.
 
-> **Câu hỏi mở Q10-35:** Màn DLQ của PH-10 (UI-10-15) và màn xử lý lỗi chung của PH-18 có trùng chức năng; khi PH-18 sẵn sàng, UI-10-15 có giữ thao tác loại bỏ, phát lại hay chỉ còn xem và liên kết sang PH-18?
+> **Câu hỏi mở Q10-35:** Màn DLQ của PH-10 (UI-10-15) và màn xử lý lỗi chung của PH-18 có trùng chức năng; khi PH-18 sẵn sàng, UI-10-15 có giữ thao tác loại bỏ, phát lại hay chỉ còn xem và liên kết sang PH-18? **Đã chốt ở bản 0.4:** PH-10 giữ thao tác loại bỏ (API-10-062) và phát lại (API-10-064) của DLQ tầng sự kiện ở UI-10-15; PH-18 hiển thị DLQ chung và mở liên kết sang UI-10-15 hoặc đề nghị phát lại qua API-10-064 (khớp D02-03-PH18, Q18-03).
 
 > **Câu hỏi mở Q10-36:** Ước lượng "Từ dữ liệu cũ nhất" ở UI-10-11 bước 4 tính phía giao diện từ số liệu 24 giờ; có cần API trả ước lượng chính xác theo offset đầu, cuối từng phân vùng?
 
@@ -2785,3 +2795,5 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 | 0.1 | 2026-11-26 | Bản đầu: 20 màn UI-10-01…20, sơ đồ kết nối siêu chi tiết, đăng ký nhận và chi tiết subscription rất chi tiết, ánh xạ màn Hub cũ, đề nghị bổ sung D03-05, API, FRS, câu hỏi mở Q10-30…39 |
 | 0.2 | 2026-11-26 | Theo FRS 0.3 và D03-04-PH10 0.2: Phụ lục B, C đã xử lý; `legalBasis` 10…1.000 ký tự; `signingKeyPending`, `metricsCollectedAt` theo tên API; Q10-31 đã trả lời (miễn xác minh sau khi tạo) |
 | 0.3 | 2026-11-26 | Chuẩn kết hợp theo K-MH và K-TRINH-BAY: giới thiệu đủ mục (phạm vi, người đọc, thuật ngữ, cấu trúc) và danh sách màn có cột UC; khối đặc tả 12 mục đầu cả 20 màn; bảng thông báo đủ ERR-10-053, 054 và nơi hiển thị lỗi data plane 101…121; đồng bộ số API tách theo FRS 0.3; ảnh hi-fi 20 màn ở `ph10/hifi/`; Phụ lục D đề nghị đồng bộ. Giữ nguyên wireframe, bảng thành phần, trạng thái, bàn phím của bản 0.2 |
+| 0.4 | 2026-11-27 | Đồng bộ chéo cuối: làm mờ nút ngoài đường đi bằng `opacity-dimmed` của D03-05-02; miền dành riêng thêm `mdm`, `dq`, `bpm`, `kpi`, `portal` ở trường Miền của biểu mẫu tạo topic; chốt Q10-35 (UI-10-15 giữ loại bỏ, phát lại) |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng `CMP-CheckResult` cho khối xác minh endpoint; Phụ lục A ghi kết quả A1…A6 |

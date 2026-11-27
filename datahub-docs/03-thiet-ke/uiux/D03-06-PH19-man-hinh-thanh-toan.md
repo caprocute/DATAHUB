@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH19
 ten: Thiết kế giao diện màn hình phân hệ PH-19 Thanh toán
-phien_ban: 0.2
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện dh-console, thiết kế UX/UI, phân tích nghiệp vụ, kiểm thử, kế toán và cán bộ vận hành thanh toán của tỉnh
@@ -572,6 +572,19 @@ Bản 0.2 tách từng mã thành một dòng, kể cả hai nhóm mà bản 0.1
 : Thông điệp người dùng nhìn thấy theo mã lỗi ERR-19-001…050, 099
 
 Lỗi thử lại được (cột "Thử lại" của khung §12 là "Có") hiện nút "Thử lại" dùng lại `Idempotency-Key` cũ; khi có `Retry-After`, nút hiện đếm ngược.
+
+Ngoài các mã ERR-19, người vận hành còn thấy sáu câu cảnh báo vận hành không gắn mã lỗi API; FRS D02-03-PH19 mục 9.2 chép các câu này từ bảng dưới đây.
+
+| Tình huống | Câu hiển thị | Nơi hiển thị |
+|---|---|---|
+| Hai lần thăm dò NCC liên tiếp thất bại | Kênh thanh toán {provider} không phản hồi. | UI-19-02, cảnh báo PH-13 |
+| Giao dịch quá hạn chưa được tác vụ hết hạn xử lý quá 10 phút | Có {count} giao dịch quá hạn chưa được xử lý. | UI-19-02, cảnh báo PH-13 |
+| Bộ xử lý IPN thất bại quá 5 lần | IPN {callbackId} xử lý lỗi nhiều lần, đã chuyển hàng đợi lỗi. | UI-19-16, cảnh báo PH-13 |
+| Lượt webhook hết lịch thử | Webhook tới đối tác {partner} chưa gửi được sau {attempts} lần. | UI-19-24, cảnh báo PH-13 |
+| Tác vụ di trú, đối chiếu thất bại | Lần chạy di trú {runId} thất bại: {reason}. | UI-19-27 |
+| Khởi tạo hạ tầng tenant dừng ở một bước | Khởi tạo phân hệ thanh toán cho tỉnh đang dừng ở bước {step}. | Cảnh báo PH-13 cho quản trị nền tảng |
+
+: Câu cảnh báo vận hành ngoài mã lỗi ERR-19
 
 ## 6. Trạng thái màn hình dùng chung
 
@@ -1651,7 +1664,7 @@ Thanh toán › Đối soát                                                    
 └──────────┴────────┴────────────────────────┴──────┴───────────┴─────────────┴───────────────┴──────────┴────────┘
 ```
 
-Chế độ "Lịch" hiện lưới tháng, mỗi ô một nhãn trạng thái theo NCC (có chữ), giúp thấy ngày bị bỏ sót. Cột tiền hiện "= khớp" khi hai phía bằng nhau, ngược lại hiện cả hai số và số chênh "(lệch −50.000 ₫)". Nút "Tạo phiên thủ công" (`recon-run`) mở hộp chọn NCC và ngày nghiệp vụ (không sau hôm qua; ERR-19-040 nếu đã có, kèm "Mở phiên").
+Chế độ "Lịch" dùng `CMP-Calendar` biến thể `month` (D03-05-04 §13.24) và hiện lưới tháng, mỗi ô một nhãn trạng thái theo NCC (có chữ), giúp thấy ngày bị bỏ sót. Cột tiền hiện "= khớp" khi hai phía bằng nhau, ngược lại hiện cả hai số và số chênh "(lệch −50.000 ₫)". Nút "Tạo phiên thủ công" (`recon-run`) mở hộp chọn NCC và ngày nghiệp vụ (không sau hôm qua; ERR-19-040 nếu đã có, kèm "Mở phiên").
 
 ## 26. UI-19-20 Chi tiết phiên đối soát
 
@@ -2141,3 +2154,5 @@ Giả định GĐ-UI-01 (mục 1.2): D03-06-00 giữ cách đánh số mẫu mà
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 28 màn, bản đồ vật liệu, mã hành động `allowedActions`, nhãn trạng thái, câu hiển thị ERR-19, ánh xạ 26 mục LGC-PAY | Nhóm phân hệ PH-19 |
 | 0.2 | 26/11/2026 | Nâng theo chuẩn kết hợp K-MH và K-TRINH-BAY, giữ toàn bộ lớp kỹ thuật của bản 0.1: thêm metadata `mo_ta`, `tai_lieu_lien_quan`; thêm mục 1.4 người đọc, 1.5 thuật ngữ và viết tắt, 1.6 cấu trúc tài liệu, 1.7 danh sách màn; khối đặc tả tám mục ở đầu 28 màn (thay dòng tóm tắt một dòng, giữ nguyên mọi thông tin); ảnh hi-fi cho 28 màn kèm thuyết minh và công cụ sinh ảnh `ph19/hifi/`; mục 5.2 tách đủ 51 mã ERR-19-001…050, 099 thành từng dòng có cột nơi hiển thị; chú thích cho mọi bảng và hình | Nhóm phân hệ PH-19 |
+| 0.3 | 27/11/2026 | Nâng theo chuẩn kết hợp K-MH và K-TRINH-BAY, giữ toàn bộ lớp kỹ thuật của bản 0.1: thêm metadata `mo_ta`, `tai_lieu_lien_quan`; thêm mục 1.4 người đọc, 1.5 thuật ngữ và viết tắt, 1.6 cấu trúc tài liệu, 1.7 danh sách màn; khối đặc tả tám mục ở đầu 28 màn (thay dòng tóm tắt một dòng, giữ nguyên mọi thông tin); ảnh hi-fi cho 28 màn kèm thuyết minh và công cụ sinh ảnh `ph19/hifi/`; mục 5.2 tách đủ 51 mã ERR-19-001…050, 099 thành từng dòng có cột nơi hiển thị; chú thích cho mọi bảng và hình | Đồng bộ chéo cuối: thêm sáu câu cảnh báo vận hành ở mục 5.2 |
+| 0.4 | 27/11/2026 | Nâng theo chuẩn kết hợp K-MH và K-TRINH-BAY, giữ toàn bộ lớp kỹ thuật của bản 0.1: thêm metadata `mo_ta`, `tai_lieu_lien_quan`; thêm mục 1.4 người đọc, 1.5 thuật ngữ và viết tắt, 1.6 cấu trúc tài liệu, 1.7 danh sách màn; khối đặc tả tám mục ở đầu 28 màn (thay dòng tóm tắt một dòng, giữ nguyên mọi thông tin); ảnh hi-fi cho 28 màn kèm thuyết minh và công cụ sinh ảnh `ph19/hifi/`; mục 5.2 tách đủ 51 mã ERR-19-001…050, 099 thành từng dòng có cột nơi hiển thị; chú thích cho mọi bảng và hình | Đồng bộ chéo cuối: chế độ Lịch của màn đối soát dẫn `CMP-Calendar` biến thể `month` (D03-05-04 §13.24) |

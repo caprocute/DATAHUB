@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH20
 ten: Đặc tả yêu cầu chức năng phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị nền tảng, vận hành nền tảng, quản trị tỉnh, kỹ sư dh-platform, kiểm thử viên
@@ -40,7 +40,7 @@ tai_lieu_lien_quan: D02-01 BRD; D02-02 SRS; D03-10 Thiết kế đa tenant; D02-
 | Sự kiện | 16 phát (EVT-20-01…16); tiêu thụ EVT-07-10, EVT-12-13, EVT-09-21, EVT-13-14, EVT-03-10, EVT-03-11 |
 | Mã lỗi | 68 control (ERR-20-001…068), 18 data plane, registry, runtime (ERR-20-101…118); `401`, `403` thiếu quyền chức năng, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
 | Thực thể mức logic | 37 (EN-20-01…37) |
-| Bước saga khởi tạo | 17 (`S01_RECORD`…`S17_ACTIVATE`), mở rộng 10 bước của D03-10 §5.2 |
+| Bước saga khởi tạo | 17 (`S01_RECORD`…`S17_ACTIVATE`), khớp 17 bước của D03-10 §5.2 |
 | Máy trạng thái | 9 |
 | Tham số | 29 khóa `20.*` đăng ký với PH-18 |
 | Chức năng hệ cũ được phủ | Không có `LGC` do PH-20 làm chính; 2 mục liên quan gián tiếp (LGC-IAM-002, LGC-BUS-031) |
@@ -378,7 +378,7 @@ Một **tenant** (DD-01) ứng với một tỉnh hoặc thành phố trực thu
 
 **Phân hệ** của nền tảng (EN-20-18) có mã `PH-01`…`PH-20`, cờ lõi, đợt, và **phụ thuộc** (EN-20-19). Mỗi tenant có một bản ghi **phân hệ theo tenant** (EN-20-20) với trạng thái `ModuleState`. Bật phân hệ phát EVT-20-07 để phân hệ đó tự khởi tạo phần của tenant (ví dụ PH-19 FR-19-064), rồi báo về. Phân hệ chưa bật trả ERR-20-103 ở data plane hoặc mã riêng của phân hệ (PH-19 dùng ERR-19-049).
 
-**Vòng đời** gồm các **đề nghị** có duyệt (EN-20-22) loại `SUSPEND`, `RESUME`, `TERMINATE`, `ISOLATION_CHANGE`, `QUOTA_DECREASE`. Tạm ngừng và khôi phục không cần bốn mắt (cần nhanh khi có sự cố) nhưng phải có lý do, mã phiếu và văn bản căn cứ khi lý do là `MANAGEMENT_DECISION`. Chấm dứt cần bốn mắt, gói bàn giao `DELIVERED` và thời gian nguội. **Sáp nhập** là một **kế hoạch** (EN-20-25) từ một hoặc nhiều tenant nguồn vào một tenant đích, có **bảng ánh xạ** theo `MergeMappingType`, **lần chuyển theo phân hệ** (EN-20-27) và **xung đột** (EN-20-28).
+**Vòng đời** gồm các **đề nghị** có duyệt (EN-20-22) loại `SUSPEND`, `RESUME`, `TERMINATE`, `ISOLATION_CHANGE`, `QUOTA_DECREASE`. Tạm ngừng và khôi phục không cần bốn mắt (cần nhanh khi có sự cố) nhưng phải có lý do, mã phiếu và văn bản căn cứ khi lý do là `MANAGEMENT_DECISION`. Chấm dứt cần bốn mắt, gói bàn giao `DELIVERED` và thời gian nguội. **Sáp nhập** là một **kế hoạch** (EN-20-25) từ một tenant nguồn vào một tenant đích (gộp nhiều tỉnh vào một thì lập nhiều kế hoạch cùng đích), có **bảng ánh xạ** theo `MergeMappingType`, **lần chuyển theo phân hệ** (EN-20-27) và **xung đột** (EN-20-28).
 
 **Tổ chức** (DD-02) là cơ quan, đơn vị trong tỉnh, có cây cấp trên, loại `OrgType`, địa bàn, hiệu lực, cờ chủ quản dữ liệu và tổ chức kế thừa khi giải thể, sáp nhập. **Phiên bản sản phẩm** (EN-20-31) theo SemVer `MAJOR.MINOR.PATCH`, gồm danh sách thành phần (DU, ảnh container có digest, chart, migration) và ghi chú phát hành; tenant đăng ký một **kênh** cho mỗi môi trường; **kế hoạch nâng cấp** chia **sóng**, mỗi tenant trong sóng có một bản ghi **nâng cấp theo tenant**.
 
@@ -404,12 +404,12 @@ Bảng dưới là thực thể mức logic; tên bảng vật lý, khóa, chỉ
 | EN-20-14 | Đề nghị đổi hạn mức (`quota_change_request`) | `requestId`, các dòng tài nguyên với giá trị cũ, mới, mức đang dùng, `requiresApproval`, `status`… | thuộc EN-20-01 |
 | EN-20-15 | Ghi đè hạn mức tạm thời (`quota_override`) | `overrideId`, `resource`, `value`, `validFrom`, `validTo`, lý do… | thuộc EN-20-01 |
 | EN-20-16 | Ảnh chụp sử dụng (`usage_snapshot`, phân vùng tháng) | `resource`, `hourStart`, `value`, `peakValue`, `effectiveLimit`, `percent`… | thuộc EN-20-01 |
-| EN-20-17 | Cảnh báo hạn mức (`quota_alert`) | `alertId`, `resource`, `level` (`WARN_80`, `LIMIT_100`), `firstAt`, `lastAt`, `status` (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`)… | thuộc EN-20-01 |
+| EN-20-17 | Cảnh báo hạn mức (`quota_alert`) | `alertId`, `resource`, `level` (`WARN_80`, `LIMIT_100`), `raisedAt`, `acknowledgedAt`, `resolvedAt`, `status` (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`)… | thuộc EN-20-01 |
 | EN-20-18 | Phân hệ của nền tảng (`platform_module`, dữ liệu nền tảng) | `moduleCode`, tên, `core`, `wave`, `asyncProvision`, `mergeParticipant`… | 1–n EN-20-19, EN-20-20 |
 | EN-20-19 | Phụ thuộc phân hệ (`module_dependency`, dữ liệu nền tảng) | `moduleCode`, `dependsOn`, loại (`REQUIRED`, `OPTIONAL`) | thuộc EN-20-18 |
 | EN-20-20 | Phân hệ theo tenant (`tenant_module`) | `moduleCode`, `state`, `enabledAt`, `disabledAt`, lý do, `lastReportAt` | thuộc EN-20-01 |
 | EN-20-21 | Cờ tính năng theo tenant (`tenant_feature_flag`) | `flagCode`, `moduleCode`, `enabled`, `validTo`, lý do | thuộc EN-20-01 |
-| EN-20-22 | Đề nghị vòng đời (`lifecycle_request`) | `requestId`, `requestType`, `status`, `reason`, `reasonText`, `ticketRef`… | thuộc EN-20-01 |
+| EN-20-22 | Đề nghị vòng đời (`lifecycle_request`) | `requestId`, `requestType`, `status`, `suspendReason`, `reasonText`, `ticketRef`… | thuộc EN-20-01 |
 | EN-20-23 | Lịch sử trạng thái (`tenant_status_history`) | Trạng thái trước, sau, thời điểm, nguyên nhân (`requestId`, `runId`, `mergePlanId`), người | thuộc EN-20-01; chỉ thêm |
 | EN-20-24 | Gói bàn giao (`data_export_package`, `data_export_item`) | `packageId`, `status`, phân hệ, số bản ghi, kích thước, băm SHA-256 từng phần… | thuộc EN-20-01 |
 | EN-20-25 | Kế hoạch sáp nhập (`merge_plan`) | `mergePlanId`, nguồn[], đích, căn cứ (số, ngày văn bản), `status`, `effectiveDate`… | 1–n EN-20-26, 27, 28 |
@@ -457,13 +457,13 @@ Bảng dưới là nguồn chuẩn mã bước dùng chung cho FRS, SDD, CSDL, A
 
 | Mã bước | Việc | Bên thực hiện | Gọi | Chế độ | Bù trừ |
 |---|---|---|---|---|---|
-| `S01_RECORD` | Ghi bản ghi tenant `PROVISIONING`, cấu hình mặc định, hạn mức từ mẫu | PH-20 | nội bộ | Đồng bộ | Xóa bản ghi (chỉ khi chưa có bước nào khác xong) |
+| `S01_RECORD` | Ghi bản ghi tenant `PROVISIONING`, cấu hình mặc định, hạn mức từ mẫu | PH-20 | nội bộ | Đồng bộ | Giữ dòng `tenant` (trigger CSDL chặn xóa, mã không tái dùng), chuyển `DECOMMISSIONED`, chỉ xóa cấu hình mặc định và hạn mức mẫu |
 | `S02_CONFIG_REPO` | Tạo thư mục `tenants/{ma}/` trong `dh-tenant-config`, commit cấu hình | PH-20 | Git | Đồng bộ | Revert commit |
-| `S03_REALM` | Realm `dh-{ma thường}`, client `dh-console`, `dh-portal`, vai trò chuẩn, quản trị tỉnh đầu tiên (đổi mật khẩu, MFA) | PH-12 | API-12-080 (`iam:realm-provision`) | Đồng bộ | Xóa realm còn `PROVISIONING` |
+| `S03_REALM` | Realm `dh-{ma thường}`, client `dh-console`, `dh-portal`, vai trò chuẩn, quản trị tỉnh đầu tiên (đổi mật khẩu, MFA) | PH-12 | API-12-080 (`iam:realm-provision`, trả `202`, PH-20 chờ tối đa 4 phút) | Đồng bộ | Xóa realm còn `PROVISIONING` |
 | `S04_SECRETS` | Đường dẫn `kv/dh/{ma}/...`, chính sách OpenBao, KEK `dh-{ma}-pii` (SEC-88) | PH-20 qua OpenBao | OpenBao API | Đồng bộ | Xóa đường dẫn, xóa KEK chưa dùng |
 | `S05_BUCKETS` | Bucket `dh-{ma}-{mục đích}` (`files`, `exports`, `backup`, `audit`) | PH-20 qua Ceph RGW | S3 API | Đồng bộ | Xóa bucket rỗng |
 | `S06_EVENTING` | Hạn mức, principal nội bộ, ACL tiền tố `{ma}.`, topic hệ thống, nhóm Apicurio | PH-10 | EVT-20-01 + báo tiến độ (FR-10-064, FR-10-067) | Bất đồng bộ | PH-10 gỡ khi nhận EVT-20-04 `DECOMMISSIONED` |
-| `S07_DATABASE` | Chỉ `DEDICATED_DB`: cụm CloudNativePG, migration, bảng định tuyến | PH-20 | CNPG CR | Đồng bộ | Xóa cụm |
+| `S07_DATABASE` | Chỉ `DEDICATED_DB`: cụm CloudNativePG (thông số cụm ghi ở khối `database` của `tenant.yaml`, không chứa bí mật), migration, bảng định tuyến | PH-20 | CNPG CR | Đồng bộ | Xóa cụm |
 | `S08_OBSERVABILITY` | Chuỗi kiểm toán, tổ chức Grafana, nguồn dữ liệu, luật cảnh báo | PH-13 | API-13-072 (`obs:tenant-provision`) | Đồng bộ | Đóng chuỗi API-13-073 |
 | `S09_GATEWAY` | Host, tiền tố, hạn mức hợp đồng ở APISIX | PH-03 | EVT-20-01, EVT-20-05 + đọc API-20-164 | Bất đồng bộ | PH-03 gỡ |
 | `S10_INTEGRATION` | Không gian `DEFAULT`, kho `dh-flows-{ma}`, ApplicationSet runtime | PH-04 | EVT-20-01 + báo tiến độ | Bất đồng bộ | PH-04 gỡ |
@@ -731,7 +731,7 @@ Bảng dưới là khung chức năng cố định của PH-20; mã FR không đ
 
 Mỗi chức năng được đặc tả bằng một khối 17 mục cố định theo K-TRINH-BAY §4, kết hợp 12 trường kỹ thuật của D00-01 §4.3: mục đích; tác nhân, quyền; mức ưu tiên, đợt; truy vết; tiền điều kiện; kích hoạt; đầu vào (bảng riêng khi từ 5 trường); luồng xử lý chính; luồng thay thế; luồng ngoại lệ (mã lỗi, HTTP, câu thông báo); đầu ra; kết quả; hậu điều kiện; sự kiện phát ra; kiểm toán; quy tắc nghiệp vụ; màn hình, API. Mục không áp dụng ghi "Không".
 
-Quy ước chung áp cho mọi FR, không nhắc lại trong từng khối: (1) lệnh tạo hoặc chạy bất đồng bộ nhận tiêu đề `Idempotency-Key` (dùng lại với thân khác: ERR-20-009, 409); (2) lệnh sửa và hành động trên tài nguyên có phiên bản cần `If-Match` bằng `ETag` hiện hành (thiếu: ERR-00-428; không khớp: ERR-20-005, 412); (3) mọi thao tác ghi của vai trò nền tảng tác động một tenant tỉnh cần `reason` ≥ 20 ký tự và `ticketRef` (thiếu: ERR-20-008, 422), được ghi kiểm toán vào chuỗi của tenant bị tác động (SEC-85); (4) tài nguyên không có hoặc thuộc tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả ERR-20-002 (404), không trả `403`, để không lộ sự tồn tại (D03-10 §6); riêng token không thuộc tenant `PLATFORM` gọi `/api/platform/v1` trả `403` ERR-00-403, vì đường dẫn nền tảng không phải tài nguyên của một tỉnh nên không có gì để che; (5) thiếu quyền chức năng trả ERR-00-403; (6) ví dụ dùng tenant `T68` (realm `dh-t68`, topic `t68.`), `T01` cho số liệu giả định GĐ-01…07, `T90…T99` cho kiểm thử, lần chạy `run-01JH…`, kế hoạch sáp nhập `MG-2026-001`, phiên bản sản phẩm `1.4.0`. Mã API trong mục "Màn hình, API" tra ở mục 9.4.
+Quy ước chung áp cho mọi FR, không nhắc lại trong từng khối: (1) lệnh tạo hoặc chạy bất đồng bộ nhận tiêu đề `Idempotency-Key` (dùng lại với thân khác: ERR-20-009, 409); (2) lệnh sửa và hành động trên tài nguyên có phiên bản cần `If-Match` bằng `ETag` hiện hành (thiếu: ERR-00-428; không khớp: ERR-20-005, 412); (3) mọi thao tác ghi của vai trò nền tảng tác động một tenant tỉnh cần `reason` ≥ 20 ký tự và `ticketRef` (thiếu: ERR-20-008, 422), được ghi kiểm toán vào chuỗi của tenant bị tác động (SEC-85); (4) tài nguyên không có hoặc thuộc tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả ERR-20-002 (404), không trả `403`, để không lộ sự tồn tại (D03-10 §6); riêng token không thuộc tenant `PLATFORM` gọi `/api/platform/v1` trả `403` ERR-00-403, vì đường dẫn nền tảng không phải tài nguyên của một tỉnh nên không có gì để che; (5) thiếu quyền chức năng trả ERR-00-403; (6) ví dụ dùng tenant `T68` (realm `dh-t68`, topic `t68.`), `T01` cho số liệu giả định GĐ-01…07, `T90…T99` cho kiểm thử, lần chạy `run-01JH…`, kế hoạch sáp nhập `SN-2026-001`, phiên bản sản phẩm `1.4.0`. Mã API trong mục "Màn hình, API" tra ở mục 9.4.
 
 ### 6.2. Nhóm A · Hồ sơ tenant
 
@@ -1337,9 +1337,9 @@ PH-20 chỉ nhận báo cho bước đang `WAITING_REPORT` của đúng `runId`;
 
 **Mức ưu tiên, đợt.** M · MVP.
 
-**Truy vết.** REQ-20; D03-10 §5.2 bước 9; FR-00-011; SEC-87.
+**Truy vết.** REQ-20; D03-10 §5.2 bước `S16_SMOKE`; FR-00-011; SEC-87.
 
-**Tiền điều kiện.** Các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`.
+**Tiền điều kiện.** Các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường.
 
 **Kích hoạt.** Bộ thực thi tới `S16_SMOKE`; hoặc PA bấm "Chạy lại kiểm tra khói" ở UI-20-04.
 
@@ -1354,7 +1354,7 @@ PH-20 chỉ nhận báo cho bước đang `WAITING_REPORT` của đúng `runId`;
 5. Ca `CROSS_TENANT_LEAK`: dùng token tenant mới đọc một tài nguyên cài sẵn của tenant kiểm thử `T99`, kỳ vọng `404`.
 6. Hệ thống lưu kết quả từng ca (EN-20-12), xóa tài khoản tạm, HTTT giả lập; bước `SUCCEEDED` khi cả bốn ca đạt.
 
-**Luồng thay thế.** `20.smoke.enabled = false` (chỉ cho tenant kiểm thử `T90…T98`): bước `SKIPPED` với cảnh báo; tenant thật không được tắt (BR-20-004).
+**Luồng thay thế.** `20.smoke.enabled = false` (chỉ cho tenant kiểm thử `T90…T98`): bước `SKIPPED` với cảnh báo; tenant thật không được tắt (BR-20-004). Không có `T99` `ACTIVE`: ở môi trường kiểm thử ca `CROSS_TENANT_LEAK` ghi `SKIPPED` kèm cảnh báo; ở `PROD` ca này coi là lỗi (ERR-20-117, chi tiết "thiếu tenant kiểm thử T99") và chặn kích hoạt.
 
 **Luồng ngoại lệ.**
 
@@ -1387,7 +1387,7 @@ PH-20 chỉ nhận báo cho bước đang `WAITING_REPORT` của đúng `runId`;
 
 **Mức ưu tiên, đợt.** M · MVP.
 
-**Truy vết.** REQ-20; BO-06; KPI-12; D03-10 §5.2 bước 10.
+**Truy vết.** REQ-20; BO-06; KPI-12; D03-10 §5.2 bước `S17_ACTIVATE`.
 
 **Tiền điều kiện.** `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử).
 
@@ -2103,7 +2103,7 @@ Nhóm D giữ hạn mức hợp đồng của mỗi tỉnh, đẩy giá trị hi
 
 **Tiền điều kiện.** Tenant `ACTIVE` hoặc `SUSPENDED`.
 
-**Kích hoạt.** UI-20-05 "Đề nghị đổi hạn mức"; PA khác duyệt ở UI-20-05 (hộp duyệt toàn nền tảng chưa có: Q20-46).
+**Kích hoạt.** UI-20-05 "Đề nghị đổi hạn mức"; PA khác duyệt ở UI-20-05 của chính tenant; hộp duyệt toàn nền tảng ở UI-20-08 chỉ gồm đề nghị vòng đời (API-20-073), không gồm đề nghị đổi hạn mức.
 
 **Đầu vào.** `items[]` (`resource`, `newValue`), `effectiveAt`, `reason`, `ticketRef`, `contractId`; `Idempotency-Key`; khi duyệt: `comment`, `If-Match`.
 
@@ -2157,8 +2157,8 @@ Nhóm D giữ hạn mức hợp đồng của mỗi tỉnh, đẩy giá trị hi
 **Luồng xử lý chính.**
 
 1. Hệ thống lặp theo tenant trong `TenantContext.runAs`, đọc số đo từ nguồn của từng tài nguyên (bảng ở mục 4.1).
-2. Hệ thống ghi một dòng EN-20-16 cho mỗi tài nguyên và giờ, kèm hạn mức hiệu lực tại giờ đó và phần trăm; khóa duy nhất (`tenant_id`, `resource`, `hour_start`) bảo đảm lũy đẳng.
-3. Nguồn không trả lời: dòng `quality = MISSING`; lần chạy giờ sau đọc bù tối đa 24 giờ trước.
+2. Hệ thống ghi một dòng EN-20-16 cho mỗi tài nguyên và giờ, kèm hạn mức hiệu lực tại giờ đó và phần trăm; khóa duy nhất (`tenant_id`, `resource_code`, `captured_at`, với `captured_at` là đầu giờ) bảo đảm lũy đẳng.
+3. Nguồn không trả lời: không ghi dòng (CSDL không lưu dòng thiếu, API trả điểm `quality = MISSING` cho giờ đó); nguồn tạm không đọc được nhưng có số thay thế thì ghi `is_estimate = true` (API trả `quality = ESTIMATED`); lần chạy giờ sau đọc bù tối đa 24 giờ trước.
 4. Hệ thống gọi FR-20-029 đánh giá ngưỡng cho dòng mới.
 
 **Luồng thay thế.** Tenant `DEDICATED_CLUSTER` không đẩy được chỉ số về Mimir trung tâm: số đo do bộ thực thi cục bộ gửi theo gói ngày, `quality = ESTIMATED` khi trễ.
@@ -2166,7 +2166,7 @@ Nhóm D giữ hạn mức hợp đồng của mỗi tỉnh, đẩy giá trị hi
 **Luồng ngoại lệ.**
 
 - Nguồn thiếu quá 3 giờ liên tiếp (runtime): ERR-20-110 "Thiếu số liệu sử dụng {tài nguyên} của {tenant} từ {giờ}."; cảnh báo PO ở UI-20-06.
-- Mimir không khả dụng: ERR-20-062 (503); "Dịch vụ {tên} tạm thời không khả dụng. Thử lại sau." Cả lượt `MISSING`, không phát cảnh báo hạn mức giả.
+- Mimir không khả dụng: ERR-20-062 (503); "Dịch vụ {tên} tạm thời không khả dụng. Thử lại sau." Cả lượt ghi nhận `MISSING` (không có dòng), không phát cảnh báo hạn mức giả.
 - Yêu cầu thu bổ sung cho tenant `DECOMMISSIONED`: ERR-20-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}."
 
 **Đầu ra.** Nội bộ; chỉ số `dh_tenant_usage_ratio{tenant,resource}`.
@@ -2205,7 +2205,7 @@ Nhóm D giữ hạn mức hợp đồng của mỗi tỉnh, đẩy giá trị hi
 
 1. Sau mỗi ảnh chụp, và mỗi `20.usage.probe-interval` (PT5M) với nhóm đo bằng Mimir, hệ thống so `percent` với `20.quota.warn-percent` (80) và 100.
 2. Vượt ngưỡng mà chưa có cảnh báo mở cùng tài nguyên, cùng mức: tạo EN-20-17 `OPEN`, phát EVT-20-06, gửi thông báo qua PH-18 tới PO và đầu mối `TECHNICAL`, `TENANT_ADMIN` của tỉnh.
-3. Đã có cảnh báo mở: cập nhật `lastAt`, không gửi lặp (BR-20-016).
+3. Đã có cảnh báo mở: cập nhật số đo và phần trăm của cảnh báo đó, giữ nguyên `raisedAt`, không gửi lặp (BR-20-016).
 4. Mức dùng xuống dưới `20.quota.alert-reset-percent` (75) trong 24 giờ liên tục: cảnh báo `RESOLVED`.
 
 **Luồng thay thế.** PA xác nhận: cảnh báo `ACKNOWLEDGED` kèm ý kiến (ví dụ "đã lập đề nghị tăng"), vẫn hiện cho tới khi `RESOLVED`.
@@ -2617,7 +2617,7 @@ Nhóm F đặc tả các chuyển trạng thái có quyết định của tenant
 
 **Kích hoạt.** UI-20-08 "Tạm ngừng".
 
-**Đầu vào.** `reason` (`SuspendReason`), `reasonText` (≥ 20 ký tự), `ticketRef`, `decisionDocNo`, `decisionDocDate` (bắt buộc khi `MANAGEMENT_DECISION`, `CONTRACT_EXPIRED`), `essentialApisAllowed` (chỉ khi `20.suspend.essential-api-allowed = true`), `scheduledAt` (tùy chọn); `Idempotency-Key`.
+**Đầu vào.** `suspendReason` (`SuspendReason`), `reasonText` (≥ 20 ký tự), `ticketRef`, `decisionDocNo`, `decisionDocDate` (bắt buộc khi `MANAGEMENT_DECISION`, `CONTRACT_EXPIRED`), `essentialApisAllowed` (chỉ khi `20.suspend.essential-api-allowed = true`), `scheduledAt` (tùy chọn); `Idempotency-Key`.
 
 **Luồng xử lý chính.**
 
@@ -2789,7 +2789,7 @@ Hình cho thấy ba chốt chặn trước khi dữ liệu mất vĩnh viễn: d
 
 **Luồng xử lý chính.**
 
-1. Hệ thống tạo gói `REQUESTED`, phát lệnh xuất (sự kiện nội bộ) tới từng phân hệ tham gia; gói `COLLECTING`.
+1. Hệ thống tạo gói `REQUESTED`, phát lệnh xuất tới từng phân hệ tham gia bằng sự kiện lệnh `platform.tenant.export-requested.v1` (khóa `packageId`, kèm `tenantCode`, `modules[]`, `format`, `includeAudit`; dùng cùng khuôn CloudEvents và outbox với EVT-20-01…16, là lệnh nội bộ nên không cấp mã EVT riêng); gói `COLLECTING`.
 2. Mỗi phân hệ ghi phần của mình vào bucket `dh-{ma}-exports` dưới `packages/{packageId}/{module}/`, báo số bản ghi, kích thước, SHA-256 qua API-20-168.
 3. Đủ báo: hệ thống dựng bản kê `manifest.json` (phân hệ, tệp, băm, số bản ghi), ký bằng khóa nền tảng, gói `READY`, phát EVT-20-16.
 4. PA cấp liên kết tải có hạn tới đầu mối tỉnh; tải xong, PA tải biên bản bàn giao lên và xác nhận: `DELIVERED` (ERR-20-007 nếu người xác nhận là người duyệt chấm dứt).
@@ -2839,19 +2839,19 @@ Hình cho thấy ba chốt chặn trước khi dữ liệu mất vĩnh viễn: d
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm đủ ba điều kiện (ERR-20-037, ERR-20-038).
-2. Hệ thống phát EVT-20-04 `DECOMMISSIONED` (phân hệ nghe để gỡ tài nguyên và xóa dữ liệu theo chính sách của mình), gọi PH-12 xóa realm, API-13-073 đóng chuỗi kiểm toán (chuỗi WORM giữ theo thời hạn quy định).
+2. Hệ thống chuyển tenant `DECOMMISSIONED` ngay ở giai đoạn đầu để data plane dừng phục vụ, phát EVT-20-04 `DECOMMISSIONED` (phân hệ nghe để gỡ tài nguyên và xóa dữ liệu theo chính sách của mình), gọi PH-12 xóa realm, API-13-073 đóng chuỗi kiểm toán (chuỗi WORM giữ theo thời hạn quy định).
 3. Hệ thống gỡ bucket, đường dẫn OpenBao, thư mục Git (commit xóa có ký, lịch sử Git giữ).
 4. Hệ thống gọi FR-09-043 xóa mật mã KEK `dh-{ma}-pii`; chờ EVT-09-21.
-5. Nhận EVT-09-21: tenant `DECOMMISSIONED`, đề nghị `DONE`, ghi lịch sử.
+5. Nhận EVT-09-21: đề nghị `DONE`, ghi lịch sử (tenant đã `DECOMMISSIONED` từ bước 2).
 
-**Luồng thay thế.** Một phân hệ chưa báo gỡ xong sau 24 giờ: hệ thống vẫn chuyển `DECOMMISSIONED` (data plane đã trả ERR-20-102) và mở việc dọn ở PH-18 cho phân hệ đó.
+**Luồng thay thế.** Một phân hệ chưa báo gỡ xong sau 24 giờ: tenant vẫn `DECOMMISSIONED` (data plane đã trả ERR-20-102), hệ thống mở việc dọn ở PH-18 cho phân hệ đó.
 
 **Luồng ngoại lệ.**
 
 - Chưa đủ điều kiện: ERR-20-037 (422); "Chưa đủ điều kiện chấm dứt hoặc khôi phục tenant {mã}: {lý do}."
 - Chưa hết thời gian nguội: ERR-20-038 (422); "Chưa hết thời gian chờ {số} ngày kể từ khi tạm ngừng (đến {ngày})."
 - Sai mã xác nhận: ERR-20-004 (400).
-- Không nhận EVT-09-21 sau 24 giờ (runtime): ERR-20-116 "Chưa nhận xác nhận xóa mật mã của {tenant}."; cảnh báo SO nền tảng, tenant giữ `SUSPENDED`.
+- Không nhận EVT-09-21 sau 24 giờ (runtime): ERR-20-116 "Chưa nhận xác nhận xóa mật mã của {tenant}."; cảnh báo SO nền tảng, đề nghị giữ trạng thái đang thực hiện (chưa `DONE`) dù tenant đã `DECOMMISSIONED`.
 
 **Đầu ra.** `202`; `requestId`, tiến độ theo bước.
 
@@ -2936,7 +2936,7 @@ Hình cho thấy ba chốt chặn trước khi dữ liệu mất vĩnh viễn: d
 2. Hệ thống gọi `NotificationApi` của PH-18 với mẫu, biến (tenant, trạng thái, lý do rút gọn, hạn, liên hệ hỗ trợ), `Idempotency-Key = {historyId}:{kênh}`.
 3. Hệ thống ghi kết quả gửi vào bản ghi lịch sử.
 
-**Luồng thay thế.** Lý do `SECURITY_INCIDENT`: thư chỉ nêu "sự cố an toàn thông tin", không nêu chi tiết.
+**Luồng thay thế.** Lý do `SECURITY_INCIDENT`: thư chỉ nêu "sự cố an toàn thông tin", không nêu chi tiết. Thông báo đổi trạng thái không có thao tác gửi lại riêng (chỉ thư bàn giao có nút "Gửi lại thư bàn giao" ở FR-20-013); thông báo còn thất bại sau 6 lần thử hiện cảnh báo ở UI-20-20 để PO liên hệ đầu mối, và kết quả gửi xem ở API-20-085.
 
 **Luồng ngoại lệ.**
 
@@ -2960,7 +2960,7 @@ Hình cho thấy ba chốt chặn trước khi dữ liệu mất vĩnh viễn: d
 
 ### 6.8. Nhóm G · Sáp nhập
 
-Nhóm G hiện thực D03-10 §5.4: một hoặc nhiều tenant nguồn sáp nhập vào một tenant đích. PH-20 chỉ điều phối theo hợp đồng bên tham gia sáp nhập (ADR 202 đề xuất); PH-18 chạy chuyển dữ liệu từng phân hệ (FR-20-048). Dữ liệu chuyển giữ `id` gốc và ghi `origin_tenant_id`.
+Nhóm G hiện thực D03-10 §5.4: một tenant nguồn sáp nhập vào một tenant đích; khi gộp nhiều tỉnh vào một tỉnh thì lập nhiều kế hoạch cùng đích, mỗi kế hoạch một nguồn. PH-20 chỉ điều phối theo hợp đồng bên tham gia sáp nhập (ADR 202 đề xuất); PH-18 chạy chuyển dữ liệu từng phân hệ (FR-20-048). Dữ liệu chuyển giữ `id` gốc và ghi `origin_tenant_id`.
 
 #### FR-20-045 · Lập kế hoạch sáp nhập
 
@@ -2977,16 +2977,16 @@ Nhóm G hiện thực D03-10 §5.4: một hoặc nhiều tenant nguồn sáp nh�
 
 **Kích hoạt.** UI-20-11 "+ Kế hoạch sáp nhập", wizard UI-20-09 (nguồn đích, căn cứ, ánh xạ, chạy thử, gửi duyệt); PA khác duyệt ở UI-20-09.
 
-**Đầu vào.** `sourceTenants[]`, `targetTenant`, `decisionDocNo`, `decisionDocDate`, `decisionFileId`, `effectiveDate`, `transitionMonths` (mặc định `20.merge.transition-months`), `modules[]` (mặc định mọi phân hệ `mergeParticipant` đang bật ở nguồn); `Idempotency-Key`; `If-Match` khi sửa, gửi, duyệt.
+**Đầu vào.** `sourceTenants[]` (đúng một phần tử, khác một thì ERR-20-004), `targetTenant`, `decisionDocNo`, `decisionDocDate`, `decisionFileId`, `effectiveDate`, `transitionMonths` (mặc định `20.merge.transition-months`), `modules[]` (mặc định mọi phân hệ `mergeParticipant` đang bật ở nguồn); `Idempotency-Key`; `If-Match` khi sửa, gửi, duyệt.
 
 **Luồng xử lý chính.**
 
 1. PA nhập nguồn, đích; hệ thống kiểm nguồn ≠ đích, đều `ACTIVE`, đều `PROVINCE` (ERR-20-040), không thuộc kế hoạch khác (ERR-20-041), `transitionMonths` ≤ `20.merge.transition-max-months` (ERR-20-045).
-2. Hệ thống tạo kế hoạch `DRAFT` mã `MG-{yyyy}-{nnn}`, kiểm phân hệ bật ở nguồn cũng bật ở đích (thiếu: cảnh báo, gợi ý FR-20-034).
+2. Hệ thống tạo kế hoạch `DRAFT` mã `SN-{yyyy}-{nnn}`, kiểm phân hệ bật ở nguồn cũng bật ở đích (thiếu: cảnh báo, gợi ý FR-20-034).
 3. PA lập ánh xạ (FR-20-046), chạy thử (FR-20-047), rồi bấm "Gửi duyệt"; hệ thống kiểm có chạy thử đạt và còn hợp lệ (ERR-20-043), kế hoạch `PENDING_APPROVAL`.
 4. PA khác duyệt (ERR-20-007 nếu là người lập, gửi); kế hoạch `APPROVED`, báo TA hai tỉnh.
 
-**Luồng thay thế.** Hủy trước `CUTOVER`: kế hoạch `CANCELLED`; nếu đã `TRANSFERRING`, dữ liệu đã chuyển sang đích được PH-18 gỡ theo `origin_tenant_id`, nguồn về `ACTIVE`.
+**Luồng thay thế.** Hủy trước `IDENTITY_TRANSFER`: kế hoạch `CANCELLED`; nếu đã `TRANSFERRING`, dữ liệu đã chuyển sang đích được PH-18 gỡ theo `origin_tenant_id`, nguồn về `ACTIVE`. Từ `IDENTITY_TRANSFER` trở đi người dùng và client đã tạo ở realm đích nên không hủy được (ERR-20-040, "Kế hoạch sáp nhập không hợp lệ: đã chuyển định danh"); kế hoạch chỉ tiến tới `CUTOVER`, hoặc PA đề nghị PH-12 gỡ theo kế hoạch đảo (API-12-045 chế độ đảo) rồi mới hủy.
 
 **Luồng ngoại lệ.**
 
@@ -3077,7 +3077,7 @@ Nhóm G hiện thực D03-10 §5.4: một hoặc nhiều tenant nguồn sáp nh�
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm ánh xạ đủ (ERR-20-042); kế hoạch `DRY_RUN`.
-2. Hệ thống gọi PH-18 `merge-transfers` với `dryRun = true` cho từng phân hệ; PH-18 gọi xuất của phân hệ nguồn và kiểm nhập của phân hệ đích trên bản sao không ghi.
+2. Hệ thống gọi PH-18 `merge-transfers` (API-18-150) với `dryRun = true` cho từng phân hệ; PH-18 gọi xuất của phân hệ nguồn và kiểm nhập của phân hệ đích trên bản sao không ghi.
 3. PH-18 báo qua API-20-167 số bản ghi, số xung đột dự kiến theo loại, thời gian ước tính; hệ thống ghi EN-20-27 `phase = DRY_RUN`, EN-20-28 dự kiến.
 4. Đủ báo: kế hoạch về `DRAFT`, `dryRunResult = PASSED` khi không phân hệ nào lỗi, ghi `mappingHash` để phát hiện chạy thử cũ.
 
@@ -3125,11 +3125,11 @@ Nhóm G hiện thực D03-10 §5.4: một hoặc nhiều tenant nguồn sáp nh�
 
 1. Hệ thống kiểm kế hoạch `APPROVED` (ERR-20-006), chạy thử còn hợp lệ (ERR-20-043).
 2. Hệ thống chuyển tenant nguồn `MERGING`, kế hoạch `TRANSFERRING`, phát EVT-20-10 và EVT-20-04.
-3. Hệ thống gọi `merge-transfers` cho từng phân hệ theo thứ tự phụ thuộc: PH-20 (tổ chức) → PH-07 → PH-01 → PH-02 → PH-10 → PH-04, PH-05 → PH-03 → các phân hệ khác; phân hệ không phụ thuộc nhau chạy song song.
+3. Hệ thống gọi `merge-transfers` (API-18-150) cho từng phân hệ theo thứ tự phụ thuộc: PH-20 (tổ chức) → PH-07 → PH-01 → PH-02 → PH-10 → PH-04, PH-05 → PH-03 → các phân hệ khác; phân hệ không phụ thuộc nhau chạy song song.
 4. Mỗi báo tiến độ cập nhật EN-20-27; khi phân hệ báo `SUCCEEDED`, hệ thống so số bản ghi nguồn và đích (trừ `SKIP`); lệch thì phân hệ `FAILED` (ERR-20-113).
 5. Có xung đột: kế hoạch `CONFLICT_REVIEW` (FR-20-049); mọi phân hệ `SUCCEEDED`: kế hoạch sang `IDENTITY_TRANSFER` (FR-20-050).
 
-**Luồng thay thế.** Dữ liệu phát sinh ở nguồn trong lúc chuyển: mỗi phân hệ chạy lượt bù (delta) cuối cùng ngay trước cutover theo dấu thời gian `updated_at` (FR-20-051 bước 2). Phân hệ lỗi: PA bấm "Chạy lại phân hệ" (API-20-100), lũy đẳng theo `{mergePlanId}:{module}:transfer`.
+**Luồng thay thế.** Dữ liệu phát sinh ở nguồn trong lúc chuyển: mỗi phân hệ chạy lượt bù (delta) cuối cùng ngay trước cutover theo dấu thời gian `updated_at` (FR-20-051 bước 2). Phân hệ lỗi: PA bấm "Chạy lại phân hệ" (API-20-100), lũy đẳng theo `{mergePlanId}:{module}`.
 
 **Luồng ngoại lệ.**
 
@@ -3162,7 +3162,7 @@ sequenceDiagram
   participant P18 as PH-18 merge-transfers
   participant SRC as Phân hệ ở T01
   participant DST as Phân hệ ở T68
-  PA->>P20: Gửi duyệt kế hoạch MG-2026-001
+  PA->>P20: Gửi duyệt kế hoạch SN-2026-001
   PA2->>P20: Duyệt (bốn mắt, khác người lập)
   PA->>P20: Bắt đầu chuyển
   P20->>K: EVT-20-10 merge-started, EVT-20-04 T01 MERGING
@@ -4229,9 +4229,9 @@ Mỗi quy tắc có một mã, được dẫn ở mục "Quy tắc nghiệp vụ
 | BR-20-019 | Chấm dứt cần tenant `SUSPENDED`, gói bàn giao `DELIVERED`, hết `20.terminate.cooling-days` ngày, hai PA | D03-10 §5.3 | 040, 042 |
 | BR-20-020 | Xóa mật mã chỉ sau bàn giao, không đảo ngược | FR-09-043 | 042, 052 |
 | BR-20-021 | Tạm ngừng trả ERR-20-001, giao diện chỉ đọc, API thiết yếu theo tham số, không cần bốn mắt | D03-10 §5.3 | 038, 066 |
-| BR-20-022 | Sáp nhập: nguồn và đích `ACTIVE`, `PROVINCE`, mỗi tenant thuộc tối đa một kế hoạch chưa kết thúc | D03-10 §5.4 | 045, 048 |
+| BR-20-022 | Sáp nhập: nguồn và đích `ACTIVE`, `PROVINCE`; mỗi kế hoạch có đúng một tenant nguồn, mỗi tenant nguồn thuộc tối đa một kế hoạch chưa kết thúc, nhiều kế hoạch được cùng một tenant đích | D03-10 §5.4 | 045, 048 |
 | BR-20-023 | Dữ liệu chuyển giữ `id` gốc, ghi `origin_tenant_id`; xung đột không bao giờ ghi đè tự động | ADR 202 | 046, 048, 049 |
-| BR-20-024 | Cutover cần mọi phân hệ `SUCCEEDED`, không xung đột mở, định danh đã chuyển; hủy chỉ trước cutover | D03-10 §5.4 | 047, 050, 051 |
+| BR-20-024 | Cutover cần mọi phân hệ `SUCCEEDED`, không xung đột mở, định danh đã chuyển; hủy chỉ trước chuyển định danh (`IDENTITY_TRANSFER`) | D03-10 §5.4 | 047, 050, 051 |
 | BR-20-025 | Chuyển tiếp `20.merge.transition-months` tháng, tối đa `20.merge.transition-max-months`; phản hồi có header `Deprecation`, `Sunset` | D03-10 §5.4 | 045, 051, 052 |
 | BR-20-026 | Tenant `MERGED` chỉ đọc; ghi trả ERR-20-115 | D03-10 §5.4 | 051, 066 |
 | BR-20-027 | Mã tổ chức duy nhất trong tenant, cây không chu trình, giải thể còn tham chiếu phải có kế thừa, không xóa cứng | DD-02 | 053, 054, 055, 058 |
@@ -4522,14 +4522,14 @@ Sự kiện qua outbox lên Kafka, lược đồ ở Apicurio, khóa phân vùng
 
 | Mã | Topic | Khi nào | Bên nhận | FR |
 |---|---|---|---|---|
-| EVT-20-01 | `platform.tenant.created.v1` | Khai báo xong, saga bắt đầu | PH-10, PH-03, PH-04, PH-06, PH-13 | 008 |
+| EVT-20-01 | `platform.tenant.created.v1` | Sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008), phân hệ bất đồng bộ bắt đầu phần của mình | PH-10, PH-03, PH-04, PH-06, PH-13, PH-18 | 008 |
 | EVT-20-02 | `platform.tenant.provisioning-failed.v1` | Saga dừng `FAILED` | PH-13, PH-18 | 008, 010 |
 | EVT-20-03 | `platform.tenant.activated.v1` | Tenant `ACTIVE` | Mọi DU, PH-16 | 013, 014 |
-| EVT-20-04 | `platform.tenant.status-changed.v1` | Mọi đổi trạng thái tenant | PH-01, PH-03, PH-04, PH-12, PH-13, PH-19 | 038–044, 048, 051, 052 |
+| EVT-20-04 | `platform.tenant.status-changed.v1` | Mọi đổi trạng thái tenant | PH-01, PH-03, PH-04, PH-12, PH-13, PH-18, PH-19 | 038–044, 048, 051, 052 |
 | EVT-20-05 | `platform.tenant.quota-changed.v1` | Hạn mức hợp đồng hoặc ghi đè đổi | PH-03, PH-04, PH-10, PH-12 | 026, 027, 032 |
 | EVT-20-06 | `platform.tenant.quota-threshold-reached.v1` | Chạm 80% hoặc 100% | PH-13, PH-18 | 029 |
-| EVT-20-07 | `platform.tenant.module-enabled.v1` | Bật phân hệ | Phân hệ được bật | 034 |
-| EVT-20-08 | `platform.tenant.module-disabled.v1` | Tắt, tạm ngừng phân hệ | Phân hệ bị tắt | 035 |
+| EVT-20-07 | `platform.tenant.module-enabled.v1` | Bật phân hệ | Phân hệ được bật (PH-19, PH-17, PH-11, PH-14, PH-15) | 034 |
+| EVT-20-08 | `platform.tenant.module-disabled.v1` | Tắt, tạm ngừng phân hệ | Phân hệ bị tắt (PH-19, PH-17, PH-11, PH-14, PH-15) | 035 |
 | EVT-20-09 | `platform.tenant.config-changed.v1` | Cấu hình hoặc cài đặt tỉnh đổi | PH-03, PH-12, `dh-console` | 018–021, 025 |
 | EVT-20-10 | `platform.tenant.merge-started.v1` | Bắt đầu chuyển dữ liệu sáp nhập | Phân hệ có dữ liệu, PH-18 | 048 |
 | EVT-20-11 | `platform.tenant.merge-cutover.v1` | Nguồn `MERGED`, chuyển tiếp bật | PH-03, PH-12, PH-01 | 051 |
@@ -4540,6 +4540,8 @@ Sự kiện qua outbox lên Kafka, lược đồ ở Apicurio, khóa phân vùng
 | EVT-20-16 | `platform.tenant.export-ready.v1` | Gói bàn giao sẵn sàng | PH-18 | 041 |
 
 : Sự kiện EVT-20-01…16 do PH-20 phát
+
+Ngoài 16 sự kiện miền trên, PH-20 phát một sự kiện lệnh nội bộ `platform.tenant.export-requested.v1` để ra lệnh xuất gói bàn giao cho các phân hệ có `exportParticipant` (FR-20-041); sự kiện này không mang dữ liệu cá nhân và không có mã EVT.
 
 | Sự kiện | Topic | PH-20 làm gì | FR |
 |---|---|---|---|
@@ -4719,7 +4721,7 @@ PH-20 công bố 171 API: 134 ở `/api/platform/v1` (PA, PO, PAU), 27 ở `/api
 | API-20-159 | GET | `/api/tenant/v1/release-info` | Phiên bản đang chạy, ghi chú phát hành, lịch bảo trì | 064 | `PERM-20-org-read` |
 | API-20-160 | PUT | `/api/tenant/v1/maintenance-window` | Đặt cửa sổ bảo trì ưa thích của tỉnh | 018, 061 | `PERM-20-settings` |
 | API-20-161 | GET | `/api/tenant/v1/audit-events` | Nhật ký kiểm toán PH-20 của tỉnh | 068 | TA, AU |
-| API-20-162 | GET | `/internal/tenant/v1/tenants` | Registry tenant (`?status=ACTIVE` cho tác vụ nền) | 065 | Scope `tenant:registry-read` |
+| API-20-162 | GET | `/internal/tenant/v1/tenants` | Registry tenant (`?status=ACTIVE` cho tác vụ nền; tùy chọn lọc `isolationMode`, `module`, `updatedSince`, `size` tối đa 1.000 để đồng bộ tăng dần) | 065 | Scope `tenant:registry-read` |
 | API-20-163 | GET | `/internal/tenant/v1/tenants/{tenantCode}` | Bản ghi registry của một tenant kèm phân hệ đang bật | 037, 065, 066 | Scope `tenant:registry-read` |
 | API-20-164 | GET | `/internal/tenant/v1/tenants/{tenantCode}/enforcement` | Hạn mức hiệu lực, host, tiền tố, ánh xạ chuyển tiếp cho PH-03, PH-04, PH-10 | 026, 027, 051, 066 | Scope `tenant:registry-read` |
 | API-20-165 | GET | `/internal/tenant/v1/tenants/{tenantCode}/cross-tenant-policy` | Chính sách tiếp nhận cho PH-12 | 023 | Scope `tenant:registry-read` |
@@ -4818,7 +4820,7 @@ Không có SRS-PH-20 vì hệ cũ không có phân hệ quản trị tenant. Ngu
 | PH-01 | PH-01 gọi | API-20-169…171 tổ chức (đệm 24 giờ, ERR-01-004, ERR-01-046); nghe EVT-20-04, EVT-20-13 (Q01-10); cấp song song thông tin xác thực HTTT khi sáp nhập |
 | PH-06, PH-08, PH-16 | Phân hệ gọi, sự kiện | Kiểm tổ chức chủ quản (API-20-171); PH-06 nạp gói nền khi khởi tạo; PH-16 FR-16-008 kế thừa mẫu, PH-20 đẩy KPI-12 qua API-16-030 |
 | PH-09 | PH-20 gọi | FR-09-043 xóa mật mã khi chấm dứt; nhận EVT-09-21 |
-| PH-18 | Hai chiều | Tham số (DD-14), thông báo (DD-13), sao lưu theo tenant. Sáp nhập: PH-20 gọi `POST /api/ops/v1/merge-transfers` (giả định; thân `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`) cho từng phân hệ; PH-18 và phân hệ tham gia báo tiến độ qua API-20-167 `POST /internal/tenant/v1/merge-plans/{mergePlanId}/participants/{module}:report` (scope `tenant:provision-report`); tác vụ nền của PH-18 lặp tenant qua API-20-162 `GET /internal/tenant/v1/tenants?status=ACTIVE` (scope `tenant:registry-read`) |
+| PH-18 | Hai chiều | Tham số (DD-14), thông báo (DD-13), sao lưu theo tenant. Sáp nhập: PH-20 gọi `POST /api/ops/v1/merge-transfers` (API-18-150…153 của D03-04-PH18; PH-20 gọi bằng tài khoản máy `client_credentials` qua `apisix-int`, scope `ops:merge-transfer`, `Idempotency-Key = {mergePlanId}:{module}` (thêm `:DELTA` cho lượt bù cuối, `:DRYRUN` cho lượt chạy thử); `module` dạng `PH-nn`; trường tùy chọn `mode` (`FULL` mặc định, `DELTA`) và `since` cho lượt bù cuối; thân `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`) cho từng phân hệ; PH-18 và phân hệ tham gia báo tiến độ qua API-20-167 `POST /internal/tenant/v1/merge-plans/{mergePlanId}/participants/{module}:report` (scope `tenant:provision-report`); PH-20 còn gọi API-18-030 `params:seed-defaults` (scope `ops:param-write`) khi khởi tạo tenant, theo dõi chuyển bằng API-18-152 hoặc EVT-18-24 và nhận EVT-18-21 khi khôi phục tenant; tác vụ nền của PH-18 lặp tenant qua API-20-162 `GET /internal/tenant/v1/tenants?status=ACTIVE` (scope `tenant:registry-read`) |
 | PH-19, PH-17, PH-11, PH-14, PH-15 | Sự kiện | Nghe EVT-20-07, 08 (PH-19 FR-19-064, ERR-19-049); PH-17 mặc định `17.enabled` tắt |
 | `dh-console` | Đọc | API-20-142 trạng thái phân hệ cho menu, dải cảnh báo `MERGING`, chế độ chỉ đọc khi `SUSPENDED` |
 
@@ -4826,7 +4828,7 @@ Không có SRS-PH-20 vì hệ cũ không có phân hệ quản trị tenant. Ngu
 
 ### 12.2. Giả định
 
-Hợp đồng `merge-transfers` của PH-18 là giả định tới khi FRS PH-18 chốt (Q20-15); hạn mức sáu tài nguyên cuối của `QuotaResource` (Q20-05) và gói bàn giao 500 GB trong 24 giờ (Q20-02) là giả định; mỗi phân hệ có dữ liệu hiện thực hợp đồng bên tham gia sáp nhập trước kế hoạch sáp nhập đầu tiên.
+Hợp đồng `merge-transfers` đã chốt ở PH-18 (API-18-150…153, trường `dryRun`) nên không còn là giả định; hạn mức sáu tài nguyên cuối của `QuotaResource` (Q20-05) và gói bàn giao 500 GB trong 24 giờ (Q20-02) là giả định; mỗi phân hệ có dữ liệu hiện thực hợp đồng bên tham gia sáp nhập trước kế hoạch sáp nhập đầu tiên.
 
 ### 12.3. Ràng buộc và quyết định kiến trúc đề xuất
 
@@ -4850,8 +4852,8 @@ PH-20 chạy trong DU `dh-platform`, schema `ph20_tenant`, mô-đun `vn.datahub.
 | Q20-12 | Gieo tổ chức cấp xã khi khởi tạo | FR-008, 053 | Gieo từ ĐVHC `COMMON` |
 | Q20-13 | Giữ mật khẩu khi chuyển định danh sáp nhập | FR-050 | Buộc đặt lại |
 | Q20-14 | Cơ chế ký commit GitOps | FR-020 | Ký bằng khóa dịch vụ ở Vault |
-| Q20-15 | Hợp đồng `merge-transfers` với PH-18 | FR-047, 048 | Theo 12.1 |
-| Q20-16 | Lệch tên topic với PH-19, PH-10 | 9.3 | Theo 9.3 |
+| Q20-15 | Hợp đồng `merge-transfers` với PH-18 | FR-047, 048 | Đã đóng: PH-18 chốt API-18-150…153 có `dryRun`, PH-20 gọi bằng client credentials qua `apisix-int`, scope `ops:merge-transfer` (12.1) |
+| Q20-16 | Lệch tên topic với PH-19, PH-10 | 9.3 | Đã đóng: theo 9.3; PH-19 nghe `platform.tenant.module-enabled.v1`, PH-10 dùng `platform.tenant.created.v1` |
 | Q20-17 | PH-17 mặc định tắt khi khởi tạo | FR-034 | Tắt |
 | Q20-18 | Ngoại lệ khẩn cho liên tenant và kiểm thử rò rỉ trên `PROD` | FR-023, 070 | Không cho |
 | Q20-19 | Lịch ngày làm việc tính KPI-12 | FR-014 | Lịch nghỉ lễ do PH-18 quản |
@@ -4872,7 +4874,7 @@ PH-20 chạy trong DU `dh-platform`, schema `ph20_tenant`, mô-đun `vn.datahub.
 
 ## Phụ lục A. Giá trị liệt kê
 
-Nguồn chuẩn enum cho mọi tập PH-20.
+Nguồn chuẩn enum cho mọi tập PH-20; các liệt kê từ `ContractStatus` trở xuống do CSDL D03-03-PH20 mục 6.3 đặt thêm cho cột trạng thái phụ và được ghi ở đây để một nơi giữ mọi giá trị.
 
 | Liệt kê | Giá trị |
 |---|---|
@@ -4905,10 +4907,46 @@ Nguồn chuẩn enum cho mọi tập PH-20.
 | `SmokeCheck` | `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE`, `CROSS_TENANT_LEAK` |
 | `AlertState` | `OPEN`, `ACKNOWLEDGED`, `RESOLVED` |
 | `ConfigChangeKind` | `TENANT_PROFILE`, `TENANT_SETTINGS`, `PLATFORM_CONFIG`, `CROSS_TENANT_POLICY`, `ISOLATION_MODE`, `FEATURE_FLAG` |
+| `ContractStatus` | `DRAFT`, `ACTIVE`, `EXPIRED`, `TERMINATED` |
+| `ServiceLevel` | `STANDARD`, `PREMIUM` |
+| `ModuleCatalogStatus` | `AVAILABLE`, `PLANNED`, `DEPRECATED` |
+| `DependencyType` | `REQUIRED`, `OPTIONAL` |
+| `ConfigScope` | `PLATFORM_CONFIG`, `SETTINGS`, `QUOTA`, `MODULES`, `ALL` |
+| `ChangeSource` | `API`, `SAGA`, `RESTORE`, `DRIFT_FIX` |
+| `ApplyStatus` | `PENDING`, `APPLIED`, `FAILED` |
+| `DriftResolution` | `RECONCILED`, `ACCEPTED`, `IGNORED` |
+| `SmokeResult` | `PASS`, `FAIL`, `SKIPPED` |
+| `OverrideStatus` | `ACTIVE`, `EXPIRED`, `REVOKED` |
+| `UsageSource` | `MIMIR`, `APISIX`, `KAFKA`, `OBJECT_STORE`, `DATABASE`, `IAM`, `CATALOG`, `RUNTIME`, `OTHER` |
+| `PushStatus` | `PENDING`, `PUSHED`, `FAILED` |
+| `QuotaSource` | `TEMPLATE`, `CONTRACT`, `OVERRIDE` |
+| `ReportStatus` | `REQUESTED`, `GENERATING`, `READY`, `FAILED`, `EXPIRED` |
+| `ReportFormat` | `XLSX`, `CSV`, `PDF` |
+| `ExportItemStatus` | `PENDING`, `COLLECTING`, `DONE`, `FAILED` |
+| `ParticipantPhase` | `DRY_RUN`, `TRANSFER`, `IDENTITY`, `CUTOVER`, `VERIFY` |
+| `ParticipantStatus` | `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED` |
+| `MappingStatus` | `PROPOSED`, `CONFIRMED`, `CONFLICT`, `APPLIED` |
+| `ConflictKind` | `DUPLICATE_CODE`, `DUPLICATE_PATH`, `DUPLICATE_USER`, `OTHER` |
+| `ConflictState` | `OPEN`, `RESOLVED` |
+| `ImportStatus` | `UPLOADED`, `PREVIEWED`, `APPLYING`, `DONE`, `FAILED`, `CANCELLED` |
+| `ImportMode` | `CREATE_ONLY`, `UPSERT` |
+| `ImportAction` | `CREATE`, `UPDATE`, `SKIP`, `ERROR` |
+| `ImportRowStatus` | `VALID`, `ERROR`, `APPLIED`, `SKIPPED` |
+| `ComponentType` | `SERVICE`, `CONSOLE`, `CHART`, `SCHEMA`, `CONFIG` |
+| `WaveStatus` | `PENDING`, `RUNNING`, `PAUSED`, `DONE`, `STOPPED` |
+| `WindowType` | `RECURRING`, `ONE_OFF` |
+| `LeakTrigger` | `SCHEDULE`, `MANUAL`, `PRE_ACTIVATION` |
+| `LeakStatus` | `RUNNING`, `PASSED`, `FAILED`, `ERROR` |
+| `ScanStatus` | `PENDING`, `CLEAN`, `INFECTED` |
+| `FilePurpose` | `CONTRACT`, `EXPORT_PACKAGE`, `ORG_IMPORT`, `USAGE_REPORT`, `LEAK_REPORT`, `LOGO`, `OTHER` |
+| `IdemState` | `IN_PROGRESS`, `COMPLETED` |
+| `ReportScope` | `TENANT`, `PLATFORM` |
 
 : Giá trị liệt kê của PH-20
 
 ## Phụ lục B. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 | Tài liệu | Đề nghị |
 |---|---|
@@ -4966,5 +5004,6 @@ Các lệch do sáu tập con nêu ở bản 0.1 đã xử lý ở bản 0.2.
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ sáu tập con: 29 tham số, cửa sổ 2…6 giờ, quyết định 403 và 404, bổ sung Phụ lục A, Phụ lục C |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, tên trường theo CSDL, DECOMMISSIONED ở giai đoạn 1, BR-20-022, sự kiện lệnh xuất gói, bước saga D03-10, thêm liệt kê CSDL, đóng Q20-15, Q20-16 |
 
 : Lịch sử phiên bản

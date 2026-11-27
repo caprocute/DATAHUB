@@ -252,6 +252,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -301,6 +303,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -347,6 +351,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -393,6 +399,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -440,6 +448,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -491,6 +501,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -551,7 +563,7 @@ paths:
           $ref: '#/components/schemas/OperationType'
       - name: exposed
         in: query
-        schema: &id003
+        schema: &id001
           type: boolean
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
@@ -703,6 +715,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -842,6 +856,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -892,6 +908,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1035,6 +1053,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -1118,6 +1138,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -1166,6 +1188,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -1329,6 +1353,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -1380,6 +1406,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1602,6 +1630,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1648,6 +1678,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1697,6 +1729,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1745,6 +1779,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1915,6 +1951,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -1968,6 +2006,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -1995,7 +2035,7 @@ paths:
       description: Lấy token ở `worker`, không lưu. Tối đa `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).
       parameters:
       - $ref: '#/components/parameters/PlatformCodePath'
-      - &id002
+      - &id003
         name: environment
         in: query
         schema:
@@ -2023,6 +2063,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '429':
@@ -2050,7 +2092,8 @@ paths:
       - FR-14-033
       x-datahub-permission:
         permission: PERM-14-read
-      description: Chỉ trả dữ liệu của tenant trong token; danh sách phân trang theo `page`, `size` (tối đa 100).
+      description: Tham số tùy chọn `history = true` trả thêm các phiên bản hạn mức đã bị thay thế, xếp theo `effectiveFrom` giảm dần, cho tab
+        Lịch sử hạn mức của UI-14-09 (`CMP-VersionTimeline`).
       parameters:
       - name: platformCode
         in: query
@@ -2060,6 +2103,9 @@ paths:
         in: query
         schema:
           $ref: '#/components/schemas/ServiceCode'
+      - name: history
+        in: query
+        schema: *id001
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2142,6 +2188,11 @@ paths:
       - FR-14-033
       x-datahub-permission:
         permission: PERM-14-read
+        serviceScope: national.health-read
+      security:
+      - oauth2User: []
+      - oauth2Service:
+        - national.health-read
       description: Đọc từ bộ đếm ở Valkey; ngưỡng cảnh báo theo `14.quota.warn-levels`.
       parameters:
       - name: platformCode
@@ -2256,6 +2307,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -2348,6 +2401,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -2500,6 +2555,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -2583,6 +2640,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -2633,6 +2692,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -2686,12 +2747,12 @@ paths:
         explode: false
       - name: from
         in: query
-        schema: &id001
+        schema: &id002
           type: string
           format: date-time
       - name: to
         in: query
-        schema: *id001
+        schema: *id002
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Traceparent'
@@ -2917,6 +2978,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -3020,6 +3083,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
         '502':
@@ -3086,7 +3151,7 @@ paths:
       description: 'Chạy ở `worker`: DNS, TLS, token, gọi thăm dò, chữ ký. Không quá `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).'
       parameters:
       - $ref: '#/components/parameters/PlatformCodePath'
-      - *id002
+      - *id003
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -3106,6 +3171,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -3165,14 +3232,16 @@ paths:
       - FR-14-049
       x-datahub-permission:
         permission: PERM-14-audit-read
-      description: Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che.
+      description: 'Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che. Tham số tùy chọn `after` là con trỏ keyset theo (`started_at`,
+        `transaction_code`): khi có `after`, `page` bị bỏ qua và phản hồi trả `nextCursor`, dùng cho khoảng thời gian lớn (Q14-59). `asyncState`
+        lọc theo trạng thái yêu cầu bất đồng bộ (hàng chờ ở UI-14-12), `stale` lọc lượt trả dữ liệu đệm quá hạn.'
       parameters:
       - name: from
         in: query
-        schema: *id001
+        schema: *id002
       - name: to
         in: query
-        schema: *id001
+        schema: *id002
       - name: systemCode
         in: query
         schema:
@@ -3205,7 +3274,23 @@ paths:
           maxLength: 64
       - name: fromCache
         in: query
-        schema: *id003
+        schema: *id001
+      - name: stale
+        in: query
+        schema: *id001
+      - name: asyncState
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/AsyncState'
+        style: form
+        explode: false
+      - name: after
+        in: query
+        schema:
+          type: string
+          maxLength: 256
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Traceparent'
@@ -3381,10 +3466,10 @@ paths:
       parameters:
       - name: from
         in: query
-        schema: *id001
+        schema: *id002
       - name: to
         in: query
-        schema: *id001
+        schema: *id002
       - name: systemCode
         in: query
         schema:
@@ -3557,6 +3642,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -3647,6 +3734,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '500':
           $ref: '#/components/responses/InternalError'
       x-datahub-errors:
@@ -3720,6 +3809,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '500':
@@ -4606,7 +4697,7 @@ components:
           scopes:
             national.invoke: Gọi dịch vụ quốc gia; thực tế dùng `national.invoke.{nhóm}` (vd `national.invoke.lltp`)
             national.runtime-config: Đọc ảnh chụp cấu hình không bí mật (`dh-runtime`)
-            national.health-read: Đọc chỉ số sức khỏe (PH-13)
+            national.health-read: Đọc chỉ số sức khỏe (PH-13) và mức dùng hạn mức (PH-01)
             national.catalog.read: Đọc danh mục dùng chung quốc gia (PH-07)
             national.catalog.propose: Gửi đề xuất bổ sung danh mục (PH-07)
             national.sync.trigger: Kích hoạt đồng bộ (PH-02, PH-06)
@@ -4729,7 +4820,7 @@ components:
       schema:
         type: string
         maxLength: 128
-      description: ETag hiện tại; lệch trả ERR-14-004 (409) kèm `currentEtag`.
+      description: ETag hiện tại; lệch trả ERR-14-004 (412) kèm `currentEtag`.
     IfNoneMatch:
       name: If-None-Match
       in: header
@@ -4771,7 +4862,7 @@ components:
     AcceptStale:
       name: X-DH-Accept-Stale
       in: header
-      schema: *id003
+      schema: *id001
       description: '`true`: chấp nhận dữ liệu đệm quá hạn khi nền tảng lỗi (FR-14-037).'
     ParallelRunHeader:
       name: X-DH-Parallel-Run
@@ -4862,15 +4953,27 @@ components:
             code: ERR-14-001
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Conflict:
-      description: Trạng thái không cho phép, trùng mã, `ETag` lệch, chạy trùng (ERR-14-002, 004, 006, 010, 013, 023, 026, 033, 116, 122, 130).
+      description: Trạng thái không cho phép, trùng mã, chạy trùng (ERR-14-002, 004, 006, 010, 013, 023, 026, 033, 116, 122, 130).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/errors/ERR-14-004
-            title: Trạng thái không cho phép, trùng mã, `ETag` lệch, chạy trùng
+            title: Trạng thái không cho phép, trùng mã, chạy trùng
             status: 409
+            code: ERR-14-004
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    PreconditionFailed:
+      description: '`If-Match` lệch `ETag` hiện tại (ERR-14-004), kèm `currentEtag`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/errors/ERR-14-004
+            title: '`If-Match` lệch `ETag` hiện tại'
+            status: 412
             code: ERR-14-004
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unprocessable:
@@ -5190,11 +5293,11 @@ components:
           type: string
         reason:
           type: string
-        resetAt: *id001
+        resetAt: *id002
         cache:
           type: object
           properties:
-            available: *id003
+            available: *id001
           additionalProperties: false
           description: Kèm ERR-14-104.
         retryAfterSeconds:
@@ -5215,14 +5318,14 @@ components:
             $ref: '#/components/schemas/PlatformScope'
           state:
             $ref: '#/components/schemas/PlatformState'
-          securityHold: *id003
+          securityHold: *id001
           specStatus:
             $ref: '#/components/schemas/SpecStatus'
           health:
             $ref: '#/components/schemas/HealthLevel'
           serviceCount:
             type: integer
-          updatedAt: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - platformCode
@@ -5267,7 +5370,7 @@ components:
             format: uuid
           credentialAgeDays:
             type: integer
-          createdAt: *id001
+          createdAt: *id002
           createdBy:
             type: string
             maxLength: 64
@@ -5420,8 +5523,8 @@ components:
           contractVersion:
             type: string
             maxLength: 16
-          exposed: *id003
-          updatedAt: *id001
+          exposed: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - serviceCode
@@ -5473,18 +5576,18 @@ components:
             maxLength: 2000
           protocol:
             $ref: '#/components/schemas/NatProtocol'
-          cacheable: *id003
+          cacheable: *id001
           cacheTtlSeconds:
             type: integer
             minimum: 1
             maximum: 86400
-          staleAllowed: *id003
+          staleAllowed: *id001
           signingMode:
             $ref: '#/components/schemas/SigningMode'
           verifyMode:
             $ref: '#/components/schemas/SigningMode'
-          purposeRequired: *id003
-          procedureCodeRequired: *id003
+          purposeRequired: *id001
+          procedureCodeRequired: *id001
           timeoutMs:
             type: integer
             minimum: 1000
@@ -5499,7 +5602,7 @@ components:
             type: string
             maxLength: 500
             description: Căn cứ văn bản.
-          createdAt: *id001
+          createdAt: *id002
           createdBy:
             type: string
             maxLength: 64
@@ -5532,18 +5635,18 @@ components:
           $ref: '#/components/schemas/Sensitivity'
         priority:
           $ref: '#/components/schemas/Priority'
-        cacheable: *id003
+        cacheable: *id001
         cacheTtlSeconds:
           type: integer
           minimum: 1
           maximum: 86400
-        staleAllowed: *id003
+        staleAllowed: *id001
         signingMode:
           $ref: '#/components/schemas/SigningMode'
         verifyMode:
           $ref: '#/components/schemas/SigningMode'
-        purposeRequired: *id003
-        procedureCodeRequired: *id003
+        purposeRequired: *id001
+        procedureCodeRequired: *id001
         timeoutMs:
           type: integer
           minimum: 1000
@@ -5596,18 +5699,18 @@ components:
           $ref: '#/components/schemas/Sensitivity'
         priority:
           $ref: '#/components/schemas/Priority'
-        cacheable: *id003
+        cacheable: *id001
         cacheTtlSeconds:
           type: integer
           minimum: 1
           maximum: 86400
-        staleAllowed: *id003
+        staleAllowed: *id001
         signingMode:
           $ref: '#/components/schemas/SigningMode'
         verifyMode:
           $ref: '#/components/schemas/SigningMode'
-        purposeRequired: *id003
-        procedureCodeRequired: *id003
+        purposeRequired: *id001
+        procedureCodeRequired: *id001
         timeoutMs:
           type: integer
           minimum: 1000
@@ -5673,7 +5776,7 @@ components:
           items:
             type: string
             maxLength: 500
-        breaking: *id003
+        breaking: *id001
       additionalProperties: false
       required:
       - nationalServiceCode
@@ -5696,7 +5799,7 @@ components:
           items:
             $ref: '#/components/schemas/ReconcileItem'
         summary: *id006
-        startedAt: *id001
+        startedAt: *id002
         finishedAt: *id007
       additionalProperties: false
       required:
@@ -5711,7 +5814,7 @@ components:
             type: string
             maxLength: 64
           description: Rỗng là áp mọi mục.
-        acknowledgeBreaking: *id003
+        acknowledgeBreaking: *id001
       additionalProperties: false
     SetLabelRequest:
       type: object
@@ -5742,7 +5845,7 @@ components:
         checksum:
           type: string
           maxLength: 71
-        breaking: *id003
+        breaking: *id001
         state:
           type: string
           enum:
@@ -5754,7 +5857,7 @@ components:
           items:
             type: string
             maxLength: 500
-        createdAt: *id001
+        createdAt: *id002
         createdBy:
           type: string
           maxLength: 64
@@ -5806,7 +5909,7 @@ components:
     SpecActivate:
       type: object
       properties:
-        acknowledgeBreaking: *id003
+        acknowledgeBreaking: *id001
         comment:
           type: string
           maxLength: 1000
@@ -5893,7 +5996,7 @@ components:
             type:
             - string
             - 'null'
-          allowFallback: *id003
+          allowFallback: *id001
           priority:
             type: integer
             minimum: 1
@@ -5909,7 +6012,7 @@ components:
             - PENDING_APPROVAL
             - ACTIVE
             - DISABLED
-          updatedAt: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - ruleId
@@ -5944,7 +6047,7 @@ components:
           $ref: '#/components/schemas/ServiceCode'
         fallbackServiceCode:
           $ref: '#/components/schemas/ServiceCode'
-        allowFallback: *id003
+        allowFallback: *id001
         priority:
           type: integer
           minimum: 1
@@ -5971,7 +6074,7 @@ components:
         fallbackServiceCode:
           type: string
           maxLength: 63
-        allowFallback: *id003
+        allowFallback: *id001
         priority:
           type: integer
           minimum: 1
@@ -6010,7 +6113,7 @@ components:
           type:
           - string
           - 'null'
-        fallbackUsedWhenPrimaryFails: *id003
+        fallbackUsedWhenPrimaryFails: *id001
         candidates:
           type: array
           items:
@@ -6019,12 +6122,12 @@ components:
               ruleId: *id004
               priority:
                 type: integer
-              matched: *id003
+              matched: *id001
               reason:
                 type: string
                 maxLength: 500
             additionalProperties: false
-        conflict: *id003
+        conflict: *id001
       additionalProperties: false
       required:
       - candidates
@@ -6043,8 +6146,8 @@ components:
           serialNumber:
             type: string
             maxLength: 128
-          notBefore: *id001
-          notAfter: *id001
+          notBefore: *id002
+          notAfter: *id002
           daysLeft:
             type: integer
           purpose:
@@ -6076,7 +6179,7 @@ components:
             maxLength: 255
             description: Tham chiếu khóa ở OpenBao `transit`, không bao giờ là khóa.
           keyMatchVerifiedAt: *id007
-          chainOk: *id003
+          chainOk: *id001
           supersededBy:
             type:
             - string
@@ -6157,7 +6260,7 @@ components:
       properties:
         reason:
           $ref: '#/components/schemas/Reason'
-        revokedAt: *id001
+        revokedAt: *id002
       additionalProperties: false
       required:
       - reason
@@ -6171,7 +6274,7 @@ components:
         fingerprintSha256:
           type: string
           maxLength: 64
-        notAfter: *id001
+        notAfter: *id002
         state:
           type: string
           enum:
@@ -6200,8 +6303,8 @@ components:
               issuer:
                 type: string
                 maxLength: 512
-              thisUpdate: *id001
-              nextUpdate: *id001
+              thisUpdate: *id002
+              nextUpdate: *id002
               ageDays:
                 type: integer
               state:
@@ -6220,42 +6323,44 @@ components:
       required:
       - anchors
     SignatureIncident:
-      type: object
-      properties:
-        incidentId: *id004
-        kind:
-          type: string
-          enum:
-          - SIGNATURE_MISMATCH
-          - UNTRUSTED_CHAIN
-          - REVOKED_CERT
-          - STALE_TIMESTAMP
-          - REPLAY
-        transactionCode:
-          type: string
-        platformCode:
-          $ref: '#/components/schemas/PlatformCode'
-        state:
-          type: string
-          enum:
-          - OPEN
-          - ACKNOWLEDGED
-          - RESOLVED
-        assignee:
-          type:
-          - string
-          - 'null'
-        openedAt: *id001
-        resolvedAt: *id007
-        resolution:
-          type: string
-          maxLength: 2000
-      additionalProperties: false
-      required:
-      - incidentId
-      - kind
-      - state
-      - openedAt
+      allOf:
+      - type: object
+        properties:
+          incidentId: *id004
+          kind:
+            type: string
+            enum:
+            - SIGNATURE_MISMATCH
+            - UNTRUSTED_CHAIN
+            - REVOKED_CERT
+            - STALE_TIMESTAMP
+            - REPLAY
+          transactionCode:
+            type: string
+          platformCode:
+            $ref: '#/components/schemas/PlatformCode'
+          state:
+            type: string
+            enum:
+            - OPEN
+            - ACKNOWLEDGED
+            - RESOLVED
+          assignee:
+            type:
+            - string
+            - 'null'
+          openedAt: *id002
+          resolvedAt: *id007
+          resolution:
+            type: string
+            maxLength: 2000
+        additionalProperties: false
+        required:
+        - incidentId
+        - kind
+        - state
+        - openedAt
+      - $ref: '#/components/schemas/AllowedActions'
     SignatureIncidentList:
       type: object
       properties:
@@ -6326,7 +6431,7 @@ components:
           - DONE
           - CANCELLED
         transitionUntil: *id007
-        startedAt: *id001
+        startedAt: *id002
       additionalProperties: false
       required:
       - rotationId
@@ -6334,7 +6439,7 @@ components:
     TokenTestResult:
       type: object
       properties:
-        ok: *id003
+        ok: *id001
         authMode:
           $ref: '#/components/schemas/AuthMode'
         latencyMs:
@@ -6352,46 +6457,48 @@ components:
       required:
       - ok
     Quota:
-      type: object
-      properties:
-        quotaId: *id004
-        platformCode:
-          $ref: '#/components/schemas/PlatformCode'
-        serviceCode:
-          type:
-          - string
-          - 'null'
-          description: Rỗng là cả nền tảng.
-        period:
-          type: string
-          enum:
-          - HOUR
-          - DAY
-          - MONTH
-        limit:
-          type: integer
-          minimum: 1
-        basisDocument:
-          type: string
-          maxLength: 500
-        effectiveFrom: &id008
-          type: string
-          format: date
-        state:
-          type: string
-          enum:
-          - PENDING_APPROVAL
-          - ACTIVE
-          - SUPERSEDED
-        updatedAt: *id001
-      additionalProperties: false
-      required:
-      - quotaId
-      - platformCode
-      - period
-      - limit
-      - basisDocument
-      - effectiveFrom
+      allOf:
+      - type: object
+        properties:
+          quotaId: *id004
+          platformCode:
+            $ref: '#/components/schemas/PlatformCode'
+          serviceCode:
+            type:
+            - string
+            - 'null'
+            description: Rỗng là cả nền tảng.
+          period:
+            type: string
+            enum:
+            - HOUR
+            - DAY
+            - MONTH
+          limit:
+            type: integer
+            minimum: 1
+          basisDocument:
+            type: string
+            maxLength: 500
+          effectiveFrom: &id008
+            type: string
+            format: date
+          state:
+            type: string
+            enum:
+            - PENDING_APPROVAL
+            - ACTIVE
+            - SUPERSEDED
+          updatedAt: *id002
+        additionalProperties: false
+        required:
+        - quotaId
+        - platformCode
+        - period
+        - limit
+        - basisDocument
+        - effectiveFrom
+      - $ref: '#/components/schemas/AllowedActions'
     QuotaList:
       type: object
       properties:
@@ -6467,7 +6574,7 @@ components:
           type: integer
         ratio: &id009
           type: number
-        resetAt: *id001
+        resetAt: *id002
         level:
           type: string
           enum:
@@ -6476,8 +6583,8 @@ components:
           - WARN85
           - WARN95
           - EXHAUSTED
-        deferringBackground: *id003
-        essentialOnly: *id003
+        deferringBackground: *id001
+        essentialOnly: *id001
       additionalProperties: false
       required:
       - quotaId
@@ -6491,7 +6598,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/QuotaUsageItem'
-        evaluatedAt: *id001
+        evaluatedAt: *id002
         windowMode:
           type: string
           enum:
@@ -6650,10 +6757,10 @@ components:
             items:
               type: string
               maxLength: 64
-          signatureRequired: *id003
+          signatureRequired: *id001
           senderCount:
             type: integer
-          updatedAt: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - endpointCode
@@ -6685,7 +6792,7 @@ components:
           pattern: ^[a-z0-9-]{3,63}$
         platformCode:
           $ref: '#/components/schemas/PlatformCode'
-        signatureRequired: *id003
+        signatureRequired: *id001
         flowMapping:
           type: array
           items:
@@ -6708,7 +6815,7 @@ components:
     InboundEndpointUpdate:
       type: object
       properties:
-        signatureRequired: *id003
+        signatureRequired: *id001
         state:
           type: string
           enum:
@@ -6798,53 +6905,55 @@ components:
       required:
       - fingerprintsConfirmed
     SyncRun:
-      type: object
-      properties:
-        runId: *id004
-        kind:
-          type: string
-          enum:
-          - SERVICE_CATALOG
-          - MASTER_DATA
-          - OPEN_DATA
-          - SERVICE_RECONCILE
-        trigger:
-          type: string
-          enum:
-          - SCHEDULE
-          - EVENT
-          - MANUAL
-          - RETRY
-        state:
-          type: string
-          enum:
-          - PLANNED
-          - RUNNING
-          - COMPLETED
-          - COMPLETED_WITH_ERRORS
-          - FAILED
-        sent:
-          type: integer
-        accepted:
-          type: integer
-        rejected:
-          type: integer
-        error:
-          type: integer
-        receiptRef:
-          type:
-          - string
-          - 'null'
-        startedAt: *id001
-        finishedAt: *id007
-        startedBy:
-          type: string
-          maxLength: 64
-      additionalProperties: false
-      required:
-      - runId
-      - kind
-      - state
+      allOf:
+      - type: object
+        properties:
+          runId: *id004
+          kind:
+            type: string
+            enum:
+            - SERVICE_CATALOG
+            - MASTER_DATA
+            - OPEN_DATA
+            - SERVICE_RECONCILE
+          trigger:
+            type: string
+            enum:
+            - SCHEDULE
+            - EVENT
+            - MANUAL
+            - RETRY
+          state:
+            type: string
+            enum:
+            - PLANNED
+            - RUNNING
+            - COMPLETED
+            - COMPLETED_WITH_ERRORS
+            - FAILED
+          sent:
+            type: integer
+          accepted:
+            type: integer
+          rejected:
+            type: integer
+          error:
+            type: integer
+          receiptRef:
+            type:
+            - string
+            - 'null'
+          startedAt: *id002
+          finishedAt: *id007
+          startedBy:
+            type: string
+            maxLength: 64
+        additionalProperties: false
+        required:
+        - runId
+        - kind
+        - state
+      - $ref: '#/components/schemas/AllowedActions'
     SyncRunDetail:
       allOf:
       - $ref: '#/components/schemas/SyncRun'
@@ -6900,7 +7009,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ServiceCode'
-        full: *id003
+        full: *id001
       additionalProperties: false
       required:
       - platformCode
@@ -6916,7 +7025,7 @@ components:
           - PUSH
           - PULL
           - BOTH
-        since: *id001
+        since: *id002
       additionalProperties: false
       required:
       - datasetCode
@@ -6947,7 +7056,7 @@ components:
         snapshotVersion:
           type: string
           maxLength: 32
-        firstPublish: *id003
+        firstPublish: *id001
       additionalProperties: false
       required:
       - datasetCode
@@ -6967,14 +7076,14 @@ components:
           $ref: '#/components/schemas/PlatformCode'
         level:
           $ref: '#/components/schemas/HealthLevel'
-        since: *id001
+        since: *id002
         reasonCode:
           type: string
           maxLength: 32
         reasonDetail:
           type: string
           maxLength: 1000
-        securityHold: *id003
+        securityHold: *id001
         breaker:
           type: string
           enum:
@@ -6991,7 +7100,7 @@ components:
             errorRate5m: *id009
             p95Ms:
               type: integer
-            tokenOk: *id003
+            tokenOk: *id001
             crlAgeDays:
               type: integer
             certDaysLeft:
@@ -7008,14 +7117,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HealthItem'
-        evaluatedAt: *id001
+        evaluatedAt: *id002
       additionalProperties: false
       required:
       - items
     ProbeResult:
       type: object
       properties:
-        ok: *id003
+        ok: *id001
         steps:
           type: array
           items:
@@ -7048,8 +7157,8 @@ components:
             required:
             - name
             - status
-        startedAt: *id001
-        finishedAt: *id001
+        startedAt: *id002
+        finishedAt: *id002
       additionalProperties: false
       required:
       - ok
@@ -7074,6 +7183,23 @@ components:
           type: integer
         queueDepth:
           type: integer
+        p95Ms24h:
+          type: integer
+        series24h:
+          type: array
+          items:
+            type: object
+            properties:
+              hour: *id002
+              live:
+                type: integer
+              cache:
+                type: integer
+              rejected:
+                type: integer
+            additionalProperties: false
+          maxItems: 24
+        stale: *id001
         attention:
           type: array
           items:
@@ -7090,7 +7216,7 @@ components:
                 maxLength: 500
             additionalProperties: false
           maxItems: 50
-        evaluatedAt: *id001
+        evaluatedAt: *id002
       additionalProperties: false
       required:
       - platforms
@@ -7119,11 +7245,11 @@ components:
           - 'null'
         state:
           $ref: '#/components/schemas/TxnState'
-        fromCache: *id003
-        stale: *id003
+        fromCache: *id001
+        stale: *id001
         durationMs:
           type: integer
-        startedAt: *id001
+        startedAt: *id002
         traceId:
           type: string
       additionalProperties: false
@@ -7152,14 +7278,14 @@ components:
             type:
             - string
             - 'null'
-          payloadStored: *id003
+          payloadStored: *id001
           payloadHash:
             type: string
             maxLength: 71
           payloadExpiresAt: *id007
           attempts:
             type: integer
-          quotaCharged: *id003
+          quotaCharged: *id001
           remoteReference:
             type:
             - string
@@ -7169,7 +7295,7 @@ components:
             items:
               type: object
               properties:
-                at: *id001
+                at: *id002
                 stage:
                   type: string
                   maxLength: 32
@@ -7187,6 +7313,11 @@ components:
             $ref: '#/components/schemas/TransactionSummary'
         page:
           $ref: '#/components/schemas/PageMeta'
+        nextCursor:
+          type:
+          - string
+          - 'null'
+          description: Con trỏ keyset cho trang kế (`after`); rỗng khi hết.
       additionalProperties: false
       required:
       - items
@@ -7217,7 +7348,7 @@ components:
           type: string
         request: *id005
         response: *id005
-        expiresAt: *id001
+        expiresAt: *id002
         viewId: *id004
       additionalProperties: false
       required:
@@ -7265,7 +7396,7 @@ components:
           $ref: '#/components/schemas/SystemCode'
         serviceCode:
           $ref: '#/components/schemas/ServiceCode'
-        hour: *id001
+        hour: *id002
         calls:
           type: integer
         cacheHits:
@@ -7300,8 +7431,8 @@ components:
     UsageExportRequest:
       type: object
       properties:
-        from: *id001
-        to: *id001
+        from: *id002
+        to: *id002
         systemCode:
           $ref: '#/components/schemas/SystemCode'
         format:
@@ -7315,41 +7446,43 @@ components:
       - to
       - format
     AnomalyAlert:
-      type: object
-      properties:
-        alertId: *id004
-        systemCode:
-          $ref: '#/components/schemas/SystemCode'
-        serviceCode:
-          $ref: '#/components/schemas/ServiceCode'
-        rule:
-          type: string
-          enum:
-          - MASS_LOOKUP
-          - OFF_HOURS
-          - SPIKE
-          - CASE_FANOUT
-        evidence: *id005
-        state:
-          type: string
-          enum:
-          - OPEN
-          - RESOLVED
-        decision:
-          anyOf:
-          - type: string
+      allOf:
+      - type: object
+        properties:
+          alertId: *id004
+          systemCode:
+            $ref: '#/components/schemas/SystemCode'
+          serviceCode:
+            $ref: '#/components/schemas/ServiceCode'
+          rule:
+            type: string
             enum:
-            - CONFIRMED_LEGITIMATE
-            - REVOKE_REQUESTED
-            - SERVICE_BLOCKED
-          - type: 'null'
-        detectedAt: *id001
-      additionalProperties: false
-      required:
-      - alertId
-      - rule
-      - state
-      - detectedAt
+            - MASS_LOOKUP
+            - OFF_HOURS
+            - SPIKE
+            - CASE_FANOUT
+          evidence: *id005
+          state:
+            type: string
+            enum:
+            - OPEN
+            - RESOLVED
+          decision:
+            anyOf:
+            - type: string
+              enum:
+              - CONFIRMED_LEGITIMATE
+              - REVOKE_REQUESTED
+              - SERVICE_BLOCKED
+            - type: 'null'
+          detectedAt: *id002
+        additionalProperties: false
+        required:
+        - alertId
+        - rule
+        - state
+        - detectedAt
+      - $ref: '#/components/schemas/AllowedActions'
     AnomalyAlertList:
       type: object
       properties:
@@ -7448,8 +7581,8 @@ components:
                 pattern: ^14\.[a-z0-9.-]+$
               value: {}
               default: {}
-              securityParam: *id003
-              pending: *id003
+              securityParam: *id001
+              pending: *id001
               domain:
                 type: string
                 maxLength: 255
@@ -7495,41 +7628,43 @@ components:
         legacyRef: ngsp-lltp-tra-cuu
         sampleRatio: 0.1
     ParallelRun:
-      type: object
-      properties:
-        runId: *id004
-        serviceCode:
-          $ref: '#/components/schemas/ServiceCode'
-        sampleRatio: *id009
-        samples:
-          type: integer
-        matchRatio: *id009
-        state:
-          type: string
-          enum:
-          - RUNNING
-          - STOPPED
-          - CLOSED
-        readyForCutover: *id003
-        daysAtTarget:
-          type: integer
-        mismatches:
-          type: array
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-                maxLength: 255
-              count:
-                type: integer
-            additionalProperties: false
-        startedAt: *id001
-      additionalProperties: false
-      required:
-      - runId
-      - serviceCode
-      - state
+      allOf:
+      - type: object
+        properties:
+          runId: *id004
+          serviceCode:
+            $ref: '#/components/schemas/ServiceCode'
+          sampleRatio: *id009
+          samples:
+            type: integer
+          matchRatio: *id009
+          state:
+            type: string
+            enum:
+            - RUNNING
+            - STOPPED
+            - CLOSED
+          readyForCutover: *id001
+          daysAtTarget:
+            type: integer
+          mismatches:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  maxLength: 255
+                count:
+                  type: integer
+              additionalProperties: false
+          startedAt: *id002
+        additionalProperties: false
+        required:
+        - runId
+        - serviceCode
+        - state
+      - $ref: '#/components/schemas/AllowedActions'
     ParallelObservation:
       type: object
       properties:
@@ -7549,7 +7684,7 @@ components:
           type: integer
         legacyDurationMs:
           type: integer
-        observedAt: *id001
+        observedAt: *id002
       additionalProperties: false
       required:
       - observationId
@@ -7569,7 +7704,7 @@ components:
           type: string
           maxLength: 10485760
           description: Văn bản (≤ 10 MiB).
-        dryRun: *id003
+        dryRun: *id001
       additionalProperties: false
       required:
       - sourceKind
@@ -7634,7 +7769,7 @@ components:
           type: string
           maxLength: 64
           minLength: 1
-        freshData: *id003
+        freshData: *id001
       additionalProperties: false
       required:
       - serviceCode
@@ -7650,13 +7785,13 @@ components:
     ResultMeta:
       type: object
       properties:
-        fromCache: *id003
+        fromCache: *id001
         cacheAgeSeconds:
           type:
           - integer
           - 'null'
-        stale: *id003
-        signatureVerified: *id003
+        stale: *id001
+        signatureVerified: *id001
         dataTime: *id007
         durationMs:
           type: integer
@@ -7718,6 +7853,16 @@ components:
         state: QUEUED
         statusUrl: /internal/national/v1/async-invocations/6f0f6b1a-6a8e-4c52-8a3e-1f0d2b0a4c11
         queuePosition: 3
+    AsyncState:
+      type: string
+      enum:
+      - QUEUED
+      - SENDING
+      - SUCCEEDED
+      - FAILED
+      - UNKNOWN_RESULT
+      - CANCELLED
+      - EXPIRED
     AsyncStatus:
       type: object
       properties:
@@ -7744,7 +7889,7 @@ components:
           type:
           - string
           - 'null'
-        createdAt: *id001
+        createdAt: *id002
         finishedAt: *id007
       additionalProperties: false
       required:
@@ -7810,8 +7955,8 @@ components:
               type:
                 type: string
                 maxLength: 32
-              required: *id003
-              key: *id003
+              required: *id001
+              key: *id001
               description:
                 type: string
                 maxLength: 500
@@ -7872,7 +8017,7 @@ components:
         message:
           type: string
           maxLength: 500
-        updatedAt: *id001
+        updatedAt: *id002
       additionalProperties: false
       required:
       - proposalId
@@ -7885,7 +8030,7 @@ components:
           maxLength: 16
         configVersion:
           type: integer
-        generatedAt: *id001
+        generatedAt: *id002
         signature:
           type: string
           maxLength: 512
@@ -7929,7 +8074,7 @@ components:
           type: string
           maxLength: 128
           minLength: 8
-        signedAt: *id001
+        signedAt: *id002
         signature:
           type: string
           maxLength: 8192
@@ -7981,7 +8126,7 @@ components:
         subjectRef:
           type: string
           maxLength: 128
-        signedAt: *id001
+        signedAt: *id002
         signature:
           type: string
           maxLength: 8192

@@ -1,11 +1,11 @@
 ---
 ma_tai_lieu: D00-02
 ten: Sổ quyết định kiến trúc (ADR)
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Đội kỹ thuật, Hội đồng thẩm định
-mo_ta: Sổ chỉ mục các quyết định kiến trúc của Datahub, gồm dải số cấp theo nhóm, danh sách 60 ADR với trạng thái và nhật ký quyết định của chủ đầu tư.
+mo_ta: Sổ chỉ mục các quyết định kiến trúc của Datahub, gồm dải số cấp theo nhóm, danh sách 70 ADR với trạng thái và nhật ký quyết định của chủ đầu tư.
 tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước §9.2; D03-01 SAD; D03-07 Thiết kế ATTT; D03-09 Hạ tầng và DR; thư mục adr/
 ---
 
@@ -15,26 +15,26 @@ tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước §9.2; D03-01 SAD; D03-0
 
 **Mục tiêu.** Sổ ADR là chỉ mục của mọi quyết định kiến trúc có ảnh hưởng lâu dài của Datahub: công nghệ, mô hình dữ liệu, cách cách ly tenant, cách triển khai. Mỗi quyết định nêu bối cảnh, phương án đã cân nhắc, lý do chọn và hệ quả, để hội đồng thẩm định đánh giá được tính hợp lý của lựa chọn và đội kỹ thuật không phải tranh luận lại.
 
-**Phạm vi.** Tài liệu gồm quan hệ với 22 ADR cũ trong `docs/05-adr` của repo, bảng dải số cấp trước cho các luồng viết song song, danh sách 60 ADR kèm trạng thái và nhóm phụ trách, và nhật ký quyết định của chủ đầu tư. Nội dung từng ADR nằm ở file riêng trong thư mục `adr/`, không lặp lại ở đây.
+**Phạm vi.** Tài liệu gồm quan hệ với 22 ADR cũ trong `docs/05-adr` của repo, bảng dải số cấp trước cho các luồng viết song song, danh sách 70 ADR kèm trạng thái và nhóm phụ trách, bảng đề xuất ADR chưa có tệp, và nhật ký quyết định của chủ đầu tư. Nội dung từng ADR nằm ở file riêng trong thư mục `adr/`, không lặp lại ở đây.
 
 **Căn cứ.** Khung MADR rút gọn theo D00-01 §9.2. Các ADR về an toàn thông tin viện dẫn CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026/NĐ-CP, TCVN 14423:2026), ví dụ ADR-030 chọn cấp độ 3 sẵn sàng cấp độ 4; các ADR về dữ liệu cá nhân viện dẫn CMP-LAW-04 và CMP-LAW-05.
 
-**Những điểm hội đồng cần lưu ý.** (1) Trong 60 ADR, 6 ADR đã được chấp nhận ngày 25/11/2026 (ADR-004, 005, 030, 033, 061, 067) và 54 ADR ở trạng thái đề xuất, chờ duyệt ở cổng G1. (2) Bộ tài liệu độc lập với repo (quyết định Q11) nên đánh số lại, nhưng mỗi ADR ghi ADR tương ứng của repo trong mục Truy vết. (3) ADR-020 (Liquid Glass) thay ADR-016 của repo; ADR-003 bổ sung mô hình đa tenant; Backstage chưa được chọn làm cổng nhà phát triển. (4) Mỗi ADR một file, nên mọi thay đổi quyết định để lại dấu vết riêng và bảng này chỉ cần cập nhật trạng thái.
+**Những điểm hội đồng cần lưu ý.** (1) Trong 70 ADR, 6 ADR đã được chấp nhận ngày 25/11/2026 (ADR-004, 005, 030, 033, 061, 067) và 64 ADR ở trạng thái đề xuất, chờ duyệt ở cổng G1. (2) Bộ tài liệu độc lập với repo (quyết định Q11) nên đánh số lại, nhưng mỗi ADR ghi ADR tương ứng của repo trong mục Truy vết. (3) ADR-020 (Liquid Glass) thay ADR-016 của repo; ADR-003 bổ sung mô hình đa tenant; Backstage chưa được chọn làm cổng nhà phát triển. (4) Mỗi ADR một file, nên mọi thay đổi quyết định để lại dấu vết riêng và bảng này chỉ cần cập nhật trạng thái.
 
 **Con số chính.**
 
 | Chỉ số | Giá trị |
 |---|---|
-| ADR đã ghi | 60 |
+| ADR đã ghi | 70 |
 | ADR đã chấp nhận | 6 (ngày 25/11/2026) |
-| ADR đề xuất | 54 |
-| Dải số cấp trước | 7 |
+| ADR đề xuất | 64 |
+| Dải số cấp trước | 17 |
 | ADR cũ của repo được đối chiếu | 22 |
 | Dòng nhật ký quyết định chủ đầu tư | 5 |
 
 : Con số chính của sổ quyết định kiến trúc
 
-Các con số trên được đếm từ bảng ở mục 3, 4 và 5; trạng thái cập nhật tới ngày 26/11/2026.
+Các con số trên được đếm từ bảng ở mục 3, 4 và 5; trạng thái cập nhật tới ngày 27/11/2026.
 
 ## 1. Mục đích
 
@@ -89,7 +89,7 @@ Bảng dưới tóm tắt từng chương.
 |---|---|---|
 | 2 | Quan hệ với ADR của repo | Hội đồng, kiến trúc sư |
 | 3 | Dải số cấp trước theo nhóm | Kiến trúc sư, người viết |
-| 4 | Danh sách ADR, trạng thái, nhóm | Mọi người đọc |
+| 4 | Danh sách ADR, trạng thái, nhóm; mục 4.1 đề xuất ADR chưa có tệp | Mọi người đọc |
 | 5 | Nhật ký quyết định của chủ đầu tư | Hội đồng, quản lý dự án |
 
 : Cấu trúc chương của D00-02
@@ -111,6 +111,16 @@ Bảng dưới cấp trước dải số ADR cho từng luồng viết, để c�
 | ADR-050 … 059 | Danh mục dùng chung và các phân hệ khác | Luồng PH-07 và các phân hệ |
 | ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
 | ADR-070 … 074 | Sự kiện (PH-10) | Luồng PH-10 |
+| ADR-075 … 079 | Kết nối quốc gia (PH-14) | Luồng PH-14 |
+| ADR-080 … 084 | Dữ liệu chủ (PH-06) | Luồng PH-06 |
+| ADR-085 … 089 | Chất lượng dữ liệu (PH-08) | Luồng PH-08 |
+| ADR-090 … 094 | Quyền riêng tư (PH-09), đã dùng 090 … 093 | Luồng PH-09 |
+| ADR-095 … 099 | Cổng nhà phát triển (PH-15) | Luồng PH-15 |
+| ADR-110 … 114 | Quy trình liên thông (PH-11) | Luồng PH-11 |
+| ADR-160 … 164 | Báo cáo chỉ tiêu và sổ kiến trúc (PH-16) | Luồng PH-16 |
+| ADR-170 … 174 | Trợ lý AI (PH-17) | Luồng PH-17 |
+| ADR-180 … 184 | Vận hành và xử lý lỗi (PH-18) | Luồng PH-18 |
+| ADR-200 … 204 | Quản trị tenant (PH-20) | Luồng PH-20 |
 
 : Dải số ADR cấp trước cho từng luồng viết
 
@@ -180,8 +190,44 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-071](adr/ADR-071-giao-nhan-day-keo-qua-dh-runtime.md) | Giao nhận đẩy (webhook ký HMAC) và kéo (API, Kafka ngoài) qua mô-đun của dh-runtime | Đề xuất | PH-10 |
 | [ADR-072](adr/ADR-072-cap-phat-topic-acl-qua-gitops.md) | Cấp phát topic, ACL, hạn mức Kafka bằng tài nguyên Strimzi trong kho GitOps của tenant | Đề xuất | PH-10 |
 | [ADR-073](adr/ADR-073-cau-noi-di-tru-pulsar.md) | Di trú Hub Pulsar bằng cầu nối hai chiều tạm thời trên dh-runtime | Đề xuất | PH-10 |
+| [ADR-170](adr/ADR-170-spring-ai-pgvector-pg-core.md) | Spring AI và pgvector trên pg-core cho tri thức của trợ lý AI, truy hồi lai vector và từ khóa không dấu | Đề xuất | PH-17 |
+| [ADR-171](adr/ADR-171-cong-mo-hinh-apisix-ai-proxy.md) | Cổng mô hình qua APISIX ai-proxy, mô hình nội bộ mặc định, mô hình ngoài theo danh sách trắng và phiên bản đã duyệt | Đề xuất | PH-17 |
+| [ADR-172](adr/ADR-172-cong-cu-token-nguoi-dung-chi-doc.md) | Công cụ của trợ lý chạy bằng token người dùng, chỉ đọc; hành động ghi chỉ qua thẻ đề xuất người dùng xác nhận | Đề xuất | PH-17 |
+| [ADR-173](adr/ADR-173-phong-thu-tiem-lenh-ca-do.md) | Phòng thủ tiêm lệnh nhiều lớp và bộ ca đỏ chạy trong CI làm cổng phát hành mô hình và chỉ dẫn hệ thống | Đề xuất | PH-17 |
+| [ADR-174](adr/ADR-174-chi-muc-theo-su-kien-xoa-lan-truyen.md) | Lập chỉ mục tri thức theo sự kiện nguồn, chỉ dữ liệu Công khai và Nội bộ, xóa lan truyền hai pha | Đề xuất | PH-17 |
+| [ADR-180](adr/ADR-180-kho-tham-so-tap-trung-theo-tenant.md) | Kho tham số tập trung theo tenant trên PostgreSQL, lược đồ khóa do phân hệ đăng ký, làm mới bằng sự kiện | Đề xuất | PH-18 |
+| [ADR-181](adr/ADR-181-dlq-hop-nhat-chi-muc-postgresql.md) | Hàng đợi lỗi hợp nhất: chỉ mục trên PostgreSQL, payload gốc bất biến, payload lớn ở Garage, liên thông DLQ sự kiện của PH-10 | Đề xuất | PH-18 |
+| [ADR-182](adr/ADR-182-phat-lai-qua-loi-vao-nguon.md) | Phát lại bản tin lỗi luôn qua lối vào của nguồn, khóa lũy đẳng theo bản sửa, loạt lớn duyệt bốn mắt | Đề xuất | PH-18 |
+| [ADR-183](adr/ADR-183-khung-di-tru-dh-migrate.md) | Khung di trú hệ cũ: worker dh-migrate đọc JDBC chỉ đọc, ghi vào phân hệ đích qua API nhập, có chạy thử và báo cáo đối chiếu | Đề xuất | PH-18 |
+| [ADR-184](adr/ADR-184-thong-bao-outbox-smtp-sms.md) | Thông báo qua outbox, SMTP/TLS và SMS gateway REST, mẫu Mustache không logic có kiểm tra cấm dữ liệu Hạn chế | Đề xuất | PH-18 |
+| [ADR-200](adr/ADR-200-saga-khoi-tao-tu-xay-tren-postgresql.md) | Saga khởi tạo tenant tự xây trên PostgreSQL | Đề xuất | PH-20 |
+| [ADR-201](adr/ADR-201-git-la-trang-thai-mong-muon-csdl-la-ban-chieu.md) | Git là trạng thái mong muốn của tenant, CSDL là bản chiếu | Đề xuất | PH-20 |
+| [ADR-202](adr/ADR-202-sap-nhap-qua-hop-dong-ben-tham-gia.md) | Sáp nhập tenant qua hợp đồng bên tham gia, PH-18 chạy chuyển dữ liệu | Đề xuất | PH-20 |
+| [ADR-203](adr/ADR-203-kenh-stable-preview-nang-cap-theo-song.md) | Kênh STABLE và PREVIEW, nâng cấp theo sóng, ngưỡng lỗi 2% | Đề xuất | PH-20 |
+| [ADR-204](adr/ADR-204-anh-chup-su-dung-hang-gio-han-muc-hieu-luc.md) | Ảnh chụp sử dụng hằng giờ, hạn mức hiệu lực là min của trần và max của hợp đồng, ghi đè | Đề xuất | PH-20 |
 
-: Danh sách 60 ADR kèm trạng thái và nhóm phụ trách
+: Danh sách 70 ADR kèm trạng thái và nhóm phụ trách
+
+### 4.1. Đề xuất ADR chưa có tệp
+
+Bảng dưới gom các quyết định kiến trúc mà tập phân hệ đã nêu là "đề xuất ADR" nhưng chưa tạo tệp trong `adr/`. Dải đã cấp ở mục 3 được giữ cho đúng phân hệ; quyết định chưa cấp số sẽ lấy số trong dải còn trống 014 … 019 và 024 … 029 khi đưa vào duyệt ở cổng G1. Các ADR 170 … 174 và 180 … 184 đã có tệp và nằm ở bảng mục 4; số ADR-171 là cổng mô hình và ADR-173 là phòng thủ tiêm lệnh theo đúng tệp, nên dòng ghi ADR-171 là truy hồi lai và ADR-173 là chỉ dẫn hệ thống ở Phụ lục B của FRS PH-17 cần đổi theo tệp. Số 075 mà tập PH-15 đề xuất cho cổng nhà phát triển trùng dải PH-14, nên chuyển sang 095 (các tập PH-15 và PH-16 cần đổi dòng "ADR 075").
+
+| Số hoặc dải | Phân hệ | Nội dung đề xuất |
+|---|---|---|
+| 075 … 078 | PH-14 | (A) Ký số bản tin quốc gia bằng OpenBao `transit` qua nhà cung cấp JCA không có vật liệu khóa, kiểm khớp khóa hai lớp; (B) kiểm soát mục đích ở cổng quốc gia vì tài khoản NDXP dùng chung, đóng an toàn; (C) phân bổ hạn mức, ưu tiên dịch vụ thiết yếu, đệm gộp lượt trùng bằng script nguyên tử ở Valkey; (D) mặt phẳng dữ liệu không nối PostgreSQL, ghi bền qua spool đĩa và Kafka, cấu hình bằng ảnh chụp có chữ ký |
+| 080 … 084 | PH-06 | Đối sánh theo lô bằng Splink chạy Job K8s đọc staging; đối sánh trực tuyến bằng quy tắc xác định và `pg_trgm`; ảnh chụp đầy đủ cho lịch sử và hoàn tác bản ghi vàng; nguồn gốc ở cấp thuộc tính; sự kiện dữ liệu chủ không chứa DLCN, bên nhận tra lại theo mục đích |
+| 085 … 089 | PH-08 | Thực thi quy tắc tập hợp bằng SQL đẩy xuống và quy tắc mức bản ghi bằng CEL; bản ghi lỗi có dấu vân tay, che HMAC theo tenant, phân vùng tháng; truy cập dữ liệu đo qua khung nhìn hợp đồng PH-06 và kết nối PH-05 chỉ đọc; kiểm tra trực tuyến với bộ đệm quy tắc trong bộ nhớ; 089 dự phòng cho dựng PDF và ký số báo cáo |
+| 090 … 093 | PH-09 | Điểm quyết định chính sách tập trung (PH-09 là PAP và PIP, OPA là PDP); giả danh hóa HMAC và token, không bảng ánh xạ; ẩn danh hóa bằng ARX với k tối thiểu 10; phát hiện DLCN bằng mẫu và kiểm tổng, không dùng ML |
+| 095 | PH-15 | Cổng nhà phát triển tự xây trên `@datahub/ui` thay Backstage (đề xuất số 075 ở tập PH-15) |
+| 110 … 114 | PH-11 | Một engine Flowable nhúng đa tenant; trình thiết kế bpmn-js nhúng React; service task bất đồng bộ qua lệnh Kafka và outbox; Saga bằng sự kiện bù trừ BPMN cộng `saga_log`; lịch làm việc theo tenant |
+| 160 … 164 | PH-16 | Chỉ tiêu trên PostgreSQL phân vùng, không ClickHouse; công thức bằng CEL; báo cáo chính thức bất biến, ký số, lưu WORM; gói gửi quốc gia theo mẫu cấu hình qua PH-14; sổ kiến trúc tự xây, không dùng Backstage |
+| 200 … 204 | PH-20 | Saga khởi tạo tenant trên PostgreSQL; GitOps cấu hình tenant qua `dh-tenant-config`; hợp đồng bên tham gia sáp nhập; kênh phát hành và nâng cấp theo sóng; đo sử dụng hằng giờ và hạn mức hiệu lực |
+| Chưa cấp số | PH-01 | (a) Bàn giao thông tin xác thực một lần bằng response wrapping của OpenBao và đăng nhập đúng đầu mối; (b) mở rộng ADR-058 cho quy trình kết nạp HTTT nhiều bước, giữ đường nâng lên Flowable; (c) trần phạm vi (`ScopeCeiling`) là giới hạn trên của đăng ký sử dụng |
+| Chưa cấp số | PH-03 | (1) Plugin APISIX do Datahub viết bằng Lua và danh mục mười plugin được duyệt, bổ sung ADR-005; (2) bộ đồng bộ `dh-sync` bằng Go, định dạng ảnh chụp và hoàn nguyên có xác nhận; (3) kênh nhanh Valkey cho thu hồi token và tạm ngừng khẩn cấp, mô hình hai chặng `apisix-ext`, `apisix-int`; (4) mô hình mảnh tenant và bản ghép nền tảng của ảnh chụp cấu hình ở `QM-CHUNG`; (5) có điều kiện: phân trang con trỏ cho API đọc từ kho phân tích ClickHouse trên toàn hệ thống, nếu câu hỏi Q03-56 được chấp nhận |
+| Chưa cấp số | PH-12 | (a) Đăng nhập liên tenant qua nhà môi giới `dh-platform` và quyền có thời hạn; (b) chính sách của tenant chỉ thêm luật chặt hơn; (c) dữ liệu vai trò và quyền sinh thành gói ký; (d) thu hồi bằng `notBefore`, API kéo và Kafka; (e) bộ mở rộng Keycloak tối thiểu và ảnh tùy biến; (f) ký gói OPA bằng khóa transit; (g) chạy Rego cô lập trong `policy-runner`; (h) chốt tách nhiệm vụ, bốn mắt và máy trạng thái ở CSDL bằng trigger kèm khóa tư vấn, bổ sung ADR-069; (i) mẫu RLS G cho quyền có thời hạn vào tenant khác |
+| Chưa cấp số (dải 050 … 059 dùng chung PH-07 và khác) | PH-02 | Công bố có xác nhận từ cổng, hạn chế ghi ngay: `:publish` trả `202` khi cổng chưa xác nhận, trạng thái cuối (`PUBLISHED`) chỉ ghi sau API-02-082; không tạo tệp ADR cho tới khi đưa vào duyệt ở cổng G1 |
+
+: Đề xuất ADR chưa có tệp, theo dải hoặc phân hệ
 
 ## 5. Nhật ký quyết định của chủ đầu tư
 
@@ -203,3 +249,6 @@ Bảng dưới ghi các quyết định của chủ đầu tư ảnh hưởng t�
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: quan hệ với ADR của repo, dải số, danh sách ADR, nhật ký quyết định của chủ đầu tư |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 đến 1.5 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 3 và 5; viết lại chú thích bảng cho cụ thể |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm vào mục 3 các dải 075 đến 099, 110 đến 114, 160 đến 204 của PH-14, 06, 08, 09, 15, 11, 16, 17, 18, 20; thêm ADR-170 đến 174 và ADR-180 đến 184 vào danh sách (70 ADR); thêm mục 4.1 đề xuất ADR chưa có tệp |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mục 4.1 thêm đề xuất ADR của PH-02 (công bố có xác nhận từ cổng) |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: lập tệp ADR-200 đến ADR-204 của PH-20 (saga khởi tạo, Git và bản chiếu, sáp nhập, nâng cấp theo sóng, ảnh chụp sử dụng) |

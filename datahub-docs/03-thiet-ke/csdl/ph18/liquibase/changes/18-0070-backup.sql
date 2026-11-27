@@ -285,6 +285,8 @@ CREATE TABLE ph18_ops.merge_transfer (
   target_tenant    varchar(16) NOT NULL,
   mapping_ref      varchar(255) NOT NULL,
   dry_run          boolean NOT NULL DEFAULT true,
+  transfer_mode    varchar(5) NOT NULL DEFAULT 'FULL',
+  delta_since      timestamptz,
   status           varchar(24) NOT NULL DEFAULT 'QUEUED',
   progress_percent numeric(5,2) NOT NULL DEFAULT 0,
   rows_total       bigint,
@@ -310,6 +312,7 @@ CREATE TABLE ph18_ops.merge_transfer (
   CONSTRAINT ck_merge_transfer_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_merge_transfer_export_job FOREIGN KEY (tenant_id, export_job_id) REFERENCES ph18_ops.tenant_export_job (tenant_id, id),
   CONSTRAINT ck_merge_transfer_module CHECK (module ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_merge_transfer_mode CHECK (transfer_mode IN ('FULL', 'DELTA') AND (transfer_mode = 'DELTA' OR delta_since IS NULL)),
   CONSTRAINT ck_merge_transfer_tenants CHECK (source_tenant ~ '^T[0-9]{2}$' AND target_tenant = tenant_id AND source_tenant <> target_tenant),
   CONSTRAINT ck_merge_transfer_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'SUCCEEDED_WITH_ERRORS', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_merge_transfer_progress CHECK (progress_percent BETWEEN 0 AND 100),
@@ -317,12 +320,14 @@ CREATE TABLE ph18_ops.merge_transfer (
   CONSTRAINT ck_merge_transfer_report CHECK (report_status IN ('PENDING', 'REPORTED', 'REPORT_FAILED')),
   CONSTRAINT ck_merge_transfer_done CHECK (status <> 'SUCCEEDED' OR progress_percent = 100)
 );
-CREATE UNIQUE INDEX uq_merge_transfer_real ON ph18_ops.merge_transfer (tenant_id, merge_plan_id, module) WHERE NOT dry_run AND status NOT IN ('FAILED', 'CANCELLED');
+CREATE UNIQUE INDEX uq_merge_transfer_real ON ph18_ops.merge_transfer (tenant_id, merge_plan_id, module, transfer_mode) WHERE NOT dry_run AND status NOT IN ('FAILED', 'CANCELLED');
 CREATE INDEX ix_merge_transfer_plan ON ph18_ops.merge_transfer (tenant_id, merge_plan_id);
 CREATE TRIGGER tg_merge_transfer_touch BEFORE UPDATE ON ph18_ops.merge_transfer FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
-CREATE TRIGGER tg_merge_transfer_immutable BEFORE UPDATE ON ph18_ops.merge_transfer FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('merge_plan_id', 'module', 'source_tenant', 'target_tenant', 'mapping_ref', 'dry_run');
+CREATE TRIGGER tg_merge_transfer_immutable BEFORE UPDATE ON ph18_ops.merge_transfer FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('merge_plan_id', 'module', 'source_tenant', 'target_tenant', 'mapping_ref', 'dry_run', 'transfer_mode', 'delta_since');
 CREATE TRIGGER tg_merge_transfer_fsm_status BEFORE UPDATE ON ph18_ops.merge_transfer FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'QUEUED>RUNNING,QUEUED>CANCELLED,RUNNING>SUCCEEDED,RUNNING>SUCCEEDED_WITH_ERRORS,RUNNING>FAILED,RUNNING>CANCELLED');
 CALL ph18_ops.p_enable_rls('ph18_ops.merge_transfer', false);
-COMMENT ON TABLE ph18_ops.merge_transfer IS 'EN-18-55 Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; PH-18 báo tiến độ về PH-20 (participants/{module}:report). Dòng thuộc tenant đích. Mỗi kế hoạch, phân hệ chỉ một lần chạy thật đang hoạt động hoặc đã xong.';
+COMMENT ON TABLE ph18_ops.merge_transfer IS 'EN-18-55 Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; thêm mode (FULL hoặc DELTA, lượt bù cuối) và since cho lượt bù; PH-18 báo tiến độ về PH-20 (participants/{module}:report). Dòng thuộc tenant đích. Mỗi kế hoạch, phân hệ, chế độ chỉ một lần chạy thật đang hoạt động hoặc đã xong.';
 COMMENT ON COLUMN ph18_ops.merge_transfer.mapping_ref IS 'Tham chiếu bảng ánh xạ mã của kế hoạch sáp nhập do PH-20 giữ (không chép nội dung).';
+COMMENT ON COLUMN ph18_ops.merge_transfer.transfer_mode IS 'FULL chuyển toàn bộ dòng của phân hệ; DELTA là lượt bù cuối trước cutover, chỉ chuyển dòng có updated_at từ delta_since (PH-20 gọi sau khi nguồn chỉ đọc).';
+COMMENT ON COLUMN ph18_ops.merge_transfer.delta_since IS 'Mốc updated_at bắt đầu của lượt bù; chỉ có khi transfer_mode = DELTA, mặc định là finished_at của lượt FULL thật gần nhất.';
 --rollback DROP TABLE IF EXISTS ph18_ops.merge_transfer CASCADE;

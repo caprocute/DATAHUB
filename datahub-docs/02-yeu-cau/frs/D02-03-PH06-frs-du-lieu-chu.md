@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH06
 ten: Đặc tả yêu cầu chức năng phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, người quản lý dữ liệu, kỹ sư dh-data, kiểm thử viên
 phan_he: PH-06
@@ -835,7 +835,7 @@ Ghi chú: quy tắc chữ số kiểm tra MST theo Thông tư hướng dẫn đ�
 ::: dac-ta
 **Mục đích.** Bảo đảm mọi thuộc tính có mức phân loại (Công khai, Nội bộ, Hạn chế, Nhạy cảm) trước khi dữ liệu được nạp, để che, mã hóa và ghi nhật ký đúng Luật BVDLCN.
 
-**Tác nhân, quyền.** TA, DS đề xuất (`PERM-06-config`); phân loại chính thức do PH-09 quản lý (`PERM-09-classify` của TA, SO, DO).
+**Tác nhân, quyền.** TA, DS đề xuất (`PERM-06-config`); phân loại chính thức do PH-09 quản lý (`PERM-09-classify` của TA, SO, DO); đề xuất và xác nhận phân loại theo FR-09-004 (hạ mức cần bốn mắt).
 
 **Mức ưu tiên, đợt.** M · Đợt 3.
 
@@ -3514,7 +3514,7 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 
 **Mức ưu tiên, đợt.** M · Đợt 3.
 
-**Truy vết.** REQ-06; REQ-09; CMP-LAW-05; SEC-31; SEC-32.
+**Truy vết.** REQ-06; REQ-09; CMP-LAW-05; SEC-31; SEC-32; FR-09-027 (kế hoạch che trực tuyến), FR-09-028 (áp che).
 
 **Tiền điều kiện.** Thuộc tính có phân loại (FR-06-004).
 
@@ -3840,7 +3840,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 ::: dac-ta
 **Mục đích.** Thực hiện quyền của chủ thể dữ liệu theo Luật BVDLCN đối với dữ liệu chủ: được biết dữ liệu nào về mình đang được xử lý, từ nguồn nào, ai đã truy cập; được đề nghị sửa; được đề nghị hạn chế xử lý, phối hợp PH-09.
 
-**Tác nhân, quyền.** DS, SO, TA (`PERM-06-dsr`); PH-09 chuyển yêu cầu tiếp nhận ở kênh chung.
+**Tác nhân, quyền.** DS, SO, TA (`PERM-06-dsr`); PH-09 chuyển yêu cầu tiếp nhận ở kênh chung (FR-09-045 đến FR-09-051: tiếp nhận, xác minh, tra theo băm định danh, phân công, hạn xử lý, trả lời, báo cáo truy cập).
 
 **Mức ưu tiên, đợt.** M · Đợt 3.
 
@@ -3850,7 +3850,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 
 **Kích hoạt.** PH-09 chuyển yêu cầu; DS tạo ở UI-06-16 khi công dân đến trực tiếp.
 
-**Đầu vào.** `requestType` (`DsrType`: `ACCESS`, `RECTIFICATION`, `RESTRICTION`), `subjectIdentifier`, `verificationRef`, `details`, `channel`, `receivedAt`.
+**Đầu vào.** `requestType` (`DsrType`: `ACCESS`, `RECTIFICATION`, `RESTRICTION`), `subjectIdentifier`, `verificationRef`, `details`, `channel`, `receivedAt`. Khi PH-09 chuyển tác vụ, loại yêu cầu của PH-09 được ánh xạ: `ACCESS` sang `ACCESS`, `RECTIFY` sang `RECTIFICATION`, `RESTRICT` sang `RESTRICTION`; các loại `ERASE`, `OBJECT`, `WITHDRAW_CONSENT`, `INFO` PH-06 không nhận qua kênh này (PH-09 xử lý hoặc chuyển bên kiểm soát khác).
 
 **Luồng xử lý chính.**
 
@@ -4083,7 +4083,7 @@ Ghi chú đo. (1) NFR-06-008 đo precision chỉ trên các cặp có kết lu�
 
 ### 8.2. Tham số theo tenant
 
-Các tham số dưới đây do từng tỉnh tự chỉnh; bảng ghi giá trị mặc định, miền cho phép và ý nghĩa để quản trị tenant biết có thể đổi những gì.
+Các tham số dưới đây do từng tỉnh tự chỉnh; bảng ghi giá trị mặc định, miền cho phép và ý nghĩa để quản trị tenant biết có thể đổi những gì. Các tham số này được lưu ở kho tham số tập trung PH-18: PH-06 đăng ký không gian tên `06` với PH-18 khi khởi động (khóa, kiểu, mặc định, miền, mức áp dụng) và đọc qua thư viện cấu hình chung, bộ đệm tối đa 60 giây theo BR-18-006.
 
 | Khóa | Mặc định | Miền | Ý nghĩa |
 |---|---|---|---|
@@ -4266,7 +4266,7 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 
 ### 9.4. Danh mục API
 
-Định nghĩa đầy đủ ở D03-04-PH06 và `openapi-mdm.yaml`. Mã API-06-001…096 giữ nguyên; dòng gộp nhiều hành động ghi hành động đầu, các hành động còn lại có mã riêng API-06-097…120 (khớp D03-04-PH06 mục 3.1). Mã API-06-121…125 là API mới của bản 0.2, chưa có trong OpenAPI. Tiền tố `/api/mdm/v1`; API nội bộ có tiền tố `/internal` chỉ mở trong mạng nội bộ.
+Định nghĩa đầy đủ ở D03-04-PH06 và `openapi-mdm.yaml`. Mã API-06-001…096 giữ nguyên; dòng gộp nhiều hành động ghi hành động đầu, các hành động còn lại có mã riêng API-06-097…120 (khớp D03-04-PH06 mục 3.1). Mã API-06-121…125 là API mới của bản 0.2, đã có trong OpenAPI và D03-04-PH06. Tiền tố `/api/mdm/v1`; API nội bộ có tiền tố `/internal` chỉ mở trong mạng nội bộ.
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4736,6 +4736,8 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-06 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị để hai bên khớp nhau.
 
 | Tài liệu | Đề nghị |
@@ -4755,7 +4757,7 @@ PH-06 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từn
 | D03-03-PH06, D03-06-PH06, D05-02-PH06, D02-04-PH06 | Đồng bộ mã mới: EN-06-22…34, ERR-06-051…053, tham số mục 8.2, enum Phụ lục A; TC thay ký hiệu 403-PQ, 401-XT bằng ERR-00-403, ERR-00-401; UC bỏ đề nghị đã áp ở mục 15 |
 | D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 (Q06-24) |
 | D03-09 | `ResourceQuota` và `PriorityClass dh-batch-low` cho Job ở `dh-control`; cân nhắc node pool `batch` (Q06-25) |
-| PH-09 (bổ sung) | Họ tên (`display_name`, `name_norm`) lưu rõ có chỉ mục để tra gần đúng: cần phân loại họ tên của PH-09 chấp nhận (Q06-53); API chính sách che trả lời ≤ 50 ms cho ngân sách resolve |
+| PH-09 (bổ sung) | Họ tên (`display_name`, `name_norm`) lưu rõ có chỉ mục để tra gần đúng: cần phân loại họ tên của PH-09 chấp nhận (Q06-53, PH-09 xử lý ở Q09-19); API chính sách che trả lời ≤ 50 ms cho ngân sách resolve |
 | PH-10 (bổ sung) | Debezium Outbox Event Router cho `ph06_mdm.outbox_event`; kênh `PUSH` của đăng ký nhận cập nhật dùng kênh PH-10 (Q06-58) |
 | PH-14 (bổ sung) | `reconcile-batch-size` mặc định 1.000 khóa mỗi lô (`06.sync.reconcile-batch-size`), cần PH-14 xác nhận trần |
 | Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-06 đang dẫn |
@@ -4769,3 +4771,4 @@ PH-06 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từn
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của sáu tập (UC, MH, SDD, CSDL, API, TC): thêm API-06-121…125 và cập nhật 9.4 theo bảng tách API-06-097…120; ERR-06-051…053 và dùng mã nền ERR-00-401, 403, 428; EN-06-22…34; chín tham số mới ở 8.2; câu hiển thị 9.2 đủ mã; quy ước route 10.3; sửa FR-06-003, 007, 019, 021, 022, 025, 026, 028, 029, 030, 035, 045, 053, 056, 058, 013; ghi chú đo 8.1; enum mới Phụ lục A; mục 15 nhật ký hấp thụ; Q06-10…12 |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 60 FR đủ 17 mục chia tám nhóm, mở rộng từ 13 FR của SRS cũ; bốn máy trạng thái; 33 BR, 20 NFR, 64 mã lỗi, 15 sự kiện, 96 API dự kiến, 18 màn hình; Phụ lục A nguồn chuẩn enum; truy vết LGC gián tiếp và ánh xạ mã cũ |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dẫn FR-09 cho che và DSR, ánh xạ DsrType, tham số PH-18 với bộ đệm tối đa 60 giây |

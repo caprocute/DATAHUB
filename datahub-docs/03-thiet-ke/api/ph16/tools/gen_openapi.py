@@ -105,7 +105,7 @@ NOTE = {
     "118": "Gói chưa đạt lược đồ mẫu trả ERR-16-048; nội dung trùng lần nộp trước trả ERR-16-049; chỉ gói của báo cáo `PUBLISHED` (ERR-16-052). Trả bản xem trước.",
     "121": "Gửi qua PH-14; phát EVT-16-12. Lỗi kênh được thử lại tối đa `16.national.retry-max` lần.",
     "122": "Chỉ gói `FAILED` hoặc `REJECTED` còn lượt gửi lại (ERR-16-050).",
-    "124": "Chỉ qua `/internal` trong mạng nội bộ, scope `kpi.national-receipt` của PH-14. Mã băm không khớp ghi ERR-16-124.",
+    "124": "Chỉ qua `/internal` trong mạng nội bộ, scope `kpi.national-receipt` của PH-14. Mã băm không khớp ghi ERR-16-124. Biên nhận trùng `channelMessageId` của cùng gói là lũy đẳng: trả `204`, không ghi thêm dòng nhật ký.",
     "125": "Bất đồng bộ; đang có lần đối soát chạy trả ERR-16-056.",
     "128": "Giá trị ngoài miền hoặc vượt trần của PA trả ERR-16-051.",
     "129": "Đọc từ kho kiểm toán PH-13; khoảng thời gian tối đa 12 tháng mỗi lần (ERR-16-057).",

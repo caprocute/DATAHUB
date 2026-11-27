@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH16
 ten: Thiết kế chi tiết phần mềm phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
@@ -1223,7 +1223,7 @@ Dải ADR 160 đến 164 dành cho PH-16 (D00-04 §3.1); tập này tóm tắt n
 | ADR 161 | Công thức chỉ tiêu bằng CEL trên quan sát đã chuẩn hóa | Công thức là cấu hình có phiên bản chạy được an toàn. `cel-java`, hàm `obs`, `manual`, `prev`, giới hạn 50 ms và 10.000 bước, tái lập. Hệ quả: không có công thức tùy ý (SQL, script); cần thư viện hàm chuẩn. Cùng họ ADR 085 |
 | ADR 162 | Báo cáo chính thức bất biến, ký số, lưu WORM | Ảnh chụp JSON và PDF ký PAdES, SHA-256, kho Object Lock 10 năm, sửa bằng phiên bản đính chính. Hệ quả: không xóa được dù sai (chỉ rút có lý do); cần kiểm băm hằng đêm |
 | ADR 163 | Gói gửi quốc gia theo mẫu cấu hình ngoài, gửi qua PH-14 | Khung quốc gia chưa ban hành nên mẫu (JSON Schema và ánh xạ) có phiên bản ngoài mã; idempotent theo mã, phiên bản, băm; không giữ thông tin xác thực quốc gia. Hệ quả: đổi khuôn không cần phát hành; PH-14 cần loại nền tảng mới |
-| ADR 164 | Sổ kiến trúc tự xây trong `dh-platform`, tự đăng ký, không dùng Backstage | Tự đăng ký từ sự kiện nguồn trên PostgreSQL; `arch` độc lập `kpi` (chỉ `kpi` gọi `arch::api`). Hệ quả: không phụ thuộc Backstage; PH-15 chỉ tiêu thụ EVT-16-10 (ADR 075 đề xuất) |
+| ADR 164 | Sổ kiến trúc tự xây trong `dh-platform`, tự đăng ký, không dùng Backstage | Tự đăng ký từ sự kiện nguồn trên PostgreSQL; `arch` độc lập `kpi` (chỉ `kpi` gọi `arch::api`). Hệ quả: không phụ thuộc Backstage; PH-15 chỉ tiêu thụ EVT-16-10 (ADR 095 đề xuất) |
 | Chốt ở SDD | Dấu yêu cầu tính lại ở CSDL, không chỉ ở Valkey | Bền hơn khi mất Valkey, thêm cột `recompute_requested_at` ở kỳ (§13.6) |
 | Chốt ở SDD | Hạ tầng dùng chung `platform.shared` cho outbox, inbox, kiểm toán, tham số | Để `arch` không phụ thuộc `kpi`; ArchUnit kiểm |
 | Chốt ở SDD | Công bố không giữ giao dịch CSDL qua các bước ngoài (ký, WORM) | Tránh khóa lâu; phục hồi bằng khóa đối tượng định danh (§4.9) |
@@ -1251,6 +1251,8 @@ Mười câu hỏi sau chưa có trả lời; thiết kế dùng phương án n�
 
 ### 13.6. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS Phụ lục A) và các đề nghị với tài liệu khác. Mỗi đề nghị do chủ tài liệu tương ứng nhận ở bản kế tiếp; SDD không tự sửa tài liệu ngoài phạm vi. Ba dòng đầu và dòng FRS đã được FRS 0.2, CSDL 0.2 xử lý ở đợt đồng bộ 26/11/2026 (FRS Phụ lục C, HT-13…18); kết quả ghi cuối ô đề nghị.
 
 | Tài liệu | Đề nghị | Mục SDD |
@@ -1274,3 +1276,4 @@ Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS P
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: hai mô-đun `kpi` và `arch` với 14 thành phần có khối đặc tả 10 mục, bộ tính CEL, tiếp nhận quan sát idempotent, tổng hợp fail-soft, công bố bốn mắt ký số WORM, sổ kiến trúc tự đăng ký, gói quốc gia qua PH-14, bảy sơ đồ trình tự, thuật toán độ đầy đủ, trạng thái, điểm nhóm, ngân sách hiệu năng, năm ADR đề xuất 160…164, mười câu hỏi mở Q16-20…29 và phụ lục đề nghị đồng bộ các điểm lệch CSDL 0.1 với FRS |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2, CSDL 0.2: EVT-16-14 ở `PeriodCloser`; ERR-16-059 khi xác nhận số tay; ERR-16-061 và chuyển `APPROVED` → `CHANGES_REQUESTED` của báo cáo; API đẩy trả `202`, `207`, lô 1…500; xử lý lại ghi `REPROCESSED`; ghi kết quả hấp thụ ở §13.6 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095 |

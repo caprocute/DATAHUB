@@ -95,7 +95,7 @@ for c, http, mean in errs:
         r2.append(f"| {c} | {http} | {mean.strip()} | {u} |")
 rs = re.search(r"\| Lý do \(`reason`\) \|.*?\n\n", frs, re.S)
 rsn = re.search(r"(\| Mã \| Câu hiển thị \| Vị trí \|.*?)\n\n", frs, re.S)
-blocks["errors"] = ("### 6.1. Lỗi API quản trị (ERR-12-001…047)\n\n" + "\n".join(r1) + "\n\n: Mã lỗi control plane của PH-12\n\n"
+blocks["errors"] = ("### 6.1. Lỗi API quản trị (ERR-12-001…047)\n\nBảng sau là danh sách chuẩn các mã lỗi của API quản trị PH-12 với mã HTTP, ý nghĩa và các API có thể phát sinh lỗi đó; các tập khác lấy mã HTTP và câu thông báo từ đây.\n\n" + "\n".join(r1) + "\n\n: Mã lỗi control plane của PH-12\n\n"
     "### 6.2. Lỗi runtime (ERR-12-101…125)\n\nCác mã dưới đây phát sinh ở API quyết định (`/api/authz/v1`, thân RFC 9457) và ở điểm cuối OIDC của Keycloak (thân RFC 6749, mã chỉ ghi vào nhật ký và hiển thị ở trang của Keycloak).\n\n"
     + "\n".join(r2) + "\n\n: Mã lỗi runtime của PH-12\n\n"
     "### 6.3. Thông báo hiển thị theo mã lỗi\n\nBảng sau lấy nguyên từ FRS §9.2 để hai tài liệu không lệch; nguồn chuẩn của câu hiển thị là D03-06-PH12 §5.2.\n\n"

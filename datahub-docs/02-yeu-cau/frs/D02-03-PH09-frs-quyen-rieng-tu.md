@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH09
 ten: Đặc tả yêu cầu chức năng phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, chủ quản dữ liệu, cán bộ ATTT, kỹ sư dh-data, kiểm thử viên
 phan_he: PH-09
@@ -385,7 +385,7 @@ Bốn mắt (FR-00-071, ADR-046) áp dụng cho: hạ mức phân loại, gỡ n
 
 Cặp loại trừ đề nghị cho D02-08 §4: SO không đồng thời giữ `PERM-09-purpose-approve` (không vừa đề nghị vừa duyệt khôi phục); DS và DA là cặp loại trừ trong cùng tenant (như PH-06); người soạn chính sách (`PERM-09-policy`) không duyệt chính sách đó dù có `PERM-09-policy-approve`.
 
-HTTT và phân hệ gọi PH-09 bằng token dịch vụ. Scope: `privacy:decide` (quyết định, kế hoạch che, chỉ mục phân loại, bundle, băm chủ thể, báo lượt), `privacy:apply` (áp che bản tin), `privacy:pseudonymize` (giả danh hóa), `privacy:register` (đăng ký phần tử, mức hợp đồng, kiểm tra kích hoạt, tiếp nhận yêu cầu chủ thể từ kênh công), `privacy:consent` (ghi, tra đồng ý), cùng scope `purpose:{mã}` mang mục đích của lời gọi (D02-08 §5). Data plane còn kiểm danh tính DU theo SPIFFE ID của Istio (SEC-15): PH-03, PH-04, PH-06, PH-14, PH-19 có `privacy:decide` và `privacy:apply`; chỉ PH-04 và PH-17 có `privacy:pseudonymize`; `privacy:consent` cấp cho HTTT có tiện ích đồng ý. Job ARX dùng tài khoản CSDL riêng chỉ đọc bảng nguồn được giao và ghi vào vùng lưu trữ tập ẩn danh.
+HTTT và phân hệ gọi PH-09 bằng token dịch vụ. Scope: `privacy:decide` (quyết định, kế hoạch che, chỉ mục phân loại, bundle, băm chủ thể, báo lượt), `privacy:apply` (áp che bản tin), `privacy:pseudonymize` (giả danh hóa), `privacy:register` (đăng ký phần tử, mức hợp đồng, kiểm tra kích hoạt, tiếp nhận yêu cầu chủ thể từ kênh công, tiếp nhận sự cố có dữ liệu cá nhân từ PH-18 ở API-09-203), `privacy:consent` (ghi, tra đồng ý), cùng scope `purpose:{mã}` mang mục đích của lời gọi (D02-08 §5). Data plane còn kiểm danh tính DU theo SPIFFE ID của Istio (SEC-15): PH-03, PH-04, PH-06, PH-14, PH-19 có `privacy:decide` và `privacy:apply`; chỉ PH-04 và PH-17 có `privacy:pseudonymize`; PH-08 và PH-17 chỉ cần đọc phân loại nên chỉ có `privacy:decide` cho `classification-index` và `classification:check`, PH-08 thêm `privacy:register` để đề xuất phân loại cho dữ liệu trọng yếu (CDE); `privacy:consent` cấp cho HTTT có tiện ích đồng ý. Job ARX dùng tài khoản CSDL riêng chỉ đọc bảng nguồn được giao và ghi vào vùng lưu trữ tập ẩn danh.
 
 ## 4. Khái niệm và mô hình nghiệp vụ
 
@@ -803,7 +803,7 @@ Hình cho thấy FR-09-004 là cổng duy nhất để một phân loại có hi
 ::: dac-ta
 **Mục đích.** Đưa mọi trường của thực thể nội bộ, lược đồ API, lược đồ sự kiện vào danh mục phần tử dữ liệu (DD-09), từ phân hệ gọi, từ lược đồ nhập vào và từ khai báo MVP (`@Classified`, `x-dh-classification`).
 
-**Tác nhân, quyền.** PH-02, PH-04, PH-06, PH-10 (scope `privacy:register`); TA, SO, DS, SV (`PERM-09-classify`); ngừng phần tử: TA, SO, DO.
+**Tác nhân, quyền.** PH-02, PH-04, PH-06, PH-08, PH-10 (scope `privacy:register`; PH-08 đề xuất phân loại cho CDE ở trạng thái `PROPOSED`); TA, SO, DS, SV (`PERM-09-classify`); ngừng phần tử: TA, SO, DO.
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -3401,7 +3401,7 @@ Khi có vi phạm, thời gian là ràng buộc cứng: thông báo Cục A05 tr
 ::: dac-ta
 **Mục đích.** Ghi nhận vi phạm ngay khi phát hiện và đánh giá loại, quy mô, mức nghiêm trọng.
 
-**Tác nhân, quyền.** TO, SO, TA (`PERM-09-breach`); PH-13, PH-18 gửi cảnh báo.
+**Tác nhân, quyền.** TO, SO, TA (`PERM-09-breach`); PH-13 gửi cảnh báo; PH-18 chuyển sự cố có dữ liệu cá nhân bằng tài khoản máy (scope `privacy:register`).
 
 **Mức ưu tiên, đợt.** M · Đợt 2.
 
@@ -3430,7 +3430,7 @@ Khi có vi phạm, thời gian là ràng buộc cứng: thông báo Cục A05 tr
 2. SO đánh giá (`ASSESSING`): ảnh hưởng, `BreachSeverity` (`LOW`, `MEDIUM`, `HIGH`), có dữ liệu nhạy cảm không, có phải vi phạm không.
 3. Không phải vi phạm cần SO duyệt và lý do (BR-09-056).
 
-**Luồng thay thế.** Tự tạo từ sự cố PH-18.
+**Luồng thay thế.** Tự tạo từ sự cố PH-18: PH-18 gọi API-09-203 qua `apisix-int` bằng tài khoản máy có scope `privacy:register`, với `source = INCIDENT_PH18`, `incidentRef` là mã sự cố, `detectedAt` là thời điểm phát hiện sự cố (mốc bắt đầu đồng hồ 72 giờ) và `Idempotency-Key` theo mã sự cố; PH-09 trả mã hồ sơ vụ việc.
 
 **Luồng ngoại lệ.**
 
@@ -3818,7 +3818,7 @@ Các quy tắc dưới đây áp dụng xuyên suốt nhiều chức năng; cộ
 | Mã | Yêu cầu | Chỉ tiêu | Điều kiện đo |
 |---|---|---|---|
 | NFR-09-001 | Độ trễ quyết định mục đích | p95 ≤ 20 ms tại điểm thực thi có đệm (trúng đệm ≤ 2 ms); p95 ≤ 50 ms và p99 ≤ 100 ms khi gọi trực tiếp `purpose:decide` | 1.000 yêu cầu mỗi giây, 3 bản sao, hồ sơ tỉnh vừa (GĐ-07) |
-| NFR-09-002 | Độ trễ kế hoạch che | p95 ≤ 50 ms khi gọi trực tiếp; trúng đệm ≤ 2 ms | Như trên, 200 trường mỗi kế hoạch |
+| NFR-09-002 | Độ trễ kế hoạch che và tra phân loại | p95 ≤ 50 ms khi gọi trực tiếp; trúng đệm ≤ 2 ms; tra phân loại trường (`classification-index`, `classification:check`, giao diện `ClassificationLookupApi`) p95 ≤ 100 ms cho PH-08, PH-17 | Như trên, 200 trường mỗi kế hoạch |
 | NFR-09-003 | Độ trễ áp che bản tin | p95 ≤ 30 ms cho bản tin 10 KB không băm có khóa; p95 ≤ 80 ms khi có băm có khóa hoặc token hóa theo lô | `messages:apply`, 3 bản sao |
 | NFR-09-004 | Thông lượng quyết định | ≥ 5.000 yêu cầu mỗi giây toàn cụm data plane (3 bản sao), không tăng độ trễ quá 20% so với NFR-09-001 | Kiểm thử tải 30 phút |
 | NFR-09-005 | Đồng bộ bundle | p99 ≤ 60 giây từ khi chấp thuận hoặc chính sách có hiệu lực đến khi mọi OPA nạp bundle; thu hồi và tạm dừng p95 ≤ 15 giây qua sự kiện đẩy | Đo từ EVT phát đến chỉ số `bundle_loaded` của từng OPA |
@@ -4019,9 +4019,9 @@ Sự kiện phát qua Kafka theo mẫu outbox (ADR-042), phong bì CloudEvents, 
 
 | Mã | Topic | Khi nào | Bên tiêu thụ |
 |---|---|---|---|
-| EVT-09-01 | `{tenant}.privacy.classification.changed.v1` | Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới) | PH-02, PH-04, PH-06, PH-13 |
+| EVT-09-01 | `{tenant}.privacy.classification.changed.v1` | Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới) | PH-02, PH-04, PH-06, PH-08, PH-13, PH-17 |
 | EVT-09-02 | `{tenant}.privacy.classification.scan-finished.v1` | Lượt quét phát hiện kết thúc | PH-13, UI-09-04 |
-| EVT-09-03 | `{tenant}.privacy.contract-level.changed.v1` | Mức phân loại của hợp đồng API, topic, luồng đổi | PH-02, PH-03, PH-04, PH-10 |
+| EVT-09-03 | `{tenant}.privacy.contract-level.changed.v1` | Mức phân loại của hợp đồng API, topic, luồng đổi | PH-02, PH-03, PH-04, PH-10, PH-17 |
 | EVT-09-04 | `{tenant}.privacy.activity.activated.v1` | Hoạt động xử lý được kích hoạt hoặc ngừng | PH-13 |
 | EVT-09-05 | `{tenant}.privacy.purpose-request.submitted.v1` | Yêu cầu khai thác được gửi thẩm định | PH-11 hoặc Việc của tôi, chủ quản dữ liệu |
 | EVT-09-06 | `{tenant}.privacy.purpose-grant.approved.v1` | Chấp thuận được cấp hoặc sửa, gia hạn | PH-02, PH-03, PH-12, HTTT yêu cầu |
@@ -4262,7 +4262,7 @@ Control plane ở `/api/privacy/v1` qua APISIX, xác thực token người dùng
 | API-09-200 | `POST /dpia-records/{dpiaId}:export-a05` | 057 | ropa | Xuất hồ sơ gửi Cục A05 (nền) |
 | API-09-201 | `POST /dpia-records/{dpiaId}:mark-submitted` | 057 | ropa | Ghi nhận đã gửi, số công văn |
 | API-09-202 | `GET /breaches` | 058 | breach | Liệt kê vụ việc |
-| API-09-203 | `POST /breaches` | 058 | breach | Ghi nhận vi phạm |
+| API-09-203 | `POST /breaches` | 058 | breach / scope privacy:register | Ghi nhận vi phạm (người dùng hoặc PH-18) |
 | API-09-204 | `GET /breaches/{breachId}` | 058 | breach | Chi tiết vụ việc |
 | API-09-205 | `PATCH /breaches/{breachId}` | 058 | breach | Cập nhật mô tả, phạm vi |
 | API-09-206 | `POST /breaches/{breachId}:assess` | 058 | breach | Đánh giá ảnh hưởng, mức nghiêm trọng |
@@ -4642,6 +4642,8 @@ Các enum từ `LogPolicy` đến `AuditOutcome` (trừ `AccessRequestKind`) l�
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-09 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị để hai bên khớp nhau. PH-09 không tự sửa các tài liệu dùng chung.
 
 | Tài liệu | Đề nghị |
@@ -4729,3 +4731,4 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 64 FR đủ 17 mục chia 11 nhóm, mở rộng từ 11 FR của SRS cũ; 62 BR, 26 NFR, 82 + 13 mã lỗi, 32 sự kiện, 245 API dự kiến, 22 màn hình, 55 thực thể, 43 tham số |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, MH, SDD, CSDL, API, TC (bảng ở Phụ lục C): rank 1 đến 4, tên thư viện `dh-privacy-client`, 4 mã lỗi mới (ERR-09-079 đến 082), 8 API mới, 3 NFR mới, 7 tham số mới, 15 enum mới, 4 thực thể mới |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm PH-08 và PH-17 vào bên dùng phân loại (FR-09-003, EVT-09-01, EVT-09-03, NFR-09-002 tra phân loại p95 ≤ 100 ms), cho PH-18 gọi API-09-203 bằng scope `privacy:register` (FR-09-058) |

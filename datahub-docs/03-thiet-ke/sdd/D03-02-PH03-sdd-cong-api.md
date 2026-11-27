@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH03
 ten: Thiết kế chi tiết phần mềm phân hệ PH-03 Cổng API
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect và gateway, kiến trúc sư, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-03
@@ -175,7 +175,7 @@ Module `gateway` cùng DU với PH-01 và PH-02 nên gọi nhau trong tiến tr�
 
 | Bên | Hướng | Cách | Dùng cho |
 |---|---|---|---|
-| PH-02 (module `catalog`) | PH-03 đọc | `PublishedApiQuery`, `PlanQuery`, `SubscriptionQuery` (Modulith) và sự kiện nội bộ | Nguồn route, gói, đăng ký cho FR-03-039; `critical`, `deprecatedAt`, `sunsetAt`, `policyPackage` |
+| PH-02 (module `catalog`) | PH-03 đọc | `catalog.api.PublishedConfigApi` (phạm vi `catalog:gateway-read`, tên theo D03-02-PH02; trả dữ liệu công bố gồm API, gói, bên đăng ký) (Modulith) và sự kiện nội bộ | Nguồn route, gói, đăng ký cho FR-03-039; `critical`, `deprecatedAt`, `sunsetAt`, `policyPackage`. Chiều ngược lại, module `gateway` cài cổng `catalog.spi.GatewayApplyPort` (`requestApply`, `status`, `describe(env)` trả số phiên bản cấu hình từng pod và băm nguồn từng route, `rebuild`), đóng dấu `contentHash` của PH-02 vào route đã sinh, gọi `GatewayAckApi` (API-02-082) khi nạp xong và chấp nhận số phiên bản cấu hình nhảy vọt; tên route theo quy ước `{apiCode}:v{major}:{operationId}` để PH-13 gom số đo theo API |
 | PH-02 | PH-03 → PH-02 | EVT-03-01, 03, 07, 12 | Kết quả phát, cảnh báo ngưỡng, ảnh chụp bị từ chối |
 | PH-01 (module `onboarding`) | PH-01 → PH-03 | REST API-03-013…015, scope `gateway:sync` | Saga kết nạp tạo, gỡ consumer |
 | PH-12 | PH-12 → PH-03 | REST API-03-053, scope `gateway:revoke` | Đẩy danh sách chặn token |
@@ -1641,7 +1641,7 @@ PH-03 là cửa vào duy nhất nên bảo mật là chức năng chính chứ k
 
 ### 8.1. Bảng chuyển trạng thái
 
-Mười một máy trạng thái của PH-03 có bảng dưới. Tám máy đầu (route, consumer, ngoại lệ WAF, ảnh chụp, yêu cầu thay đổi, tạm ngừng khẩn cấp, chuyển tiếp tenant, ngoại lệ TLS 1.2) lưu ở PostgreSQL; ba máy sau (chế độ WAF của nút, trạng thái nạp của `dh-sync`, trạng thái đồng bộ nút) là trạng thái suy ra hoặc cục bộ của nút, không có bản ghi. Cột cuối nêu nơi máy chủ kiểm chuyển trạng thái; giao diện không phải nơi bảo vệ.
+Mười bốn máy trạng thái của PH-03 có bảng dưới. Mười một máy lưu ở PostgreSQL: tám máy (route, consumer, ngoại lệ WAF, ảnh chụp, yêu cầu thay đổi, tạm ngừng khẩn cấp, chuyển tiếp tenant, ngoại lệ TLS 1.2) cùng ba máy mà tập CSDL bổ sung là luật vá ảo (`WAF_PATCH`), giữ tổng hợp sau quay lui (`TENANT_HOLD`) và nhập hệ cũ (`IMPORT_JOB`). Cặp chuyển hợp lệ nằm ở bảng `state_transition` và trigger `tg_state_guard` chặn mọi cập nhật cột `state` ngoài bảng; nội dung ảnh chụp đã ký được giữ bất biến bằng trigger `tg_write_once` (D03-03-PH03 chương 1 và 5). Ba máy còn lại (chế độ WAF của nút, trạng thái nạp của `dh-sync`, trạng thái đồng bộ nút) là trạng thái suy ra hoặc cục bộ của nút, không có bản ghi. Cột cuối nêu nơi máy chủ kiểm chuyển trạng thái; giao diện không phải nơi bảo vệ.
 
 | Đối tượng | Từ | Lệnh | Sang | Kiểm ở máy chủ |
 |---|---|---|---|---|
@@ -2071,6 +2071,8 @@ Thiết kế dựa vào một số hành vi của APISIX 3.11 chưa được ki�
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung; các việc dưới đây để đợt đồng bộ cuối thực hiện hoặc để các luồng phân hệ khác tiếp nhận.
 
 | Tài liệu | Đề nghị |
@@ -2095,4 +2097,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn trình bày: Tóm tắt cho hội đồng thẩm định, giới thiệu, vị trí kiến trúc (hai chặng, vùng mạng), cấu trúc mã nguồn (module `gateway`, plugin Lua, `dh-sync`), 16 thành phần với bảng đặc tả 10 mục, 11 biểu đồ tuần tự, 11 máy trạng thái, đa tenant, bảo mật theo SEC, thử lại và mở hay đóng, tham số và cờ, chỉ số và cảnh báo, ngân sách hiệu năng, kiểm thử, lộ trình kèm bảy điều cần xác minh, rủi ro, 8 câu hỏi mở Q03-20…27 và Đề nghị đồng bộ |
-
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: máy trạng thái ở CSDL (§8.1), GatewayApplyPort và PublishedConfigApi (§2.3) |

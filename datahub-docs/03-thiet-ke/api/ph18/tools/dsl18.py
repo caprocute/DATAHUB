@@ -8,7 +8,7 @@ hash (SHA-256), ikey (khóa lũy đẳng dlqId:revision). Mảng `[kiểu]`, tha
 import re
 
 REFS = {'pkey': 'ParamKey', 'fkey': 'FlagKey', 'scode': 'SourceCode', 'ph': 'ModuleCode', 'tn': 'TenantCode', 'err': 'ErrorCode',
-        'tcode': 'TemplateCode', 'ttype': 'TaskTypeCode', 'trace': 'TraceId', 'vault': 'VaultRef', 'hash': 'Sha256', 'ikey': 'ReplayIdempotencyKey'}
+        'tcode': 'TemplateCode', 'ttype': 'TaskTypeCode', 'trace': 'TraceId', 'vault': 'VaultRef', 'hash': 'Sha256', 'ikey': 'ReplayIdempotencyKey', 'mpid': 'MergePlanId'}
 TYPES = {'s': {'type': 'string'}, 'i': {'type': 'integer'}, 'n': {'type': 'number'}, 'b': {'type': 'boolean'},
          'ts': {'type': 'string', 'format': 'date-time'}, 'd': {'type': 'string', 'format': 'date'},
          'u': {'type': 'string', 'format': 'uuid'}, 'o': {'type': 'object', 'additionalProperties': True},

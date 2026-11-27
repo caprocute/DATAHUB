@@ -69,8 +69,9 @@ paths:
         perms:
         - PERM-12-read
         scopes: []
-      description: Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`,
-        `LOCKED` xếp đầu khi không có `sort`.
+      description: '`facets` kèm số người dùng thuộc nhóm bắt buộc MFA mà chưa có (`mfaRequiredMissing`) và số tài khoản sắp bị vô hiệu vì không
+        dùng (`inactivitySoon`); lọc theo MFA bằng tham số `mfa`. Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm
+        tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`, `LOCKED` xếp đầu khi không có `sort`.'
       parameters:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
@@ -4211,7 +4212,7 @@ paths:
       security:
       - oauth2Service:
         - iam:realm-provision
-      description: 'PH-20 gọi ở bước 2 của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở.'
+      description: 'PH-20 gọi ở bước `S03_REALM` của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở.'
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -5523,6 +5524,7 @@ paths:
         perms:
         - PERM-12-decision-read
         scopes: []
+      description: Mỗi lượt xem dữ liệu đã che được ghi vết sang PH-13 (FR-12-057); phản hồi liệt kê `maskedFields`.
       parameters:
       - $ref: '#/components/parameters/decisionIdPath'
       - $ref: '#/components/parameters/Traceparent'
@@ -6509,6 +6511,10 @@ components:
               additionalProperties:
                 type: integer
             orgCode: *id007
+            mfaRequiredMissing:
+              type: integer
+            inactivitySoon:
+              type: integer
           additionalProperties: false
       additionalProperties: false
       required:
@@ -7404,6 +7410,12 @@ components:
         decidedAt: *id006
         activeFrom: *id006
         expiresAt: *id006
+        remainingSeconds:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Số giây còn lại tới `expiresAt`, tính ở máy chủ để giao diện đếm ngược không phụ thuộc đồng hồ máy.
         createdAt: *id002
         createdBy: *id016
         updatedAt: *id002
@@ -9174,6 +9186,12 @@ components:
           type: string
           maxLength: 64
         sampled: *id005
+        maskedFields:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          description: Tên trường đã che trong bản ghi trả về.
       additionalProperties: false
       required:
       - decisionId

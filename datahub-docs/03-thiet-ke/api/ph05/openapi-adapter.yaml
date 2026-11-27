@@ -4083,7 +4083,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-003
+            type: https://datahub.gov.vn/errors/ERR-05-003
             title: Dữ liệu không hợp lệ theo lược đồ
             status: 400
             code: ERR-05-003
@@ -4095,7 +4095,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-012
+            type: https://datahub.gov.vn/errors/ERR-05-012
             title: Thiếu token hoặc token hết hạn
             status: 401
             code: ERR-05-012
@@ -4107,7 +4107,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-012
+            type: https://datahub.gov.vn/errors/ERR-05-012
             title: Không đủ quyền
             status: 403
             code: ERR-05-012
@@ -4119,7 +4119,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-001
+            type: https://datahub.gov.vn/errors/ERR-05-001
             title: Không tìm thấy hoặc thuộc tenant khác
             status: 404
             code: ERR-05-001
@@ -4131,7 +4131,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-008
+            type: https://datahub.gov.vn/errors/ERR-05-008
             title: Trạng thái không cho phép
             status: 409
             code: ERR-05-008
@@ -4143,7 +4143,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-007
+            type: https://datahub.gov.vn/errors/ERR-05-007
             title: ETag không khớp
             status: 412
             code: ERR-05-007
@@ -4155,7 +4155,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-035
+            type: https://datahub.gov.vn/errors/ERR-05-035
             title: Dữ liệu mẫu vượt 1 MiB hoặc tệp nhập quá lớn
             status: 413
             code: ERR-05-035
@@ -4167,7 +4167,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-032
+            type: https://datahub.gov.vn/errors/ERR-05-032
             title: Lỗi nghiệp vụ dạng dữ liệu
             status: 422
             code: ERR-05-032
@@ -4179,7 +4179,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-031
+            type: https://datahub.gov.vn/errors/ERR-05-031
             title: Đang đóng băng thay đổi PROD
             status: 423
             code: ERR-05-031
@@ -4191,7 +4191,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-019
+            type: https://datahub.gov.vn/errors/ERR-05-019
             title: Vượt số lần kiểm tra cho phép
             status: 429
             code: ERR-05-019
@@ -4203,7 +4203,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: https://datahub.gov.vn/problems/adapter/err-05-029
+            type: https://datahub.gov.vn/errors/ERR-05-029
             title: Phụ thuộc chưa sẵn sàng
             status: 503
             code: ERR-05-029

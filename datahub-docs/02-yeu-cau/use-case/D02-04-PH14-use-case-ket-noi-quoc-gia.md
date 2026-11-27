@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH14
 ten: Đặc tả use case phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -619,7 +619,7 @@ Sáu nhóm dưới đây theo thứ tự UC-14-01…38. Mỗi use case một kh�
 - **E2. Nền tảng không tồn tại (bước 4).** ERR-14-001; "Không tìm thấy nền tảng ndxp-t68."
 - **E3. Dịch vụ mức Nhạy cảm hoặc thao tác ghi mà bật đệm (bước 4).** ERR-14-038; "Dịch vụ mức Nhạy cảm hoặc dịch vụ ghi không được bật đệm."
 - **E4. Thời hạn đệm vượt trần (bước 4).** ERR-14-036; "Thời hạn đệm vượt mức tối đa 86400 giây của tỉnh."
-- **E5. Hai người sửa cùng lúc (bước 7).** ERR-14-004; "Dịch vụ đã được người khác sửa. Xem khác biệt và chọn ghi đè hoặc tải lại."
+- **E5. Hai người sửa cùng lúc (bước 7).** ERR-14-004 (412); "Dịch vụ đã được người khác sửa. Xem khác biệt và chọn ghi đè hoặc tải lại."
 - **E6. Dịch vụ không tồn tại hoặc thuộc tenant khác (bước 6).** ERR-14-001; "Không tìm thấy dịch vụ vbqppl-tim-toan-van."
 
 **Quy tắc áp dụng.** BR-14-002, 014, 022, 024, 025, 029.
@@ -1670,7 +1670,7 @@ Hình cho thấy ba lớp bảo vệ trước khi chứng thư được dùng: k
 - **E3. Giảm hạn mức dưới tổng phân bổ (bước 2).** Lan giảm xuống 25.000 trong khi đã phân bổ 28.000: ERR-14-018 (422); "Tổng phân bổ cho các HTTT (28.000) vượt giới hạn mới. Giảm phân bổ trước."
 - **E4. Phân bổ vượt hạn mức (bước 6).** ERR-14-018 (422); "Tổng phân bổ (31.000) vượt hạn mức 30.000. Giảm phân bổ của một HTTT."
 - **E5. Người duyệt trùng người đề nghị (bước 3).** ERR-14-007 (403); "Bạn không thể tự duyệt yêu cầu do mình đề nghị hoặc sửa gần nhất. Nhờ người khác duyệt."
-- **E6. Dữ liệu đã bị sửa (bước 2 hoặc 6).** ERR-14-004 (409); "Đối tượng đang ở trạng thái ACTIVE hoặc đã được người khác sửa, không thực hiện được thao tác này. Tải lại và thử lại."
+- **E6. Dữ liệu đã bị sửa (bước 2 hoặc 6).** ERR-14-004 (412 khi `If-Match` lệch, 409 khi trạng thái không cho phép); "Đối tượng đang ở trạng thái ACTIVE hoặc đã được người khác sửa, không thực hiện được thao tác này. Tải lại và thử lại."
 
 **Quy tắc áp dụng.** BR-14-011, 012, 013, 022.
 
@@ -2456,7 +2456,7 @@ Hình cho thấy bộ đồng bộ chỉ gửi phần thay đổi của các d�
 - **E1. Giá trị ngoài miền hoặc mâu thuẫn (bước 2).** ERR-14-036 (422); "Giá trị của 14.quota.background-defer-ratio phải nằm trong 0,5…0,95."
 - **E2. Người duyệt trùng người sửa (bước 4).** ERR-14-007 (403); "Bạn không thể tự duyệt thay đổi tham số do mình sửa."
 - **E3. Không có dữ liệu trong kỳ (bước 6).** ERR-14-001 (404); "Chưa có dữ liệu sử dụng trong kỳ này."
-- **E4. Dữ liệu đã bị sửa bởi người khác (bước 2).** ERR-14-004 (409); "Đối tượng đang ở trạng thái ACTIVE hoặc đã được người khác sửa, không thực hiện được thao tác này. Tải lại và thử lại."
+- **E4. Dữ liệu đã bị sửa bởi người khác (bước 2).** ERR-14-004 (412 khi `If-Match` lệch, 409 khi trạng thái không cho phép); "Đối tượng đang ở trạng thái ACTIVE hoặc đã được người khác sửa, không thực hiện được thao tác này. Tải lại và thử lại."
 
 **Quy tắc áp dụng.** BR-14-011, 013, 022.
 
@@ -2618,6 +2618,8 @@ Các câu hỏi dưới đây phát sinh khi đặc tả use case và chưa có 
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài liệu của phân hệ khác; tập này không sửa trực tiếp vì các luồng viết chạy song song. Đề nghị thực hiện trong đợt đồng bộ cuối.
 
 | Tài liệu | Nội dung đề nghị | Lý do |
@@ -2636,3 +2638,4 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 38 use case, sáu sơ đồ use case, ba bảng truy vết, sáu luồng phụ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412 ở các luồng ngoại lệ |

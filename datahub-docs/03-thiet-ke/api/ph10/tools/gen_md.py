@@ -37,7 +37,7 @@ for code, method, path, summary, fr, perm, idem, success, group, own in spec.OPS
     rows.append(f"| API-10-{code} | `{method} {full_path(group, path)}` | {summary} | {fr} | {perm_md(code, perm)} | {idm} | {success} | {own_errs(own)} |")
 blocks["endpoints"] = "\n".join(rows).lstrip("\n")
 # ---- §3.1 tách mã
-sec83 = FRS_TXT[FRS_TXT.index("### 8.3."):FRS_TXT.index("## 9.")]
+sec83 = FRS_TXT[FRS_TXT.index("### 9.4."):FRS_TXT.index("## 10.")]
 frs_rows = dict(re.findall(r"^\| (API-10-\d{3}) \| (.+?) \| [^|]+ \|$", sec83, re.M))
 ops = {o[0]: o for o in spec.OPS}
 r = ["| Dòng FRS §8.3 | Nội dung gộp ở FRS | Giữ mã cho | Mã cấp mới |", "|---|---|---|---|"]

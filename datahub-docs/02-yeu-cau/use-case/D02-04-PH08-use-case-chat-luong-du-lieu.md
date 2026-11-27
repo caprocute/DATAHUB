@@ -2110,6 +2110,8 @@ Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC
 
 ### 8.2. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảy đề nghị của bản 0.1 đã được FRS 0.2 xử lý (FRS chương 15); cột cuối ghi kết quả. Tập này không sửa tệp nào ngoài tập của mình.
 
 | Mã | Tài liệu | Đề nghị | Kết quả ở FRS 0.2 |

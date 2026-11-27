@@ -3619,6 +3619,8 @@ paths:
       - FR-02-056
       x-datahub-permission:
         permission: PERM-02-read
+        scopes:
+        - catalog:metrics-read
       description: 'Kỳ gần nhất có đủ dữ liệu: số API có cam kết, tỷ lệ đạt, số API không đạt, API không đạt liên tiếp từ `02.sla.breach-periods` kỳ, nhóm theo mức
         phân loại. Dữ liệu thực tế lấy từ PH-13. Dùng cho UI-02-11. Mã lỗi riêng: ERR-02-003, ERR-02-034.'
       parameters:
@@ -3848,7 +3850,8 @@ paths:
       - FR-02-059
       x-datahub-permission:
         permission: Token dịch vụ, phạm vi catalog:portal-read
-      description: Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu.
+      description: Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu. Phiên bản `SUSPENDED` vẫn nằm trong
+        `versions[]` với `status = SUSPENDED` để cổng hiện nhãn tạm ngừng (Q15-19); cờ `portalPublished` được giữ nguyên.
       parameters:
       - $ref: '#/components/parameters/Q_updatedSince'
       - $ref: '#/components/parameters/Q_page'

@@ -17,6 +17,6 @@ Tính năng: TS-17-35 · Gợi ý cho bước quy trình PH-11, luôn có ngư�
     # Truy vết: FR-17-061 · API-17-190, 191 · BR-17-083 · ERR-17-114, 117
     # Mục đích: Chứng minh không có cấu hình tự duyệt.
     Biết S-T90-PH11.
-    Khi S-T90-PH11 `POST /assist/v1/process-suggestions` với `autoDecide = true`.
+    Khi S-T90-PH11 `POST /assist/v1/process-suggestions` với `stepType = APPROVAL`, `processRef`, `purposeCode` hợp lệ và thêm cờ `autoDecide = true` (cờ không thuộc lược đồ, FR-17-061 buộc từ chối).
     Và S-T90-PH11 `:record-decision` cho `SG-khong-co`.
     Thì bước 1 `403` ERR-17-114. Bước 2 `404` ERR-17-117.

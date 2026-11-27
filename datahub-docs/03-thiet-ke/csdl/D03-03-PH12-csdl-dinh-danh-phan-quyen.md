@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH12
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư dữ liệu, DBA, kỹ sư dh-platform, cán bộ ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-12
@@ -2595,7 +2595,7 @@ Dữ liệu khởi tạo nhỏ vì phần lớn danh mục của PH-12 (22 vai t
 | Realm `dh-platform`, quản trị nền tảng đầu tiên | `PLATFORM` | `realm_state`, `user_account`, `role_assignment` `PLATFORM_ADMIN` | Cấu hình dựng nền tảng | Cùng Job; yếu tố WebAuthn đăng ký ở lần đăng nhập đầu (BR-12-015) |
 | Tài khoản dịch vụ của đơn vị triển khai | `PLATFORM` | `service_account` cho PH-01, PH-15, PH-20, APISIX, DU | Kho cấu hình | Yêu cầu hợp nhất có người duyệt thứ hai (FR-12-037) |
 | Tham số `12.*` | Không ở đây | 38 tham số mặc định | FRS §8.2 | Kho tham số PH-18 |
-| Realm, vai trò chuẩn của từng tỉnh | Keycloak | Tạo ở bước 2 của saga khởi tạo tenant | D03-10 §5.2 | `RealmProvisioner` (FR-12-041), ghi `realm_state`, `realm_provision_step` |
+| Realm, vai trò chuẩn của từng tỉnh | Keycloak | Tạo ở bước `S03_REALM` của saga khởi tạo tenant | D03-10 §5.2 | `RealmProvisioner` (FR-12-041), ghi `realm_state`, `realm_provision_step` |
 
 : Dữ liệu khởi tạo của PH-12
 
@@ -2839,6 +2839,8 @@ Năm câu hỏi dưới đây phát sinh khi chuyển thiết kế SDD sang bả
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do luồng khác chịu trách nhiệm; tập này chỉ ghi lại để đợt đồng bộ cuối xử lý.
 
 | Tài liệu | Đề nghị |
@@ -2861,4 +2863,5 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-CSDL và K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu; chiến lược lưu trữ (vai trò, ba mẫu RLS P, S, G, quy ước, danh mục 43 bảng, quyền); bốn ERD; đặc tả 43 bảng với khối 10 mục sinh từ DDL; 25 quy tắc chốt ở CSDL kèm ánh xạ `SQLSTATE` sang ERR; DDL sáu tệp đã chạy thử trên PostgreSQL 16.16 và bài kiểm 100 khối PASS; dữ liệu cá nhân và không lưu bí mật; dữ liệu khởi tạo; kho ngoài PostgreSQL; sao lưu, khôi phục, lưu giữ; ánh xạ hệ cũ; 5 câu hỏi mở (Q12-50…Q12-54); đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên bước S03_REALM theo D03-10 |
 

@@ -18,10 +18,10 @@ Tính năng: TS-09-22 · Miền giả danh hóa và vòng đời khóa
     # Truy vết: FR-09-034 · API-09-116, 115 · ERR-09-047 · BR-09-029, 033 · EVT-09-16 · PERM-09-policy-approve
     # Mục đích: Chứng minh xoay giữ khóa cũ ở `DECRYPT_ONLY` và chặn xoay quá gần.
     Biết T90; `PD-HGD` khóa v1 vừa tạo; `09.pseudo.min-rotate-days = 30`; U-T90-DA1.
-    Khi DA1 `POST /pseudonym-domains/PD-HGD/keys:rotate` không xác nhận cảnh báo.
+    Khi DA1 `POST /pseudonym-domains/PD-HGD/keys:rotate` với `confirmInconsistency = false`.
     Và DA1 xoay lại kèm `confirmInconsistency = true`.
     Và DA1 xoay lần hai ngay.
-    Thì bước 1 từ chối kèm cảnh báo bí danh đổi. Bước 2 `200`, v2 `ACTIVE`, v1 `DECRYPT_ONLY`, EVT: `pseudonym-key.state-changed`. Bước 3 `409` ERR-09-047 nêu số ngày chờ.
+    Thì bước 1 từ chối `422` ERR-09-003 kèm cảnh báo bí danh đổi. Bước 2 `200`, v2 `ACTIVE`, v1 `DECRYPT_ONLY`, EVT: `pseudonym-key.state-changed`. Bước 3 `409` ERR-09-047 nêu số ngày chờ.
 
   @TC-09-077 @P1 @Âm @Dương
   Kịch bản: TC-09-077 Hủy khóa: chặn khi còn dùng, hai người duyệt, chờ trước khi hủy

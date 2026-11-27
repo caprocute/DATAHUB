@@ -6649,6 +6649,8 @@ paths:
       - FR-09-034
       x-datahub-permission:
         permission: PERM-09-policy-approve
+      description: 'Xoay khóa làm bí danh mới khác bí danh cũ cho cùng giá trị (phá nhất quán): `confirmInconsistency` phải là `true`, nếu không trả ERR-09-003 kèm
+        cảnh báo; xoay trong khoảng `09.pseudo.min-rotate-days` thì ERR-09-047.'
       security:
       - oauth2User: []
       x-dh-classification: RESTRICTED
@@ -6667,7 +6669,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReasonInput'
+              $ref: '#/components/schemas/KeyRotateInput'
       responses:
         '201':
           description: Đã tạo.
@@ -6692,8 +6694,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-        '422':
-          $ref: '#/components/responses/Unprocessable'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '503':
@@ -6702,7 +6702,6 @@ paths:
       - ERR-09-001
       - ERR-09-003
       - ERR-09-006
-      - ERR-09-007
       - ERR-09-010
       - ERR-09-046
       - ERR-09-047
@@ -11909,16 +11908,18 @@ paths:
       tags:
       - DPIA và vi phạm
       operationId: api09203
-      summary: Ghi nhận vi phạm
+      summary: Ghi nhận vi phạm (người dùng hoặc PH-18)
       x-datahub-id: API-09-203
       x-datahub-fr:
       - FR-09-058
       x-datahub-permission:
-        permission: PERM-09-breach
+        permission: PERM-09-breach; scope privacy:register
       description: '`detectedAt` bắt đầu đồng hồ 72 giờ (`deadlineAt = detectedAt + 72 giờ`, không sửa được); phát EVT-09-30; TO được ghi nhận nhưng không đóng hồ
         sơ (BR-09-057).'
       security:
       - oauth2User: []
+      - oauth2Machine:
+        - privacy:register
       x-dh-classification: RESTRICTED
       x-datahub-idempotent: required
       parameters:
@@ -19393,6 +19394,17 @@ components:
           type: string
         rotateDays:
           type: integer
+    KeyRotateInput:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 20
+        confirmInconsistency:
+          type: boolean
+      required:
+      - reason
+      - confirmInconsistency
     KeyDestroyInput:
       type: object
       properties:

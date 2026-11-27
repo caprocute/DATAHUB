@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH04
 ten: Kịch bản và test case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-04 (L-INT, frontend console), Kiến trúc sư, ATTT, Vận hành, Cán bộ nghiệm thu, Chủ đầu tư
 phan_he: PH-04
@@ -2517,7 +2517,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 3. Trên UI-04-12, chọn hai lần chạy, bấm "So sánh".
 4. Đặt đồng hồ hệ thống tới 8 ngày sau, chạy job dọn.
 
-**Kết quả mong đợi.** Bước 1: ba lần chạy, mỗi lần có `matchesCurrentHash`. Bước 2: thân đã che theo BR-04-013 (trường phân loại Cá nhân thay bằng `***`). Bước 3: bảng so sánh theo chặng, tô khác biệt thời gian và trạng thái. Bước 4: thân bị xóa khỏi RGW bucket `dh-int-testrun` (`04.test.body-retention-days = 7`), bước 2 nay trả `404`; metadata còn tới 90 ngày.
+**Kết quả mong đợi.** Bước 1: ba lần chạy, mỗi lần có `matchesCurrentHash`. Bước 2: thân đã che theo BR-04-013 (trường phân loại Hạn chế, Nhạy cảm thay bằng `***`). Bước 3: bảng so sánh theo chặng, tô khác biệt thời gian và trạng thái. Bước 4: thân bị xóa khỏi RGW bucket `dh-int-testrun` (`04.test.body-retention-days = 7`), bước 2 nay trả `404`; metadata còn tới 90 ngày.
 :::
 
 #### TC-04-079 · Chạy thử SANDBOX_LIVE gọi đích TEST <!--k:run-live-->
@@ -3723,7 +3723,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 2. Gọi với mục đích `KHAC` không có trong chính sách.
 3. Quét log runtime, vết, chỉ số, EVT-04-14 tìm `001099000001` và `Nguyễn Văn Thử`.
 
-**Kết quả mong đợi.** Bước 1: phản hồi có `soDinhDanh = "********0001"`. Bước 2: mọi trường phân loại Cá nhân bị che toàn bộ (mặc định khi không có quy tắc). Bước 3: không xuất hiện ở bất kỳ nguồn nào, kể cả log DEBUG (log thân bản tin bị chặn bởi `dh-default-config`).
+**Kết quả mong đợi.** Bước 1: phản hồi có `soDinhDanh = "********0001"`. Bước 2: mọi trường phân loại Hạn chế, Nhạy cảm bị che toàn bộ (mặc định khi không có quy tắc). Bước 3: không xuất hiện ở bất kỳ nguồn nào, kể cả log DEBUG (log thân bản tin bị chặn bởi `dh-default-config`).
 :::
 
 #### TC-04-127 · Đích quá thời gian, lỗi, ngắt mạch <!--k:rt-deliver-->
@@ -3876,7 +3876,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 1. Gửi hai bản tin.
 2. Đọc `t68.ops.dlq.v1`.
 
-**Kết quả mong đợi.** Hai bản tin trong DLQ có tiêu đề `dh-error-code` (ERR-04-101 và ERR-04-104), `dh-flow`, `dh-version`, `dh-attempts`, `traceparent`. Các bản tin sau đó vẫn được xử lý (không tắc phân vùng). Lỗi giải tuần tự vào DLQ ngay, không thử lại.
+**Kết quả mong đợi.** Hai bản tin trong DLQ có tiêu đề `dh-dlq-error-code` (ERR-04-101 và ERR-04-104), `dh-flow`, `dh-version`, `dh-dlq-attempts`, `traceparent`. Các bản tin sau đó vẫn được xử lý (không tắc phân vùng). Lỗi giải tuần tự vào DLQ ngay, không thử lại.
 :::
 
 #### TC-04-133 · Chống trùng bản tin <!--k:rt-idem-->
@@ -3939,7 +3939,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 1. Gửi hai bản tin vào `t68.datdai.thua-dat.changed.v1`, tiếp theo 10 bản tin hợp lệ.
 2. Đọc `t68.ops.dlq.v1` và chỉ số `dh_flow_failures_total`.
 
-**Kết quả mong đợi.** Hai bản tin vào DLQ với `dh-attempts = 1` (không thử lại): tiêu đề `dh-error-code` lần lượt ERR-04-108 và ERR-04-109, kèm `dh-flow`, `dh-version`, `traceparent`; trường nhạy cảm đã mã hóa. 10 bản tin hợp lệ vẫn ra `t68.cdm.thua-dat.v1` (không tắc phân vùng). ERR-04-109 sinh cảnh báo PH-13; người vận hành thấy cả hai ở màn DLQ của PH-18.
+**Kết quả mong đợi.** Hai bản tin vào DLQ với `dh-dlq-attempts = 1` (không thử lại): tiêu đề `dh-dlq-error-code` lần lượt ERR-04-108 và ERR-04-109, kèm `dh-flow`, `dh-version`, `traceparent`; trường nhạy cảm đã mã hóa. 10 bản tin hợp lệ vẫn ra `t68.cdm.thua-dat.v1` (không tắc phân vùng). ERR-04-109 sinh cảnh báo PH-13; người vận hành thấy cả hai ở màn DLQ của PH-18.
 :::
 
 ### TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
@@ -4545,10 +4545,11 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Các bước.**
 
-1. Chạy Schemathesis (`--checks all`) trên toàn bộ operation với token IE1, IA1, TA.
-2. Chạy `oasdiff breaking` so với `main`.
+1. Chạy `ph04/tools/check_contracts.py` (cổng CI-5): mọi ví dụ yêu cầu và phản hồi ở D03-04-PH04 chương 10 phải khớp lược đồ.
+2. Chạy Schemathesis (`--checks all`) trên toàn bộ operation với token IE1, IA1, TA, dùng chính các ví dụ ở chương 10 làm dữ liệu ca (pha ví dụ tường minh) trước khi sinh ca ngẫu nhiên.
+3. Chạy `oasdiff breaking` so với `main`.
 
-**Kết quả mong đợi.** Không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
+**Kết quả mong đợi.** Bước 1 không có ví dụ nào lệch lược đồ. Không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
 :::
 
 #### TC-04-202 · Di trú dữ liệu W2 khi schema do tài khoản khác sở hữu <!--k:migrate-w2-owner-->
@@ -5608,6 +5609,8 @@ Các script dùng chung `tc_parse.py`, đọc được cả khối đặc tả `
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở tập khác trong đợt gom cuối. Tập này đã viết ca theo phương án ở cột "Đề nghị".
 
 | Tập | Chỗ | Vấn đề | Đề nghị | Trạng thái |
@@ -5626,3 +5629,4 @@ Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: 32 kịch bản, 186 ca, 12 UAT, mẫu tự động hóa, công cụ sinh ma trận |
 | 0.2 | 2026-11-26 | Theo chuẩn trình bày D00-04-KTB: Giới thiệu đủ sáu mục; bảng danh sách test case 3.3; chuyển 186 ca (kể cả 14 ca hiệu năng) sang khối đặc tả, giữ nguyên dữ liệu, bước, mong đợi, truy vết; thêm 16 ca (TC-04-187…202): ngoại lệ UC-04-05 E5, 06 E4, 12 E1, 17 E7, 18 E2; ca đầu cuối cho bốn trình tự SDD; di trú W2 khi schema có chủ khác; trạng thái màn UI-04-09, 16, 17, 18, 19, 21; `fill_doc.py`, chú thích bảng ở ma trận; mục 11 đề nghị đồng bộ |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: dh-dlq-error-code, TC-04-158, sinh lại gherkin và xlsx |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-00
 ten: Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Nhà thiết kế giao diện, Kỹ sư giao diện, Kiểm thử viên, Chuyên viên phân tích nghiệp vụ, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -201,7 +201,7 @@ Menu của `dh-console` được chia theo **nhóm nhiệm vụ của người d
 
 1. **Nhãn là việc, không là hệ thống.** Nhãn menu dùng danh từ nghiệp vụ quen thuộc với cán bộ ("Hệ thống thành viên", "Danh mục dùng chung", "Giao dịch") chứ không dùng tên công nghệ ("Kafka topic", "APISIX route"). Thuật ngữ kỹ thuật chỉ xuất hiện ở cấp 2 khi người dùng mục tiêu là kỹ sư (ví dụ "Topic sự kiện" cho kỹ sư tích hợp).
 2. **Tối đa hai cấp trong sidebar.** Cấp 1 là nhóm nhiệm vụ (không điều hướng, chỉ mở/đóng), cấp 2 là màn hình đích. Mọi cấp sâu hơn (chi tiết đối tượng, tab) đi bằng điều hướng trong trang và được thể hiện trên breadcrumb, không thêm cấp menu thứ ba. Giới hạn này giữ sidebar đọc được trong một lần nhìn và tránh menu kiểu cây thư mục của hệ cũ.
-3. **Mỗi nhóm không quá chín mục cấp 2.** Khi một nhóm vượt chín mục, tách nhóm hoặc gộp màn hình thành tab trong một trang.
+3. **Mỗi nhóm không quá chín mục cấp 2.** Khi một nhóm vượt chín mục, tách nhóm hoặc gộp màn hình thành tab trong một trang. Ngoại lệ có kiểm soát: nhóm của phân hệ vận hành riêng có nhiều màn độc lập (Cổng API, Kết nối quốc gia, Kết nối & API) được phép tới 14 mục, với điều kiện sidebar ngăn các mục thành cụm không quá chín mục bằng `CMP-Divider` có nhãn (ví dụ "Vận hành", "Bảo vệ", "Cấu hình" trong nhóm Cổng API).
 4. **Thứ tự nhóm theo tần suất.** Nhóm dùng hằng ngày (Tổng quan, Việc của tôi) ở trên; nhóm dùng thỉnh thoảng (Quản trị) ở dưới. Trong một nhóm, mục thường dùng nhất đứng đầu.
 5. **Ẩn theo quyền, không ẩn theo phân hệ chưa triển khai bằng cờ trong mã.** Một mục hiện khi người dùng có quyền xem màn hình đích và phân hệ đã được bật cho tenant (cấu hình PH-20). Phân hệ thuộc đợt sau chưa phát hành thì không có mục trong bản dựng, không hiện dạng "sắp ra mắt".
 
@@ -209,15 +209,17 @@ Menu của `dh-console` được chia theo **nhóm nhiệm vụ của người d
 
 #### 2.3.1. Sơ đồ tổng quát
 
-Sơ đồ dưới đây thể hiện mười nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
+Sơ đồ dưới đây thể hiện mười hai nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
 
-```{.mermaid caption="Cây điều hướng dh-console, mười nhóm cấp 1 và mục cấp 2"}
+```{.mermaid caption="Cây điều hướng dh-console, mười hai nhóm cấp 1 và mục cấp 2"}
 flowchart LR
     ROOT(["dh-console"])
     ROOT --> N0["Tổng quan"]
     ROOT --> N1["Việc của tôi"]
     ROOT --> N2["Kết nối & API"]
+    ROOT --> N10["Cổng API"]
     ROOT --> N3["Tích hợp"]
+    ROOT --> N11["Kết nối quốc gia"]
     ROOT --> N4["Dữ liệu dùng chung"]
     ROOT --> N5["Thanh toán (Đ2)"]
     ROOT --> N6["Quy trình (Đ2)"]
@@ -229,14 +231,16 @@ flowchart LR
 
     N0 --> N0a["Bảng điều khiển"]
     N1 --> N1a["Hộp việc"] & N1b["Yêu cầu tôi đã gửi"] & N1c["Tác vụ nền"]
-    N2 --> N2a["Hệ thống thành viên"] & N2b["Danh mục API"] & N2c["Gói sử dụng"] & N2d["Đăng ký sử dụng"] & N2e["Chính sách cổng API"] & N2f["Nút gateway"] & N2g["Cổng nhà phát triển (Đ2)"]
+    N2 --> N2a["Hệ thống thành viên"] & N2b["Danh mục API"] & N2c["Gói sử dụng"] & N2d["Đăng ký sử dụng"] & N2g["Cổng nhà phát triển (Đ2)"] & N2h["Rà soát quyền, danh bạ, thống kê kết nạp"] & N2i["Tuân thủ SLA, đồng bộ quốc gia, quản trị danh mục API"]
+    N10 --> N10a["Tổng quan, Route, Consumer, Hạn mức, Nhật ký lượt gọi"] & N10b["WAF, ngoại lệ WAF, địa chỉ bị chặn, chứng thư và TLS"] & N10c["Cấu hình, nút gateway, mẫu chính sách, tham số, nhập từ hệ cũ"]
+    N11 --> N11a["Tổng quan, nền tảng, định tuyến, hạn mức và đệm, chiều vào"] & N11b["Đồng bộ, giao dịch, nhật ký, chứng thư, sự cố chữ ký, cắt chuyển, cài đặt"]
     N3 --> N3a["Luồng tích hợp"] & N3b["Bộ điều hợp"] & N3c["Kết nối nguồn"] & N3d["Dự án sự kiện"] & N3e["Topic sự kiện"] & N3f["Sơ đồ kết nối"] & N3g["Dịch vụ quốc gia"]
     N4 --> N4a["Danh mục dùng chung"] & N4b["Đồng bộ danh mục quốc gia"] & N4c["Dữ liệu chủ (Đ3)"] & N4d["Chất lượng dữ liệu (Đ3)"] & N4e["Quyền riêng tư (Đ2)"]
     N5 --> N5a["Giao dịch"] & N5b["Đối soát"] & N5c["Hoàn tiền"] & N5d["Dịch vụ thu"] & N5e["Nhà cung cấp & đối tác"] & N5f["Kênh thanh toán"]
-    N6 --> N6a["Mô hình quy trình"] & N6b["Phiên quy trình"]
+    N6 --> N6a["Mô hình quy trình"] & N6b["Phiên quy trình"] & N6c["Giám sát quy trình"]
     N7 --> N7a["Bảng giám sát"] & N7b["Cảnh báo"] & N7c["Tra log"] & N7d["Truy vết"] & N7e["Nhật ký kiểm toán"] & N7f["Báo cáo chỉ tiêu (Đ3)"]
-    N8 --> N8a["Hàng đợi lỗi (DLQ)"] & N8b["Tham số hệ thống"] & N8c["Sao lưu & khôi phục"] & N8d["Di trú hệ cũ"]
-    N9 --> N9a["Người dùng"] & N9b["Nhóm & vai trò"] & N9c["Chính sách truy cập"] & N9d["Cài đặt tỉnh"] & N9e["Tenant (nền tảng)"]
+    N8 --> N8a["Hàng đợi lỗi (DLQ)"] & N8b["Tham số hệ thống"] & N8c["Sao lưu & khôi phục"] & N8d["Di trú hệ cũ"] & N8e["Tổng quan vận hành, thông báo, sự cố, lịch"]
+    N9 --> N9a["Người dùng"] & N9b["Nhóm & vai trò"] & N9c["Chính sách truy cập"] & N9d["Cài đặt tỉnh"] & N9e["Tenant (nền tảng)"] & N9f["Tổ chức, trợ lý AI, realm và các mục nền tảng"]
 ```
 
 Sơ đồ được đọc từ trái sang phải: gốc là ứng dụng, tầng giữa là nhóm cấp 1 hiển thị trên sidebar, tầng phải là mục cấp 2 dẫn tới màn hình. Hai nút nối bằng nét đứt (Trợ lý AI và thanh trên) không phải nhóm menu mà là các điểm vào luôn có mặt ở mọi màn hình. Nhóm "Tổng quan" chỉ có một mục nên được hiển thị như một mục đơn ở cấp 1, không có mũi tên mở rộng. Nhóm "Cài đặt cá nhân" không nằm trên sidebar mà được mở từ menu tài khoản trên thanh trên (mục 2.10).
@@ -255,8 +259,8 @@ Bảng dưới đây là đặc tả chuẩn của cây menu. Kỹ sư dùng nó
 | 6 | Kết nối & API | Danh mục API | PH-02 | `/ket-noi/api` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
 | 7 | Kết nối & API | Gói sử dụng | PH-02 | `/ket-noi/goi-su-dung` | Quản trị tỉnh | PTN-01 | MVP |
 | 8 | Kết nối & API | Đăng ký sử dụng | PH-02 | `/ket-noi/dang-ky` | Quản trị tỉnh, Chủ quản dữ liệu | PTN-01 | MVP |
-| 9 | Kết nối & API | Chính sách cổng API | PH-03 | `/ket-noi/chinh-sach` | Quản trị tỉnh | PTN-01 | MVP |
-| 10 | Kết nối & API | Nút gateway | PH-03 | `/ket-noi/gateway` | Quản trị tỉnh, Quản trị nền tảng | PTN-11 | MVP |
+| 9 | Cổng API | Route | PH-03 | `/cong-api/route` (đường cũ `/ket-noi/chinh-sach` chuyển hướng tới đây) | Quản trị tỉnh | PTN-01 | MVP |
+| 10 | Cổng API | Nút gateway | PH-03 | `/cong-api/nut` (đường cũ `/ket-noi/gateway` chuyển hướng tới đây) | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
 | 11 | Kết nối & API | Cổng nhà phát triển | PH-15 (quản trị) | `/ket-noi/cong-nha-phat-trien` | Quản trị tỉnh | PTN-12 | Đợt 2 |
 | 12 | Tích hợp | Luồng tích hợp | PH-04 | `/tich-hop/luong` | Kỹ sư tích hợp | PTN-01 (danh sách), PTN-07 (thiết kế) | MVP |
 | 13 | Tích hợp | Bộ điều hợp | PH-05 | `/tich-hop/bo-dieu-hop` | Kỹ sư tích hợp | PTN-01 | MVP |
@@ -268,7 +272,7 @@ Bảng dưới đây là đặc tả chuẩn của cây menu. Kỹ sư dùng nó
 | 19 | Dữ liệu dùng chung | Danh mục dùng chung | PH-07 | `/du-lieu/danh-muc` | Cán bộ nghiệp vụ | PTN-08 | MVP |
 | 20 | Dữ liệu dùng chung | Đồng bộ danh mục quốc gia | PH-07 | `/du-lieu/dong-bo-quoc-gia` | Cán bộ nghiệp vụ, Quản trị tỉnh | PTN-01 | MVP |
 | 21 | Dữ liệu dùng chung | Dữ liệu chủ | PH-06 | `/du-lieu/du-lieu-chu` | Cán bộ nghiệp vụ | PTN-01 | Đợt 3 |
-| 22 | Dữ liệu dùng chung | Chất lượng dữ liệu | PH-08 | `/du-lieu/chat-luong` | Cán bộ nghiệp vụ, Chủ quản dữ liệu | PTN-06 | Đợt 3 |
+| 22 | Dữ liệu dùng chung | Chất lượng dữ liệu | PH-08 | `/du-lieu/chat-luong` (cây con 20 màn ở mục 2.3.4) | Cán bộ nghiệp vụ, Chủ quản dữ liệu | PTN-06 | Đợt 3 |
 | 23 | Dữ liệu dùng chung | Quyền riêng tư | PH-09 | `/du-lieu/quyen-rieng-tu` | Chủ quản dữ liệu | PTN-01 | Đợt 2 |
 | 24 | Thanh toán | Giao dịch | PH-19 | `/thanh-toan/giao-dich` | Cán bộ đối soát | PTN-01 | Đợt 2 |
 | 25 | Thanh toán | Đối soát | PH-19 | `/thanh-toan/doi-soat` | Cán bộ đối soát | PTN-01 | Đợt 2 |
@@ -283,20 +287,66 @@ Bảng dưới đây là đặc tả chuẩn của cây menu. Kỹ sư dùng nó
 | 34 | Giám sát & kiểm toán | Tra log | PH-13 | `/giam-sat/log` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-11 | MVP |
 | 35 | Giám sát & kiểm toán | Truy vết | PH-13 | `/giam-sat/truy-vet` | Kỹ sư tích hợp | PTN-11 | MVP |
 | 36 | Giám sát & kiểm toán | Nhật ký kiểm toán | PH-13 | `/giam-sat/kiem-toan` | Kiểm toán viên, Quản trị tỉnh | PTN-11 | MVP |
-| 37 | Giám sát & kiểm toán | Báo cáo chỉ tiêu | PH-16 | `/giam-sat/chi-tieu` | Lãnh đạo, Quản trị tỉnh | PTN-06 | Đợt 3 |
+| 37 | Giám sát & kiểm toán | Báo cáo chỉ tiêu | PH-16 | `/giam-sat/chi-tieu` (cây con 20 màn ở mục 2.3.4; thẻ PH-16 hiện trên `/tong-quan`, FR-16-037) | Lãnh đạo, Quản trị tỉnh | PTN-06 | Đợt 3 |
 | 38 | Vận hành | Hàng đợi lỗi (DLQ) | PH-18 | `/van-hanh/dlq` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
 | 39 | Vận hành | Tham số hệ thống | PH-18 | `/van-hanh/tham-so` | Quản trị tỉnh | PTN-12 | MVP |
-| 40 | Vận hành | Sao lưu & khôi phục | PH-18 | `/van-hanh/sao-luu` | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
+| 40 | Vận hành | Sao lưu & khôi phục | PH-18 | `/van-hanh/sao-luu` | Quản trị tỉnh, Quản trị nền tảng | PTN-06 | MVP |
 | 41 | Vận hành | Di trú hệ cũ | PH-18 | `/van-hanh/di-tru` | Quản trị tỉnh | PTN-05 (chạy), PTN-01 (lịch sử) | MVP |
 | 42 | Quản trị | Người dùng | PH-12 | `/quan-tri/nguoi-dung` | Quản trị tỉnh | PTN-01 | MVP |
 | 43 | Quản trị | Nhóm & vai trò | PH-12 | `/quan-tri/vai-tro` | Quản trị tỉnh | PTN-08 | MVP |
 | 44 | Quản trị | Chính sách truy cập | PH-12 | `/quan-tri/chinh-sach` | Quản trị tỉnh | PTN-01 | MVP |
 | 45 | Quản trị | Cài đặt tỉnh | PH-20 (phần tenant tự quản) | `/quan-tri/cai-dat-tinh` | Quản trị tỉnh | PTN-12 | MVP |
 | 46 | Quản trị | Tenant | PH-20 | `/nen-tang/tenant` | Quản trị nền tảng | PTN-01 | MVP |
+| 47 | Kết nối & API | Rà soát quyền HTTT | PH-01 | `/ket-noi/ra-soat-quyen` | Quản trị tỉnh | PTN-10 | MVP |
+| 48 | Kết nối & API | Danh bạ đầu mối | PH-01 | `/ket-noi/danh-ba` | Quản trị tỉnh | PTN-01 | MVP |
+| 49 | Kết nối & API | Thống kê kết nạp | PH-01 | `/ket-noi/thong-ke-ket-nap` | Quản trị tỉnh | PTN-06 | MVP |
+| 50 | Kết nối & API | Tuân thủ SLA | PH-02 | `/ket-noi/tuan-thu-sla` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-06 | MVP |
+| 51 | Kết nối & API | Đồng bộ danh mục API quốc gia | PH-02 | `/ket-noi/dong-bo-quoc-gia` | Quản trị tỉnh | PTN-11 | MVP |
+| 52 | Kết nối & API | Quản trị danh mục API (phân loại, bộ luật, nhập APIM cũ, cài đặt) | PH-02 | `/ket-noi/quan-tri/phan-loai` | Quản trị tỉnh | PTN-08 | MVP |
+| 53 | Cổng API | Tổng quan | PH-03 | `/cong-api/tong-quan` | Quản trị tỉnh, Quản trị nền tảng | PTN-06 | MVP |
+| 54 | Cổng API | Consumer | PH-03 | `/cong-api/consumer` | Quản trị tỉnh | PTN-01 | MVP |
+| 55 | Cổng API | Hạn mức | PH-03 | `/cong-api/han-muc` | Quản trị tỉnh | PTN-12 | MVP |
+| 56 | Cổng API | Nhật ký lượt gọi | PH-03 | `/cong-api/nhat-ky` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-11 | MVP |
+| 57 | Cổng API | WAF | PH-03 | `/cong-api/waf` | Quản trị tỉnh, Quản trị nền tảng | PTN-11 | MVP |
+| 58 | Cổng API | Ngoại lệ WAF | PH-03 | `/cong-api/waf/ngoai-le` | Quản trị tỉnh | PTN-01 | MVP |
+| 59 | Cổng API | Địa chỉ bị chặn | PH-03 | `/cong-api/chan-dia-chi` | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
+| 60 | Cổng API | Chứng thư và TLS | PH-03 | `/cong-api/chung-thu` | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
+| 61 | Cổng API | Cấu hình | PH-03 | `/cong-api/cau-hinh` | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
+| 62 | Cổng API | Mẫu chính sách | PH-03 | `/cong-api/mau-chinh-sach` | Quản trị tỉnh | PTN-01 | MVP |
+| 63 | Cổng API | Tham số cổng | PH-03 | `/cong-api/tham-so` | Quản trị tỉnh | PTN-12 | MVP |
+| 64 | Cổng API | Nhập từ hệ cũ | PH-03 | `/cong-api/nhap-he-cu` | Quản trị tỉnh | PTN-05 | MVP |
+| 65 | Kết nối quốc gia | Tổng quan | PH-14 | `/tich-hop/quoc-gia` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-06 | MVP |
+| 66 | Kết nối quốc gia | Nền tảng quốc gia | PH-14 | `/tich-hop/quoc-gia/nen-tang` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 67 | Kết nối quốc gia | Bảng định tuyến | PH-14 | `/tich-hop/quoc-gia/dinh-tuyen` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 68 | Kết nối quốc gia | Chứng thư số | PH-14 | `/tich-hop/quoc-gia/chung-thu` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 69 | Kết nối quốc gia | Hạn mức và đệm | PH-14 | `/tich-hop/quoc-gia/han-muc` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-06 | MVP |
+| 70 | Kết nối quốc gia | Điểm cuối chiều vào | PH-14 | `/tich-hop/quoc-gia/chieu-vao` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 71 | Kết nối quốc gia | Đồng bộ | PH-14 | `/tich-hop/quoc-gia/dong-bo` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 72 | Kết nối quốc gia | Giao dịch và đối soát | PH-14 | `/tich-hop/quoc-gia/giao-dich` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-11 | MVP |
+| 73 | Kết nối quốc gia | Nhật ký khai thác | PH-14 | `/tich-hop/quoc-gia/nhat-ky` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-11 | MVP |
+| 74 | Kết nối quốc gia | Sự cố chữ ký | PH-14 | `/tich-hop/quoc-gia/su-co-chu-ky` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-01 | MVP |
+| 75 | Kết nối quốc gia | Cắt chuyển từ hệ cũ | PH-14 | `/tich-hop/quoc-gia/cat-chuyen` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-05 | MVP |
+| 76 | Kết nối quốc gia | Cài đặt phân hệ | PH-14 | `/tich-hop/quoc-gia/cai-dat` | Quản trị tỉnh, Kỹ sư tích hợp | PTN-12 | MVP |
+| 77 | Quy trình | Giám sát quy trình (tập PH-11 gọi là mục 31a) | PH-11 | `/quy-trinh/giam-sat` | Quản trị tỉnh, Cán bộ nghiệp vụ | PTN-06 | Đợt 2 |
+| 78 | Quản trị | Realm định danh (nền tảng) | PH-12 | `/nen-tang/realm` | Quản trị nền tảng | PTN-01 | MVP |
+| 79 | Quản trị | Quản trị trợ lý AI | PH-17 | `/quan-tri/tro-ly-ai` | Quản trị tỉnh | PTN-12 (tab) | Đợt 3 |
+| 80 | Quản trị | Mô hình AI (nền tảng) | PH-17 | `/nen-tang/mo-hinh-ai` | Quản trị nền tảng | PTN-01 | Đợt 3 |
+| 81 | Vận hành | Tổng quan vận hành | PH-18 | `/van-hanh` | Quản trị tỉnh, Quản trị nền tảng | PTN-06 | MVP |
+| 82 | Vận hành | Thông báo vận hành | PH-18 | `/van-hanh/thong-bao` | Quản trị tỉnh | PTN-01 | MVP |
+| 83 | Vận hành | Sự cố | PH-18 | `/van-hanh/su-co` | Quản trị tỉnh, Quản trị nền tảng | PTN-01 | MVP |
+| 84 | Vận hành | Lịch vận hành | PH-18 | `/van-hanh/lich` | Quản trị tỉnh | PTN-01 | MVP |
+| 85 | Quản trị | Tổ chức | PH-20 (phần tenant tự quản) | `/quan-tri/to-chuc` | Quản trị tỉnh | PTN-01 | MVP |
+| 86 | Quản trị | Tổng quan nền tảng (nền tảng) | PH-20 | `/nen-tang/tong-quan` | Quản trị nền tảng | PTN-06 | MVP |
+| 87 | Quản trị | Sáp nhập tỉnh (nền tảng) | PH-20 | `/nen-tang/sap-nhap` | Quản trị nền tảng | PTN-01 | MVP |
+| 88 | Quản trị | Phát hành (nền tảng) | PH-20 | `/nen-tang/phat-hanh` | Quản trị nền tảng | PTN-01 | MVP |
+| 89 | Quản trị | Sử dụng tài nguyên (nền tảng) | PH-20 | `/nen-tang/su-dung` | Quản trị nền tảng | PTN-06 | MVP |
+| 90 | Quản trị | Mẫu khởi tạo (nền tảng) | PH-20 | `/nen-tang/mau-khoi-tao` | Quản trị nền tảng | PTN-01 | MVP |
 
 : Bảng mục menu chi tiết
 
-Có bốn điểm trong bảng cần thuyết minh. Thứ nhất, màn "Bảng điều khiển" ở mục 1 thuộc PH-13 về dữ liệu nhưng đóng vai trò trang chủ của mọi người dùng, nên nội dung thẻ được lắp theo quyền: cán bộ đối soát thấy thẻ giao dịch, kỹ sư tích hợp thấy thẻ luồng lỗi, lãnh đạo thấy thẻ chỉ tiêu; người không có quyền xem số liệu nào chỉ thấy thẻ "Việc của tôi" và "Thông báo mới". Thứ hai, mục "Tenant" (mục 46) dùng nhánh route `/nen-tang/` thay vì `/quan-tri/` vì đây là màn của vai trò nền tảng, thao tác trên nhiều tenant; nó chỉ xuất hiện trong nhóm Quản trị khi người dùng có vai trò nền tảng, và được đặt cuối nhóm, ngăn cách bằng `CMP-Divider` với nhãn "Nền tảng". Thứ ba, màn thiết kế luồng (PTN-07) không có mục menu riêng; người dùng vào từ danh sách luồng (`/tich-hop/luong/{ma-luong}/thiet-ke`) để luôn có ngữ cảnh luồng nào đang sửa. Thứ tư, PH-17 (Trợ lý AI) không có mục menu vì nó là năng lực xuyên suốt, được mở bằng nút trên thanh trên hoặc từ CommandPalette (mục 2.12).
+Có bốn điểm trong bảng cần thuyết minh. Thứ nhất, màn "Bảng điều khiển" ở mục 1 thuộc PH-13 về dữ liệu nhưng đóng vai trò trang chủ của mọi người dùng, nên nội dung thẻ được lắp theo quyền: cán bộ đối soát thấy thẻ giao dịch, kỹ sư tích hợp thấy thẻ luồng lỗi, lãnh đạo thấy thẻ chỉ tiêu; người không có quyền xem số liệu nào chỉ thấy thẻ "Việc của tôi" và "Thông báo mới". Thứ hai, mục "Tenant" (mục 46) dùng nhánh route `/nen-tang/` thay vì `/quan-tri/` vì đây là màn của vai trò nền tảng, thao tác trên nhiều tenant; nó chỉ xuất hiện trong nhóm Quản trị khi người dùng có vai trò nền tảng, và được đặt cuối nhóm, ngăn cách bằng `CMP-Divider` với nhãn "Nền tảng". Thứ ba, màn thiết kế luồng (PTN-07) không có mục menu riêng; người dùng vào từ danh sách luồng (`/tich-hop/luong/{ma-luong}/thiet-ke`) để luôn có ngữ cảnh luồng nào đang sửa. Thứ tư, bản thân Trợ lý AI (PH-17) không có mục menu vì nó là năng lực xuyên suốt, được mở bằng nút trên thanh trên hoặc từ CommandPalette (mục 2.12); chỉ phần quản trị của nó (mục 79, 80) có mục menu và chỉ hiện với người có quyền cấu hình.
+
+Các mục 47 đến 90 do đợt đồng bộ chéo cuối bổ sung theo tập màn hình của từng phân hệ. Thứ tự hiển thị trên sidebar vẫn theo nhóm cấp 1 và cụm có nhãn, không theo số thứ tự của bảng; số thứ tự chỉ để truy vết. Nhóm "Cổng API" (PH-03) gồm mục 9, 10 và 53 đến 64, tức 14 mục chia ba cụm "Vận hành" (Tổng quan, Route, Consumer, Hạn mức, Nhật ký lượt gọi), "Bảo vệ" (WAF, Ngoại lệ WAF, Địa chỉ bị chặn, Chứng thư và TLS) và "Cấu hình" (Cấu hình, Nút gateway, Mẫu chính sách, Tham số cổng, Nhập từ hệ cũ); hai đường cũ `/ket-noi/chinh-sach` và `/ket-noi/gateway` được giữ làm chuyển hướng. Nhóm "Kết nối quốc gia" (PH-14) gồm mục 65 đến 76; mục 18 "Dịch vụ quốc gia" vẫn nằm trong nhóm Tích hợp. Mục 31a trong tập PH-11 là mục 77 của bảng này. Các màn con của từng phân hệ (chi tiết, biểu mẫu, tab có route riêng) liệt kê ở mục 2.3.4.
 
 #### 2.3.3. Lối vào ngoài sidebar
 
@@ -306,19 +356,309 @@ Một số màn không nằm trên sidebar nhưng vẫn có route ổn định v
 |---|---|---|---|
 | Cài đặt cá nhân | `/ca-nhan/cai-dat` | Menu tài khoản (`CMP-UserMenu`) › Cài đặt cá nhân | PTN-12 |
 | Phiên đăng nhập của tôi | `/ca-nhan/phien` | Menu tài khoản › Phiên đăng nhập (FR-00-005) | PTN-01 |
-| Thông báo (toàn trang) | `/ca-nhan/thong-bao` | Trung tâm thông báo › Xem tất cả | PTN-01 |
+| Thông báo (toàn trang) | `/ca-nhan/thong-bao` | Trung tâm thông báo › Xem tất cả | PTN-01; một trang hai tab, tab Tùy chọn nhận (`?tab=tuy-chon`, PTN-12) do PH-18 cấu hình |
 | Bộ lọc đã lưu | `/ca-nhan/bo-loc` | Menu tài khoản › Bộ lọc đã lưu (FR-00-024) | PTN-01 |
 | Trợ giúp | Mở HDSD theo ngữ cảnh ở tab mới | Nút trợ giúp trên thanh trên (FR-00-082) | — |
 | Trang lỗi 403, 404, 500, bảo trì | `/loi/403`, `/loi/404`, `/loi/500`, `/bao-tri` | Hệ thống tự điều hướng | PTN-13 |
 | Chọn tenant | `/chon-tenant` | Sau đăng nhập khi người dùng thuộc nhiều tenant và chưa có tenant mặc định | PTN-13 (biến thể) |
+| Bàn giao thông tin xác thực HTTT | `/ket-noi/ban-giao/{token}` | Liên kết một lần trong thư gửi đầu mối (UI-01-09) | Trang riêng, khung `CMP-AppShell` biến thể `bare` |
+| Xác nhận nhu cầu quyền của HTTT | `/ket-noi/xac-nhan/{token}` | Liên kết một lần trong thư gửi đầu mối (UI-01-13) | Trang riêng, khung `CMP-AppShell` biến thể `bare` |
+| Chạy thử route | `/cong-api/chay-thu` | Nút "Chạy thử" ở danh sách và chi tiết route (UI-03-14) | PTN-04 (Drawer trên `/cong-api/route`) |
+| Duyệt thay đổi cổng API | `/cong-api/duyet` | Liên kết trong màn PH-03 (UI-03-17) | Chuyển hướng tới `/viec-cua-toi?loai=ph03.*` |
+| Ủy quyền vắng mặt | `/viec-cua-toi/uy-quyen` | Nút "Ủy quyền vắng mặt" ở Hộp việc (UI-11-17) | PTN-01 |
+| Chi tiết một việc | `/viec-cua-toi/{ma-viec}` | Hộp việc (nút "Mở toàn trang"), thông báo | PTN-10; mở UI-11-07 khi `taskKind` là `PUBLISH_REVIEW`, UI-11-15 với loại khác |
+| Việc của tôi (đường cũ) | `/ca-nhan/viec` | Không có trên giao diện | Chuyển hướng 301 tới `/viec-cua-toi` |
+| Tham số hệ thống (đường cũ) | `/quan-tri/tham-so`, `/quan-tri/tham-so/ket-nap` | Không có trên giao diện | Chuyển hướng 301 tới `/van-hanh/tham-so?ns={tiền-tố}`, ví dụ `?ns=01.` cho tham số kết nạp |
 
 : Lối vào ngoài sidebar
+
+**Màn một lối vào.** `/viec-cua-toi` là đường dẫn duy nhất của Hộp việc; đường `/ca-nhan/viec` trong FRS PH-18 chỉ là chuyển hướng 301. Tham số riêng của từng phân hệ cùng nằm ở `/van-hanh/tham-so` (PH-18) với `ns` là tiền tố khóa của phân hệ, nên tập PH-01 dùng `/van-hanh/tham-so?ns=01.` thay cho `/quan-tri/tham-so/ket-nap`.
+
+**Thành phần nhúng không có route.** Một số màn là thành phần nhúng vào màn chủ của phân hệ khác và không có route riêng (ví dụ UI-09-22 hộp xem giá trị đầy đủ nhúng vào UI-06-03 và các màn PH-19). Tập màn của phân hệ sở hữu nêu danh sách màn chủ; trạng thái của thành phần nhúng giữ trong tham số `chon` hoặc tab của màn chủ, không đưa vào bảng route.
+
+#### 2.3.4. Route con của các phân hệ
+
+Bảng ở mục 2.3.2 chỉ ghi route gốc của từng mục menu. Mục này liệt kê màn con, tab có route riêng và các lối vào phụ của phân hệ, lấy từ bảng đường dẫn React Router của tập D03-06-PH{nn} tương ứng (tập đó là nguồn chuẩn cho tham số truy vấn của từng màn và cho quyền vào). Route nào đã có ở mục 2.3.2 hoặc 2.3.3 thì không lặp lại. Quy tắc chung: đoạn tĩnh (`moi`, `nhap`, `tham-dinh`, `thiet-ke`) được so khớp trước đoạn động `{ma}`, nên mã đối tượng của mọi phân hệ không được trùng với các đoạn tĩnh đó (xem mục 2.4).
+
+**PH-02, nhóm quản trị danh mục API (menu mục 50 đến 52).**
+
+| Route | Màn |
+|---|---|
+| `/ket-noi/tuan-thu-sla` | UI-02-11 |
+| `/ket-noi/dong-bo-quoc-gia` | UI-02-12 |
+| `/ket-noi/quan-tri/phan-loai` | UI-02-14 |
+| `/ket-noi/quan-tri/bo-luat` | UI-02-15 |
+| `/ket-noi/quan-tri/nhap-apim-cu` | UI-02-16 |
+| `/ket-noi/quan-tri/cai-dat` | UI-02-17 |
+
+**PH-03, Cổng API (mục 9, 10 và 53 đến 64; route đầy đủ).**
+
+| Route | Màn |
+|---|---|
+| `/cong-api/tong-quan` | UI-03-01 |
+| `/cong-api/route` | UI-03-02 |
+| `/cong-api/route/{routeCode}` | UI-03-03 |
+| `/cong-api/consumer` | UI-03-04 |
+| `/cong-api/consumer/{consumerCode}` | UI-03-05 |
+| `/cong-api/han-muc` | UI-03-06 |
+| `/cong-api/waf` | UI-03-07 |
+| `/cong-api/waf/ngoai-le` | UI-03-08 |
+| `/cong-api/nhat-ky` | UI-03-09 |
+| `/cong-api/cau-hinh` | UI-03-10 |
+| `/cong-api/cau-hinh/{version}` | UI-03-10 chi tiết |
+| `/cong-api/nut` | UI-03-11 |
+| `/cong-api/chung-thu` | UI-03-12 |
+| `/cong-api/mau-chinh-sach` | UI-03-13 |
+| `/cong-api/chay-thu` | UI-03-14 (Drawer trên `/cong-api/route`) |
+| `/cong-api/chan-dia-chi` | UI-03-15 |
+| `/cong-api/tham-so` | UI-03-16 |
+| `/cong-api/duyet` | UI-03-17 (bộ lọc của `/viec-cua-toi?loai=ph03.*`) |
+| `/cong-api/nhap-he-cu` | UI-03-18 |
+
+**PH-08, Chất lượng dữ liệu (mục 22; mọi route có tiền tố `/du-lieu/chat-luong`).**
+
+| Route | Màn |
+|---|---|
+| `/` | UI-08-01 |
+| `/doi-tuong` | UI-08-02 |
+| `/doi-tuong/moi` | UI-08-03 |
+| `/doi-tuong/{ma}` | UI-08-04 |
+| `/doi-tuong/{ma}/ho-so` | UI-08-05 |
+| `/quy-tac` | UI-08-06 |
+| `/quy-tac/{ma}/sua` | UI-08-07 |
+| `/quy-tac/{ma}/sua?quy-tac={maQuyTac}` | UI-08-08 |
+| `/quy-tac/{ma}/lich-su` | UI-08-09 |
+| `/cai-dat/trong-so` | UI-08-10 |
+| `/lan-do` | UI-08-11 |
+| `/lan-do/{ma}` | UI-08-12 |
+| `/loi` | UI-08-13 |
+| `/loi?chon={findingId}` | UI-08-14 |
+| `/khac-phuc` | UI-08-15 |
+| `/khac-phuc/{ma}` | UI-08-16 |
+| `/canh-bao` | UI-08-17 |
+| `/bao-cao`, `/bao-cao/{ma}` | UI-08-18 |
+| `/cai-dat` | UI-08-19 |
+| `/truc-tuyen` | UI-08-20 |
+
+**PH-11, Quy trình (mục 30, 31, 77).**
+
+| Route | Màn |
+|---|---|
+| `/quy-trinh/mo-hinh` | UI-11-01 |
+| `/quy-trinh/mo-hinh/moi` | UI-11-02 |
+| `/quy-trinh/mo-hinh/{ma}` | UI-11-03 |
+| `/quy-trinh/mo-hinh/{ma}/thiet-ke` | UI-11-04 |
+| `/quy-trinh/mo-hinh/{ma}/so-sanh` | UI-11-05 |
+| `/quy-trinh/mo-hinh/{ma}/chay-thu` | UI-11-06 |
+| `/viec-cua-toi/{ma-viec}` (loại `PUBLISH_REVIEW`) | UI-11-07 |
+| `/quy-trinh/bieu-mau` | UI-11-08 |
+| `/quy-trinh/y-dinh` | UI-11-09 |
+| `/quy-trinh/mau` | UI-11-10 |
+| `/quy-trinh/phien` | UI-11-11 |
+| `/quy-trinh/phien/{ma}` | UI-11-12 |
+| `/quy-trinh/phien/moi` | UI-11-13 |
+| `/quy-trinh/phien/di-tru` | UI-11-14 |
+| `/viec-cua-toi/{ma-viec}` (loại khác) | UI-11-15 |
+| `/quy-trinh/phan-cong` | UI-11-16 |
+| `/viec-cua-toi/uy-quyen` | UI-11-17 |
+| `/quy-trinh/lich-lam-viec` | UI-11-18 |
+| `/quy-trinh/giam-sat` | UI-11-19 |
+| `/quy-trinh/su-co` | UI-11-20 |
+| `/quy-trinh/bu-tru` | UI-11-21 |
+| `/quy-trinh/bao-cao-han` | UI-11-22 |
+| `/quy-trinh/cai-dat` | UI-11-23 |
+
+**PH-12, Định danh và phân quyền (mục 42 đến 44, 78).**
+
+| Route | Màn |
+|---|---|
+| `/quan-tri/nguoi-dung` | UI-12-01 |
+| `/quan-tri/nguoi-dung/moi` | UI-12-03 (drawer, chế độ tạo) |
+| `/quan-tri/nguoi-dung/nhap` | UI-12-04 |
+| `/quan-tri/nguoi-dung/{ma}` | UI-12-02 |
+| `/quan-tri/nguoi-dung/{ma}/sua` | UI-12-03 (drawer, chế độ sửa) |
+| `/quan-tri/vai-tro` | UI-12-05 |
+| `/quan-tri/vai-tro/nhom` | UI-12-07 |
+| `/quan-tri/quyen-co-thoi-han` | UI-12-08 |
+| `/quan-tri/ra-soat-quyen` | UI-12-09 (danh sách chiến dịch) |
+| `/quan-tri/ra-soat-quyen/{chienDich}` | UI-12-09 |
+| `/quan-tri/danh-tinh-httt` | UI-12-10 (danh sách) |
+| `/quan-tri/danh-tinh-httt/{ma}` | UI-12-10 (chi tiết) |
+| `/quan-tri/lien-ket-dinh-danh` | UI-12-11 |
+| `/quan-tri/chinh-sach` | UI-12-12 (danh sách) |
+| `/quan-tri/chinh-sach/{ma}/thiet-ke` | UI-12-12 (trình soạn) |
+| `/quan-tri/chinh-sach/{ma}/duyet` | UI-12-13 |
+| `/quan-tri/nhat-ky-quyet-dinh` | UI-12-14 |
+| `/quan-tri/canh-bao-an-ninh` | UI-12-15 |
+| `/quan-tri/cai-dat-dinh-danh` | UI-12-16 |
+| `/viec-cua-toi?loai=ph12.*` | UI-12-17 |
+| `/nen-tang/realm` | UI-12-19 (danh sách) |
+| `/nen-tang/realm/{maTenant}` | UI-12-19 (chi tiết) |
+
+**PH-13, Giám sát và kiểm toán (mục 32 đến 36).**
+
+| Route | Màn |
+|---|---|
+| `/giam-sat/bang-dieu-khien` | UI-13-01 |
+| `/giam-sat/bang-dieu-khien/data-plane` | UI-13-02 |
+| `/giam-sat/bang-dieu-khien/api` | UI-13-03 |
+| `/giam-sat/bang-dieu-khien/ha-tang` | UI-13-04 |
+| `/giam-sat/bang-dieu-khien/nghiep-vu` | UI-13-05 |
+| `/giam-sat/bang-dieu-khien/an-ninh` | UI-13-06 |
+| `/giam-sat/log` | UI-13-07 |
+| `/giam-sat/log/truy-cap-api` | UI-13-09 |
+| `/giam-sat/truy-vet` | UI-13-08 (ô nhập) |
+| `/giam-sat/truy-vet/{trace-id}` | UI-13-08 (chi tiết) |
+| `/giam-sat/canh-bao` | UI-13-10 |
+| `/giam-sat/canh-bao/{alert-id}` | UI-13-10 (chi tiết) |
+| `/giam-sat/canh-bao/luat` | UI-13-11 |
+| `/giam-sat/canh-bao/luat/moi`, `/giam-sat/canh-bao/luat/{ma-luat}/sua` | UI-13-11 (PTN-03) |
+| `/giam-sat/canh-bao/lich-truc` | UI-13-12 |
+| `/giam-sat/kiem-toan` | UI-13-13 |
+| `/giam-sat/kiem-toan/toan-ven` | UI-13-14 |
+| `/giam-sat/kiem-toan/toan-ven/xuat/{ma-xuat}` | UI-13-14 (chi tiết yêu cầu xuất) |
+| `/giam-sat/kiem-toan/lien-tenant` | UI-13-16 |
+| `/giam-sat/kiem-toan/suc-khoe` | UI-13-18 |
+| `/giam-sat/an-ninh` | UI-13-15 |
+| `/giam-sat/an-ninh/{alert-id}` | UI-13-15 (chi tiết) |
+| `/giam-sat/cai-dat` | UI-13-17 |
+
+**PH-14, Kết nối quốc gia (mục 18 và 65 đến 76).**
+
+| Route | Màn |
+|---|---|
+| `/tich-hop/quoc-gia` | UI-14-01 |
+| `/tich-hop/quoc-gia/nen-tang` | UI-14-02 |
+| `/tich-hop/quoc-gia/nen-tang/moi` | UI-14-03 wizard |
+| `/tich-hop/quoc-gia/nen-tang/{platformCode}` | UI-14-03 chi tiết |
+| `/tich-hop/quoc-gia/nen-tang/{platformCode}/sua` | UI-14-03 chế độ sửa |
+| `/tich-hop/dich-vu-quoc-gia` | UI-14-04 |
+| `/tich-hop/dich-vu-quoc-gia/moi` | UI-14-05 chế độ tạo |
+| `/tich-hop/dich-vu-quoc-gia/{serviceCode}` | UI-14-05 |
+| `/tich-hop/dich-vu-quoc-gia/doi-chieu` | UI-14-06 |
+| `/tich-hop/quoc-gia/dinh-tuyen` | UI-14-07 |
+| `/tich-hop/quoc-gia/chung-thu` | UI-14-08 |
+| `/tich-hop/quoc-gia/han-muc` | UI-14-09 |
+| `/tich-hop/quoc-gia/chieu-vao` | UI-14-10 |
+| `/tich-hop/quoc-gia/dong-bo` | UI-14-11 |
+| `/tich-hop/quoc-gia/giao-dich` | UI-14-12 |
+| `/tich-hop/quoc-gia/giao-dich/{transactionCode}` | UI-14-12 chi tiết toàn trang |
+| `/tich-hop/quoc-gia/nhat-ky` | UI-14-13 |
+| `/tich-hop/quoc-gia/su-co-chu-ky` | UI-14-14 |
+| `/tich-hop/quoc-gia/cat-chuyen` | UI-14-15 |
+| `/tich-hop/quoc-gia/cai-dat` | UI-14-16 |
+| `/viec-cua-toi?loai=ph14.*` | UI-14-17 |
+
+**PH-16, Báo cáo chỉ tiêu (mục 37; mọi route có tiền tố `/giam-sat/chi-tieu`).**
+
+| Route | Màn |
+|---|---|
+| `/` | UI-16-01 |
+| `/chi-so/{ma}` | UI-16-02 |
+| `/bo-chi-tieu` | UI-16-03 |
+| `/bo-chi-tieu/{ma}/sua` | UI-16-04 |
+| `/nguon` | UI-16-05 |
+| `/nguon/{ma}` | UI-16-06 |
+| `/nhap` | UI-16-07 |
+| `/ky` | UI-16-08 |
+| `/ky/{ma}` | UI-16-09 |
+| `/bao-cao` | UI-16-10 |
+| `/bao-cao/{ma}/sua` | UI-16-11 |
+| `/duyet` | UI-16-12 |
+| `/mau-bao-cao` | UI-16-13 |
+| `/kien-truc` | UI-16-14 |
+| `/kien-truc/{ma}` | UI-16-15 |
+| `/kien-truc/{ma}/danh-gia` | UI-16-16 |
+| `/quoc-gia` | UI-16-17 |
+| `/so-sanh` | UI-16-18 |
+| `/cai-dat` | UI-16-19 |
+| `/kiem-toan` | UI-16-20 |
+
+**PH-17, Quản trị trợ lý AI và mô hình AI (mục 79, 80).**
+
+| Route | Màn |
+|---|---|
+| `/quan-tri/tro-ly-ai` | Chuyển hướng tới tab đầu có quyền |
+| `/quan-tri/tro-ly-ai/cau-hinh` | UI-17-06 |
+| `/quan-tri/tro-ly-ai/cau-hinh/so-dang-ky` | UI-17-18 |
+| `/quan-tri/tro-ly-ai/mo-hinh` | UI-17-07 |
+| `/quan-tri/tro-ly-ai/tri-thuc` | UI-17-08 |
+| `/quan-tri/tro-ly-ai/tri-thuc/tai-lieu` | UI-17-09 |
+| `/quan-tri/tro-ly-ai/cong-cu` | UI-17-10 |
+| `/quan-tri/tro-ly-ai/danh-gia` | UI-17-11 |
+| `/quan-tri/tro-ly-ai/danh-gia/chi-dan` | UI-17-12 |
+| `/quan-tri/tro-ly-ai/chat-luong` | UI-17-13 |
+| `/quan-tri/tro-ly-ai/chat-luong/phan-hoi` | UI-17-14 |
+| `/quan-tri/tro-ly-ai/nhat-ky` | UI-17-15 |
+| `/quan-tri/tro-ly-ai/nhat-ky/{id}` | UI-17-16 |
+| `/quan-tri/tro-ly-ai/nhat-ky/bao-cao` | UI-17-17 |
+| `/nen-tang/mo-hinh-ai` | UI-17-19 |
+| `/nen-tang/mo-hinh-ai/{id}` | UI-17-20 |
+
+**PH-18, Vận hành (mục 38 đến 41 và 81 đến 84).**
+
+| Route | Màn |
+|---|---|
+| `/van-hanh` | UI-18-24 |
+| `/van-hanh/dlq` | UI-18-01 |
+| `/van-hanh/dlq?tab=nhom` | UI-18-02 |
+| `/van-hanh/dlq/phat-lai` | UI-18-05 (danh sách lượt) |
+| `/van-hanh/dlq/phat-lai/{jobId}` | UI-18-05 (chi tiết lượt) |
+| `/van-hanh/dlq/thong-ke` | UI-18-06 |
+| `/van-hanh/dlq/so-tay` | UI-18-07 |
+| `/van-hanh/dlq/{dlqId}` | UI-18-03 |
+| `/van-hanh/dlq/{dlqId}/sua` | UI-18-04 |
+| `/van-hanh/tham-so` | UI-18-08 |
+| `/van-hanh/tham-so?tab=co-tinh-nang`, `?tab=egress` | UI-18-10 |
+| `/van-hanh/tham-so/{khoa}/lich-su` | UI-18-09 |
+| `/van-hanh/thong-bao` | UI-18-11 |
+| `/van-hanh/thong-bao/nhat-ky` | UI-18-13 |
+| `/van-hanh/thong-bao/mau/{ma}` | UI-18-12 |
+| `/van-hanh/lich` | UI-18-16 |
+| `/van-hanh/su-co` | UI-18-17 |
+| `/van-hanh/su-co/{ma}` | UI-18-18 |
+| `/van-hanh/sao-luu` | UI-18-19 |
+| `/van-hanh/sao-luu/khoi-phuc` | UI-18-20 |
+| `/van-hanh/di-tru` | UI-18-21 |
+| `/van-hanh/di-tru/lan-chay/{ma}` | UI-18-22 |
+| `/van-hanh/di-tru/song-song` | UI-18-23 |
+| `/ca-nhan/thong-bao` | UI-18-14 |
+| `/quan-tri/tham-so?nhom={ns}` | Chuyển hướng 301 tới `/van-hanh/tham-so?ns={ns}` |
+
+**PH-20, Quản trị tenant (mục 45, 46 và 85 đến 90).**
+
+| Route | Màn |
+|---|---|
+| `/nen-tang/tong-quan` | UI-20-20 |
+| `/nen-tang/tenant` | UI-20-01 |
+| `/nen-tang/tenant/moi` | UI-20-02 |
+| `/nen-tang/tenant/{ma-tenant}` | UI-20-03 |
+| `/nen-tang/tenant/{ma-tenant}/khoi-tao` | UI-20-04 |
+| `/nen-tang/tenant/{ma-tenant}/han-muc` | UI-20-05 |
+| `/nen-tang/tenant/{ma-tenant}/phan-he` | UI-20-07 |
+| `/nen-tang/tenant/{ma-tenant}/vong-doi` | UI-20-08 |
+| `/nen-tang/tenant/{ma-tenant}/lich-su` | UI-20-17 |
+| `/nen-tang/su-dung` | UI-20-06 |
+| `/nen-tang/sap-nhap` | UI-20-11 |
+| `/nen-tang/sap-nhap/moi` | UI-20-09 |
+| `/nen-tang/sap-nhap/{ma-sap-nhap}` | UI-20-10 |
+| `/nen-tang/phat-hanh` | UI-20-18 |
+| `/nen-tang/phat-hanh/{phien-ban}/ke-hoach` | UI-20-19 |
+| `/nen-tang/mau-khoi-tao` | UI-20-21 |
+| `/quan-tri/cai-dat-tinh` | UI-20-12 |
+| `/quan-tri/cai-dat-tinh/su-dung` | UI-20-13 |
+| `/quan-tri/cai-dat-tinh/lien-tenant` | UI-20-22 |
+| `/quan-tri/to-chuc` | UI-20-14 |
+| `/quan-tri/to-chuc/nhap` | UI-20-16 |
+| `/quan-tri/to-chuc/moi`, `/{ma-to-chuc}`, `/{ma-to-chuc}/sua` | UI-20-15 |
+
+Tập PH-01 (nhóm `/ket-noi/he-thong/...`), PH-04, PH-05, PH-06, PH-07, PH-09, PH-10, PH-15 và PH-19 giữ bảng route trong tập của mình; mục 2.3.2 và 2.14 đã đủ làm điểm vào. Với PH-18, `/ca-nhan/thong-bao` (UI-18-14) là một trang hai tab theo mục 2.3.3.
 
 ### 2.4. Quy tắc URL
 
 URL là một phần của giao diện: người dùng chia sẻ URL cho đồng nghiệp, dán vào phiếu hỗ trợ, đánh dấu trang. Vì vậy URL phải ổn định, đọc được và mang đủ trạng thái để mở lại đúng màn hình (FR-00-022). Các quy tắc dưới đây áp dụng cho `dh-console`; `dh-portal` theo cùng quy tắc với tiền tố riêng ở mục 2.14.
 
-**Đường dẫn (path).** Đường dẫn gồm các đoạn tiếng Việt không dấu viết `kebab-case`, theo cấu trúc `/{nhóm}/{tài-nguyên}/{mã-đối-tượng}/{màn-con}`. Đoạn `{nhóm}` khớp với nhóm menu (bảng ở mục 2.3.2), đoạn `{tài-nguyên}` khớp với mục cấp 2. Các màn con chuẩn dùng từ cố định sau để mọi phân hệ thống nhất: `/moi` (tạo mới, PTN-03), `/{ma}` (chi tiết, PTN-02), `/{ma}/sua` (sửa, PTN-03), `/{ma}/thiet-ke` (designer, PTN-07), `/{ma}/lich-su` (tab Lịch sử có thể liên kết sâu), `/nhap` (nhập dữ liệu, PTN-09). Tab trong trang chi tiết được phản ánh bằng đoạn cuối, ví dụ `/ket-noi/api/tra-cuu-ho-tich/phien-ban`, để có thể gửi liên kết thẳng tới tab.
+**Đường dẫn (path).** Đường dẫn gồm các đoạn tiếng Việt không dấu viết `kebab-case`, theo cấu trúc `/{nhóm}/{tài-nguyên}/{mã-đối-tượng}/{màn-con}`. Đoạn `{nhóm}` khớp với nhóm menu (bảng ở mục 2.3.2), đoạn `{tài-nguyên}` khớp với mục cấp 2. Các màn con chuẩn dùng từ cố định sau để mọi phân hệ thống nhất: `/moi` (tạo mới, PTN-03), `/{ma}` (chi tiết, PTN-02), `/{ma}/sua` (sửa, PTN-03), `/{ma}/thiet-ke` (designer, PTN-07), `/{ma}/lich-su` (tab Lịch sử có thể liên kết sâu), `/nhap` (nhập dữ liệu, PTN-09). Tab trong trang chi tiết được phản ánh bằng đoạn cuối, ví dụ `/ket-noi/api/tra-cuu-ho-tich/phien-ban`, để có thể gửi liên kết thẳng tới tab. Bộ định tuyến so khớp đoạn tĩnh (`moi`, `nhap`, `tham-dinh`, `thiet-ke`) trước đoạn động `{ma}`; vì vậy mã nghiệp vụ không được trùng đoạn tĩnh, và mã HTTT bắt đầu bằng chữ hoa (ví dụ `HTTT_SO_TP`) nên không va chạm với đoạn tĩnh viết thường. Ví dụ tab ở đoạn cuối của một route lồng: `/ket-noi/he-thong/{ma}/dinh-danh` mở tab "Ứng dụng và thông tin xác thực" của chi tiết HTTT.
 
 **Mã đối tượng trong URL.** Khi đối tượng có mã nghiệp vụ duy nhất trong tenant và bất biến (mã danh mục, mã API, mã luồng, mã HTTT, mã giao dịch), URL dùng mã đó thay cho khóa nội bộ, ví dụ `/du-lieu/danh-muc/DM_GIOI_TINH` chứ không phải `/du-lieu/danh-muc/5f2c…`. Mã nghiệp vụ giúp người dùng đọc được URL và giúp phiếu hỗ trợ có nghĩa. Khi đối tượng không có mã nghiệp vụ ổn định (bản ghi kiểm toán, phiên quy trình, thông báo), URL dùng định danh do hệ thống sinh nhưng là định danh công khai (ULID hoặc UUID), không bao giờ dùng khóa tự tăng của CSDL, vì khóa tự tăng cho phép suy đoán số lượng bản ghi và vi phạm tinh thần FR-00-011. Mã trong URL được mã hóa theo RFC 3986; mã chứa ký tự đặc biệt phải được `encodeURIComponent`.
 
@@ -326,7 +666,7 @@ URL là một phần của giao diện: người dùng chia sẻ URL cho đồng
 
 | Tham số | Ý nghĩa | Ví dụ | Ghi chú |
 |---|---|---|---|
-| `q` | Từ khóa tìm kiếm | `q=da%20nang` | Cắt khoảng trắng đầu cuối trước khi ghi lên URL |
+| `q` | Từ khóa tìm kiếm | `q=da%20nang` | Cắt khoảng trắng đầu cuối trước khi ghi lên URL; tối đa 200 ký tự (dài hơn bị chặn ở ô nhập và báo "Từ khóa tìm kiếm từ 1 đến 200 ký tự."); áp dụng sau 400ms ngừng gõ hoặc khi nhấn `Enter` |
 | `trang` | Số trang, bắt đầu từ 1 | `trang=3` | Bỏ khỏi URL khi bằng 1 |
 | `co` | Cỡ trang | `co=50` | Chỉ nhận 10, 20, 50, 100 (FR-00-021); bỏ khi bằng 20 |
 | `sap-xep` | Trường và chiều sắp xếp | `sap-xep=ngay-tao:giam` | Chiều `tang` hoặc `giam`; nhiều trường nối bằng dấu phẩy nếu màn cho phép đa cột |
@@ -458,18 +798,25 @@ Từ ma trận có thể rút ra hai hệ quả thiết kế. Thứ nhất, lãn
 
 | Khu vực | Route | Đăng nhập | Mẫu | Mô tả |
 |---|---|---|---|---|
-| Trang chủ | `/` | Không bắt buộc | PTN-14 (biến thể trang chào) | Giới thiệu, ô tìm API lớn, nhóm API nổi bật, hướng dẫn bắt đầu |
-| Danh mục API | `/api` | Không bắt buộc (theo cấu hình tenant) | PTN-01 (biến thể thẻ) | Lọc theo lĩnh vực, cơ quan cung cấp, kiểu xác thực; hiển thị dạng lưới thẻ hoặc bảng |
-| Tài liệu một API | `/api/{ma-api}/{phien-ban}` | Không bắt buộc | PTN-14 | Mục lục, nội dung, khung thử API |
-| Hướng dẫn | `/huong-dan/{bai}` | Không bắt buộc | PTN-14 | Bài hướng dẫn: xác thực, mã lỗi, giới hạn, sự kiện |
-| Ứng dụng của tôi | `/ung-dung` | Bắt buộc | PTN-01, PTN-02 | Ứng dụng của nhà phát triển, đăng ký sử dụng API, trạng thái duyệt |
+| Trang chủ | `/` | Không bắt buộc | PTN-14 (biến thể trang chào) | Giới thiệu, ô tìm dịch vụ lớn, nhóm dịch vụ nổi bật, hướng dẫn bắt đầu |
+| Danh mục dịch vụ API | `/dich-vu` | Không bắt buộc (theo cấu hình tenant) | PTN-01 (biến thể thẻ) | Lọc theo lĩnh vực, cơ quan cung cấp, kiểu xác thực; hiển thị dạng lưới thẻ hoặc bảng |
+| Tài liệu một dịch vụ | `/dich-vu/{ma-api}` (tham số `phien-ban`), `/dich-vu/{ma-api}/tai-lieu`, `/dich-vu/{ma-api}/thay-doi` | Không bắt buộc | PTN-02, PTN-14 | Chi tiết dịch vụ, mục lục, nội dung, nhật ký thay đổi |
+| Thử API | `/dich-vu/{ma-api}/thu` | Bắt buộc (`PERM-15-try`) | PTN-14 (biến thể khung thử rộng) | Khung thử gọi API với dữ liệu giả lập; không có `/sandbox` riêng, lịch sử lượt thử nằm ở tab `bo-suu-tap` của ứng dụng |
+| Sự kiện | `/su-kien`, `/su-kien/{ma-topic}` | Không bắt buộc (theo tenant) | PTN-01, PTN-02 | Danh mục topic sự kiện công khai và chi tiết |
+| Tìm kiếm | `/tim-kiem` | Không bắt buộc | PTN-01 | Kết quả theo loại `api`, `huong-dan`, `su-kien` |
+| Hướng dẫn, hỏi đáp, thông báo | `/huong-dan`, `/huong-dan/{ma-trang}`, `/hoi-dap`, `/thong-bao` | Theo đối tượng của trang | PTN-14 | Bài hướng dẫn: xác thực, mã lỗi, giới hạn, sự kiện |
+| Đăng nhập, đăng ký | `/dang-nhap`, `/dang-ky` | Không | PTN-04, PTN-13 | Tài khoản nhà phát triển (dh-dev); đăng nhập qua BFF |
+| Ứng dụng của tôi | `/ung-dung`, `/ung-dung/moi`, `/ung-dung/{ma}` | Bắt buộc | PTN-01, PTN-02, PTN-04 | Ứng dụng của nhà phát triển, bộ sưu tập thử, thống kê, nhật ký, thành viên |
 | Thông tin xác thực | `/ung-dung/{ma}/xac-thuc` | Bắt buộc | PTN-02 (tab) | Client ID, xoay vòng bí mật; bí mật chỉ hiện một lần bằng `CMP-SecretField` |
-| Sandbox | `/sandbox` | Bắt buộc | PTN-11 (biến thể) | Lịch sử lượt gọi thử, dữ liệu giả lập |
-| Tài khoản | `/tai-khoan` | Bắt buộc | PTN-12 | Thông tin cá nhân, giao diện, thông báo |
+| Đăng ký sử dụng, kết nạp, công bố | `/dang-ky-su-dung`, `/ket-nap`, `/cong-bo`, `/cong-bo/moi` | Bắt buộc (đầu mối, chủ dịch vụ) | PTN-05 | Đăng ký dùng API, kết nạp HTTT và công bố API từ cổng |
+| Tổng quan cá nhân | `/tong-quan` | Bắt buộc | PTN-06 | Tóm tắt ứng dụng, lượt gọi, việc cần xử lý |
+| Hỗ trợ | `/ho-tro`, `/ho-tro/moi`, `/ho-tro/{ma-yeu-cau}` | Bắt buộc | PTN-01, PTN-02 | Phiếu hỗ trợ và hỏi đáp |
+| Tài khoản | `/tai-khoan`, `/tai-khoan/nhom`, `/tai-khoan/dieu-khoan`, `/tai-khoan/thong-bao` | Bắt buộc | PTN-12, PTN-01 | Thông tin cá nhân, nhóm, điều khoản, hộp thông báo |
+| Quản trị cổng | `/quan-tri-cong/*` (nội dung, dịch vụ, tài khoản dev, nhận diện, tham số, nhật ký, đồng bộ, di trú, hỗ trợ) | Bắt buộc (quyền quản trị cổng) | PTN-03, PTN-10, PTN-12, PTN-11 | Đặt trong `dh-portal` theo quyết định tạm của FRS PH-15; vị trí cuối cùng còn chờ Q15-16 (nếu chuyển sang `dh-console` thì dùng mục 11 `/ket-noi/cong-nha-phat-trien`, nội dung màn giữ nguyên) |
 
 : Kiến trúc thông tin của dh-portal
 
-Thanh trên của cổng gồm logo và tên cổng của tỉnh, các liên kết "API", "Hướng dẫn", "Ứng dụng của tôi", ô tìm kiếm (cũng mở bằng `Ctrl+K`, chỉ có nhóm "API" và "Bài hướng dẫn"), chọn ngôn ngữ và nút đăng nhập hoặc menu tài khoản. Dưới `bp-md`, các liên kết gộp vào nút menu mở `CMP-Drawer`.
+Thanh trên của cổng gồm logo và tên cổng của tỉnh, các liên kết "Dịch vụ", "Hướng dẫn", "Ứng dụng của tôi", ô tìm kiếm (cũng mở bằng `Ctrl+K`, chỉ có nhóm "API" và "Bài hướng dẫn"), chọn ngôn ngữ và nút đăng nhập hoặc menu tài khoản. Dưới `bp-md`, các liên kết gộp vào nút menu mở `CMP-Drawer`.
 
 ## 3. Khung bố cục
 
@@ -544,12 +891,14 @@ Vùng nội dung dùng lưới 12 cột của antd (`Row`/`Col`) để các kh�
 | ≥ `bp-xxl` (1600px) | Mở rộng `size-sidebar` | `space-6` | `space-6` | 12 | Bảng điều khiển hiển thị lưới 4 thẻ KPI một hàng; nội dung trang biểu mẫu/chi tiết giới hạn `size-page-max` và căn giữa |
 | `bp-xl` … < `bp-xxl` (1200–1599px) | Mở rộng; ở 1200–1365px mặc định thu gọn `size-sidebar-collapsed` | `space-6` | `space-5` | 12 | 1366×768 là độ phân giải mục tiêu: sidebar mở rộng vẫn còn ≈ 1062px cho nội dung |
 | `bp-lg` … < `bp-xl` (992–1199px) | Thu gọn `size-sidebar-collapsed` | `space-5` | `space-4` | 12 | Biểu mẫu hai cột vẫn giữ; lưới KPI 2 thẻ một hàng |
-| `bp-md` … < `bp-lg` (768–991px) | Ẩn; mở bằng nút ≡ thành `CMP-Drawer` trái | `space-4` | `space-4` | 12 | Biểu mẫu chuyển một cột; bảng cuộn ngang với cột hành động dính phải |
+| `bp-md` … < `bp-lg` (768–991px) | Ẩn; mở bằng nút ≡ thành `CMP-Drawer` trái | `space-4` | `space-4` | 12 | Biểu mẫu chuyển một cột; bảng cuộn ngang với cột hành động dính phải; bảng của dh-portal chuyển thẻ từ `bp-sm` trở xuống (xem dưới) |
 | < `bp-md` (dưới 768px) | Như trên | `space-4` | `space-3` | 4 (gộp) | Chỉ đảm bảo đọc và thao tác cơ bản; PTN-07 hiển thị thông báo "Trình thiết kế cần màn hình rộng tối thiểu 992px" |
 
 : Lưới, lề và hành vi responsive
 
 Có ba điểm cần giải thích. Thứ nhất, D02-02 §2.2 đặt màn hình tối thiểu 1280×720 cho màn quản trị, còn D03-05-02 §12.3 lấy 1366×768 làm độ phân giải mục tiêu thiết kế. Hai số không mâu thuẫn: thiết kế tối ưu cho 1366×768, và mọi màn vẫn phải dùng được đầy đủ (không mất chức năng, không cuộn ngang toàn trang) ở 1280×720 với sidebar thu gọn; kiểm thử viên chạy cả hai kích thước. Thứ hai, ở 1200–1365px sidebar mặc định thu gọn nhưng người dùng có thể mở rộng; lựa chọn được ghi nhớ theo người dùng. Khi sidebar thu gọn, mục cấp 1 chỉ còn biểu tượng (`size-icon-lg`) và rê chuột hoặc focus vào biểu tượng mở popover `glass-overlay` liệt kê mục cấp 2; popover này mở được bằng phím `Enter` hoặc `→`. Thứ ba, chiều cao 768px buộc khung tiết kiệm chiều dọc: thanh trên 56px (48px ở mật độ Gọn), không có thanh chân trang (footer) trong `dh-console`, và `CMP-PageHeader` một dòng tiêu đề.
+
+**Bảng chuyển thẻ.** Ở `dh-portal` và ở các trang công khai, mọi `CMP-DataTable` dưới `bp-sm` (576px) dùng biến thể `card-list`: mỗi dòng thành một thẻ có nhãn cột đứng trước giá trị, hành động đưa xuống cuối thẻ; không cuộn ngang. `dh-console` vẫn dùng cuộn ngang vì ứng dụng quản trị chỉ bảo đảm đọc và thao tác cơ bản dưới 768px.
 
 Chiều rộng tối đa `size-page-max` chỉ áp dụng cho trang biểu mẫu (PTN-03), chi tiết (PTN-02) và cài đặt (PTN-12); trang danh sách (PTN-01), dashboard (PTN-06), designer (PTN-07) và tra log (PTN-11) dùng toàn bộ chiều rộng vì dữ liệu dạng bảng và biểu đồ hưởng lợi từ chiều ngang. Cột biểu mẫu đơn không vượt `size-form-max`.
 
@@ -561,7 +910,7 @@ Việc phát hiện cuộn dùng `IntersectionObserver` trên một phần tử 
 
 ### 3.6. Thanh "Bỏ qua tới nội dung", landmark và thứ tự focus
 
-**Bỏ qua tới nội dung.** Phần tử focus được đầu tiên của trang là liên kết "Bỏ qua tới nội dung chính" (NFR-00-042). Liên kết ẩn khỏi màn hình bằng kỹ thuật ẩn trực quan (không dùng `display:none`) cho tới khi nhận focus, khi đó nó hiện ở góc trên trái, trên mọi lớp (`z-toast`), dạng nút nền `color-surface-inverse` chữ `color-text-on-inverse`, có vòng focus kép. Kích hoạt liên kết chuyển focus tới tiêu đề `h1` của trang trong `main` (có `tabindex="-1"`). Trang có bảng lớn (PTN-01, PTN-11) có thêm liên kết thứ hai "Bỏ qua tới bảng dữ liệu".
+**Bỏ qua tới nội dung.** Phần tử focus được đầu tiên của trang là liên kết "Bỏ qua tới nội dung chính" (NFR-00-042). Liên kết ẩn khỏi màn hình bằng kỹ thuật ẩn trực quan (không dùng `display:none`) cho tới khi nhận focus, khi đó nó hiện ở góc trên trái, trên mọi lớp (`z-toast`), dạng nút nền `color-surface-inverse` chữ `color-text-on-inverse`, có vòng focus kép. Kích hoạt liên kết chuyển focus tới tiêu đề `h1` của trang trong `main` (có `tabindex="-1"`). Trang có bảng lớn (PTN-01, PTN-11) có thêm liên kết thứ hai "Bỏ qua tới bảng dữ liệu". Khi bảng bên Trợ lý AI đang mở (landmark `complementary` thứ hai bên phải), có thêm liên kết "Bỏ qua tới Trợ lý AI" đứng sau liên kết bảng dữ liệu, chuyển focus tới tiêu đề của bảng bên.
 
 **Landmark ARIA.** Khung dùng landmark HTML5 để người dùng trình đọc màn hình nhảy nhanh giữa các vùng. Bảng sau quy định ánh xạ.
 
@@ -752,7 +1101,7 @@ Sơ đồ cho thấy toàn bộ bộ lọc, bảng và phân trang nằm trong *
 
 **Khi dùng.** Mọi đối tượng có mã, có vòng đời hoặc có quan hệ. **Khi không dùng.** Đối tượng quá nhỏ chỉ vài trường (dùng Drawer xem nhanh từ PTN-01).
 
-**Ví dụ trong Datahub.** Chi tiết API (PH-02, `/ket-noi/api/{ma-api}` với tab Tổng quan, Phiên bản, Gói sử dụng, Đăng ký, Thống kê, Lịch sử); chi tiết HTTT thành viên (PH-01, tab Hồ sơ, Ứng dụng và thông tin xác thực, Đầu mối, API đang dùng, Lịch sử); chi tiết giao dịch (PH-19); chi tiết danh mục (PH-07, tab Mục, Thuộc tính, Phiên bản, Lịch sử).
+**Ví dụ trong Datahub.** Chi tiết API (PH-02, `/ket-noi/api/{ma-api}` với tab Tổng quan, Phiên bản, Backend, Gói sử dụng, Đăng ký, Thống kê, SLA, Lịch sử); chi tiết HTTT thành viên (PH-01, tab Hồ sơ, Ứng dụng và thông tin xác thực, Đầu mối, API đang dùng, Lịch sử); chi tiết giao dịch (PH-19); chi tiết danh mục (PH-07, tab Mục, Thuộc tính, Phiên bản, Lịch sử).
 
 **Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
@@ -1069,7 +1418,7 @@ Designer chiếm toàn bộ vùng nội dung, không cuộn trang; mỗi vùng t
 
 **Trạng thái cụ thể.** ST-01: canvas trống với skeleton 3 nút. Rỗng (luồng mới): canvas hiện gợi ý "Kéo một nút Nguồn vào đây hoặc nhấn Enter trên nút trong bảng bên trái để bắt đầu". Mất kết nối khi đang sửa: tiếp tục sửa cục bộ, chỉ báo "Chưa lưu lên máy chủ", tự đồng bộ khi có lại kết nối.
 
-**Phím tắt.** `Ctrl+S` lưu; `Ctrl+Z`/`Ctrl+Shift+Z`; `Delete`; `Ctrl+D` nhân bản nút; `0` vừa khung; `+`/`−` thu phóng; `Ctrl+\` chuyển chế độ YAML; `F` toàn màn hình; `?` danh sách phím tắt.
+**Phím tắt.** `Ctrl+S` lưu; `Ctrl+Z`/`Ctrl+Shift+Z`; `Delete`; `Ctrl+D` nhân bản nút; `0` vừa khung; `+`/`−` thu phóng; `Ctrl+\` chuyển chế độ YAML; `F` toàn màn hình; `Alt+L` mở hoặc đóng "Xem dạng danh sách" (nút và cạnh dưới dạng danh sách, áp dụng cho mọi canvas); `?` danh sách phím tắt.
 
 **Tiêu chí nghiệm thu PTN-07.**
 
@@ -1079,6 +1428,8 @@ Designer chiếm toàn bộ vùng nội dung, không cuộn trang; mỗi vùng t
 - [ ] Tự lưu hoạt động; hai người sửa cùng luồng nhận xung đột có so sánh.
 - [ ] Luồng 200 nút thu phóng, kéo mượt (≥ 50 khung hình/giây trên máy văn phòng chuẩn).
 - [ ] Trạng thái chạy thử của nút có chữ/biểu tượng, không chỉ màu.
+
+**Biến thể "trình soạn mã".** Màn soạn chính sách hoặc tập tệp mã (PH-12 UI-12-12, soạn Rego) dùng khung PTN-07 nhưng thay canvas bằng `CMP-CodeEditor`: ba cột (cây tệp, vùng soạn, bảng thuộc tính hoặc kết quả kiểm thử), bảng Vấn đề ở dưới và thanh trạng thái; không có đồng bộ hai chiều với đồ thị. Các quy tắc về phím tắt, tự lưu, `If-Match` và chế độ chỉ xem giống PTN-07.
 
 **Sai lầm thường gặp.** Chỉ hỗ trợ kéo thả; canvas glass; mất dữ liệu khi chuyển chế độ YAML; Inspector là Modal che canvas; không có hoàn tác.
 
@@ -1215,7 +1566,7 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: duyệt xong một việc, khung chi tiết tự chuyển sang việc kế tiếp. Dưới `bp-xl`, khung chi tiết mở thành trang riêng.
+Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: duyệt xong một việc, khung chi tiết tự chuyển sang việc kế tiếp. Dưới `bp-xl`, khung chi tiết mở thành trang riêng. Ở mọi cỡ màn hình, khung chi tiết có nút "Mở toàn trang" dẫn tới `/viec-cua-toi/{ma-viec}`; màn đích do `taskKind` quyết định (việc duyệt phát hành mô hình quy trình `PUBLISH_REVIEW` mở UI-11-07, các loại khác mở UI-11-15), cùng một đường dẫn.
 
 **Thành phần.** `CMP-Tabs`/`CMP-SegmentedControl`, `CMP-FilterBar`, danh sách thẻ việc (`CMP-Card` gọn với `CMP-StatusTag`, `CMP-Timestamp`), `CMP-DescriptionList`, `CMP-DiffViewer`, `CMP-Timeline`, `CMP-ApprovalPanel`, `CMP-ReasonDialog`. Mọi vùng đặc.
 
@@ -1419,7 +1770,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 
 **Mục đích.** Cho nhà phát triển của các hệ thống thành viên đọc tài liệu dài có cấu trúc của một API hoặc bài hướng dẫn, và thử gọi API ngay trên trang, trên `dh-portal` (PH-15).
 
-**Khi dùng.** Tài liệu một API theo phiên bản (`/api/{ma-api}/{phien-ban}`), bài hướng dẫn (`/huong-dan/{bai}`: xác thực, mã lỗi, giới hạn, sự kiện), trang chủ cổng (biến thể trang chào). **Khi không dùng.** Quản trị API trong `dh-console` (PTN-02 của PH-02).
+**Khi dùng.** Tài liệu một dịch vụ API theo phiên bản (`/dich-vu/{ma-api}/tai-lieu`, tham số `phien-ban`), bài hướng dẫn (`/huong-dan/{bai}`: xác thực, mã lỗi, giới hạn, sự kiện), trang chủ cổng (biến thể trang chào). **Khi không dùng.** Quản trị API trong `dh-console` (PTN-02 của PH-02).
 
 **Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
@@ -1442,7 +1793,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Ba cột từ `bp-xxl`; 1200–1599px: khung thử ③ thu thành nút "Thử API" mở `CMP-Drawer` `lg`; dưới `bp-lg`: mục lục thành nút "Mục lục" mở Drawer trái, một cột nội dung.
+Ba cột từ `bp-xxl`. Biến thể "khung thử rộng" (UI-15-06 Thử API) dùng ba cột: mục lục 240px, hai cột còn lại rộng bằng nhau (nội dung và khung thử), vì thân yêu cầu và phản hồi cần chiều ngang tương đương phần mô tả. Với bố cục chuẩn: 1200–1599px: khung thử ③ thu thành nút "Thử API" mở `CMP-Drawer` `lg`; dưới `bp-lg`: mục lục thành nút "Mục lục" mở Drawer trái, một cột nội dung.
 
 **Thành phần và vật liệu.** Thanh trên của cổng theo D03-06-00 §3.10 (`glass-chrome`); ① mục lục dính, nền đặc, mục đang đọc tô `color-fill-selected` và có `aria-current="location"`; ② nội dung Markdown dựng từ OpenAPI 3.1 và AsyncAPI 3 của D03-04 trên nền đặc, chữ thân `font-callout`, độ dài dòng tối đa 80 ký tự, bảng tham số `CMP-DataTable` biến thể gọn không phân trang, ví dụ mã `CMP-CodeEditor` chỉ đọc có `CMP-SegmentedControl` chọn ngôn ngữ và `CMP-CopyButton`, mã trạng thái `CMP-StatusTag`; ③ khung thử nền đặc gồm `CMP-Select` môi trường, `CMP-Select` ứng dụng, `CMP-CodeEditor` thân yêu cầu, `CMP-Button`, `CMP-JsonViewer` phản hồi, `CMP-Duration`; ④ chân trang trên canvas.
 
@@ -1627,7 +1978,7 @@ Theo quyết định Q4 (phủ đủ nghiệp vụ hệ cũ và giữ màn có g
 | LGC-APIM-016, 021 | Quản lý đăng ký theo API, theo ứng dụng | Giữ nguyên | PTN-02 (tab), PTN-01 | Chi tiết API tab Đăng ký; `/ket-noi/dang-ky` |
 | LGC-APIM-019 | Danh sách ứng dụng | Nâng cấp | PTN-01 | `/ket-noi/he-thong` (PH-01, ứng dụng thuộc HTTT) |
 | LGC-APIM-022 | Log request của ứng dụng, chi tiết một log | Nâng cấp | PTN-11 | `/giam-sat/log` lọc theo ứng dụng |
-| LGC-APIM-023, 024, 025 | Danh sách, chi tiết, giám sát gateway | Thay thế | PTN-11 (nút gateway), PTN-06 | `/ket-noi/chinh-sach` (PH-03), `/giam-sat/bang-dieu-khien` |
+| LGC-APIM-023, 024, 025 | Danh sách, chi tiết, giám sát gateway | Thay thế | PTN-01 (nút gateway), PTN-06 | `/cong-api/nut` và `/cong-api/route` (PH-03), `/giam-sat/bang-dieu-khien` |
 | LGC-APIM-026 | Dashboard hoạt động chung của hệ thống API | Giữ nguyên | PTN-06 | `/tong-quan`, `/giam-sat/bang-dieu-khien` |
 | LGC-APIM-027 | Audit thông tin tác động hệ thống | Nâng cấp | PTN-11 | `/giam-sat/kiem-toan` |
 | LGC-DMDC-001 | Danh sách danh mục, số lượng | Giữ nguyên | PTN-08 | UI-07-01 |
@@ -1681,5 +2032,6 @@ Các đề xuất dưới đây cần chủ sở hữu các tài liệu liên qu
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Luồng giao diện | Bản dự thảo trước khi áp chuẩn trình bày kết hợp |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm metadata `mo_ta` và `tai_lieu_lien_quan`, Tóm tắt cho hội đồng thẩm định, các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu), đoạn mở cho §5.2, §5.5, §8, §9, đoạn dẫn cho 15 wireframe |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bổ sung mục menu 47 đến 90 và mục 2.3.4 (route con của PH-02, 03, 08, 11, 12, 13, 14, 16, 17, 18, 20), nhóm Cổng API và Kết nối quốc gia, ngoại lệ quy tắc chín mục; đổi bảng IA của dh-portal theo FRS PH-15; thêm lối vào ngoài sidebar (bàn giao, xác nhận, chạy thử, ủy quyền), chuyển hướng `/ca-nhan/viec` và `/quan-tri/tham-so`; quy tắc đoạn tĩnh, giới hạn `q` 200 ký tự, bảng chuyển thẻ, skip-link Trợ lý AI, `Alt+L` và biến thể trình soạn mã của PTN-07, "Mở toàn trang" của PTN-10, khung thử rộng của PTN-14 |
 
 : Lịch sử phiên bản của D03-06-00

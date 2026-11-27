@@ -175,9 +175,15 @@ paths:
         permission: PERM-03-read
       security:
       - oauth2User: []
-      description: Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `ETag`.
+      description: Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `impact` để nêu hậu quả bằng
+        số trước khi xác nhận; có `eligibility` khi gọi với `eligibility=true`. Có `ETag`.
       parameters:
       - $ref: '#/components/parameters/RouteCodePath'
+      - name: eligibility
+        in: query
+        schema: &id004
+          type: boolean
+        description: Trả thêm danh sách điều kiện mở cửa Internet, đạt hoặc chưa (UI-03-03 tab Cửa vào).
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -359,8 +365,7 @@ paths:
           minLength: 2
       - name: unhealthyOnly
         in: query
-        schema: &id005
-          type: boolean
+        schema: *id004
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Traceparent'
@@ -812,7 +817,7 @@ paths:
         permission: PERM-03-read
       security:
       - oauth2User: []
-      description: Không có bí mật. Có `ETag`.
+      description: Không có bí mật. Có `impact` và `subscriptions` (API, gói, hiệu lực lấy từ bản chiếu PH-02). Có `ETag`.
       parameters:
       - $ref: '#/components/parameters/ConsumerCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -2377,7 +2382,7 @@ paths:
       - &id006
         name: from
         in: query
-        schema: &id004
+        schema: &id005
           type: string
           format: date-time
           maxLength: 40
@@ -2385,7 +2390,7 @@ paths:
       - &id007
         name: to
         in: query
-        schema: *id004
+        schema: *id005
         description: Mốc kết thúc; tối đa 31 ngày giữa hai mốc, trong 12 tháng (ERR-03-021).
       - name: routeCode
         in: query
@@ -3984,7 +3989,7 @@ paths:
       parameters:
       - name: enabled
         in: query
-        schema: *id005
+        schema: *id004
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Traceparent'
@@ -4953,7 +4958,7 @@ paths:
           $ref: '#/components/schemas/RouteCode'
       - name: enabled
         in: query
-        schema: *id005
+        schema: *id004
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Traceparent'
@@ -5489,10 +5494,10 @@ paths:
           - MONTH
       - name: from
         in: query
-        schema: *id004
+        schema: *id005
       - name: to
         in: query
-        schema: *id004
+        schema: *id005
       - name: consumerCode
         in: query
         schema:
@@ -6629,7 +6634,7 @@ components:
           type: string
           description: Kèm ERR-03-010.
           maxLength: 255
-        existingExpiresAt: *id004
+        existingExpiresAt: *id005
         activeSubscriptions:
           type: integer
           description: Kèm ERR-03-017.
@@ -6740,7 +6745,7 @@ components:
               format: int32
               minimum: 0
               maximum: 2147483647
-            resetAt: *id004
+            resetAt: *id005
           additionalProperties: false
       additionalProperties: true
     RouteSummary:
@@ -6784,16 +6789,16 @@ components:
               type: string
               maxLength: 100
             maxItems: 1000
-          requireMtls: *id005
-          deprecatedAt: *id004
-          sunsetAt: *id004
+          requireMtls: *id004
+          deprecatedAt: *id005
+          sunsetAt: *id005
           snapshotVersion:
             type: integer
             description: Ảnh chụp mới nhất có chứa route.
             format: int32
             minimum: 0
             maximum: 2147483647
-          updatedAt: *id004
+          updatedAt: *id005
           version:
             type: integer
             format: int32
@@ -6835,7 +6840,7 @@ components:
               - WEBSOCKET
               - GRPC
             maxItems: 1000
-          corsEnabled: *id005
+          corsEnabled: *id004
           wafParanoia:
             type: integer
             minimum: 1
@@ -6854,7 +6859,7 @@ components:
           stateChangedBy:
             type: string
             maxLength: 64
-          stateChangedAt: *id004
+          stateChangedAt: *id005
           rateLimits:
             type: array
             items:
@@ -6881,6 +6886,43 @@ components:
             type: string
             maxLength: 128
             description: Gói chính sách OPA gắn với route.
+          impact:
+            $ref: '#/components/schemas/ImpactEstimate'
+          eligibility:
+            type: array
+            items:
+              type: object
+              properties:
+                code:
+                  type: string
+                  maxLength: 32
+                met: *id004
+                reason:
+                  type: string
+                  maxLength: 300
+              additionalProperties: false
+              required:
+              - code
+              - met
+            description: Danh sách điều kiện mở route ra cửa Internet (FR-03-038), đạt hoặc chưa; chỉ trả khi gọi với `eligibility=true`.
+            maxItems: 1000
+    ImpactEstimate:
+      type: object
+      properties:
+        consumersLast15m:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2147483647
+        routesAffected:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2147483647
+        evaluatedAt: *id005
+      additionalProperties: false
+      description: Ước lượng hậu quả của thao tác dừng, tạm ngừng hoặc gỡ để giao diện nêu bằng số trước khi xác nhận; lấy từ PH-13, không có
+        thì bỏ trường.
     RoutePage:
       type: object
       properties:
@@ -6992,8 +7034,8 @@ components:
                 maxLength: 16
               state:
                 $ref: '#/components/schemas/RouteState'
-              deprecatedAt: *id004
-              sunsetAt: *id004
+              deprecatedAt: *id005
+              sunsetAt: *id005
               successorRoute:
                 $ref: '#/components/schemas/RouteCode'
               callsLast7d:
@@ -7056,7 +7098,7 @@ components:
           minimum: 100
           maximum: 100000
           format: int32
-        schemaValidation: *id005
+        schemaValidation: *id004
       additionalProperties: false
     TimeoutsUpdate:
       type: object
@@ -7173,7 +7215,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        tlsVerify: *id005
+        tlsVerify: *id004
         version:
           type: integer
           format: int32
@@ -7294,21 +7336,21 @@ components:
             $ref: '#/components/schemas/SystemCode'
           priorityGroup:
             $ref: '#/components/schemas/PriorityGroup'
-          trustedSource: *id005
+          trustedSource: *id004
           authMethod:
             $ref: '#/components/schemas/AuthMethod'
           state:
             $ref: '#/components/schemas/ConsumerState'
           syncState:
             $ref: '#/components/schemas/SyncState'
-          certNotAfter: *id004
-          apiKeyNotAfter: *id004
+          certNotAfter: *id005
+          apiKeyNotAfter: *id005
           subscriptionCount:
             type: integer
             format: int32
             minimum: 0
             maximum: 2147483647
-          updatedAt: *id004
+          updatedAt: *id005
           version:
             type: integer
             format: int32
@@ -7341,6 +7383,30 @@ components:
       - $ref: '#/components/schemas/ConsumerSummary'
       - type: object
         properties:
+          impact:
+            $ref: '#/components/schemas/ImpactEstimate'
+          subscriptions:
+            type: array
+            items:
+              type: object
+              properties:
+                apiCode:
+                  type: string
+                  maxLength: 100
+                planCode:
+                  type: string
+                  maxLength: 64
+                state:
+                  type: string
+                  maxLength: 16
+                validFrom: *id005
+                validTo: *id005
+              additionalProperties: false
+              required:
+              - apiCode
+              - state
+            description: Đăng ký sử dụng của consumer (API, gói, hiệu lực) lấy từ bản chiếu PH-02, để tab Đăng ký ở UI-03-05.
+            maxItems: 1000
           emergencyBlock:
             type: object
             properties:
@@ -7351,14 +7417,14 @@ components:
               createdBy:
                 type: string
                 maxLength: 64
-              createdAt: *id004
+              createdAt: *id005
             additionalProperties: false
           lastSyncedSnapshot:
             type: integer
             format: int32
             minimum: 0
             maximum: 2147483647
-          createdAt: *id004
+          createdAt: *id005
     ConsumerPage:
       type: object
       properties:
@@ -7397,7 +7463,7 @@ components:
           $ref: '#/components/schemas/ConsumerState'
         priorityGroup:
           $ref: '#/components/schemas/PriorityGroup'
-        trustedSource: *id005
+        trustedSource: *id004
         authMethod:
           $ref: '#/components/schemas/AuthMethod'
         certThumbprints:
@@ -7406,10 +7472,10 @@ components:
             $ref: '#/components/schemas/Sha256Hex'
           maxItems: 2
           description: Vân tay SHA-256 chứng thư khách, khi `MTLS`.
-        certNotAfter: *id004
+        certNotAfter: *id005
         apiKeyHash:
           $ref: '#/components/schemas/Sha256Hex'
-        apiKeyNotAfter: *id004
+        apiKeyNotAfter: *id005
       additionalProperties: false
       required:
       - systemCode
@@ -7436,10 +7502,10 @@ components:
           items:
             $ref: '#/components/schemas/Sha256Hex'
           maxItems: 2
-        certNotAfter: *id004
+        certNotAfter: *id005
         apiKeyHash:
           $ref: '#/components/schemas/Sha256Hex'
-        apiKeyNotAfter: *id004
+        apiKeyNotAfter: *id005
       additionalProperties: false
       required:
       - authMethod
@@ -7462,7 +7528,7 @@ components:
             maxLength: 20
             description: 'Băm cắt ngắn: 16 ký tự đầu cộng dấu chấm lửng.'
           maxItems: 1000
-        certNotAfter: *id004
+        certNotAfter: *id005
         certDaysLeft:
           type: integer
           format: int32
@@ -7472,7 +7538,7 @@ components:
           type: string
           maxLength: 8
           description: 8 ký tự đầu của băm; không bao giờ trả khóa.
-        apiKeyNotAfter: *id004
+        apiKeyNotAfter: *id005
         version:
           type: integer
           format: int32
@@ -7523,7 +7589,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        sourceUpdatedAt: *id004
+        sourceUpdatedAt: *id005
         version:
           type: integer
           format: int32
@@ -7588,7 +7654,7 @@ components:
           minimum: 0
           maximum: 2147483647
         pendingChangeRequestId: *id009
-        updatedAt: *id004
+        updatedAt: *id005
         version:
           type: integer
           format: int32
@@ -7662,14 +7728,14 @@ components:
           minimum: 0
           format: int32
           maximum: 2147483647
-        validTo: *id004
+        validTo: *id005
         reason:
           type: string
           maxLength: 500
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt: *id005
         version:
           type: integer
           format: int32
@@ -7713,7 +7779,7 @@ components:
           minimum: 0
           format: int32
           maximum: 2147483647
-        validTo: *id004
+        validTo: *id005
         reason:
           $ref: '#/components/schemas/Reason'
       additionalProperties: false
@@ -7766,8 +7832,8 @@ components:
       properties:
         consumerCode:
           $ref: '#/components/schemas/ConsumerCode'
-        evaluatedAt: *id004
-        degraded: *id005
+        evaluatedAt: *id005
+        degraded: *id004
         rates:
           type: array
           items:
@@ -7825,7 +7891,7 @@ components:
                 type: number
                 minimum: 0
                 maximum: 1000000000000
-              resetAt: *id004
+              resetAt: *id005
             additionalProperties: false
             required:
             - routeCode
@@ -7864,8 +7930,8 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        raisedAt: *id004
-        resetAt: *id004
+        raisedAt: *id005
+        resetAt: *id005
       additionalProperties: false
       required:
       - consumerCode
@@ -7931,9 +7997,9 @@ components:
                   type: string
                   maxLength: 16
                 maxItems: 1000
-              hsts: *id005
-              ocspStapling: *id005
-              ipv6: *id005
+              hsts: *id004
+              ocspStapling: *id004
+              ipv6: *id004
               mtlsMode:
                 type: string
                 enum:
@@ -7967,7 +8033,7 @@ components:
         reason:
           type: string
           maxLength: 500
-        expiresAt: *id004
+        expiresAt: *id005
         state:
           type: string
           enum:
@@ -7977,7 +8043,7 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt: *id005
         version:
           type: integer
           format: int32
@@ -7997,7 +8063,7 @@ components:
           maxLength: 255
         reason:
           $ref: '#/components/schemas/Reason'
-        expiresAt: *id004
+        expiresAt: *id005
       additionalProperties: false
       required:
       - hostPattern
@@ -8056,8 +8122,8 @@ components:
                 enum:
                 - DATAHUB_PKI
                 - TENANT_CA
-              notAfter: *id004
-              crlUpdatedAt: *id004
+              notAfter: *id005
+              crlUpdatedAt: *id005
               crlAgeHours:
                 type: integer
                 format: int32
@@ -8088,8 +8154,8 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
-        expiresAt: *id004
+        createdAt: *id005
+        expiresAt: *id005
       additionalProperties: false
       required:
       - blockId
@@ -8153,7 +8219,7 @@ components:
         eventId:
           type: string
           maxLength: 32
-        ts: *id004
+        ts: *id005
         routeCode:
           $ref: '#/components/schemas/RouteCode'
         ruleId:
@@ -8238,13 +8304,13 @@ components:
                 description: '`TENANT` hoặc mã route.'
               mode:
                 $ref: '#/components/schemas/WafModeValue'
-              detectSince: *id004
+              detectSince: *id005
               detectDays:
                 type: integer
                 format: int32
                 minimum: 0
                 maximum: 2147483647
-              autoDegradedAt: *id004
+              autoDegradedAt: *id005
             additionalProperties: false
             required:
             - scope
@@ -8253,7 +8319,7 @@ components:
         eligibleForBlock:
           type: object
           properties:
-            eligible: *id005
+            eligible: *id004
             detectDays:
               type: integer
               format: int32
@@ -8354,11 +8420,11 @@ components:
         approvedBy:
           type: string
           maxLength: 64
-        decidedAt: *id004
+        decidedAt: *id005
         decisionComment:
           type: string
           maxLength: 1000
-        expiresAt: *id004
+        expiresAt: *id005
         evidenceEventId:
           type: string
           maxLength: 32
@@ -8367,7 +8433,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        createdAt: *id004
+        createdAt: *id005
         version:
           type: integer
           format: int32
@@ -8393,7 +8459,7 @@ components:
           type: string
           maxLength: 1000
           minLength: 20
-        expiresAt: *id004
+        expiresAt: *id005
         evidenceEventId:
           type: string
           maxLength: 32
@@ -8475,11 +8541,11 @@ components:
           - ACTIVE
           - RETIRED
           - EXPIRED
-        expiresAt: *id004
+        expiresAt: *id005
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt: *id005
         version:
           type: integer
           format: int32
@@ -8514,7 +8580,7 @@ components:
           type: string
           maxLength: 64
           description: Mã CVE hoặc số cảnh báo.
-        expiresAt: *id004
+        expiresAt: *id005
       additionalProperties: false
       required:
       - ruleText
@@ -8587,7 +8653,7 @@ components:
             type: string
             maxLength: 100
           maxItems: 1000
-        allowCredentials: *id005
+        allowCredentials: *id004
         maxAgeSeconds:
           type: integer
           minimum: 0
@@ -8631,7 +8697,7 @@ components:
             type: string
             maxLength: 100
           maxItems: 1000
-        allowCredentials: *id005
+        allowCredentials: *id004
         maxAgeSeconds:
           type: integer
           minimum: 0
@@ -8715,7 +8781,7 @@ components:
                 format: int32
                 minimum: 0
                 maximum: 2147483647
-              lastRefreshAt: *id004
+              lastRefreshAt: *id005
               state:
                 type: string
                 enum:
@@ -8744,8 +8810,8 @@ components:
         sub:
           type: string
           maxLength: 128
-        notBefore: *id004
-        tokenExpiresAt: *id004
+        notBefore: *id005
+        tokenExpiresAt: *id005
         reason:
           $ref: '#/components/schemas/Reason'
       additionalProperties: false
@@ -8775,17 +8841,17 @@ components:
         sub:
           type: string
           maxLength: 128
-        notBefore: *id004
-        tokenExpiresAt: *id004
+        notBefore: *id005
+        tokenExpiresAt: *id005
         reason:
           type: string
           maxLength: 500
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
-        expiresAt: *id004
-        propagatedAt: *id004
+        createdAt: *id005
+        expiresAt: *id005
+        propagatedAt: *id005
       additionalProperties: false
       required:
       - revocationId
@@ -8834,7 +8900,7 @@ components:
         apiClassification:
           type: string
           maxLength: 32
-        requiresPurpose: *id005
+        requiresPurpose: *id004
       additionalProperties: false
       required:
       - routeCode
@@ -8940,7 +9006,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        gitPending: *id005
+        gitPending: *id004
         nodesApplied:
           type: integer
           format: int32
@@ -8954,9 +9020,9 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
-        publishedAt: *id004
-        appliedAt: *id004
+        createdAt: *id005
+        publishedAt: *id005
+        appliedAt: *id005
         version:
           type: integer
           format: int32
@@ -9102,7 +9168,7 @@ components:
           enum:
           - MANUAL
           - IMPORT
-        dryRun: *id005
+        dryRun: *id004
         reason:
           type: string
           maxLength: 500
@@ -9119,13 +9185,13 @@ components:
     ValidationReport:
       type: object
       properties:
-        valid: *id005
+        valid: *id004
         routeCount:
           type: integer
           format: int32
           minimum: 0
           maximum: 2147483647
-        checkedAt: *id004
+        checkedAt: *id005
         findings:
           type: array
           items:
@@ -9270,13 +9336,13 @@ components:
           - LAGGING
           - FAILED
           - UNKNOWN
-        lastSeenAt: *id004
+        lastSeenAt: *id005
         jwksAgeSeconds:
           type: integer
           format: int32
           minimum: 0
           maximum: 2147483647
-        valkeyUp: *id005
+        valkeyUp: *id004
         wafMode:
           $ref: '#/components/schemas/WafModeValue'
         cpuPercent: *id010
@@ -9307,7 +9373,7 @@ components:
             items:
               type: object
               properties:
-                at: *id004
+                at: *id005
                 code:
                   type: string
                   maxLength: 32
@@ -9382,7 +9448,7 @@ components:
         version:
           type: string
           maxLength: 16
-        enabled: *id005
+        enabled: *id004
         params:
           type: array
           items:
@@ -9460,7 +9526,7 @@ components:
     TemplateEnablement:
       type: object
       properties:
-        enabled: *id005
+        enabled: *id004
         params: &id011
           type: object
           additionalProperties: true
@@ -9485,7 +9551,7 @@ components:
             type: string
             maxLength: 255
           maxItems: 1000
-        notAfter: *id004
+        notAfter: *id005
         issuer:
           type: string
           maxLength: 500
@@ -9502,7 +9568,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        autoRenew: *id005
+        autoRenew: *id004
         version:
           type: integer
           format: int32
@@ -9572,15 +9638,15 @@ components:
         requestedBy:
           type: string
           maxLength: 64
-        requestedAt: *id004
+        requestedAt: *id005
         decidedBy:
           type: string
           maxLength: 64
-        decidedAt: *id004
+        decidedAt: *id005
         decisionComment:
           type: string
           maxLength: 1000
-        expiresAt: *id004
+        expiresAt: *id005
         version:
           type: integer
           format: int32
@@ -9627,7 +9693,7 @@ components:
         logId:
           type: string
           maxLength: 64
-        ts: *id004
+        ts: *id005
         tenant:
           $ref: '#/components/schemas/TenantCode'
         traceId:
@@ -9712,7 +9778,7 @@ components:
           format: int32
           minimum: 0
           maximum: 2147483647
-        synthetic: *id005
+        synthetic: *id004
       additionalProperties: false
       required:
       - logId
@@ -9753,8 +9819,8 @@ components:
     AccessLogExportRequest:
       type: object
       properties:
-        from: *id004
-        to: *id004
+        from: *id005
+        to: *id005
         consumerCode:
           $ref: '#/components/schemas/ConsumerCode'
         routeCode:
@@ -9819,8 +9885,8 @@ components:
         requestedBy:
           type: string
           maxLength: 64
-        createdAt: *id004
-        expiresAt: *id004
+        createdAt: *id005
+        expiresAt: *id005
       additionalProperties: false
       required:
       - exportId
@@ -9835,8 +9901,8 @@ components:
           - 1h
           - 24h
           - 7d
-        dataAvailable: *id005
-        generatedAt: *id004
+        dataAvailable: *id004
+        generatedAt: *id005
         totals:
           type: object
           properties:
@@ -9922,9 +9988,9 @@ components:
         degraded:
           type: object
           properties:
-            valkey: *id005
-            waf: *id005
-            jwks: *id005
+            valkey: *id004
+            waf: *id004
+            jwks: *id004
           additionalProperties: false
         runningSnapshotVersion:
           type: integer
@@ -9932,6 +9998,28 @@ components:
           minimum: 0
           maximum: 2147483647
         series: *id012
+        kpis:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                maxLength: 32
+              value: *id010
+              previous: *id010
+              trend:
+                type: string
+                enum:
+                - UP
+                - DOWN
+                - FLAT
+            additionalProperties: false
+            required:
+            - code
+            - value
+          description: Chỉ số tổng quan kèm xu hướng so với kỳ liền trước cùng độ dài.
+          maxItems: 1000
       additionalProperties: false
       required:
       - window
@@ -10041,7 +10129,7 @@ components:
           minimum: 30
           format: int32
           maximum: 2147483647
-        enabled: *id005
+        enabled: *id004
         lastResult:
           type: object
           properties:
@@ -10050,7 +10138,7 @@ components:
               enum:
               - PASSED
               - FAILED
-            at: *id004
+            at: *id005
             latencyMs:
               type: integer
               format: int32
@@ -10114,7 +10202,7 @@ components:
           default: 60
           format: int32
           maximum: 2147483647
-        enabled: *id005
+        enabled: *id004
       additionalProperties: false
       required:
       - checkCode
@@ -10195,11 +10283,11 @@ components:
         detail:
           type: string
           maxLength: 1000
-        raisedAt: *id004
+        raisedAt: *id005
         acknowledgedBy:
           type: string
           maxLength: 64
-        acknowledgedAt: *id004
+        acknowledgedAt: *id005
         version:
           type: integer
           format: int32
@@ -10260,9 +10348,9 @@ components:
               unit:
                 type: string
                 maxLength: 16
-              requiresFourEyes: *id005
+              requiresFourEyes: *id004
               contractCeiling: *id010
-              updatedAt: *id004
+              updatedAt: *id005
               updatedBy:
                 type: string
                 maxLength: 64
@@ -10398,7 +10486,7 @@ components:
           maxItems: 1000
         problem:
           $ref: '#/components/schemas/GatewayProblem'
-        logged: *id005
+        logged: *id004
       additionalProperties: false
       required:
       - snapshotVersion
@@ -10412,8 +10500,8 @@ components:
         period:
           type: object
           properties:
-            from: *id004
-            to: *id004
+            from: *id005
+            to: *id005
           additionalProperties: false
         groupBy:
           type: string
@@ -10421,7 +10509,7 @@ components:
           - CONSUMER
           - ROUTE
           - PLAN
-        generatedAt: *id004
+        generatedAt: *id005
         rows:
           type: array
           items:
@@ -10471,8 +10559,8 @@ components:
           enum:
           - DAY
           - MONTH
-        from: *id004
-        to: *id004
+        from: *id005
+        to: *id005
         groupBy:
           type: string
           enum:
@@ -10562,15 +10650,15 @@ components:
               legacyRef:
                 type: string
                 maxLength: 255
-              needsReview: *id005
+              needsReview: *id004
             additionalProperties: false
             required:
             - proposalId
             - objectType
             - suggestedCode
           maxItems: 1000
-        startedAt: *id004
-        finishedAt: *id004
+        startedAt: *id005
+        finishedAt: *id005
       additionalProperties: false
       required:
       - importId
@@ -10599,8 +10687,8 @@ components:
           $ref: '#/components/schemas/TenantCode'
         toTenant:
           $ref: '#/components/schemas/TenantCode'
-        startAt: *id004
-        endAt: *id004
+        startAt: *id005
+        endAt: *id005
         state:
           type: string
           enum:
@@ -10628,7 +10716,7 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt: *id005
         version:
           type: integer
           format: int32
@@ -10649,8 +10737,8 @@ components:
           $ref: '#/components/schemas/TenantCode'
         toTenant:
           $ref: '#/components/schemas/TenantCode'
-        startAt: *id004
-        endAt: *id004
+        startAt: *id005
+        endAt: *id005
         identityMode:
           type: string
           enum:

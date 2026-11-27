@@ -10,7 +10,7 @@ Tính năng: TS-18-03 · Đề nghị và duyệt bốn mắt tham số bảo m�
     Biết T90; U-T90-TA1 (đề nghị), U-T90-SO (`PERM-18-approve`); `18.dlq.replay.approval-threshold` ★ = 500.
     Khi TA1 `PUT /params/18.dlq.replay.approval-threshold` giá trị 200, lý do 30 ký tự.
     Và TA1 `GET /params/18.dlq.replay.approval-threshold`.
-    Và SO mở `/ca-nhan/viec`, mở việc `ph18.approve-param`, xem giá trị trước và sau ở UI-18-09.
+    Và SO mở `/viec-cua-toi`, mở việc `ph18.approve-param`, xem giá trị trước và sau ở UI-18-09.
     Và SO `POST /param-change-requests/{requestId}:approve` kèm `If-Match`.
     Thì bước 1 `202`, đề nghị `PENDING_APPROVAL`, EVT-18-02 phát; KT: có (param-change-request). Bước 2 giá trị hiệu lực vẫn 500. Bước 3 việc chỉ hiện cho SO và TA2, không hiện cho TA1. Bước 4 `200`, phiên bản mới `ACTIVE`, phiên bản cũ `SUPERSEDED`, EVT-18-01 phát, việc đóng `DONE`; KT ghi trước khi giá trị có hiệu lực.
 

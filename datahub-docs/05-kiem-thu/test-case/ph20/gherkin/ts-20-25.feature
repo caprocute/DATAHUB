@@ -6,7 +6,7 @@ Tính năng: TS-20-25 · Chạy thử, gửi duyệt và duyệt kế hoạch s�
   @TC-20-113 @P1 @Dương
   Kịch bản: TC-20-113 Chạy thử sáp nhập đạt, ghi băm ánh xạ
     # Truy vết: FR-20-047 · UC-20-25 · API-20-097, 167 · BR-20-023 · UI-20-09, 10 · `PERM-20-merge`
-    Biết `U-PA1`; kế hoạch `DRAFT` T91→T90 đã đủ ánh xạ; `ops-sim` (hợp đồng `merge-transfers` giả định, `dryRun = true`).
+    Biết `U-PA1`; kế hoạch `DRAFT` T91→T90 đã đủ ánh xạ; `ops-sim` (bản giả hợp đồng `merge-transfers`, API-18-150, `dryRun = true`).
     Khi `POST P/merge-plans/{id}:dry-run` với `modules` mặc định
     Và `ops-sim` báo từng phân hệ `POST I/merge-plans/{id}/participants/{module}:report` với `phase = DRY_RUN`, `status = SUCCEEDED`, `exportedCount`, `conflictCount`
     Và `GET P/merge-plans/{id}`

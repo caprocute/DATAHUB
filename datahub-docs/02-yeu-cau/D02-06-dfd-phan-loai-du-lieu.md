@@ -964,6 +964,8 @@ DFD trong tài liệu này phải được rà lại khi thêm phân hệ, thêm
 
 ## 9. Giả định, câu hỏi mở và đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 9.1. Giả định
 
 Thiếu số liệu thật về khối lượng và loại dữ liệu của tỉnh thí điểm, tài liệu dùng các giả định sau.
@@ -996,6 +998,8 @@ Thiếu số liệu thật về khối lượng và loại dữ liệu của t�
 : Câu hỏi mở của D02-06
 
 ### 9.3. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các điểm sau gom vào đợt đồng bộ cuối:
 

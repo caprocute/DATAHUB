@@ -21,7 +21,7 @@ Tính năng: TS-18-17 · Phát lại loạt có duyệt bốn mắt và điều 
     Khi TO tạo lượt 800 mục và gửi.
     Và TO `POST /replay-jobs/{jobId}:approve`.
     Và trong lúc chờ, bỏ qua 20 mục của lượt.
-    Và TA2 duyệt từ việc ở `/ca-nhan/viec`.
+    Và TA2 duyệt từ việc ở `/viec-cua-toi`.
     Thì bước 1 `200` `PENDING_APPROVAL`. Bước 2 `403` ERR-18-005. Bước 4 `200` `APPROVED` rồi `RUNNING`, `total = 780`, 20 mục ghi `SKIPPED`; việc duyệt không hiện cho TO.
 
   @TC-18-059 @P1 @Âm @Biên

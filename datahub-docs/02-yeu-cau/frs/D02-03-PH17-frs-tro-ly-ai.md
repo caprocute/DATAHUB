@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH17
 ten: Đặc tả yêu cầu chức năng phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ ATTT, quản trị tỉnh, kỹ sư dh-assist, kiểm thử viên
@@ -4349,7 +4349,7 @@ Sự kiện phát qua Kafka theo mẫu outbox (ADR-042), phong bì CloudEvents, 
 
 : Sự kiện PH-17 tiêu thụ
 
-Tên topic của PH-02, PH-04, PH-07, PH-10, PH-03 lấy theo FRS của các phân hệ này; tên topic PH-09 theo EVT-09-01, 03, 18. Việc tài liệu ERR catalog và hướng dẫn vận hành (PH-18) có phát sự kiện thay đổi hay không chưa có căn cứ, nên được lập chỉ mục theo lịch (Q17-08).
+Tên topic của PH-02, PH-04, PH-07, PH-10, PH-03 lấy theo FRS của các phân hệ này; tên topic PH-09 theo EVT-09-01, 03, 18. Sổ tay mã lỗi và hướng dẫn vận hành (PH-18) phát `{tenant}.ops.error-guide.changed.v1` (EVT-18-11) khi bản mới được công bố, nên được lập chỉ mục khi nhận sự kiện này và đối chiếu theo lịch qua API-18-062 làm dự phòng (Q17-08).
 
 ### 9.4. Danh mục API
 
@@ -4911,6 +4911,8 @@ Các giá trị dưới là chuẩn cho API, sự kiện và thiết kế dữ l
 
 ## Phụ lục B. Đề nghị đồng bộ sang tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu của phân hệ khác. Các thay đổi dưới là đề nghị để chủ tài liệu thực hiện; phần "PERM-17" đã được đồng bộ vào D02-08 §3.1 ở bản 0.2.
 
 | Tài liệu | Đề nghị | Lý do |
@@ -4977,3 +4979,4 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, SDD, CSDL, API, MH và TC 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của FRS PH-17: 62 FR, 87 BR, 28 NFR, 20 màn hình, 193 API, 28 sự kiện; 22 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, SDD, CSDL, API, MH, TC (bảng ở Phụ lục C): sửa BR-17-009 và FR-17-006 cho tắt khẩn, 9 thực thể mới (EN-17-40 đến 48), 30 enum mới ở Phụ lục A, trạng thái `APPROVED`, ERR-17-021 đến 023 ở FR liên quan, gỡ tắt khẩn tenant qua `RESUME`, hằng 100 lượt mỗi hội thoại, 3 câu hỏi mở mới (Q17-87 đến 89) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nêu PH-18 phát EVT-18-11 cho sổ tay mã lỗi, lập chỉ mục theo sự kiện và theo lịch dự phòng |

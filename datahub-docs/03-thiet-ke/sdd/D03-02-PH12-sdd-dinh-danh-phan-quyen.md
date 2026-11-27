@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH12
 ten: Thiết kế chi tiết phần mềm phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư hạ tầng định danh, kiến trúc sư ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-12
@@ -355,6 +355,17 @@ public interface RevocationQueryApi {
   RevocationFeed feed(String ifNoneMatch);
 }
 
+/** Cho DU kiểm quyền `PERM-*` mà không dựng input thủ công (PH-13 dùng cho `PERM-13-*`). Bọc `DhAuthorizationManager.check`. */
+public interface PermissionApi {
+  Decision check(String permission, ResourceRef resource);      // FR-12-044, 045
+}
+
+/** Cho DU hỏi mức xác thực của phiên; trả `STEPUP_REQUIRED` kèm `acr_values` khi chưa đủ (RFC 9470, ERR-12-120). */
+public interface StepUpApi {
+  AuthLevel current();                                          // `acr` và `auth_time` lấy từ token đã xác minh
+  void require(int minAcr, Duration maxAge);                    // FR-12-023
+}
+
 /** Cổng vào cho PH-02, 09, 10, 19 đẩy dữ liệu đã duyệt để sinh scope (FR-12-036). */
 public interface ScopeSourcePort {
   void accept(ScopeSource source, String sourceRef, String clientId, Set<ScopeGrant> grants);
@@ -560,6 +571,8 @@ Hình cho thấy ba nhóm gần như độc lập: nhóm người dùng (trái),
 | `Realm` | Cấu hình bảo mật chỉ đổi qua GitOps; quản trị tỉnh không có `manage-*` | BR-12-038 | `RealmProvisioner` là đường ghi duy nhất; vai trò Keycloak của `dh-platform-iam` |
 
 : Invariant của các aggregate
+
+**Đối chiếu với thiết kế CSDL (D03-03-PH12).** Schema `ph12_iam` có 43 bảng, gồm cả ba bảng không suy ra từ aggregate: `sod_pair` (cặp vai trò xung đột sinh từ D02-08 §4), `legacy_role_map` (ánh xạ vai trò hệ cũ sang vai trò chuẩn) và `shedlock` (khóa tác vụ nền). `SodGuard` kiểm trước để trả thông báo `ERR-12-009`, còn `sod_pair` cùng trigger là bản chốt ở CSDL; tệp `SodRuleSet` vẫn là nguồn sinh và CI so hai nguồn với nhau. `ExceptionTranslator` ánh xạ `SQLSTATE` `P12nn` do trigger ném sang `ERR-12-0nn` theo mục 3.44 của D03-03-PH12. Các bảng `realm_state`, `realm_provision_step`, `tenant_merge_step` và `service_account` mang `tenant_id = 'PLATFORM'`. `revocation_entry.keycloak_confirmed_at` ghi thời điểm Keycloak xác nhận vô hiệu để hạ cờ `blockAll`; mã nhóm `org_group.code` viết hoa; client cấp lại sau khi bị thu hồi mang hậu tố `-r{n}` vì mã cũ không dùng lại.
 
 ### 4.2. Quản trị người dùng và vòng đời tài khoản
 
@@ -858,7 +871,7 @@ Chi tiết thiết kế:
 
 `RevocationService.revoke` đặt danh sách chặn **trước** khi chạm Keycloak. Giao dịch: kiểm lý do (ERR-12-014) và chủ thể không là người thao tác (ERR-12-013), chèn `revocation_entry(kind, value, not_before = now, block_all = true, expires_at = null)`, tăng `revocation_feed_version`, ghi outbox EVT-12-05, commit. Cờ `block_all` nghĩa là bên thực thi từ chối **mọi** token của chủ thể bất kể `iat`; nó cần vì khi Keycloak chưa xác nhận vô hiệu thì chủ thể vẫn xin được token mới, mà token mới có `iat` sau mốc nên một mục chỉ dựa trên `notBefore` không chặn được. Khi Keycloak xác nhận (người dùng đã `enabled=false`, client đã tạm ngừng), `RevocationService` hạ `block_all = false` và đặt `expires_at = now + 330 giây`: từ đó mục chỉ còn chặn token cấp trước mốc, và hạn 330 giây là token truy cập sống tối đa 300 giây cộng dung sai 30 giây, sau hạn đó mọi token cũ đã hết hạn nên không cần giữ. Sau commit mới gọi Keycloak: vô hiệu người dùng hoặc tạm ngừng client, hủy mọi phiên, thu hồi refresh token. Thứ tự này có chủ đích: nếu Keycloak lỗi hoặc ngắt mạch, cổng vẫn chặn được ngay và lệnh Keycloak được thử lại từ `sync_task`. Mục thu hồi dùng khóa `kind` là `SUB` (người dùng, mọi token có `iat < notBefore`), `CLIENT` (theo `azp`) hoặc `JTI` (một token, RFC 7009).
 
-Hai đường phân phối cho hai loại bên nhận. APISIX và `dh-runtime` kéo `GET /api/iam/v1/revocations` (API-12-079) mỗi 10 giây với `If-None-Match`; phản hồi là `{version, entries[{kind, value, notBefore, blockAll}], serverTime}`, ETag là `version`, trả `304` khi không đổi, nên chi phí thường trực rất thấp và danh sách luôn nhỏ (mục chỉ sống 330 giây). Các DU Spring Boot nhận EVT-12-05 qua Kafka vào `BlocklistCache` (bản đồ trong bộ nhớ theo `sub`, `azp`, `jti`) và vẫn kéo API mỗi 30 giây làm đường dự phòng khi Kafka chậm. Nhờ vậy thu hồi không phụ thuộc một đường duy nhất; ngay cả khi Kafka ngừng, 10 giây kéo của cổng cộng thời gian lan nằm trong 60 giây của NFR-12-005.
+Hai đường phân phối cho hai loại bên nhận, cộng một đường đẩy sang PH-03: ngay khi ghi mục, `RevocationService` gọi API-03-053 (`POST /revocations`, scope `gateway:revoke`, `Idempotency-Key` theo `revocationId`) để `dh-connect` ghi vào Valkey, còn đường kéo bên dưới là đường đối chiếu. APISIX và `dh-runtime` kéo `GET /api/iam/v1/revocations` (API-12-079) mỗi 10 giây với `If-None-Match`; phản hồi là `{version, entries[{kind, value, notBefore, blockAll}], serverTime}`, ETag là `version`, trả `304` khi không đổi, nên chi phí thường trực rất thấp và danh sách luôn nhỏ (mục chỉ sống 330 giây). Các DU Spring Boot nhận EVT-12-05 qua Kafka vào `BlocklistCache` (bản đồ trong bộ nhớ theo `sub`, `azp`, `jti`) và vẫn kéo API mỗi 30 giây làm đường dự phòng khi Kafka chậm. Nhờ vậy thu hồi không phụ thuộc một đường duy nhất; ngay cả khi Kafka ngừng, 10 giây kéo của cổng cộng thời gian lan nằm trong 60 giây của NFR-12-005.
 
 Bên thực thi áp mục sau khi xác minh chữ ký và `exp`: token bị từ chối ERR-12-116 (`401`) nếu một mục `SUB` hoặc `CLIENT` khớp có `blockAll`, hoặc có `iat < notBefore`, hoặc nếu `jti` nằm trong danh sách. Mỗi nút gửi kèm tiêu đề `X-DH-Applied-Version` ở lần kéo kế tiếp; `AppliedNodeTracker` ghi phiên bản đã áp theo nút (nhận diện bằng danh tính mTLS) và tính `iam_revocation_applied_nodes`, cho giao diện câu "Đã áp dụng ở n/m nút cổng". Nút im lặng quá 60 giây kể từ khi có phiên bản mới thì phát cảnh báo nghiêm trọng cho SO; token còn hiệu lực tối đa 5 phút như FRS ghi nhận.
 
@@ -1415,7 +1428,7 @@ sequenceDiagram
 
 ### 5.8. Khởi tạo realm cho tenant mới và phát hiện lệch cấu hình (FR-12-041, 042)
 
-Luồng thứ tám là bước 2 của saga khởi tạo tenant do PH-20 gọi, kèm vòng đối chiếu cấu hình hằng giờ sau khi realm hoạt động.
+Luồng thứ tám là bước `S03_REALM` của saga khởi tạo tenant do PH-20 gọi, kèm vòng đối chiếu cấu hình hằng giờ sau khi realm hoạt động.
 
 ```{.mermaid caption="Saga tạo realm từ mẫu Git, phát hiện lệch hằng giờ"}
 sequenceDiagram
@@ -2010,6 +2023,8 @@ Bảng rủi ro xếp theo mức tác động tới an toàn và tính sẵn sà
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do luồng khác chịu trách nhiệm; tập này chỉ ghi lại để đợt đồng bộ cuối xử lý.
 
 | Tài liệu | Đề nghị |
@@ -2034,3 +2049,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu; vị trí trong kiến trúc và hiện trạng mã; cấu trúc mã (module `iam`, thư viện PEP, bộ mở rộng Keycloak, kho `dh-policies`) và hợp đồng quyết định; mô hình miền và 14 thành phần với bảng đặc tả 10 mục; 14 biểu đồ tuần tự; đa tenant; bảo mật dẫn SEC và THR; bảng chuyển trạng thái 10 đối tượng; chịu lỗi và nhất quán; cấu hình và cờ; quan sát; hiệu năng và vận hành; kiểm thử; lộ trình, rủi ro; 10 câu hỏi mở (Q12-20…Q12-29); đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: giao diện PermissionApi, StepUpApi, đường đẩy API-03-053, đối chiếu CSDL, bước S03_REALM |

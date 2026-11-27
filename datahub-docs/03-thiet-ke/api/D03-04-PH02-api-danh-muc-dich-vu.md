@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH02
 ten: Đặc tả API và sự kiện phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, giao diện; kỹ sư PH-03, PH-04, PH-15; ATTT; kiểm thử viên; hội đồng thẩm định
 phan_he: PH-02
@@ -143,7 +143,7 @@ PH-02 có ba loại bên gọi: người dùng console (người của đơn v�
 | PH-03 (cổng API) | `client_credentials` + mTLS mesh; `catalog:gateway-read`, `catalog:gateway-ack` | API-02-080, 082 |
 | PH-15 (cổng nhà phát triển) | `client_credentials` + mTLS mesh; `catalog:portal-read` | API-02-081 |
 | PH-04 (lõi tích hợp) | Gọi trong tiến trình khi cùng DU, khi tách DU dùng `client_credentials` + mTLS, `catalog:flow-sync` | API-02-017, 007 |
-| PH-13, PH-16 | `client_credentials`, `catalog:metrics-read` | API-02-079 |
+| PH-13, PH-16 | `client_credentials`, `catalog:metrics-read` | API-02-079, API-02-097 |
 
 : Xác thực và phân quyền theo bên gọi
 
@@ -310,7 +310,7 @@ Chương này liệt kê toàn bộ operation của PH-02, ví dụ các lời g
 | API-02-073 | `PUT /apis/{apiCode}/versions/{versionNo}/sla` | Khai báo cam kết chất lượng dịch vụ (SLA) | 055 | `PERM-02-create` |  | 200 |
 | API-02-074 | `GET /apis/{apiCode}/versions/{versionNo}/sla` | Cam kết SLA hiện hành và đang chờ hiệu lực | 055, 056 | `PERM-02-read` |  | 200 |
 | API-02-075 | `GET /apis/{apiCode}/versions/{versionNo}/sla/periods` | Đối chiếu SLA thực tế theo kỳ | 056 | `PERM-02-read` |  | 200 |
-| API-02-097 | `GET /sla/summary` | Tổng hợp tuân thủ SLA toàn tenant | 056 | `PERM-02-read` |  | 200 |
+| API-02-097 | `GET /sla/summary` | Tổng hợp tuân thủ SLA toàn tenant | 056 | `PERM-02-read`; hoặc token máy `catalog:metrics-read` |  | 200 |
 | API-02-076 | `POST /apis/{apiCode}/change-notices` | Gửi thông báo thay đổi cho bên khai thác | 057 | `PERM-02-create` | có | 202 |
 | API-02-077 | `GET /change-notices` | Lịch sử thông báo thay đổi và bên nhận | 057 | `PERM-02-read` |  | 200 |
 | API-02-078 | `GET /apis/{apiCode}/versions/{versionNo}/usage-stats` | Thống kê sử dụng theo phiên bản (Đợt 2) | 058 | `PERM-02-read` |  | 200 |
@@ -758,6 +758,7 @@ PH-02 là phân hệ nằm giữa PH-01 (HTTT), PH-03 (gateway), PH-12 (định 
 | PH-01 | PH-02 đọc | `SystemDirectoryApi`: HTTT `ACTIVE`, đơn vị chủ quản, đầu mối kỹ thuật, kiểu định danh máy; sự kiện tạm ngừng, thu hồi HTTT | Thao tác cần HTTT trả ERR-02-034; đọc danh mục vẫn được |
 | PH-03 | PH-03 → PH-02 | API-02-080 (dữ liệu công bố, ndjson, `ETag`, `sinceConfigVersion`), API-02-082 (xác nhận nạp) | PH-03 tự giữ cấu hình đã nạp; PH-02 thử lại công bố 5 lần trong 15 phút |
 | PH-03 | PH-02 → PH-03 | `GatewayApplyPort.requestApply`, `status`, `describe`, `rebuild` (đối soát, đẩy lại) | Phiên bản không đổi trạng thái, ERR-02-033; không chặn đọc |
+| PH-03 | PH-02 nghe | EVT-03-01 (ảnh chụp đã phát), EVT-03-03 (route đổi trạng thái), EVT-03-07 (sắp chạm hạn mức), EVT-03-12 (ảnh chụp bị từ chối, kèm danh sách lỗi) để đối soát trạng thái áp dụng và báo người phát hành | Thiếu sự kiện thì đối soát định kỳ bằng `GatewayApplyPort.status` bù lại |
 | PH-04 | PH-04 → PH-02 | API-02-017 (đăng ký API từ luồng), API-02-007 (đọc đặc tả đã gộp), EVT-04-02, 04, 07 | Luồng chạy bình thường; API `flowSyncStatus = ERROR` |
 | PH-04 | PH-02 → PH-04 | `Ph04FlowClient.createFromSpec(workspaceCode, flowCode, apiRef)` cho API-02-032; lũy đẳng theo `apiRef` | ERR-02-034; tác vụ bất đồng bộ `FAILED` |
 | PH-05 | PH-02 đọc | Danh sách kết nối cho backend loại `SYSTEM` (kiểm `connectionCode` khi khai backend) | ERR-02-020 khi kết nối không hợp lệ; ERR-02-034 khi PH-05 lỗi |
@@ -768,7 +769,7 @@ PH-02 là phân hệ nằm giữa PH-01 (HTTT), PH-03 (gateway), PH-12 (định 
 | PH-14 | PH-02 → PH-14 | `NationalCatalogPort.upsert`, `withdraw` lũy đẳng theo `payloadHash`; kết quả `ACKED`, `REJECTED` kèm lý do, `NOT_CONFIGURED` | Bản ghi `FAILED`, thử lại; không chặn vòng đời; cảnh báo sau `02.sync.overdue-days` (ADR-057) |
 | PH-15 | PH-15 → PH-02 | API-02-081 (danh mục `portalPublished`), EVT-02-01, 02, 03, 05, 06, 08, 10, 12 | PH-15 giữ bản đã tải |
 | PH-16 | PH-16 → PH-02 | API-02-079 và EVT-02-05, 13 (chỉ số tuân thủ) | Không ảnh hưởng PH-02 |
-| PH-18 | PH-02 ↔ PH-18 | Tham số `02.*` (bộ đệm 60 giây), `NotificationApi` (kênh trong ứng dụng, thư điện tử, khóa lũy đẳng), lịch ngày làm việc, việc trong "Việc của tôi" | Dùng giá trị mặc định đã đệm; thông báo xếp hàng thử lại |
+| PH-18 | PH-02 ↔ PH-18 | Tham số `02.*` (bộ đệm 60 giây), trạng thái đóng băng qua API-18-122 (`freeze-status`, scope `ops:calendar-read`; PH-02 không giữ cửa sổ đóng băng riêng), `NotificationApi` (kênh trong ứng dụng, thư điện tử, khóa lũy đẳng), lịch ngày làm việc, việc trong "Việc của tôi" | Dùng giá trị mặc định đã đệm; thông báo xếp hàng thử lại |
 | Nền tảng quốc gia | Qua PH-14 | PH-02 không gọi trực tiếp; mọi trao đổi đi qua PH-14 | Như dòng PH-14 |
 | HTTT khai thác | HTTT → PH-02 | API-02-004, 005, 007 với `catalog:read` | 429 khi vượt giới hạn |
 
@@ -1935,7 +1936,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ (ERR-02-003, kèm `errors[]` theo trường) hoặc thiếu lý do (ERR-02-041); `401` Thiếu token hoặc token hết hạn (ERR-02-014); `403` Không có quyền (ERR-02-014) hoặc vi phạm bốn mắt (ERR-02-013).
 
-**Ghi chú.** Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu.
+**Ghi chú.** Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu. Phiên bản `SUSPENDED` vẫn nằm trong `versions[]` với `status = SUSPENDED` để cổng hiện nhãn tạm ngừng (Q15-19); cờ `portalPublished` được giữ nguyên.
 :::
 
 #### API-02-082 · PH-03 xác nhận đã nạp cấu hình
@@ -3133,7 +3134,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `GET /sla/summary`.
 
-**Quyền.** `PERM-02-read`.
+**Quyền.** `PERM-02-read`; hoặc token máy `catalog:metrics-read`.
 
 **FR hiện thực.** FR-02-056.
 
@@ -3354,6 +3355,8 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây nằm ngoài quyền sửa của tập này (tài liệu dùng chung hoặc tập khác của phân hệ); chuyển cho luồng hoặc đợt đồng bộ phụ trách.
 
 | Tài liệu | Đề nghị |
@@ -3374,3 +3377,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: 95 operation REST, 16 sự kiện phát và 6 sự kiện nhận, 45 mã lỗi, sơ đồ trình tự, ánh xạ hệ cũ, 5 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm API-02-096 (danh sách gói), 097 (tổng hợp SLA), 098 (chi tiết yêu cầu duyệt), nâng lên 98 operation; `Finding` có `line`, `column`; `OperationStatus` thêm `CANCELLED` và nêu loại tác vụ; thêm Q02-60, cập nhật Q02-55; sinh lại OpenAPI và các khối bảng |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-02 nghe EVT-03, API-18-122 đóng băng, API-02-081 giữ SUSPENDED, API-02-097 thêm catalog:metrics-read |

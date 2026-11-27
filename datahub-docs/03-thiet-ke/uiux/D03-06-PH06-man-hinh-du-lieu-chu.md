@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH06
 ten: Thiết kế giao diện màn hình phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, người quản lý dữ liệu, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-06
@@ -125,7 +125,7 @@ Bảng dưới cho biết mỗi vùng giao diện của PH-06 dùng vật liệu
 | Thanh quyết định ở chân UI-06-05 | `CMP-DecisionPanel` | `glass-overlay` cố định, nội dung đặc | Lớp nổi luôn thấy khi cuộn |
 | Drawer chi tiết ứng viên, nguồn gốc | `CMP-Drawer` | Khung `glass-modal`, giếng nội dung đặc | Lớp nổi chứa nội dung dày |
 | Hộp lý do, xác nhận, hoàn tác chuỗi | `CMP-ReasonDialog`, `CMP-ConfirmDialog`, `CMP-ConflictDialog` | Khung `glass-modal` | Lớp nổi |
-| Băng cảnh báo nghiêm trọng đầu trang | `CMP-Banner` | Đặc `color-error` | Không dựa vào độ trong |
+| Băng cảnh báo nghiêm trọng đầu trang | `CMP-Alert` loại `error`, kiểu `block` | Đặc `color-error-bg` | Không dựa vào độ trong |
 
 : Bản đồ vật liệu Liquid Glass theo vùng màn PH-06
 
@@ -147,7 +147,7 @@ Nút chỉ hiện khi người dùng có quyền và trạng thái đối tượ
 
 Vì màn hình hiển thị dữ liệu cá nhân, các quy tắc dưới đây quy định việc che giá trị nhạy cảm, nội dung URL, khóa nguồn và dấu vết khi chụp hoặc in màn hình.
 
-1. Giá trị `SENSITIVE` hiển thị `CMP-MaskedValue`; nút "Hiện…" chỉ có khi người dùng có `PERM-09-unmask`, mở `CMP-ReasonDialog` (lý do từ 20 ký tự), giá trị rõ chỉ tồn tại trong phiên và tự che lại sau 60 giây hoặc khi rời màn.
+1. Giá trị `SENSITIVE` hiển thị `CMP-MaskedValue`; nút "Xem đầy đủ" chỉ có khi người dùng có `PERM-09-unmask`, mở hộp thoại dùng chung UI-09-22 của PH-09 (`CMP-MaskedValue` `revealable` cộng `CMP-ReasonDialog`, lý do từ 20 ký tự), giá trị rõ chỉ tồn tại trong phiên, có đếm ngược và tự che lại sau 60 giây hoặc khi rời màn.
 2. Không đưa số định danh, họ tên, ngày sinh, điện thoại lên URL; URL chỉ chứa `goldenId`, `itemId` (mã không mang nghĩa).
 3. Khóa nguồn (`sourceKey`) che một phần theo FRS (hai ký tự cuối). Số định danh trên ô tìm kiếm là trường mật khẩu dạng văn bản che, không lưu trong bộ nhớ trình duyệt, không ghi vào lịch sử gợi ý.
 4. Ảnh chụp màn hình và in: trang chi tiết có chữ thủy vân "Người xem: {tên}, {thời điểm}" khi có giá trị đã bỏ che.
@@ -394,8 +394,8 @@ Bảng dưới ghi các dải thông báo dùng chung, gồm tình huống kích
 
 | Tình huống | Dải | Nội dung |
 |---|---|---|
-| Cảnh báo nghiêm trọng (ERR-06-107, ERR-06-112) | `CMP-Banner` đỏ đầu trang, không đóng được tới khi hết điều kiện | Câu ở 5.3 kèm nút "Xem" |
-| PH-07 hoặc PH-09 không khả dụng (ERR-06-021) | `CMP-Banner` cảnh báo | "Chưa lấy được danh mục dùng chung hoặc chính sách che. Một số màn hiển thị giới hạn." |
+| Cảnh báo nghiêm trọng (ERR-06-107, ERR-06-112) | `CMP-Alert` loại `error` đầu trang, không có nút đóng (chỉ loại `info`, `success` mới đóng được) tới khi hết điều kiện | Câu ở 5.3 kèm nút "Xem" |
+| PH-07 hoặc PH-09 không khả dụng (ERR-06-021) | `CMP-Alert` loại `warning` | "Chưa lấy được danh mục dùng chung hoặc chính sách che. Một số màn hiển thị giới hạn." |
 | Số liệu tổng hợp cũ hơn 30 phút | Nhãn nhỏ cạnh tiêu đề | "Số liệu cập nhật lúc {thời điểm}" |
 | Có giá trị đã bỏ che trên màn | Dải thông tin | "Đang hiển thị giá trị đầy đủ của {n} thuộc tính. Tự che lại sau {s} giây." |
 
@@ -479,8 +479,8 @@ Bảng dưới đánh số các thành phần trong bố cục trên, kèm thàn
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
-| 1 | Băng nghiêm trọng "cùng số định danh" | `CMP-Banner` đỏ | Hiện khi `duplicateIdentifierGoldens > 0`; nút "Xem" mở UI-06-02 lọc `che-do=khoa-trung` | `metrics.criticalAlerts` | Không đóng được |
-| 2 | Băng đồng bộ | `CMP-Banner` | `PAUSED`: đỏ ERR-06-107; `RUNNING`: nền thông tin, chỉ hiện khi lệch ≥ 1% | `metrics.sync` | |
+| 1 | Băng nghiêm trọng "cùng số định danh" | `CMP-Alert` loại `error` | Hiện khi `duplicateIdentifierGoldens > 0`; nút "Xem" mở UI-06-02 lọc `che-do=khoa-trung` | `metrics.criticalAlerts` | Không đóng được |
+| 2 | Băng đồng bộ | `CMP-Alert` | `PAUSED`: đỏ ERR-06-107; `RUNNING`: nền thông tin, chỉ hiện khi lệch ≥ 1% | `metrics.sync` | |
 | 3 | Thẻ "Bản ghi vàng" | `CMP-KpiCard` | Tổng và phân rã theo domain, bấm mở UI-06-02 | `metrics.golden.byDomain` | |
 | 4 | Thẻ "Tỷ lệ tự động 30 ngày" | `CMP-KpiCard` biến thể `status` | Xanh khi ≥ 85%, vàng 80–85%, đỏ dưới 80% (FRS §10.2), luôn kèm chữ "Đạt", "Cần chú ý", "Thấp" | `metrics.autoRate` | NFR-06-019 |
 | 5 | Thẻ "Hàng đợi mở" | `CMP-KpiCard` | Số mở, số quá hạn kèm biểu tượng ⚠; bấm mở UI-06-04 lọc `phan-vung=qua-han` | `stewardship/stats` | |
@@ -666,7 +666,7 @@ Hình dưới là bố cục tab Thuộc tính của bản ghi vàng: đầu tra
 |------------------------------------------------------------|--------------------------------|
 | ③ Thuộc tính | Giá trị | Phân loại | Nguồn | Chiến lược |  | ④ Nguồn gốc · Ngày sinh        |
 |   Tin cậy | Cập nhật nguồn |                               | Giá trị hiện tại 12/03/1985 từ  |
-|  Số định danh  *********345 [Hiện…] SENSITIVE QG-DANCU    | QG-DANCU theo NATIONAL_AUTHORITY|
+|  Số định danh  *********345 [Xem…]  SENSITIVE QG-DANCU    | QG-DANCU theo NATIONAL_AUTHORITY|
 |   NATIONAL_AUTHORITY  ● 1,0  26/06/2026                    | Giá trị theo từng nguồn:        |
 |  Họ tên        Nguyễn Văn An  INTERNAL QG-DANCU …          |  QG-DANCU 12/03/1985 ✓ đang dùng|
 |  Ngày sinh     12/03/1985 … < đang chọn                    |  HT-YTE   12/03/1986 ≠ khác     |
@@ -685,7 +685,7 @@ Bảng dưới đánh số các phần của đầu trang và hàng tab chi ti�
 | 1 | Tiêu đề bản ghi | `CMP-PageHeader` | Tên hiển thị (theo quy tắc che), `GoldenStatus`, domain, phiên bản, độ tin cậy tổng | Không chứa số định danh |
 | 2 | ID vàng | `CMP-Identifier` + `CMP-CopyButton` | Đầy đủ, sao chép | Tooltip "ID vàng có thể dùng làm khóa liên kết (Q06-08)" |
 | 3 | Thanh thao tác | `CMP-Button`, `CMP-DropdownMenu` | "Sửa tay" (`update`), "Hợp nhất…", "Tách…", "Hoàn tác", "Ngừng…" (`merge`); mục ít dùng vào menu "⋯" | Điều kiện theo mục 9.7 |
-| 4 | Băng khóa | `CMP-Banner` | Khi `LOCKED`: "Bản ghi vàng {id} đang có thao tác chờ duyệt." kèm liên kết tab "Thao tác" | |
+| 4 | Băng khóa | `CMP-Alert` | Khi `LOCKED`: "Bản ghi vàng {id} đang có thao tác chờ duyệt." kèm liên kết tab "Thao tác" | |
 | 5 | Hàng tab | `CMP-Tabs` | Năm tab với số đếm; mỗi tab là route con | Tab "Thao tác" có huy hiệu khi có thao tác chờ |
 
 : UI-06-03 Chi tiết bản ghi vàng, đầu trang
@@ -697,11 +697,11 @@ Bảng một dòng mỗi thuộc tính của mô hình `ACTIVE` (không hiện t
 | Cột | Nội dung | `CMP-*` | Ghi chú |
 |---|---|---|---|
 | Thuộc tính | Nhãn thuộc tính, mã trong `CMP-CodeText` khi bật "Hiện mã" | `CMP-Text` | Khóa định danh có biểu tượng khóa |
-| Giá trị | Giá trị theo quy tắc che; `SENSITIVE` là dạng che kèm nút "Hiện…" | `CMP-MaskedValue` | Nút chỉ khi có `PERM-09-unmask` |
-| Phân loại | `DataClass` | `CMP-Tag` | Nhạy cảm tô nền đậm hơn, vẫn có chữ |
+| Giá trị | Giá trị theo quy tắc che; `SENSITIVE` là dạng che kèm nút "Xem đầy đủ" mở UI-09-22 | `CMP-MaskedValue` | Nút chỉ khi có `PERM-09-unmask` |
+| Phân loại | `DataClass` | `CMP-Tag` | Sắc thái theo D03-05-03 mục tag trạng thái: Công khai `neutral`, Nội bộ `info`, Hạn chế `warning`, Nhạy cảm `error`; chữ luôn đi kèm màu |
 | Nguồn | Mã nguồn của giá trị đang thắng | `CMP-Tag` `color-source-*` | Bấm mở tab "Nguồn liên kết" tại nguồn |
 | Chiến lược thắng | `SurvivorshipStrategy` | `CMP-Text` | `MANUAL_OVERRIDE` có biểu tượng bút và lý do ở tooltip |
-| Tin cậy | Chấm kèm số và chữ cao, TB, thấp | `CMP-StatusDot` | Ngưỡng 0,9 và 0,7 |
+| Tin cậy | Chấm kèm số và chữ cao, TB, thấp | `CMP-StatusDot` biến thể `labeled` | Ngưỡng 0,9 và 0,7; sắc thái `success`, `warning`, `error` có sẵn, chữ luôn đi kèm màu |
 | Cập nhật nguồn | `sourceUpdatedAt` | `CMP-Timestamp` | |
 | ⋯ | Menu dòng | `CMP-DropdownMenu` | "Xem nguồn gốc", "Sửa tay…", "Đề nghị sửa tại nguồn" |
 
@@ -719,7 +719,7 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 | Phần tử | Quy tắc |
 |---|---|
 | Giá trị che | Cả giá trị trước và sau đều che theo phân loại; bỏ che từng dòng cần lý do và ghi nhật ký |
-| Nhãn nguồn | Mã nguồn bằng chữ; tô `color-source-*` theo `SourceKind` |
+| Nhãn nguồn | Mã nguồn bằng chữ; tô theo `SourceKind`: `NATIONAL_DB` dùng `color-source-national`, các loại còn lại (`SECTOR_*`, `MANUAL_ENTRY`, `FILE_BATCH`) dùng `color-source-local`; loại nguồn luôn có chữ riêng nên màu không là kênh duy nhất |
 | Dòng mới nhất | Có nhãn "đang dùng" |
 | Rỗng | "Thuộc tính này chưa có lịch sử." |
 | Lỗi thuộc tính không có trong mô hình | "Domain {mã} không có thuộc tính {tên}." (ERR-06-003) |
@@ -744,7 +744,7 @@ Bảng dưới ghi các hộp thoại thao tác trên bản ghi vàng như bỏ 
 
 | Hộp thoại | `CMP-*` | Trường | Kiểm tra | Thông điệp |
 |---|---|---|---|---|
-| Bỏ che giá trị | `CMP-ReasonDialog` | Lý do, phạm vi (một thuộc tính hoặc cả bản ghi) | Lý do ≥ 20 ký tự; cần `PERM-09-unmask`; PH-09 trả lời | "Nhập lý do (tối thiểu 20 ký tự)."; giá trị rõ tự che lại sau 60 giây |
+| Xem đầy đủ giá trị (UI-09-22) | `CMP-ReasonDialog` trong hộp thoại dùng chung | Lý do, phạm vi (một thuộc tính hoặc cả bản ghi) | Lý do ≥ 20 ký tự; cần `PERM-09-unmask`; PH-09 trả lời | "Nhập lý do (tối thiểu 20 ký tự)."; giá trị rõ tự che lại sau 60 giây |
 | Sửa tay | `CMP-Modal` + `CMP-FormField` | Thuộc tính, giá trị mới, hạn hiệu lực, lý do | Đúng kiểu; không phải thuộc tính thẩm quyền quốc gia; lý do ≥ 20 ký tự; tự tạo yêu cầu sửa tại nguồn (BR-06-014) | ERR-06-035, ERR-06-007; xung đột phiên bản `ST-13` |
 | Hoàn tác | `CMP-ConfirmDialog` | Lý do; danh sách thao tác phụ thuộc | Quá `06.undo.window-days` (90 ngày) cần DA duyệt (ERR-06-034); có thao tác phụ thuộc thì liệt kê và xin xác nhận cả chuỗi | ERR-06-033, ERR-06-034 |
 | Ngừng | `CMP-ReasonDialog` | `RetireReason`, lý do | Không còn liên kết hiệu lực (ERR-06-036) | ERR-06-036 |
@@ -777,19 +777,19 @@ Bảng dưới ghi màn chi tiết khi đang tải, khi không ghi được nh�
 | Không tìm thấy, đã ngừng | `ST-08` với câu ERR-06-001; bản ghi `RETIRED` vẫn xem được lịch sử qua tab |
 | Không có quyền, ngoài phạm vi | `ST-07` |
 | Xung đột phiên bản khi sửa | `ST-13` |
-| PH-09 không khả dụng | Mọi giá trị DLCN hiện dạng che, nút "Hiện…" vô hiệu, dải 5.4 (ERR-06-021) |
+| PH-09 không khả dụng | Mọi giá trị DLCN hiện dạng che, nút "Xem đầy đủ" vô hiệu, dải 5.4 (ERR-06-021) |
 
 : UI-06-03 Trạng thái màn
 
 ### 9.9. Bàn phím, truy cập
 
-Bảng thuộc tính là `role="grid"`: mũi tên di chuyển giữa ô, `Enter` mở nguồn gốc, `Shift+F10` mở menu dòng, `Esc` đóng bảng điều khiển. Nút "Hiện…" có tên truy cập "Hiện giá trị đầy đủ của {thuộc tính}, cần nhập lý do". Giá trị đã bỏ che được thông báo bằng `aria-live="polite"` một lần ("Đã hiển thị giá trị đầy đủ của Điện thoại, tự che lại sau 60 giây"). Chấm tin cậy có chữ; chiến lược và nguồn không chỉ bằng màu. Dưới `bp-lg` vùng ④ chuyển thành `CMP-Drawer` mở từ bên phải.
+Bảng thuộc tính là `role="grid"`: mũi tên di chuyển giữa ô, `Enter` mở nguồn gốc, `Shift+F10` mở menu dòng, `Esc` đóng bảng điều khiển. Nút "Xem đầy đủ" có tên truy cập "Xem giá trị đầy đủ của {thuộc tính}, cần nhập lý do". Giá trị đã bỏ che được thông báo bằng `aria-live="polite"` một lần ("Đã hiển thị giá trị đầy đủ của Điện thoại, tự che lại sau 60 giây"). Chấm tin cậy có chữ; chiến lược và nguồn không chỉ bằng màu. Dưới `bp-lg` vùng ④ chuyển thành `CMP-Drawer` mở từ bên phải.
 
 ### 9.10. Bản hi-fi
 
 ![UI-06-03 · Chi tiết bản ghi vàng, tab Thuộc tính](ph06/hifi/ui-06-03.png)
 
-Ảnh cho thấy đầu trang bản ghi với năm nút thao tác, bảng thuộc tính có đủ bảy cột (phân loại, nhãn nguồn, chiến lược, tin cậy có chữ), giá trị Nhạy cảm che kèm nút "Hiện…", và bảng điều khiển nguồn gốc của thuộc tính "Ngày sinh": giá trị hiện tại lấy từ QG-DANCU, HT-YTE đang có giá trị khác (≠ khác, màu và chữ), dòng thời gian hai lần ghi và nút "Đề nghị sửa tại nguồn HT-YTE".
+Ảnh cho thấy đầu trang bản ghi với năm nút thao tác, bảng thuộc tính có đủ bảy cột (phân loại, nhãn nguồn, chiến lược, tin cậy có chữ), giá trị Nhạy cảm che kèm nút "Xem đầy đủ", và bảng điều khiển nguồn gốc của thuộc tính "Ngày sinh": giá trị hiện tại lấy từ QG-DANCU, HT-YTE đang có giá trị khác (≠ khác, màu và chữ), dòng thời gian hai lần ghi và nút "Đề nghị sửa tại nguồn HT-YTE".
 
 ![UI-06-03 · Tab Nguồn gốc](ph06/hifi/ui-06-03b.png)
 
@@ -930,15 +930,15 @@ Bảng dưới đánh số các vùng của màn So sánh và quyết định, t
 
 | # | Vùng, thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
 |---|---|---|---|---|
-| 1 | Thanh điểm tổng | `CMP-ProgressBar` biến thể thang chia vùng + `CMP-Text` số lớn | Điểm 0 đến 1, vạch ngưỡng xem xét và tự hợp nhất của bộ quy tắc, mũi tên vị trí; dải chữ "Có thể khớp"; nhãn rủi ro `RiskLevel` | `item.score`, `thresholds` |
+| 1 | Thanh điểm tổng | `CMP-ScoreMeter` biến thể `bar` (D03-05-04 mục 13.18) + `CMP-Text` số lớn | Điểm 0 đến 1, vạch ngưỡng xem xét và tự hợp nhất của bộ quy tắc, mũi tên vị trí; dải chữ "Có thể khớp"; nhãn rủi ro `RiskLevel` | `item.score`, `thresholds` |
 | 2 | Trạng thái giữ | `CMP-StatusTag` + `CMP-Duration` | "Đã nhận · giữ còn {phút} phút"; còn 5 phút hiện `warning` và nút "Gia hạn" | `item.holdUntil` |
 | 3 | Bảng so sánh | `CMP-DiffTable` (`CMP-DataTable` gọn, hai cột giá trị) | Cột: Thuộc tính, A, B, Mức so sánh (chữ), Điểm. Ô giá trị tô `color-diff-added` (`EXACT`), `color-diff-changed` (`FUZZY_*`), `color-diff-removed` (`DIFFERENT`), trung tính (`MISSING`) | `attributes[]` |
-| 4 | Giá trị che | `CMP-MaskedValue` | Cột giá trị `SENSITIVE` che; nút "Hiện…" từng dòng (`PERM-09-unmask`); bỏ che cho cả hai cột cùng lúc | `unmask[]`, `reason` |
+| 4 | Giá trị che | `CMP-MaskedValue` | Cột giá trị `SENSITIVE` che; nút "Xem đầy đủ" từng dòng mở UI-09-22 (`PERM-09-unmask`); bỏ che cho cả hai cột cùng lúc | `unmask[]`, `reason` |
 | 5 | Bộ lọc dòng | `CMP-Switch` | "Chỉ hiện dòng khác", "Hiện cả thuộc tính thiếu cả hai bên" | — |
 | 6 | Cột ngữ cảnh | `CMP-Card` ×3, `CMP-DescriptionList` | (a) Bản ghi nguồn mỗi bên: mã nguồn, khóa nguồn che một phần, ngày cập nhật, bấm mở UI-06-03; (b) cảnh báo chuẩn hóa `NormalizationWarning`; (c) quyết định tương tự trước đây "12 cặp họ tên, ngày sinh giống: 11 Khớp, 1 Khác" | `context` |
 | 7 | Thanh quyết định | `CMP-DecisionPanel` | Ô lý do, mẫu câu, ba nút (mục 11.3) | — |
 | 8 | Điều hướng mục | `CMP-IconButton` | Mục trước, sau trong danh sách "của tôi"; số còn lại `queueRemaining` | API-06-046 |
-| 9 | Băng lỗi thời | `CMP-Banner` cảnh báo | "Dữ liệu của cặp đã thay đổi. Xem lại trước khi quyết định." khi ERR-06-030; bảng tự tải lại | — |
+| 9 | Băng lỗi thời | `CMP-Alert` loại `warning` | "Dữ liệu của cặp đã thay đổi. Xem lại trước khi quyết định." khi ERR-06-030; bảng tự tải lại | — |
 
 : UI-06-05 So sánh và quyết định, giải phẫu vùng
 
@@ -1250,10 +1250,10 @@ Bảng dưới đánh số các thành phần của màn Quy tắc đối sánh,
 | 2 | Bảng quy tắc | `CMP-EditableTable` | Số thứ tự, `MatchRuleType`, thuộc tính, `Comparator`, trọng số (m, u) hoặc "tuyệt đối", bật; quy tắc loại trừ khác số định danh khóa, không tắt được (BR-06-006) |
 | 3 | Khóa gom nhóm | `CMP-Tag` có thể sửa + `CMP-DataTable` | Biểu thức khóa, số nhóm, nhóm lớn nhất; cảnh báo khi nhóm lớn nhất > 5.000 |
 | 4 | Phân bố điểm | `CMP-Chart` cột 100 khoảng + vạch ngưỡng | Ba vùng: khác biệt, xem xét, tự hợp nhất; mỗi vùng có chữ chú giải |
-| 5 | Thanh trượt ngưỡng | thanh trượt hai đầu (chưa có `CMP-*`, xem Phụ lục A, đề nghị A2) + `CMP-NumberInput` | Ngưỡng xem xét, tự hợp nhất, hai chữ số thập phân; kiểm tra ERR-06-023; ước tính hàng đợi mỗi ngày, cảnh báo khi > 15% số ứng viên |
+| 5 | Thanh trượt ngưỡng | `CMP-RangeSlider` (D03-05-03 mục 7.19) + `CMP-NumberInput` | Ngưỡng xem xét, tự hợp nhất, hai chữ số thập phân; kiểm tra ERR-06-023; ước tính hàng đợi mỗi ngày, cảnh báo khi > 15% số ứng viên |
 | 6 | Khối đánh giá | `CMP-StatCard`, `CMP-DataTable` | Precision, recall, ma trận nhầm lẫn, dấu đạt hoặc chưa đạt kèm ngưỡng (≥ 99,9%, ≥ 98%; BR-06-021) |
 | 7 | Khối chạy thử | `CMP-DescriptionList` | Mẫu 20.000 bản ghi: số tự hợp nhất, xem xét, khác biệt, số cặp đổi kết luận so với bản `ACTIVE`; liên kết xem cặp đổi |
-| 8 | Băng chưa đạt | `CMP-Banner` | "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." (ERR-06-024); nút "Gửi duyệt" vô hiệu |
+| 8 | Băng chưa đạt | `CMP-Alert` | "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." (ERR-06-024); nút "Gửi duyệt" vô hiệu |
 
 : UI-06-09 Quy tắc đối sánh, thành phần
 
@@ -1416,7 +1416,7 @@ Bảng dưới đánh số các thành phần của màn Job và lịch, gồm b
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
-| 1 | Băng chờ xác nhận | `CMP-Banner` cảnh báo | Job `AWAITING_CONFIRMATION`; nút "Xem kết quả", "Xác nhận áp dụng" (BR-06-022) |
+| 1 | Băng chờ xác nhận | `CMP-Alert` loại `warning` | Job `AWAITING_CONFIRMATION`; nút "Xem kết quả", "Xác nhận áp dụng" (BR-06-022) |
 | 2 | Bảng job | `CMP-DataTable` gọn | Mã job, `JobType`, domain, `JobStatus`, tiến độ (`CMP-JobProgress` kèm phần trăm bằng chữ), bắt đầu, thời gian, kết quả, thao tác |
 | 3 | Khối lịch | `CMP-DataTable` + `CMP-CronPicker` | Loại job, lịch, lần chạy sau; sửa cần `PERM-06-operate` |
 | 4 | Chi tiết job đang chạy | `CMP-DescriptionList` | `BatchScope`, giai đoạn (chuẩn bị, đối sánh, áp dụng), tài nguyên Job K8s, dự kiến xong |
@@ -1508,7 +1508,7 @@ Bảng dưới đánh số các thành phần của màn Đồng bộ quốc gia
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
-| 1 | Băng đỏ | `CMP-Banner` | Khi `PAUSED` do lệch > `06.sync.pause-ratio`: câu ERR-06-107, nút "Tiếp tục đồng bộ…" |
+| 1 | Băng đỏ | `CMP-Alert` | Khi `PAUSED` do lệch > `06.sync.pause-ratio`: câu ERR-06-107, nút "Tiếp tục đồng bộ…" |
 | 2 | Thẻ chỉ số | `CMP-KpiCard` ×4 | `SyncState` và thời điểm, tỷ lệ lệch lượt gần nhất (kèm "vượt 5%"), số lệch mở theo `DiscrepancySeverity`, lần đối chiếu cuối |
 | 3 | Biểu đồ lệch | `CMP-Chart` đường + vạch ngưỡng 5% nét đứt `color-error` | 12 lượt gần nhất; bảng thay thế |
 | 4 | Bảng chiều đồng bộ | `CMP-DataTable` | `SyncDirection` (`DOWN`, `RECONCILE`, `UP`), trạng thái, lần gần nhất; chiều lên tắt khi `06.sync.up-attributes` rỗng (Q06-02) |
@@ -1586,7 +1586,7 @@ Trạng thái: rỗng "Chưa có đề nghị xuất nào."; tệp `EXPIRED` ẩ
 ::: dac-ta
 **Mục đích.** Cho DS và SO tiếp nhận và xử lý yêu cầu của chủ thể dữ liệu (biết, sửa, hạn chế xử lý) theo Luật BVDLCN 91/2025 và NĐ 356/2025: xác minh danh tính, tìm bản ghi, lập báo cáo, chuyển nguồn, theo hạn.
 
-**Tác nhân, quyền.** TA, SO, DS (`PERM-06-dsr`); bỏ che dữ liệu của chính chủ thể trong báo cáo theo quy tắc PH-09.
+**Tác nhân, quyền.** TA, SO, DS (`PERM-06-dsr`); xem đầy đủ dữ liệu của chính chủ thể trong báo cáo qua hộp thoại dùng chung UI-09-22 của PH-09 (nút "Xem đầy đủ", lý do từ 20 ký tự).
 
 **FR, UC.** FR-06-058.
 
@@ -1719,7 +1719,7 @@ Bảng dưới đánh số các thành phần của màn Nhật ký, gồm ba ta
 | # | Thành phần | `CMP-*` | Nội dung |
 |---|---|---|---|
 | 1 | Hàng tab | `CMP-Tabs` | Nhật ký truy cập, Nhật ký xử lý, Cảnh báo bất thường (huy hiệu số) |
-| 2 | Băng bất thường | `CMP-Banner` cảnh báo | Truy cập > 100 bản ghi trong 10 phút (BR-06-013) kèm nút "Mở" |
+| 2 | Băng bất thường | `CMP-Alert` loại `warning` | Truy cập > 100 bản ghi trong 10 phút (BR-06-013) kèm nút "Mở" |
 | 3 | Bộ lọc | `CMP-FilterBar`, `CMP-DateRangePicker` | Người dùng hoặc HTTT, hành động, domain, khoảng thời gian (tối đa 31 ngày một lần) |
 | 4 | Bảng log | `CMP-LogViewer` hoặc `CMP-DataTable` gọn | Cột dưới; sắp theo thời điểm giảm dần |
 
@@ -1865,6 +1865,8 @@ Bảng dưới liệt kê ảnh hi-fi của từng màn và điểm nổi bật 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng dưới ghi các thành phần giao diện mới mà PH-06 đề nghị bổ sung vào bộ chung D03-05, kèm lý do và nơi dùng.
 
 | # | Đề nghị | Lý do, nơi dùng |
@@ -1874,14 +1876,16 @@ Bảng dưới ghi các thành phần giao diện mới mà PH-06 đề nghị b
 | A3 | Thành phần cặp bản ghi so sánh (tên đề nghị: PairCompare) | UI-06-05, UI-06-13: hiện ghép `CMP-DiffTable` hai cột; cần chuẩn hóa thứ tự, ô giá trị che, cột điểm |
 | A4 | Biến thể `status` của `CMP-StatusDot` cho độ tin cậy (cao, TB, thấp) kèm chữ | UI-06-03; hiện hiển thị bằng chấm + chữ ghép tay |
 | A5 | Ghi chú ánh xạ `color-source-*` cho `SourceKind` (mục 5.2) | Tránh mỗi phân hệ tự gán nghĩa |
-| A6 | Biến thể `CMP-Banner` "nghiêm trọng, không đóng được" | UI-06-01, UI-06-14 (ERR-06-107, ERR-06-112) |
+| A6 | Biến thể `CMP-Alert` "nghiêm trọng, không đóng được" | UI-06-01, UI-06-14 (ERR-06-107, ERR-06-112) |
 | A7 | Token cho ba mức độ tin cậy (`color-confidence-high`, `-medium`, `-low`) hoặc ghi rõ dùng `color-success`, `color-warning`, `color-error` | UI-06-03; hiện dùng ba màu ngữ nghĩa có sẵn |
 
 : Đề nghị bổ sung cho D03-05
 
-Tài liệu này dùng tạm các tổ hợp có sẵn cho A1 đến A4 để không tự đặt thành phần mới; khi D03-05 bổ sung sẽ thay.
+Xử lý sau đồng bộ chéo cuối với D03-05 bản 0.4: A1 dùng `CMP-ScoreMeter` biến thể `bar` (D03-05-04 mục 13.18); A2 dùng `CMP-RangeSlider` (D03-05-03 mục 7.19); A3 dùng `CMP-DiffTable` hai cột, tên `PairCompare` đã ánh xạ ở D03-05-04 mục 14.2; A4 dùng `CMP-StatusDot` biến thể `labeled`; A6 dùng `CMP-Alert` loại `error` hoặc `warning` không có nút đóng, vì `CMP-Banner` chỉ dành cho thông báo toàn ứng dụng; A7 không thêm token riêng mà dùng `color-success`, `color-warning`, `color-error` kèm chữ cao, TB, thấp. A5 được ghi ở bảng quy tắc của UI-06-03 (nhãn nguồn): `NATIONAL_DB` dùng `color-source-national`, các loại nguồn còn lại dùng `color-source-local`; nếu D03-05-02 muốn chuẩn hóa thành quy ước chung thì lấy từ đây.
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 FRS 0.2 (§15) đã xử lý từng đề nghị; cột cuối ghi kết quả.
 
@@ -1900,6 +1904,8 @@ FRS 0.2 (§15) đã xử lý từng đề nghị; cột cuối ghi kết quả.
 : Đề nghị bổ sung API cho D03-04-PH06
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS D02-03-PH06
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 FRS 0.2 đã áp toàn bộ chín đề nghị; bảng giữ để truy vết.
 
@@ -1945,5 +1951,6 @@ FRS 0.2 đã áp toàn bộ chín đề nghị; bảng giữ để truy vết.
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-06 | Bản đầu: 18 màn UI-06-01…18 kèm 22 ảnh hi-fi (18 màn và 4 biến thể), ma trận vai trò, kiểm thử, phụ lục đề nghị |
 | 0.2 | 26/11/2026 | Nhóm phân hệ PH-06 | Đồng bộ FRS 0.2: Phụ lục B, C đánh dấu đã áp; dùng API-06-121…125 (Nhận việc tiếp theo, Mở lại, tab Thao tác, khóa tập nhãn, gỡ hạn chế), `decision` ở API-06-106, `cause` ở API-06-118, `partition` ở API-06-045; thêm câu ERR-06-051…053 ở mục 5.3 |
+| 0.3 | 27/11/2026 | Nhóm phân hệ PH-06 | Đồng bộ chéo cuối: CMP-Alert thay CMP-Banner, ScoreMeter, RangeSlider, nút Xem đầy đủ mở UI-09-22, ánh xạ sắc thái DataClass |
 
 : Lịch sử phiên bản D03-06-PH06

@@ -9790,6 +9790,8 @@ paths:
                 days:
                 - '2026-12-01'
                 - '2026-12-02'
+                calendarMissing: false
+                calendarSource: TENANT
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -9856,6 +9858,8 @@ paths:
                 skippedDates:
                 - '2026-12-05'
                 - '2026-12-06'
+                calendarMissing: false
+                calendarSource: TENANT
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -12635,8 +12639,11 @@ paths:
       - FR-18-057
       x-datahub-permission:
         permission: scope ops:merge-transfer
-      description: 'PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11). Chạy `dh-tenant-export` và nạp cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ
-        về `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` của PH-20. Trùng `mergePlanId` và `module` với thân khác: ERR-18-061.'
+      description: 'PH-20 gọi khi điều phối sáp nhập (hợp đồng 27/11) bằng tài khoản máy qua `apisix-int` (client credentials, scope `ops:merge-transfer`, không dùng
+        phiên người dùng). `dryRun = true` chỉ đếm và kiểm xung đột khóa, không ghi. `mode = DELTA` (mặc định `FULL`) là lượt bù cuối trước cutover, chỉ chuyển dòng
+        có `updated_at` từ `since` (mặc định là mốc kết thúc của lượt `FULL` thật gần nhất); lũy đẳng theo `mergePlanId:module:mode`. Chạy `dh-tenant-export` và nạp
+        cho `module`, giữ `id` gốc và `origin_tenant_id`; báo tiến độ về `POST /internal/tenant/v1/merge-plans/{id}/participants/{module}:report` của PH-20. Trùng
+        `mergePlanId` và `module` với thân khác: ERR-18-061.'
       security:
       - oauth2Machine:
         - ops:merge-transfer
@@ -12652,8 +12659,8 @@ paths:
             schema:
               $ref: '#/components/schemas/MergeTransferInput'
             example:
-              mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
-              module: ph01_onboarding
+              mergePlanId: SN-2026-001
+              module: PH-01
               sourceTenant: T67
               targetTenant: T68
               mappingRef: ph20/merge-plans/MP-0003/mappings/ph01
@@ -12672,12 +12679,14 @@ paths:
                 createdBy: nguyen.van.an
                 updatedAt: '2026-11-27T09:15:02+07:00'
                 updatedBy: tran.thi.binh
-                mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
-                module: ph01_onboarding
+                mergePlanId: SN-2026-001
+                module: PH-04
                 sourceTenant: T68
                 targetTenant: T68
                 mappingRef: ph20/merge-plans/MP-0003/mappings/ph01
                 dryRun: true
+                mode: FULL
+                since: '2026-11-27T09:15:02+07:00'
                 status: RUNNING
                 progressPercent: 42.5
                 rowsRead: 12
@@ -12739,14 +12748,13 @@ paths:
         in: query
         required: true
         schema:
-          type: string
-          format: uuid
-        example: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
+          $ref: '#/components/schemas/MergePlanId'
+        example: SN-2026-001
       - name: module
         in: query
         required: false
         schema:
-          type: string
+          $ref: '#/components/schemas/ModuleCode'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -12760,8 +12768,8 @@ paths:
                 items:
                 - id: 0190a1b2-c3d4-7e5f-8a6b-b80bb7740288
                   version: 3
-                  mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
-                  module: ph01_onboarding
+                  mergePlanId: SN-2026-001
+                  module: PH-04
                   sourceTenant: T68
                   targetTenant: T68
                   mappingRef: ph20/merge-plans/MP-0003/mappings/ph01
@@ -12820,12 +12828,14 @@ paths:
                 createdBy: nguyen.van.an
                 updatedAt: '2026-11-27T09:15:02+07:00'
                 updatedBy: tran.thi.binh
-                mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
-                module: ph01_onboarding
+                mergePlanId: SN-2026-001
+                module: PH-04
                 sourceTenant: T68
                 targetTenant: T68
                 mappingRef: ph20/merge-plans/MP-0003/mappings/ph01
                 dryRun: true
+                mode: FULL
+                since: '2026-11-27T09:15:02+07:00'
                 status: RUNNING
                 progressPercent: 42.5
                 rowsRead: 12
@@ -12903,12 +12913,14 @@ paths:
                 createdBy: nguyen.van.an
                 updatedAt: '2026-11-27T09:15:02+07:00'
                 updatedBy: tran.thi.binh
-                mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-4438ed8a0b60
-                module: ph01_onboarding
+                mergePlanId: SN-2026-001
+                module: PH-04
                 sourceTenant: T68
                 targetTenant: T68
                 mappingRef: ph20/merge-plans/MP-0003/mappings/ph01
                 dryRun: true
+                mode: FULL
+                since: '2026-11-27T09:15:02+07:00'
                 status: RUNNING
                 progressPercent: 42.5
                 rowsRead: 12
@@ -16615,6 +16627,10 @@ components:
       type: string
       pattern: ^PH-[0-9]{2}$
       description: Mã phân hệ, ví dụ `PH-04`.
+    MergePlanId:
+      type: string
+      pattern: ^SN-[0-9]{4}-[0-9]{3}$
+      description: Mã kế hoạch sáp nhập do PH-20 cấp, ví dụ `SN-2026-001`.
     TenantCode:
       type: string
       pattern: ^T[0-9]{2}$
@@ -18056,6 +18072,8 @@ components:
           - FAILED
         enabled:
           type: boolean
+        collectorError:
+          type: boolean
       required:
       - version
       - id
@@ -18309,10 +18327,9 @@ components:
         updatedBy:
           type: string
         mergePlanId:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/MergePlanId'
         module:
-          type: string
+          $ref: '#/components/schemas/ModuleCode'
         sourceTenant:
           $ref: '#/components/schemas/TenantCode'
         targetTenant:
@@ -18321,6 +18338,14 @@ components:
           type: string
         dryRun:
           type: boolean
+        mode:
+          type: string
+          enum:
+          - FULL
+          - DELTA
+        since:
+          type: string
+          format: date-time
         status:
           $ref: '#/components/schemas/JobStatus'
         progressPercent:
@@ -20622,6 +20647,14 @@ components:
           items:
             type: string
             format: date
+        calendarMissing:
+          type: boolean
+        calendarSource:
+          type: string
+          enum:
+          - TENANT
+          - COMMON
+          - NONE
       required:
       - tenant
       - from
@@ -20644,6 +20677,14 @@ components:
           items:
             type: string
             format: date
+        calendarMissing:
+          type: boolean
+        calendarSource:
+          type: string
+          enum:
+          - TENANT
+          - COMMON
+          - NONE
       required:
       - from
       - workingDays
@@ -22588,10 +22629,9 @@ components:
       type: object
       properties:
         mergePlanId:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/MergePlanId'
         module:
-          type: string
+          $ref: '#/components/schemas/ModuleCode'
         sourceTenant:
           $ref: '#/components/schemas/TenantCode'
         targetTenant:
@@ -22600,6 +22640,14 @@ components:
           type: string
         dryRun:
           type: boolean
+        mode:
+          type: string
+          enum:
+          - FULL
+          - DELTA
+        since:
+          type: string
+          format: date-time
       required:
       - mergePlanId
       - module

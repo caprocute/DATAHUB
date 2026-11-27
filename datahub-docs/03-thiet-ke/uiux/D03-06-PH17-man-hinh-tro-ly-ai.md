@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH17
 ten: Thiết kế giao diện màn hình phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ ATTT, quản trị tỉnh, kiểm thử viên, hội đồng thẩm định
@@ -253,6 +253,7 @@ Route theo D03-06-00 §2.4 và FRS §10.3. Bảng bên không có route, trạng
 | `/quan-tri/tro-ly-ai/cong-cu` | UI-17-10 | PTN-01 | `nang-luc`, tab công cụ, bộ lọc, danh sách trắng, câu hỏi mẫu |
 | `/quan-tri/tro-ly-ai/danh-gia` | UI-17-11 | PTN-01 | `nang-luc=MAPPING`, tab bộ đánh giá hoặc ca đỏ |
 | `/quan-tri/tro-ly-ai/danh-gia/chi-dan` | UI-17-12 | PTN-02, PTN-03 | `chon={templateId}` |
+| `/quan-tri/tro-ly-ai/danh-gia/chi-dan/{templateId}/sua` | UI-17-12 (biểu mẫu soạn chỉ dẫn) | PTN-03 | Mẫu chung `/{ma}/sua` của D03-06-00 |
 | `/quan-tri/tro-ly-ai/chat-luong` | UI-17-13 | PTN-06 | `khoang`, `nang-luc` |
 | `/quan-tri/tro-ly-ai/chat-luong/phan-hoi` | UI-17-14 | PTN-10 | `trang-thai`, `loai` |
 | `/quan-tri/tro-ly-ai/nhat-ky` | UI-17-15 | PTN-11 | `khoang`, `tu`, `den`, `nang-luc`, `ket-qua` |
@@ -2588,6 +2589,8 @@ Thông báo hiển thị lấy nguyên văn từ FRS §9.1 (mã ERR-17-001 đế
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các mục dưới đây là chỗ tập màn khác với hoặc bổ sung cho tài liệu khác; không tạo mã mới ngoài UI-17.
 
 | Mã | Tài liệu | Đề nghị | Lý do |
@@ -2623,5 +2626,6 @@ Các mục dưới đây là chỗ tập màn khác với hoặc bổ sung cho t
 | Phiên bản | Ngày | Nội dung | Người lập |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 20 màn UI-17-01 đến 20, điều hướng, ma trận vai trò và FR, ảnh hi-fi, đề nghị đồng bộ, câu hỏi mở Q17-40 đến 46 | Nhóm phân hệ PH-17 |
+| 0.2 | 27/11/2026 | Đồng bộ chéo cuối: ghi route biểu mẫu chỉ dẫn `…/chi-dan/{templateId}/sua` | Nhóm viết tài liệu (Claude) |
 
 : Lịch sử phiên bản D03-06-PH17

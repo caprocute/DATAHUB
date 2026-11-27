@@ -6,7 +6,7 @@ Tính năng: TS-20-26 · Điều phối chuyển dữ liệu sáp nhập theo ph
   @TC-20-118 @P1 @Dương
   Kịch bản: TC-20-118 Bắt đầu chuyển dữ liệu T91 sang T90, kiểm đếm khớp
     # Truy vết: FR-20-048 · UC-20-26 · API-20-098, 099, 088, 167 · BR-20-023 · NFR-20-014 · EVT-20-04, 10 · UI-20-10 · `PERM-20-merge`
-    Biết STAGING; `U-PA1`; kế hoạch `APPROVED`; F-MERGE đã giải quyết ánh xạ; `ops-sim` giả định hợp đồng `merge-transfers` (Q20-15).
+    Biết STAGING; `U-PA1`; kế hoạch `APPROVED`; F-MERGE đã giải quyết ánh xạ; `ops-sim` bản giả hợp đồng `merge-transfers` (API-18-150).
     Khi `POST P/merge-plans/{id}:start` với `reason`, `ticketRef`, kèm `If-Match`, `Idempotency-Key`
     Và theo dõi `GET P/merge-plans/{id}/participants`
     Và kiểm đếm `USER`: nguồn 150, `SKIP` 6; `ORGANIZATION`: nguồn 25

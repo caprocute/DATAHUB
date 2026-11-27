@@ -19,11 +19,11 @@ Tính năng: TS-10-02 · Tạo topic và gửi duyệt
     # Mục đích: Chứng minh mỗi tình huống nêu ở tên ca bị từ chối đúng mã lỗi, theo FR-10-008 (Tạo topic và gửi duyệt).
     Biết U-T68-IE1; topic `t68.tc.cu.da-xoa.v1` đã `RETIRED`.
     Khi `POST /topics` với `domain = "DKKD"`, rồi `entity = "doanh_nghiep"`.
-    Và lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`.
+    Và lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`, `mdm`, `dq`, `bpm`, `kpi`, `portal`.
     Và ghép tên dài 201 ký tự.
     Và tạo lại `t68.tc.cu.da-xoa.v1`.
     Và `POST /topics` có `topicKind = CDC` bằng U-T68-IE1.
-    Thì bước 1, 2, 3 `422` ERR-10-004 với `errors[].field` đúng trường. Bước 4 `409` ERR-10-002. Bước 5 `422` ERR-10-004 hoặc ERR-10-003 theo API §3.3 (người dùng không đăng ký `CDC`); không có bản ghi topic nào được tạo.
+    Thì bước 1, 2, 3 `422` ERR-10-004 với `errors[].field` đúng trường. Bước 4 `409` ERR-10-002. Bước 5 `400` ERR-10-003 theo FR-10-008 và API §3.3 (người dùng không gửi `topicKind` khác `BUSINESS`); không có bản ghi topic nào được tạo.
     # Hậu điều kiện: Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 
   @TC-10-008 @P1 @Âm @Biên

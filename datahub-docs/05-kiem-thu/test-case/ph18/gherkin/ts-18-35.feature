@@ -28,7 +28,7 @@ Tính năng: TS-18-35 · Chạy thử di trú, đối chiếu và xử lý bản
     # Truy vết: FR-18-063 · API-18-164, 170 · BR-18-041 · ERR-18-036
     # Mục đích: Chứng minh FR-18-063: chạy lại theo danh sách lỗi, bản ghi đã sửa chuyển `FIXED_AT_SOURCE`, khi không còn bản ghi lỗi thì từ chối.
     Biết T96; lần chạy `RUN-DRY-02` có 15 bản ghi lỗi; DS sửa mã cha ở nguồn.
-    Khi U-T96-DS `POST /migration-runs` `mode = DRY_RUN`, `retryErrorsOf = RUN-DRY-02`.
+    Khi U-T96-DS `POST /migration-runs` `mode = DRY_RUN`, `retryOf = RUN-DRY-02`.
     Và gửi lại bước 1 khi không còn bản ghi `OPEN`.
     Thì bước 1 lần chạy chỉ đọc 15 bản ghi, 15 hợp lệ, danh sách lỗi cũ `FIXED_AT_SOURCE`. Bước 2 `422` ERR-18-036.
 

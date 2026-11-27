@@ -31,7 +31,7 @@ obj('StatusHistoryEntry', 'Một dòng lịch sử trạng thái (EN-20-23).', (
 page('StatusHistoryEntry', 'StatusHistoryPage')
 
 # ---------------------------------------------------------------- sáp nhập
-obj('MergePlanCreate', 'Lập kế hoạch sáp nhập (FR-20-045).', ('name:str', 'Sáp nhập T91 vào T90'), ('sourceTenants!:tc[]', ['T91'], {'minItems': 1}), ('targetTenant!:tc', 'T90'),
+obj('MergePlanCreate', 'Lập kế hoạch sáp nhập (FR-20-045).', ('name:str', 'Sáp nhập T91 vào T90'), ('sourceTenants!:tc[]', ['T91'], {'minItems': 1, 'maxItems': 1}), ('targetTenant!:tc', 'T90'),
     ('decisionDocNo!:str', '1234/QĐ-TTg'), ('decisionDocDate!:date', '2026-10-15'), 'decisionFileId:uuid', ('effectiveDate!:date', '2026-12-15'), ('transitionMonths:int', 6, {'minimum': 1, 'maximum': 12}),
     ('modules:mod[]', ['PH-01', 'PH-03', 'PH-06']))
 obj('MergePlanUpdate', 'Sửa kế hoạch `DRAFT`.', 'name:str', ('effectiveDate:date', '2026-12-20'), ('transitionMonths:int', 6, {'minimum': 1, 'maximum': 12}), ('modules:mod[]', ['PH-01', 'PH-03']),

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH12
 ten: Kịch bản và test case phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
 phan_he: PH-12
@@ -71,7 +71,7 @@ Bảng sau nêu các mức kiểm thử áp dụng cho PH-12, công cụ dùng �
 |---|---|---|
 | UT (đơn vị) | JUnit 5, `opa test` | Quy tắc mật khẩu BR-12-018, sinh khóa đệm, luật Rego gốc (≥ 90 % dòng, SEC-26) |
 | IT (tích hợp) | Testcontainers: PostgreSQL 16, Keycloak, OPA, OpenBao, Kafka | Gán vai trò, bốn mắt, sinh gói chính sách ký |
-| DB | pgTAP | RLS `ph12_iam`, `tenant_id` mọi bảng |
+| DB | `psql` với `ph12_isolation_test.sql` (24 nhóm kiểm), pgTAP; `TenantIsolationIT` cho ca đồng thời | RLS ba mẫu P, S, G của `ph12_iam`, `tenant_id` mọi bảng, bất biến, tách nhiệm vụ, bốn mắt, không lưu bí mật |
 | API | REST Assured, k6 | Hợp đồng RFC 9457, `If-Match`, `Idempotency-Key` |
 | E2E | Playwright, axe-core | UI-12-01…19, đăng nhập với PKCE, WebAuthn ảo |
 | ZAP, Chaos | OWASP ZAP, Chaos Mesh | Quét ASVS 5.0 mức 2, tắt OPA, tắt Keycloak |
@@ -2090,6 +2090,8 @@ Bảng sau nêu các lệnh sinh số ca, ma trận truy vết, kịch bản Ghe
 
 ## 10. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Danh sách sau gom các đề nghị với tài liệu chung và các tập khác để đợt đồng bộ cuối xử lý, vì tập này không sửa tài liệu chung.
 
 - D05-01: thêm nhóm "fail-closed và cách ly tenant của PH-12" vào cổng RG-3 như điều kiện chặn.
@@ -2110,3 +2112,4 @@ Danh sách sau gom các đề nghị với tài liệu chung và các tập khá
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: kịch bản và test case chức năng, phi chức năng, UAT tương đương hệ IAM cũ, ma trận truy vết sinh tự động |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph12_isolation_test.sql và TenantIsolationIT |

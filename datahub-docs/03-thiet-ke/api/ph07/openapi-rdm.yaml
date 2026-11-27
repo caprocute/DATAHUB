@@ -133,6 +133,22 @@ paths:
           in: query
           description: '`ALL` (mặc định) gồm danh mục tenant và COMMON; `TENANT` chỉ của tenant; `COMMON` chỉ danh mục dùng chung toàn quốc.'
           schema: { type: string, enum: [ALL, TENANT, COMMON], default: ALL }
+        - name: ownerOrgId
+          in: query
+          description: Lọc theo tổ chức chủ quản danh mục (UI-07-01).
+          schema: { type: string, format: uuid }
+        - name: openVersionStatus
+          in: query
+          description: Lọc danh mục có phiên bản đang mở ở trạng thái này (DRAFT, IN_REVIEW, APPROVED); phiên bản đang mở là phiên bản chưa phát hành mới nhất.
+          schema: { type: string, enum: [DRAFT, IN_REVIEW, APPROVED] }
+        - name: updatedFrom
+          in: query
+          description: Lọc danh mục cập nhật từ thời điểm này (gồm).
+          schema: { type: string, format: date-time }
+        - name: updatedTo
+          in: query
+          description: Lọc danh mục cập nhật đến thời điểm này (không gồm).
+          schema: { type: string, format: date-time }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
         - name: sort
@@ -143,12 +159,20 @@ paths:
         - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         '200':
-          description: Một trang danh mục.
+          description: >-
+            Một trang danh mục. Khi `Accept` là `text/csv` hoặc
+            `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, trả tệp xuất
+            toàn bộ tập kết quả đã lọc (không phân trang, tối đa 50.000 dòng) với các cột mã, tên,
+            nhóm, chủ quản, số bản ghi, phiên bản hiện hành, trạng thái, cập nhật lúc.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CatalogPage' }
               examples:
                 trangDau: { $ref: '#/components/examples/CatalogPageExample' }
+            text/csv:
+              schema: { type: string, format: binary }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -1155,6 +1179,10 @@ paths:
           in: query
           description: Chỉ lấy con trực tiếp của mã này; giá trị `~` lấy các nút gốc.
           schema: { type: string, maxLength: 64 }
+        - name: isLocalExtension
+          in: query
+          description: Lọc bản ghi bổ sung của tenant trên danh mục HYBRID (`true`) hoặc bản ghi COMMON (`false`).
+          schema: { type: boolean }
         - name: changeState
           in: query
           style: form
@@ -3243,7 +3271,7 @@ paths:
       x-datahub-fr: [FR-07-049]
       x-datahub-permission:
         permission: PLATFORM
-        note: Chỉ client dịch vụ của PH-20 (scope `platform.tenant.provision`, giả định) hoặc ROLE-PLATFORM_ADMIN.
+        note: Chỉ client dịch vụ của PH-20 (scope máy `platform.tenant.provision`, đã cấp cho PH-20) hoặc ROLE-PLATFORM_ADMIN.
       x-datahub-idempotent: true
       security:
         - oauth2Client: [platform.tenant.provision]
@@ -3295,7 +3323,7 @@ components:
             rdm.read: Tra cứu danh mục (một mã, lô, toàn bộ, cây, delta, lược đồ, ảnh chụp, chuyển mã)
             rdm.query: Truy vấn có cấu trúc bằng DSL (items:query)
             rdm.write: Ghi lô bản ghi vào bản nháp (items:batch) với danh mục được cấp
-            platform.tenant.provision: Chỉ client dịch vụ PH-20 — nạp gói danh mục nền (giả định)
+            platform.tenant.provision: Chỉ client dịch vụ PH-20 — nạp gói danh mục nền (API-07-073)
     oauth2User:
       type: oauth2
       description: |
@@ -3779,7 +3807,7 @@ components:
         type:
           type: string
           format: uri
-          description: '`https://datahub.gov.vn/problems/rdm/{slug}` (tên miền giả định, chờ chốt).'
+          description: '`https://datahub.gov.vn/errors/ERR-{PH}-{nnn}` (mẫu chung RFC 9457 của mọi phân hệ).'
         title: { type: string, description: 'Tóm tắt ngắn, cố định theo `code`.' }
         status: { type: integer, minimum: 400, maximum: 599 }
         detail: { type: string, description: Mô tả cụ thể lần lỗi này và cách khắc phục. }
@@ -3866,6 +3894,10 @@ components:
                 status: { $ref: '#/components/schemas/VersionStatus' }
                 updatedAt: { $ref: '#/components/schemas/TTs' }
             itemCount: { type: integer, readOnly: true, description: Số bản ghi ACTIVE của phiên bản hiện hành. }
+            currentItemCount: { type: integer, readOnly: true, description: Số bản ghi ACTIVE của phiên bản đang có hiệu lực (khác `itemCount` khi bản đang mở có thay đổi chưa phát hành). }
+            pendingSyncRun: { oneOf: [{ $ref: '#/components/schemas/SyncRun' }, { type: 'null' }], readOnly: true, description: Lượt đồng bộ đang chạy hoặc chờ duyệt của danh mục (nếu có). }
+            allowedActions: { $ref: '#/components/schemas/AllowedActions' }
+            disabledReasons: { $ref: '#/components/schemas/DisabledReasons' }
             hasSyncSource: { type: boolean, readOnly: true }
             retiredAt: { type: [string, 'null'], format: date-time, readOnly: true }
             retireReason: { type: [string, 'null'], readOnly: true }
@@ -3930,6 +3962,18 @@ components:
       properties:
         reason: { type: string, minLength: 5, maxLength: 1000 }
         effectiveTo: { $ref: '#/components/schemas/TDate' }
+    AllowedActions:
+      type: array
+      readOnly: true
+      description: Thao tác người gọi được phép làm trên đối tượng ở trạng thái hiện tại (quy ước chung của D03-04 §1, dùng để bật tắt nút ở giao diện).
+      items: { type: string, pattern: '^[a-z][a-zA-Z0-9]{1,40}$' }
+      example: [update, submitReview, delete]
+    DisabledReasons:
+      type: object
+      readOnly: true
+      description: Lý do thao tác bị tắt, khóa là tên thao tác không có trong `allowedActions`.
+      additionalProperties: { type: string, maxLength: 300 }
+      example: { publish: Phiên bản chưa được duyệt. }
     CatalogPage:
       type: object
       required: [items, page]
@@ -4013,6 +4057,8 @@ components:
             catalogCode: { $ref: '#/components/schemas/TCode' }
             versionNo: { type: integer, minimum: 1 }
             status: { $ref: '#/components/schemas/VersionStatus' }
+            allowedActions: { $ref: '#/components/schemas/AllowedActions' }
+            disabledReasons: { $ref: '#/components/schemas/DisabledReasons' }
             effectiveState: { oneOf: [{ $ref: '#/components/schemas/EffectiveState' }, { type: 'null' }] }
             effectiveFrom: { type: [string, 'null'], format: date }
             effectiveTo: { type: [string, 'null'], format: date, description: Không gồm (khoảng nửa mở). }
@@ -4134,6 +4180,7 @@ components:
         pattern: { type: [string, 'null'], maxLength: 500, description: Biểu thức chính quy ECMA 262 (chỉ STRING). }
         minValue: { type: [number, string, 'null'], description: Với INTEGER/DECIMAL là số; với DATE/DATETIME là chuỗi ngày. }
         maxValue: { type: [number, string, 'null'] }
+        precision: { type: [integer, 'null'], minimum: 0, maximum: 18, description: 'Số chữ số thập phân tối đa của thuộc tính DECIMAL (chỉ DECIMAL). Giá trị thập phân trong `attrs` truyền và trả dưới dạng chuỗi để không mất độ chính xác.' }
         enumValues:
           type: [array, 'null']
           maxItems: 500
@@ -4464,6 +4511,8 @@ components:
           properties:
             id: { $ref: '#/components/schemas/TId' }
             jobType: { type: string, enum: [IMPORT, ADMIN_UNIT_CONVERT, PROPOSAL], default: IMPORT }
+            allowedActions: { $ref: '#/components/schemas/AllowedActions' }
+            disabledReasons: { $ref: '#/components/schemas/DisabledReasons' }
             catalogCode: { type: [string, 'null'], description: Rỗng khi `CREATE_CATALOG` chưa commit. }
             versionNo: { type: [integer, 'null'] }
             mode: { type: string, enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, MAPPING, ADMIN_UNIT_CONVERT] }
@@ -4969,6 +5018,8 @@ components:
         catalogCode: { $ref: '#/components/schemas/TCode' }
         status: { $ref: '#/components/schemas/SyncRunStatus' }
         trigger: { type: string, enum: [SCHEDULE, MANUAL, FIRST_RUN] }
+        allowedActions: { $ref: '#/components/schemas/AllowedActions' }
+        disabledReasons: { $ref: '#/components/schemas/DisabledReasons' }
         triggeredBy: { type: string }
         remoteVersion: { type: [string, 'null'] }
         diffStats:
@@ -6855,7 +6906,7 @@ components:
     ProblemBatchTooLarge:
       summary: ERR-07-026 · Số lượng vượt mức cho phép
       value:
-        type: https://datahub.gov.vn/problems/rdm/vuot-so-luong
+        type: https://datahub.gov.vn/errors/ERR-07-026
         title: Số lượng vượt mức cho phép
         status: 400
         detail: Lô có 742 mã, tối đa 500 mã mỗi lần gọi.
@@ -6866,7 +6917,7 @@ components:
     ProblemQuerySyntax:
       summary: ERR-07-023 · Biểu thức truy vấn sai cú pháp
       value:
-        type: https://datahub.gov.vn/problems/rdm/truy-van-sai-cu-phap
+        type: https://datahub.gov.vn/errors/ERR-07-023
         title: Biểu thức truy vấn sai cú pháp
         status: 400
         detail: Toán tử "like" không được hỗ trợ tại filter.and[1].op; dùng "contains" hoặc "startsWith".
@@ -6877,7 +6928,7 @@ components:
     ProblemNotQueryable:
       summary: ERR-07-025 · Thuộc tính không cho phép truy vấn
       value:
-        type: https://datahub.gov.vn/problems/rdm/thuoc-tinh-khong-truy-van
+        type: https://datahub.gov.vn/errors/ERR-07-025
         title: Thuộc tính không cho phép truy vấn
         status: 400
         detail: Thuộc tính "ten_ngan" chưa bật cho phép truy vấn.
@@ -6888,7 +6939,7 @@ components:
     ProblemBadParam:
       summary: ERR-07-040 · Thiếu tiêu đề If-Match
       value:
-        type: https://datahub.gov.vn/problems/rdm/thieu-if-match
+        type: https://datahub.gov.vn/errors/ERR-07-040
         title: Thiếu tiêu đề If-Match
         status: 400
         detail: Thao tác sửa cần tiêu đề If-Match chứa ETag lấy từ lần đọc gần nhất.
@@ -6899,7 +6950,7 @@ components:
     ProblemUnauthorized:
       summary: ERR-07-041 · Chưa xác thực
       value:
-        type: https://datahub.gov.vn/problems/rdm/chua-xac-thuc
+        type: https://datahub.gov.vn/errors/ERR-07-041
         title: Chưa xác thực
         status: 401
         detail: Token đã hết hạn lúc 08:25; hãy lấy token mới.
@@ -6910,7 +6961,7 @@ components:
     ProblemReadOnly:
       summary: ERR-07-003 · Danh mục chỉ đọc
       value:
-        type: https://datahub.gov.vn/problems/rdm/chi-doc
+        type: https://datahub.gov.vn/errors/ERR-07-003
         title: Danh mục chỉ đọc
         status: 403
         detail: Danh mục DVHC là danh mục quốc gia, chỉ được cập nhật qua đồng bộ.
@@ -6921,7 +6972,7 @@ components:
     ProblemSelfApproval:
       summary: ERR-07-015 · Không được tự duyệt
       value:
-        type: https://datahub.gov.vn/problems/rdm/bon-mat
+        type: https://datahub.gov.vn/errors/ERR-07-015
         title: Không được tự duyệt
         status: 403
         detail: Bạn đã sửa bản nháp này nên không thể duyệt; hãy chuyển cho người duyệt khác.
@@ -6932,7 +6983,7 @@ components:
     ProblemRestricted:
       summary: ERR-07-030 · Chưa được cấp quyền khai thác
       value:
-        type: https://datahub.gov.vn/problems/rdm/chua-cap-quyen-khai-thac
+        type: https://datahub.gov.vn/errors/ERR-07-030
         title: Chưa được cấp quyền khai thác
         status: 403
         detail: HTTT chưa được cấp quyền khai thác danh mục hạn chế DM_NOI_BO.
@@ -6943,7 +6994,7 @@ components:
     ProblemForbidden:
       summary: ERR-07-046 · Không đủ quyền
       value:
-        type: https://datahub.gov.vn/problems/rdm/khong-du-quyen
+        type: https://datahub.gov.vn/errors/ERR-07-046
         title: Không đủ quyền
         status: 403
         detail: Thao tác cần quyền PERM-07-publish.
@@ -6954,7 +7005,7 @@ components:
     ProblemCatalogNotFound:
       summary: ERR-07-001 · Không tìm thấy danh mục
       value:
-        type: https://datahub.gov.vn/problems/rdm/khong-tim-thay-danh-muc
+        type: https://datahub.gov.vn/errors/ERR-07-001
         title: Không tìm thấy danh mục
         status: 404
         detail: Không có danh mục mã LOAI_HINH_XX.
@@ -6965,7 +7016,7 @@ components:
     ProblemItemNotFound:
       summary: ERR-07-007 · Không tìm thấy mã
       value:
-        type: https://datahub.gov.vn/problems/rdm/khong-tim-thay-ma
+        type: https://datahub.gov.vn/errors/ERR-07-007
         title: Không tìm thấy mã
         status: 404
         detail: Mã 99 không có trong danh mục DAN_TOC tại ngày 21/11/2026.
@@ -6976,7 +7027,7 @@ components:
     ProblemOpenVersion:
       summary: ERR-07-005 · Đã có phiên bản đang mở
       value:
-        type: https://datahub.gov.vn/problems/rdm/da-co-phien-ban-mo
+        type: https://datahub.gov.vn/errors/ERR-07-005
         title: Đã có phiên bản đang mở
         status: 409
         detail: Danh mục đang có bản nháp số 4; hãy tiếp tục bản nháp đó.
@@ -6987,7 +7038,7 @@ components:
     ProblemApprovalRequired:
       summary: ERR-07-016 · Phải qua duyệt
       value:
-        type: https://datahub.gov.vn/problems/rdm/can-duyet
+        type: https://datahub.gov.vn/errors/ERR-07-016
         title: Phải qua duyệt
         status: 409
         detail: Bản nháp có thay đổi phá vỡ nên không phát hành thẳng được; hãy trình duyệt.
@@ -6998,7 +7049,7 @@ components:
     ProblemIdempotencyReused:
       summary: ERR-07-022 · Idempotency-Key đã dùng
       value:
-        type: https://datahub.gov.vn/problems/rdm/trung-idempotency-key
+        type: https://datahub.gov.vn/errors/ERR-07-022
         title: Idempotency-Key đã dùng
         status: 409
         detail: Khóa đã được dùng cho một yêu cầu khác nội dung.
@@ -7009,7 +7060,7 @@ components:
     ProblemReferenced:
       summary: ERR-07-032 · Danh mục đang bị tham chiếu
       value:
-        type: https://datahub.gov.vn/problems/rdm/dang-bi-tham-chieu
+        type: https://datahub.gov.vn/errors/ERR-07-032
         title: Danh mục đang bị tham chiếu
         status: 409
         detail: Danh mục đang được 2 danh mục khác tham chiếu nên chưa ngừng hiệu lực được.
@@ -7020,7 +7071,7 @@ components:
     ProblemRetired:
       summary: ERR-07-031 · Danh mục đã ngừng hiệu lực
       value:
-        type: https://datahub.gov.vn/problems/rdm/da-ngung-hieu-luc
+        type: https://datahub.gov.vn/errors/ERR-07-031
         title: Danh mục đã ngừng hiệu lực
         status: 410
         detail: Danh mục LOAI_HINH_DN_2020 đã ngừng hiệu lực từ 01/01/2026.
@@ -7031,7 +7082,7 @@ components:
     ProblemPrecondition:
       summary: ERR-07-018 · Dữ liệu đã bị người khác sửa
       value:
-        type: https://datahub.gov.vn/problems/rdm/etag-khong-khop
+        type: https://datahub.gov.vn/errors/ERR-07-018
         title: Dữ liệu đã bị người khác sửa
         status: 412
         detail: Bản ghi đã được cập nhật lúc 08:29; hãy tải lại trước khi sửa.
@@ -7042,7 +7093,7 @@ components:
     ProblemTooLarge:
       summary: ERR-07-042 · Vượt kích thước tối đa
       value:
-        type: https://datahub.gov.vn/problems/rdm/qua-kich-thuoc
+        type: https://datahub.gov.vn/errors/ERR-07-042
         title: Vượt kích thước tối đa
         status: 413
         detail: Tệp 63 MB vượt mức tối đa 50 MB.
@@ -7053,7 +7104,7 @@ components:
     ProblemMediaType:
       summary: ERR-07-043 · Kiểu nội dung không hỗ trợ
       value:
-        type: https://datahub.gov.vn/problems/rdm/kieu-noi-dung
+        type: https://datahub.gov.vn/errors/ERR-07-043
         title: Kiểu nội dung không hỗ trợ
         status: 415
         detail: Chỉ nhận tệp xlsx, xls hoặc csv.
@@ -7064,7 +7115,7 @@ components:
     ProblemAttrInvalid:
       summary: ERR-07-009 · Dữ liệu không hợp lệ
       value:
-        type: https://datahub.gov.vn/problems/rdm/du-lieu-khong-hop-le
+        type: https://datahub.gov.vn/errors/ERR-07-009
         title: Dữ liệu không hợp lệ
         status: 422
         detail: Có 1 trường không hợp lệ.
@@ -7080,7 +7131,7 @@ components:
     ProblemParentInvalid:
       summary: ERR-07-010 · Mã cha không hợp lệ
       value:
-        type: https://datahub.gov.vn/problems/rdm/ma-cha-khong-hop-le
+        type: https://datahub.gov.vn/errors/ERR-07-010
         title: Mã cha không hợp lệ
         status: 422
         detail: Mã cha 999 không tồn tại trong bản nháp.
@@ -7091,7 +7142,7 @@ components:
     ProblemEffectiveDate:
       summary: ERR-07-017 · Ngày hiệu lực không hợp lệ
       value:
-        type: https://datahub.gov.vn/problems/rdm/ngay-hieu-luc
+        type: https://datahub.gov.vn/errors/ERR-07-017
         title: Ngày hiệu lực không hợp lệ
         status: 422
         detail: Ngày hiệu lực phải từ hôm nay (21/11/2026) trở đi.
@@ -7102,7 +7153,7 @@ components:
     ProblemImportHasErrors:
       summary: ERR-07-021 · Còn dòng lỗi
       value:
-        type: https://datahub.gov.vn/problems/rdm/con-dong-loi
+        type: https://datahub.gov.vn/errors/ERR-07-021
         title: Còn dòng lỗi
         status: 422
         detail: Tệp còn 1 dòng lỗi; sửa tệp hoặc chọn bỏ qua dòng lỗi.
@@ -7118,7 +7169,7 @@ components:
     ProblemQueryLimit:
       summary: ERR-07-024 · Truy vấn vượt giới hạn
       value:
-        type: https://datahub.gov.vn/problems/rdm/vuot-gioi-han-truy-van
+        type: https://datahub.gov.vn/errors/ERR-07-024
         title: Truy vấn vượt giới hạn
         status: 422
         detail: Truy vấn có 24 điều kiện, tối đa 20.
@@ -7129,7 +7180,7 @@ components:
     ProblemSensitive:
       summary: ERR-07-036 · Không chứa dữ liệu cá nhân
       value:
-        type: https://datahub.gov.vn/problems/rdm/du-lieu-ca-nhan
+        type: https://datahub.gov.vn/errors/ERR-07-036
         title: Không chứa dữ liệu cá nhân
         status: 422
         detail: Thuộc tính "so_cccd" gợi ý dữ liệu cá nhân; danh mục không được chứa dữ liệu cá nhân.
@@ -7140,7 +7191,7 @@ components:
     ProblemRateLimited:
       summary: ERR-07-044 · Vượt giới hạn tần suất
       value:
-        type: https://datahub.gov.vn/problems/rdm/vuot-tan-suat
+        type: https://datahub.gov.vn/errors/ERR-07-044
         title: Vượt giới hạn tần suất
         status: 429
         detail: Đã vượt 10 lô mỗi phút; thử lại sau 35 giây.
@@ -7151,7 +7202,7 @@ components:
     ProblemNdxp:
       summary: ERR-07-028 · Nguồn quốc gia không phản hồi
       value:
-        type: https://datahub.gov.vn/problems/rdm/nguon-quoc-gia-loi
+        type: https://datahub.gov.vn/errors/ERR-07-028
         title: Nguồn quốc gia không phản hồi
         status: 502
         detail: NDXP không phản hồi sau 30 giây; lần chạy sẽ thử lại theo lịch.
@@ -7162,7 +7213,7 @@ components:
     ProblemUnavailable:
       summary: ERR-07-047 · Tạm chưa sẵn sàng
       value:
-        type: https://datahub.gov.vn/problems/rdm/tam-chua-san-sang
+        type: https://datahub.gov.vn/errors/ERR-07-047
         title: Tạm chưa sẵn sàng
         status: 503
         detail: Ảnh chụp phiên bản đang được sinh; thử lại sau 10 giây.

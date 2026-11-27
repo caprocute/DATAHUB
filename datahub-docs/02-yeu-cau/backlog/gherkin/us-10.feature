@@ -141,11 +141,10 @@ Tính năng: PH-10 · Sự kiện
     Và người dùng thấy thông báo "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
 
   @US-10-008 @FR-10-008 @M @âm
-  Kịch bản: US-10-008 âm 2 · Tên trùng
+  Kịch bản: US-10-008 âm 2 · Người dùng gửi `topicKind` khác `BUSINESS` hoặc gửi sẵn `topicName` (chỉ tài khoản dịch vụ có `event:topic-register` đượ …
     Biết dự án `ACTIVE`; tenant chưa vượt `maxTopics`, `maxPartitionsTotal`
-    Khi tên trùng
-    Thì hệ thống từ chối với ERR-10-002 (409)
-    Và người dùng thấy thông báo "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác."
+    Khi người dùng gửi `topicKind` khác `BUSINESS` hoặc gửi sẵn `topicName` (chỉ tài khoản dịch vụ có `event:topic-register` được dùng hai trường này, FR-10-066, 067)
+    Thì hệ thống từ chối với ERR-10-003 (400)
 
   @US-10-009 @FR-10-009 @M
   Kịch bản: US-10-009 dương · Duyệt tạo topic và cấp phát trên cụm
@@ -336,11 +335,10 @@ Tính năng: PH-10 · Sự kiện
     Và người dùng thấy thông báo "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}."
 
   @US-10-017 @FR-10-017 @M @âm
-  Kịch bản: US-10-017 âm 2 · Thiếu trường khóa
+  Kịch bản: US-10-017 âm 2 · `content` vượt 256 KiB
     Biết topic không `RETIRED`; không có phiên bản khác `PENDING_APPROVAL` cho cùng topic
-    Khi thiếu trường khóa
-    Thì hệ thống từ chối với ERR-10-017 (422)
-    Và người dùng thấy thông báo "Lược đồ thiếu trường khóa phân vùng '{trường}' hoặc trường này không phải chuỗi, số, hoặc cho phép null."
+    Khi `content` vượt 256 KiB
+    Thì hệ thống từ chối với ERR-10-003, ERR-10-015 (400)
 
   @US-10-018 @FR-10-018 @M
   Kịch bản: US-10-018 dương · Kiểm tra tương thích với các phiên bản đã có
@@ -556,7 +554,7 @@ Tính năng: PH-10 · Sự kiện
   @US-10-029 @FR-10-029 @M
   Kịch bản: US-10-029 dương · Đồng bộ trạng thái với PH-01 và PH-04
     Biết bên tham gia gắn HTTT hoặc luồng
-    Khi sự kiện đổi trạng thái HTTT của PH-01 (giả định `{tenant}.connect.system.state-changed.v1`, Q10-17); EVT-04-09 `{tenant}.integration.flow.retired.v1` của PH-04; lịch đối chiếu mỗi giờ
+    Khi sự kiện đổi trạng thái HTTT của PH-01 (EVT-01-03 `{tenant}.connect.system.state-changed.v1` của PH-01); EVT-04-09 `{tenant}.integration.flow.retired.v1` của PH-04; lịch đối chiếu mỗi giờ
     Thì cán bộ thấy bên tham gia chuyển "Tạm ngừng" với lý do "Theo PH-01" ngay sau khi HTTT bị tạm ngừng
     Và trạng thái bên khớp phân hệ nguồn sau ≤ 60 giây hoặc sau chu kỳ đối chiếu
     Và sự kiện được phát: EVT-10-07, EVT-10-09
@@ -1183,7 +1181,7 @@ Tính năng: PH-10 · Sự kiện
     Biết danh mục nền tảng đã nạp
     Khi thiếu quyền
     Thì hệ thống từ chối với ERR-10-054 (403)
-    Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant."
+    Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
   @US-10-061 @FR-10-061 @M
   Kịch bản: US-10-061 dương · Danh mục chế độ định tuyến
@@ -1247,7 +1245,7 @@ Tính năng: PH-10 · Sự kiện
   @US-10-064 @FR-10-064 @M
   Kịch bản: US-10-064 dương · Cách ly đa tenant trên trục sự kiện
     Biết tenant đã có mã
-    Khi mọi thao tác tạo, cấp phát; lịch chạy bộ kiểm thử rò rỉ; PH-20 khởi tạo tenant
+    Khi mọi thao tác tạo, cấp phát; lịch chạy bộ kiểm thử rò rỉ; PH-20 khởi tạo tenant (nghe EVT-20-01 `platform.tenant.created.v1`)
     Thì tenant chỉ thấy tài nguyên của mình
     Và nhật ký kiểm toán ghi nhận thao tác
 

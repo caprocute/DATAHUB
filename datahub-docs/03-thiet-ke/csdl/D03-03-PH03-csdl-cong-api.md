@@ -2226,6 +2226,8 @@ Không có changeset di trú kiểu `migrate-w1` như PH-05 vì không có bản
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung; các việc dưới đây để đợt đồng bộ cuối thực hiện (hoặc các luồng phân hệ khác tiếp nhận).
 
 | Tài liệu | Đề nghị |

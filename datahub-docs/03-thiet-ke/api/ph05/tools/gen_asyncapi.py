@@ -93,7 +93,7 @@ EV = [
 ]
 RECEIVERS = {"connectionEnabled": "dh-runtime, PH-04", "connectionChanged": "dh-runtime", "secretRotated": "dh-runtime",
     "connectionStateChanged": "dh-runtime, PH-04, PH-13", "grantChanged": "PH-04", "healthChanged": "PH-04, PH-13",
-    "adapterVersionApproved": "PH-04, dh-runtime", "adapterStateChanged": "dh-runtime, PH-04", "kameletPublished": "PH-04",
+    "adapterVersionApproved": "PH-04, dh-runtime", "adapterStateChanged": "dh-runtime, PH-04, PH-16", "kameletPublished": "PH-04",
     "kameletLifecycleChanged": "PH-04, PH-13", "cdcSchemaChanged": "PH-10, PH-13", "cdcStateChanged": "PH-13",
     "cdcChange": "Luồng PH-04, PH-06", "dbAccessRecorded": "dh-integration, PH-13", "flowAccountChanged": "PH-04, PH-13",
     "probeCommand": "dh-runtime probe-jvm", "probeResult": "dh-integration"}

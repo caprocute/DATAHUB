@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-09
 ten: Thiết kế hạ tầng, triển khai, HA/DR/BCP
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội vận hành TTDL tỉnh, Nhà cung cấp cloud Chính phủ, Kiến trúc sư, Kỹ sư SRE, Hội đồng thẩm định
 mo_ta: Thiết kế hạ tầng chạy Datahub gồm hai hồ sơ triển khai on-prem và cloud Chính phủ, cụm Kubernetes, định cỡ tài nguyên, tính sẵn sàng cao, khôi phục sau thảm họa, sao lưu bất biến và pipeline GitOps, làm căn cứ dựng, vận hành và thẩm định.
@@ -493,6 +493,9 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `dh-iam` | Keycloak | Phụ thuộc data | Z6 | |
 | `dh-cache` | Valkey | Phụ thuộc data | Z5 | |
 | `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | Z3 | |
+| `dh-batch` | Job nặng và CronJob của PH-18: ảnh `dh-ops-worker` (`dh-tenant-restore`, `dh-tenant-export`, `dh-migrate`), CronJob `dh-backup-reporter`, cụm tạm kiểm tra khôi phục | Control | Z3 | `ResourceQuota` cho tối đa 3 Job nặng cùng lúc; priority class `dh-batch`; tài khoản dịch vụ `dh-platform-ops-jobs` chỉ có quyền Job ở namespace này |
+| `dh-restore-{tenant}-{mã ngắn}` | Cụm CloudNativePG tạm dựng bằng PITR cho khôi phục một tenant (mục 8.5) | Dữ liệu | Z5 | Tạo và xóa theo từng yêu cầu khôi phục; `NetworkPolicy` từ chối mọi kết nối trừ pod của Job và kho sao lưu |
+| `dh-sandbox` | `dh-runtime-sandbox` của PH-04: chạy thử định nghĩa luồng chưa phát hành bằng Camel thật | Data | Z4 | Chính sách mạng riêng: không có đường tới kho dữ liệu của tenant, egress chỉ tới đích thử đã duyệt (đề xuất của SDD PH-04, Q04-20) |
 | `dh-payment` | `dh-payment` | Control + data | Z3 | Tách riêng vì yêu cầu bảo mật cao hơn (SAD §4.2); network policy riêng ra kênh thanh toán |
 | `dh-assist` | `dh-assist` | Control | Z3 | Tắt hoàn toàn được |
 | `dh-db` | Các cụm CNPG, PgBouncer | Dữ liệu | Z5 (`pg-iam` thuộc Z6) | |
@@ -582,7 +585,7 @@ Hình cho thấy ba điều. Thứ nhất, lưu lượng từ Internet đi một
 
 : Số bản sao tối thiểu và PodDisruptionBudget theo thành phần
 
-**Priority class.** Khi cụm thiếu tài nguyên (ví dụ mất một nút trong lúc tải cao), bộ lập lịch phải ưu tiên giữ data plane. Datahub định nghĩa năm priority class: `dh-critical-data` (1.000.000) cho Kafka, PostgreSQL, OpenBao; `dh-critical-dataplane` (900.000) cho APISIX, OPA, `dh-runtime`, Keycloak, Valkey; `dh-control` (500.000) cho DU control plane; `dh-observability` (300.000) cho bộ giám sát; `dh-batch` (100.000, không chiếm chỗ pod khác) cho tác vụ lô, kiểm tra khôi phục. Hệ quả có chủ đích là khi thiếu tài nguyên, bộ giám sát và tác vụ lô bị đẩy ra trước data plane.
+**Priority class.** Khi cụm thiếu tài nguyên (ví dụ mất một nút trong lúc tải cao), bộ lập lịch phải ưu tiên giữ data plane. Datahub định nghĩa năm priority class: `dh-critical-data` (1.000.000) cho Kafka, PostgreSQL, OpenBao; `dh-critical-dataplane` (900.000) cho APISIX, OPA, `dh-runtime`, Keycloak, Valkey; `dh-control` (500.000) cho DU control plane; `dh-observability` (300.000) cho bộ giám sát; `dh-batch` (100.000, không chiếm chỗ pod khác) cho tác vụ lô, kiểm tra khôi phục. Job đối sánh nặng của PH-06 (`mdm-splink`, 8 vCPU, 32 GB) chạy ở `dh-control` với `PriorityClass` `dh-batch-low` (đề xuất 50.000, thấp hơn `dh-batch`, không chiếm chỗ) và `ResourceQuota` riêng để nhường tài nguyên cho API trực tuyến; việc tách node pool `batch` riêng chỉ cân nhắc nếu đo thấy tranh chấp (Q06-25 ở SDD PH-06). Hệ quả có chủ đích là khi thiếu tài nguyên, bộ giám sát và tác vụ lô bị đẩy ra trước data plane.
 
 ### 4.4. Mạng trong cụm: Cilium, Istio ambient, cửa vào APISIX
 
@@ -591,6 +594,8 @@ Hình cho thấy ba điều. Thứ nhất, lưu lượng từ Internet đi một
 **Istio ambient mesh** cung cấp mTLS giữa mọi pod mà không cần sidecar (đáp ứng NFR-00-020 và nhóm SEC-10–19). `PeerAuthentication` ở chế độ `STRICT` cho toàn mesh (theo D03-07), không chấp nhận lưu lượng không mã hóa giữa các pod. Tác tử ztunnel trên mỗi nút mã hóa và xác thực danh tính SPIFFE của pod; chính sách `AuthorizationPolicy` ở tầng 4 chỉ cho phép danh tính được liệt kê gọi dịch vụ (ví dụ chỉ service account của APISIX được gọi `dh-runtime` ở cổng HTTP). Waypoint proxy (tầng 7) chỉ triển khai cho namespace cần chính sách theo đường dẫn hoặc thử lại ở tầng 7, mặc định không có, để không thêm chặng trên đường đi của data plane. Kafka, PostgreSQL và Garage nằm trong mesh nhưng vẫn bật TLS ở giao thức gốc của chúng, vì cần xác thực chứng thư của chính kho (ví dụ khi kết nối từ site DR, nằm ngoài mesh).
 
 **Cửa vào cụm là APISIX** (ADR-033 bản 0.2). Mỗi cửa vào là một nhóm phiên bản APISIX có Service kiểu LoadBalancer riêng: `apisix-ext` trong `dh-edge` cho Internet và `apisix-int` trong `dh-gateway` cho mạng TSLCD. Hai nhóm dùng chung cấu hình do control plane đồng bộ (ADR-005) và chỉ nạp route được gắn nhãn cho cửa của mình. APISIX đảm nhận cả phần biên (TLS, chứng thư khách, WAF Coraza, `limit-conn`/`limit-req` theo địa chỉ nguồn để chống tràn) lẫn phần nghiệp vụ (xác thực OAuth, gói sử dụng, hạn mức theo consumer, chính sách OPA, nhật ký nghiệp vụ). Plugin chống tràn chạy trước plugin xác thực để loại yêu cầu xấu sớm. Không dùng Ingress NGINX vì dự án cộng đồng đã ngừng phát triển năm 2025, và không thêm Envoy Gateway để bớt một chặng và một thành phần phải vận hành.
+
+**Tuyến và địa chỉ dịch vụ do các phân hệ yêu cầu.** Dịch vụ trong cụm có địa chỉ dạng `{dịch vụ}.{namespace}.svc`. `dh-connect.dh-control.svc` phục vụ PH-01, PH-02, PH-03, PH-15; `dh-platform.dh-control.svc:8080` phục vụ ba nhóm API của PH-13 (`/api/observability/v1`, `/api/audit/v1`, `/api/platform/v1`) cho cả người dùng qua BFF, các DU nguồn và Alertmanager. Trên APISIX, tuyến `/api/onboarding/v1` của PH-01 dành cho người dùng với giới hạn 300 yêu cầu mỗi phút và tuyến `/internal/*` chỉ nhận trong cụm với giới hạn 600 yêu cầu mỗi phút. Khu quản trị cổng nhà phát triển (`/quan-tri-cong`, `/api/portal/v1/admin/**`) chỉ có route ở `apisix-int` (mạng TSLCD) và trả `404` ở `apisix-ext` (BR-15-031). Alertmanager gọi API-13-090 (`POST /internal/alertmanager:webhook`) của `dh-platform` bằng mTLS của mesh; `AuthorizationPolicy` chỉ cho SPIFFE ID của Alertmanager gọi đường dẫn này (SEC-15). `dh-assist` chỉ cho data plane gọi vào cổng 8444.
 
 > **Q348 (đã đóng 25/11/2026):** Không còn lớp Envoy Gateway riêng, nên NFR-00-001 vẫn đo độ trễ thêm tại một điểm là APISIX, đã gồm chi phí WAF. Không cần thêm chỉ tiêu độ trễ đầu cuối từ biên.
 
@@ -635,6 +640,23 @@ cert-manager cấp và gia hạn mọi chứng thư TLS trong cụm. Có ba ngu�
 Cụm OpenBao niêm phong có quy trình riêng: mảnh khóa Shamir 3/5 giao cho năm người thuộc hai đơn vị (TTDL và chủ quản), mỗi lần mở niêm phong được ghi biên bản; khóa transit của nó được sao lưu bằng chức năng sao lưu khóa của engine transit, mã hóa bằng khóa công khai của chủ quản, cất ngoại tuyến, vì mất khóa này đồng nghĩa không mở được cụm chính lẫn bản snapshot của cụm chính. Site DR có cụm niêm phong riêng được nạp cùng khóa (mục 7.4). Mảnh khóa khôi phục (recovery key) của cụm chính cũng được chia Shamir và cất như trên.
 
 > **Câu hỏi mở Q336:** Cần xác minh phiên bản OpenBao dự kiến dùng đã hỗ trợ seal PKCS#11 ở bản phát hành ổn định và danh sách HSM đã kiểm thử; đồng thời hỏi TTDL tỉnh thí điểm có HSM dùng chung (ví dụ của hệ thống chữ ký số) có thể cấp phân vùng cho Datahub hay không.
+
+**Khóa transit và đường dẫn do các phân hệ yêu cầu.** Bảng dưới liệt kê các khóa transit và đường dẫn OpenBao mà thiết kế các phân hệ đòi hỏi, để vận hành dựng sẵn chính sách theo tenant lúc khởi tạo (D03-10 §5.2, bước `S04_SECRETS`). Tên theo tập SDD và CSDL của phân hệ chủ; mọi khóa khớp mẫu `^transit/keys/dh-{tenant}-[a-z0-9-]+$` hoặc nằm trong nhóm khóa nền tảng.
+
+| Khóa hoặc đường dẫn | Mục đích | Phân hệ chủ |
+|---|---|---|
+| `transit/keys/dh-{tenant}-pii` | KEK mã hóa trường Nhạy cảm (SEC-31) | PH-20 tạo, mọi DU dùng |
+| `transit/keys/dh-{tenant}-handover` | Bọc bí mật khi bàn giao thông tin xác thực client; đọc bí mật qua response wrapping và hủy bản sao sau lần mở | PH-01 |
+| `transit/keys/dh-gateway-snapshot` | Ký ảnh chụp cấu hình gateway, cùng nhóm khóa ký với bundle OPA (SEC-36) | PH-03 |
+| `transit/keys/dh-audit-sign` | Ký neo chuỗi băm kiểm toán, khóa nền tảng chung | PH-13 |
+| `transit/keys/dh-{tenant}-audit-hmac` | HMAC theo tenant cho kiểm toán; DU chỉ có quyền `update` trên đường `hmac` | PH-13 |
+| `kv/.../audit-mac/{du}` | Khóa HMAC chữ ký nguồn của từng DU (tiêu đề `dh-mac`); DU chỉ đọc khóa của mình | PH-13 |
+| `transit/keys/dh-{tenant}-nat-sign-*`, `dh-{tenant}-nat-auth`, `dh-{tenant}-nat-config`, `dh-{tenant}-nat-evidence` | Bốn nhóm khóa của cổng quốc gia: ký bản tin gửi NDXP, xác thực, ký cấu hình, ký bằng chứng giao dịch | PH-14 |
+| Chính sách OpenBao sinh theo tenant | Tạo cùng `kv/dh/{tenant}/...` lúc khởi tạo tenant, kể cả `kv/dh/{tenant}/clients/*` cho PH-01 | PH-20 |
+
+: Khóa transit và đường dẫn OpenBao theo phân hệ
+
+Tên khóa của cổng quốc gia theo SDD PH-14 (`nat-sign-*`, `nat-auth`, `nat-config`, `nat-evidence`); tên `dh-{tenant}-national-sign` ở FRS PH-14 là cách gọi cũ, không dùng ở hạ tầng.
 
 ### 4.8. Kho ảnh: Harbor
 
@@ -828,6 +850,79 @@ Dữ liệu ở DEV, TEST và STAGING là dữ liệu giả lập; không sao ch
 
 Data plane mở rộng ngang: HPA theo CPU (ngưỡng 60%) cho `apisix-ext` và `apisix-int`, KEDA theo độ trễ tiêu thụ Kafka và theo số lượt/giây cho `dh-runtime`. Để đạt NFR-00-061 (gấp đôi tài nguyên cho ít nhất 1,8 lần thông lượng), các điểm thắt cổ chai dùng chung phải mở rộng được cùng: Valkey (bộ đếm hạn mức) chuyển sang chế độ cluster khi vượt 50.000 thao tác/giây; số phân vùng topic được đặt từ đầu bằng 2–3 lần số consumer tối đa dự kiến; PgBouncer có pool riêng cho luồng đọc tới standby. Kiểm thử tải ở D05-01 phải đo hệ số mở rộng với 3 và 6 bản sao APISIX.
 
+### 5.9. Tài nguyên bổ sung theo phân hệ
+
+Bảng định cỡ ở mục 5.3 lập từ khung quy mô chung, trước khi các tập SDD và CSDL của từng phân hệ hoàn tất. Mục này gộp các hạng mục bổ sung mà các tập đó đề nghị, theo bốn nhóm: Deployment, Job; bucket kho đối tượng; topic Kafka; CSDL (schema, vai trò, dung lượng). Con số ghi cho `QM-VUA` nếu không nói khác; hồ sơ khác nhân theo cùng hệ số ở mục 5.2. Phần lớn là giả định của tập nguồn, cần đo ở tỉnh thí điểm.
+
+| Thành phần | Namespace, vùng | Định cỡ | Nguồn và ghi chú |
+|---|---|---|---|
+| Module `onboarding` (PH-01), trong `dh-connect` | `dh-control`, Z3 | Khoảng 0,3 vCPU, 384 MiB bổ sung cho mỗi bản sao | SDD PH-01; Debezium outbox cho schema `ph01_onboarding` |
+| `dh-connect` vai trò `lint-worker` (PH-02) | `dh-control`, Z3 | 2 bản × 1 vCPU, 2 GiB, chỉ `QM-LON` và `QM-CHUNG` (đề xuất) | SDD PH-02 mục 4.4; cùng ảnh, khác profile |
+| `dh-connect` vai trò `portal-sandbox` (PH-15) | `dh-control`, Z3 | Deployment độc lập, co giãn riêng (NFR-15-013 ≥ 100 lượt/giây) | SDD PH-15 QĐ-15-01; egress ra backend thử qua egress gateway theo FQDN (SEC-16) |
+| Vai trò của `dh-connect` | | Bốn vai trò từ một ảnh: `api`, `worker`, `lint-worker`, `portal-sandbox` | SDD PH-02, PH-15 |
+| `dh-sync` cạnh mỗi pod APISIX (PH-03) | `dh-edge`, `dh-gateway` | 50 mCPU, 32 MiB | SDD PH-03 mục 6.1; cộng `lua_shared_dict` khoảng 114 MiB mỗi pod APISIX |
+| `dh-data-dq-worker` (PH-08) | `dh-control`, Z3 | 2 bản khi nghỉ, 4 bản ở `QM-VUA`, tối đa 8; 1/2 vCPU, 3 GiB; `ScaledObject` KEDA theo `dq_scan_tasks_queued` (thêm khi quá 2 tác vụ chờ mỗi bản sao) | SDD PH-08 mục 11.1; `terminationGracePeriodSeconds` 330 |
+| Job `mdm-splink` (PH-06) | `dh-control`, Z3 | 8 vCPU, 32 GB mỗi Job | `PriorityClass` `dh-batch-low` và `ResourceQuota` (mục 4.3) |
+| Job `privacy-arx-{tenant}-{jobId}` (PH-09) | Namespace Job riêng của `dh-data` (đề xuất tên `dh-data-jobs`), Z4 | Theo tập dữ liệu; chỉ chạy khi có yêu cầu | SDD PH-09: tài khoản dịch vụ riêng, `NetworkPolicy` chỉ tới Garage, không root, hệ tệp gốc chỉ đọc |
+| `dh-platform` vai trò `api`, `ingest`, `jobs` (PH-13) | `dh-control`, Z3 | Phần PH-13 cộng khoảng 0,5 vCPU và 1 GiB mỗi bản sao vào `dh-platform` `QM-VUA`; ở `QM-LON`, `QM-CHUNG` tách ba Deployment riêng | SDD PH-13 mục 11.1; bộ phát hiện bất thường, bộ quét dữ liệu cá nhân, bộ tiếp nhận kiểm toán nằm trong các vai trò này |
+| `dh-platform` vai trò `api`, `worker` (PH-16, PH-18, PH-20) | `dh-control`, Z3 | Hai Deployment cho mỗi nhóm; việc dựng PDF của PH-16 chạy ở `worker` nên tính thêm bộ nhớ cho OpenHTMLtoPDF | SDD PH-16, PH-18, PH-20 |
+| `policy-runner` (PH-12) | `dh-control`, Z3 | 2 bản, vai trò `runner` của `dh-platform`, không có thông tin xác thực CSDL, không có đường ra mạng | SDD PH-12 mục 4.13 |
+| Job `dh-iam-provisioner` (PH-12) | `dh-iam`, Z6 | Do `dh-platform` tạo theo yêu cầu bằng quyền K8s tối thiểu, giữ thông tin xác thực tạo realm (ảnh chạy `keycloak-config-cli`) | SDD PH-12 mục 3 |
+| Sidecar OPA ở APISIX | `dh-gateway`, Z2 | 1 GiB ở `QM-CHUNG` nếu Q12-28 xác nhận; các hồ sơ khác giữ giá trị ở mục 5.3 | SDD PH-12 |
+| `otel-siem` và `alert-relay` (PH-13) | `dh-obs`, Z7 | 2 bản sao mỗi Deployment | SDD PH-13; bộ nhận nhịp tim ngoài site cho Watchdog (FR-13-049) đặt ở vùng quản trị hoặc site DR, độc lập với cụm chính |
+| Cổng quốc gia `national-gateway` vai trò `gateway` (PH-14) | `dh-runtime` (hoặc `dh-rt-{tenant}`), Z4 | Một Deployment mỗi tenant đặt tên `dh-nat-{tenant}`: 3 bản × 0,5/1 vCPU, 768 MiB, KEDA tới 12 | SDD PH-14 mục 11; JVM, nhãn `dh.gov.vn/tenant` |
+| Cổng quốc gia vai trò `worker` (PH-14) | Như trên | 2 bản × 0,25/0,5 vCPU, 512 MiB mỗi tenant | Chạy kiểm tra, đồng bộ, hàng chờ, chuỗi tin cậy |
+| Valkey của PH-14 | `dh-cache`, Z5 | Khoảng 128 MiB mỗi tenant, khóa tiền tố `{tenant}:nat:` | Đệm, bộ đếm hạn mức, chống phát lại, cờ `SECURITY_HOLD`; cần IP nguồn cố định cho site DR (Q334, mục 3.3) |
+| `dh-assist` (PH-17) | `dh-assist`, Z3 | Hai Deployment (`api`, `worker`), Job đánh giá; HPA theo CPU 65% và `assist_stream_active` trung bình 25 mỗi bản sao, cùng `ScaledObject` KEDA theo SDD PH-17 | SDD PH-17 mục 11.4; `NetworkPolicy` riêng, cổng 8444 cho data plane; đường vào tới Valkey, Kafka, OpenBao, Keycloak của hạ tầng dùng chung |
+| Valkey của PH-20 | `dh-cache`, Z5 | Cụm đệm cho registry tenant | SDD PH-20 |
+
+: Deployment, Job và CronJob bổ sung theo phân hệ
+
+Ghi chú định cỡ `QM-VUA` cho các tập này: module `dh-connect` có thêm các vai trò kể trên trong cùng ảnh nên chỉ tăng bản sao khi tải đòi hỏi. Với PH-13, bộ nhận nhịp tim ngoài site giúp Watchdog phát hiện cụm chính ngừng hoàn toàn, điều mà giám sát đặt trong cụm không làm được. Namespace `dh-assist` có thể tắt hoàn toàn mà không ảnh hưởng các DU khác.
+
+**Bucket kho đối tượng bổ sung.** Bảng dưới liệt kê bucket do các phân hệ yêu cầu ngoài mẫu `dh-{tenant}-{mục đích}` của mục 4. Bucket cần Object Lock đặt ở Ceph RGW; bucket còn lại ở Garage.
+
+| Bucket | Hệ | Nội dung và vòng đời | Phân hệ |
+|---|---|---|---|
+| `dh-platform-gateway` | Garage | Ảnh chụp cấu hình gateway theo cấu trúc ở mục 6.1 | PH-03 |
+| `dh-{tenant}-onboarding` | Garage | Tệp đính kèm hồ sơ kết nạp, mã hóa SSE-C, giữ cùng hồ sơ; bucket nền tảng chứa tệp mẫu văn bản (`platform/onboarding/templates/...`) | PH-01 |
+| `dh-{tenant}-catalog` | Garage | Tiền tố `specs/`, `exports/`, `legacy/`; dung lượng ước tính theo SDD PH-02 | PH-02 |
+| `dq-reports`, `dq-exports`, `dq-archive` | Ceph RGW (`dq-reports` có Object Lock) | Báo cáo chất lượng PDF, XLSX giữ 10 năm; tệp xuất lỗi hạn tải 24 giờ; Parquet của phân vùng `dq_finding` đã tách nếu tenant bật lưu lạnh. SDD PH-08 gọi bucket báo cáo là `dq-reports-official`, tên chuẩn theo CSDL | PH-08 |
+| `dh-iam-import` (đề xuất) | Garage | Tệp nhập người dùng, đặt cạnh `dh-platform-policy` | PH-12 |
+| `dh-worm-audit` | Ceph RGW, Object Lock tuân thủ | WORM kiểm toán, khóa đối tượng `audit/{tenant}/...` theo tiền tố `{tenant}/`, lô 5 phút | PH-13 |
+| `dh-evidence` | Ceph RGW, Object Lock | Bằng chứng ATTT và gói bằng chứng kiểm toán (Garage không có Object Lock) | PH-13 |
+| `dh-seclog-archive` | Garage | Log an ninh nén `zstd`, vòng đời 3 năm, không phải WORM | PH-13 |
+| `dh-audit-export-tmp` | Garage | Tệp xuất tạm, vòng đời 7 ngày | PH-13 |
+| `dh-nat-payload`, `dh-nat-trust`, `dh-nat-sync` | Ceph RGW | Nội dung bản tin mã hóa theo khóa tenant, chuỗi tin cậy, đồng bộ; tiền tố `{tenant}/`, chính sách IAM theo tiền tố; sổ giao dịch dùng bucket WORM riêng (tên và vòng đời chốt ở SDD PH-14) | PH-14 |
+| `dh-{tenant}-portal`, `dh-{tenant}-portal-render` | Garage | Tài nguyên cổng nhà phát triển và bản dựng tài liệu | PH-15 |
+| `kpi-reports`, `kpi-evidence`, `kpi-exports` | `kpi-reports` ở Ceph RGW Object Lock chế độ chính tắc | PDF ký số báo cáo chỉ tiêu giữ theo `16.report.retention-years` (10 năm); bằng chứng số liệu; tệp xuất hạn tải 24 giờ | PH-16 |
+| `dh-common-restore` | Garage | Bản trích khôi phục một tenant, mã hóa, giữ 7 ngày | PH-18 |
+
+: Bucket kho đối tượng bổ sung theo phân hệ
+
+**Topic Kafka bổ sung.** Topic nghiệp vụ theo mẫu `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` của D00-04; topic cấp nền tảng không có tiền tố tenant. Mười lăm topic `connect` của PH-01 (tiền tố `{tenant}.connect.`) có 3 phân vùng và giữ 7 ngày; Apicurio đăng ký 15 lược đồ tương ứng ở chế độ tương thích `BACKWARD`. Topic kiểm toán `{tenant}.obs.audit.recorded.v1` giữ 7 ngày và topic truy cập `{tenant}.obs.access.logged.v1` giữ 3 ngày (PH-13). Topic hàng đợi lỗi chuẩn là `{tenant}.ops.dlq.v1` của PH-18, một topic mỗi tenant, giữ theo FRS PH-18 mục 4.1b; phần dung lượng của các topic DLQ được cộng vào ước lượng Kafka ở mục 2.4 (khoảng 2.000 mục mỗi ngày mỗi tenant ở hồ sơ tỉnh vừa, đỉnh 50.000 mục trong một giờ). Topic `platform.tenant.created.v1` và `platform.tenant.module-enabled.v1` (EVT-20-07) là topic cấp nền tảng.
+
+Kyverno có thêm chính sách nhập cho `KafkaTopic` và `KafkaUser` ở `dh-kafka`: mọi tài nguyên phải mang nhãn `dh.gov.vn/tenant` (trừ topic nền tảng) khớp tiền tố tên, để không tạo được topic hoặc principal lệch tenant (PH-10, SEC-82). Mô-đun cổng sự kiện (`dh-runtime-event-gateway`), bộ giao nhận (`dh-runtime-event-dispatcher`), bộ phát lại và bộ giám sát tuân thủ của PH-10 chạy trong `dh-runtime`, được cộng vào định cỡ `dh-runtime` ở mục 5.3 theo SDD PH-10.
+
+**PostgreSQL: schema, vai trò và dung lượng bổ sung.** Mọi schema dưới đây nằm trên `pg-core` (trừ `ph19_payment` ở `pg-payment`); danh mục đầy đủ ở SAD mục 8.4.
+
+| Schema | Vai trò CSDL chính | Dung lượng bổ sung | Ghi chú |
+|---|---|---|---|
+| `ph01_onboarding` | `dh_connect_app`, `dh_connect_migrator`; tài khoản sao chép riêng cho Debezium, `publication` chỉ gồm `ph01_onboarding.outbox` | Dưới 1 GiB mỗi năm | Debezium outbox |
+| `ph02_catalog` | Theo tập CSDL PH-02 | Dưới 1 GiB ở tỉnh vừa, khoảng 10 GiB ở trần | Lịch tác vụ dọn giữ phân vùng `lint_finding`, `usage_daily`, `config_change_log` theo chính sách lưu giữ của tập CSDL |
+| `ph03_gateway` | Theo tập CSDL PH-03 | Dưới 5 GiB sau 3 năm ở `QM-CHUNG` (giả định mục 7.2 của tập CSDL) | Nhật ký lượt gọi nằm ở ClickHouse, khoảng 110 GB mỗi tenant mỗi năm ở mức cao điểm (giả định mục 6.5 của tập CSDL); khi DR đặt lại `snapshot_counter` cộng `gw.snapshot.drGap` (mục 7.4 của tập CSDL) |
+| `ph08_dq` | `ph08_owner`, `ph08_app`, `ph08_readonly`, `ph08_benchmark`, `dq_reader` | Theo tập CSDL PH-08 | `ph08_benchmark` là ngoại lệ đọc liên tenant bằng khung nhìn (D03-10 mục 4) |
+| `ph12_iam` | Theo tập CSDL PH-12 | Khoảng 75 MB mỗi tỉnh vừa | Lưu sự kiện `pg-iam` 7 ngày nếu Q12-25 chọn |
+| `ph13_audit` | `ph13_owner`, `ph13_app`, `ph13_verify`, `ph13_archive`, `ph13_obs_app` | Khoảng 2,5 TB mỗi 12 tháng ở 34 tenant `QM-VUA`, tới 5 TB nếu có tenant giữ 24 tháng; WAL trung bình khoảng 120 KB/giây | Bản sao đọc `pg-core` cho `ph13_verify`; có thể tách cụm `pg-audit` riêng khi vượt ngưỡng (đề xuất, chưa là quyết định kiến trúc). ClickHouse `access_log` ở mục 6.3 của tập CSDL |
+| `ph14_national` | Theo tập CSDL PH-14 | Khoảng 62 GB mỗi tenant tỉnh vừa ở năm đầu, cận trên 2,1 TB cho 34 tenant | Số liệu mục 7.3 của tập CSDL |
+| `ph15_portal` | Theo tập CSDL PH-15 | Theo tập CSDL | Dùng `pg-core` chung, cần extension `unaccent` |
+| `ph16_kpi` | `ph16_owner`, `ph16_app`, `ph16_readonly`, `ph16_compare` | Theo tập CSDL PH-16 | `ph16_compare` là ngoại lệ đọc liên tenant bằng khung nhìn |
+| `ph20_tenant` | `ph20_owner`, `ph20_app`, `ph20_platform_app`, `ph20_ro` | Theo tập CSDL PH-20 | Thuộc `TPH-1` nên nhân bản liên tục, RPO ≤ 1 phút (mục 7.1), đáp ứng trần 5 phút của PH-20; tài khoản dịch vụ `dh-platform` của nhóm API nền tảng tách khỏi nhóm API tỉnh |
+
+: Schema, vai trò và dung lượng bổ sung trên `pg-core`
+
+Cụm `pg-core` bật các extension `pg_trgm` (PH-04, tìm kiếm gần đúng tên), `unaccent` (PH-15, PH-02 tìm kiếm tiếng Việt khi chưa dùng OpenSearch) và `pgvector` (PH-17 nếu cụm chốt ở SDD PH-17), cùng các extension chuẩn đã dùng.
+
 ## 6. Tính sẵn sàng cao của từng thành phần
 
 Mục này mô tả cơ chế HA trong một site. Nguyên tắc chung là mọi thành phần `TPH-0` có ít nhất ba bản sao trải ba vùng lỗi, thành phần có trạng thái dùng cơ chế đồng thuận hoặc nhân bản của chính nó, và không có thành phần nào mà hỏng một bản sao làm gián đoạn data plane. Cuối mục có bảng tổng hợp hành vi khi mất một nút và mất một vùng.
@@ -837,6 +932,10 @@ Mục này mô tả cơ chế HA trong một site. Nguyên tắc chung là mọi
 ADR-005 ghi rằng cấu hình được control plane đồng bộ xuống APISIX qua Admin API, và APISIX chuẩn dùng etcd làm kho cấu hình. Tài liệu này chọn **chế độ standalone khai báo, không dùng etcd**, khớp với cấu hình đang có trong repo (`deployment.role: data_plane`, `config_provider: yaml` ở `deploy/apisix/config.yaml`). Lý do là etcd là một kho có trạng thái nữa phải HA, sao lưu và sao chép sang DR, và quan trọng hơn là khi control plane ngừng thì etcd cùng bộ đồng bộ trở thành điểm hỏng mới của data plane. Với chế độ standalone, mỗi pod APISIX giữ toàn bộ cấu hình trong bộ nhớ, đọc từ một tệp khai báo; không có trạng thái dùng chung giữa các pod.
 
 Cơ chế cụ thể như sau. `dh-connect` (PH-03) là nguồn sự thật, sinh **ảnh chụp cấu hình** (configuration snapshot) đầy đủ gồm route, upstream, consumer, plugin config, có số phiên bản tăng dần và chữ ký. Ảnh chụp được ghi vào hai nơi: một ConfigMap `apisix-config` trong `dh-gateway` (qua kho Git cấu hình và Argo CD, để có lịch sử và quay lui), và một đối tượng trong bucket Garage `dh-platform-gateway` (cho đường cập nhật nhanh). Một tiến trình nhỏ cạnh APISIX (sidecar đồng bộ) theo dõi bucket, kiểm tra chữ ký và số phiên bản, ghi tệp `apisix.yaml` cục bộ; APISIX tự nạp lại tệp khi thay đổi mà không mất kết nối. Khi pod APISIX khởi động lại lúc control plane đang ngừng, nó vẫn có cấu hình từ ConfigMap đã gắn kết (bản Git gần nhất) và từ bucket (bản mới nhất), nên NFR-00-012 đạt được kể cả khi pod bị lập lịch lại. Độ trễ lan truyền thay đổi cấu hình qua bucket là ≤ 10 giây, đáp ứng NFR-00-052 (≤ 60 giây).
+
+Cấu trúc bucket và nguồn dữ liệu của ảnh chụp như sau. Bucket `dh-platform-gateway` có dạng `snapshots/{site}/{version}/` gồm `manifest.json`, `manifest.sig`, `int.yaml`, `ext.yaml` và thư mục `shards/`, cùng con trỏ `current` trỏ tới bản đang hiệu lực; kho Git cấu hình có thư mục `gateway/{site}/`. Chữ ký bằng khóa transit `transit/keys/dh-gateway-snapshot` (mục 4.7). `dh-sync` điền chứng thư và khóa riêng từ Secret vào tệp cục bộ; khóa riêng không bao giờ vào Git hay bucket. Ở site có điểm chuyển tiếp ảnh chụp ở Z2, pod ở `apisix-ext` (Z1) chỉ nhận ảnh chụp qua điểm này; `AuthorizationPolicy` mở cổng 8444 cho `apisix-ext` và điểm chuyển tiếp. `apisix-ext` chỉ chuyển lượt gọi sang `apisix-int` cổng 8444 và không chạy phần xác thực, hạn mức, OPA (Q03-21 ở SDD PH-03); các chốt đó chạy ở `apisix-int`.
+
+PH-02 là nguồn dữ liệu của ảnh chụp cấu hình (FR-02-059) và chịu chỉ tiêu NFR-02-005: thay đổi cấu hình có hiệu lực ≤ 30 giây, lan truyền tới mọi pod ≤ 10 giây. Mỗi pod APISIX báo qua `describe(env)` số phiên bản cấu hình đang chạy và băm nguồn từng route để PH-02 xác nhận đã nạp (Q02-22, Q02-23); số phiên bản được phép nhảy vọt, không bắt buộc liên tục.
 
 > **Câu hỏi mở Q338 (phần quyết định đã đóng 25/11/2026: ADR-005 bản 0.2 chọn chế độ standalone).** Phần còn mở: xác minh phiên bản APISIX 3.x được chọn có hỗ trợ nạp lại tệp standalone khi thay đổi mà không mất kết nối ở mức tải `QM-CHUNG` (khoảng 70.000 route), hoặc hỗ trợ chế độ standalone nhận cấu hình qua API.
 
@@ -874,7 +973,7 @@ Keycloak chạy ba bản sao (sáu ở `QM-CHUNG`) với bộ nhớ đệm phân
 
 ### 6.6. OPA
 
-OPA chạy như sidecar trong pod APISIX (quyết định gateway) và trong pod của DU cần quyết định cục bộ nhanh. Gói chính sách được `dh-platform` (PH-12) biên dịch, ký và đặt vào bucket Garage `dh-platform-policy`; OPA tải theo chu kỳ 30 giây, kiểm tra chữ ký gói, lưu bền ra đĩa. OPA không có trạng thái dùng chung, mỗi bản sao độc lập, nên HA của OPA là HA của pod chứa nó cộng HA của Garage. Nhật ký quyết định (decision log) của OPA được gửi qua OTel Collector vào Loki với mẫu 1% cho quyết định cho phép và 100% cho quyết định từ chối.
+OPA chạy như sidecar trong pod APISIX (quyết định gateway) và trong pod của DU cần quyết định cục bộ nhanh. Gói chính sách được `dh-platform` (PH-12) biên dịch, ký và đặt vào bucket Garage `dh-platform-policy`; OPA tải theo chu kỳ 30 giây, kiểm tra chữ ký gói, lưu bền ra đĩa. OPA không có trạng thái dùng chung, mỗi bản sao độc lập, nên HA của OPA là HA của pod chứa nó cộng HA của Garage. Nhật ký quyết định (decision log) của OPA được gửi qua OTel Collector vào Loki theo FR-12-057: 100% quyết định từ chối và quyết định mức Hạn chế, Nhạy cảm, 10% quyết định mức Công khai, Nội bộ.
 
 ### 6.7. Valkey
 
@@ -1144,7 +1243,7 @@ flowchart TB
     GAR["Garage<br/>rclone mỗi giờ"]
     BAO["OpenBao<br/>Raft snapshot mỗi 15 phút"]
     VEL["Velero, Kopia<br/>tài nguyên K8s, volume"]
-    AUD["dh-platform PH-13<br/>lô nhật ký kiểm toán hằng giờ, chuỗi băm"]
+    AUD["dh-platform PH-13<br/>lô WORM 5 phút, neo hằng giờ, chuỗi băm"]
   end
   ENC["Mã hóa phía máy khách<br/>khóa do OpenBao quản lý"]
   subgraph RGW["Ceph RGW ở site DR, ngoài cụm K8s DR, Object Lock compliance"]
@@ -1187,9 +1286,11 @@ Bảng dưới đây là danh mục đầy đủ đối tượng sao lưu. Cột
 | Harbor: ảnh và chữ ký | Nhân bản sang Harbor DR; gói phân phối gốc lưu lại | Theo phát hành | 10 bản phát hành | Harbor DR; kho sao lưu | — | Mỗi bản phát hành |
 | ClickHouse | `clickhouse-backup` ra S3 | Hằng ngày (tăng dần), hằng tuần (đầy đủ) | 35 ngày | Kho sao lưu (không cần bất biến) | Như trên | Hằng tháng |
 | Mimir, Loki, Tempo | Không sao lưu riêng; dữ liệu nằm trong Garage, tác vụ đồng bộ Garage mục 7.4 không áp dụng cho bucket giám sát | — | — | — | — | — |
-| Nhật ký kiểm toán: bản WORM | `dh-platform` (PH-13) ghi lô hằng giờ có chuỗi băm sang kho WORM (ADR-031) | Hằng giờ | Theo ADR-031 | Kho WORM, có thể trùng kho sao lưu bất biến với bucket riêng | Như trên | Hằng tháng: kiểm tra toàn vẹn chuỗi băm từ đầu |
+| Nhật ký kiểm toán: bản WORM | `dh-platform` (PH-13) ghi lô 5 phút có chuỗi băm sang kho WORM, cộng neo ký hằng giờ (ADR-031) | Lô mỗi 5 phút, neo hằng giờ | Theo ADR-031 | Kho WORM, có thể trùng kho sao lưu bất biến với bucket riêng | Như trên | Hằng tháng: kiểm tra toàn vẹn chuỗi băm từ đầu |
 
 : Danh mục đối tượng sao lưu: công cụ, tần suất, thời gian giữ, nơi lưu và kiểm tra khôi phục
+
+Mỗi hàng của bảng là một bản ghi `backup_object` ở PH-18, định danh bằng `object_code` duy nhất trong tenant (D03-03-PH18 mục 5), để PH-18 thu trạng thái sao lưu và kiểm tra khôi phục. Ánh xạ sang `object_kind`: PostgreSQL bản sao cơ sở `POSTGRES_BASE`, WAL `POSTGRES_WAL`, xuất logic theo tenant `TENANT_EXPORT`, cấu hình Kafka `KAFKA_CONFIG`, Garage `OBJECT_STORE`, OpenBao `SECRET_STORE`, khóa transit của cụm niêm phong và mảnh khóa `OFFLINE_SHARES`, tài nguyên Kubernetes `K8S_RESOURCES`, volume `VOLUME`, kho Git `GIT`, Harbor `REGISTRY`, ClickHouse `CLICKHOUSE`, WORM kiểm toán `AUDIT_WORM`.
 
 Valkey không được sao lưu vì là dữ liệu có thể mất (mục 6.7). Kafka không sao lưu nội dung vì mọi sự kiện nghiệp vụ có nguồn sự thật ở bảng outbox của PostgreSQL hoặc ở HTTT nguồn; khi khôi phục từ sao lưu, topic được tạo lại và các luồng cần phát lại sẽ đọc từ nguồn.
 
@@ -1232,12 +1333,14 @@ Quy trình như sau, được hiện thực bằng công cụ `dh-tenant-restore
 2. **Dựng cụm khôi phục.** PITR ô CSDL chứa tenant về thời điểm đích vào một cụm tạm trong namespace cô lập, network policy chỉ cho phép công cụ khôi phục truy cập. (45 phút – 3 giờ.)
 3. **Trích dữ liệu.** Trên cụm tạm, dùng vai trò có `BYPASSRLS` chỉ tồn tại ở cụm tạm, xuất các dòng `tenant_id = '{tenant}'` của mọi bảng trong các schema thuộc phạm vi, theo thứ tự phụ thuộc khóa ngoại, ra định dạng nhị phân của `COPY`. Bảng kiểm toán không nằm trong phạm vi (xem bước 7). (≤ 30 phút cho tenant 200 GB.)
 4. **Đặt tenant vào trạng thái bảo trì.** Chuyển tenant sang `SUSPENDED` với cờ cho phép API thiết yếu chỉ-đọc nếu cần (D03-10 §5.1); dừng các luồng của tenant; tạm dừng consumer outbox của tenant.
-5. **Thay thế.** Trên ô CSDL đang chạy, trong một giao dịch cho mỗi phân hệ với `SET LOCAL app.tenant_id = '{tenant}'` (nên RLS bảo đảm không chạm dòng của tenant khác dù công cụ có lỗi): xóa dòng hiện tại của tenant trong phạm vi, nạp dòng từ bản trích. Trình kích hoạt (trigger) ghi outbox được tắt cho phiên này để không phát lại hàng loạt sự kiện cũ; thay vào đó phát một sự kiện `tenant.restored` để các DU làm mới bộ đệm. (≤ 1 giờ.)
+5. **Thay thế.** Trên ô CSDL đang chạy, trong một giao dịch cho mỗi phân hệ với `SET LOCAL app.tenant_id = '{tenant}'` (nên RLS bảo đảm không chạm dòng của tenant khác dù công cụ có lỗi): xóa dòng hiện tại của tenant trong phạm vi, nạp dòng từ bản trích. Bảng outbox, inbox, nhật ký kiểm toán và năm bảng nhật ký của `ph18_ops` nằm ngoài danh sách bảng thay thế nên không phát lại hàng loạt sự kiện cũ; trigger chặn xóa hoặc chặn sửa lịch sử của các phân hệ cho phép thao tác khi cờ phiên `app.restore_mode = on` và người dùng là `dh_tenant_restorer` (D03-10 mục 6); thay vào đó công cụ phát một sự kiện `tenant.restored` để các DU làm mới bộ đệm. (≤ 1 giờ.)
 6. **Các kho khác của tenant.** Tệp trong bucket `dh-{tenant}-*` được khôi phục về phiên bản tại thời điểm đích từ kho sao lưu; realm Keycloak được xuất từ một Keycloak tạm chạy trên bản PITR của `pg-iam` rồi nhập đè (chỉ khi phạm vi gồm người dùng, vai trò); đường dẫn `kv/dh/{tenant}/` trong OpenBao được đưa về phiên bản cũ nhờ KV phiên bản 2; topic Kafka của tenant không khôi phục, offset của nhóm consumer được đặt lại tới thời điểm khôi phục nếu cần.
 7. **Kiểm toán.** Nhật ký kiểm toán là chỉ-thêm và không bao giờ bị khôi phục về quá khứ; thay vào đó thao tác khôi phục được ghi thành bản ghi kiểm toán gồm thời điểm đích, phạm vi, số dòng thay thế mỗi bảng, người duyệt.
-8. **Kiểm tra và mở lại.** Chạy bộ kiểm tra khói của tenant (D03-10 §5.2 bước 9), đối chiếu số dòng với bản trích, chuyển tenant về `ACTIVE`, xóa cụm tạm.
+8. **Kiểm tra và mở lại.** Chạy bộ kiểm tra khói của tenant (D03-10 §5.2, bước `S16_SMOKE`), đối chiếu số dòng với bản trích, chuyển tenant về `ACTIVE`, xóa cụm tạm.
 
 Mục tiêu thời gian khôi phục một tenant `QM-VUA` (dữ liệu ≤ 200 GB) là ≤ 4 giờ từ khi được duyệt. Đây là chỉ tiêu mới, đề xuất bổ sung vào SRS (mục 16.3). Cùng công cụ trích và nạp theo tenant được dùng để chuyển tenant giữa các ô CSDL, chuyển tenant từ `SHARED` sang `DEDICATED_DB`, và bàn giao dữ liệu khi tenant `DECOMMISSIONED`.
+
+Các đối tượng hạ tầng của công cụ `dh-tenant-restore`: vai `dh_tenant_restorer` (`NOBYPASSRLS`) do OpenBao cấp động khi yêu cầu được duyệt và thu hồi khi xong; Job chạy ở namespace `dh-batch` bằng ảnh `dh-ops-worker`, được `ResourceQuota` giới hạn tối đa 3 Job nặng cùng lúc; cụm tạm ở namespace `dh-restore-{tenant}-{mã ngắn}` có `NetworkPolicy` từ chối mọi kết nối trừ pod của Job và kho sao lưu; bản trích đặt ở bucket `dh-common-restore`, mã hóa, giữ 7 ngày; tài khoản dịch vụ `dh-platform-ops-jobs` chỉ có quyền Job ở `dh-batch`, mỗi công cụ worker (`dh-tenant-restore`, `dh-tenant-export`, `dh-migrate`) và CronJob `dh-backup-reporter` có tài khoản dịch vụ và Role riêng.
 
 > **Câu hỏi mở Q342:** Khôi phục một tenant làm dữ liệu tham chiếu chéo giữa tenant đó và dữ liệu `COMMON` (ví dụ mã danh mục quốc gia đã đổi sau thời điểm đích) có thể không nhất quán. Cần luồng PH-07 và PH-20 xác nhận quy tắc xử lý tham chiếu tới `COMMON` khi khôi phục.
 
@@ -1290,12 +1393,12 @@ Bảng sau tổng hợp thời hạn giữ dữ liệu quan sát, đồng bộ v
 | Loại dữ liệu | Kho | Trực tuyến | Lưu trữ dài hạn | Căn cứ |
 |---|---|---|---|---|
 | Log vận hành | Loki | 90 ngày | Không | NFR-00-028 |
-| Log an ninh (xác thực, từ chối ủy quyền, Hubble, Kyverno, sự kiện Keycloak) | Loki (tenant Loki `security` riêng) và SIEM của tỉnh | 12 tháng | Theo D03-07 | D03-07, nhóm SEC-60–69 |
+| Log an ninh (xác thực, từ chối ủy quyền, Hubble, Kyverno, sự kiện Keycloak) | Loki (tổ chức Loki `{tenant}-security` riêng cho từng tenant) và SIEM của tỉnh | 12 tháng | Theo D03-07 | D03-07, nhóm SEC-60–69 |
 | Nhật ký kiểm toán nghiệp vụ | PostgreSQL phân vùng theo tháng | 12 tháng | Kho WORM theo ADR-031 | NFR-00-027 |
 | Siêu dữ liệu lượt gọi | ClickHouse | 12 tháng (TTL theo phân vùng tháng) | Không | NFR-00-062 |
 | Chỉ số chi tiết | Mimir | 90 ngày | Tổng hợp SLO 25 tháng | Đề xuất, Q332 |
 | Trace | Tempo | 14 ngày | Không | Đề xuất, Q332 |
-| Nhật ký kiểm toán Kubernetes API | Loki (tenant `security`) và kho WORM | 12 tháng | Kho WORM theo ADR-031 | D03-07, nhóm SEC-60–69 |
+| Nhật ký kiểm toán Kubernetes API | Loki (tổ chức `{tenant}-security`) và kho WORM | 12 tháng | Kho WORM theo ADR-031 | D03-07, nhóm SEC-60–69 |
 
 : Thời hạn giữ dữ liệu quan sát và nhật ký, trực tuyến và dài hạn, theo căn cứ
 
@@ -1557,16 +1660,18 @@ Từ viết tắt mới: BCP (Business Continuity Plan), GSLB (Global Server Loa
 
 ### 16.3. Đề xuất sửa SAD, SRS và ADR khác (không tự sửa)
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Danh sách dưới ghi các chỗ tài liệu này lệch hoặc cần bổ sung so với SAD, SRS và ADR khác. Tài liệu không tự sửa các văn bản đó; luồng phụ trách từng văn bản xem xét và đồng bộ.
 
 1. **SAD §6 hàng "Biên"**: thay "Ingress NGINX hoặc Envoy Gateway, WAF ModSecurity/Coraza" bằng "APISIX ở biên, WAF Coraza với OWASP CRS chạy trong APISIX", ADR-033. *(Đã gộp 25/11/2026.)*
-2. **SAD §10 và §11**: ghi định nghĩa "phụ thuộc data plane" (Keycloak, OPA, Valkey, OpenBao, Kafka, Apicurio) và rằng chúng có HA, RTO như data plane; thêm `pg-iam` tách khỏi CSDL nghiệp vụ.
+2. **SAD §10 và §11**: ghi định nghĩa "phụ thuộc data plane" (Keycloak, OPA, Valkey, OpenBao, Kafka, Apicurio) và rằng chúng có HA, RTO như data plane; thêm `pg-iam` tách khỏi CSDL nghiệp vụ. *(Đã gộp vào SAD 27/11/2026.)*
 3. **SRS NFR-00-012**: làm rõ "control plane" trong phép thử là các DU control plane và `pg-core`, không gồm phụ thuộc data plane; quyết định PH-19 (Q340).
 4. **SRS mục 6.2**: đề xuất thêm yêu cầu khôi phục một tenant riêng lẻ về thời điểm quá khứ trong ≤ 4 giờ (dữ liệu ≤ 200 GB) mà không ảnh hưởng tenant khác (mã đề xuất NFR-00-016).
 5. **SRS §2.2**: thay "tài nguyên tối thiểu theo hồ sơ quy mô ở D03-09" bằng tham chiếu cụ thể `QM-NHO`…`QM-CHUNG`; bổ sung yêu cầu ba vùng lỗi.
 6. **ADR-005**: chuyển cơ chế đồng bộ cấu hình APISIX từ "Admin API, etcd" sang chế độ standalone có ảnh chụp cấu hình ký số (Q338), khớp `deploy/apisix/config.yaml` của repo. *(Đã gộp 25/11/2026.)*
-7. **D03-10 §5.2**: bảng định tuyến tenant dùng cho cả ô CSDL `SHARED` chứ không chỉ `DEDICATED_DB`.
-8. **D04-01**: quy tắc chỉ dùng `SET LOCAL` (không `SET` cấp phiên) do PgBouncer chế độ giao dịch.
+7. **D03-10 §5.2**: bảng định tuyến tenant dùng cho cả ô CSDL `SHARED` chứ không chỉ `DEDICATED_DB`. *(Đã gộp 27/11/2026.)*
+8. **D04-01**: quy tắc chỉ dùng `SET LOCAL` (không `SET` cấp phiên) do PgBouncer chế độ giao dịch. *(D03-10 mục 6 đã ghi quy tắc này 27/11/2026; D04-01 do luồng khác.)*
 9. **Lệch với repo**: `docs/04-deployment` bước 13 ghi RTO ≤ 30 phút, SRS ghi ≤ 1 giờ; tài liệu này theo SRS. Repo đặt WAF Coraza trong APISIX (proxy-wasm); tài liệu này giữ đúng cách đó (ADR-033 bản 0.2).
 
 ## 17. Câu hỏi mở
@@ -1604,3 +1709,4 @@ Danh sách dưới đây tập hợp các câu hỏi mở của tài liệu, d�
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: hai hồ sơ triển khai, cụm Kubernetes, định cỡ, HA, DR, sao lưu, quan sát, pipeline, gói air-gapped |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm Tóm tắt cho hội đồng thẩm định, các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc), đoạn mở cho năm mục còn thiếu, viết lại chú thích 40 bảng, thêm sáu sơ đồ (namespace theo vùng Z0 đến Z7, quy trình RBK-01, luồng sao lưu bất biến, thứ tự RBK-03, pipeline GitOps, sync wave) kèm thuyết minh. Giữ nguyên nội dung kỹ thuật của bản 0.1 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mục 5.9 (Deployment, bucket, topic Kafka, schema và dung lượng bổ sung theo phân hệ), namespace `dh-batch`, `dh-restore-*`, `dh-sandbox`, bảng khóa transit theo phân hệ (4.7), tuyến và địa chỉ dịch vụ (4.4), cấu trúc bucket ảnh chụp gateway và chỉ tiêu PH-02 (6.1), lấy mẫu nhật ký OPA theo FR-12-057, lô WORM 5 phút và neo hằng giờ, ánh xạ `object_code` (8.2), đối tượng hạ tầng khôi phục một tenant (8.5) |

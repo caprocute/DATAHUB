@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH12
 ten: Đặc tả API và sự kiện phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, thư viện PEP, APISIX, giao diện; ATTT; đơn vị kết nối; hội đồng thẩm định
 phan_he: PH-12
@@ -145,13 +145,14 @@ Các quy ước dưới đây áp dụng cho API quản trị `/api/iam/v1` và 
 | Phiên bản | Đường dẫn `v1`; thay đổi phá vỡ sang `v2` chạy song song ít nhất 6 tháng (oasdiff ở CI-5 chặn thay đổi phá vỡ trong `v1`). Riêng `/api/authz/v1` coi như hợp đồng nền tảng: không đổi cấu trúc `DecisionRequest`, `DecisionResult` trong `v1` |
 | Tenant | Lấy từ claim `tenant` của token; không bao giờ từ đường dẫn, thân hay tiêu đề `X-DH-Tenant` khi gọi từ ngoài mesh (SDD §3.4). Ngoại lệ: API-12-080…085 và API-12-045…046 có mã tenant đích trong thân hoặc đường dẫn vì gọi bởi PH-20 ở tenant `PLATFORM` |
 | Hành động | Hậu tố `:{hành-động}` trên tài nguyên (`:lock`, `:approve`, `:rotate`) theo AIP-136; hành động không đổi trạng thái (`:test`, `:plan`) cũng dùng `POST` |
-| Khóa lạc quan | `GET` chi tiết trả `ETag` (số `version`); `PATCH`, `PUT`, `DELETE` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả ERR-12-044 (`412`) kèm `currentVersion` |
-| Chống trùng | `POST` tạo hoặc có tác dụng phụ bắt buộc `Idempotency-Key` (16…128 ký tự), bảng `idempotency_key` giữ khóa, băm thân và phản hồi 24 giờ; gọi lại cùng khóa cùng thân trả lại đúng phản hồi cũ; cùng khóa khác thân trả ERR-12-045 (`422`). Lời gọi của saga (PH-01, PH-20) dùng khóa này để tiếp tục tiến trình dở |
+| Khóa lạc quan | `GET` chi tiết trả `ETag` (đúng bằng cột `version` của bảng); `PATCH`, `PUT`, `DELETE` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả ERR-12-044 (`412`) kèm `currentVersion` |
+| Chống trùng | `POST` tạo hoặc có tác dụng phụ bắt buộc `Idempotency-Key` (16…128 ký tự), bảng `idempotency_key` giữ khóa, băm thân và phản hồi 24 giờ; gọi lại cùng khóa cùng thân trả lại đúng phản hồi cũ; cùng khóa khác thân trả ERR-12-045 (`422`). Lời gọi của saga (PH-01, PH-20) dùng khóa này để tiếp tục tiến trình dở; phản hồi lưu theo khóa của API cấp client không chứa `wrappingToken`, chỉ chứa `handoverId` |
 | Phân trang | `page` (từ 1), `size` (10, 20, 50, 100; mặc định 20); phản hồi `page`, `size`, `totalElements`, `totalPages`. Ngoài miền trả ERR-12-003 |
 | Sắp xếp, lọc | `sort=truong:asc\|desc`; lọc bằng tham số riêng từng danh sách (ví dụ `state`, `orgCode`, `roleCode`); tìm `q` không phân biệt dấu |
-| Lỗi | `application/problem+json` theo RFC 9457: `type` (`https://datahub.gov.vn/errors/ERR-12-nnn`), `title`, `status`, `detail`, `code`, `traceId`; thêm `errors[]` (theo trường), `conflictingRoles` (ERR-12-009), `currentVersion` (ERR-12-044), `retryAfterSeconds` (ERR-12-037, 125). Điểm cuối OIDC trả `error`, `error_description` theo RFC 6749 |
+| Lỗi | `application/problem+json` theo RFC 9457: `type` (`https://datahub.gov.vn/errors/ERR-12-nnn`), `title`, `status`, `detail`, `code`, `traceId`; thêm `errors[]` (theo trường), `conflictingRoles` (ERR-12-009), `currentVersion` (ERR-12-044), `retryAfterSeconds` (ERR-12-037, 125). Điểm cuối OIDC trả `error`, `error_description` theo RFC 6749; lỗi do CSDL chốt (trigger ném `SQLSTATE` `P12nn`, CHECK, khóa duy nhất) được ánh xạ sang `ERR-12-nnn` theo D03-03-PH12 mục 3.44 |
 | Hành động được phép | Đối tượng trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm (ví dụ không cho nút "Mở khóa" khi tài khoản `ACTIVE`) |
 | Truy vết | `traceparent` W3C xuyên BFF, `dh-platform`, Kafka, OPA; `traceId` của lỗi trùng `trace_id` ở PH-13 |
+| Truy cập liên tenant | Yêu cầu tới `/api/platform/` có thể mang tiêu đề `X-DH-Grant-Id` (tùy chọn) chứa `grantId` của quyền có thời hạn; chỉ để ghi vết, OPA không tin tiêu đề mà tra quyền theo dữ liệu `data.dh.platform.grants` |
 | Ngôn ngữ | `Accept-Language: vi` (mặc định) hoặc `en` cho `title`, `detail` |
 | Tiến trình dài | Nhập người dùng, chạy khô, đồng bộ LDAP, xoay bí mật, tạo realm trả `202` kèm `Location` và `Accepted.taskId`; kết quả cuối qua `GET` của tài nguyên hoặc sự kiện |
 | Giới hạn tần suất | Thao tác ghi nhạy cảm (nhập, đặt lại yếu tố, xoay bí mật, cấp client) bị giới hạn theo người gọi; vượt trả ERR-12-037 (`429`) kèm `Retry-After`. Cấp token: `12.client.token-rate-limit` mỗi client (ERR-12-125) |
@@ -598,7 +599,7 @@ Khi cho phép, `reason` là `MATCHED_POLICY`, `matchedPolicy` là mã chính sá
 
 **API-12-079 · Danh sách chặn** (`GET /revocations`, APISIX kéo mỗi 10 giây, `If-None-Match: "412"`, `X-DH-Applied-Version: 412`, `X-DH-Node: apisix-0`)
 
-Không có mục mới: `304`, không thân. Có mục mới: `200`, `ETag: "413"`.
+Không có mục mới: `304`, không thân. Có mục mới: `200`, `ETag: "413"`. Giá trị `version` và `ETag` là số thứ tự toàn cục của bảng `revocation_feed_version`.
 
 ```json
 { "version": 413, "generatedAt": "2026-11-26T08:40:50Z",
@@ -718,15 +719,15 @@ Bảng sau liệt kê các hợp đồng giữa PH-12 và phân hệ khác hoặ
 
 | Bên | Hướng | Hợp đồng | Ghi chú |
 |---|---|---|---|
-| PH-01 Kết nạp HTTT | PH-01 → PH-12 | API-12-058 (cấp client), 060, 061, 062, 068 bằng scope `iam:client-provision`; nhận EVT-12-06, 07 | Saga cấp client dùng `Idempotency-Key` làm khóa tìm lại tiến trình dở; PH-01 mở địa chỉ bọc ở BFF, hiển thị bí mật một lần |
+| PH-01 Kết nạp HTTT | PH-01 → PH-12 | API-12-058 (cấp client), 060, 061, 062, 068 bằng scope `iam:client-provision`; nhận EVT-12-06, 07 | PH-12 trả kết quả đồng bộ (`201`), không dùng callback API-01-087 (Q01-56); đổi trạng thái hoặc đơn vị của tài khoản đầu mối qua EVT-12-02. Saga cấp client dùng `Idempotency-Key` làm khóa tìm lại tiến trình dở; PH-01 mở địa chỉ bọc ở BFF, hiển thị bí mật một lần |
 | PH-02, PH-09, PH-10, PH-19 | Nguồn → PH-12 | `ScopeSourcePort.accept` (trong tiến trình) hoặc API-12-068 (REST) đẩy dữ liệu đã duyệt để sinh scope | Chỉ scope có nguồn duyệt mới được ghi (ERR-12-019) |
-| PH-03 Cổng API (APISIX) | PH-03 → PH-12 | API-12-075 (JWKS), API-12-079 (danh sách chặn kéo mỗi 10 giây), API-12-086 (nếu không dùng OPA cục bộ); nhận EVT-12-08, 09, 10 | Plugin `dh-authz` ánh xạ trường theo SDD §3.4; báo `X-DH-Applied-Version` để PH-12 hiển thị "đã áp dụng n/m nút" |
+| PH-03 Cổng API (APISIX) | PH-03 → PH-12; PH-12 → PH-03 | API-12-075 (JWKS), API-12-079 (danh sách chặn kéo mỗi 10 giây), API-12-086 (nếu không dùng OPA cục bộ); nhận EVT-12-08, 09, 10; PH-12 đẩy thu hồi qua API-03-053 bằng scope `gateway:revoke` | Plugin `dh-authz` ánh xạ trường theo SDD §3.4; báo `X-DH-Applied-Version` để PH-12 hiển thị "đã áp dụng n/m nút" |
 | PH-04, PH-05, DU | DU → PH-12 | Thư viện PEP gọi OPA cục bộ; API-12-014 (danh bạ); nhận EVT-12-05, 09, 10 | `dh-runtime` (Quarkus) gọi API-12-086 trong giai đoạn đầu (Q12-26 của SDD) |
 | PH-07 Danh mục dùng chung | PH-12 đọc | Danh mục đơn vị (đồng bộ thuộc tính, kiểm `orgCode`) | ERR-12-004 khi đơn vị hết hiệu lực, ERR-12-040 khi PH-07 không khả dụng |
 | PH-13 Giám sát và kiểm toán | PH-12 → PH-13 | EVT-12-01…16; nhật ký quyết định theo đường log; bản ghi thay đổi quyền vào chuỗi băm của tenant bị truy cập | Hợp đồng tiếp nhận do PH-13 xác định |
 | PH-15 Cổng nhà phát triển | PH-15 → PH-12 | API-12-063 bằng scope `iam:dev-client` | Chỉ ở sandbox; PH-15 thêm độ trễ ngẫu nhiên khi làm mới token |
 | PH-18 Vận hành | PH-12 đọc, ghi | Tham số `12.*` qua API-12-110, 111 (kho tham số của PH-18), đệm 60 giây | Ngoài trần: ERR-12-043 |
-| PH-20 Quản trị tenant | PH-20 → PH-12 | API-12-080 (tạo realm, ≤ 5 phút), 084, 085 (tạm ngừng, khôi phục), 045, 046 (chuyển định danh khi sáp nhập); nhận EVT-12-13 | PH-20 chờ tối đa 4 phút ở bước 2 của saga |
+| PH-20 Quản trị tenant | PH-20 → PH-12 | API-12-080 (tạo realm, ≤ 5 phút), 084, 085 (tạm ngừng, khôi phục), 045, 046 (chuyển định danh khi sáp nhập); nhận EVT-12-13 | PH-20 chờ tối đa 4 phút ở bước `S03_REALM` của saga |
 | Keycloak | `dh-platform` → Keycloak | Admin REST với client `dh-platform-iam` (chỉ `realm-user-admin`) và `dh-client-provisioner` (giới hạn thuộc tính `dh_managed`); `keycloak-config-cli` cho realm | Không qua API công bố; lỗi: ERR-12-038 |
 | OpenBao | `dh-platform` → OpenBao | Transit (ký gói chính sách), KV, cubbyhole (địa chỉ bọc) | Lỗi: ERR-12-039 |
 | OPA | `dh-platform`, PEP → OPA | `POST /v1/data/dh/authz/decision`; nạp gói từ bucket Ceph RGW; plugin `status`, `decision_logs` | Hợp đồng đầu vào, đầu ra ở SDD §3.4 |
@@ -842,7 +843,7 @@ Các mã dưới đây phát sinh ở API quyết định (`/api/authz/v1`, thâ
 | ERR-12-117 | 401 | Xác thực client thất bại (`invalid_client`) | API-12-074, API-12-077 |
 | ERR-12-118 | 403 | Client bị tạm ngừng hoặc thu hồi (`unauthorized_client`) | API-12-074 |
 | ERR-12-119 | 400 | Scope giao rỗng (`invalid_scope`) | API-12-074 |
-| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`) | API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-012, API-12-015, API-12-017, API-12-018, API-12-022, API-12-023, API-12-024, API-12-026, API-12-027, API-12-029, API-12-030, API-12-031, API-12-033, API-12-034, API-12-035, API-12-036, API-12-038, API-12-039, API-12-040, API-12-041, API-12-044, API-12-048, API-12-049, API-12-050, API-12-052, API-12-053, API-12-055, API-12-059, API-12-060, API-12-061, API-12-062, API-12-064, API-12-065, API-12-066, API-12-070, API-12-071, API-12-074, API-12-083, API-12-084, API-12-085, API-12-097, API-12-098, API-12-099, API-12-100, API-12-111 |
+| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`), dùng cho API quản trị của PH-12 chứ không chỉ cho Keycloak | API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-012, API-12-015, API-12-017, API-12-018, API-12-022, API-12-023, API-12-024, API-12-026, API-12-027, API-12-029, API-12-030, API-12-031, API-12-033, API-12-034, API-12-035, API-12-036, API-12-038, API-12-039, API-12-040, API-12-041, API-12-044, API-12-048, API-12-049, API-12-050, API-12-052, API-12-053, API-12-055, API-12-059, API-12-060, API-12-061, API-12-062, API-12-064, API-12-065, API-12-066, API-12-070, API-12-071, API-12-074, API-12-083, API-12-084, API-12-085, API-12-097, API-12-098, API-12-099, API-12-100, API-12-111 |
 | ERR-12-121 | 403 | Tenant tạm ngừng hoặc realm không hoạt động | API-12-073, API-12-074 |
 | ERR-12-122 | 400 | Grant hoặc loại phản hồi bị cấm (`unsupported_grant_type`) | API-12-073, API-12-074 |
 | ERR-12-123 | 400 | Yêu cầu XACML sai lược đồ (phản hồi `Indeterminate`) | API-12-088 |
@@ -857,7 +858,7 @@ Bảng sau lấy nguyên từ FRS §9.2 để hai tài liệu không lệch; ngu
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
-| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." | Dưới trường nhập |
+| ERR-12-002 | "Tên đăng nhập hoặc thư điện tử này đã được dùng. Chọn giá trị khác." Với mã nhóm trùng: "Mã nhóm này đã được dùng. Chọn mã khác." | Dưới trường nhập |
 | ERR-12-004 | "Đơn vị {mã} không tồn tại hoặc đã hết hiệu lực." | Dưới trường đơn vị |
 | ERR-12-005 | "Thư điện tử phải thuộc miền {danh sách miền} của tỉnh." | Dưới trường thư |
 | ERR-12-007 | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền." | Thông báo nổi hoặc trang PTN-13 |
@@ -2972,7 +2973,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-12-002, ERR-12-003, ERR-12-007, ERR-12-038, ERR-12-039, ERR-12-040, ERR-12-041, ERR-12-043, ERR-12-045, ERR-12-116 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** PH-20 gọi ở bước 2 của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở.
+**Ghi chú.** PH-20 gọi ở bước `S03_REALM` của saga; hoàn tất ≤ 5 phút. Lũy đẳng: gọi lại cùng khóa thì tiếp tục từ bước dở.
 :::
 
 #### API-12-081 · Trạng thái realm của tenant
@@ -3681,6 +3682,8 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do luồng khác chịu trách nhiệm; tập này chỉ ghi lại để đợt đồng bộ cuối xử lý.
 
 | Tài liệu | Đề nghị |
@@ -3705,3 +3708,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và K-TRINH-BAY |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields |

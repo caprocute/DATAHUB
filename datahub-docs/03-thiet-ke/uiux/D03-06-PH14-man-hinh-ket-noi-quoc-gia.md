@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH14
 ten: Thiết kế giao diện màn hình phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, kỹ sư tích hợp, cán bộ ATTT, hội đồng thẩm định
@@ -365,7 +365,12 @@ Nguồn chuẩn của câu hiển thị là bảng ở D02-03-PH14 §9.2 (đã c
 | ERR-14-029 | "Đã kiểm tra quá {n} lần trong một giờ. Thử lại sau {phút} phút." | Nút "Kiểm tra kết nối" khóa, đếm ngược |
 | ERR-14-030 | "Cần xác thực lại bằng yếu tố thứ hai để xem nội dung đầy đủ." | Hộp xác thực lại |
 | ERR-14-031 | "Nội dung bản tin đã quá thời hạn lưu hoặc tỉnh không bật lưu nội dung." | `CMP-Alert` trong chi tiết giao dịch |
-| ERR-14-101…132 | Lỗi cổng quốc gia hiển thị cho cán bộ HTTT bằng trường `detail`; cho vận hành ở cột "Lỗi" và dòng thời gian của UI-14-12 kèm mã và mã truy vết | Cột Lỗi, `CMP-AuditTimeline` |
+| ERR-14-003 (lý do) | "Giá trị lý do không hợp lệ: cần từ 10 đến 500 ký tự." | Dưới trường lý do |
+| ERR-14-003 (phạm vi vô hiệu đệm) | "Giá trị phạm vi không hợp lệ: chọn một dịch vụ hoặc một nền tảng." | Dưới trường phạm vi |
+| Lỗi 403 theo FR-00 | "Chỉ quản trị nền tảng được khai báo nền tảng dùng chung toàn quốc." (khai báo `COMMON`); "Nền tảng đang bị tạm ngừng bởi cán bộ ATTT, chỉ quản trị tỉnh được tiếp tục." (tiếp tục nền tảng bị ATTT tạm ngừng) | `CMP-Alert` đầu trang |
+| ERR-14-117 (`reason = SECURITY_HOLD`) | "Nền tảng đang được giữ an ninh sau sự cố chữ ký nên chưa nhận lượt gọi mới. Liên hệ cán bộ an toàn thông tin của tỉnh." | Cột Lỗi và `CMP-AuditTimeline` ở UI-14-12 |
+| ERR-14-133 | "Kho chống trùng tạm thời không khả dụng nên không nhận thao tác ghi. Thử lại sau ít phút." | Cột Lỗi, `CMP-AuditTimeline` |
+| ERR-14-101…133 | Lỗi cổng quốc gia hiển thị cho cán bộ HTTT bằng trường `detail` (bảng thông điệp ở D03-04-PH14 §6.3); cho vận hành ở cột "Lỗi" và dòng thời gian của UI-14-12 kèm mã và mã truy vết | Cột Lỗi, `CMP-AuditTimeline` |
 | Khác | Theo FR-00-080: câu tiếng Việt từ `detail`, kèm mã lỗi và nút "Sao chép mã truy vết" (`CMP-CopyButton`) | `CMP-Alert` |
 
 : Thông điệp lỗi ERR-14 sang câu hiển thị
@@ -1790,12 +1795,14 @@ Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp v�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
-Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằng thành phần và token hiện có. Các biến thể và mục menu đề nghị ghi vào D03-05-04 và D03-06-00 ở lần cập nhật kế.
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
+Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằng thành phần và token hiện có. Các biến thể dưới đây đã có ở D03-05-03 bản 0.4 trở lên (ghi cuối từng dòng); mục menu đề nghị ghi vào D03-06-00.
 
 | Đề nghị | Dựa trên | Dùng ở | Lý do |
 |---|---|---|---|
-| `CMP-ProgressBar` biến thể "có mốc" | `CMP-ProgressBar` | UI-14-01, 09, 15 | Vạch mốc 70%, 85%, 95% kèm nhãn chữ và `aria-valuetext` thay vì chỉ vạch; đổi sắc thái theo mốc |
-| `CMP-StatusTag` biến thể "đếm ngược theo ngưỡng" | `CMP-StatusTag`, `CMP-Duration` | UI-14-08, 01 | "còn 24 ngày" đổi sắc thái ở 60, 30, 7 ngày; luôn có chữ |
+| `CMP-ProgressBar` biến thể "có mốc" | `CMP-ProgressBar` | UI-14-01, 09, 15 | Vạch mốc 70%, 85%, 95% kèm nhãn chữ và `aria-valuetext` thay vì chỉ vạch; đổi sắc thái theo mốc. Đã có: biến thể `milestone` (D03-05-03 §6.3) |
+| `CMP-StatusTag` biến thể "đếm ngược theo ngưỡng" | `CMP-StatusTag`, `CMP-Duration` | UI-14-08, 01 | "còn 24 ngày" đổi sắc thái ở 60, 30, 7 ngày; luôn có chữ. Đã có: biến thể `countdown` (D03-05-03 §5.1) |
 | `CMP-SecretField` biến thể "chỉ ghi có siêu dữ liệu" | `CMP-SecretField` | UI-14-03 | Đã đề xuất ở D03-06-PH05 Phụ lục A; dùng chung, không tạo lại |
 | `CMP-MaskedValue` biến thể "bỏ che có hẹn giờ" | `CMP-MaskedValue` | UI-14-12 | Đã dùng ở D03-06-PH19; tự che sau thời gian đặt, đếm ngược bằng chữ |
 | Mục menu nhóm "Kết nối quốc gia" (D03-06-00 §2.3.2) | Mục 18 hiện có | Mục 4.2, 4.3 của tập này | Thêm 12 mục con với đường dẫn `/tich-hop/quoc-gia/*`; giữ mục 18 `/tich-hop/dich-vu-quoc-gia` |
@@ -1803,6 +1810,8 @@ Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằ
 : Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Giao diện cần một số dữ liệu mà API hiện có chưa trả; các đề nghị dưới đây ghi vào D03-04-PH14 ở đợt đồng bộ cuối.
 
@@ -1818,6 +1827,8 @@ Giao diện cần một số dữ liệu mà API hiện có chưa trả; các đ
 : Phụ lục B. Đề nghị bổ sung API
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập này không sửa tài liệu dùng chung; các việc dưới đây cần làm ở đợt đồng bộ cuối.
 
@@ -1839,3 +1850,5 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây cần
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-14-01…17 với bảng đặc tả, wireframe, thành phần, trạng thái, thông báo, phím tắt, truy cập; ảnh hi-fi từng màn; ma trận vai trò, truy vết FR, kiểm thử giao diện, phụ lục đề nghị bổ sung |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Bổ sung dòng lỗi ERR-14-003, 117, 133 ở mục 5.2 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi `milestone` của `CMP-ProgressBar` và `countdown` của `CMP-StatusTag` đã có ở D03-05-03 |

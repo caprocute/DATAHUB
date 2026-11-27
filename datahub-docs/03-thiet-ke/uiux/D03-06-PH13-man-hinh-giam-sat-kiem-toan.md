@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH13
 ten: Thiết kế giao diện màn hình phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, hội đồng thẩm định, cán bộ vận hành và cán bộ ATTT của tỉnh
 phan_he: PH-13
@@ -188,11 +188,11 @@ Nhãn chữ tiếng Việt có dấu, giọng văn theo D03-06-00 §5. Giữ ngu
 
 ### 2.4. Hành động theo quyền và trạng thái
 
-Nút ghi chỉ hiện khi người dùng có quyền; nếu có quyền nhưng đối tượng ở trạng thái không áp dụng được thì nút bị vô hiệu kèm tooltip nêu lý do (ví dụ "Cảnh báo đã xử lý, không còn áp dụng"). Quy tắc tương ứng của D03-06-00 §2.6: không có quyền xem màn thì mục menu ẩn và mở trực tiếp bằng URL trả `ST-07`. Tenant tạm ngừng (ERR-13-016) hoặc phiên liên tenant: mọi nút ghi vô hiệu (`ST-15`).
+Nút ghi chỉ hiện khi người dùng có quyền; nếu có quyền nhưng đối tượng ở trạng thái không áp dụng được thì nút bị vô hiệu kèm tooltip nêu lý do (ví dụ "Cảnh báo đã xử lý, không còn áp dụng"). Quy tắc tương ứng của D03-06-00 §2.6: không có quyền xem màn thì mục menu ẩn và mở trực tiếp bằng URL trả `ST-07`. Tenant tạm ngừng (ERR-13-016) hoặc phiên liên tenant: mọi nút ghi vô hiệu (`ST-15`). Việc bật, tắt nút lấy từ `allowedActions` và `disabledReasons` trong phản hồi của danh sách cảnh báo, cảnh báo an ninh, luật cảnh báo và yêu cầu xuất; câu thông báo lấy từ FRS §9.2. Tab "Lịch sử" của phân hệ chủ gọi API-13-076 qua BFF của đơn vị triển khai chứ không gọi từ trình duyệt.
 
 ### 2.5. Lý do bắt buộc và xác thực lại
 
-Ba loại thao tác cần lý do qua `CMP-ReasonDialog` (10 đến 500 ký tự, ERR-13-008, ERR-13-012): tra cứu nhật ký kiểm toán, xuất bằng chứng, thao tác ghi khi ở phiên liên tenant. Xuất bằng chứng và tra theo đối tượng bị tra cứu còn cần xác thực lại phiên (ERR-13-028); hộp xác thực lại là hộp của Keycloak qua `CMP-Modal`, hết hạn sau 5 phút (giả định theo FR-00-012).
+Ba loại thao tác cần lý do qua `CMP-ReasonDialog` (10 đến 500 ký tự, ERR-13-008, ERR-13-012): tra cứu nhật ký kiểm toán, xuất bằng chứng, thao tác ghi khi ở phiên liên tenant. Xuất bằng chứng và tra theo đối tượng bị tra cứu còn cần xác thực lại phiên (ERR-13-028); hộp xác thực lại là hộp của Keycloak qua `CMP-Modal`, hết hạn sau 5 phút (giả định theo FR-00-012). Mọi màn kiểm toán (UI-13-13, 14, 16, 18) hiện dải "Việc tra cứu này sẽ được ghi vết" thường trực ở đầu trang, không thu gọn được; riêng UI-13-13 còn buộc nhập lý do trước khi tra.
 
 ### 2.6. Dữ liệu nhạy cảm và dữ liệu cá nhân
 
@@ -517,7 +517,7 @@ Mỗi thẻ tải độc lập (PTN-06, hành vi 4); bấm thẻ hoặc điểm 
 | 1 | Tiêu đề, khoảng thời gian, làm mới | `CMP-PageHeader`, `CMP-SegmentedControl`, `CMP-Select`, `CMP-Timestamp` | 1 giờ, 24 giờ (mặc định), 7 ngày; làm mới Tắt/15 giây/30 giây/1 phút/5 phút | `khoang=24h` trên URL | — |
 | 2 | Thẻ KPI × 5 | `CMP-KpiCard` | Số `--dh-font-display`, sparkline, viền trái 3px màu trạng thái khi vượt ngưỡng kèm chữ ("Vượt SLO") | API-13-001 | Lượt gọi → UI-13-03; độ trễ → UI-13-04; cảnh báo → UI-13-10 |
 | 3 | Dải cảnh báo Nghiêm trọng | `CMP-Alert` mức lỗi | Cảnh báo `CRITICAL` `FIRING` mới nhất, tối đa 1 dải + "và {n} cảnh báo khác" | API-13-030 | UI-13-10 chi tiết |
-| 4 | Bản đồ thành phần | `CMP-Card`, `CMP-StatusTag`, `CMP-Tooltip` | 16 ô; nhãn Tốt, Cảnh báo, Lỗi, Chưa có dữ liệu (không dùng màu duy nhất) | API-13-002 | UI-13-02, UI-13-04 theo thành phần |
+| 4 | Bản đồ thành phần | `CMP-HealthGrid`, `CMP-Tooltip` | 16 ô; nhãn Tốt, Cảnh báo, Lỗi, Chưa có dữ liệu (không dùng màu duy nhất) | API-13-002 | UI-13-02, UI-13-04 theo thành phần |
 | 5 | Hệ thống giám sát | `CMP-Card`, `CMP-DescriptionList`, `CMP-StatusTag` | Nhịp tim ngoài site, tỷ lệ mẫu bỏ, Ruler và Alertmanager, kiểm tra tổng hợp | API-13-053 | UI-13-17 tab Kiểm tra tổng hợp |
 | 6 | Biểu đồ lưu lượng | `CMP-Chart` (đường, `--dh-color-chart-1`, 5xx `--dh-color-error`) | 2xx, 4xx, 5xx theo thời gian | API-13-001 | Điểm lỗi → UI-13-08 (trace mẫu) |
 | 7 | Biểu đồ độ trễ | `CMP-Chart` | p50, p95, p99, vạch SLO 50 ms nét đứt có nhãn chữ | API-13-001 | UI-13-04 |
@@ -727,7 +727,7 @@ VW không có `PERM-13-logs` nên không có liên kết đi sâu sang log; nút
 | 2 | Biểu đồ đăng nhập thất bại | `CMP-Chart` | Theo giờ, đỉnh có nhãn chữ | API-13-016 |
 | 3 | Nguồn từ chối nhiều nhất | `CMP-DataTable` gọn | Chủ thể, Số lần, Lý do chính; chủ thể dạng định danh đã che | API-13-016 |
 | 4 | Kết quả quét lọt dữ liệu cá nhân | `CMP-Card`, `CMP-StatusTag` | DU, mẫu bị lọt, số dòng (ERR-13-112); không hiện giá trị | API-13-016 |
-| 5 | Chỉ báo toàn vẹn chuỗi | `CMP-StatusTag`, `CMP-Link` | Chuỗi toàn vẹn / nghi vấn, lần kiểm tra cuối | API-13-087 |
+| 5 | Chỉ báo toàn vẹn chuỗi | `CMP-IntegrityBadge`, `CMP-Link` | Chuỗi toàn vẹn / nghi vấn, lần kiểm tra cuối | API-13-087 |
 | 6 | Cảnh báo an ninh mới nhất | `CMP-DataTable` gọn | 5 dòng; liên kết UI-13-15 (cần `PERM-13-security`, không có thì chỉ hiện số) | API-13-056 |
 
 : UI-13-06 Thành phần
@@ -786,7 +786,7 @@ Bảng dưới liệt kê thành phần, trường nhập và ràng buộc của
 | 5 | Danh sách log | `CMP-LogViewer` | Ảo hóa, `--dh-font-mono-sm`; cột Thời điểm, Mức (chữ), Dịch vụ, Thông điệp; tải thêm theo `cursor`, `limit` ≤ 1.000; dòng dài cắt một dòng | API-13-019 |
 | 6 | Chi tiết dòng | `CMP-Drawer` (hoặc khung phải ≥ bp-xl), `CMP-JsonViewer`, `CMP-MaskedValue`, `CMP-CopyButton` | Trường đã che ở nguồn; không nút "hiện giá trị"; `trace_id` là `CMP-Link` tới UI-13-08 | API-13-020 |
 | 7 | Ngữ cảnh | `CMP-Button` "Xem ngữ cảnh ±50 dòng" | Mở chế độ ngữ cảnh trong cùng danh sách, có nút "Về kết quả tìm" | API-13-020 |
-| 8 | Trực tiếp | `CMP-Switch` | SSE; chèn ở đầu, tối đa 1.000 dòng trong bộ nhớ; cuộn khỏi đầu tự tạm dừng, hiện "{n} sự kiện mới · Về đầu"; tự tắt sau 15 phút không tương tác | API-13-021 |
+| 8 | Trực tiếp | `CMP-Switch` | SSE; chèn ở đầu, tối đa 1.000 dòng trong bộ nhớ; cuộn khỏi đầu tự tạm dừng, hiện "{n} sự kiện mới · Về đầu"; tự tắt sau 15 phút không tương tác; khi máy chủ gửi sự kiện `closed` với `reason` là `IDLE`, `LIMIT` hoặc `QUOTA` thì hiện câu tương ứng kèm nút "Bật lại" | API-13-021 |
 | 9 | Truy vấn đã lưu | `CMP-DropdownMenu`, `CMP-ReasonDialog` biến thể tên | Lưu tên 3 đến 80 ký tự, chia sẻ trong tenant (tùy chọn); xóa chỉ của mình | API-13-027, 028, 029 |
 | 10 | Xuất | `CMP-Button` | Xuất tối đa 10.000 dòng đang hiển thị; ghi kiểm toán | — |
 
@@ -858,7 +858,7 @@ Màn Truy vết chia thành các vùng đánh số tròn trên wireframe; bảng
 | ① Ô nhập | `CMP-SearchField`, `CMP-Button`, `CMP-CopyButton` | Nhận 32 ký tự thập lục phân; tự cắt khoảng trắng, tự chuyển chữ thường; dán chuỗi có `traceparent` thì tách lấy `trace_id`. Sai định dạng: dòng lỗi dưới ô (không gọi API). "Tìm theo điều kiện" mở bộ lọc HTTT, luồng, trạng thái, độ dài tối thiểu, khoảng thời gian → bảng kết quả 20 dòng (API-13-022) |
 | ② Tóm tắt | `CMP-DescriptionList`, `CMP-StatusTag`, `CMP-Duration` | Tổng thời gian, trạng thái (Thành công, Lỗi, Chưa đầy đủ), số chặng, bên gọi, bắt đầu; nhãn "Chưa đầy đủ" khi ERR-13-117, "Đã cắt" khi ERR-13-116 |
 | ③ Nhận xét | `CMP-Alert` mức thông tin | Câu sinh tự động: thành phần chiếm quá 50% thời gian; nếu không có thì ẩn vùng; không thay phán đoán của người dùng nên có chữ "Gợi ý tự động" |
-| ④ Thác nước | `CMP-Tree` cho cột chặng + `CMP-Chart` (series tùy biến) cho thanh thời gian | Mỗi chặng một hàng cao `--dh-size-table-row`; thanh theo tỷ lệ, màu thành phần `--dh-color-chart-1…8`, chặng lỗi tô `--dh-color-error` kèm mẫu gạch chéo và chữ "LỖI"; chặng chiếm > 50% có biểu tượng cảnh báo và chữ "chiếm 94%"; chặng lỗi tự mở rộng; chặng con thụt lề 16px, thu gọn bằng `←`, mở bằng `→` |
+| ④ Thác nước | `CMP-TraceWaterfall` (cột chặng dạng treegrid kèm thanh thời gian) | Mỗi chặng một hàng cao `--dh-size-table-row`; thanh theo tỷ lệ, màu thành phần `--dh-color-chart-1…8`, chặng lỗi tô `--dh-color-error` kèm mẫu gạch chéo và chữ "LỖI"; chặng chiếm > 50% có biểu tượng cảnh báo và chữ "chiếm 94%"; chặng lỗi tự mở rộng; chặng con thụt lề 16px, thu gọn bằng `←`, mở bằng `→` |
 | ⑤ Phân bổ | `CMP-DataTable` gọn, `CMP-ProgressBar` | Thành phần, thời gian riêng (self time), % tổng; sắp giảm theo thời gian riêng |
 | ⑥ Hàng nút liên kết | `CMP-Button` | "Chỉ số liên quan" mở UI-13-01 hoặc UI-13-02 với khoảng quanh trace; "Log của trace" mở UI-13-07 với `q=trace_id:…`; "Bản ghi kiểm toán" mở UI-13-13 (hộp lý do hiện trước, chỉ với `PERM-13-audit-read`); dữ liệu từ API-13-024, mỗi nút kèm số lượng ("12 dòng log") |
 | ⑦ Log chặng | `CMP-LogViewer` | Chọn chặng ở ④ thì lọc theo `span_id`; ảo hóa; liên kết "Mở trong Tra log" |
@@ -1124,7 +1124,7 @@ Bảng dưới mô tả từng vùng đánh số của màn Nhật ký kiểm to
 | ② Dải ghi vết | `CMP-Alert` mức thông tin, không `closable` | Thường trực ở đầu trang; nền `--dh-color-info`, chữ `--dh-color-info-text` |
 | ③ Lý do | `CMP-TextArea` trong `CMP-FormField` | Bắt buộc 10 đến 500 ký tự, đếm ký tự; trống: nút "Tra cứu" vô hiệu kèm gợi ý "Nhập lý do để tra cứu" (ERR-13-012 nếu máy chủ từ chối). Lý do **không** lưu vào URL, `localStorage` hay lịch sử; giữ trong bộ nhớ trang đến khi đổi tenant |
 | ④ Bộ lọc | `CMP-FilterBar`, `CMP-DateRangePicker`, `CMP-ResourceSelect`, `CMP-Select` | Khoảng bắt buộc, tối đa 31 ngày mỗi lần (ERR-13-005); quá 12 tháng: ERR-13-029; chủ thể gõ không dấu; hành động chọn nhiều giá trị (ví dụ `PII.REVEAL`, `PAYMENT.*`) |
-| ⑤ Chỉ báo toàn vẹn | `CMP-StatusTag`, `CMP-Alert` | "Chuỗi toàn vẹn" xanh kèm giờ kiểm tra và neo gần nhất; khi nghi vấn: dải đỏ không đóng được "Phát hiện đứt chuỗi kiểm toán tại seq {seq} của tenant {tenant}." (ERR-13-109) kèm nút "Xem chi tiết" → UI-13-14 |
+| ⑤ Chỉ báo toàn vẹn | `CMP-IntegrityBadge` (biến thể `suspect` mở rộng thành `CMP-Alert`) | "Chuỗi toàn vẹn" xanh kèm giờ kiểm tra và neo gần nhất; khi nghi vấn: dải đỏ không đóng được "Phát hiện đứt chuỗi kiểm toán tại seq {seq} của tenant {tenant}." (ERR-13-109) kèm nút "Xem chi tiết" → UI-13-14 |
 | "Tra theo đối tượng bị tra cứu" | `CMP-Drawer`, `CMP-SecretField`, `CMP-ReasonDialog` | Nhập số định danh (kiểm tra định dạng, ERR-13-031) và lý do; xác thực lại phiên (ERR-13-028); ô nhập xóa ngay sau khi gửi, chỉ băm được lưu; kết quả hiển thị trong bảng ⑥ với nhãn "Tra theo đối tượng" |
 | ⑥ Bảng kết quả | `CMP-DataTable`, `CMP-StatusTag`, `CMP-Pagination` | Cột (bảng 19.3); sắp `sap-xep=thoi-diem:giam` mặc định; chỉ đọc, không có hàng chọn để xóa hay sửa; `size` ≤ 200 |
 | ⑦ Chi tiết | `CMP-Drawer` hoặc khung phải, `CMP-DescriptionList`, `CMP-DiffTable`, `CMP-MaskedValue`, `CMP-CopyButton` | Hiện khi chọn một dòng (`chon={audit-id}`); mở chi tiết cũng là một lượt tra cứu được ghi vết cùng lý do |
@@ -1197,7 +1197,7 @@ Bảng dưới quy định thao tác, trạng thái và thông báo của màn N
 | 1 | Tab | `CMP-Tabs` | Neo băm · Kiểm tra toàn vẹn · Xuất bằng chứng | — |
 | 2 | Bảng neo | `CMP-DataTable`, `CMP-StatusTag` | Thời điểm neo, Khoảng `seq`, Băm đầu chuỗi, Khóa ký (phiên bản), Bản WORM, SIEM, Trạng thái | API-13-080, 081 |
 | 3 | Bảng lượt kiểm tra | `CMP-DataTable` | Thời điểm, Loại (hằng ngày, theo yêu cầu), Phạm vi, Kết quả (Toàn vẹn, Nghi vấn, Đang kiểm tra), Người yêu cầu | API-13-078 |
-| 4 | Nút "Kiểm tra toàn vẹn" | `CMP-Button`, `CMP-ReasonDialog` | Chọn phạm vi (từ neo gần nhất, toàn chuỗi 12 tháng), lý do; trả 202; đang chạy thì vô hiệu (ERR-13-032) | API-13-077 |
+| 4 | Nút "Kiểm tra toàn vẹn" | `CMP-Button`, `CMP-ReasonDialog` | Chọn phạm vi (từ neo gần nhất, toàn chuỗi 12 tháng), lý do; trả 202; đang chạy thì vô hiệu (ERR-13-032); ẩn với người không có `PERM-13-audit-export` vì API-13-077 đòi quyền này (PA, TA chỉ xem kết quả) | API-13-077 |
 | 5 | Chi tiết lượt kiểm tra | `CMP-Drawer`, `CMP-DescriptionList` | Số bản ghi đã duyệt, `seq` bị đứt, nút "Chuyển cho xử lý sự cố" (liên kết UI-13-15) | API-13-079 |
 | 6 | Bảng yêu cầu xuất | `CMP-DataTable`, `CMP-StatusTag`, `CMP-JobProgress` | Phạm vi, Lý do, Căn cứ, Trạng thái (bảng 5.1), Tiến độ, Hạn tải, Người yêu cầu | API-13-083 |
 | 7 | Biểu mẫu xuất | `CMP-Modal` hoặc trang PTN-03 | Khoảng (≤ 5 năm), bộ lọc (cùng bộ lọc UI-13-13), Lý do 10 đến 500, Căn cứ 5 đến 200, xác thực lại phiên | API-13-082 |
@@ -1344,7 +1344,7 @@ Lưu có `If-Match` (ERR-13-007, ST-13); tenant tạm ngừng: ERR-13-016, mọi
 | # | Thành phần | `CMP-*` | Nội dung | API |
 |---|---|---|---|---|
 | 1 | Thẻ KPI × 5 | `CMP-KpiCard` | `seq` đầu chuỗi, Backlog hộp thư đi, Độ trễ ghi p95 (NFR-13-008: 2 giây), Độ trễ sao WORM, Neo gần nhất | API-13-087 |
-| 2 | Chỉ báo toàn vẹn | `CMP-StatusTag` | Như UI-13-13 vùng ⑤ | API-13-087 |
+| 2 | Chỉ báo toàn vẹn | `CMP-IntegrityBadge` | Như UI-13-13 vùng ⑤ | API-13-087 |
 | 3 | Đối chiếu số lượng | `CMP-DataTable` | DU, Phát, Nhận, Lệch, Trạng thái; dòng lệch hiện ERR-13-111 "Số bản ghi kiểm toán của {du} lệch: phát {n}, nhận {m}." | API-13-086 |
 | 4 | Phân vùng | `CMP-DataTable`, `CMP-StatusTag` | Tháng, Số bản ghi, Đã xác minh WORM, Trạng thái (Trực tuyến, Đã lưu trữ); dòng chưa xác minh đủ hiện ERR-13-125 | API-13-088 |
 | 5 | Kho cách ly | `CMP-DataTable` | Bản ghi bị cách ly (ERR-13-101, 105), lý do; chỉ xem số lượng và lý do, không xem nội dung | API-13-087 |
@@ -1387,7 +1387,7 @@ Giao diện nằm trong gói `features/observability` của `dh-console` (React,
 |---|---|
 | `features/observability/overview` | UI-13-01 đến 06; hook `useOverview`, `useComponents`, `useDashboardRange` |
 | `features/observability/logs` | UI-13-07, 09; `LogQueryBar`, `useLogSearch` (con trỏ), `useLogTail` (SSE, tự tạm dừng) |
-| `features/observability/trace` | UI-13-08; `TraceWaterfall` (ECharts custom series, tối đa 2.000 chặng hiển thị, phần còn lại gộp "… {n} chặng") |
+| `features/observability/trace` | UI-13-08; `CMP-TraceWaterfall` (D03-05-04 mục 13.14; ảo hóa hàng khi trên 200 chặng, tối đa 2.000 chặng hiển thị, phần còn lại gộp "… {n} chặng") |
 | `features/observability/alerts` | UI-13-10, 11, 12 |
 | `features/observability/audit` | UI-13-13, 14, 16, 18; `AuditQueryForm` (lý do chỉ giữ ở state, không persist), `ReauthDialog` |
 | `features/observability/security` | UI-13-15 |
@@ -1501,6 +1501,8 @@ python3 gen_hifi.py && node shot.js
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung. Các mục dưới đây đề nghị đợt đồng bộ; trong lúc chờ, màn dùng thành phần chuẩn gần nhất ghi ở cột "Tạm dùng".
 
 ### A.1. Thành phần
@@ -1512,8 +1514,8 @@ Các thành phần dưới đây chưa có trong thư viện D03-05; tập màn 
 | `TraceWaterfall` (đề nghị) (cây chặng cộng thanh thời gian, gộp chặng, tiêu điểm bàn phím) | UI-13-08 | `CMP-Tree` cộng `CMP-Chart` custom series |
 | `ComponentMap` (đề nghị) (lưới ô trạng thái thành phần) | UI-13-01 | `CMP-Card` cộng `CMP-StatusTag` |
 | `IntegrityBadge` (đề nghị) (chỉ báo toàn vẹn chuỗi, có dải đỏ nghi vấn) | UI-13-06, 13, 14, 18 | `CMP-StatusTag` cộng `CMP-Alert` |
-| `OnCallGrid` (đề nghị) (lưới lịch trực theo ca) | UI-13-12 | `CMP-DataTable` lưới |
-| `QueryBar` (đề nghị) (ô truy vấn tô cú pháp, gợi ý trường) | UI-13-07 | `CMP-SearchField` biến thể truy vấn |
+| `OnCallGrid` (đề nghị) (lưới lịch trực theo ca) | UI-13-12 | `CMP-DataTable` lưới. Không thêm vào design system: chỉ PH-13 dùng, giữ cục bộ trong `features/observability` |
+| `QueryBar` (đề nghị) (ô truy vấn tô cú pháp, gợi ý trường) | UI-13-07 | `CMP-SearchField` biến thể truy vấn. Không thêm vào design system: chỉ PH-13 dùng, giữ cục bộ với tên `LogQueryBar` trong `features/observability/logs` |
 
 : Đề nghị bổ sung thành phần cho D03-05-04
 
@@ -1530,6 +1532,8 @@ Màn dùng `PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin` đang là đ
 Đề nghị D03-06-00 §4.9, §4.14 ghi rõ phím tắt ký tự đơn chỉ hoạt động khi focus ở vùng danh sách và có cài đặt tắt (WCAG 2.1.4), kèm bảng phím riêng cho cảnh báo (`A`, `S`, `X`).
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các API dưới đây chưa có trong D03-04-PH13; màn hình tạm dùng API hiện có như ghi ở cột Lý do, và đề nghị bổ sung ở lần cập nhật kế tiếp của tập API.
 
@@ -1553,7 +1557,7 @@ Các câu hỏi dưới đây chưa có trả lời chốt; tập này dùng gi�
 
 > **Câu hỏi mở Q13-32:** Lý do tra cứu kiểm toán có được giữ giữa các lần tra trong cùng phiên màn không. Giả định: giữ trong bộ nhớ trang đến khi đổi tenant hoặc hết phiên, không bao giờ lưu bền; kiểm toán viên không phải nhập lại khi chỉ đổi bộ lọc (WCAG 3.3.7).
 
-> **Câu hỏi mở Q13-33:** Thác nước dùng ECharts custom series (ADR-023) hay thư viện chuyên dụng cho trace. Giả định: ECharts custom series, giới hạn 2.000 chặng hiển thị; vượt thì gộp; nếu hiệu năng không đạt thì thêm `TraceWaterfall` (đề nghị) (Phụ lục A) dựng bằng canvas riêng.
+> **Câu hỏi mở Q13-33:** Thác nước dùng ECharts custom series (ADR-023) hay thư viện chuyên dụng cho trace. Giả định: dùng `CMP-TraceWaterfall` của D03-05-04 mục 13.14 (cây chặng ghép cột thời gian vẽ bằng SVG), giới hạn 2.000 chặng hiển thị; vượt thì gộp.
 
 > **Câu hỏi mở Q13-34:** Phím tắt ký tự đơn ở UI-13-10 (`A`, `S`, `X`) có vi phạm WCAG 2.1.4 không khi chỉ hoạt động trong vùng danh sách. Giả định: chấp nhận được nhờ điều kiện focus và có cài đặt tắt; cần kiểm thử viên truy cập xác nhận.
 
@@ -1567,3 +1571,5 @@ Các câu hỏi dưới đây chưa có trả lời chốt; tập này dùng gi�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-13 (Claude) | Bản đầu: 18 màn hình, điều hướng, thông báo ERR-13, ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: bổ sung UC hiện thực của UI-13-01, 12, 13, 17, 18 theo D02-04 mục 5.2; FR của UI-13-06, 09 thêm FR-13-005, 006; thêm đoạn mở cho các mục con |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: allowedActions, dải ghi vết tra cứu, lý do đóng SSE, tên CMP theo D03-05-04 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A.1 ghi `OnCallGrid`, `QueryBar` là thành phần cục bộ của PH-13 |

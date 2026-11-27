@@ -1995,6 +1995,8 @@ Các câu hỏi phát sinh khi viết use case, đánh số Q16-45…49 theo d�
 
 ## Phụ lục A. Đề nghị đồng bộ cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS, các dòng dưới dồn vào Phụ lục C của FRS ở bản kế tiếp. Dòng A-01…A-07 là lệch giữa câu thông báo của từng FR và FRS §9.2 (use case dùng câu §9.2); A-08…A-12 là thiếu hụt. Cột "Kết quả" ghi quyết định của FRS 0.2 (Phụ lục C của FRS, ngày 26/11/2026).
 
 | Mã | Vị trí ở FRS | Đề nghị | Kết quả |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH09
 ten: Kịch bản và test case phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
 phan_he: PH-09
@@ -107,7 +107,7 @@ Tiêu chí vào và ra bám các cổng `RG-1…5` của D05-01.
 
 ### 1.5. Quy ước mã và cách trình bày
 
-Kịch bản có mã `TS-09-nn`, test case `TC-09-nnn`; mã không tái sử dụng, ca bị hủy ghi "Đã hủy" và giữ mã. Mỗi ca là khối `::: dac-ta`, tiêu đề `#### TC-09-nnn · Tên ca <!--k:khóa-->`; khóa dùng cho `number_tcs.py` và tham chiếu `[[tc:khóa]]`, không in ra bản xuất. Đường dẫn trong bước tương đối với `/api/privacy/v1`; data plane ghi đủ `/privacy/v1/...`. Tên trường JSON không có trong FRS (ví dụ `dryRun`, `mandatoryByLaw`, `confirmInconsistency`) là giả định, đối chiếu lại khi `openapi-privacy.yaml` chốt (Q09-42).
+Kịch bản có mã `TS-09-nn`, test case `TC-09-nnn`; mã không tái sử dụng, ca bị hủy ghi "Đã hủy" và giữ mã. Mỗi ca là khối `::: dac-ta`, tiêu đề `#### TC-09-nnn · Tên ca <!--k:khóa-->`; khóa dùng cho `number_tcs.py` và tham chiếu `[[tc:khóa]]`, không in ra bản xuất. Đường dẫn trong bước tương đối với `/api/privacy/v1`; data plane ghi đủ `/privacy/v1/...`. Tên trường JSON không có trong FRS lấy từ `openapi-privacy.yaml` (D03-04-PH09): `dryRun`, `statutory` (mục đích luật định), `confirmInconsistency` (xác nhận xoay khóa làm bí danh đổi), `effectiveClass`, `neverReveal` (Q09-42).
 
 | Trường | Nội dung |
 |---|---|
@@ -949,7 +949,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. TA `POST /legal-documents` văn bản `ND-xx/2026` hiệu lực từ 2026-01-01.
 2. TA `POST /legal-bases` cơ sở `STATE_TASK` gắn văn bản.
-3. DO1 `POST /purposes` mã `MD-TRACUU-HGD`, cờ `mandatoryByLaw = false`; thêm `MD-LUATDINH` cờ `true`.
+3. DO1 `POST /purposes` mã `MD-TRACUU-HGD`, cờ `statutory = false`; thêm `MD-LUATDINH` cờ `true`.
 4. `GET /purposes`.
 
 **Kết quả mong đợi.** Bước 1 đến 3 `201`; bước 4 có cả hai mục đích; KT: có cho mỗi thao tác ghi.
@@ -2252,11 +2252,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DA1 `POST /pseudonym-domains/PD-HGD/keys:rotate` không xác nhận cảnh báo.
+1. DA1 `POST /pseudonym-domains/PD-HGD/keys:rotate` với `confirmInconsistency = false`.
 2. DA1 xoay lại kèm `confirmInconsistency = true`.
 3. DA1 xoay lần hai ngay.
 
-**Kết quả mong đợi.** Bước 1 từ chối kèm cảnh báo bí danh đổi. Bước 2 `200`, v2 `ACTIVE`, v1 `DECRYPT_ONLY`, EVT: `pseudonym-key.state-changed`. Bước 3 `409` ERR-09-047 nêu số ngày chờ.
+**Kết quả mong đợi.** Bước 1 từ chối `422` ERR-09-003 kèm cảnh báo bí danh đổi. Bước 2 `200`, v2 `ACTIVE`, v1 `DECRYPT_ONLY`, EVT: `pseudonym-key.state-changed`. Bước 3 `409` ERR-09-047 nêu số ngày chờ.
 :::
 
 #### TC-09-077 · Hủy khóa: chặn khi còn dùng, hai người duyệt, chờ trước khi hủy <!--k:pd-destroy-->
@@ -4749,6 +4749,8 @@ Bảng nối 13 tiêu chí ở FRS §14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị cho FRS
 
 FRS 0.2 đã hấp thụ các đề nghị của bản 0.1 (Phụ lục C của FRS); bảng nêu kết quả và cách ca đã chỉnh. Tập này không sửa FRS.
@@ -4768,6 +4770,8 @@ FRS 0.2 đã hấp thụ các đề nghị của bản 0.1 (Phụ lục C của 
 : Kết quả hấp thụ đề nghị của tập kiểm thử vào FRS 0.2
 
 ### 10.2. Đề nghị đồng bộ tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới thuộc tài liệu dùng chung hoặc tập của người khác; tập này không tự sửa.
 
@@ -4800,5 +4804,6 @@ Các việc dưới thuộc tài liệu dùng chung hoặc tập của người 
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-09-01…42, test case TC-09, ma trận truy vết, Gherkin, bảng tính theo FRS 0.1 |
 | 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: ERR-09-079…082, API-09-238…245, NFR-09-024…026, BR-09-062; sửa mã lỗi ở TC-09-006, 090, 116, 117; thêm TC-09-150; thu hẹp mục 10.1, bỏ Q09-40, thêm Q09-45 |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: tên trường JSON theo OpenAPI (`statutory`, `confirmInconsistency`); ca xoay khóa chờ ERR-09-003 khi chưa xác nhận |
 
 : Lịch sử phiên bản

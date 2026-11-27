@@ -10,7 +10,7 @@ Tính năng: TS-09-08 · Cơ sở pháp lý, văn bản căn cứ và mục đí
     Biết T90; U-T90-DO1, U-T90-TA.
     Khi TA `POST /legal-documents` văn bản `ND-xx/2026` hiệu lực từ 2026-01-01.
     Và TA `POST /legal-bases` cơ sở `STATE_TASK` gắn văn bản.
-    Và DO1 `POST /purposes` mã `MD-TRACUU-HGD`, cờ `mandatoryByLaw = false`; thêm `MD-LUATDINH` cờ `true`.
+    Và DO1 `POST /purposes` mã `MD-TRACUU-HGD`, cờ `statutory = false`; thêm `MD-LUATDINH` cờ `true`.
     Và `GET /purposes`.
     Thì bước 1 đến 3 `201`; bước 4 có cả hai mục đích; KT: có cho mỗi thao tác ghi.
 

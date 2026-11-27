@@ -126,7 +126,7 @@ SUB = "ht-thue-dn-cap-phep"
 PUB = "pub-01jd3y8k2m9p3q7r4t6v8w0y2z"
 # key, mã, thực thể, sự kiện, payload, tóm tắt, khóa, bên nhận, FR, ví dụ payload
 EV = [
-  ("topicActivated", "EVT-10-01", "topic", "activated", "TopicActivated", "Topic sang `ACTIVE`.", "topicName", "PH-04, PH-05, PH-02, PH-13", "FR-10-009, 066",
+  ("topicActivated", "EVT-10-01", "topic", "activated", "TopicActivated", "Topic sang `ACTIVE`.", "topicName", "PH-04, PH-05, PH-02, PH-13, PH-16", "FR-10-009, 066",
    {"tenantId": "T68", "topicName": TOPIC, "projectCode": "dang-ky-kinh-doanh", "topicKind": "BUSINESS", "partitions": 6, "retentionHours": 168,
     "routingMode": "KEY_HASH", "partitionKeyField": "maDoanhNghiep", "orderingRequired": True, "dataClass": "INTERNAL", "latestSchemaVersion": 1,
     "activatedAt": T0, "ownerServiceCode": None, "configVersion": 4180}),
@@ -136,13 +136,13 @@ EV = [
   ("topicDeprecated", "EVT-10-03", "topic", "deprecated", "TopicDeprecated", "Topic sang `DEPRECATED` (kèm kế nhiệm, `sunsetAt`).", "topicName", "PH-04, PH-02, PH-18", "FR-10-014, 015, 068",
    {"tenantId": "T68", "topicName": TOPIC, "successorTopic": "t68.dkkd.doanh-nghiep.da-cap-phep.v2", "sunsetAt": "2027-02-24T00:00:00+07:00",
     "migrationNote": "Phiên bản 2 tách `diaChi` thành đối tượng.", "configVersion": 4190}),
-  ("topicRetired", "EVT-10-04", "topic", "retired", "TopicRetired", "Topic sang `RETIRED`.", "topicName", "PH-04, PH-05, PH-02, PH-13", "FR-10-014",
+  ("topicRetired", "EVT-10-04", "topic", "retired", "TopicRetired", "Topic sang `RETIRED`.", "topicName", "PH-04, PH-05, PH-02, PH-13, PH-16", "FR-10-014",
    {"tenantId": "T68", "topicName": TOPIC, "retiredAt": "2027-02-24T00:00:05+07:00", "configVersion": 4301}),
   ("schemaVersionEnabled", "EVT-10-05", "schema", "version-enabled", "SchemaVersionEnabled", "Phiên bản lược đồ `ENABLED`.", "topicName", "dh-runtime, PH-04, PH-05, PH-15", "FR-10-009, 019, 068",
    {"tenantId": "T68", "topicName": TOPIC, "versionNo": 3, "schemaFormat": "AVRO", "compatibility": "BACKWARD", "apicurioGroupId": "t68",
     "apicurioArtifactId": TOPIC, "apicurioGlobalId": 1042, "apicurioContentId": 877,
     "contentHash": "ddb50afd73e0294218a32b2833f50bbcb1d8d3fc80ca8fab000baed40a691252", "enabledAt": T0}),
-  ("publicationActivated", "EVT-10-06", "publication", "activated", "PublicationActivated", "Publication `ACTIVE`.", "publicationCode", "PH-04, PH-13", "FR-10-031",
+  ("publicationActivated", "EVT-10-06", "publication", "activated", "PublicationActivated", "Publication `ACTIVE`.", "publicationCode", "PH-04, PH-13, PH-16", "FR-10-031",
    {"tenantId": "T68", "publicationCode": PUB, "publisherCode": "ht-dkkd", "topicName": TOPIC, "grantedScope": f"topic:{TOPIC}:publish",
     "approvedBy": "binh.tt", "approvedAt": T0}),
   ("publicationStateChanged", "EVT-10-07", "publication", "state-changed", "PublicationStateChanged", "Tạm ngừng, tiếp tục, thu hồi publication.", "publicationCode", "PH-04, PH-13, PH-18", "FR-10-028, 029, 032",

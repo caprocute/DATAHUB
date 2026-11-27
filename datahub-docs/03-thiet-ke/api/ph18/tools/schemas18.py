@@ -68,6 +68,7 @@ PATTERNS = {
     'FlagKey': ('^ff\\.[a-z0-9-]+\\.[a-z0-9-]+$', 'Cờ tính năng `ff.{module}.{tính-năng}` (FR-18-009).'),
     'SourceCode': ('^[a-z0-9-]{3,40}$', 'Mã nguồn DLQ (FR-18-012).'),
     'ModuleCode': ('^PH-[0-9]{2}$', 'Mã phân hệ, ví dụ `PH-04`.'),
+    'MergePlanId': ('^SN-[0-9]{4}-[0-9]{3}$', 'Mã kế hoạch sáp nhập do PH-20 cấp, ví dụ `SN-2026-001`.'),
     'TenantCode': ('^T[0-9]{2}$', 'Mã tenant, ví dụ `T68`.'),
     'ErrorCode': ('^ERR-[0-9]{2}-[0-9]{3}$', 'Mã lỗi của phân hệ nguồn hoặc của PH-18.'),
     'TemplateCode': ('^[a-z0-9.-]{3,80}$', 'Mã mẫu thông báo (FR-18-035).'),
@@ -122,7 +123,7 @@ READ = {
                 'status!:#IncidentStatus, assignee:s, hasPersonalData:b, affectedSystems:[s], detectedAt!:ts, acknowledgedAt:ts, mitigatedAt:ts, resolvedAt:ts, closedAt:ts, '
                 'privacyCaseRef:s, rootCause:s, lessonsLearned:s, actions:[#IncidentAction]',
     'BackupObject': 'objectCode!:s, name!:s, objectKind!:s, tool!:#BackupTool, schedule:s, rpoMinutes:i, rtoMinutes:i, retentionDays:i, freshness!:#Freshness, lastRunAt:ts, '
-                    'lastResult:#BackupResult, lastSuccessAt:ts, lastVerifiedAt:ts, lastVerificationResult:e(PASSED|FAILED), enabled!:b',
+                    'lastResult:#BackupResult, lastSuccessAt:ts, lastVerifiedAt:ts, lastVerificationResult:e(PASSED|FAILED), enabled!:b, collectorError:b',
     'BackupRun': 'objectCode!:s, tool!:#BackupTool, startedAt!:ts, finishedAt:ts, result!:#BackupResult, sizeBytes:i, location:s, tenant:tn, errorMessage:s, collectedAt!:ts',
     'RestoreVerification': 'objectCode!:s, method!:#VerifyMethod, result!:e(PASSED|FAILED), metrics:#VerifyMetrics, evidenceRef:s, verifiedAt!:ts, durationSec:i',
     'TenantRestore': 'requestNo!:s, targetTime!:ts, scope!:e(FULL_TENANT|MODULES), modules:[s], includeObjects!:b, includeIdentity!:b, includeSecrets!:b, reason!:s, '
@@ -130,7 +131,7 @@ READ = {
                      'startedAt:ts, finishedAt:ts, rowsReplaced:i',
     'TenantExport': 'exportCode!:s, purpose!:#ExportPurpose, includeObjects!:b, format!:e(PG_COPY|PG_DUMP), recipientRef:#RecipientRef, status!:#JobStatus, sizeBytes:i, '
                     'manifestSha256:hash, expiresAt:ts, startedAt:ts, finishedAt:ts, errorMessage:s',
-    'MergeTransfer': 'mergePlanId!:u, module!:s, sourceTenant!:tn, targetTenant!:tn, mappingRef!:s, dryRun!:b, status!:#JobStatus, progressPercent:n, rowsRead:i, rowsLoaded:i, '
+    'MergeTransfer': 'mergePlanId!:mpid, module!:ph, sourceTenant!:tn, targetTenant!:tn, mappingRef!:s, dryRun!:b, mode:e(FULL|DELTA), since:ts, status!:#JobStatus, progressPercent:n, rowsRead:i, rowsLoaded:i, '
                      'rowsConflicted:i, rowsFailed:i, startedAt:ts, finishedAt:ts, lastReportedAt:ts, reportStatus:e(PENDING|REPORTED|REPORT_FAILED), errorMessage:s',
     'DrDrill': 'drillCode!:s, kind!:#DrillKind, startedAt!:ts, finishedAt!:ts, rtoMeasuredMinutes:i, rpoMeasuredSeconds:i, result!:e(PASSED|PASSED_WITH_ISSUES|FAILED), '
                'issues:[s], evidenceRef:s, recordedBy!:s',
@@ -228,8 +229,8 @@ PLAIN = {
     'BounceAck': 'deliveryId:u, status!:#DeliveryStatus, suppressed!:b',
     'TaskSummary': 'open!:i, overdue!:i, dueToday!:i, byType!:[#FacetCount]',
     'CalendarHoliday': 'date!:d, name!:s, kind!:e(HOLIDAY|MAKEUP_WORKDAY), legalBasis:s',
-    'WorkingDaysResult': 'tenant!:tn, from!:d, to!:d, count!:i, days!:[d]',
-    'AddWorkingDaysResult': 'from!:ts, workingDays!:i, dueAt!:ts, skippedDates!:[d]',
+    'WorkingDaysResult': 'tenant!:tn, from!:d, to!:d, count!:i, days!:[d], calendarMissing:b, calendarSource:e(TENANT|COMMON|NONE)',
+    'AddWorkingDaysResult': 'from!:ts, workingDays!:i, dueAt!:ts, skippedDates!:[d], calendarMissing:b, calendarSource:e(TENANT|COMMON|NONE)',
     'FreezeStatus': 'tenant!:tn, evaluatedAt!:ts, frozen!:b, active!:[#ActiveWindow]',
     'ActiveWindow': 'windowCode!:s, kind!:e(MAINTENANCE|FREEZE), environments!:[#Environment], startsAt!:ts, endsAt!:ts, exemptions:[s]',
     'IncidentAction': 'title!:s, owner!:s, dueAt:d',
@@ -334,7 +335,7 @@ INPUT = {
     'TenantRestoreInput': 'targetTime!:ts, scope!:e(FULL_TENANT|MODULES), modules:[s], includeObjects:b, includeIdentity:b, includeSecrets:b, reason!:s30',
     'RestoreApproveInput': 'comment:s, maintenanceNotice:b',
     'TenantExportInput': 'purpose!:#ExportPurpose, includeObjects:b, format!:e(PG_COPY|PG_DUMP), recipientRef:#RecipientRef, reason!:s10',
-    'MergeTransferInput': 'mergePlanId!:u, module!:s, sourceTenant!:tn, targetTenant!:tn, mappingRef!:s, dryRun!:b',
+    'MergeTransferInput': 'mergePlanId!:mpid, module!:ph, sourceTenant!:tn, targetTenant!:tn, mappingRef!:s, dryRun!:b, mode:e(FULL|DELTA), since:ts',
     'DrDrillInput': 'kind!:#DrillKind, startedAt!:ts, finishedAt!:ts, rtoMeasuredMinutes:i, rpoMeasuredSeconds:i, result!:e(PASSED|PASSED_WITH_ISSUES|FAILED), issues:[s], evidenceRef:s',
     'LegacySourceInput': 'sourceCode!:s, name!:s, legacySystem!:#LegacySystem, jdbcUrl!:s, credentialRef!:vault, schemas!:[s], networkZone:s',
     'MigrationPlanInput': 'planCode!:s, sourceCode!:s, title!:s, description:s, targetCutoverDate:d',

@@ -33,7 +33,7 @@ obj("AlertFiredData", "Cảnh báo `FIRING` hoặc `RESOLVED` (FR-08-048); khôn
     ("severity!", "E:AlertSeverity", "HIGH"), ("status!", "str", "FIRING", {"enum": ["FIRING", "RESOLVED"]}), ("message", "str", "Điểm chất lượng thấp hơn ngưỡng cảnh báo."))
 obj("CheckFailedData", "Phút có kết luận `FAIL` trực tuyến, gộp theo đối tượng và bên gọi (FR-08-034).", ("bucketAt!", "ts"), AS, ("caller!", "str", "luong-dang-ky-khai-sinh"), ("failCount!", "int", 30),
     ("checkCount!", "int", 1200), ("topRules", "[$TopRuleCount]"))
-obj("KpiPublishedData", "Bản tin KPI cho PH-16 (FR-08-057).", ("kind!", "E:KpiKind", "SCAN_SNAPSHOT"), ("kpiSchemaVersion!", "int", 1), ("periodCode", "period"), ("tenantScore", "score"),
+obj("KpiPublishedData", "Bản tin KPI cho PH-16 (FR-08-057); `snapshotId` là khóa lũy đẳng, PH-16 dùng làm `idempotencyRef`.", ("snapshotId!", "uuid"), ("kind!", "E:KpiKind", "SCAN_SNAPSHOT"), ("kpiSchemaVersion!", "int", 1), ("periodCode", "period"), ("tenantScore", "score"),
     ("domainScores", "[$DomainCard]"), ("issues", "$IssueSummary"), ("official", "bool", False))
 # --- sự kiện tiêu thụ (chỉ khai trường PH-08 dùng; bên phát giữ hợp đồng gốc ở D03-04-PH06, D03-04-PH07)
 obj("MdmGoldenEventData", "Bản ghi vàng đổi (EVT-06-01…04); PH-08 chỉ dùng mã để gom khóa cho đo tăng dần.", ("domainCode!", "dcode"), ("goldenId", "uuid"), ("goldenIds", "[uuid]"), ("survivorId", "uuid"),

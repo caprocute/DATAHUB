@@ -2528,6 +2528,13 @@ paths:
                           TN: 9000
                           FN: 15
                           REVIEW: 400
+                        scoreDistribution:
+                        - 0
+                        - 1
+                        - 3
+                        - 8
+                        - 21
+                        - 40
                         pairCount: 1200
                         verdict: PASSED
                         evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -2638,6 +2645,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -2762,6 +2776,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -3012,6 +3033,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -3392,6 +3420,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -3883,6 +3918,30 @@ paths:
                     context: {}
                     mergeAllowed: true
                     queueRemaining: 12
+                    thresholds:
+                      autoMerge: 0.95
+                      review: 0.8
+                      autoMergeEnabled: true
+                    holdUntil: '2026-11-20T08:00:00+07:00'
+                    similarDecisions:
+                    - itemId: 0193b6a0-0000-7000-8000-000000000001
+                      decision: MATCH
+                      score: 0.88
+                      decidedAt: '2026-11-20T09:00:00+07:00'
+                    nextItems:
+                    - itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                      domainCode: CITIZEN
+                      reason: POSSIBLE_MATCH
+                      status: OPEN
+                      riskLevel: LOW
+                      score: 0.87
+                      priority: 40
+                      assignee: ds.pham
+                      dueAt: '2026-11-20T08:00:00+07:00'
+                      operationId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                      createdAt: '2026-11-20T08:00:00+07:00'
+                      updatedAt: '2026-11-20T08:00:00+07:00'
+                      version: 3
           headers:
             ETag:
               schema:
@@ -4592,6 +4651,9 @@ paths:
                     mergedInto: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                     version: 5
                     updatedAt: '2026-11-20T08:00:00+07:00'
+                    lineageHint:
+                      phone: 2
+                      permanentAddress: 1
           headers:
             ETag:
               schema:
@@ -5129,6 +5191,9 @@ paths:
                     mergedInto: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                     version: 5
                     updatedAt: '2026-11-20T08:00:00+07:00'
+                    lineageHint:
+                      phone: 2
+                      permanentAddress: 1
           headers:
             ETag:
               schema:
@@ -5267,10 +5332,13 @@ paths:
                       mergedInto: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                       version: 5
                       updatedAt: '2026-11-20T08:00:00+07:00'
+                      lineageHint:
+                        phone: 2
+                        permanentAddress: 1
                     diff:
                     - attribute: phone
-                      before: 0900000000
-                      after: 0901234567
+                      before: '0900000000'
+                      after: '0901234567'
           headers:
             ETag:
               schema:
@@ -5690,6 +5758,9 @@ paths:
                     mergedInto: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                     version: 5
                     updatedAt: '2026-11-20T08:00:00+07:00'
+                    lineageHint:
+                      phone: 2
+                      permanentAddress: 1
           headers:
             ETag:
               schema:
@@ -6747,6 +6818,14 @@ paths:
                     bySource:
                     - sourceCode: HT-YTE
                       candidates: 1000
+                      invalidIdentifierRate: 0.012
+                      duplicateRate: 0.03
+                    criticalAlerts:
+                      duplicateIdentifierGoldens: 0
+                      syncPaused: false
+                    queueByReason:
+                      POSSIBLE_MATCH: 10
+                      MULTIPLE_CANDIDATES: 4
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -8025,6 +8104,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -8129,6 +8215,13 @@ paths:
                         TN: 9000
                         FN: 15
                         REVIEW: 400
+                      scoreDistribution:
+                      - 0
+                      - 1
+                      - 3
+                      - 8
+                      - 21
+                      - 40
                       pairCount: 1200
                       verdict: PASSED
                       evaluatedAt: '2026-11-20T08:00:00+07:00'
@@ -8820,6 +8913,9 @@ paths:
                     mergedInto: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                     version: 5
                     updatedAt: '2026-11-20T08:00:00+07:00'
+                    lineageHint:
+                      phone: 2
+                      permanentAddress: 1
           headers:
             ETag:
               schema:
@@ -9930,7 +10026,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-003
+                type: https://datahub.gov.vn/errors/ERR-06-003
                 title: Dữ liệu không hợp lệ
                 status: 400
                 detail: Dữ liệu không hợp lệ.
@@ -9945,7 +10041,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-00-401
+                type: https://datahub.gov.vn/errors/ERR-00-401
                 title: Chưa xác thực
                 status: 401
                 detail: Chưa xác thực.
@@ -9960,7 +10056,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-005
+                type: https://datahub.gov.vn/errors/ERR-06-005
                 title: Không đủ quyền
                 status: 403
                 detail: Không đủ quyền.
@@ -9975,7 +10071,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-001
+                type: https://datahub.gov.vn/errors/ERR-06-001
                 title: Không tìm thấy
                 status: 404
                 detail: Không tìm thấy.
@@ -9990,7 +10086,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-004
+                type: https://datahub.gov.vn/errors/ERR-06-004
                 title: Xung đột
                 status: 409
                 detail: Xung đột.
@@ -10005,7 +10101,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-042
+                type: https://datahub.gov.vn/errors/ERR-06-042
                 title: Đã không còn
                 status: 410
                 detail: Đã không còn.
@@ -10020,7 +10116,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-018
+                type: https://datahub.gov.vn/errors/ERR-06-018
                 title: Vượt giới hạn
                 status: 413
                 detail: Vượt giới hạn.
@@ -10035,7 +10131,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-007
+                type: https://datahub.gov.vn/errors/ERR-06-007
                 title: Không xử lý được
                 status: 422
                 detail: Không xử lý được.
@@ -10050,7 +10146,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-048
+                type: https://datahub.gov.vn/errors/ERR-06-048
                 title: Vượt hạn mức gọi
                 status: 429
                 detail: Vượt hạn mức gọi.
@@ -10065,7 +10161,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-06-021
+                type: https://datahub.gov.vn/errors/ERR-06-021
                 title: Dịch vụ phụ thuộc không khả dụng
                 status: 503
                 detail: Dịch vụ phụ thuộc không khả dụng.
@@ -10080,7 +10176,7 @@ components:
           examples:
             vi-du:
               value:
-                type: https://datahub.example.vn/errors/ERR-00-428
+                type: https://datahub.gov.vn/errors/ERR-00-428
                 title: Thiếu If-Match
                 status: 428
                 code: ERR-00-428
@@ -11218,6 +11314,10 @@ components:
           type: number
         confusion:
           type: object
+        scoreDistribution:
+          type: array
+          items:
+            type: integer
         pairCount:
           type: integer
         verdict:
@@ -11606,6 +11706,19 @@ components:
           type: boolean
         queueRemaining:
           type: integer
+        thresholds:
+          $ref: '#/components/schemas/Thresholds'
+        holdUntil:
+          type: string
+          format: date-time
+        similarDecisions:
+          type: array
+          items:
+            type: object
+        nextItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/StewardItem'
       required:
       - item
       - left
@@ -11811,6 +11924,8 @@ components:
         updatedAt:
           type: string
           format: date-time
+        lineageHint:
+          type: object
       required:
       - goldenId
       - domainCode
@@ -12665,6 +12780,10 @@ components:
           type: array
           items:
             type: object
+        criticalAlerts:
+          type: object
+        queueByReason:
+          type: object
       required:
       - metrics
     JobSchedule:

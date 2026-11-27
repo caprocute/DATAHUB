@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D01-01
 ten: Báo cáo nghiên cứu khả thi dự án Datahub
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo hoàn chỉnh, chờ chủ đầu tư rà soát
 nguoi_doc: Hội đồng thẩm định, Chủ đầu tư, Cơ quan chủ quản, Quản lý dự án
@@ -350,7 +350,7 @@ Các câu hỏi dưới đây là những điểm về nhóm dự án, thẩm qu
 
 ## 2. Hiện trạng và sự cần thiết đầu tư
 
-> **Tóm tắt cho hội đồng thẩm định.** Tỉnh thí điểm đang vận hành một hệ LGSP do Viettel xây dựng năm 2021, gồm năm khối (Bus, Hub, API Management, Danh mục dùng chung Aita, Payment) với 183 chức năng đã được kiểm kê tại D00-03. Hệ thống này được thiết kế trên Java 8, Spring Boot 2, Angular 7, CentOS 6 và PostgreSQL 13, toàn bộ các thành phần nền này đã hết hoặc sắp hết vòng đời hỗ trợ của nhà phát hành tính đến thời điểm lập báo cáo. Cam kết chất lượng trong hồ sơ thiết kế của hệ cũ là độ sẵn sàng 90% mỗi năm và thời gian phản hồi không quá 5 giây với 10 người dùng đồng thời, thấp hơn nhiều so với yêu cầu của một nền tảng dùng chung cấp tỉnh sau sắp xếp đơn vị hành chính. Hệ cũ không có lớp dữ liệu chủ, không có quản lý chất lượng dữ liệu, không có cơ chế bảo vệ dữ liệu cá nhân, không có đối soát thanh toán và không hỗ trợ nhiều tỉnh trên một bản sản phẩm, trong khi các yêu cầu này đã trở thành bắt buộc theo CMP-LAW-01, CMP-LAW-02 và CMP-LAW-03. Báo cáo xác định 14 điểm nghẽn có mã từ ĐN-01 đến ĐN-14 và kết luận rằng việc đầu tư một nền tảng thế hệ mới là cần thiết về cả bốn phương diện pháp lý, nghiệp vụ, kỹ thuật và kinh tế. Số liệu vận hành thực tế của hệ cũ (lượng giao dịch, số HTTT đang kết nối, số sự cố) chưa có trong hồ sơ và cần chủ đầu tư cung cấp; trong khi chờ, báo cáo dùng quy mô tham chiếu cỡ M của bộ giả định nền.
+> **Tóm tắt cho hội đồng thẩm định.** Tỉnh thí điểm đang vận hành một hệ LGSP do Viettel xây dựng năm 2021, gồm năm khối (Bus, Hub, API Management, Danh mục dùng chung Aita, Payment) với 186 chức năng đã được kiểm kê tại D00-03. Hệ thống này được thiết kế trên Java 8, Spring Boot 2, Angular 7, CentOS 6 và PostgreSQL 13, toàn bộ các thành phần nền này đã hết hoặc sắp hết vòng đời hỗ trợ của nhà phát hành tính đến thời điểm lập báo cáo. Cam kết chất lượng trong hồ sơ thiết kế của hệ cũ là độ sẵn sàng 90% mỗi năm và thời gian phản hồi không quá 5 giây với 10 người dùng đồng thời, thấp hơn nhiều so với yêu cầu của một nền tảng dùng chung cấp tỉnh sau sắp xếp đơn vị hành chính. Hệ cũ không có lớp dữ liệu chủ, không có quản lý chất lượng dữ liệu, không có cơ chế bảo vệ dữ liệu cá nhân, không có đối soát thanh toán và không hỗ trợ nhiều tỉnh trên một bản sản phẩm, trong khi các yêu cầu này đã trở thành bắt buộc theo CMP-LAW-01, CMP-LAW-02 và CMP-LAW-03. Báo cáo xác định 14 điểm nghẽn có mã từ ĐN-01 đến ĐN-14 và kết luận rằng việc đầu tư một nền tảng thế hệ mới là cần thiết về cả bốn phương diện pháp lý, nghiệp vụ, kỹ thuật và kinh tế. Số liệu vận hành thực tế của hệ cũ (lượng giao dịch, số HTTT đang kết nối, số sự cố) chưa có trong hồ sơ và cần chủ đầu tư cung cấp; trong khi chờ, báo cáo dùng quy mô tham chiếu cỡ M của bộ giả định nền.
 
 ### 2.1. Hiện trạng chung về hạ tầng, ứng dụng và dữ liệu chia sẻ cấp tỉnh
 
@@ -474,7 +474,7 @@ Bảng dưới đây tổng hợp số chức năng theo khối và theo kết l
 
 : Kiểm kê chức năng hệ LGSP cũ theo năm khối và phương án xử lý
 
-Năm khối nghiệp vụ chiếm 153 trên 183 mục; 30 mục còn lại là các năng lực xuyên khối. Trong 183 mục, có 85 mục được giữ nguyên hành vi, 69 mục được nâng cấp, 25 mục được thay bằng cơ chế khác do thay đổi công nghệ, và chỉ 3 mục được đề xuất loại bỏ vì lý do an toàn thông tin (người dùng tự sửa tệp pom, nhập thành phần từ tệp JAR, đăng nhập bằng tài khoản mạng xã hội). Tỷ lệ 94 mục phải nâng cấp hoặc thay thế trên 183 mục, tương đương 51%, cho thấy hơn một nửa chức năng của hệ cũ không còn đáp ứng nếu giữ nguyên trạng.
+Năm khối nghiệp vụ chiếm 156 trên 186 mục; 30 mục còn lại là các năng lực xuyên khối. Trong 186 mục, có 85 mục được giữ nguyên hành vi, 72 mục được nâng cấp, 25 mục được thay bằng cơ chế khác do thay đổi công nghệ, và chỉ 3 mục được đề xuất loại bỏ vì lý do an toàn thông tin (người dùng tự sửa tệp pom, nhập thành phần từ tệp JAR, đăng nhập bằng tài khoản mạng xã hội). Tỷ lệ 94 mục phải nâng cấp hoặc thay thế trên 183 mục, tương đương 51%, cho thấy hơn một nửa chức năng của hệ cũ không còn đáp ứng nếu giữ nguyên trạng.
 
 #### 2.2.4. Công nghệ và phiên bản
 
@@ -790,7 +790,7 @@ Khi đối chiếu sơ đồ, đơn vị tư vấn nhận thấy hai khoảng tr
 
 #### 3.2.4. Mục tiêu về tiến độ và chất lượng sản phẩm
 
-Ngoài mục tiêu nghiệp vụ, dự án có các mục tiêu về tiến độ và chất lượng sản phẩm, được dùng làm điều kiện của các cổng nghiệm thu trong D01-02. Về tiến độ, MVP gồm 12 phân hệ được nghiệm thu tại cổng G2 ở mốc T0+10 tháng; MVP vận hành chính thức tại tỉnh thí điểm ở cổng G3, mốc T0+13 tháng; đợt 2 được nghiệm thu ở cổng G4, mốc T0+15 tháng; và toàn bộ dự án được nghiệm thu ở cổng G5, mốc T0+18 tháng, khi hệ cũ được tắt và nền tảng đã được khởi tạo cho tỉnh thứ hai. Về chất lượng, mọi chức năng của hệ cũ có kết luận giữ nguyên, nâng cấp hoặc thay thế trong D00-03 (179 trên 183 mục) đều phải có yêu cầu chức năng tương ứng đã kiểm thử đạt; hồ sơ đề xuất cấp độ 3 phải được phê duyệt trước khi vận hành chính thức; và các chỉ tiêu phi chức năng cấp hệ thống tại D02-02 (nhóm NFR-00) phải đạt trong đợt kiểm thử chấp nhận.
+Ngoài mục tiêu nghiệp vụ, dự án có các mục tiêu về tiến độ và chất lượng sản phẩm, được dùng làm điều kiện của các cổng nghiệm thu trong D01-02. Về tiến độ, MVP gồm 12 phân hệ được nghiệm thu tại cổng G2 ở mốc T0+10 tháng; MVP vận hành chính thức tại tỉnh thí điểm ở cổng G3, mốc T0+13 tháng; đợt 2 được nghiệm thu ở cổng G4, mốc T0+15 tháng; và toàn bộ dự án được nghiệm thu ở cổng G5, mốc T0+18 tháng, khi hệ cũ được tắt và nền tảng đã được khởi tạo cho tỉnh thứ hai. Về chất lượng, mọi chức năng của hệ cũ có kết luận giữ nguyên, nâng cấp hoặc thay thế trong D00-03 (182 trên 186 mục) đều phải có yêu cầu chức năng tương ứng đã kiểm thử đạt; hồ sơ đề xuất cấp độ 3 phải được phê duyệt trước khi vận hành chính thức; và các chỉ tiêu phi chức năng cấp hệ thống tại D02-02 (nhóm NFR-00) phải đạt trong đợt kiểm thử chấp nhận.
 
 ### 3.3. Quy mô đầu tư
 
@@ -810,7 +810,7 @@ Việc phân đợt theo nguyên tắc: đợt đầu (MVP) phải đủ để t
 
 Trong MVP, yêu cầu tối thiểu về che dữ liệu cá nhân trong nhật ký và kiểm soát truy cập theo vai trò vẫn được hiện thực ở PH-03, PH-12 và PH-13, để tỉnh không phải chờ PH-09 ở đợt 2 mới đáp ứng các yêu cầu cơ bản về bảo vệ dữ liệu cá nhân. Khối Payment của hệ cũ tiếp tục chạy song song cho tới khi PH-19 vận hành ổn định 30 ngày.
 
-Về khối lượng kế thừa, Datahub phải bảo toàn 179 chức năng của hệ cũ (85 giữ nguyên hành vi, 69 nâng cấp, 25 thay bằng cơ chế khác), loại bỏ 3 chức năng vì lý do an toàn thông tin theo chấp thuận của chủ đầu tư, và xử lý riêng 1 mục phi chức năng, theo kiểm kê tại D00-03 §5. Đây là phần "giữ nguyên giá trị đã đầu tư"; phần còn lại của quy mô chức năng là năng lực mới.
+Về khối lượng kế thừa, Datahub phải bảo toàn 182 chức năng của hệ cũ (85 giữ nguyên hành vi, 72 nâng cấp, 25 thay bằng cơ chế khác), loại bỏ 3 chức năng vì lý do an toàn thông tin theo chấp thuận của chủ đầu tư, và xử lý riêng 1 mục phi chức năng, theo kiểm kê tại D00-03 §5. Đây là phần "giữ nguyên giá trị đã đầu tư"; phần còn lại của quy mô chức năng là năng lực mới.
 
 #### 3.3.2. Quy mô phục vụ
 
@@ -951,7 +951,7 @@ PA2 mua bản quyền hoặc thuê dịch vụ một nền tảng tích hợp đ
 
 PA3 xây mới Datahub gồm 20 phân hệ theo kiến trúc đã thiết kế ở D03-01, trên các thành phần mã nguồn mở có giấy phép phù hợp (Mục 5.3), đóng gói thành một sản phẩm duy nhất triển khai được cho nhiều tỉnh (mỗi tỉnh là một tenant), và chuyển đổi khỏi hệ cũ theo chiến lược thay thế dần. Đây không phải là viết từ đầu mọi thứ: phần nặng nhất về kỹ thuật (cổng API, động cơ tích hợp, hệ thống sự kiện, định danh, quy trình, giám sát) là các dự án mã nguồn mở trưởng thành được nhiều tổ chức lớn dùng trong vận hành thật; phần xây mới là lớp nghiệp vụ, lớp quản trị và lớp kết nối với các nền tảng quốc gia, tức đúng phần mà PA2 cũng phải tùy biến.
 
-PA3 kế thừa tri thức nghiệp vụ của hệ cũ một cách có hệ thống: 183 chức năng của hệ cũ đã được kiểm kê thành các mục `LGC` trong D00-03, mỗi mục có kết luận giữ nguyên, nâng cấp, thay thế hay loại bỏ, và tiêu chí bàn giao là 100% mục có kết luận. Vì vậy người dùng không mất chức năng đang dùng, chỉ được cung cấp lại trên nền mới.
+PA3 kế thừa tri thức nghiệp vụ của hệ cũ một cách có hệ thống: 186 chức năng của hệ cũ đã được kiểm kê thành các mục `LGC` trong D00-03, mỗi mục có kết luận giữ nguyên, nâng cấp, thay thế hay loại bỏ, và tiêu chí bàn giao là 100% mục có kết luận. Vì vậy người dùng không mất chức năng đang dùng, chỉ được cung cấp lại trên nền mới.
 
 **Ưu điểm.** Đáp ứng đầy đủ 20 phân hệ, gồm lớp dữ liệu dùng chung mà hệ cũ và phần lớn sản phẩm thương mại không có; tỉnh (hoặc cơ quan được giao làm chủ sản phẩm) làm chủ mã nguồn; không có chi phí bản quyền phần mềm nền; một bản mã nguồn cho mọi tỉnh nên chi phí phát triển được phân bổ khi nhân rộng; kiến trúc thiết kế từ đầu cho an toàn thông tin cấp độ 3 và sẵn sàng nâng cấp độ 4; chạy được cả trên hạ tầng tại chỗ và cloud chính phủ vì chỉ dùng chuẩn mở.
 
@@ -1254,7 +1254,7 @@ Hai mươi phân hệ được nhóm thành sáu nhóm chức năng. Bảng dư�
 
 : Nhóm phân hệ, chức năng chính và khối hệ cũ được thay thế
 
-Hệ cũ có 183 chức năng đã được kiểm kê thành các mục `LGC` tại D00-03, mỗi mục được ánh xạ tới phân hệ và yêu cầu chức năng của Datahub với kết luận giữ nguyên, nâng cấp, thay thế hoặc loại bỏ. Nhờ ánh xạ này, yêu cầu "không mất chức năng đang dùng" được kiểm chứng bằng số liệu: tiêu chí bàn giao là 100% mục có kết luận và có bằng chứng kiểm thử.
+Hệ cũ có 186 chức năng đã được kiểm kê thành các mục `LGC` tại D00-03, mỗi mục được ánh xạ tới phân hệ và yêu cầu chức năng của Datahub với kết luận giữ nguyên, nâng cấp, thay thế hoặc loại bỏ. Nhờ ánh xạ này, yêu cầu "không mất chức năng đang dùng" được kiểm chứng bằng số liệu: tiêu chí bàn giao là 100% mục có kết luận và có bằng chứng kiểm thử.
 
 #### 5.2.3. Yêu cầu phi chức năng
 
@@ -3284,7 +3284,7 @@ Bảng dưới đây là ma trận tuân thủ cấp dự án. Ma trận chi ti�
 | Phù hợp kế hoạch chuyển đổi số 5 năm và hằng năm của tỉnh | Khoản 1 Điều 45 NĐ 224/2026 | Datahub là hạ tầng số dùng chung; số hiệu kế hoạch của tỉnh cần điền | Chương 2 mục 2.5.5 | Có điều kiện (Q-D0101-14) |
 | Tuân thủ Khung kiến trúc tổng thể quốc gia số hoặc khung kiến trúc hiện hành | Điều 37, điểm a khoản 1 Điều 46 NĐ 224/2026; CMP-LAW-10, CMP-LAW-11 | Ánh xạ bốn lớp kiến trúc, vai trò nền tảng tích hợp cấp tỉnh, tách control plane và data plane | Chương 5 mục 5.7; D03-01 | Có điều kiện (Q-D0101-15, Q-D0101-45) |
 | Kết nối, chia sẻ dữ liệu qua Nền tảng chia sẻ, điều phối dữ liệu quốc gia | CMP-LAW-03 (NĐ 278/2025) | PH-14 kết nối quốc gia; địa chỉ và xác thực là cấu hình theo tenant (GĐ-02); chuẩn hóa trước 31/12/2026 | Chương 5 mục 5.8; FRS PH-14 | Đáp ứng |
-| Chức năng của nền tảng tích hợp cấp tỉnh | CMP-LAW-09 | Phủ đủ chức năng LGSP và 183 mục nghiệp vụ hệ cũ `LGC` | Chương 5 mục 5.2; D00-03 | Đáp ứng |
+| Chức năng của nền tảng tích hợp cấp tỉnh | CMP-LAW-09 | Phủ đủ chức năng LGSP và 186 mục nghiệp vụ hệ cũ `LGC` | Chương 5 mục 5.2; D00-03 | Đáp ứng |
 | Quản trị, phân loại, chia sẻ dữ liệu | CMP-LAW-01, CMP-LAW-02 | Danh mục dùng chung (PH-07), dữ liệu chủ (PH-06), chất lượng dữ liệu (PH-08), nhãn phân loại dữ liệu | Chương 5; D02-07 | Đáp ứng |
 | Bảo vệ dữ liệu cá nhân, hồ sơ đánh giá tác động | CMP-LAW-05, CMP-LAW-04 | PH-09; che dữ liệu, mã hóa trường Nhạy cảm, hồ sơ đánh giá tác động gửi cơ quan chuyên trách; báo vi phạm trong 72 giờ | Chương 7 mục 7.7; D03-07 | Đáp ứng |
 | Bảo vệ an ninh mạng theo cấp độ 3, sẵn sàng cấp độ 4 | CMP-LAW-16, CMP-LAW-06, CMP-LAW-08 | 18 nhóm yêu cầu cấp độ 3 của TCVN 14423:2026; hồ sơ D03-08; điểm cắm cấp độ 4 | Chương 7; D03-07, D03-08; ADR-030 | Có điều kiện (Q-D0101-71) |
@@ -3341,3 +3341,4 @@ Câu hỏi dưới đây liên quan đến mẫu ma trận tuân thủ mà cơ q
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, 12 chương theo khung báo cáo nghiên cứu khả thi, số liệu từ bộ giả định nền D01-00 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát và bổ sung nội dung kỹ thuật, số liệu theo bộ giả định nền |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm Tóm tắt cho hội đồng thẩm định (số liệu từ Chương 8 đến 10) và phần Giới thiệu tài liệu (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); viết lại chú thích cụ thể cho 74 bảng và 18 hình; thêm đoạn mở cho các mục Câu hỏi mở; đổi các sơ đồ flowchart LR nhiều nút sang TB; thêm hai sơ đồ (trình tự thủ tục đầu tư ở mục 1.6, trình tự một lượt gọi ở mục 5.4.3); sửa dẫn chiếu kết luận ở bảng mục 1.4 (Chương 12 mục 12.7) và câu về TCO thấp nhất ở mục 12.7 cho khớp mục 8.10 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: số chức năng hệ cũ theo D00-03 bản 0.2 (186 mục, 72 nâng cấp, 182 mục được bảo toàn) |

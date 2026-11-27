@@ -9,7 +9,7 @@ Tính năng: TS-18-26 · Xử lý Việc của tôi, nhắc và quá hạn
     # Mục đích: Chứng minh FR-18-044: danh sách sắp theo hạn, `?summary=true` cho thẻ trang chủ, chi tiết có liên kết sang màn của phân hệ nguồn.
     Biết T90; U-T90-TA2 có 12 việc mở thuộc 4 loại, 2 quá hạn.
     Khi `GET /me/tasks?summary=true`.
-    Và mở `/ca-nhan/viec`, lọc loại `ph18.approve-param`.
+    Và mở `/viec-cua-toi`, lọc loại `ph18.approve-param`.
     Và bấm một việc.
     Thì bước 1 `200` `open = 12`, `overdue = 2`, theo loại. Bước 2 đúng việc, cột hạn và người giao. Bước 3 chuyển sang màn của phân hệ nguồn qua liên kết đã đăng ký.
 
@@ -28,7 +28,7 @@ Tính năng: TS-18-26 · Xử lý Việc của tôi, nhắc và quá hạn
     # Mục đích: Chứng minh liên kết cũ trong thư nhắc không mở được việc đã đóng.
     Biết T90; việc `TASK-DONE-01` đã `DONE`.
     Khi `GET /me/tasks/TASK-KHONG-CO`.
-    Và mở liên kết `/ca-nhan/viec/TASK-DONE-01`.
+    Và mở liên kết `/viec-cua-toi/TASK-DONE-01`.
     Thì bước 1 `404` ERR-18-001. Bước 2 màn hiện câu thông báo ERR-18-048 và nút về danh sách.
 
   @TC-18-166 @P2 @Dương @Âm @Lũy_đẳng

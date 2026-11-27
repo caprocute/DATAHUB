@@ -22,7 +22,7 @@ Tính năng: TS-10-06 · Lược đồ sự kiện: soạn, kiểm tra, duyệt
     Và tạo phiên bản Avro 300 KiB.
     Và tạo phiên bản không có `changeNote`.
     Và tạo phiên bản thứ hai khi v4 đang `PENDING_APPROVAL`.
-    Thì bước 1 `422` ERR-10-020 (khác định dạng đã có). Bước 2 `422` ERR-10-015 hoặc ERR-10-003 theo giới hạn 256 KiB (API §3.3). Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006.
+    Thì bước 1 `422` ERR-10-020 (khác định dạng đã có). Bước 2 `400` ERR-10-003 với `errors[].field = content` (vượt 256 KiB, FR-10-017). Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006.
     # Hậu điều kiện: Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 
   @TC-10-029 @P1 @Dương

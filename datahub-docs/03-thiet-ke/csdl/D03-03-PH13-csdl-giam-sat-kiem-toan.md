@@ -2282,6 +2282,8 @@ Các câu hỏi dưới đây chưa có trả lời chốt; thiết kế dùng g
 
 ## 10. Đề nghị đồng bộ cho tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung và không tạo ADR; các thay đổi dưới đây do chủ tài liệu tương ứng cập nhật.
 
 | Tài liệu | Đề nghị |

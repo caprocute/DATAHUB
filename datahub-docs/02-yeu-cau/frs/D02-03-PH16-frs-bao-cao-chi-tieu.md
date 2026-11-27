@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH16
 ten: Đặc tả yêu cầu chức năng phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, lãnh đạo UBND và sở ngành, quản trị tỉnh, cán bộ tổng hợp, kỹ sư dh-platform, kiểm thử viên
@@ -140,7 +140,7 @@ Tài liệu pháp lý dùng mã CMP-LAW của D00-01 §7; ADR có tệp được
 | Dự án | D01-02 Kế hoạch dự án §12.5; D02-01 BRD §3 (BO-01…09, KPI-01…18), REQ-16; D02-02 SRS (FR-00, NFR-00); D02-08 Ma trận phân quyền; D00-03 Ma trận truy vết; D00-04 Sổ tra cứu gọn; D03-06-00 IA và mẫu màn hình (dòng 37) |
 | FRS phân hệ nguồn | D02-03-PH01, PH02, PH04, PH05, PH07, PH08, PH10, PH14, PH19 |
 | ADR có tệp | ADR-001 (Spring Boot Modulith), ADR-003 (PostgreSQL RLS), ADR-004 (Kafka), ADR-006 (Keycloak, OPA), ADR-012 (OpenBao), ADR-020 (Liquid Glass), ADR-023 (ECharts), ADR-031 (kiểm toán chuỗi băm, WORM), ADR-042 (inbox, outbox), ADR-046 (phê duyệt bốn mắt), ADR-047 (lưu trữ phân vùng), ADR-057 (đồng bộ quốc gia qua PH-14) |
-| ADR đề xuất | ADR 160–164 (mục 12.3); ADR 085 của PH-08 (cùng họ CEL); ADR 075 của PH-15 (bỏ Backstage) |
+| ADR đề xuất | ADR 160–164 (mục 12.3); ADR 085 của PH-08 (cùng họ CEL); ADR 095 của PH-15 (bỏ Backstage) |
 | SRS cũ | `docs/07-srs/SRS-PH-16-nas-kpi.md` (22 FR, 24 NFR, 6 BR, 6 màn) |
 
 : Tài liệu tham chiếu của FRS PH-16
@@ -229,7 +229,7 @@ Hình cho thấy PH-16 có hai đường vào (sự kiện qua Kafka và kéo AP
 
 PH-16 là hai mô-đun Modulith trong `dh-platform`. Mô-đun `kpi` gồm bảy thành phần nội bộ. **Định nghĩa** (`kpi-definition`) lưu chỉ tiêu, phiên bản, mục tiêu, ngưỡng, nhóm, biên dịch công thức bằng `cel-java` (ADR 161, cùng họ ADR 085 của PH-08). **Thu thập** (`kpi-ingest`) tiêu thụ sự kiện Kafka qua inbox (ADR-042), kéo API chỉ số theo lịch, nhận API đẩy, chuẩn hóa thành quan sát và ghi bảng `observation` phân vùng theo tháng của kỳ (ADR 160, ADR-047). **Nhập tay** (`kpi-manual`) nhận biểu mẫu và tệp XLSX, lưu bằng chứng ở kho đối tượng. **Tính toán** (`kpi-compute`) chạy lần tổng hợp theo lịch nội bộ `ScheduleDispatcher` dưới khóa ShedLock, đánh giá công thức trên quan sát của kỳ, lưu giá trị và dòng truy nguồn. **Báo cáo** (`kpi-report`) dựng bản nháp từ mẫu, duyệt, công bố: dựng PDF bằng OpenHTMLtoPDF, ký số qua dịch vụ ký của nền tảng (khóa ở OpenBao, ADR-012), lưu WORM (ADR 162). **Xuất, phân phối** (`kpi-export`) sinh XLSX bằng Apache POI, CSV, JSON; gửi thông báo qua kênh PH-13. **Gửi quốc gia** (`kpi-national`) dựng gói theo mẫu cấu hình ngoài, kiểm lược đồ, giao PH-14 qua outbox (ADR 163, ADR-057). Mô-đun `arch` giữ sổ kiến trúc, tiêu thụ sự kiện đăng ký từ phân hệ nguồn, nhận API `arch.register` và chạy đánh giá tuân thủ.
 
-Không dùng ClickHouse hay kho phân tích riêng: khối lượng chỉ tiêu nhỏ (24 chỉ tiêu × 36 kỳ × 34 tenant), PostgreSQL phân vùng đủ đáp ứng NFR-16-005 (ADR 160). Không dùng Backstage cho sổ kiến trúc (ADR-006 cũ của repo bị thay; PH-15 cũng bỏ Backstage theo ADR 075 đề xuất).
+Không dùng ClickHouse hay kho phân tích riêng: khối lượng chỉ tiêu nhỏ (24 chỉ tiêu × 36 kỳ × 34 tenant), PostgreSQL phân vùng đủ đáp ứng NFR-16-005 (ADR 160). Không dùng Backstage cho sổ kiến trúc (ADR-006 cũ của repo bị thay; PH-15 cũng bỏ Backstage theo ADR 095 đề xuất).
 
 ```{.mermaid caption="Trình tự luồng chính từ quan sát tới báo cáo công bố"}
 sequenceDiagram
@@ -326,7 +326,7 @@ PH-16 không tạo vai trò mới; mọi vai trò lấy từ D02-08. Người du
 | PU | ROLE-PLATFORM_AUDITOR | Người | Kiểm toán nền tảng | Kiểm toán liên tenant, chỉ đọc |
 | Phân hệ nguồn | PH-01, 02, 04, 05, 07, 08, 10, 13, 19, 20 | Hệ thống | Cung cấp quan sát | Phát sự kiện, trả API chỉ số, gọi `kpi.ingest`, `arch.register` |
 | PH-14 | Kết nối quốc gia | Hệ thống | Kênh gửi quốc gia | Nhận gói, trả biên nhận |
-| PH-13 | Giám sát | Hệ thống | Kiểm toán, thông báo, chỉ số vận hành | Nhận kiểm toán, gửi thông báo, cung cấp `opsStatus` |
+| PH-13 | Giám sát | Hệ thống | Kiểm toán, thông báo, chỉ số vận hành | Nhận kiểm toán, gửi thông báo, cung cấp `opsStatus`; PH-16 đọc chỉ số qua API-13-067, 068 |
 | PH-17, PH-18 | Trợ lý, hộp việc | Hệ thống | Bên đọc, bên nhận việc | `kpi.read`; tạo việc duyệt |
 
 : Tác nhân của PH-16
@@ -2882,7 +2882,7 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 1. Hệ thống đọc qua khung nhìn tổng hợp có ngoại lệ RLS chỉ cho vai trò CSDL của báo cáo liên tenant, lấy giá trị chính thức của các tenant dùng cùng phiên bản mẫu (không tùy biến công thức).
 2. Hệ thống kiểm số tenant ≥ ngưỡng (thiếu: ERR-16-038).
-3. Hệ thống trả phân bố (trung vị, tứ phân vị, nhỏ nhất, lớn nhất) và danh sách tenant mang mã giả ổn định theo kỳ; PA thấy mã tỉnh thật, PU chỉ thấy mã giả.
+3. Hệ thống trả phân bố (trung vị, tứ phân vị, nhỏ nhất, lớn nhất) và danh sách tenant mang mã giả ổn định theo kỳ; PA thấy mã tỉnh thật, PU (có `PERM-16-compare`) chỉ thấy mã giả. Mã giả `alias` là nhãn "Tỉnh A", "Tỉnh B"… xếp theo thứ tự băm HMAC-SHA256 của (mã tenant, mã kỳ) với khóa của PH-16, nên giữ nguyên khi gọi lại trong cùng kỳ, đổi giữa các kỳ và không suy ngược được ra tenant.
 
 **Luồng thay thế.** Không.
 
@@ -2890,7 +2890,7 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 - Không đủ tenant: ERR-16-038 (422); "Cần ít nhất {n} tỉnh có số chính thức để so sánh."
 
-**Đầu ra.** `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`.
+**Đầu ra.** `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`, và `rank`, `peerCount` của tenant gọi (ẩn danh, chỉ khi tenant cho phép so sánh).
 
 **Kết quả.** Quản trị nền tảng thấy vị trí từng tỉnh trên phân bố chung.
 
@@ -3532,7 +3532,7 @@ Hình cho thấy PH-16 chỉ nói chuyện với PH-14; thông tin xác thực, 
 **Luồng xử lý chính.**
 
 1. Hệ thống ghi dòng nhật ký chỉ thêm cho mỗi lần giao, phản hồi, biên nhận (thời điểm, mã thông điệp kênh, mã lỗi).
-2. Nhận biên nhận: hệ thống kiểm `contentHash` khớp gói đã gửi (lệch: ERR-16-124, giữ `SENT`); khớp thì chuyển `ACKNOWLEDGED`, lưu `receiptNo`.
+2. Nhận biên nhận: hệ thống kiểm `contentHash` khớp gói đã gửi (lệch: ERR-16-124, giữ `SENT`); khớp thì chuyển `ACKNOWLEDGED`, lưu `receiptNo`. Biên nhận trùng `channelMessageId` của cùng gói là lũy đẳng: trả `204`, không ghi thêm dòng nhật ký và không báo `409`.
 3. Gói `FAILED`: hệ thống tự gửi lại với giãn cách 5, 15, 45, 135 phút tới `16.national.retry-max` lần; quá thì tạo việc cho TA.
 4. TA gửi lại tay: hệ thống kiểm gói `FAILED` và chưa quá số lần (ERR-16-050), giao lại với cùng `contentHash`.
 
@@ -3864,7 +3864,7 @@ Yêu cầu dưới đo được, chặt hơn hoặc bằng NFR-00 của SRS và 
 
 ### 8.2. Tham số theo tenant
 
-Hai mươi lăm khóa dưới chỉnh được ở FR-16-055; cột "Miền, trần" ghi giới hạn PA đặt ở `PLATFORM`.
+Hai mươi lăm khóa dưới chỉnh được ở FR-16-055; cột "Miền, trần" ghi giới hạn PA đặt ở `PLATFORM`. PH-16 tự giữ giá trị tham số `16.*` theo tenant ở bảng `kpi_tenant_setting` với bộ đệm 15 giây (hiệu lực không quá 60 giây, theo BR-18-006); PH-16 không lưu giá trị ở kho tham số của PH-18, nên PH-18 chỉ cần biết tiền tố `16.` để hiển thị chỉ đọc nếu muốn.
 
 | Khóa | Mặc định | Miền, trần | Ý nghĩa |
 |---|---|---|---|
@@ -4563,6 +4563,8 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-16 (UC, SDD, CSDL, API,
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ khác; tập này không sửa trực tiếp các tài liệu đó. Bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị; mọi dòng dồn vào đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
@@ -4577,7 +4579,7 @@ PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 | PH-20 (khi viết) | Gọi FR-16-008 khi khởi tạo tenant; đẩy thời gian khởi tạo tenant (KPI-12) qua `kpi.ingest` hoặc sự kiện (Q16-16); API tổ chức chủ quản |
 | D02-03-PH08 | Xác nhận lược đồ EVT-08-14 có trường `kpiSchemaVersion` và `snapshotId` dùng làm `idempotencyRef`; API-08-122 làm đường đọc bù với scope `dq.read`; ngưỡng KPI chất lượng do PH-16 quyết định (trả lời Q08-15: `diem-chat-luong-du-lieu` ≥ 80 điểm, giả định) |
 | D02-03-PH02, PH04, PH10 | Xác nhận EVT-02-05, 06, 13, EVT-04-01, 07, 09, EVT-10-01, 04, 06 mang đủ trường cho tự đăng ký kiến trúc (`componentCode`, phiên bản, `dependsOn`) và cho chỉ tiêu; cấp scope `catalog:metrics-read` cho PH-16 (API-02-079, API-02-097); PH-10 đăng ký 14 topic `{tenant}.kpi.*` theo FR-10-067 |
-| D02-03-PH15 | Tiêu thụ EVT-16-10 để hiển thị trạng thái kiến trúc trên trang API; xác nhận bỏ Backstage (ADR 075) để sổ kiến trúc PH-16 là nguồn duy nhất |
+| D02-03-PH15 | Tiêu thụ EVT-16-10 để hiển thị trạng thái kiến trúc trên trang API; xác nhận bỏ Backstage (ADR 095) để sổ kiến trúc PH-16 là nguồn duy nhất |
 | Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-16 dẫn |
 | D03-06-00 | Dòng 37: cây menu dưới `/giam-sat/chi-tieu` theo 10.1 (20 route con); thẻ PH-16 trên trang `/tong-quan` (FR-16-037) |
 | `01-khoi-tao/_gia-dinh-nen.md`, D03-01 | Bỏ ghi chú "ClickHouse chờ ADR" cho chỉ tiêu; thay bằng "PostgreSQL phân vùng (ADR 160 đề xuất)" |
@@ -4633,5 +4635,6 @@ Phụ lục ghi các đề nghị dành cho FRS từ tập UC, SDD, CSDL, API, M
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 58 FR (M 37, S 17, C 4) đủ 17 mục chia chín nhóm, phủ 22 FR của SRS cũ; bộ 24 chỉ tiêu mẫu `COMMON` ứng với KPI-01…18; bảy máy trạng thái; 39 thực thể; 35 BR, 22 NFR, 24 tham số; 57 mã lỗi control và 25 mã thu thập, tính toán, gửi kèm câu thông báo; 13 sự kiện phát; 130 API dự kiến; 20 màn hình; 19 câu hỏi mở; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; đề xuất ADR 160–164; bỏ Backstage và NAS Connector riêng của SRS cũ |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với UC, SDD, CSDL, API, MH 0.1 (Phụ lục C, 27 đề nghị nhận, 6 không nhận): mỗi mã lỗi một câu chuẩn có tham số, FR ghi giá trị biến; mã mới ERR-16-058 (`Idempotency-Key` dùng lại), ERR-16-059 (không thuộc vai trò xác nhận), ERR-16-060 (khoảng thời gian vượt tối đa), ERR-16-061 (thiếu số ký hiệu, nơi nhận); sự kiện EVT-16-14 kỳ `CLOSED`, `REOPENED`; báo cáo `APPROVED` trả về soạn; tham số `16.overview.pinned-indicators`; scope `kpi.national-receipt`; 19 enum bổ sung, thêm `DRAFT` vào `report_template.state` ở Phụ lục A; tiền tố chỉ số `dh_kpi_`, `dh_arch_`; §10.2 trỏ ảnh hi-fi đã có |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, quy tắc bí danh và quyền so sánh ở FR-16-041, biên nhận trùng ở FR-16-053, tham số 16.* và API-13-067, 068 |
 
 : Lịch sử phiên bản

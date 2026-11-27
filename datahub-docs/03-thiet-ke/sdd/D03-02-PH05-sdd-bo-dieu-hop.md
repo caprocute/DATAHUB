@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH05
 ten: Thiết kế chi tiết phần mềm phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, ATTT, hội đồng thẩm định
 phan_he: PH-05
@@ -73,7 +73,7 @@ Thuật ngữ và chữ viết tắt dùng chung với [D02-03-PH05](../../02-ye
 
 : Đơn vị triển khai và vùng mạng
 
-Lưu lượng tới HTTT đi từ Z4 qua egress gateway với `ServiceEntry` theo FQDN (SEC-16). Bộ chạy `probe-jvm` có cùng chính sách egress với runtime của tenant, nên kết quả kiểm tra phản ánh đúng đường mạng thật của luồng.
+Lưu lượng tới HTTT đi từ Z4 qua egress gateway với `ServiceEntry` theo FQDN (SEC-16). Bộ chạy `probe-jvm` có cùng chính sách egress với runtime của tenant, nên kết quả kiểm tra phản ánh đúng đường mạng thật của luồng. `probe-jvm` không có đường ra tới các đích quốc gia của PH-14 (NDXP): danh sách FQDN cho phép của nó chỉ gồm đích HTTT đã khai ở kết nối, không có FQDN NDXP, vì việc kiểm tra kết nối quốc gia do cổng của PH-14 làm.
 
 ### 2.2. Sơ đồ thành phần
 
@@ -181,7 +181,7 @@ vn.datahub.integration.adapter
 ```text
 dh-runtime/
 ├── dh-runtime-lib/
-│   ├── vn.datahub.runtime.secret      # (có từ PH-04) ConnPropertiesFunction, thêm ConnManifestCache, SecretVersionSelector
+│   ├── vn.datahub.runtime.secret      # (có từ PH-04) ConnPropertiesFunction, thêm ConnManifestCache, SecretVersionSelector; ConnPropertiesFunction và SecretVersionSelector dùng chung với PH-14 (loại oauth2-client có private_key_jwt, giá trị chờ khi xoay cho FR-14-025)
 │   └── vn.datahub.runtime.adapter
 │       ├── limit/                     # TenantBulkhead, PoolSizer (hạn mức theo bản sao)
 │       ├── http/                      # AuthApplier (Basic, ApiKey, OAuth2TokenCache, mTLS), Paginator, RateLimitGovernor
@@ -1205,3 +1205,4 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu (người đọc, tài liệu tham chiếu), bảng đặc tả 10 mục cho 12 thành phần ở chương 4, chú thích mọi bảng và hình |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: probe-jvm không ra đích quốc gia, thư viện dùng chung với PH-14 |

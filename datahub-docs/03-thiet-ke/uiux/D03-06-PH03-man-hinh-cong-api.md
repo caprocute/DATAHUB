@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH03
 ten: Thiết kế giao diện màn hình phân hệ PH-03 Cổng API
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, cán bộ ATTT, vận hành gateway, hội đồng thẩm định
@@ -2015,18 +2015,22 @@ Ca kiểm thử chi tiết viết ở D05-02-PH03 (theo `number_tcs.py`); tập 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Không có thành phần mới bắt buộc: mọi màn dựng được bằng 121 `CMP-*` chuẩn. Bốn biến thể đề xuất ghi vào D03-05-04 ở lần cập nhật kế để bớt lặp mã ở các màn:
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
-| Đề xuất | Dựa trên | Dùng ở | Lý do |
-|---|---|---|---|
-| `CMP-Chart` có mẫu nền cho series | `CMP-Chart`, `color-chart-*` | UI-03-01, 07, 09 | Phân biệt series không dựa vào màu (WCAG 1.4.1); hiện mới có màu |
-| `CMP-Steps` biến thể danh sách kiểm dọc | `CMP-Steps` | UI-03-03 tab Cửa vào, UI-03-14 | Hiện đạt, chưa đạt, không đánh giá cho từng điều kiện hoặc chốt kèm mã lỗi |
-| `CMP-Pagination` biến thể con trỏ "Trước, Sau" kèm số ước lượng | `CMP-Pagination` | UI-03-07, 09 | Nhật ký từ ClickHouse không có tổng chính xác (Q03-56 của D03-04-PH03) |
-| `CMP-CodeEditor` ngôn ngữ SecLang | `CMP-CodeEditor` | UI-03-08 tab Luật vá ảo | Tô cú pháp và báo lỗi cú pháp luật WAF |
+Không có thành phần mới bắt buộc: mọi màn dựng được bằng các `CMP-*` chuẩn. Bốn biến thể dưới đây đã có ở D03-05-04 bản 0.4 trở lên (cột "Đã có ở"), bảng giữ lại để truy vết:
+
+| Đề xuất | Dựa trên | Dùng ở | Lý do | Đã có ở |
+|---|---|---|---|---|
+| `CMP-Chart` có mẫu nền cho series | `CMP-Chart`, `color-chart-*` | UI-03-01, 07, 09 | Phân biệt series không dựa vào màu (WCAG 1.4.1); hiện mới có màu | D03-05-04 §6.6: hoa văn `decal` luôn bật từ ba chuỗi |
+| `CMP-Steps` biến thể danh sách kiểm dọc | `CMP-Steps` | UI-03-03 tab Cửa vào, UI-03-14 | Hiện đạt, chưa đạt, không đánh giá cho từng điều kiện hoặc chốt kèm mã lỗi | D03-05-04 §10.1: biến thể `checklist` |
+| `CMP-Pagination` biến thể con trỏ "Trước, Sau" kèm số ước lượng | `CMP-Pagination` | UI-03-07, 09 | Nhật ký từ ClickHouse không có tổng chính xác (Q03-56 của D03-04-PH03) | D03-05-04 §4.4: biến thể `cursor` |
+| `CMP-CodeEditor` ngôn ngữ SecLang | `CMP-CodeEditor` | UI-03-08 tab Luật vá ảo | Tô cú pháp và báo lỗi cú pháp luật WAF | D03-05-04 §9.1: ngôn ngữ `seclang` |
 
 : Phụ lục A. Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các điểm dưới đây là chỗ giao diện cần dữ liệu mà D03-04-PH03 bản 0.1 chưa có hoặc chưa rõ; ghi để đợt đồng bộ API xử lý, tập này không sửa D03-04.
 
@@ -2063,13 +2067,15 @@ Các điểm dưới đây là chỗ giao diện cần dữ liệu mà D03-04-PH
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung; các việc dưới đây để đợt đồng bộ cuối thực hiện.
 
 | Tài liệu | Đề nghị |
 |---|---|
 | D03-06-00 §2.3.2, §7 | Thêm nhóm menu "Cổng API" với 14 mục và route `/cong-api/...` ở bảng 4.2 của tập này (FRS PH-03 cũng đề nghị); đổi mục 9 và 10 hiện có (`/ket-noi/chinh-sach`, `/ket-noi/gateway`) thành đường chuyển hướng tới `/cong-api/route`, `/cong-api/nut`; sửa mẫu của UI-03-11 trong IA từ PTN-11 thành PTN-01; cập nhật cột "Màn mới" của LGC-APIM-023 ở §7 |
 | D03-06-00 §2.3.3 | Thêm lối vào `/cong-api/chay-thu` (Drawer), `/cong-api/duyet` (chuyển hướng hộp việc) |
-| D03-05-04 | Bốn biến thể ở Phụ lục A |
+| D03-05-04 | Đã xử lý: bốn biến thể ở Phụ lục A đã có ở D03-05-04 |
 | D02-03-PH03 §9.2 | Bổ sung câu cho ERR-03-001, 002, 003, 004, 022, 023 theo §5.2 của tập này; §10.1 giữ nguyên PTN, thêm cột route nếu cần |
 | D03-04-PH03 | Chín đề nghị ở Phụ lục B |
 | Hộp việc chung (FR-00-070 ở D02-02) | Hỗ trợ bộ lọc `loai=ph03.*` và vùng chi tiết riêng của PH-03 (UI-03-17); xác nhận với tập chung (Q03-33) |
@@ -2095,3 +2101,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 18 màn UI-03-01…18 theo khuôn K-MH (bảng đặc tả đầu mỗi màn, route `/cong-api/...`, mẫu PTN, thành phần `CMP-*` chuẩn, trạng thái, 27 thông điệp `ERR-03-…`, phím tắt, truy cập WCAG 2.2 AA), UI-03-03 siêu chi tiết, ảnh hi-fi 18 màn, ma trận vai trò, truy vết 59 FR, phụ lục đề nghị bổ sung D03-05 và API; 5 câu hỏi mở Q03-30…34 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi bốn biến thể (`decal`, `checklist`, `cursor`, `seclang`) đã có ở D03-05-04 |

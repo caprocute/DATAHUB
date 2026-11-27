@@ -252,7 +252,7 @@ NOTES = {
     91: 'Duyệt bốn mắt kế hoạch sáp nhập: chạy thử phải đạt và không cũ (ERR-20-043); người duyệt khác người lập (ERR-20-007).',
     95: 'Sinh gợi ý ánh xạ tự động theo mã, đường dẫn, tên; chỉ tạo dòng `PROPOSED`, không ghi đè dòng đã xác nhận.',
     97: 'Bất đồng bộ; kết quả ở `dryRun` của API-20-088. Ánh xạ chưa đủ trả ERR-20-042; PH-18 chạy chuyển thử và báo qua API-20-167.',
-    98: 'Phát EVT-20-10, gọi PH-18 `POST /api/ops/v1/merge-transfers` cho từng phân hệ; kế hoạch sang `TRANSFERRING`. Trả `202`.',
+    98: 'Phát EVT-20-10, gọi PH-18 `POST /api/ops/v1/merge-transfers` (API-18-150) cho từng phân hệ; kế hoạch sang `TRANSFERRING`. Trả `202`.',
     99: 'Tiến độ chuyển dữ liệu theo phân hệ: số xuất, nhập, kiểm đếm, xung đột. Kiểm đếm lệch ghi ERR-20-113.',
     102: 'Quyết định một xung đột; `RENAME_SOURCE` cần `newCode`.',
     103: 'Quyết định tối đa 200 xung đột cùng cách giải quyết; xung đột không quyết định được nằm ở `failed`.',

@@ -762,7 +762,7 @@ Tính năng: PH-16 · Báo cáo chỉ tiêu và sổ kiến trúc
   Kịch bản: US-16-041 dương · So sánh liên tenant ẩn danh cho quản trị nền tảng
     Biết ít nhất `16.compare.min-tenants` tenant có giá trị chính thức của chỉ tiêu trong kỳ
     Khi mở UI-16-18
-    Thì hệ thống trả `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`
+    Thì hệ thống trả `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`, và `rank`, `peerCount` của tenant gọi (ẩn danh, chỉ khi tenant cho phép so sánh)
     Và nhật ký kiểm toán ghi nhận thao tác
 
   @US-16-041 @FR-16-041 @C @âm

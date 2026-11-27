@@ -2303,6 +2303,8 @@ Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS trong luồn
 
 ### 8.3. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu khác; các đề nghị dưới đây dành cho chủ tài liệu. Bảy đề nghị đầu ghi chỗ FRS 0.1 còn thiếu hoặc chưa rõ khi viết use case (mã ĐN-UC), ba đề nghị sau dành cho tập khác.
 
 | Mã | Đối tượng | Đề nghị | Nguồn |

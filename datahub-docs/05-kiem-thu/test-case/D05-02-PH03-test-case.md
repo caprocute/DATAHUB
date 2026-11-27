@@ -3856,6 +3856,8 @@ Chạy các lệnh từ thư mục `datahub-docs/05-kiem-thu/test-case/`.
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 | Tài liệu | Đề nghị |
 |---|---|
 | D00-04 §2 | Cập nhật cột "Tài liệu" của PH-03 thành "đủ bảy tập 0.1" khi cả bảy tập đã duyệt; chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để cập nhật dải mã TS, TC của PH-03 |

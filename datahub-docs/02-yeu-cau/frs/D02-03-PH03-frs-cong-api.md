@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH03
 ten: Đặc tả yêu cầu chức năng phân hệ PH-03 Cổng API
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-connect và gateway, cán bộ ATTT, kiểm thử viên
 phan_he: PH-03
@@ -273,12 +273,14 @@ Chuỗi chốt kiểm soát được sắp theo nguyên tắc chi phí tăng d�
 | 6 | Kiểm tra thu hồi | 018 | Token đã thu hồi |
 | 7 | Đăng ký sử dụng, phương thức bảo mật theo gói, phạm vi, đường dẫn | 015…017, 020 | HTTT chưa đăng ký, thiếu phạm vi |
 | 8 | Hạn mức consumer, hạn ngạch, hạn mức tenant | 021…026 | Lạm dụng, hàng xóm ồn ào |
-| 9 | OPA | 019 | Truy cập ngoài chính sách |
-| 10 | Kiểm tra lược đồ yêu cầu | 009 | Yêu cầu sai cấu trúc |
+| 9 | Kiểm tra lược đồ yêu cầu | 009 | Yêu cầu sai cấu trúc |
+| 10 | OPA | 019 | Truy cập ngoài chính sách |
 | 11 | Định tuyến, cân bằng tải, ngắt mạch | 028…031 | Backend hỏng |
 | 12 | Ghi siêu dữ liệu, chỉ số, vết | 050, 052 | Không loại bỏ, phục vụ truy vết |
 
 : Thứ tự các chốt kiểm soát trong một lượt gọi
+
+Kiểm tra lược đồ yêu cầu (chốt 9) chạy trước OPA (chốt 10) vì plugin kiểm tra lược đồ chạy ở pha `rewrite` còn plugin OPA chạy ở pha `access` của APISIX (D03-02-PH03 §4.1).
 
 Nếu đảo thứ tự, ví dụ đặt xác minh token trước giới hạn theo IP, thì mọi yêu cầu độc hại vẫn phải qua bước mật mã tốn kém trước khi bị chặn.
 
@@ -412,12 +414,17 @@ Thực thể ở mức logic; kiểu và ràng buộc chi tiết ở D03-03-PH03
 | EN-03-07 | Ngoại lệ luật WAF | `exceptionId`, `routeCode`, `ruleId`, `reason`, `requestedBy`, `approvedBy`, `expiresAt`, `state` | Mục 4.4 |
 | EN-03-08 | Luật vá ảo | `patchId`, `ruleText`, `appliesTo`, `reason`, `expiresAt`, `state` | |
 | EN-03-09 | Ảnh chụp cấu hình | `snapshotVersion`, `scope`, `contentHash`, `signature`, `builtFrom` (danh sách phiên bản nguồn), `state` | Mục 4.5; nội dung ở Git và bucket, bảng chỉ giữ siêu dữ liệu |
-| EN-03-10 | Nút gateway | `nodeId`, `gate` (`EXT`, `INT`), `site`, `runningVersion`, `lastSeenAt`, `syncState` | Cập nhật từ chỉ số, không do nút gọi về |
+| EN-03-10 | Nút gateway | `nodeId`, `gate` (`EXT`, `INT`), `site`, `runningVersion`, `lastSeenAt`, `syncState` | Cập nhật từ chỉ số, không do nút gọi về; thực thể suy ra từ chỉ số, không có bảng ở CSDL |
 | EN-03-11 | Chứng thư biên | `certCode`, `subject`, `hosts[]`, `notAfter`, `issuer`, `state` | Khóa riêng ở OpenBao, không ở bảng |
 | EN-03-12 | Lệnh tạm ngừng khẩn cấp | `blockId`, `targetType` (`ROUTE`, `CONSUMER`), `targetCode`, `reason`, `createdBy`, `liftedAt` | |
 | EN-03-13 | Chuyển tiếp tenant sáp nhập | `redirectId`, `fromTenant`, `toTenant`, `startAt`, `endAt`, `state` | Mặc định 180 ngày |
 | EN-03-14 | Địa chỉ bị chặn | `blockId`, `cidr`, `source` (`AUTO`, `MANUAL`), `expiresAt`, `reason` | |
 | EN-03-15 | Yêu cầu thay đổi gateway | `requestId`, `changeType`, `payload`, `requestedBy`, `decidedBy`, `state` | Dùng cho bốn mắt |
+| EN-03-16 | Host cửa vào | `hostId`, `hostPattern`, `purpose`, `state` | Gắn một host với đúng một tenant (BR-03-026), không dùng lại host đã gỡ (BR-03-029); bảng `edge_host` |
+| EN-03-17 | Bản chiếu đăng ký sử dụng | `consumerCode`, `routeCode`, `planPolicyCode`, `state`, `validFrom`, `validTo` | Nguồn là PH-02; gateway chỉ cho consumer có đăng ký hiệu lực đi qua (FR-03-016); bảng `subscription_ref` |
+| EN-03-18 | Thiết lập mẫu chính sách | `templateCode`, `templateVersion`, `enabled`, `params` | Bật, tắt, tham số hóa mẫu được duyệt sẵn theo tenant (FR-03-048); không có đường tải plugin của tenant; bảng `policy_template_setting` |
+| EN-03-19 | CA tin cậy cho mTLS | `caCode`, `subject`, `fingerprint`, `notAfter`, `crlUrl` | Chỉ chứa chứng thư công khai của CA (FR-03-002, FR-03-049); bảng `client_ca` |
+| EN-03-20 | Ngoại lệ TLS 1.2 | `hostId`, `reason`, `state`, `expiresAt` | Hạn tối đa 180 ngày, PA tạo, không bao giờ dưới TLS 1.2 (FR-03-001, BR-03-003); bảng `tls_exception` |
 
 : Thực thể logic của PH-03
 
@@ -777,7 +784,7 @@ flowchart TB
 | `gw.ip.apiReqPerSecond` | 200 | 20…2.000 | Giả định: bốn lần mức giao diện vì HTTT máy dùng chung địa chỉ sau NAT; chỉnh theo số liệu thật (Q03-05) |
 | `gw.ip.burst` | 2 lần mức mỗi giây | 1…10 lần | Dung sai đột biến ngắn |
 | `gw.ip.trustedCidrs` | Dải bộ giám sát và NDXP của tenant | Danh sách CIDR | Do SO duyệt, ghi kiểm toán |
-| `gw.ip.headerTimeoutSeconds` / `gw.ip.bodyTimeoutSeconds` | 10 / 30 | 5…60 | Chống kết nối chậm |
+| `gw.ip.headerTimeoutSeconds` / `gw.ip.bodyTimeoutSeconds` | 10 / 30 | 5…60 | Chống kết nối chậm; có hiệu lực ở mức nhóm cửa vào (`apisix-ext`, `apisix-int`), không theo từng route |
 
 : Tham số giới hạn theo địa chỉ nguồn
 
@@ -1978,7 +1985,7 @@ flowchart TB
 
 **Kích hoạt.** Lệnh tới Valkey quá 50 ms hoặc lỗi kết nối.
 
-**Đầu vào.** Trạng thái kết nối Valkey; số bản sao APISIX đang chạy; `gw.degrade.localDivisorMode` (mặc định `REPLICAS`).
+**Đầu vào.** Trạng thái kết nối Valkey; số bản sao APISIX đang chạy (lấy từ `EndpointSlice` hoặc từ giá trị cấu hình khi không đọc được); `gw.degrade.localDivisorMode` (mặc định `REPLICAS`).
 
 **Luồng xử lý chính.**
 
@@ -2600,7 +2607,7 @@ flowchart TB
 2. Hệ thống kiểm tra route đủ điều kiện: có lược đồ, có chính sách OPA, bắt buộc xác thực (không `KEYLESS` trừ dữ liệu mở), WAF chế độ `BLOCK` ở PROD (không đủ: ERR-03-011).
 3. Hệ thống tạo yêu cầu thay đổi chờ SO duyệt; người đề nghị không tự duyệt (ERR-03-008).
 4. SO duyệt hoặc từ chối kèm ý kiến.
-5. Được duyệt thì ảnh chụp mới gắn route vào nhóm `apisix-ext`; nút `apisix-ext` nạp route và áp chuỗi chốt đầy đủ, `ip-restriction` theo `ipAllowCidrs`.
+5. Được duyệt thì ảnh chụp mới gắn route vào nhóm `apisix-ext`; nút `apisix-ext` nạp route và áp các chốt ở biên (TLS, chặn địa chỉ, WAF, giới hạn thân, `ip-restriction` theo `ipAllowCidrs`) rồi chuyển lượt gọi sang `apisix-int`, nơi áp phần còn lại của chuỗi chốt (xác thực, thu hồi, hạn mức, OPA, định tuyến).
 6. Đưa route về `INT` (thu hồi cửa ngoài) có hiệu lực ngay, không cần duyệt lại (giảm bề mặt tấn công).
 
 **Luồng thay thế.** Callback của nhà cung cấp thanh toán (PH-19) dùng mẫu route `EXT` có sẵn: giới hạn theo dải nguồn đã công bố, xác minh chữ ký ở DU (SEC-48), hạn mức riêng.
@@ -3948,7 +3955,7 @@ Tham số chỉnh qua FR-03-056 (trừ các khóa ghi chú "có bốn mắt" đ�
 | `gw.ip.apiReqPerSecond` | 200 | 20…2.000 | Yêu cầu/giây/IP cho API máy (giả định, Q03-05) |
 | `gw.ip.burst` | 2 | 1…10 | Hệ số dung sai đột biến theo IP |
 | `gw.ip.trustedCidrs` | dải giám sát và NDXP | Danh sách CIDR | Địa chỉ miễn giới hạn theo IP; SO duyệt |
-| `gw.ip.headerTimeoutSeconds`, `gw.ip.bodyTimeoutSeconds` | 10, 30 | 5…60 | Thời hạn đọc tiêu đề, thân (chống kết nối chậm) |
+| `gw.ip.headerTimeoutSeconds`, `gw.ip.bodyTimeoutSeconds` | 10, 30 | 5…60 | Thời hạn đọc tiêu đề, thân (chống kết nối chậm); có hiệu lực ở mức nhóm cửa vào |
 | `gw.ip.autoBlock.threshold` | 10 | 3…100 | Số lần vi phạm trong 60 giây để tự chặn (FR-03-004) |
 | `gw.ip.autoBlock.minutes` | 15 | 1…1.440 | Thời gian chặn tự động |
 | `gw.body.maxBytes` | 1 MiB | 1 KiB…10 MiB | Kích thước thân tối đa mỗi route (FR-03-009) |
@@ -4079,6 +4086,10 @@ Mỗi mã lỗi mà người dùng quản trị có thể gặp trên màn hình
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
+| ERR-03-001 | "Không tìm thấy {đối tượng} {mã}. Có thể đối tượng đã bị gỡ hoặc thuộc tỉnh khác." | Trang kết quả thay cho nội dung |
+| ERR-03-002 | "Mã {mã} đã được dùng. Chọn mã khác." | Dưới trường mã |
+| ERR-03-003 | "Dữ liệu chưa hợp lệ: {n} lỗi. Xem các trường được đánh dấu." | Hộp lỗi đầu biểu mẫu, lỗi tại từng trường |
+| ERR-03-004 | "{Người} vừa cập nhật {đối tượng} lúc {giờ}. Xem khác biệt rồi tải bản mới nhất hoặc ghi đè." | Hộp thoại so sánh khác biệt |
 | ERR-03-005 | "Cấu hình gateway không hợp lệ: {n} lỗi. Xem danh sách bên dưới." | Hộp lỗi đầu trang, danh sách lỗi dưới |
 | ERR-03-006 | "Đang có một lần tổng hợp hoặc phát cấu hình cho tỉnh này. Chờ lần đó hoàn tất." | Thông báo trên cùng |
 | ERR-03-007 | "Không thể quay lui về phiên bản {v}: {đối tượng} không còn hợp lệ." | Hộp thoại quay lui |
@@ -4096,6 +4107,8 @@ Mỗi mã lỗi mà người dùng quản trị có thể gặp trên màn hình
 | ERR-03-019 | "{Route|HTTT} {mã} đã ở trạng thái {trạng thái}." | Thông báo trên cùng |
 | ERR-03-020 | "Gói cấu hình hệ cũ không đọc được: {lý do}." | Dưới ô tải tệp |
 | ERR-03-021 | "Chỉ tra cứu tối đa 31 ngày mỗi lần và trong vòng 12 tháng gần nhất." | Dưới bộ chọn thời gian |
+| ERR-03-022 | "Bạn chưa có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh để được cấp quyền." | Thông báo nổi mức lỗi |
+| ERR-03-023 | "Route {mã} đang {trạng thái} nên chưa thực hiện được thao tác này." | Thông báo nổi mức cảnh báo |
 | ERR-03-024 | "Địa chỉ này thuộc danh sách tin cậy hoặc hạ tầng của nền tảng, không thể chặn." | Dưới trường địa chỉ |
 | ERR-03-025 | "Chỉ tạo được chuyển tiếp cho tỉnh đã sáp nhập và chưa có chuyển tiếp đang chạy." | Hộp thoại |
 | ERR-03-026 | "Chưa lấy được số liệu từ hệ thống giám sát. Thử lại sau." | Khung số liệu, thay cho số 0 |
@@ -4128,104 +4141,104 @@ Sự kiện nghiệp vụ của `dh-connect` đi qua outbox tới Kafka theo ADR
 
 Định nghĩa đầy đủ và ví dụ ở D03-04-PH03; nguồn chuẩn là OpenAPI của `dh-connect` có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`. Tiền tố `/api/gateway/v1`; tenant lấy từ token, không có trong đường dẫn. Hành động dùng `POST …/{mã}:{động-từ}`. Cột quyền: `read`, `admin`, `limit`, `waf-request`, `waf-approve`, `waf`, `operate`, `publish`, `approve`, `log-read` là `PERM-03-…`; `sync`, `revoke` là scope dịch vụ `gateway:…`.
 
-| Mã | Phương thức và đường dẫn | FR | Quyền |
-|---|---|---|---|
-| API-03-001 | `GET /routes` | 028 | read |
-| API-03-002 | `GET /routes/{routeCode}` | 009, 017, 028, 033, 034, 035 | read |
-| API-03-003 | `POST /routes/{routeCode}:stop` | 036 | operate |
-| API-03-004 | `POST /routes/{routeCode}:start` | 036 | operate |
-| API-03-005 | `GET /upstreams` | 029 | read |
-| API-03-006 | `GET /upstreams/{upstreamCode}` | 029, 030 | read |
-| API-03-007 | `GET /routes/{routeCode}/versions` | 035 | read |
-| API-03-008 | `PUT /routes/{routeCode}/exposure` | 038 | admin |
-| API-03-009 | `PUT /routes/{routeCode}/request-limits` | 009 | admin |
-| API-03-010 | `PUT /routes/{routeCode}/timeouts` | 031 | admin |
-| API-03-011 | `GET /consumers` | 046 | read |
-| API-03-012 | `GET /consumers/{consumerCode}` | 014, 016, 046 | read |
-| API-03-013 | `PUT /consumers/{consumerCode}` | 046 | sync |
-| API-03-014 | `PUT /consumers/{consumerCode}/credentials` | 046 | sync |
-| API-03-015 | `DELETE /consumers/{consumerCode}` | 046 | sync |
-| API-03-016 | `GET /consumers/{consumerCode}/credentials` | 002, 014 | read |
-| API-03-017 | `POST /consumers/{consumerCode}:suspend` | 047 | operate |
-| API-03-018 | `POST /consumers/{consumerCode}:resume` | 047 | operate |
-| API-03-019 | `POST /routes/{routeCode}:suspend` | 047 | operate |
-| API-03-020 | `POST /routes/{routeCode}:resume` | 047 | operate |
-| API-03-021 | `GET /plan-policies` | 015, 016, 020, 021 | read |
-| API-03-022 | `GET /plan-policies/{policyCode}` | 015, 017, 020, 021 | read |
-| API-03-023 | `GET /tenant-limits` | 023 | read |
-| API-03-024 | `PUT /tenant-limits` | 023 | limit |
-| API-03-025 | `GET /rate-limit-overrides` | 024, 025 | read |
-| API-03-026 | `POST /rate-limit-overrides` | 024 | limit |
-| API-03-027 | `PUT /rate-limit-overrides/{overrideId}` | 024 | limit |
-| API-03-028 | `DELETE /rate-limit-overrides/{overrideId}` | 024 | limit |
-| API-03-029 | `GET /consumers/{consumerCode}/usage` | 021, 022, 027 | read |
-| API-03-030 | `GET /quota-alerts` | 022 | read |
-| API-03-031 | `GET /edge/tls-profile` | 001 | read |
-| API-03-032 | `GET /tls-exceptions` | 001 | read |
-| API-03-033 | `POST /tls-exceptions` | 001 | admin |
-| API-03-034 | `POST /tls-exceptions/{exceptionId}:revoke` | 001 | admin |
-| API-03-035 | `GET /edge/client-ca-bundles` | 002, 049 | read |
-| API-03-036 | `GET /ip-blocks` | 003, 004 | read |
-| API-03-037 | `POST /ip-blocks` | 004 | waf |
-| API-03-038 | `DELETE /ip-blocks/{blockId}` | 004 | waf |
-| API-03-039 | `GET /waf/events` | 005 | waf-request |
-| API-03-040 | `GET /waf/mode` | 006 | read |
-| API-03-041 | `PUT /waf/mode` | 006 | waf |
-| API-03-042 | `GET /waf/exceptions` | 007 | waf-request |
-| API-03-043 | `POST /waf/exceptions` | 007 | waf-request |
-| API-03-044 | `POST /waf/exceptions/{exceptionId}:approve` | 007 | waf-approve |
-| API-03-045 | `POST /waf/exceptions/{exceptionId}:reject` | 007 | waf-approve |
-| API-03-046 | `POST /waf/exceptions/{exceptionId}:revoke` | 007 | waf |
-| API-03-047 | `GET /waf/virtual-patches` | 008 | waf-request |
-| API-03-048 | `POST /waf/virtual-patches` | 008 | waf |
-| API-03-049 | `POST /waf/virtual-patches/{patchId}:retire` | 008 | waf |
-| API-03-050 | `GET /cors-policies` | 010 | read |
-| API-03-051 | `PUT /cors-policies/{routeCode}` | 010 | admin |
-| API-03-052 | `GET /auth/jwks-status` | 012 | read |
-| API-03-053 | `POST /revocations` | 018 | revoke |
-| API-03-054 | `GET /revocations` | 018 | read |
-| API-03-055 | `GET /authorization-bindings` | 019 | read |
-| API-03-056 | `GET /snapshots` | 039, 044 | read |
-| API-03-057 | `GET /snapshots/{version}` | 039, 041 | read |
-| API-03-058 | `POST /snapshots:validate` | 040 | publish |
-| API-03-059 | `POST /snapshots:build` | 039, 040, 041 | publish |
-| API-03-060 | `POST /snapshots/{version}:publish` | 042 | publish |
-| API-03-061 | `POST /snapshots/{version}:rollback` | 044 | operate |
-| API-03-062 | `GET /snapshots/{version}/diff` | 044 | read |
-| API-03-063 | `GET /nodes` | 043, 045 | read |
-| API-03-064 | `GET /nodes/{nodeId}` | 043, 045 | read |
-| API-03-065 | `GET /policy-templates` | 020, 048 | read |
-| API-03-066 | `GET /policy-templates/{templateCode}` | 015, 048 | read |
-| API-03-067 | `PUT /policy-templates/{templateCode}/enablement` | 048 | admin |
-| API-03-068 | `GET /certificates` | 049 | read |
-| API-03-069 | `GET /certificates/{certCode}` | 049 | read |
-| API-03-070 | `POST /certificates/{certCode}:renew` | 049 | operate |
-| API-03-071 | `GET /change-requests` | 006, 023, 038 | read |
-| API-03-072 | `POST /change-requests/{requestId}:approve` | 006, 023, 038 | approve |
-| API-03-073 | `POST /change-requests/{requestId}:reject` | 006, 023, 038 | approve |
-| API-03-074 | `GET /access-logs` | 050, 051 | log-read |
-| API-03-075 | `GET /access-logs/{logId}` | 051 | log-read |
-| API-03-076 | `POST /access-logs:export` | 051 | log-read |
-| API-03-077 | `GET /overview` | 026, 052, 055 | read |
-| API-03-078 | `GET /overview/top-consumers` | 055 | read |
-| API-03-079 | `GET /overview/top-routes` | 055 | read |
-| API-03-080 | `GET /synthetic-checks` | 053 | read |
-| API-03-081 | `POST /synthetic-checks` | 053 | admin |
-| API-03-082 | `PUT /synthetic-checks/{checkId}` | 053 | admin |
-| API-03-083 | `DELETE /synthetic-checks/{checkId}` | 053 | admin |
-| API-03-084 | `GET /security-alerts` | 054 | read |
-| API-03-085 | `POST /security-alerts/{alertId}:acknowledge` | 054 | operate |
-| API-03-086 | `GET /settings` | 003, 011, 056 | read |
-| API-03-087 | `PUT /settings` | 003, 011, 056 | admin |
-| API-03-088 | `POST /simulations` | 057 | admin |
-| API-03-089 | `GET /reports/usage` | 058 | read |
-| API-03-090 | `POST /reports/usage:export` | 058 | log-read |
-| API-03-091 | `POST /migrations/legacy-gateway:import` | 059 | admin |
-| API-03-092 | `GET /migrations/legacy-gateway/{importId}` | 059 | admin |
-| API-03-093 | `POST /migrations/legacy-gateway/{importId}:apply` | 059 | admin |
-| API-03-094 | `GET /tenant-redirects` | 037 | read |
-| API-03-095 | `POST /tenant-redirects` | 037 | admin |
-| API-03-096 | `POST /tenant-redirects/{redirectId}:end` | 037 | admin |
+| Mã | Phương thức và đường dẫn | FR | Quyền | Mã thành công |
+|---|---|---|---|---|
+| API-03-001 | `GET /routes` | 028 | read | 200 |
+| API-03-002 | `GET /routes/{routeCode}` | 009, 017, 028, 033, 034, 035 | read | 200 |
+| API-03-003 | `POST /routes/{routeCode}:stop` | 036 | operate | 200 |
+| API-03-004 | `POST /routes/{routeCode}:start` | 036 | operate | 200 |
+| API-03-005 | `GET /upstreams` | 029 | read | 200 |
+| API-03-006 | `GET /upstreams/{upstreamCode}` | 029, 030 | read | 200 |
+| API-03-007 | `GET /routes/{routeCode}/versions` | 035 | read | 200 |
+| API-03-008 | `PUT /routes/{routeCode}/exposure` | 038 | admin | 200 (202) |
+| API-03-009 | `PUT /routes/{routeCode}/request-limits` | 009 | admin | 200 |
+| API-03-010 | `PUT /routes/{routeCode}/timeouts` | 031 | admin | 200 |
+| API-03-011 | `GET /consumers` | 046 | read | 200 |
+| API-03-012 | `GET /consumers/{consumerCode}` | 014, 016, 046 | read | 200 |
+| API-03-013 | `PUT /consumers/{consumerCode}` | 046 | sync | 200 (201) |
+| API-03-014 | `PUT /consumers/{consumerCode}/credentials` | 046 | sync | 200 |
+| API-03-015 | `DELETE /consumers/{consumerCode}` | 046 | sync | 204 |
+| API-03-016 | `GET /consumers/{consumerCode}/credentials` | 002, 014 | read | 200 |
+| API-03-017 | `POST /consumers/{consumerCode}:suspend` | 047 | operate | 200 |
+| API-03-018 | `POST /consumers/{consumerCode}:resume` | 047 | operate | 200 |
+| API-03-019 | `POST /routes/{routeCode}:suspend` | 047 | operate | 200 |
+| API-03-020 | `POST /routes/{routeCode}:resume` | 047 | operate | 200 |
+| API-03-021 | `GET /plan-policies` | 015, 016, 020, 021 | read | 200 |
+| API-03-022 | `GET /plan-policies/{policyCode}` | 015, 017, 020, 021 | read | 200 |
+| API-03-023 | `GET /tenant-limits` | 023 | read | 200 |
+| API-03-024 | `PUT /tenant-limits` | 023 | limit | 200 (202) |
+| API-03-025 | `GET /rate-limit-overrides` | 024, 025 | read | 200 |
+| API-03-026 | `POST /rate-limit-overrides` | 024 | limit | 201 |
+| API-03-027 | `PUT /rate-limit-overrides/{overrideId}` | 024 | limit | 200 |
+| API-03-028 | `DELETE /rate-limit-overrides/{overrideId}` | 024 | limit | 204 |
+| API-03-029 | `GET /consumers/{consumerCode}/usage` | 021, 022, 027 | read | 200 |
+| API-03-030 | `GET /quota-alerts` | 022 | read | 200 |
+| API-03-031 | `GET /edge/tls-profile` | 001 | read | 200 |
+| API-03-032 | `GET /tls-exceptions` | 001 | read | 200 |
+| API-03-033 | `POST /tls-exceptions` | 001 | admin | 201 |
+| API-03-034 | `POST /tls-exceptions/{exceptionId}:revoke` | 001 | admin | 200 |
+| API-03-035 | `GET /edge/client-ca-bundles` | 002, 049 | read | 200 |
+| API-03-036 | `GET /ip-blocks` | 003, 004 | read | 200 |
+| API-03-037 | `POST /ip-blocks` | 004 | waf | 201 |
+| API-03-038 | `DELETE /ip-blocks/{blockId}` | 004 | waf | 204 |
+| API-03-039 | `GET /waf/events` | 005 | waf-request | 200 |
+| API-03-040 | `GET /waf/mode` | 006 | read | 200 |
+| API-03-041 | `PUT /waf/mode` | 006 | waf | 200 (202) |
+| API-03-042 | `GET /waf/exceptions` | 007 | waf-request | 200 |
+| API-03-043 | `POST /waf/exceptions` | 007 | waf-request | 201 |
+| API-03-044 | `POST /waf/exceptions/{exceptionId}:approve` | 007 | waf-approve | 200 |
+| API-03-045 | `POST /waf/exceptions/{exceptionId}:reject` | 007 | waf-approve | 200 |
+| API-03-046 | `POST /waf/exceptions/{exceptionId}:revoke` | 007 | waf | 200 |
+| API-03-047 | `GET /waf/virtual-patches` | 008 | waf-request | 200 |
+| API-03-048 | `POST /waf/virtual-patches` | 008 | waf | 201 |
+| API-03-049 | `POST /waf/virtual-patches/{patchId}:retire` | 008 | waf | 200 |
+| API-03-050 | `GET /cors-policies` | 010 | read | 200 |
+| API-03-051 | `PUT /cors-policies/{routeCode}` | 010 | admin | 200 |
+| API-03-052 | `GET /auth/jwks-status` | 012 | read | 200 |
+| API-03-053 | `POST /revocations` | 018 | revoke | 201 |
+| API-03-054 | `GET /revocations` | 018 | read | 200 |
+| API-03-055 | `GET /authorization-bindings` | 019 | read | 200 |
+| API-03-056 | `GET /snapshots` | 039, 044 | read | 200 |
+| API-03-057 | `GET /snapshots/{version}` | 039, 041 | read | 200 |
+| API-03-058 | `POST /snapshots:validate` | 040 | publish | 200 |
+| API-03-059 | `POST /snapshots:build` | 039, 040, 041 | publish | 201 (200) |
+| API-03-060 | `POST /snapshots/{version}:publish` | 042 | publish | 200 |
+| API-03-061 | `POST /snapshots/{version}:rollback` | 044 | operate | 201 |
+| API-03-062 | `GET /snapshots/{version}/diff` | 044 | read | 200 |
+| API-03-063 | `GET /nodes` | 043, 045 | read | 200 |
+| API-03-064 | `GET /nodes/{nodeId}` | 043, 045 | read | 200 |
+| API-03-065 | `GET /policy-templates` | 020, 048 | read | 200 |
+| API-03-066 | `GET /policy-templates/{templateCode}` | 015, 048 | read | 200 |
+| API-03-067 | `PUT /policy-templates/{templateCode}/enablement` | 048 | admin | 200 |
+| API-03-068 | `GET /certificates` | 049 | read | 200 |
+| API-03-069 | `GET /certificates/{certCode}` | 049 | read | 200 |
+| API-03-070 | `POST /certificates/{certCode}:renew` | 049 | operate | 202 |
+| API-03-071 | `GET /change-requests` | 006, 023, 038 | read | 200 |
+| API-03-072 | `POST /change-requests/{requestId}:approve` | 006, 023, 038 | approve | 200 |
+| API-03-073 | `POST /change-requests/{requestId}:reject` | 006, 023, 038 | approve | 200 |
+| API-03-074 | `GET /access-logs` | 050, 051 | log-read | 200 |
+| API-03-075 | `GET /access-logs/{logId}` | 051 | log-read | 200 |
+| API-03-076 | `POST /access-logs:export` | 051 | log-read | 202 |
+| API-03-077 | `GET /overview` | 026, 052, 055 | read | 200 |
+| API-03-078 | `GET /overview/top-consumers` | 055 | read | 200 |
+| API-03-079 | `GET /overview/top-routes` | 055 | read | 200 |
+| API-03-080 | `GET /synthetic-checks` | 053 | read | 200 |
+| API-03-081 | `POST /synthetic-checks` | 053 | admin | 201 |
+| API-03-082 | `PUT /synthetic-checks/{checkId}` | 053 | admin | 200 |
+| API-03-083 | `DELETE /synthetic-checks/{checkId}` | 053 | admin | 204 |
+| API-03-084 | `GET /security-alerts` | 054 | read | 200 |
+| API-03-085 | `POST /security-alerts/{alertId}:acknowledge` | 054 | operate | 200 |
+| API-03-086 | `GET /settings` | 003, 011, 056 | read | 200 |
+| API-03-087 | `PUT /settings` | 003, 011, 056 | admin | 200 (202) |
+| API-03-088 | `POST /simulations` | 057 | admin | 200 |
+| API-03-089 | `GET /reports/usage` | 058 | read | 200 |
+| API-03-090 | `POST /reports/usage:export` | 058 | log-read | 202 |
+| API-03-091 | `POST /migrations/legacy-gateway:import` | 059 | admin | 202 |
+| API-03-092 | `GET /migrations/legacy-gateway/{importId}` | 059 | admin | 200 |
+| API-03-093 | `POST /migrations/legacy-gateway/{importId}:apply` | 059 | admin | 200 |
+| API-03-094 | `GET /tenant-redirects` | 037 | read | 200 |
+| API-03-095 | `POST /tenant-redirects` | 037 | admin | 201 |
+| API-03-096 | `POST /tenant-redirects/{redirectId}:end` | 037 | admin | 200 |
 
 : Danh mục API của PH-03
 
@@ -4520,6 +4533,8 @@ Các kịch bản kiểm thử chấp nhận cũ `AT-03-001…032` chuyển sang
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung; các việc dưới đây để đợt đồng bộ cuối thực hiện (hoặc các luồng phân hệ khác tiếp nhận).
 
 | Tài liệu | Đề nghị |
@@ -4545,4 +4560,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo chuẩn kết hợp: 59 FR (47 M, 11 S, 1 C) đặc tả 17 mục, 30 BR, 27 NFR, 18 UI, 96 API, 12 sự kiện, 57 mã lỗi; ma trận truy vết 9 mục LGC của D00-03 phần A và ánh xạ đủ 17 FR, 28 NFR, 12 BR của SRS PH-03 cũ; điều chỉnh theo ADR-005 bản 0.2 (APISIX khai báo không etcd), ADR-033, SEC-24, SEC-25, SEC-80, SEC-86; 12 câu hỏi mở Q03-01…12 |
-
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm EN-03-16…20, thứ tự chốt 9 và 10, FR-03-038 và 026, §8.2 gw.ip.*, câu ERR-03-001…004, 022, 023 ở §9.2, cột mã thành công ở §9.4 |

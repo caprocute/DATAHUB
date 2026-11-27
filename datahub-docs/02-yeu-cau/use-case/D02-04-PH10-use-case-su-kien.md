@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH10
 ten: Đặc tả use case phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-10
@@ -83,7 +83,7 @@ Bảng dưới liệt kê các tài liệu người đọc cần mở song song 
 |---|---|
 | [D00-01 Thuật ngữ và quy ước](../../00-chung/D00-01-thuat-ngu-quy-uoc.md) | Hệ mã truy vết, kiểu T-*, mức ưu tiên M, S, C |
 | [D02-01 BRD](../D02-01-brd.md) | Quy trình BP-01…09, yêu cầu nghiệp vụ REQ |
-| [D02-03-PH10 FRS](../frs/D02-03-PH10-frs-su-kien.md) | FR-10, BR-10, mã lỗi §8.1, sự kiện §8.2, API §8.3, Phụ lục A enum và trường |
+| [D02-03-PH10 FRS](../frs/D02-03-PH10-frs-su-kien.md) | FR-10, BR-10, mã lỗi §9.1, sự kiện §9.3, API §9.4, Phụ lục A enum và trường |
 | [D02-08 Ma trận phân quyền](../D02-08-ma-tran-phan-quyen.md) | Vai trò, `PERM-10-*`, scope máy |
 | [D03-02-PH10 SDD](../../03-thiet-ke/sdd/D03-02-PH10-sdd-su-kien.md) | Thành phần, bộ đối soát, bộ giao nhận, cầu nối |
 | [D03-03-PH10 CSDL](../../03-thiet-ke/csdl/D03-03-PH10-csdl-su-kien.md) | Bảng `ph10_event`, trường lưu trạng thái |
@@ -890,7 +890,7 @@ Use case phục vụ ứng phó sự cố ATTT và đồng bộ trạng thái HT
 
 **Luồng thay thế.**
 
-- **1a. PH-01 tạm ngừng HTTT.** PH-10 nhận sự kiện đổi trạng thái HTTT (giả định `t68.connect.system.state-changed.v1`, Q10-17), trong ≤ 60 giây đưa mọi bên phát, bên nhận gắn `HT-DKKD` sang `SUSPENDED` với `suspendSource` `PH01`, lý do "Theo PH-01"; tiếp bước 2. Khi HTTT `ACTIVE` lại, hệ thống chỉ tiếp tục các bên do PH-01 tạm ngừng, không tiếp tục bên do SO tạm ngừng.
+- **1a. PH-01 tạm ngừng HTTT.** PH-10 nhận sự kiện đổi trạng thái HTTT (EVT-01-03 `t68.connect.system.state-changed.v1` của PH-01), trong ≤ 60 giây đưa mọi bên phát, bên nhận gắn `HT-DKKD` sang `SUSPENDED` với `suspendSource` `PH01`, lý do "Theo PH-01"; tiếp bước 2. Khi HTTT `ACTIVE` lại, hệ thống chỉ tiếp tục các bên do PH-01 tạm ngừng, không tiếp tục bên do SO tạm ngừng.
 - **1b. PH-01 thu hồi kết nạp.** Hệ thống ngừng dùng các bên gắn HTTT như nhánh 4b.
 - **1c. Luồng ngừng ở PH-04.** Nhận EVT-04-09 `t68.integration.flow.retired.v1`: thu hồi publication, subscription của bên `FLOW` tương ứng, xóa nhóm tiêu thụ sau khi luồng dừng hẳn.
 - **1d. Bên nhận.** Tạm ngừng `ht-thue` (API-10-041) đưa subscription sang `SUSPENDED`, bộ giao nhận dừng, phát EVT-10-09.
@@ -1809,8 +1809,8 @@ Mỗi DU nội bộ tự đăng ký topic sự kiện miền của mình theo c�
 **Luồng thay thế.**
 
 - **2a. Triển khai lại.** Bộ khai báo gọi lặp; PH-10 trả `200` cho topic đã có cùng cấu hình.
-- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…16) theo cùng cách.
-- **2c. Topic nền tảng.** Hà hoặc tài khoản dịch vụ nền tảng đăng ký `dh.integration.runtime.command.v1` thuộc tenant `COMMON`, artifact Apicurio `groupId = dh`.
+- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…16) theo cùng cách; DU của phân hệ miền đăng ký trọn bộ topic của mình (`t68.mdm.*`, `t68.dq.*`, `t68.bpm.*`, `t68.kpi.*`, `t68.obs.*`, `t68.portal.*`) ở lần triển khai đầu.
+- **2c. Topic nền tảng.** Hà hoặc tài khoản dịch vụ nền tảng đăng ký `dh.integration.runtime.command.v1` thuộc tenant `COMMON`, artifact Apicurio `groupId = dh`; sự kiện cấp nền tảng như `platform.tenant.created.v1` (EVT-20-01 của PH-20) đăng ký cùng cách, tiền tố `platform.`, `groupId = platform`.
 - **4a. PH-20 tạm ngừng tenant.** PH-10 chặn mọi lệnh ghi của tenant (ERR-10-039) và tạm ngừng publication, subscription theo quy trình PH-20.
 
 **Luồng ngoại lệ.**
@@ -1818,7 +1818,7 @@ Mỗi DU nội bộ tự đăng ký topic sự kiện miền của mình theo c�
 - **E1. DU không có trong danh sách Phụ lục A.2.12 (bước 2).** ERR-10-023 (422). Thông báo: "Dịch vụ nội bộ {mã} không có trong danh sách."
 - **E2. Tiền tố không khớp tenant (bước 2).** ERR-10-005 (422). Thông báo: "Tiền tố tenant của topic không khớp tenant đang làm việc."
 - **E3. Người dùng sửa cấu hình topic `SYSTEM` ngoài mô tả.** ERR-10-045 (422). Thông báo: "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa."
-- **E4. Người dùng đăng ký topic có tiền tố `dh.` (bước 2c).** ERR-10-004 (422). Thông báo: "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
+- **E4. Người dùng đăng ký topic có tiền tố `dh.` hoặc `platform.` (bước 2c).** ERR-10-004 (422). Thông báo: "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
 
 **Quy tắc áp dụng.** BR-10-001, 002, 018, 030, 031.
 
@@ -2065,7 +2065,9 @@ Tập này không tạo mã FR, BR, API, ERR, EVT, UI, TS mới. Mã của tập
 
 ### 8.2. Đề nghị bổ sung cho FRS
 
-Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
+Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §15); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
 
 Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tên chuẩn; tập này dùng đúng chữ trong thân FR và đề nghị đưa vào Phụ lục A để các tập sau (API, màn hình, ca kiểm thử) dùng thống nhất.
 
@@ -2084,6 +2086,8 @@ Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tê
 : Đề nghị bổ sung cho FRS đã được xử lý
 
 ### 8.3. Đề nghị đồng bộ cho tập màn hình và API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Câu thông báo dưới đây đã thống nhất với D02-03-PH10 FRS §9.2 trong đợt đồng bộ ngày 26/11/2026. D03-06-PH10 §5.3 giữ câu cho ERR-10-001…054 và nơi hiển thị cho người vận hành của mã data plane; bảng giữ lại để truy vết đề nghị đưa các câu này vào `detail` mẫu của D03-04-PH10.
 
@@ -2123,3 +2127,5 @@ Ngoài ra, ERR-10-007 và ERR-10-044 ở §5.3 của tập màn hình chỉ dẫ
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC, căn cứ FRS D02-03-PH10 0.1 và Phụ lục A |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo FRS 0.2: ERR-10-051 (cấp độ ATTT), ERR-10-052 (tạm dừng `INTERNAL`), EVT-10-16, API-10-091; §8.2 đã xử lý |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo chuẩn kết hợp K-UC, K-TRINH-BAY: Giới thiệu đủ sáu mục, mẫu 15 mục và quy ước đọc, tác nhân có viết tắt; sơ đồ use case tổng chia năm hình theo nhóm có chú thích; bảng truy vết thêm kịch bản kiểm thử và mã quy trình BP; cả 28 use case chuyển sang khối đặc tả 15 mục có đoạn bối cảnh, truy vết, màn hình, API; luồng ngoại lệ kèm mã HTTP và câu thông báo theo D03-06-PH10 §5.3, §18.4; giữ nguyên mọi bước, dữ liệu ví dụ và sơ đồ trình tự; thêm §8.3 đề nghị đồng bộ câu thông báo |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Q10-17 chốt EVT-01-03; topic nền tảng `platform.` và topic miền đăng ký ở UC-10-24 |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đổi dẫn chiếu FRS PH-10 theo số chương mới của bản 0.4 (§9.1, §9.3, §9.4, §15) |

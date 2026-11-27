@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH07
 ten: Thiết kế chi tiết phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Trưởng nhóm PH-07, Lập trình viên L-DATA, Kiểm thử viên, Nhóm vận hành
 phan_he: PH-07
@@ -366,6 +366,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import vn.datahub.data.rdm.api.dto.*;
 
 /**
@@ -405,6 +406,13 @@ public interface RdmLookupApi {
 
   /** Phiên bản hiệu lực tại thời điểm (dùng làm ETag, khóa đệm của bên gọi). */
   Optional<VersionRef> effectiveVersion(String catalogCode, LocalDate at);
+
+  /**
+   * Ảnh chụp tập mã của một phiên bản đã phát hành, trả dạng luồng đọc từ ảnh chụp trên Garage
+   * (ADR-053), không nạp cả tập vào bộ nhớ. Bên gọi phải đóng luồng (try-with-resources).
+   * Dùng cho PH-08 dựng tập tham chiếu khi kiểm tra chất lượng (FR-07-028).
+   */
+  Stream<ItemView> snapshotItems(String catalogCode, VersionRef version);
 }
 ```
 
@@ -2234,18 +2242,18 @@ Chi tiết thiết kế:
 
 #### 4.11.1. Thành phần và ranh giới
 
-PH-07 không gọi thẳng NDXP. Mọi lời gọi đi qua adapter `NDXP_DMDC` của PH-14 (ADR-057), nơi giữ chứng thư số, khóa API, nhật ký kết nối với Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo NĐ 278/2025/NĐ-CP. `NdxpCatalogClient` là client REST nội bộ có ba thao tác, ứng với ba đường của adapter:
+PH-07 không gọi thẳng NDXP. Mọi lời gọi đi qua adapter `NDXP_DMDC` của PH-14 (ADR-057), nơi giữ chứng thư số, khóa API, nhật ký kết nối với Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo NĐ 278/2025/NĐ-CP. `NdxpCatalogClient` là client REST nội bộ có bốn thao tác (kèm đọc trạng thái đề xuất), ứng với các đường của cổng tiếp hợp ở D03-04-PH14 (API-14-079…083, tiền tố `/internal/national/v1`; token dịch vụ scope `national.catalog.read` cho thao tác đọc, `national.catalog.propose` cho đề xuất):
 
 | Thao tác | Đường adapter | Dùng ở | Thời gian chờ | Thử lại |
 |---|---|---|---|---|
-| `listRemoteCatalogs(page)` | `GET /internal/ndxp/dmdc/catalogs` | FR-07-038 (API-07-063) | 10 giây | 2 lần, lùi 1 giây và 3 giây |
-| `describe(remoteCode)` | `GET /internal/ndxp/dmdc/catalogs/{code}` | FR-07-035, 036 bước 2 | 10 giây | 2 lần |
-| `fetchItems(remoteCode, pageToken)` | `GET /internal/ndxp/dmdc/catalogs/{code}/items` | FR-07-036 bước 4 | 30 giây mỗi trang | 3 lần mỗi trang, lùi theo hàm mũ tới 30 giây |
-| `submitProposal(remoteCode, items)` | `POST /internal/ndxp/dmdc/catalogs/{code}/proposals` | FR-07-039 | 30 giây | Không thử lại tự động |
+| `listRemoteCatalogs(page)` | `GET /national-catalogs` (API-14-079) | FR-07-038 (API-07-063) | 10 giây | 2 lần, lùi 1 giây và 3 giây |
+| `describe(remoteCode)` | `GET /national-catalogs/{remoteCode}/structure` (API-14-080) | FR-07-035, 036 bước 2 | 10 giây | 2 lần |
+| `fetchItems(remoteCode, pageToken)` | `GET /national-catalogs/{remoteCode}/data` (API-14-081), tham số `ifVersionNot` | FR-07-036 bước 4 | 30 giây mỗi trang | 3 lần mỗi trang, lùi theo hàm mũ tới 30 giây |
+| `submitProposal(remoteCode, items)` | `POST /national-catalogs/{remoteCode}/proposals` (API-14-082, bắt buộc `Idempotency-Key`); trạng thái đề xuất đọc bằng `GET …/proposals/{proposalId}` (API-14-083) | FR-07-039 | 30 giây | Không thử lại tự động |
 
 : Thành phần và ranh giới
 
-Client chạy sau bộ ngắt mạch Resilience4j tên `ndxp` (§8.3). Phản hồi của adapter được ánh xạ: `404` thành ERR-07-028 với chi tiết "không tìm thấy danh mục trên nền tảng quốc gia"; `5xx`, hết thời gian chờ, mạch mở thành ERR-07-028 HTTP 502 ở API đồng bộ, và thành lần chạy `FAILED` ở tác vụ nền.
+Client chạy sau bộ ngắt mạch Resilience4j tên `ndxp` (§8.3). `fetchItems` truyền `ifVersionNot` bằng phiên bản nguồn đã đồng bộ gần nhất; cổng trả `304` thì lần chạy kết thúc `NO_CHANGE` mà không tải dữ liệu (trả lời Q07-40). Phản hồi của adapter được ánh xạ: `404` thành ERR-07-028 với chi tiết "không tìm thấy danh mục trên nền tảng quốc gia"; `5xx`, hết thời gian chờ, mạch mở thành ERR-07-028 HTTP 502 ở API đồng bộ, và thành lần chạy `FAILED` ở tác vụ nền.
 
 #### 4.11.2. Bộ lập lịch
 
@@ -2487,7 +2495,7 @@ Chi tiết thiết kế:
 
 Chi tiết thiết kế:
 
-Mọi thao tác ghi gọi `AuditRecorder.record(AuditEntry)` của thư viện chung; thư viện ghi bản ghi kiểm toán vào outbox của module trong cùng giao dịch, và Debezium chuyển tới PH-13. Nhờ vậy kiểm toán không mất khi thao tác đã cam kết và không mất khi PH-13 ngừng (NFR-07-015). Bản ghi có các trường của FR-00-041: tác nhân, tenant, thời điểm, hành động (`RDM_*`), đối tượng (`objectRef = rdm:{catalogCode}[:{versionNo}[:{itemCode}]]`), giá trị trước và sau (chỉ các trường thay đổi), địa chỉ IP, `trace_id`. Với thao tác lô, bản ghi tóm tắt kèm tệp khác biệt trên kho đối tượng `exports/audit/{auditId}.jsonl.gz`, không nhồi hàng nghìn thay đổi vào một bản ghi.
+Mọi thao tác ghi gọi `AuditRecorder.record(AuditEntry)` của thư viện chung; thư viện ghi bản ghi kiểm toán vào hộp thư đi kiểm toán `audit_outbox` của module trong cùng giao dịch, kèm bộ đếm `audit_emit_counter` cập nhật trong cùng giao dịch để PH-13 đối chiếu; `OutboxRelay` của `dh-audit` gửi tới PH-13 và chỉ đánh dấu đã xuất bản sau khi Kafka xác nhận (BR-13-004), không dùng Debezium cho bản ghi kiểm toán (Debezium vẫn dùng cho sự kiện miền EVT-07, ADR-042); nếu hồ sơ cần dùng Debezium cho kiểm toán thì đo tồn đọng bằng độ trễ replication slot. Nhờ vậy kiểm toán không mất khi thao tác đã cam kết và không mất khi PH-13 ngừng (NFR-07-015). Bản ghi có các trường của FR-00-041: tác nhân, tenant, thời điểm, hành động (`RDM_*`), đối tượng (`objectRef = rdm:{catalogCode}[:{versionNo}[:{itemCode}]]`), giá trị trước và sau (chỉ các trường thay đổi), địa chỉ IP, `trace_id`. Với thao tác lô, bản ghi tóm tắt kèm tệp khác biệt trên kho đối tượng `exports/audit/{auditId}.jsonl.gz`, không nhồi hàng nghìn thay đổi vào một bản ghi.
 
 `HistoryService` (API-07-072, FR-07-050) truy vấn PH-13 theo `objectRef` có tiền tố danh mục, nối với `version_review` của PH-07 theo thời gian, che giá trị của danh mục `RESTRICTED` theo quyền (§7.4). PH-13 không sẵn sàng thì trả ERR-07-047 kèm phần dữ liệu PH-07 và `partial = true`.
 
@@ -2560,7 +2568,7 @@ Chi tiết thiết kế:
 
 Chi tiết thiết kế:
 
-`AccessGrantService` hiện thực FR-07-052. Với danh mục `classification = RESTRICTED`, `RdmAuthorization.checkExploit(catalog, scope)` lấy `member_system_id` từ claim của token client do PH-01 gán khi cấp client (tên claim theo D02-08), tra cấp quyền hiệu lực trong bộ đệm L1 60 giây theo `(catalogId, memberSystemId)` và kiểm tra `scope` (`rdm.read`, `rdm.query`). Không có trả ERR-07-030. Cấp quyền quá `expires_at` tự hết tác dụng vì phép tra so với thời điểm hiện tại. PH-01 phát sự kiện khi HTTT chuyển `SUSPENDED` hoặc `REVOKED`; `MemberSystemListener` xóa mục đệm của HTTT đó trên mọi pod qua kênh `rdm:invalidate`.
+`AccessGrantService` hiện thực FR-07-052. Tài khoản dịch vụ của PH-08 (module `dq` cùng `dh-data`) không có quyền mặc định với danh mục `RESTRICTED`: PA cấp theo từng danh mục qua FR-07-052 như với HTTT; danh mục `PUBLIC` và `INTERNAL` PH-08 khai thác bình thường. Với danh mục `classification = RESTRICTED`, `RdmAuthorization.checkExploit(catalog, scope)` lấy `member_system_id` từ claim của token client do PH-01 gán khi cấp client (tên claim theo D02-08), tra cấp quyền hiệu lực trong bộ đệm L1 60 giây theo `(catalogId, memberSystemId)` và kiểm tra `scope` (`rdm.read`, `rdm.query`). Không có trả ERR-07-030. Cấp quyền quá `expires_at` tự hết tác dụng vì phép tra so với thời điểm hiện tại. PH-01 phát sự kiện khi HTTT chuyển `SUSPENDED` hoặc `REVOKED`; `MemberSystemListener` xóa mục đệm của HTTT đó trên mọi pod qua kênh `rdm:invalidate`.
 
 API-07-075 PUT thay toàn bộ danh sách trong một giao dịch: xóa dòng không còn, thêm dòng mới, ghi kiểm toán phần khác biệt. ETag của danh sách là `W/"g-{max(version)}-{count}"`.
 
@@ -2590,7 +2598,7 @@ API-07-075 PUT thay toàn bộ danh sách trong một giao dịch: xóa dòng kh
 
 Chi tiết thiết kế:
 
-`RdmParamProvider` đọc tham số `07.rdm.*` (FRS §7.1) qua API tham số của PH-18, đệm L1 5 phút theo tenant, và làm mới ngay khi nhận sự kiện thay đổi tham số của PH-18. Khi PH-18 không trả lời, provider dùng giá trị đệm gần nhất; chưa từng có giá trị thì dùng mặc định trong `RdmProperties`, ghi cảnh báo và tăng chỉ số `rdm_param_fallback_total`. Giá trị được kiểm tra miền khi đọc; giá trị ngoài miền bị bỏ, dùng mặc định. Tham số mức `PLATFORM` là trần cứng: giá trị của tenant vượt trần bị cắt về trần.
+`RdmParamProvider` đọc tham số `07.rdm.*` (FRS §7.1) qua API tham số của PH-18, đệm L1 tối đa 60 giây theo tenant (BR-18-006, `18.param.cache-ttl-seconds`), và làm mới ngay khi nhận sự kiện thay đổi tham số của PH-18. Khi PH-18 không trả lời, provider dùng giá trị đệm gần nhất; chưa từng có giá trị thì dùng mặc định trong `RdmProperties`, ghi cảnh báo và tăng chỉ số `rdm_param_fallback_total`. Giá trị được kiểm tra miền khi đọc; giá trị ngoài miền bị bỏ, dùng mặc định. Tham số mức `PLATFORM` là trần cứng: giá trị của tenant vượt trần bị cắt về trần.
 
 ## 5. Biểu đồ tuần tự
 
@@ -2972,7 +2980,7 @@ Mọi lỗi nghiệp vụ là lớp con của `RdmException(ErrorCode code, Map<
 
 ```json
 {
-  "type": "https://datahub.gov.vn/problems/ERR-07-017",
+  "type": "https://datahub.gov.vn/errors/ERR-07-017",
   "title": "Ngày hiệu lực không hợp lệ",
   "status": 422,
   "detail": "Ngày hiệu lực 2026-11-20 sớm hơn hôm nay; chỉ phiên bản đồng bộ hoặc di trú được hồi tố.",
@@ -3281,3 +3289,4 @@ FR-07-039 (đề xuất bổ sung lên NDXP, mức C) không thuộc MVP và đ�
 | 0.1 | 2026-11-22 | Nhóm phân hệ PH-07 | Bản đầu |
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 10 mục cho 19 thành phần, bảng danh sách thành phần, thuật ngữ, cấu trúc tài liệu, chú thích bảng và hình |
+| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bộ đệm tham số 60 giây, type ERR-07-nnn, snapshotItems, NdxpCatalogClient theo API-14-079…083, audit qua OutboxRelay |

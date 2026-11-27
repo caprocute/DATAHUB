@@ -18,7 +18,7 @@ def uid(name):
 
 PAT = {'ParamKey': '18.dlq.replay.batch-max', 'FlagKey': 'ff.ph04.moi', 'SourceCode': 'ph04-runtime', 'ModuleCode': 'PH-04', 'TenantCode': 'T68',
        'ErrorCode': 'ERR-04-101', 'TemplateCode': 'ph01.ho-so.da-duyet', 'TaskTypeCode': 'ph01.approve-onboarding', 'TraceId': TRACE,
-       'VaultRef': 'kv/dh/t68/legacy/esb-bus', 'Sha256': HEX64, 'ReplayIdempotencyKey': uid('dlqId') + ':1'}
+       'VaultRef': 'kv/dh/t68/legacy/esb-bus', 'Sha256': HEX64, 'ReplayIdempotencyKey': uid('dlqId') + ':1', 'MergePlanId': 'SN-2026-001'}
 # giá trị theo (lược đồ cha, trường) rồi theo trường
 PF = {
     ('DlqMessage', 'reason'): 'TARGET_UNAVAILABLE', ('DlqMessageDetail', 'reason'): 'TARGET_UNAVAILABLE', ('DlqMessageInput', 'reason'): 'TARGET_UNAVAILABLE',
@@ -202,7 +202,7 @@ EX = {
           'priority': 'NORMAL', 'sourceRef': 'onboarding:HS-0042'},
          {'messageId': uid('messageId'), 'status': 'QUEUED', 'duplicate': False, 'recipients': 2}),
     175: ({'action': 'REQUEST', 'target': 'PARTIAL_CUTOVER', 'trafficPercent': 20, 'reason': 'Đạt ngưỡng khớp 7 ngày, cắt chuyển 20% theo kế hoạch tuần 49'}, None),
-    150: ({'mergePlanId': uid('mergePlanId'), 'module': 'ph01_onboarding', 'sourceTenant': 'T67', 'targetTenant': 'T68', 'mappingRef': 'ph20/merge-plans/MP-0003/mappings/ph01',
+    150: ({'mergePlanId': 'SN-2026-001', 'module': 'PH-01', 'sourceTenant': 'T67', 'targetTenant': 'T68', 'mappingRef': 'ph20/merge-plans/MP-0003/mappings/ph01',
            'dryRun': True}, None),
 }
 
@@ -237,7 +237,7 @@ def query_example(name, n):
     if n == 14 and name == 'from':
         return 3
     return {'from': '2026-11-01' if n == 116 else '2026-11-26T00:00:00+07:00', 'to': '2026-11-30' if n == 116 else '2026-11-27T00:00:00+07:00',
-            'year': 2026, 'updatedSince': '2026-11-20T00:00:00+07:00', 'mergePlanId': uid('mergePlanId'), 'planCode': 'DT-BUS-01', 'reason': 'Đích không còn dùng',
+            'year': 2026, 'updatedSince': '2026-11-20T00:00:00+07:00', 'mergePlanId': 'SN-2026-001', 'planCode': 'DT-BUS-01', 'reason': 'Đích không còn dùng',
             }.get(name, 'giá trị mẫu')
 
 

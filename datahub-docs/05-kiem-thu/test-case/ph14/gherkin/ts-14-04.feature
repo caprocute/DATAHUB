@@ -28,7 +28,7 @@ Tính năng: TS-14-04 · Dịch vụ quốc gia: danh sách, khai báo, chi ti�
     Và `POST /services` đệm 90.000 giây.
     Và `POST /services` mã trùng; thiếu nhóm.
     Và chuyển `ACTIVE` dịch vụ `tc-chua-dac-ta`; `PATCH` với `If-Match` cũ.
-    Thì bước 1, 2 `422` ERR-14-038; bước 3 `422` ERR-14-036; bước 4 `409` ERR-14-002 và `400` ERR-14-003; bước 5 `422` ERR-14-009 và `409` ERR-14-004.
+    Thì bước 1, 2 `422` ERR-14-038; bước 3 `422` ERR-14-036; bước 4 `409` ERR-14-002 và `400` ERR-14-003; bước 5 `422` ERR-14-009 và `412` ERR-14-004 (`If-Match` cũ).
 
   @TC-14-014 @P1 @Âm @Bảo @mật
   Kịch bản: TC-14-014 Dịch vụ của tenant khác và `COMMON`

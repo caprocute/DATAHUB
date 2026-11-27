@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH04
 ten: Đặc tả API và sự kiện phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kiến trúc sư, lập trình viên L-INT và frontend console, kiểm thử viên, vận hành
 phan_he: PH-04
@@ -494,6 +494,8 @@ Lệnh EVT-04-11 có chữ ký Ed25519 qua OpenBao transit, ký trên JCS (RFC 8
 
 Tham số PH-04 đổi (FR-04-084) dùng sự kiện tham số chung của PH-18, không tạo EVT-04-15 (SDD §5.6).
 
+EVT-04-02, EVT-04-04 và EVT-04-07 mang trường tùy chọn `restOperations[]` (lược đồ `RestOperation`: `method`, `path`, `description`, `requestSchemaRef`, `responseSchemaRef`) khi luồng có điểm vào REST, để PH-02 đăng ký API nguồn `FLOW` (FR-02-013); `VersionEvent` dùng chung nên EVT-04-03 và EVT-04-05 cũng có thể mang trường này. Cho tự đăng ký kiến trúc của PH-16, EVT-04-01 và EVT-04-09 mang `flowCode` làm mã thành phần; EVT-04-07 mang `versionNo` và trường tùy chọn `dependsOn[]` (mã kết nối PH-05, topic PH-10, API PH-02 mà luồng phụ thuộc).
+
 Chính sách tương thích giống PH-07: trong `v1` chỉ thêm trường tùy chọn; lược đồ đăng ký ở Apicurio, chế độ BACKWARD; CI chặn thay đổi không tương thích.
 
 ### 4.2. Đặc tả từng sự kiện
@@ -544,7 +546,7 @@ Mục này sinh bằng `ph04/tools/gen_md.py` từ `gen_asyncapi.py` (cùng ngu�
 
 **Khóa phân vùng.** `{tenant}:{flowId}` để giữ thứ tự theo luồng.
 
-**Lược đồ.** `FlowUpdated`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `changedFields`; tổng 6 trường.
+**Lược đồ.** `FlowUpdated`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `changedFields`; tổng 7 trường.
 
 **Tiêu đề.** CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.flowUpdated.v1`.
 
@@ -576,7 +578,7 @@ Mục này sinh bằng `ph04/tools/gen_md.py` từ `gen_asyncapi.py` (cùng ngu�
 
 **Khóa phân vùng.** `{tenant}:{flowId}` để giữ thứ tự theo luồng.
 
-**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 12 trường.
+**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 13 trường.
 
 **Tiêu đề.** CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.versionSubmitted.v1`.
 
@@ -611,7 +613,7 @@ Mục này sinh bằng `ph04/tools/gen_md.py` từ `gen_asyncapi.py` (cùng ngu�
 
 **Khóa phân vùng.** `{tenant}:{flowId}` để giữ thứ tự theo luồng.
 
-**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 12 trường.
+**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 13 trường.
 
 **Tiêu đề.** CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.versionApproved.v1`.
 
@@ -646,7 +648,7 @@ Mục này sinh bằng `ph04/tools/gen_md.py` từ `gen_asyncapi.py` (cùng ngu�
 
 **Khóa phân vùng.** `{tenant}:{flowId}` để giữ thứ tự theo luồng.
 
-**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 12 trường.
+**Lược đồ.** `VersionEvent`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `versionNo`, `contentHash`, `status`; tổng 13 trường.
 
 **Tiêu đề.** CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.versionChangesRequested.v1`.
 
@@ -716,7 +718,7 @@ Mục này sinh bằng `ph04/tools/gen_md.py` từ `gen_asyncapi.py` (cùng ngu�
 
 **Khóa phân vùng.** `{tenant}:{flowId}` để giữ thứ tự theo luồng.
 
-**Lược đồ.** `DeploymentStatusChanged`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `deploymentId`, `environment`, `to`; tổng 12 trường.
+**Lược đồ.** `DeploymentStatusChanged`; trường bắt buộc: `tenantId`, `flowId`, `flowCode`, `deploymentId`, `environment`, `to`; tổng 14 trường.
 
 **Tiêu đề.** CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.deploymentStatusChanged.v1`.
 
@@ -1070,7 +1072,7 @@ Trong giai đoạn chạy song song với Bus cũ (D06-01), PH-04 không gọi B
 
 ### 6.2. Lỗi runtime trả cho bên gọi luồng (ERR-04-101…112)
 
-`dh-runtime` trả các lỗi này cho HTTT gọi luồng đồng bộ, theo RFC 9457, qua APISIX. Với luồng bất đồng bộ, mã lỗi ghi vào tiêu đề `dh-error-code` của bản tin DLQ (BR-04-008). Cả hai trường hợp đều ghi vào nhật ký kết nối EVT-04-14. Thân lỗi không chứa dữ liệu nghiệp vụ, chi tiết hệ đích hay stack trace. Dải ERR-04-113…120 để dành.
+`dh-runtime` trả các lỗi này cho HTTT gọi luồng đồng bộ, theo RFC 9457, qua APISIX. Với luồng bất đồng bộ, mã lỗi ghi vào tiêu đề `dh-dlq-error-code` của bản tin DLQ (BR-04-008). Cả hai trường hợp đều ghi vào nhật ký kết nối EVT-04-14. Thân lỗi không chứa dữ liệu nghiệp vụ, chi tiết hệ đích hay stack trace. Dải ERR-04-113…120 để dành.
 
 | Mã | HTTP | Nghĩa | Chặng | DLQ (bất đồng bộ) | Câu trả bên gọi (`title`), nơi người vận hành thấy |
 |---|---|---|---|---|---|
@@ -1146,7 +1148,7 @@ Các câu hỏi dưới đây chưa chốt nhưng đã có đề xuất tạm đ
 
 | Mã | Câu hỏi | Đề xuất tạm |
 |---|---|---|
-| Q04-55 | Tên miền chính thức cho `type` của ProblemDetails (`https://datahub.gov.vn/problems/integration/…` là giả định, cùng kiểu Q07-100) | Chốt cùng D03-09 |
+| Q04-55 | Tên miền chính thức cho `type` của ProblemDetails: mẫu `https://datahub.gov.vn/errors/ERR-04-nnn` đã áp dụng theo mẫu chung của mọi phân hệ | Tên miền chính thức chốt cùng D03-09 |
 | Q04-56 | Đường dẫn W2 `/api/routes` cần giữ bao lâu, có client nào ngoài console cũ gọi không | Giữ một bản phát hành; kiểm tra log APISIX trước khi gỡ |
 | Q04-57 | SSE qua BFF và APISIX có bị cắt ở 60 giây do thời gian chờ mặc định không | Đặt `proxy_read_timeout` 300 giây cho hai đường dẫn SSE; nhịp `heartbeat` 15 giây |
 | Q04-58 | Có cần API công khai cho đội HTTT xem trạng thái luồng mình dùng (chỉ đọc) không, hay để PH-02 cung cấp | Để PH-02 cung cấp qua trạng thái API công bố, PH-04 không mở thêm |
@@ -4071,6 +4073,8 @@ HTTP/1.1 200 OK
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập khác hoặc cho bản hợp đồng sau. Tài liệu này không tự sửa tập khác; các đề nghị được gom một đợt cuối.
 
 | Số | Tập nhận | Đề nghị | Lý do | Trạng thái |
@@ -4091,5 +4095,6 @@ Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: 70 operation, 14 sự kiện, bảng ERR-04 đầy đủ, ánh xạ hệ cũ và W2 |
 | 0.2 | 2026-11-26 | Lên chuẩn trình bày kết hợp, giữ mọi nội dung 0.1: chương Giới thiệu với sơ đồ kiến trúc và hai sơ đồ trình tự; đặc tả 14 sự kiện kèm ví dụ payload; cột câu hiển thị cho ERR-04-001…049 và câu trả bên gọi cho ERR-04-101…112; đặc tả 70 operation sinh từ OpenAPI kèm ví dụ yêu cầu và phản hồi; mô tả và ví dụ bổ sung ở nguồn sinh; sửa lược đồ `allOf`; công cụ `check_contracts.py`; đề nghị đồng bộ |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: dh-dlq-error-code, restOperations và dependsOn của sự kiện, mẫu type ERR-04-nnn |
 
 : Lịch sử phiên bản

@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D03-05-03
 ten: Thành phần nguyên tử
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã, Hội đồng thẩm định
 nguoi_lap: Luồng giao diện
-mo_ta: Đặc tả 44 thành phần nguyên tử của gói giao diện dùng chung gồm hành động, chữ và biểu tượng, chỉ báo, phản hồi, nhập liệu và hiển thị dữ liệu nghiệp vụ, kèm quy tắc trạng thái, token, bàn phím, ARIA và nghiệm thu.
+mo_ta: Đặc tả 46 thành phần nguyên tử của gói giao diện dùng chung gồm hành động, chữ và biểu tượng, chỉ báo, phản hồi, nhập liệu và hiển thị dữ liệu nghiệp vụ, kèm quy tắc trạng thái, token, bàn phím, ARIA và nghiệm thu.
 tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D03-05-02 Design token; D03-05-04 Thành phần phức hợp; D03-06-00 IA, layout, mẫu màn hình; D00-01 Thuật ngữ và quy ước; D02-02 SRS; ADR-020
 ---
 
@@ -26,7 +26,7 @@ tai_lieu_lien_quan: D03-05 Design system; D03-05-01 Vật liệu Liquid Glass; D
 
 | Chỉ số | Giá trị |
 |---|---|
-| Thành phần nguyên tử | 44 (49 mã `CMP-` tính cả năm biến thể của `CMP-ResourceSelect`) |
+| Thành phần nguyên tử | 46 (52 mã `CMP-` tính cả sáu biến thể của `CMP-ResourceSelect`) |
 | Nhóm chức năng | 6 (hành động, chữ và biểu tượng, chỉ báo và nhãn, phản hồi và gợi ý, nhập liệu, hiển thị dữ liệu nghiệp vụ) |
 | Trạng thái tương tác dùng chung | 8 |
 | Biến thể của `CMP-Button` | 6 |
@@ -129,7 +129,7 @@ Phần này nói rõ tài liệu bao gồm gì và để phần nào cho tài li
 
 | Thuộc tài liệu này | Nằm ở tài liệu khác |
 |---|---|
-| 44 thành phần nguyên tử, quy tắc trạng thái tương tác, quy ước API chung | Vật liệu Liquid Glass, `CMP-GlassSurface`, `CMP-ThemeProvider`: D03-05-01 |
+| 46 thành phần nguyên tử, quy tắc trạng thái tương tác, quy ước API chung | Vật liệu Liquid Glass, `CMP-GlassSurface`, `CMP-ThemeProvider`: D03-05-01 |
 | Tên token mỗi thành phần dùng | Giá trị và hợp đồng token: D03-05-02 |
 | Nguyên tử đặt trên glass hay nền đặc | Thành phần phức hợp và tổ chức (`CMP-FormField`, `CMP-DataTable`, `CMP-Modal`...): D03-05-04 |
 | Checklist nghiệm thu và truy vết yêu cầu | Mẫu màn hình PTN-01…14 và bố cục: D03-06-00 |
@@ -841,11 +841,29 @@ export interface DhDividerProps { orientation?: 'horizontal' | 'vertical'; spaci
 | `HEALTHY` | Bình thường | `success` | Sức khỏe dịch vụ, nút hạ tầng | |
 | `DEGRADED` | Suy giảm | `warning` | Sức khỏe dịch vụ | |
 | `DOWN` | Ngừng hoạt động | `error` | Sức khỏe dịch vụ | |
+| `PASS` | Đạt | `success` | Kết luận kiểm tra, chất lượng dữ liệu | Phán quyết ba mức của PH-08 và các kiểm tra tương tự |
+| `WARN` | Cần chú ý | `warning` | Kết luận kiểm tra, chất lượng dữ liệu | Đạt có điều kiện hoặc chạm ngưỡng cảnh báo |
+| `FAIL` | Không đạt | `error` | Kết luận kiểm tra, chất lượng dữ liệu | Dưới ngưỡng tối thiểu |
+| `PUBLIC` | Công khai | `neutral` | Mức phân loại dữ liệu (`DataClass`) | Dùng chung PH-06, PH-09 |
+| `INTERNAL` | Nội bộ | `info` | Mức phân loại dữ liệu (`DataClass`) | |
+| `RESTRICTED` | Hạn chế | `warning` | Mức phân loại dữ liệu (`DataClass`) | Dữ liệu cá nhân thông thường |
+| `SENSITIVE` | Nhạy cảm | `error` | Mức phân loại dữ liệu (`DataClass`) | Dữ liệu cá nhân nhạy cảm, luôn kèm `CMP-MaskedValue` khi hiện giá trị |
+| `SKIPPED` | Bỏ qua | `neutral` | Bước kiểm tra, bước saga | Không chạy vì bước trước đã lỗi hoặc không áp dụng |
+| `ON_TIME` | Đúng hạn | `success` | Hạn xử lý | `DueStatus` của PH-11; còn nhiều hơn ngưỡng sắp đến hạn |
+| `DUE_SOON` | Sắp đến hạn | `warning` | Hạn xử lý | Còn không quá ngưỡng do phân hệ cấu hình |
+| `OVERDUE` | Quá hạn | `error` | Hạn xử lý | Đã qua hạn |
+| `PAUSED` | Tạm dừng hạn | `neutral` | Hạn xử lý | Hạn tạm dừng (chờ bên ngoài, đang ủy quyền) |
+| `ON_TRACK` | Đạt mục tiêu | `success` | Chỉ tiêu báo cáo | PH-16, chỉ báo ● |
+| `AT_RISK` | Có nguy cơ | `warning` | Chỉ tiêu báo cáo | PH-16, chỉ báo ▲ |
+| `OFF_TRACK` | Chệch mục tiêu | `error` | Chỉ tiêu báo cáo | PH-16, chỉ báo ✕ |
+| `NO_DATA` | Chưa có số | `neutral` | Chỉ tiêu báo cáo | PH-16, chỉ báo – |
 | `UNKNOWN` | Không xác định | `neutral` | Mọi nhóm | Dự phòng khi nhận mã chưa có trong bảng |
 
 : Mã trạng thái, nhãn hiển thị, sắc thái và nhóm của CMP-StatusTag
 
 Bốn quy tắc đi kèm bảng. Thứ nhất, sắc thái thể hiện **mức cần chú ý**, không thể hiện "tốt hay xấu" về đạo đức: "Hoàn tiền" là `neutral` vì giao dịch đã kết thúc đúng quy trình; "Ngừng cung cấp" là `warning` vì bên dùng phải hành động trước ngày gỡ. Thứ hai, nhãn hiển thị trong bảng là nhãn chuẩn; nếu một phân hệ cần nhãn khác cho cùng mã (ví dụ PH thanh toán muốn "Đã hoàn tiền"), phải sửa nhãn ở đây cho mọi phân hệ, không ghi đè cục bộ. Thứ ba, mã chưa có trong bảng hiển thị là `UNKNOWN` kèm mã gốc trong tooltip, và thành phần ghi cảnh báo `console.warn` ở môi trường phát triển để phát hiện sớm. Thứ tư, khi phân hệ có máy trạng thái riêng chưa chuẩn hóa, có thể truyền `customStatus={{ label, tone }}` nhưng lint báo cảnh báo và PR phải giải thích.
+
+**Biến thể đếm ngược theo ngưỡng (`countdown`).** Với hạn hoặc hiệu lực có ngày kết thúc (chứng thư số, khóa, phiên bản sắp ngừng), thành phần nhận `countdown={{ deadline, thresholdsDays: [60, 30, 7] }}` và hiển thị "còn 24 ngày" bằng `CMP-Duration`; sắc thái đổi theo ngưỡng (trên mốc đầu `success`, từ 60 ngày `info`, từ 30 ngày `warning`, từ 7 ngày `error`) và luôn có chữ, không chỉ đổi màu. Quá hạn chuyển `EXPIRED` (`neutral`) kèm chữ "Hết hạn". Ngưỡng mặc định do phân hệ cấu hình, giá trị trên là mặc định của chứng thư (PH-14 UI-14-08). Thuộc tính `unit` chọn đơn vị: `day` (mặc định, ngày dương lịch), `businessDay` (ngày làm việc theo lịch của phân hệ, PH-11 `DueStatus`), `hour`, `minute` (đồng hồ ngắn hạn như phiếu xem và giữ quay lui của PH-18); `thresholds` là ngưỡng theo đơn vị đã chọn và thay `thresholdsDays` khi `unit` khác `day`. Với `unit` là `businessDay`, nhãn dùng mã `ON_TIME`, `DUE_SOON`, `OVERDUE`; `paused` chuyển sang `PAUSED`. `live` bật cập nhật chữ mỗi phút và thông báo cho trình đọc màn hình bằng `aria-live="polite"` mỗi phút (không thông báo từng giây); khi hết hạn đổi sang chữ "Hết hạn" hoặc "Quá hạn" có sẵn, và đồng hồ không là cách duy nhất báo hết hạn (màn vẫn phải có thông báo hoặc trạng thái bằng chữ ở nơi khác).
 
 **Kích thước.** `sm` cao 20px, chữ `font-caption` độ đậm 500, đệm ngang `space-2`, dùng trong bảng chế độ gọn và `CMP-StatusDot` có nhãn. `md` (mặc định) cao `size-control-sm` (24px), chữ `font-footnote` độ đậm 500, đệm ngang `space-2`. Bo góc `radius-pill`. Khoảng giữa chỉ báo và chữ là `space-1`; chỉ báo dạng chấm có đường kính 6px (`sm`) hoặc 8px (`md`).
 
@@ -872,6 +890,7 @@ export interface DhStatusTagProps {
   announcePrefix?: boolean;
   /** Chỉ dùng khi chưa chuẩn hóa; lint cảnh báo. */
   customStatus?: { label: string; tone: DhTone };
+  countdown?: { deadline: string; thresholdsDays?: number[]; unit?: 'day' | 'businessDay' | 'hour' | 'minute'; thresholds?: number[]; paused?: boolean; live?: boolean }; // biến thể đếm ngược theo ngưỡng
   testId?: string;
 }
 
@@ -1166,6 +1185,8 @@ export interface DhSkeletonProps {
 
 **Biến thể.** `progress` (tiến độ thao tác; màu `color-accent`; khi xong chuyển `color-success-text` và hiện biểu tượng `success`; khi lỗi chuyển `color-error-text` và biểu tượng `error`) và `meter` (mức sử dụng; màu theo ngưỡng: dưới 80% `color-accent`, từ 80% `color-warning-solid` kèm chữ "Sắp đạt hạn mức", từ 100% `color-error-solid` kèm chữ "Đã đạt hạn mức"; ngưỡng cấu hình được). Biến thể `indeterminate` (không biết tiến độ, dải chạy qua lại) chỉ dùng tạm khi máy chủ chưa trả tiến độ, tối đa vài giây.
 
+**Biến thể có mốc (`milestone`).** Thanh có các vạch mốc đặt sẵn (ví dụ 70%, 85%, 95% của hạn mức PH-14; mốc 24, 48, 60, 72 giờ của hạn chấp thuận PH-09; ba đoạn thời hạn xử lý SLA của PH-08). Mỗi mốc có nhãn chữ dưới vạch, màu thanh đổi theo mốc đã vượt qua (`color-accent`, `color-warning-solid`, `color-error-solid`) và `aria-valuetext` nêu mốc hiện tại ("85%, vượt mốc cảnh báo thứ hai"); mốc không dựa vào màu. Dùng với `CMP-Duration` khi thanh thể hiện thời gian còn lại (đếm ngược); không dùng để thay vòng tròn đếm ngược.
+
 **Kích thước.** Độ dày 4px (`sm`, trên đầu bảng) hoặc 8px (`md`, mặc định). Bo `radius-xs` (token thành phần antd `Progress.lineBorderRadius`). Rãnh (`Progress.remainingColor`) dùng `color-fill-control`.
 
 **Chữ đi kèm.** Phần trăm hiển thị bên phải bằng `font-footnote` với `font-feature-tabular`, làm tròn số nguyên, định dạng "45%". Với nhập tệp, chữ phụ nêu số tuyệt đối "4.500 / 10.000 dòng". Phần trăm không bao giờ là kênh duy nhất của trạng thái lỗi; luôn kèm chữ "Thất bại" và biểu tượng.
@@ -1180,12 +1201,13 @@ export interface DhSkeletonProps {
 
 ```tsx
 export interface DhProgressBarProps {
-  variant?: 'progress' | 'meter' | 'indeterminate';
+  variant?: 'progress' | 'meter' | 'milestone' | 'indeterminate';
   percent?: number;
   status?: 'active' | 'success' | 'error';
   size?: 'sm' | 'md';
   valueText?: string;
   thresholds?: { warning: number; error: number }; // meter, mặc định 80/100
+  milestones?: Array<{ value: number; label: string; tone?: 'accent' | 'warning' | 'error' }>; // milestone
   label: string;
   showPercent?: boolean;
 }
@@ -1708,6 +1730,8 @@ export interface DhSwitchProps {
 
 **Token.** `TKN-color-fill-control`, `TKN-color-surface-solid`, `TKN-color-fill-hover`, `TKN-color-text-secondary`, `TKN-color-text-primary`, `TKN-shadow-1`, `TKN-radius-md`, `TKN-radius-sm`, `TKN-size-control-sm`, `TKN-size-control-md`, `TKN-size-control-lg`, `TKN-motion-duration-base`, `TKN-motion-ease-emphasized`.
 
+**Biến thể `verdict`.** Nhóm ba lựa chọn quyết định đặt trong ô bảng (PH-01 UI-01-06: Chấp thuận, Thu hẹp, Từ chối; UI-01-13: Còn cần, Thu hẹp, Không cần nữa; rà soát quyền PH-12 UI-12-09). Mỗi lựa chọn có sắc thái và chữ cố định (`success`, `warning`, `error`, và `neutral` cho lựa chọn "Không áp dụng" như PH-16 UI-16-16), cho khóa từng lựa chọn kèm lý do bằng chữ (không chỉ tooltip), và `aria-label` ghép theo dòng ("Quyết định cho {đối tượng}"). Không đổi dữ liệu ngay khi chọn: quyết định ghi vào nháp của bảng và chỉ gửi khi người dùng xác nhận cả bảng. Vẫn không quá 5 mục.
+
 **Nền đặt.** Nền đặc và mọi vật liệu glass (thường xuất hiện trên thanh công cụ trong `CMP-PageHeader`).
 
 **Bàn phím và ARIA.** Antd v6 hiển thị dạng `radiogroup`; mũi tên trái phải di chuyển và chọn. Đây là hành vi đúng cho chuyển chế độ xem.
@@ -1718,10 +1742,11 @@ export interface DhSwitchProps {
 
 ```tsx
 export interface DhSegmentedControlProps<V extends string = string> {
-  options: Array<{ value: V; label?: string; icon?: React.ReactNode; ariaLabel?: string; disabled?: boolean }>;
+  options: Array<{ value: V; label?: string; icon?: React.ReactNode; ariaLabel?: string; disabled?: boolean; tone?: 'success' | 'warning' | 'error' | 'neutral'; lockedReason?: string }>;
   value?: V; onChange?: (value: V) => void;
   size?: 'sm' | 'md' | 'lg';
   block?: boolean;
+  variant?: 'default' | 'verdict';   // verdict: option có tone và lockedReason
   'aria-label': string;
   testId?: string;
 }
@@ -2057,7 +2082,7 @@ export interface DhSecretRefFieldProps {
 
 ### 7.18. CMP-ResourceSelect và các biến thể theo phân hệ
 
-**Mục đích.** Nhiều màn hình phải chọn một đối tượng do phân hệ khác quản lý: bảng mã của PH-07, kết nối của PH-05, lược đồ của PH-06, API của PH-02, topic của PH-10. Nếu mỗi màn tự dựng một Select, nhãn, cách hiển thị phiên bản và cách báo "không có quyền" sẽ khác nhau. `CMP-ResourceSelect` là `CMP-Select` tải từ xa có thêm ba hành vi chung; các biến thể theo phân hệ là cấu hình sẵn của nó, mỗi biến thể có mã `CMP-` riêng để màn hình truy vết.
+**Mục đích.** Nhiều màn hình phải chọn một đối tượng do phân hệ khác quản lý: bảng mã của PH-07, kết nối của PH-05, lược đồ của PH-06, API của PH-02, topic của PH-10, tổ chức của PH-20. Nếu mỗi màn tự dựng một Select, nhãn, cách hiển thị phiên bản và cách báo "không có quyền" sẽ khác nhau. `CMP-ResourceSelect` là `CMP-Select` tải từ xa có thêm ba hành vi chung; các biến thể theo phân hệ là cấu hình sẵn của nó, mỗi biến thể có mã `CMP-` riêng để màn hình truy vết.
 
 **Ba hành vi chung.** Thứ nhất, mỗi lựa chọn hiển thị tên, mã (`CMP-Identifier` nhỏ) và một chỉ báo trạng thái gọn (`CMP-StatusDot`). Thứ hai, khi đối tượng có phiên bản, sau khi chọn đối tượng thì hiện ô chọn phiên bản cạnh bên với mặc định "Phiên bản hiện hành (tự theo)" hoặc một phiên bản cố định; lựa chọn này được lưu tường minh (`version: 'CURRENT' | số`). Thứ ba, giá trị đã lưu trỏ tới đối tượng người dùng không còn quyền xem hoặc đã bị xóa vẫn hiển thị mã gốc kèm chữ "Không xem được (không có quyền hoặc đã xóa)" thay vì để trống, để không mất dữ liệu khi lưu lại.
 
@@ -2068,6 +2093,7 @@ export interface DhSecretRefFieldProps {
 | `CMP-SchemaSelect` | Lược đồ dữ liệu PH-06 | Danh sách lược đồ đã công bố | Lược đồ tenant được dùng | Định dạng (JSON Schema, XSD, Avro) |
 | `CMP-ApiSelect` | API PH-02 | Danh mục API người dùng được xem | `PUBLISHED` | Phiên bản API, trạng thái `DEPRECATED` có cảnh báo |
 | `CMP-TopicSelect` | Topic PH-10 | Topic của dự án sự kiện được cấp | Đúng chiều (phát hay nhận) | Quyền phát/nhận |
+| `CMP-OrganizationSelect` | Tổ chức của PH-20 (biến thể `organization`) | Danh mục tổ chức của tenant | Giới hạn theo tổ chức của người dùng (OR) | Mã tổ chức, cấp; gợi ý gần đúng khi ghép từ tệp nhập (PH-01 UI-01-01, 15; PH-12 chọn đơn vị) |
 
 : Các biến thể của CMP-ResourceSelect theo đối tượng, nguồn API và bộ lọc mặc định
 
@@ -2079,7 +2105,7 @@ export interface DhSecretRefFieldProps {
 export interface DhResourceRef { id: string; code: string; version?: 'CURRENT' | number }
 
 export interface DhResourceSelectProps {
-  kind: 'codeList' | 'connection' | 'schema' | 'api' | 'topic';
+  kind: 'codeList' | 'connection' | 'schema' | 'api' | 'topic' | 'organization';
   value?: DhResourceRef; onChange?: (v: DhResourceRef | undefined) => void;
   filter?: Record<string, string | string[]>;    // ví dụ { connectionType: 'jdbc-postgresql' }
   versioned?: boolean;                           // hiện ô chọn phiên bản
@@ -2098,6 +2124,70 @@ export const CodeListSelect = (p: Omit<DhResourceSelectProps, 'kind'>) => <Resou
 ```
 
 **Điều cấm.** Cấm tải toàn bộ đối tượng của phân hệ khác về trình duyệt. Cấm lưu nhãn hiển thị thay cho mã. Cấm âm thầm đổi giá trị đã lưu khi đối tượng không còn xem được.
+
+### 7.19. CMP-RangeSlider
+
+**Mục đích.** `CMP-RangeSlider` chọn một khoảng hai đầu trên một thang số liên tục, kèm ô số để nhập chính xác: hai ngưỡng chất lượng 70 và 80 của PH-08 (UI-08-10), hai ngưỡng gần giống 0,60 và 0,90 cách nhau tối thiểu 0,10 của PH-06 (UI-06-09). Thanh trượt chỉ là cách nhập nhanh; giá trị luôn đọc và sửa được ở ô số.
+
+**Khi dùng / không dùng.** Khi hai giá trị liên quan nhau bằng ràng buộc thứ tự hoặc khoảng cách tối thiểu. Một giá trị đơn dùng `CMP-NumberInput`; khoảng ngày dùng `CMP-DateRangePicker`.
+
+**Nền antd.** `Slider` với `range` và `marks`, cộng hai `CMP-NumberInput` đặt hai bên (đầu thấp, đầu cao). Ô số và thanh trượt đồng bộ hai chiều; ràng buộc `minGap` được kiểm ở cả hai và lỗi hiện dưới thành phần bằng chữ.
+
+**Kích thước.** Thanh dày 4px, núm 20px với vùng chạm mở rộng 24px (`size-control-sm`); ô số cỡ `size-control-md`.
+
+**Token.** `TKN-color-accent` (đoạn giữa hai núm), `TKN-color-fill-control` (rãnh), `TKN-color-border-control` (núm), `TKN-color-focus-ring`, `TKN-color-error-text` (lỗi ràng buộc), `TKN-size-control-sm`, `TKN-size-control-md`.
+
+**Nền đặt.** Nền đặc.
+
+**Bàn phím và ARIA.** Mỗi núm là `role="slider"` có `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-label` ("Ngưỡng dưới", "Ngưỡng trên") và `aria-valuetext` kèm đơn vị; mũi tên đổi theo `step`, `Page Up` và `Page Down` đổi 10 bước, `Home` và `End` về đầu mút cho phép. Kéo núm không là cách duy nhất vì ô số nhận phím (WCAG 2.5.7). Khi vi phạm `minGap`, thông báo lỗi `aria-live="polite"`.
+
+**Nội dung.** Nhãn nêu đại lượng và đơn vị ("Ngưỡng điểm, %"); lỗi nêu khoảng hợp lệ ("Hai ngưỡng phải cách nhau ít nhất 0,10.").
+
+**API.**
+
+```tsx
+export interface DhRangeSliderProps {
+  value: [number, number]; onChange: (v: [number, number]) => void;
+  min: number; max: number; step?: number; minGap?: number;
+  unit?: string; marks?: Record<number, string>;
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  'aria-label': string; id?: string; testId?: string;
+}
+```
+
+**Điều cấm.** Cấm thanh trượt không có ô số. Cấm lưu giá trị vi phạm `minGap`. Cấm dùng thanh trượt để chọn giá trị tài chính hoặc số lượng cần chính xác tuyệt đối.
+
+### 7.20. CMP-TimeRangePicker
+
+**Mục đích.** `CMP-TimeRangePicker` chọn khung giờ lặp theo ngày hoặc theo tuần (giờ bắt đầu, giờ kết thúc, ngày trong tuần, múi giờ): cửa sổ bảo trì ưa thích của tenant (PH-20), cửa sổ bảo trì và đóng băng của lịch vận hành (PH-18 UI-18-16).
+
+**Khi dùng / không dùng.** Khung giờ không gắn ngày cụ thể. Khoảng ngày giờ cụ thể dùng `CMP-DateRangePicker`; lịch lặp theo cron dùng `CMP-CronPicker`.
+
+**Nền antd.** `TimePicker.RangePicker` định dạng `HH:mm` (24 giờ) cộng nhóm `CMP-Checkbox` các thứ trong tuần và `CMP-Select` múi giờ (mặc định `Asia/Ho_Chi_Minh`). Khung qua nửa đêm (22:00 đến 02:00) được chấp nhận và hiển thị rõ "hôm sau".
+
+**Kích thước.** Ô giờ cỡ `size-control-md`; popup `glass-overlay`.
+
+**Token.** Như `CMP-DatePicker` (mục 7.11), thêm `TKN-color-warning-text` cho cảnh báo khung quá dài hoặc quá ngắn.
+
+**Nền đặt.** Nền đặc; popup lịch giờ dùng `glass-overlay`.
+
+**Bàn phím và ARIA.** Mỗi ô giờ gõ trực tiếp được (`HH:mm`), mũi tên tăng giảm theo 15 phút; nhóm thứ trong tuần là `role="group"` với nhãn "Các ngày áp dụng"; tóm tắt bằng chữ ("Thứ Bảy, 22:00 đến 02:00 hôm sau, giờ Việt Nam") cập nhật `aria-live="polite"`.
+
+**Nội dung.** Luôn hiển thị tóm tắt bằng chữ bên dưới; độ dài tối thiểu và tối đa của khung do phân hệ truyền (ví dụ 2 đến 6 giờ ở PH-20) và lỗi nêu số giờ hợp lệ.
+
+**API.**
+
+```tsx
+export interface DhTimeRangeValue { start: string; end: string; days: Array<'MO'|'TU'|'WE'|'TH'|'FR'|'SA'|'SU'>; timeZone: string }
+export interface DhTimeRangePickerProps {
+  value?: DhTimeRangeValue; onChange?: (v: DhTimeRangeValue | undefined) => void;
+  minHours?: number; maxHours?: number;
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  'aria-label': string; id?: string; testId?: string;
+}
+```
+
+**Điều cấm.** Cấm lưu giờ theo múi giờ của trình duyệt khi người dùng chưa chọn múi giờ. Cấm khung giờ không ngày áp dụng.
 
 ## 8. Nhóm hiển thị dữ liệu nghiệp vụ
 
@@ -2269,7 +2359,9 @@ export interface DhIdentifierProps {
 
 **Luồng mở xem.** (1) Người dùng bấm nút "Hiện" (biểu tượng `view`). (2) `CMP-ReasonDialog` (D03-05-04 §7.4) mở với ô lý do bắt buộc tối thiểu 10 ký tự và danh sách lý do thường dùng do phân hệ cấu hình. (3) Sau khi máy chủ trả giá trị, giá trị thật hiển thị tại chỗ, kèm chữ phụ "Đang hiện · tự che sau 30 giây" và nút "Ẩn" (`hide`). (4) Sau 30 giây, khi rời trang, khi đổi tenant hoặc khi cửa sổ mất focus quá 30 giây, giá trị tự che lại và bị xóa khỏi bộ nhớ thành phần. (5) Mở xem lần nữa cần lý do lần nữa (mỗi lần là một bản ghi kiểm toán). Trong một bảng, chỉ mở được từng ô; không có "Hiện tất cả".
 
-**Biến thể.** `revealable` (có nút Hiện khi `canReveal`), `static` (không bao giờ có nút, dùng cho log vận hành và giá trị giao diện tự nhận diện, D03-06-00 PTN-11). Khi người dùng không có quyền, nút không hiện (không hiện vô hiệu), đúng quy ước ẩn khi thiếu quyền (D03-05-04 §2.3).
+**Biến thể.** `revealable` (có nút Hiện khi `canReveal`), `static` (không bao giờ có nút, dùng cho log vận hành và giá trị giao diện tự nhận diện, D03-06-00 PTN-11). Hai bổ sung cho nhu cầu của PH-09, PH-14, PH-19: (1) khi máy chủ cấp phiên xem có hạn, nhận `expiresAt` thay cho `autoHideSeconds`, giá trị tự che đúng hạn đó và chữ phụ đếm ngược "Đang hiện · còn {mm:ss}" (đếm bằng chữ, cập nhật cho trình đọc màn hình theo mốc); (2) `fallbackText` ("Không hiển thị") khi người dùng đã có quyền nhưng chính sách phân loại cấm hiện ở ngữ cảnh này, thay cho việc ẩn nút. Hộp thoại xem giá trị đầy đủ của PH-09 (UI-09-22) là `CMP-MaskedValue` `revealable` cộng `CMP-ReasonDialog`, không phải thành phần riêng.
+
+**Thủy vân người xem.** Khi một vùng đang hiện dữ liệu cá nhân (ít nhất một `CMP-MaskedValue` ở trạng thái "đang hiện"), vùng chứa gần nhất có thể bật thủy vân (`watermark`): lớp chữ lặp, mờ, ghi tên người xem, mã tenant và thời điểm, đặt bằng phần tử giả `pointer-events: none`, không che chữ và không là kênh thông tin duy nhất; tắt khi giá trị tự che. Khi người dùng không có quyền, nút không hiện (không hiện vô hiệu), đúng quy ước ẩn khi thiếu quyền (D03-05-04 §2.3).
 
 **Trạng thái.** Che, đang mở (đợi máy chủ: spinner trong nút), đang hiện, lỗi mở (Toast lỗi với mã lỗi, giá trị giữ nguyên che), hết hạn hiện (tự che).
 
@@ -2292,6 +2384,9 @@ export interface DhMaskedValueProps {
   reveal?: (reason: string) => Promise<string>;   // gọi API mở xem
   reasonPresets?: string[];
   autoHideSeconds?: number;              // mặc định 30
+  expiresAt?: string;                    // phiên xem có hạn do máy chủ cấp (ưu tiên hơn autoHideSeconds)
+  fallbackText?: string;                 // 'Không hiển thị' khi chính sách cấm hiện
+  watermark?: string;                    // chữ thủy vân người xem, tùy chọn
   testId?: string;
 }
 ```
@@ -2347,16 +2442,18 @@ Bảng dưới đây là danh mục chính thức các thành phần nguyên t�
 | 7.15 | `CMP-CronPicker` | ghép | S | 5 kiểu lịch + lỗi | Không |
 | 7.16 | `CMP-ExpressionField` | CodeMirror 6 + `Select` | S | 5 | Không |
 | 7.17 | `CMP-SecretRefField` | `Select` | S | 4 | Không |
-| 7.18 | `CMP-ResourceSelect` (`CMP-CodeListSelect`, `CMP-ConnectionSelect`, `CMP-SchemaSelect`, `CMP-ApiSelect`, `CMP-TopicSelect`) | `Select` | S | 3 mỗi biến thể | Popup `glass-overlay` |
+| 7.18 | `CMP-ResourceSelect` (`CMP-CodeListSelect`, `CMP-ConnectionSelect`, `CMP-SchemaSelect`, `CMP-ApiSelect`, `CMP-TopicSelect`, `CMP-OrganizationSelect`) | `Select` | S | 3 mỗi biến thể | Popup `glass-overlay` |
+| 7.19 | `CMP-RangeSlider` | `Slider` range + `InputNumber` | S | 4 | Không |
+| 7.20 | `CMP-TimeRangePicker` | `TimePicker.RangePicker` + ghép | S | 4 | Popup `glass-overlay` |
 | 8.1 | `CMP-Timestamp` | thẻ `time` | M | 6 biến thể | Có |
 | 8.2 | `CMP-Duration` | thẻ `time` | M | 3 | Có |
 | 8.3 | `CMP-Money` | tự dựng | M | 3 | Có |
 | 8.4 | `CMP-Identifier` | `Typography.Text` | M | 3 | Có (trừ `link` trên glass dày) |
 | 8.5 | `CMP-MaskedValue` | tự dựng | M | 5 trạng thái | Không |
 
-: Danh mục 44 thành phần nguyên tử theo mức MoSCoW, story tối thiểu và khả năng đặt trên glass
+: Danh mục 46 thành phần nguyên tử theo mức MoSCoW, story tối thiểu và khả năng đặt trên glass
 
-Tổng cộng 44 thành phần nguyên tử. Tính cả năm biến thể theo phân hệ của `CMP-ResourceSelect` (có mã riêng để truy vết nhưng dùng chung một hiện thực) thì có 49 mã `CMP-`.
+Tổng cộng 46 thành phần nguyên tử. Tính cả sáu biến thể theo phân hệ của `CMP-ResourceSelect` (có mã riêng để truy vết nhưng dùng chung một hiện thực) thì có 52 mã `CMP-`.
 
 **Tên gọi khác đã gặp trong tài liệu phân hệ.** Một số tập D03-06 viết trước khi tập này hoàn thành dùng tên khác cho cùng thành phần. Bảng dưới là ánh xạ chính thức; tập phân hệ được sửa theo tên chuẩn ở lần cập nhật kế tiếp và lint tài liệu (`build/check-cmp.py`, đề xuất ở mục 12) cảnh báo tên không có trong danh mục.
 
@@ -2424,3 +2521,5 @@ Các đề xuất dưới đây cần chủ sở hữu tài liệu hoặc công 
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản trước: 44 thành phần nguyên tử, quy tắc trạng thái, bảng tổng hợp, checklist, truy vết, đề xuất (gồm bổ sung khóa biểu tượng ở mục 4.1) |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.5 đến 1.9 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho chương 11, 12; viết lại 15 chú thích bảng cho cụ thể, không trùng; thêm metadata `mo_ta`, `tai_lieu_lien_quan` |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm `CMP-RangeSlider` (7.19), `CMP-TimeRangePicker` (7.20); biến thể `verdict` của `CMP-SegmentedControl`, `milestone` của `CMP-ProgressBar`, `countdown` của `CMP-StatusTag`, `CMP-OrganizationSelect`; mã `PASS`, `WARN`, `FAIL` và `DataClass` trong bảng trạng thái; `expiresAt`, `fallbackText`, thủy vân của `CMP-MaskedValue`; 46 thành phần, 52 mã |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: `CMP-StatusTag` thêm mã `SKIPPED`, `ON_TIME`, `DUE_SOON`, `OVERDUE`, `PAUSED`, `ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `NO_DATA` và `unit`, `live` cho `countdown`; `CMP-SegmentedControl` `verdict` thêm sắc thái `neutral` |

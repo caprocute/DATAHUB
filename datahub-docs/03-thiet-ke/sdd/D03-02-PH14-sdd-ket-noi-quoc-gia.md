@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH14
 ten: Thiết kế chi tiết phần mềm phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, cán bộ ATTT, vận hành, hội đồng thẩm định
@@ -222,6 +222,7 @@ Bảng dưới liệt kê các module cùng đơn vị triển khai và các ph�
 | Thư viện `vn.datahub.runtime.secret` (PH-05) | Cổng dùng | `ConnPropertiesFunction`, `ConnManifestCache`, `SecretVersionSelector` | Địa chỉ và thông tin xác thực nền tảng; xoay có giá trị chờ (FR-14-025) |
 | PH-04 | PH-04 tới cổng; cổng tới PH-04 | Kamelet `dh-national-invoke`; chiều vào chuyển cho luồng qua mesh | Chiều ra của luồng; xử lý chiều vào (FR-14-041) |
 | PH-02 | `national` gọi | REST nội bộ (hợp đồng chờ D03-04-PH02), sự kiện đã công bố | Cung cấp lại, danh sách dịch vụ chia sẻ (Q14-26) |
+| PH-02 | `national` được gọi | Cổng `NationalCatalogPort` (`upsert`, `withdraw` lũy đẳng theo khóa dịch vụ, kết quả `NOT_CONFIGURED` khi tenant chưa cấu hình kênh, lý do từ chối kèm mã) | Đồng bộ danh mục dịch vụ lên kênh quốc gia |
 | PH-03 | PH-03 gắn tuyến | APISIX theo sự kiện của PH-02 | Tuyến API cung cấp lại; tuyến chiều vào theo EVT-14-13 |
 | PH-07 | PH-07 gọi cổng; cổng đọc PH-07 | REST nội bộ API-14-079…083; `CatalogLookupApi` (đệm 5 phút) | Danh mục dùng chung quốc gia; danh mục mục đích, mã thủ tục hành chính |
 | PH-09 | Cổng gọi | REST kiểm tra mục đích, kiểm tra lô; thời hạn 200 ms, đóng an toàn | FR-14-011, 044, 045 |
@@ -543,6 +544,8 @@ Ba aggregate gốc là `NationalPlatform`, `NationalService`, `NationalCertifica
 
 : Invariant của các aggregate
 
+Thiết kế dữ liệu (D03-03-PH14) thêm các bảng và cột sau so với mô hình miền ở trên. Bảng hỗ trợ: `approval_request` (yêu cầu duyệt bốn mắt, dùng chung cho các loại thay đổi của BR-14-022), `worker_command` (lệnh gửi cho vai trò `worker`, quá hạn bị bộ quét dọn sau 30 giây), `access_block` (khóa chặn truy cập), `inbound_route` (tuyến chiều vào) và `health_state` (trạng thái sức khỏe hiện hành); `cache_stats` (thống kê đệm theo giờ) ở nhóm hạn mức; `breaker_override` thuộc bảng `national_platform`; `last_warned_level` thuộc `quota_usage`; hợp đồng dịch vụ lưu ở `service_spec.contract`. Lớp `PersistenceExceptionMapper` ánh xạ lỗi lưu trữ sang mã ERR-14 theo bảng ở §1.5 của D03-03-PH14, phân trang danh sách giao dịch theo keyset (`started_at`, `transaction_code`) và `ETag` của đối tượng là `version`.
+
 ### 4.2. Danh mục nền tảng, dịch vụ, đặc tả và cung cấp lại
 
 ::: dac-ta
@@ -677,7 +680,7 @@ Có bốn điểm thiết kế cần nêu.
 
 `transactionCode` có dạng `{TENANT}-{yyyyMMdd}-{10 ký tự}` (ví dụ `T68-20261126-0000184320`). Dãy số lấy từ `INCR` Valkey mỗi tenant mỗi ngày; khi Valkey mất, dùng 10 ký tự cuối của ULID để không trùng giữa các bản sao. Mã này làm mã đối soát với trung ương (BR-14-020).
 
-Lỗi trả theo RFC 9457 `application/problem+json`: `type` là `urn:dh:err:ERR-14-104`, `title`, `status`, `detail` (câu tiếng Việt có thể hiển thị cho cán bộ HTTT), `traceId`, `transactionCode`, và trường riêng của mã (ví dụ `resetAt`, `cache.available` với ERR-14-104). `detail` không bao giờ chứa nội dung kỹ thuật của trung ương hay thông tin cấu hình nội bộ.
+Lỗi trả theo RFC 9457 `application/problem+json`: `type` là `https://datahub.gov.vn/errors/ERR-14-104`, `title`, `status`, `detail` (câu tiếng Việt có thể hiển thị cho cán bộ HTTT), `traceId`, `transactionCode`, và trường riêng của mã (ví dụ `resetAt`, `cache.available` với ERR-14-104). `detail` không bao giờ chứa nội dung kỹ thuật của trung ương hay thông tin cấu hình nội bộ.
 
 ### 4.5. Kiểm tra mục đích và định tuyến
 
@@ -705,7 +708,7 @@ Lỗi trả theo RFC 9457 `application/problem+json`: `type` là `urn:dh:err:ERR
 
 Chi tiết thiết kế:
 
-**`PurposeGuard`.** Đầu vào gồm `tenant`, `systemCode`, `serviceCode`, `group`, `sensitivity`, `purposeCode`, `procedureCode`, `caseCode`, giờ gọi. Các bước theo thứ tự rẻ trước, đắt sau: (1) kiểm định dạng `procedureCode` theo mẫu của dịch vụ và `caseCode` (1 đến 64 ký tự) khi `procedureCodeRequired`; (2) gọi OPA sidecar với dữ liệu đăng ký sử dụng của HTTT (bó dữ liệu do PH-12 dựng từ PH-02, làm mới theo sự kiện) và khung giờ `14.purpose.allowed-hours`; (3) với `sensitivity` từ `RESTRICTED`, gọi PH-09 hỏi "mục đích có trong sổ hoạt động xử lý và có cơ sở pháp lý hoặc chấp thuận không"; kết quả cho phép được đệm 60 giây theo (tenant, hệ thống, dịch vụ, mục đích) để giữ chi phí dưới ngưỡng 80 ms của NFR-14-001, kết quả từ chối không đệm; (4) kiểm `procedureCode` thuộc danh mục thủ tục của PH-07 bằng bản đệm bộ nhớ 5 phút, PH-07 ngừng thì dùng bản đệm tối đa 24 giờ. OPA hoặc PH-09 quá 200 ms hoặc lỗi thì ném ERR-14-132; không có chế độ "mở khi lỗi". Quyết định và lý do được ghi vào giao dịch dù cho phép hay từ chối (BR-14-008).
+**`PurposeGuard`.** Đầu vào gồm `tenant`, `systemCode`, `serviceCode`, `group`, `sensitivity`, `purposeCode`, `procedureCode`, `caseCode`, giờ gọi. Các bước theo thứ tự rẻ trước, đắt sau: (1) kiểm định dạng `procedureCode` theo mẫu của dịch vụ và `caseCode` (1 đến 64 ký tự) khi `procedureCodeRequired`; (2) gọi OPA sidecar với dữ liệu đăng ký sử dụng của HTTT (bó dữ liệu do PH-12 dựng từ PH-02, làm mới theo sự kiện) và khung giờ `14.purpose.allowed-hours`; (3) với `sensitivity` từ `RESTRICTED`, gọi PH-09 hỏi "mục đích có trong sổ hoạt động xử lý và có cơ sở pháp lý hoặc chấp thuận không"; kết quả cho phép được đệm 60 giây theo (tenant, hệ thống, dịch vụ, mục đích) để giữ chi phí dưới ngưỡng 80 ms của NFR-14-001, kết quả từ chối không đệm; (4) kiểm `procedureCode` thuộc danh mục thủ tục của PH-07 bằng bản đệm bộ nhớ 5 phút, PH-07 ngừng thì dùng bản đệm tối đa 24 giờ. OPA hoặc PH-09 quá 200 ms hoặc lỗi thì ném ERR-14-132; không có chế độ "mở khi lỗi". Lời gọi PH-09 đi qua thư viện `dh-privacy-client`; PH-14 khai `FailMode = PUBLIC_ONLY` khi khởi tạo (PH-14 chỉ hỏi PH-09 với dịch vụ từ `RESTRICTED`, nên khi PH-09 lỗi mọi lượt đó đều bị từ chối) và xóa đệm kết quả cho phép ngay khi nhận EVT-09-07, 08, 12. Quyết định và lý do được ghi vào giao dịch dù cho phép hay từ chối (BR-14-008).
 
 **`FederationRouter`.** `RuleMatcher` dựng chỉ mục từ ảnh chụp cấu hình: bảng băm theo `serviceCode` và theo (`group`, `operationType`), mỗi ô là danh sách luật xếp theo `priority` giảm dần (số lớn hơn ưu tiên hơn; giả định, D03-03-PH14 xác nhận). Lượt gọi lấy luật đầu tiên của ô `serviceCode`, nếu không có thì ô (`group`, `operationType`). Ba trạng thái của đích chính được kiểm theo thứ tự: dịch vụ `ACTIVE` hoặc `DEPRECATED`, nền tảng `ACTIVE` và không `securityHold`, bộ ngắt mạch không `OPEN`. Chỉ khi đích chính không dùng được, luật có `allowFallback`, thao tác `READ` và đích dự phòng cùng nhóm dữ liệu thì chuyển hướng; lượt chuyển hướng ghi `routedVia = FALLBACK`, tăng `national_fallback_total` và phát cảnh báo cấu hình `routing.fallback`. Nếu cả hai không dùng được, `StaleServer` thử đệm quá hạn (4.11) rồi mới ERR-14-103. Thao tác `WRITE` không bao giờ chuyển hướng (BR-14-023), kiểm cả ở lúc lưu luật (ERR-14-015) và ở lúc chạy.
 
@@ -1050,7 +1053,7 @@ Chi tiết thiết kế:
 1. Kiểm quá hạn (`14.queue.max-age-hours`, quá thì `FAILED` lý do `EXPIRED`) và cờ hủy (`CANCELLED` ghi ở Valkey bởi API-14-078 chỉ khi còn `QUEUED`).
 2. Kiểm bản ghi chống trùng: đã `DONE` thì không chạy lại; `IN_PROGRESS` quá `timeoutMs` cộng 30 giây (nghĩa là bản sao trước đó chết giữa chừng) thì coi là `UNKNOWN_RESULT`, không gửi lại.
 3. Đặt `SENDING`, chạy chặng 5 đến 9 của đường gọi bằng danh tính và mục đích đã lưu trong phong bì.
-4. Kết quả: `SUCCEEDED` hoặc `FAILED`, lưu kết quả mã hóa vào `dh-nat-payload/async/` 72 giờ, phát EVT-14-11 để HTTT đăng ký nhận qua PH-10 hoặc tự tra bằng API-14-077.
+4. Kết quả: `SUCCEEDED` hoặc `FAILED`, lưu kết quả mã hóa vào bucket `dh-nat-payload` theo khóa `{tenant}/async/{requestId}.res.enc` trong 72 giờ, phát EVT-14-11 để HTTT đăng ký nhận qua PH-10 hoặc tự tra bằng API-14-077.
 
 Khi cổng hạn mức hoãn (`BACKGROUND_DEFERRED`, `ESSENTIAL_ONLY`) hoặc nền tảng ngắt mạch, thông điệp không bị hỏng mà được đẩy sang chủ đề trễ `{tenant}.national.asyncqueue.retry-1m.v1`, `retry-5m`, `retry-30m` kèm tiêu đề `not-before` rồi xác nhận bản gốc; `RetryScheduler` giữ thông điệp tới đúng hạn bằng `pause` và `resume`. Cách này không dừng cả chủ đề vì một nền tảng lỗi. Khi hàng chờ vượt 1.000 thông điệp hoặc tuổi thông điệp cũ nhất vượt 5 phút do ngắt mạch, `worker` phát EVT-14-10 (loại `QUEUE_ACCUMULATING`).
 
@@ -1166,7 +1169,7 @@ Chi tiết thiết kế:
 
 **Nội dung mã hóa.** Khi `14.txn.payload-retention-days` > 0 (mặc định 30, tối đa 180, đổi cần duyệt vì ★), `PayloadVault` mã hóa thân yêu cầu và thân phản hồi bằng AES-256-GCM với DEK của tenant (AAD gồm tenant, `transactionCode`, loại) rồi ghi bất đồng bộ vào `dh-nat-payload/{tenant}/{yyyy}/{MM}/{transactionCode}.{req|res}.enc` sau khi đã trả lời bên gọi, qua hàng đệm trong bộ nhớ 10.000 mục; hàng đầy thì bỏ mục, tăng `national_payload_dropped_total` và để `payloadRef` rỗng (việc xem nội dung khi đó trả ERR-14-031), không bao giờ chặn đường gọi. Tham số bằng 0 thì không ghi. `PayloadRetentionApplier` đặt luật vòng đời của bucket theo tiền tố tenant mỗi khi tham số đổi.
 
-**Đường ghi vào PostgreSQL.** `LedgerConsumer` tiêu thụ EVT-14-11 theo lô 500 bản ghi hoặc 200 ms, chèn `national_transaction` bằng `INSERT … ON CONFLICT DO NOTHING RETURNING`; chỉ các dòng chèn mới được `UsageAggregator` cộng vào `usage_hourly` theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) trong cùng giao dịch. Cách này giữ `usage_hourly` đúng dù Kafka giao lại thông điệp. Độ trễ từ lúc giao dịch kết thúc tới lúc tra cứu được là một chuyến Kafka cộng một lô ghi, mục tiêu p99 ≤ 5 giây (giả định) và đo bằng `national_ledger_lag_seconds`. Phân vùng quá 12 tháng được `LedgerArchiver` xuất sang kho WORM của Ceph RGW kèm chuỗi băm theo ADR-031 trước khi tháo phân vùng (SEC-62).
+**Đường ghi vào PostgreSQL.** `LedgerConsumer` tiêu thụ EVT-14-11 theo lô 500 bản ghi hoặc 200 ms, ghi `national_transaction` bằng `INSERT … ON CONFLICT (tenant_id, transaction_code, started_at) DO UPDATE … WHERE` chỉ cập nhật khi trạng thái mới có hạng cao hơn bản đã lưu (bản ghi hạng thấp đến muộn bị bỏ, khớp §8.1); `UsageAggregator` chỉ cộng vào `usage_hourly` theo (giờ, HTTT, dịch vụ, mục đích, kết quả, nguồn đệm) khi dòng vừa chuyển sang trạng thái cuối (`finished_at` vừa được đặt), trong cùng giao dịch. Cách này giữ `usage_hourly` đúng dù Kafka giao lại thông điệp. Độ trễ từ lúc giao dịch kết thúc tới lúc tra cứu được là một chuyến Kafka cộng một lô ghi, mục tiêu p99 ≤ 5 giây (giả định) và đo bằng `national_ledger_lag_seconds`. Phân vùng quá 12 tháng được `LedgerArchiver` xuất sang kho WORM của Ceph RGW kèm chuỗi băm theo ADR-031 trước khi tháo phân vùng (SEC-62).
 
 **Tra cứu và đối soát.** `TransactionQuery` tra theo mã (khóa b-tree, O(1)) hoặc bộ lọc (thời gian, HTTT, dịch vụ, trạng thái, mã hồ sơ) với phân trang keyset và khoảng thời gian tối đa 31 ngày (vượt: ERR-14-003); `PERM-14-audit-read` chỉ thấy siêu dữ liệu đã che. Hàng đợi bất đồng bộ và `UNKNOWN_RESULT` cùng hiện ở UI-14-12.
 
@@ -1271,7 +1274,7 @@ Khi một luật vượt, `AnomalyAlertService` tạo `anomaly_alert` `OPEN` kè
 
 Chi tiết thiết kế:
 
-**Tham số.** `ParameterRegistry` giữ mô tả của 46 tham số `14.*` (khóa, kiểu, mặc định, miền, nhãn ★) lấy nguyên từ FRS §8.2; `SettingsService` kiểm miền và các ràng buộc chéo (ví dụ `14.quota.background-defer-ratio` < `14.quota.essential-only-ratio`, `14.cache.stale-max-seconds` không dài hơn 3 ngày) trước khi gọi `ParameterApi` của PH-18 ghi giá trị. Tham số ★ không ghi ngay mà tạo yêu cầu qua `FourEyesGuard` (BR-14-022). Giá trị hiệu lực đi vào ảnh chụp cấu hình nên cổng áp trong 30 giây (NFR-14-026); `dh-integration` đọc tham số qua `ParameterApi` với bộ đệm 60 giây.
+**Tham số.** `ParameterRegistry` giữ mô tả của 51 tham số `14.*` (khóa, kiểu, mặc định, miền, nhãn ★) lấy nguyên từ FRS §8.2; `SettingsService` kiểm miền và các ràng buộc chéo (ví dụ `14.quota.background-defer-ratio` < `14.quota.essential-only-ratio`, `14.cache.stale-max-seconds` không dài hơn 3 ngày) trước khi gọi `ParameterApi` của PH-18 ghi giá trị. Tham số ★ không ghi ngay mà tạo yêu cầu qua `FourEyesGuard` (BR-14-022). Giá trị hiệu lực đi vào ảnh chụp cấu hình nên cổng áp trong 30 giây (NFR-14-026); `dh-integration` đọc tham số qua `ParameterApi` với bộ đệm 60 giây.
 
 **Nhập từ hệ cũ.** `LegacyAppendixParser` đọc phụ lục NGSP (CSV, XLSX, JSON) như dữ liệu, không thực thi gì. Mỗi dòng thành một dịch vụ `DRAFT` với chính sách mặc định của nhóm (bảng ở 4.6) và `reconcileLabel = UNKNOWN`. `SecretColumnGuard` loại mọi cột có tên giống khóa, bí mật, mật khẩu và quét giá trị bằng `SecretDetector` của PH-04; nếu thấy thì bỏ cột, báo "đã bỏ qua cột chứa bí mật" và không lưu, hiện thực BR-14-034 ở cửa nhập. Việc nhập là tất cả hoặc không: một dòng sai thì ERR-14-032 kèm bảng lỗi theo dòng, cột và không dịch vụ nào được tạo.
 
@@ -1902,7 +1905,7 @@ Bảng dưới cụ thể hóa FRS §12.1 thành hành vi của mã, và nêu th
 | NDXP, NDOP, hệ thống đăng ký | Ngắt mạch, đệm quá hạn có cờ, hàng chờ bất đồng bộ, đồng bộ thử lại 24 giờ | Dữ liệu có thể cũ tới `14.cache.stale-max-seconds` | `national_connectivity_status`, ≤ 3 phút (NFR-14-007) |
 | OPA hoặc PH-09 | Từ chối lượt (ERR-14-132); lượt trúng kết quả PH-09 đã đệm 60 giây vẫn đi | Không có; chọn khả dụng thấp hơn an toàn | `national_purpose_decisions_total{reason="UNAVAILABLE"}` |
 | `dh-integration` hoặc `pg-core` | Cổng chạy tiếp bằng ảnh chụp cấu hình đã nạp (đĩa); giao dịch, hạn mức, sự kiện chờ ở Kafka và `LedgerSpool`; bộ tiêu thụ ghi bù khi trở lại | Không đổi cấu hình, không duyệt, không tra cứu giao dịch trong lúc ngừng; cấu hình có thể cũ | `national_config_age_seconds`, `national_ledger_lag_seconds` |
-| Valkey | Bỏ đệm; đếm hạn mức cục bộ chia đều theo số bản sao; chống phát lại chỉ trong bản sao; gộp lượt trùng chỉ cục bộ; thao tác ghi bị chặn (ERR-14-127, Q14-27); `SECURITY_HOLD` đếm cục bộ | Hạn mức xấp xỉ, nguy cơ phát lại giữa các bản sao, ghi tạm dừng | `national_quota_degraded`, cảnh báo ngay |
+| Valkey | Bỏ đệm; đếm hạn mức cục bộ chia đều theo số bản sao; chống phát lại chỉ trong bản sao; gộp lượt trùng chỉ cục bộ; thao tác ghi bị chặn (ERR-14-133, Q14-27); `SECURITY_HOLD` đếm cục bộ | Hạn mức xấp xỉ, nguy cơ phát lại giữa các bản sao, ghi tạm dừng | `national_quota_degraded`, cảnh báo ngay |
 | Kafka | Cổng ghi `LedgerSpool` rồi phát lại; hàng chờ bất đồng bộ không nhận mới (ERR-14-118); cấu hình đã nạp vẫn chạy, thăm dò 15 giây | Trễ nhật ký khai thác và sự cố chữ ký; spool đầy thì cổng ngừng nhận lượt gọi ra | `national_ledger_spool_bytes` |
 | PH-05 | Không khai báo nền tảng mới (ERR-14-005); cổng dùng tệp kê khai kết nối đã nạp | Không xoay thông tin xác thực trong lúc ngừng | Chỉ số PH-05 |
 | PH-04 | Chiều ra không ảnh hưởng; chiều vào ERR-14-124 | Không nhận được chiều vào | `national_inbound_requests_total{result="flow_error"}` |
@@ -1917,7 +1920,7 @@ Bảng dưới cụ thể hóa FRS §12.1 thành hành vi của mã, và nêu th
 
 ## 9. Cấu hình và cờ tính năng theo tenant
 
-Tham số `14.*` theo FRS §8.2 (46 khóa; khóa ★ cần duyệt bốn mắt), đọc qua `ParameterApi` của PH-18 có bộ đệm 60 giây ở `dh-integration` và đi vào ảnh chụp cấu hình cho cổng (hiệu lực ≤ 30 giây). Bảng dưới nhóm theo thành phần dùng để người đọc biết đổi tham số nào thì ảnh hưởng chỗ nào của mã; giá trị mặc định và miền ở FRS §8.2.
+Tham số `14.*` theo FRS §8.2 (51 khóa; khóa ★ cần duyệt bốn mắt), đọc qua `ParameterApi` của PH-18 có bộ đệm 60 giây ở `dh-integration` và đi vào ảnh chụp cấu hình cho cổng (hiệu lực ≤ 30 giây). Bảng dưới nhóm theo thành phần dùng để người đọc biết đổi tham số nào thì ảnh hưởng chỗ nào của mã; giá trị mặc định và miền ở FRS §8.2.
 
 | Nhóm | Khóa | Thành phần dùng |
 |---|---|---|
@@ -2083,6 +2086,7 @@ Phần này nêu cách giữ khả dụng, triển khai, khôi phục thảm h�
 - **Triển khai.** Ảnh ký bằng cosign và triển khai bằng Argo CD cùng chu trình với `dh-runtime` (SEC-55, SEC-56); khi nâng phiên bản, `maxUnavailable: 0` và `maxSurge: 1`, bản sao mới phải qua khởi động nóng mới nhận lưu lượng.
 - **Khôi phục thảm họa.** Hai site active–standby (ADR-034): `pg-core` và Ceph WORM theo D03-09; Valkey không sao lưu vì mọi dữ liệu tái dựng được (bộ đếm từ `quota_usage`, đệm tự đầy lại, cờ `SECURITY_HOLD` từ `national_platform`); ảnh chụp cấu hình dựng lại từ PostgreSQL. Điểm cần chuẩn bị riêng: địa chỉ IP nguồn của site dự phòng có thể phải đăng ký với trung ương (Q334 của D03-09), và chứng thư mTLS cùng khóa `transit` phải có bản ở site dự phòng.
 - **Sổ tay** (D06-03), các quy trình chính: (1) xử lý `SECURITY_HOLD` và sự cố chữ ký; (2) thay chứng thư trước hạn: tạo khóa `transit`, xin chứng thư, nạp, duyệt, theo dõi chuyển tiếp; (3) khi hạn mức chạm 85%: tăng thời hạn đệm, hoãn tác vụ nền, đề nghị nâng hạn mức; (4) Kafka ngừng kéo dài: theo dõi spool, thời gian còn lại, quyết định tạm ngừng nhận lượt; (5) Valkey khôi phục: kiểm `QuotaRestorer` đã nạp bộ đếm, kiểm số thế hệ đệm; (6) xoay khóa `dh-{tenant}-pii` và `nat-config`, nạp lại DEK và khóa công khai; (7) NDXP đổi địa chỉ: đề nghị đổi `ServiceEntry` qua GitOps trước khi đổi cấu hình kết nối; (8) kiểm tra mồ côi định kỳ: khóa `transit` không có chứng thư, bản nháp ở PH-02 không có cung cấp lại, đối tượng RGW quá hạn.
+- **Tác vụ nền theo dữ liệu.** Ngoài các tác vụ ở các mục trên, vai trò `worker` chạy: `PartitionMaintenanceJob` (tạo phân vùng tháng trước đầu tháng bằng thủ tục `p_ensure_month_partitions`), `HealthRollupJob` (gộp mẫu sức khỏe theo giờ sau 7 ngày), `RetentionJob` (dọn `async_request`, `worker_command` và dữ liệu hết hạn lưu), `LedgerArchiver` (xuất phân vùng giao dịch quá 12 tháng sang kho WORM), bộ quét lệnh `worker` quá hạn mỗi 30 giây và dọn bảng `outbox` đã phát; tất cả chạy dưới ShedLock.
 - **Đối soát với trung ương.** Hằng ngày `national_transaction` được so với báo cáo lượt do trung ương cung cấp (nếu có, Q14-24) để phát hiện chênh lệch đếm hạn mức; khoảng lệch dùng hiệu chỉnh `quota_allocation`.
 - **Đồng bộ D03-09.** Cần thêm vào D03-09: namespace `dh-nat-{tenant}` (hoặc nhãn trong namespace runtime), hai dòng định cỡ `national-gateway` và `national-worker`, ba bucket Ceph, danh sách FQDN đích ở egress; chưa sửa ở tập này (xem "Đề nghị đồng bộ").
 
@@ -2166,9 +2170,11 @@ Bảng dưới ghi các rủi ro riêng của PH-14 kèm mức và biện pháp 
 
 > **Câu hỏi mở Q14-26:** Hợp đồng nội bộ với PH-02 (tạo API nháp loại dịch vụ quốc gia, sự kiện đã công bố, danh sách dịch vụ chia sẻ), PH-07 (`CatalogLookupApi` cho danh mục mục đích khai thác và danh mục thủ tục), PH-09 (kiểm tra mục đích, kiểm lô, thời hạn 200 ms) chưa có tập API tương ứng; tập này giả định tên và thời hạn ở mục 2.3 và 8.3. Cần ba nhóm phân hệ đó xác nhận.
 
-> **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-127 làm mã tạm). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
+> **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-133, mã đã cấp ở D03-04-PH14, còn chờ chốt phương án). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài liệu của phân hệ khác; tập này không sửa trực tiếp vì các luồng viết chạy song song. Đề nghị thực hiện trong đợt đồng bộ cuối. Việc đã nêu ở mục "Đề nghị đồng bộ" của FRS (quyền `PERM-14-*`, scope máy, REQ-14, D00-01, D00-03 phần B, ba ADR đầu) không lặp lại ở đây.
 
@@ -2197,5 +2203,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập SDD PH-14 theo khuôn K-SDD và chuẩn trình bày K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã hai đơn vị triển khai, mô hình miền và 18 thành phần (khối 10 mục), 10 sơ đồ trình tự, 12 máy trạng thái, nhất quán và suy giảm, bảo mật đối chiếu SEC, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, 10 rủi ro, 8 câu hỏi mở (Q14-20…27) và mục Đề nghị đồng bộ. Căn cứ: FRS và use case PH-14, SAD §4, ADR-057, D03-07, D03-10 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số; `type` lỗi RFC 9457 theo mẫu `https://datahub.gov.vn/errors/` |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14 |
 
 

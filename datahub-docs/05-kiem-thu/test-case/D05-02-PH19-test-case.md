@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH19
 ten: Kịch bản và test case phân hệ PH-19 Thanh toán
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, đội phát triển dh-payment và dh-console, kế toán và cán bộ vận hành thanh toán của tỉnh, hội đồng thẩm định
@@ -3528,7 +3528,7 @@ Chương này đặc tả 29 kịch bản chức năng TS-19-01…29, cùng số
 
 **Các bước.**
 
-1. Phát sự kiện PH-20 `tenant.module.enabled` (PH-19, T50).
+1. Phát sự kiện PH-20 `platform.tenant.module-enabled.v1` (PH-19, T50).
 2. Phát lại sự kiện đó.
 
 **Kết quả mong đợi.** Bước 1: cấu hình mặc định v1, topic `t50.payment.*`, bucket `dh-t50-payment`, `dh-t50-payment-worm`, đường dẫn OpenBao `kv/dh/t50/payment/` được tạo; API của T50 trả lời. Bước 2: không tạo trùng (xử lý một lần theo hộp nhận).
@@ -3549,7 +3549,7 @@ Chương này đặc tả 29 kịch bản chức năng TS-19-01…29, cùng số
 
 **Các bước.**
 
-1. PH-20 phát `tenant.module.suspended`.
+1. PH-20 phát `platform.tenant.module-disabled.v1`.
 2. Đối tác của T50 gọi `P: POST /payments`.
 3. `PGSIM` gửi IPN cho giao dịch `PENDING`.
 
@@ -5076,3 +5076,4 @@ Các câu hỏi dưới đây chưa có câu trả lời chính thức; mỗi c�
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: 34 kịch bản, 187 ca, 12 UAT, mẫu tự động hóa, công cụ sinh ma trận theo dải số của khung §14 |
 | 0.2 | 2026-11-26 | Nâng theo K-TC và K-TRINH-BAY: Giới thiệu đủ sáu mục (mục đích, phạm vi, người đọc, thuật ngữ, tham chiếu, cấu trúc); chuyển toàn bộ <!-- gen:count:start -->187<!-- gen:count:end --> ca sang khối đặc tả mỗi ca một khối, kể cả 11 ca hiệu năng TS-19-32 (giữ bảng tóm tắt ngưỡng); đoạn mở đầu mỗi chương, chú thích mọi bảng, hình chuỗi công cụ; vá `tc_parse.py` đọc khối đặc tả, `gen_matrix.py` sinh chú thích bảng; sinh lại ma trận, Gherkin, bảng tính, độ phủ không đổi |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: topic `platform.tenant.module-enabled.v1`, `module-disabled.v1` |

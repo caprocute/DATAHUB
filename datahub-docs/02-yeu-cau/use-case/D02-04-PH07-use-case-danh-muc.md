@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH07
 ten: Đặc tả use case phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển PH-07, đội kiểm thử, hội đồng thẩm định
 phan_he: PH-07
@@ -503,7 +503,7 @@ Use case này thay thế chức năng "Nhập dữ liệu từ file" của hệ 
 **Luồng ngoại lệ.**
 
 - **E1. Tệp không hợp lệ (bước 4, 6, 7).** Hệ thống trả ERR-07-019 với lý do cụ thể. Thông điệp ví dụ: "Tệp vượt quá 50 MB", "Tệp có 230.000 dòng, vượt giới hạn 200.000 dòng", "Không nhận ra mã hóa ký tự của tệp CSV. Hãy lưu lại dưới dạng CSV UTF-8", "Thiếu cột bắt buộc MA", "Nội dung tệp không phải Excel dù có phần mở rộng .xlsx". Tác vụ chuyển `FAILED`; người dùng sửa tệp và tải lại.
-- **E2. Tệp nhiễm mã độc (bước 6).** Dịch vụ quét trả `INFECTED`; hệ thống chuyển tác vụ sang `FAILED`, xóa tệp khỏi vùng xử lý, ghi sự kiện an ninh (FR-00-045) và hiển thị "Tệp không vượt qua kiểm tra an toàn và đã bị loại bỏ. Vui lòng liên hệ cán bộ an toàn thông tin." mã lỗi ERR-07-038 (mã mới đề xuất, xem mục 8.2).
+- **E2. Tệp nhiễm mã độc (bước 6).** Dịch vụ quét trả `INFECTED`; hệ thống chuyển tác vụ sang `FAILED`, xóa tệp khỏi vùng xử lý, ghi sự kiện an ninh và bản ghi kiểm toán (FR-07-050, BR-07-041) và hiển thị "Tệp không vượt qua kiểm tra an toàn và đã bị loại bỏ. Vui lòng liên hệ cán bộ an toàn thông tin." mã lỗi ERR-07-038 (mã mới đề xuất, xem mục 8.2).
 - **E3. Có dòng lỗi nhưng chưa chọn bỏ qua (bước 13).** Hệ thống trả ERR-07-021 "Tệp còn 18 dòng lỗi. Hãy sửa tệp hoặc chọn bỏ qua dòng lỗi." Quay về bước 11.
 - **E4. Tác vụ hết hạn hoặc bản nháp đã thay đổi (bước 14).** Hệ thống trả ERR-07-020 "Kết quả xem trước đã hết hạn (quá 24 giờ) hoặc bản nháp đã được sửa sau khi phân tích. Vui lòng phân tích lại." Giao diện cung cấp nút "Phân tích lại" tạo tác vụ mới từ cùng tệp (không cần tải lên lại).
 - **E5. Bản nháp đã được trình duyệt (bước 14).** Hệ thống trả ERR-07-004; tác vụ giữ `VALIDATED`; người dùng phải chờ phiên bản bị từ chối hoặc được phát hành rồi tạo bản nháp mới. Thông báo: "Phiên bản đang ở trạng thái "{status}" nên không thực hiện được thao tác này. Tải lại trang để xem trạng thái mới nhất."
@@ -1158,7 +1158,7 @@ Hệ cũ có trường `Is_update` đánh dấu danh mục được cập nhật
 
 **Tác nhân chính.** Bộ lập lịch (chạy định kỳ); ROLE-DATA_APPROVER hoặc ROLE-TENANT_ADMIN (chạy theo yêu cầu, xác nhận); ROLE-PLATFORM_ADMIN với danh mục `COMMON`.
 
-**Tác nhân phụ.** NDXP qua adapter PH-14 `NDXP_DMDC`; hộp "Việc của tôi"; Bên nhận sự kiện (EVT-07-09, EVT-07-05).
+**Tác nhân phụ.** NDXP qua adapter PH-14 `NDXP_DMDC` (use case đối ứng ở phía PH-14: UC-14-15, PH-07 là bên gọi cổng tiếp hợp, API-14-079…083); hộp "Việc của tôi"; Bên nhận sự kiện (EVT-07-09, EVT-07-05).
 
 **Mức ưu tiên.** M.
 
@@ -1765,3 +1765,4 @@ Bảng dưới tổng hợp các câu hỏi mở phát sinh trong tài liệu, c
 |---|---|---|---|
 | 0.1 | 2026-11-21 | Nhóm phân hệ PH-07 | Bản đầu, 17 use case |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 15 mục cho mọi use case, câu thông báo theo mã lỗi, tóm tắt cho hội đồng, người đọc, sơ đồ tổng chia hai hình, chú thích bảng và hình |
+| 0.3 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: sửa mã FR của SRS dẫn sai thành FR-07-050, BR-07-041; UC-07-11 trỏ UC-14-15 |
