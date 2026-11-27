@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH12
 ten: Đặc tả yêu cầu chức năng phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, kỹ sư hạ tầng định danh, cán bộ ATTT, kiểm thử viên
@@ -2173,7 +2173,7 @@ Hình cho thấy quyết định "cần xác thực lại" do OPA đưa ra theo 
 4. SO duyệt kích hoạt (khác TA).
 5. Hệ thống tạo liên kết ở Keycloak ở chế độ chỉ-đọc: xác thực chuyển thẳng tới LDAP, mật khẩu không được sao chép; đồng bộ gia tăng mỗi 15 phút và đồng bộ đầy đủ mỗi ngày.
 6. Người dùng thuộc cơ sở tìm kiếm được nhập thành tài khoản `authSource=LDAP` với đơn vị lấy theo bảng ánh xạ OU sang `orgCode`; vai trò không tự gán từ nhóm LDAP trừ vai trò không đặc quyền trong bảng ánh xạ đã duyệt.
-7. Người dùng bị vô hiệu ở LDAP chuyển `DISABLED` ở Datahub không quá 15 phút sau; hệ thống thu hồi phiên theo FR-12-040. Với tài khoản `TENANT_ADMIN`, việc đồng bộ từ danh bạ không bị ERR-12-046 chặn (cán bộ đã nghỉ thì không giữ quyền), nhưng xử lý như ngoại lệ ATTT của BR-12-033: cảnh báo khẩn cho SO và PA, tạo việc bổ sung TA. Cách xử lý này là đề xuất của PH-12 ngoài hai ngoại lệ của Q403, đang chờ chủ đầu tư chốt (câu hỏi Q453 ở D00-03-01).
+7. Người dùng bị vô hiệu ở LDAP chuyển `DISABLED` ở Datahub không quá 15 phút sau; hệ thống thu hồi phiên theo FR-12-040. Với tài khoản `TENANT_ADMIN`, việc đồng bộ từ danh bạ không bị ERR-12-046 chặn (cán bộ đã nghỉ thì không giữ quyền), nhưng xử lý như ngoại lệ ATTT của BR-12-033: cảnh báo khẩn cho SO và PA, tạo việc bổ sung TA. Đây là ngoại lệ thứ ba của ERR-12-046, chủ đầu tư chốt 27/11/2026 (Q453 ở D00-03-01).
 
 **Luồng thay thế.** Tỉnh không có LDAP: dùng tài khoản cục bộ. LDAP chỉ để xác thực, không nhập người dùng: chế độ "chỉ xác thực" cho tài khoản đã tạo ở FR-12-003. Đồng bộ thủ công theo yêu cầu ở UI-12-11.
 
@@ -4378,7 +4378,7 @@ Bốn mươi lăm quy tắc dưới đây là các ràng buộc nghiệp vụ v�
 | BR-12-030 | Cặp vai trò xung đột (D02-08 §4) bị chặn khi gán; ngoại lệ do TA đề nghị, SO duyệt, có lý do, tối đa 90 ngày, tự gỡ khi hết hạn; cặp có AUDITOR đối với quyền ghi của PH-19 không có ngoại lệ | 003, 009, 012, 013, 015, 019, 051 |
 | BR-12-031 | Vai trò `PLATFORM_*` chỉ gán ở tenant `PLATFORM`; nhân sự nền tảng vào tenant khác chỉ bằng quyền có thời hạn | 011, 012, 017, 027, 041 |
 | BR-12-032 | Quyền có thời hạn tối đa 4 giờ, kèm lý do và mã phiếu hỗ trợ, có người duyệt thứ hai, thông báo cho quản trị tỉnh bị truy cập, ghi kiểm toán trong chuỗi của tenant đó; tự hết hạn và OPA kiểm tra hạn ở mọi quyết định | 017, 027 |
-| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant có tối thiểu hai TENANT_ADMIN hiệu lực (quyết định Q403 của chủ đầu tư, chốt 27/11/2026). PH-20 kiểm điều kiện này bằng `GET /users` lọc `roleCode`, `state` khi kích hoạt tenant; với tenant đã kích hoạt, mọi thao tác làm số TA hiệu lực xuống dưới hai (thu hồi vai trò, khóa, vô hiệu, hết hạn gán vai trò, xóa tài khoản TA) bị chặn bằng ERR-12-046 (409). TA hiệu lực là người giữ gán `TENANT_ADMIN` còn hạn mà tài khoản ở `ACTIVE`, `LOCKED` (khóa tạm do nhập sai, tự mở) hoặc `PENDING_ACTIVATION`. Ngoại lệ duy nhất: tự động vô hiệu do không dùng quá ngưỡng (FR-12-008, TCVN 14423) và khóa do sự cố ATTT vẫn thực hiện, nhưng phát cảnh báo khẩn cho SO và PA và tạo việc bổ sung TA. Luồng thay thế khi cần đổi TA là bổ sung TA mới trước rồi mới gỡ TA cũ, TA khác của tenant xác nhận | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
+| BR-12-033 | Không ai tự gán, gỡ vai trò, khóa, thu hồi hay đặt lại yếu tố thứ hai của chính mình; mỗi tenant có tối thiểu hai TENANT_ADMIN hiệu lực (quyết định Q403 của chủ đầu tư, chốt 27/11/2026). PH-20 kiểm điều kiện này bằng `GET /users` lọc `roleCode`, `state` khi kích hoạt tenant; với tenant đã kích hoạt, mọi thao tác làm số TA hiệu lực xuống dưới hai (thu hồi vai trò, khóa, vô hiệu, hết hạn gán vai trò, xóa tài khoản TA) bị chặn bằng ERR-12-046 (409). TA hiệu lực là người giữ gán `TENANT_ADMIN` còn hạn mà tài khoản ở `ACTIVE`, `LOCKED` (khóa tạm do nhập sai, tự mở) hoặc `PENDING_ACTIVATION`. Ba ngoại lệ: tự động vô hiệu do không dùng quá ngưỡng (FR-12-008, TCVN 14423), khóa do sự cố ATTT và đồng bộ vô hiệu từ danh bạ LDAP/AD (FR-12-026, Q453 chủ đầu tư chốt 27/11/2026) vẫn thực hiện, nhưng phát cảnh báo khẩn cho SO và PA và tạo việc bổ sung TA. Luồng thay thế khi cần đổi TA là bổ sung TA mới trước rồi mới gỡ TA cũ, TA khác của tenant xác nhận | 004, 005, 012, 013, 017, 018, 024, 029, 031, 040, 055 |
 | BR-12-034 | Đặt lại yếu tố thứ hai chỉ do quản trị cao hơn một cấp, sau khi xác minh danh tính bằng kênh khác; tài khoản quản trị cần SO duyệt | 024 |
 | BR-12-035 | Tài khoản không bị xóa vật lý: kết thúc là `DISABLED`, giữ truy vết | 005, 008 |
 | BR-12-036 | Hạ quyền (gỡ vai trò, thu hẹp phạm vi) thu hồi phiên và có hiệu lực ở OPA trong 60 giây; nâng quyền có hiệu lực khi có token mới (tối đa 5 phút) vì OPA lấy giao của token và dữ liệu gói | 004, 012, 046, 051 |
@@ -5158,4 +5158,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-12: 62 FR đủ khối 17 mục (52 M, 9 S, 1 C) trong tám nhóm; 45 BR, 33 NFR, 38 tham số `12.*`, 66 mã lỗi (47 điều khiển, 19 runtime), 16 sự kiện, 111 API, 19 màn hình, 2 ảnh hi-fi; ma trận truy vết 12 mục LGC và ánh xạ mã cũ sang mã mới cho 19 FR, 30 NFR, 17 BR của repo; 15 câu hỏi mở (Q12-01…15); đề nghị đồng bộ D02-08 (14 quyền, 7 scope) |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412, Q403 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403 (chủ đầu tư chốt 27/11/2026): tenant đã kích hoạt luôn có tối thiểu hai TA; chặn cứng bằng ERR-12-046 (đổi từ "TA cuối cùng" sang "dưới hai") ở FR-12-005, FR-12-012 và BR-12-033; ngoại lệ tự vô hiệu không dùng (FR-12-008) và khóa do sự cố ATTT (FR-12-005, FR-12-021, FR-12-026) kèm cảnh báo khẩn và việc bổ sung TA |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt Q453: đồng bộ LDAP/AD vô hiệu TA là ngoại lệ thứ ba của ERR-12-046 (FR-12-026 bước 7, BR-12-033) |
 
