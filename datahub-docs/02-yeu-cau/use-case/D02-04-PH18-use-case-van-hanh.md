@@ -2143,7 +2143,7 @@ Hình cho thấy đồng hồ 72 giờ thuộc PH-09 và bắt đầu từ thờ
 - **E3. Tenant đang có tác vụ nặng khác (bước 1, 4).** ERR-18-057 (409): "Tỉnh đang có {tác vụ} chạy. Chờ xong trước khi yêu cầu khôi phục."
 - **E4. Người duyệt trùng người tạo (bước 4).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 - **E5. PH-13 không ghi được kiểm toán (bước 4).** ERR-18-008 (503): "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
-- **E6. Bước của Job lỗi (bước 5, 6).** ERR-18-114 (worker): "Bước {n} lỗi: {lý do}. Đang quay lui."
+- **E6. Bước của Job lỗi (bước 5, 6).** ERR-18-114 (worker): "Bước {n} của khôi phục lỗi: {mô tả}. Hệ thống đang quay lui."
 - **E7. Đối chiếu số dòng lệch (bước 6).** ERR-18-115 (worker): "Số dòng sau khôi phục lệch ở {bảng}." Tenant giữ `SUSPENDED` chờ PA quyết định.
 
 **Quy tắc áp dụng.** BR-18-038; BR-18-039; BR-18-047; LP-18-01; LP-18-02; LP-18-05.
@@ -2371,7 +2371,7 @@ Hình cho thấy PH-20 giữ quyết định ở mọi bước; PH-18 chỉ th�
 
 **Luồng ngoại lệ.**
 - **E1. Kế hoạch chưa sẵn sàng (bước 1).** ERR-18-065 (409): "Kế hoạch {mã} chưa ở trạng thái sẵn sàng."
-- **E2. Đọc nguồn lỗi (bước 2).** ERR-18-117 (worker): "Đọc nguồn {mã} lỗi." Hiện ở UI-18-22.
+- **E2. Đọc nguồn lỗi (bước 2).** ERR-18-117 (worker): "Không đọc được nguồn hệ cũ ở bảng {bảng}: {chi tiết}." Hiện ở UI-18-22.
 - **E3. Bộ chuyển lỗi một bản ghi (bước 2).** ERR-18-118 (worker): "Bản ghi {khóa} không chuyển đổi được: {lý do}." Bản ghi vào danh sách lỗi, lần chạy tiếp tục.
 - **E4. Tổng kiểm tra lệch (bước 5).** ERR-18-120 (worker): "Tổng kiểm tra của {đối tượng} lệch."
 - **E5. Không có bản ghi lỗi để chạy lại (bước 8).** ERR-18-036 (422): "Không có mục nào phù hợp để {thao tác}.".

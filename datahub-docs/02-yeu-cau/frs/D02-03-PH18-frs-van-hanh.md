@@ -5057,10 +5057,10 @@ Mã 001 đến 072 là lỗi control plane trả cho người dùng hoặc phân
 | ERR-18-111 | Không (worker) | SMS gateway lỗi | "Gửi SMS chưa thành công; đang thử lại." | Chung |
 | ERR-18-112 | Không (worker) | Thư trả lại | "Thư bị trả lại ({loại})." | 040 |
 | ERR-18-113 | Không (worker) | Người nhận bị chặn | "Không gửi vì người nhận trong danh sách chặn." | 040 |
-| ERR-18-114 | Không (worker) | Bước khôi phục lỗi | "Bước {n} lỗi: {lý do}. Đang quay lui." | 055 |
+| ERR-18-114 | Không (worker) | Bước khôi phục lỗi | "Bước {n} của khôi phục lỗi: {mô tả}. Hệ thống đang quay lui." | 055 |
 | ERR-18-115 | Không (worker) | Đối chiếu số dòng sau khôi phục lệch | "Số dòng sau khôi phục lệch ở {bảng}." | 055 |
 | ERR-18-116 | Không (worker) | Xuất tenant lỗi | "Xuất dữ liệu chưa thành công: {lý do}." | 056 |
-| ERR-18-117 | Không (worker) | Đọc nguồn di trú lỗi | "Đọc nguồn {mã} lỗi." | 061 |
+| ERR-18-117 | Không (worker) | Đọc nguồn di trú lỗi | "Không đọc được nguồn hệ cũ ở bảng {bảng}: {chi tiết}." | 061 |
 | ERR-18-118 | Không (worker) | Bộ chuyển đổi lỗi bản ghi | "Bản ghi {khóa} không chuyển đổi được: {lý do}." | 061 |
 | ERR-18-119 | Không (worker) | Phân hệ đích từ chối bản ghi | "Phân hệ đích từ chối bản ghi {khóa}: {mã lỗi}." | 062 |
 | ERR-18-120 | Không (worker) | Tổng kiểm tra di trú lệch | "Tổng kiểm tra của {đối tượng} lệch." | 064 |
@@ -5139,7 +5139,7 @@ PH-18 tiêu thụ các sự kiện dưới để mở việc, gửi thông báo 
 
 Mã sự kiện của PH-20 sẽ theo D03-04-PH20; ở đây ghi tên topic của hợp đồng. Ngoài sự kiện, PH-20 dùng hai hợp đồng đồng bộ của PH-18: đăng ký không gian tên `20.*` qua `PUT /ops/internal/v1/param-namespaces/{ns}/schema` và gửi thư (kích hoạt, tạm ngừng tenant, bảo trì, phát hành) qua NotificationApi (FR-18-036). Danh sách tenant hoạt động cho mọi tác vụ nền (đối soát, thu trạng thái sao lưu, báo cáo) PH-18 lấy từ registry `/internal/tenant/v1/tenants?status=ACTIVE` với scope `tenant:registry-read`.
 
-Kênh DLQ chung `{tenant}.ops.dlq.v1` không mang mã EVT: đây là topic hạ tầng mà nguồn ghi bản tin lỗi kèm header của hợp đồng ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013). Thời hạn giữ topic 7 ngày, 6 phân vùng, khóa `dh-source-ph:dh-flow`. Tên topic chờ chốt với CC-CAMEL-05 (Q18-01).
+Kênh DLQ chung `{tenant}.ops.dlq.v1` không mang mã EVT: đây là topic hạ tầng mà nguồn ghi bản tin lỗi kèm header của hợp đồng ngữ cảnh (bảng 4.1b), PH-18 là bên tiêu thụ duy nhất (FR-18-013). Thời hạn giữ topic 14 ngày (ADR-181), 6 phân vùng, khóa `dh-source-ph:dh-flow`. Tên topic chờ chốt với CC-CAMEL-05 (Q18-01).
 
 ### 9.4. Danh mục API
 

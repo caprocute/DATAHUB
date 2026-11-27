@@ -3210,7 +3210,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Kết quả mong đợi.** Bước 3 `FAILED` ghi ERR-18-114; yêu cầu `FAILED`; tenant `ACTIVE` (chưa từng `SUSPENDED` vì lỗi trước bước 4); băm số dòng T90 không đổi; cụm tạm đã xóa.
 
-**Thông báo hiển thị.** ERR-18-114 (hiện ở màn vận hành, không trả qua HTTP): "Bước {n} lỗi: {lý do}. Đang quay lui."
+**Thông báo hiển thị.** ERR-18-114 (hiện ở màn vận hành, không trả qua HTTP): "Bước {n} của khôi phục lỗi: {mô tả}. Hệ thống đang quay lui."
 :::
 
 #### TC-18-106 · Lỗi ở bước 5 tự quay lui từ bản trích, PA quay lui tay khi tự động thất bại <!--k:khoi-phuc-loi-buoc-5-->
@@ -3235,7 +3235,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Kết quả mong đợi.** Lần một bước 5 ghi ERR-18-114, Job quay lui, yêu cầu `ROLLED_BACK`, tenant `ACTIVE`, băm số dòng như trước. Lần hai yêu cầu dừng chờ PA, `:rollback` `202`, kết thúc `ROLLED_BACK`; KT: có (restore-rollback).
 
-**Thông báo hiển thị.** ERR-18-114 (hiện ở màn vận hành, không trả qua HTTP): "Bước {n} lỗi: {lý do}. Đang quay lui."
+**Thông báo hiển thị.** ERR-18-114 (hiện ở màn vận hành, không trả qua HTTP): "Bước {n} của khôi phục lỗi: {mô tả}. Hệ thống đang quay lui."
 :::
 
 #### TC-18-107 · Đối chiếu số dòng ở bước 8 lệch thì tenant giữ SUSPENDED chờ PA <!--k:khoi-phuc-lech-dong-->
@@ -3257,7 +3257,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Chạy khôi phục.
 
-**Kết quả mong đợi.** Bước 8 ghi ERR-18-115 nêu bảng; tenant giữ `SUSPENDED`; UI-18-20 hiện câu "Số dòng sau khôi phục không khớp bản trích"; PA nhận việc quyết định.
+**Kết quả mong đợi.** Bước 8 ghi ERR-18-115 nêu bảng; tenant giữ `SUSPENDED`; UI-18-20 hiện câu "Số dòng sau khôi phục lệch ở {bảng}."; PA nhận việc quyết định.
 
 **Thông báo hiển thị.** ERR-18-115 (hiện ở màn vận hành, không trả qua HTTP): "Số dòng sau khôi phục lệch ở {bảng}."
 :::
@@ -3513,7 +3513,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Kết quả mong đợi.** Bước 1 `409` ERR-18-065. Bước 2 `SUCCEEDED_WITH_ERRORS`, 15 bản ghi lỗi ERR-18-118 có khóa hệ cũ và lý do, xuất CSV được. Bước 3 lần chạy `FAILED` ghi ERR-18-117; lần hủy dừng sau lô hiện hành `CANCELLED`.
 
-**Thông báo hiển thị.** ERR-18-065: "Kế hoạch {mã} chưa ở trạng thái sẵn sàng." ERR-18-118 (hiện ở màn vận hành, không trả qua HTTP): "Bản ghi {khóa} không chuyển đổi được: {lý do}." ERR-18-117 (hiện ở màn vận hành, không trả qua HTTP): "Đọc nguồn {mã} lỗi."
+**Thông báo hiển thị.** ERR-18-065: "Kế hoạch {mã} chưa ở trạng thái sẵn sàng." ERR-18-118 (hiện ở màn vận hành, không trả qua HTTP): "Bản ghi {khóa} không chuyển đổi được: {lý do}." ERR-18-117 (hiện ở màn vận hành, không trả qua HTTP): "Không đọc được nguồn hệ cũ ở bảng {bảng}: {chi tiết}."
 :::
 
 #### TC-18-117 · Sửa ở nguồn rồi chạy lại chỉ các bản ghi lỗi, không còn bản ghi để chạy <!--k:chay-lai-ban-ghi-loi-->
@@ -3954,13 +3954,13 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-18-068 · API-18-185, 175, 174 · BR-18-044 · ERR-18-006, 005, 067 · EVT-18-27 · UI-18-23.
 
-**Tiền điều kiện, dữ liệu.** T96; `PG-THUE` mọi mục tự động đạt, hai mục tay `HTTT_NOTIFIED`, `ONCALL_READY` `PENDING`; U-T96-TA1 đề nghị, U-T96-TA2 duyệt.
+**Tiền điều kiện, dữ liệu.** T96; `PG-THUE` mọi mục tự động đạt, hai mục tay `STAKEHOLDER_SIGNOFF`, `ROLLBACK_READY` `PENDING`; U-T96-TA1 đề nghị, U-T96-TA2 duyệt.
 
 **Các bước.**
 
-1. TA1 `POST /parallel-groups/PG-THUE/checklist/HTTT_NOTIFIED:confirm` kèm bằng chứng (số công văn).
-2. TA1 `:transition` `action = REQUEST` khi `ONCALL_READY` còn `PENDING`.
-3. TA1 xác nhận `ONCALL_READY`, rồi `:transition` `action = REQUEST`, `target = CUT_OVER`.
+1. TA1 `POST /parallel-groups/PG-THUE/checklist/STAKEHOLDER_SIGNOFF:confirm` kèm bằng chứng (số công văn).
+2. TA1 `:transition` `action = REQUEST` khi `ROLLBACK_READY` còn `PENDING`.
+3. TA1 xác nhận `ROLLBACK_READY`, rồi `:transition` `action = REQUEST`, `target = CUT_OVER`.
 4. TA1 `:confirm` mục tự động `MATCH_RATE`.
 5. TA1 `:transition` `action = APPROVE` trên đề nghị của chính mình.
 6. TA2 `:transition` `action = REJECT` kèm lý do.
@@ -4762,7 +4762,7 @@ Các kịch bản TS-18-41…46 kiểm các tính chất xuyên suốt: cô lậ
 1. Tính tỷ lệ sẵn sàng của API người dùng trong 30 ngày.
 2. Kiểm `retention.ms` của topic DLQ.
 
-**Kết quả mong đợi.** Tỷ lệ ≥ 99,5 %; thời hạn giữ topic ≥ 7 ngày.
+**Kết quả mong đợi.** Tỷ lệ ≥ 99,5 %; thời hạn giữ topic ≥ 14 ngày.
 :::
 
 ### TS-18-45 · Khả năng truy cập của các màn vận hành

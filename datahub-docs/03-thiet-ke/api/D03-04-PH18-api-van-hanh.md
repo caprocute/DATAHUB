@@ -923,10 +923,10 @@ Bảng sinh dưới đây gồm mọi mã ERR-18 của FRS §9.1 cùng thông b�
 | ERR-18-111 | Không (worker) | SMS gateway lỗi | "Gửi SMS chưa thành công; đang thử lại." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-112 | Không (worker) | Thư trả lại | "Thư bị trả lại ({loại})." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-113 | Không (worker) | Người nhận bị chặn | "Không gửi vì người nhận trong danh sách chặn." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
-| ERR-18-114 | Không (worker) | Bước khôi phục lỗi | "Bước {n} lỗi: {lý do}. Đang quay lui." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
+| ERR-18-114 | Không (worker) | Bước khôi phục lỗi | "Bước {n} của khôi phục lỗi: {mô tả}. Hệ thống đang quay lui." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-115 | Không (worker) | Đối chiếu số dòng sau khôi phục lệch | "Số dòng sau khôi phục lệch ở {bảng}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-116 | Không (worker) | Xuất tenant lỗi | "Xuất dữ liệu chưa thành công: {lý do}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
-| ERR-18-117 | Không (worker) | Đọc nguồn di trú lỗi | "Đọc nguồn {mã} lỗi." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
+| ERR-18-117 | Không (worker) | Đọc nguồn di trú lỗi | "Không đọc được nguồn hệ cũ ở bảng {bảng}: {chi tiết}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-118 | Không (worker) | Bộ chuyển đổi lỗi bản ghi | "Bản ghi {khóa} không chuyển đổi được: {lý do}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-119 | Không (worker) | Phân hệ đích từ chối bản ghi | "Phân hệ đích từ chối bản ghi {khóa}: {mã lỗi}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-120 | Không (worker) | Tổng kiểm tra di trú lệch | "Tổng kiểm tra của {đối tượng} lệch." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |

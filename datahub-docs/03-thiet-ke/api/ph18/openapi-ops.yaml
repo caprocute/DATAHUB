@@ -16281,9 +16281,11 @@ components:
     RevisionStatus:
       type: string
       enum:
+      - DRAFT
       - PENDING_APPROVAL
       - APPROVED
       - REJECTED
+      - CANCELLED
     ParamType:
       type: string
       enum:

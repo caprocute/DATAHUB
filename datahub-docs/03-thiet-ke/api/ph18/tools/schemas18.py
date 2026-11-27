@@ -20,7 +20,7 @@ ENUMS = {
     'UseRevision': ['LATEST_APPROVED', 'ORIGINAL'],
     'DiscardReasonCode': ['HANDLED_AT_SOURCE', 'TEST_MESSAGE', 'OBSOLETE', 'DUPLICATE', 'OTHER'],
     'Replayable': ['YES', 'AFTER_FIX', 'NO'],
-    'RevisionStatus': ['PENDING_APPROVAL', 'APPROVED', 'REJECTED'],
+    'RevisionStatus': ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'CANCELLED'],
     'ParamType': ['INT', 'DECIMAL', 'BOOL', 'STRING', 'ENUM', 'DURATION', 'CRON', 'LIST<STRING>', 'LIST<HOST>', 'JSON'],
     'ParamLevel': ['PLATFORM', 'TENANT'],
     'ParamVersionStatus': ['PENDING_APPROVAL', 'ACTIVE', 'SUPERSEDED', 'REJECTED'],
