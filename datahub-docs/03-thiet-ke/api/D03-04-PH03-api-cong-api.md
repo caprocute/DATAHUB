@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH03
 ten: Đặc tả API và sự kiện phân hệ PH-03 Cổng API
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, gateway, giao diện; đơn vị kết nối (PH-01, PH-12, PH-13); ATTT; kiểm thử viên; hội đồng thẩm định
 phan_he: PH-03
@@ -320,6 +320,7 @@ Mỗi truy vấn của `dh-connect` chạy với `app.tenant_id` lấy từ toke
 - Đối tượng thuộc tenant khác không phân biệt được với đối tượng không tồn tại: cùng `404` ERR-03-001, cùng thời gian đáp ứng.
 - `COMMON` là tenant toàn quốc giữ phần dùng chung (tham số `gw.*` mặc định, chứng thư dùng chung, CA của HTTT, luật vá WAF phạm vi nền tảng). Tenant tỉnh chỉ đọc; ghi vào `COMMON` chỉ phiên `PLATFORM` của PA. `GET /settings` trả giá trị hiệu lực đã hợp `COMMON` và phần ghi đè của tenant.
 - Tenant ở lượt gọi qua cổng cũng chỉ lấy từ token đã xác minh; mọi tiêu đề `X-DH-*` do khách gửi bị xóa (mục 5.4).
+- Ánh xạ trường với cột (D03-03-PH03): `If-Match` ứng với cột `version`; `Idempotency-Key` ứng với `idempotency_key.idem_key`; lỗi `unique_violation` của `uq_edge_host_pattern` được ánh xạ về ERR-03-002 với thân chung, không nêu host thuộc tenant nào (BR-03-028).
 
 ## 3. Danh mục endpoint
 
@@ -1155,7 +1156,7 @@ Bảng nêu với từng đối tác: hướng và giao diện, điều PH-03 b�
 | Đối tác | Hướng, giao diện | PH-03 bảo đảm | PH-03 cần ở đối tác | Khi lỗi |
 |---|---|---|---|---|
 | PH-01 Kết nạp HTTT | PH-01 gọi API-03-013, 014, 015 (scope `gateway:sync`); hỏi `GatewaySyncStatusApi.consumerStatus` trong tiến trình | Lũy đẳng theo `Idempotency-Key` 24 giờ; không lưu bí mật; `IN_SYNC` chỉ khi mọi nút của cả hai cửa đã nạp; xóa mềm, mã không dùng lại | `systemCode` ở trạng thái `ACTIVE`; gửi `Idempotency-Key` ổn định cho mỗi bước saga; chỉ gửi phần công khai | `409` ERR-03-017 khi gỡ consumer còn đăng ký: saga phải thu hồi đăng ký trước. `400` ERR-03-003: sửa thân, không thử lại |
-| PH-02 Danh mục dịch vụ | PH-03 đọc `PublishedApiQuery`, `PlanQuery`, `SubscriptionQuery`; nhận EVT-03-01, 03, 07, 12 | Chỉ phát cấu hình đã qua kiểm tra hợp lệ; báo lại PH-02 khi từ chối (EVT-03-12); không duyệt lần hai nội dung đã duyệt ở PH-02 | Nguồn đủ: lược đồ OpenAPI đã duyệt, `policyPackage`, `critical`, `deprecatedAt`, `sunsetAt` | Nguồn cũ quá 24 giờ: dùng bản chiếu gần nhất và cảnh báo (`dh_gateway_source_stale_seconds`) |
+| PH-02 Danh mục dịch vụ | PH-03 đọc `PublishedConfigApi`; nhận dữ liệu công bố từ API-02-080 (ndjson, `sinceConfigVersion`; `gap = true` thì nạp lại toàn bộ) bằng scope `catalog:gateway-read` và xác nhận đã nạp qua API-02-082 bằng scope `catalog:gateway-ack`; đặt tên route `{apiCode}:v{major}:{operationId}` để PH-13 gom số đo theo API; nhận EVT-03-01, 03, 07, 12 | Chỉ phát cấu hình đã qua kiểm tra hợp lệ; báo lại PH-02 khi từ chối (EVT-03-12); không duyệt lần hai nội dung đã duyệt ở PH-02 | Nguồn đủ: lược đồ OpenAPI đã duyệt, `policyPackage`, `critical`, `deprecatedAt`, `sunsetAt` | Nguồn cũ quá 24 giờ: dùng bản chiếu gần nhất và cảnh báo (`dh_gateway_source_stale_seconds`) |
 | PH-12 Định danh và phân quyền | PH-12 gọi API-03-053 (scope `gateway:revoke`); PH-03 đọc JWKS theo realm và gói chính sách OPA ở bucket `dh-platform-policy` | Thu hồi token có hiệu lực tại gateway ≤ 60 giây (SEC-25); gói chính sách lưu bền nên OPA khởi động lại vẫn có chính sách gần nhất | JWKS có `kid`; gói chính sách ký; thu hồi gửi đủ `tokenExpiresAt` để PH-03 đặt thời hạn khóa | Keycloak ngừng: dùng JWKS đã đệm tới 24 giờ rồi ERR-03-124. OPA không phản hồi: đóng an toàn ERR-03-124 |
 | PH-13 Giám sát và kiểm toán | PH-03 gửi chỉ số, vết, nhật ký (OTLP) và EVT-03-01…12; PH-13 đọc trạng thái bằng scope `gateway:read-state` | Nhật ký lượt gọi chỉ có siêu dữ liệu; chỉ số nhãn `consumer` giới hạn 500 giá trị (Q03-08 của FRS); bộ đệm đĩa 1 GiB mỗi pod khi PH-13 ngừng | Kho ClickHouse (nhãn `tenant` bắt buộc), Mimir, Alertmanager; luật cảnh báo GW-A01…A13 | PH-13 không trả số liệu: API đọc trả ERR-03-026 (503), giao diện hiện "chưa có số liệu", không hiện số 0 |
 | PH-20 Quản trị tenant | PH-03 đọc host, hạn mức hợp đồng, trạng thái `MERGED`; PH-20 nhận EVT-03-10, 11 | Hạn mức tenant, ghi đè không vượt trần hợp đồng (ERR-03-018); chuyển tiếp chỉ cho tenant đã `MERGED` (ERR-03-025) | Trần hợp đồng và trạng thái sáp nhập đúng, kịp thời | Dùng giá trị đã lưu gần nhất |
@@ -1680,7 +1681,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **FR hiện thực.** FR-03-009, FR-03-017, FR-03-028, FR-03-033, FR-03-034, FR-03-035.
 
-**Tham số.** `routeCode` (path, RouteCode, bắt buộc).
+**Tham số.** `routeCode` (path, RouteCode, bắt buộc); `eligibility` (query, boolean, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -1690,7 +1691,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-001, ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `ETag`.
+**Ghi chú.** Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `impact` (`consumersLast15m`, `routesAffected`) để nêu hậu quả bằng số trước khi xác nhận; có `eligibility` (danh sách điều kiện mở cửa Internet, đạt hoặc chưa) khi gọi với `eligibility=true`. Có `ETag`.
 :::
 
 #### API-03-003 · Dừng API
@@ -1932,7 +1933,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-001, ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Không có bí mật. Có `ETag`.
+**Ghi chú.** Không có bí mật. Có `impact` và `subscriptions` (API, gói, hiệu lực lấy từ bản chiếu PH-02, cho tab Đăng ký ở UI-03-05). Có `ETag`.
 :::
 
 #### API-03-013 · Tạo hoặc cập nhật consumer
@@ -3522,7 +3523,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`, `500`, `503`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-022, ERR-03-026 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Tổng quan lưu lượng, độ trễ, nút, suy giảm. PH-13 không trả số liệu thì ERR-03-026, không trả số 0 giả.
+**Ghi chú.** Tổng quan lưu lượng, độ trễ, nút, suy giảm, kèm `kpis[]` có `trend` so với kỳ liền trước. PH-13 không trả số liệu thì ERR-03-026, không trả số 0 giả.
 :::
 
 #### API-03-078 · HTTT gọi nhiều nhất
@@ -4024,3 +4025,4 @@ Tập này không sửa tài liệu dùng chung hay tập khác của PH-03; cá
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: 96 operation REST (API-03-001…096) dưới `/api/gateway/v1`, 12 sự kiện (EVT-03-01…12), 57 mã lỗi (27 control plane, 30 gateway); OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script `ph03/tools`; 5 câu hỏi mở Q03-55…59 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: hợp đồng với PH-02 (API-02-080, 082), ánh xạ trường với cột, impact, subscriptions, kpis, eligibility ở API-03-002, 012, 077; sinh lại OpenAPI |

@@ -217,7 +217,7 @@ OPS = [
     ("075", "GET", V + "/sla/periods", "Đối chiếu SLA thực tế theo kỳ", "056", "read", "", "200", "sla",
      dict(res="SlaPeriods", q=["months"], errs=["001", "003"], desc="`met` chỉ kết luận khi đủ `02.sla.min-days-data` ngày và `02.sla.min-calls` lượt; thiếu thì `status = INSUFFICIENT_DATA`.")),
     ("097", "GET", "/sla/summary", "Tổng hợp tuân thủ SLA toàn tenant", "056", "read", "", "200", "sla",
-     dict(res="SlaSummary", q=["months"], errs=["003", "034"], desc="Kỳ gần nhất có đủ dữ liệu: số API có cam kết, tỷ lệ đạt, số API không đạt, API không đạt liên tiếp từ `02.sla.breach-periods` kỳ, nhóm theo mức phân loại. Dữ liệu thực tế lấy từ PH-13. Dùng cho UI-02-11.")),
+     dict(res="SlaSummary", q=["months"], errs=["003", "034"], svc="catalog:metrics-read", desc="Kỳ gần nhất có đủ dữ liệu: số API có cam kết, tỷ lệ đạt, số API không đạt, API không đạt liên tiếp từ `02.sla.breach-periods` kỳ, nhóm theo mức phân loại. Dữ liệu thực tế lấy từ PH-13. Dùng cho UI-02-11.")),
     ("076", "POST", "/apis/{apiCode}/change-notices", "Gửi thông báo thay đổi cho bên khai thác", "057", "create", "x", "202", "sla",
      dict(req="NoticeCreate", res="NoticeAccepted", errs=["001", "003", "036"], desc="Tối đa `02.notice.announcement-max-per-day` thông báo tay mỗi API mỗi ngày. Phát EVT-02-12.")),
     ("077", "GET", "/change-notices", "Lịch sử thông báo thay đổi và bên nhận", "057", "read", "", "200", "sla",
@@ -232,7 +232,7 @@ OPS = [
           desc="`Accept: application/x-ndjson` trả luồng dòng JSON. Có `sinceConfigVersion` thì trả thay đổi sau số đó; quá cũ trả `gap = true` để PH-03 lấy toàn bộ. Trả `ETag`, `X-DH-Source-Version`. Không chứa bí mật; consumer chỉ mang định danh và phạm vi.")),
     ("081", "GET", "/internal/portal/catalog", "Danh mục cho PH-15", "004, 059", "service", "", "200", "int",
      dict(res="PortalCatalogPage", q=["updatedSince", "page", "size"], ok2=["304"], svc="catalog:portal-read",
-          desc="Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu.")),
+          desc="Chỉ mục có `portalPublished`; kèm `removed[]` là mã đã gỡ từ `updatedSince`, tệp đặc tả đã gộp tham chiếu. Phiên bản `SUSPENDED` vẫn nằm trong `versions[]` với `status = SUSPENDED` để cổng hiện nhãn tạm ngừng (Q15-19); cờ `portalPublished` được giữ nguyên.")),
     ("082", "POST", "/internal/gateway/apply-acks", "PH-03 xác nhận đã nạp cấu hình", "036, 059", "service", "", "204", "int",
      dict(req="ApplyAck", errs=["003"], svc="catalog:gateway-ack", ifm=False, desc="Lũy đẳng theo `(environment, configVersion)`; `result = FAILED` kèm `reason`. Chấp nhận số phiên bản nhảy vọt; báo lệch thì gọi lại API-02-080.")),
     # Đối soát

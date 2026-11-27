@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH01
 ten: Thiết kế giao diện màn hình phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, Quản trị tỉnh, Cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-01
@@ -558,7 +558,7 @@ Bảng dưới liệt kê các thành phần giao diện của UI-01-02 theo th�
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
 | 1 | Tiêu đề, nhãn | `CMP-PageHeader`, `CMP-StatusTag`, `CMP-CodeText` | Tên HTTT, trạng thái và vòng, số hồ sơ `HS-KN-{năm}-{số}` | API-01-034 | |
-| 2 | Dải "đang chờ" | `CMP-Alert` mức thông tin hoặc cảnh báo | Vai trò đang chờ, hạn dự kiến, nhãn Quá hạn | `waitingFor`, `dueAt` | Không có tên cá nhân |
+| 2 | Dải "đang chờ" | `CMP-Alert` mức thông tin hoặc cảnh báo | Vai trò đang chờ, hạn dự kiến, nhãn Quá hạn | `waitingOn.role`, `waitingOn.dueAt` | Không có tên cá nhân |
 | 3 | Dòng thời gian | `CMP-Timeline` biến thể `status` | Mốc: nộp, phân công, thẩm định kỹ thuật, pháp lý, ATTT, phê duyệt, cấp định danh, bàn giao, kiểm thử, kích hoạt; mỗi mốc có thời điểm và thời gian ở bước (`CMP-Duration`) | `milestones[]` | Mốc chưa tới mờ; `aria-label` "bước 4 trên 10" |
 | 4 | Yêu cầu bổ sung | `CMP-Card`, `CMP-Link` | `requests[]`: đường dẫn trường, yêu cầu; liên kết "Sửa" tới UI-01-01 đúng trường | `returnRequests[]` | Hiện khi vòng ≥ 2 hoặc `DRAFT` có `returnReason` |
 | 5 | Hành động | `CMP-Button`, `CMP-ConfirmDialog` | "Rút hồ sơ", "Sửa và nộp lại", "Xóa bản nháp" | `allowedActions` | Rút hồ sơ: hộp xác nhận nêu hồ sơ về `DRAFT` |
@@ -2290,3 +2290,4 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-01-01…17 kèm ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm mục 1.6 Cấu trúc tài liệu, đoạn mở cho 65 mục, câu thông báo cho kích hoạt 202, ghi tình trạng Phụ lục B so với API 0.2 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng waitingOn theo API-01 |

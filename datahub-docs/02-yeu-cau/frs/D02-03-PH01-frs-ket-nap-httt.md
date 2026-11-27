@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH01
 ten: Đặc tả yêu cầu chức năng phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị tỉnh, kỹ sư dh-connect, kiểm thử viên
 phan_he: PH-01
@@ -370,8 +370,8 @@ Bảng dưới liệt kê thực thể mức logic của PH-01 kèm thuộc tín
 | EN-01-06 | Tài liệu đính kèm (`Attachment`, DD-12) | `attachmentId`, `kind`, `fileName`, `objectKey`, `sizeBytes`, `sha256`, `scanStatus` | Nội dung ở kho đối tượng, mã hóa khi lưu |
 | EN-01-07 | Bước thẩm định (`ReviewStep`) | `stepType`, `assigneeId`, `result`, `opinion`, `startedAt`, `dueAt`, `finishedAt`, `pausedMillis` | Giữ vĩnh viễn |
 | EN-01-08 | Định danh ứng dụng (`AppCredential`, DD-05) | `credentialId`, `environment`, `auth_method`, `client_id`, `secret_ref`, `cert_fingerprint`, `jwksRef`, `status`, `expires_at`, `last_used_at`, `rotationEndsAt` | Không lưu bí mật |
-| EN-01-09 | Bàn giao (`Handover`) | `handoverId`, `credentialId`, `linkHash`, `wrapAccessor`, `expiresAt`, `openedAt`, `openedBy`, `openedIp`, `failedAttempts`, `status` | Không lưu liên kết gốc; giữ 3 năm |
-| EN-01-10 | Lần kiểm thử SANDBOX (`SandboxTest`) | `testId`, `authOk`, `apiOk`, `callCount`, `errorDetail`, `observedAt` | Nhận từ PH-03, PH-13; giữ 1 năm |
+| EN-01-09 | Bàn giao (`Handover`) | `handoverId`, `credentialId`, `linkHash`, `wrapAccessor`, `wrapTokenSealed`, `expiresAt`, `openedAt`, `openedBy`, `openedIp`, `failedAttempts`, `status` | Không lưu liên kết gốc; `wrapTokenSealed` là mã bọc OpenBao đã mã hóa bằng transit, chỉ tồn tại khi `PENDING` hoặc `OPENING`; `OPENING` là trạng thái kỹ thuật chiếm chỗ để hai người không mở đồng thời; giữ 3 năm |
+| EN-01-10 | Lần kiểm thử SANDBOX (`SandboxTest`) | `testId`, `source`, `authOk`, `apiOk`, `callCount`, `successCount`, `errorDetail`, `observedAt` | Nhận từ PH-03, PH-13; giữ 1 năm |
 | EN-01-11 | Lịch sử trạng thái (`StateHistory`) | `fromStatus`, `toStatus`, `reason`, `actor`, `emergency`, `at`, `traceId` | Giữ vĩnh viễn |
 | EN-01-12 | Thao tác khẩn (`EmergencyAction`) | `actionType`, `reason`, `performedBy`, `performedAt`, `confirmBy`, `confirmedBy`, `confirmedAt`, `status` | `PENDING_CONFIRM`, `CONFIRMED`, `OVERDUE` |
 | EN-01-13 | Yêu cầu thay đổi (`ChangeRequest`) | `changeClass` (`TECHNICAL`, `OWNER_CHANGE`, `FULL`, `TERMINATE`), `diff`, `status`, `requestedBy`, `decidedBy` | Thay đổi mức `NONE` áp dụng ngay nên không tạo yêu cầu; mở rộng phạm vi là loại `FULL`; chấm dứt là loại `TERMINATE` |
@@ -379,7 +379,7 @@ Bảng dưới liệt kê thực thể mức logic của PH-01 kèm thuộc tín
 | EN-01-15 | Mục rà soát (`AccessReviewItem`) | `systemCode`, `dataType`, `usageInPeriod`, `unusedDays`, `legalExpired`, `ownerResponse`, `proposal`, `decision` | |
 | EN-01-16 | Phiếu xác nhận của đơn vị (`ReviewConfirmation`) | `confirmId`, `orgId`, `linkHash`, `sentAt`, `respondedAt`, `responderId` | |
 | EN-01-17 | Tác vụ nhập hệ cũ (`LegacyImportJob`) | `jobId`, `source`, `rows[]`, `matchedOrg`, `status`, `warnings[]` | |
-| EN-01-18 | Mẫu văn bản (`Template`) | `templateCode`, `title`, `version`, `fileRef` | Mẫu văn bản đề nghị, hướng dẫn kết nối |
+| EN-01-18 | Mẫu văn bản (`Template`) | `templateCode`, `title`, `version`, `contentVersion`, `fileRef` | Mẫu văn bản đề nghị, hướng dẫn kết nối; ba mẫu mặc định ở tenant `COMMON`, tenant tỉnh đọc được |
 
 : Thực thể nghiệp vụ của PH-01
 
@@ -1822,7 +1822,7 @@ Hình cho thấy bước bù trừ khi PH-03 lỗi: client đã tạo ở PH-12 
 
 **Luồng xử lý chính.**
 
-1. Khi định danh sẵn sàng, hệ thống yêu cầu OpenBao tạo một bản sao bí mật được **bọc phản hồi** (response wrapping, chỉ mở được một lần) hết hạn sau `handover.ttlHours`; hệ thống chỉ lưu giá trị băm SHA-256 của liên kết và `wrapAccessor`, không lưu liên kết gốc.
+1. Khi định danh sẵn sàng, hệ thống yêu cầu OpenBao tạo một bản sao bí mật được **bọc phản hồi** (response wrapping, chỉ mở được một lần) hết hạn sau `handover.ttlHours`; hệ thống chỉ lưu giá trị băm SHA-256 của liên kết, `wrapAccessor` và mã bọc đã mã hóa bằng transit (xóa ngay khi bàn giao rời `PENDING` hoặc `OPENING`), không lưu liên kết gốc.
 2. Hệ thống gửi thư tới thư điện tử công vụ của đầu mối kỹ thuật: thư chỉ có liên kết dạng `/ket-noi/ban-giao/{token}` và hướng dẫn, **không** chứa bí mật (FR-00-062).
 3. Đầu mối mở liên kết; hệ thống buộc đăng nhập một lần qua Keycloak và xác thực hai yếu tố mới (không dựa vào phiên cũ, ERR-01-035 nếu chưa đạt).
 4. Hệ thống băm `token`, tìm bàn giao `PENDING` (không có hoặc đã dùng, hết hạn, hủy: ERR-01-024, 410) và kiểm tra người đăng nhập đúng là tài khoản của đầu mối nhận (sai: ERR-01-025, 403, tăng `failedAttempts`, phát cảnh báo an ninh EVT-01-10 tới SO).
@@ -3501,7 +3501,7 @@ PH-01 không nằm trên đường dữ liệu nên yêu cầu hiệu năng th�
 | NFR-01-007 | Cách ly sự cố | Khi `dh-connect` ngừng, HTTT `ACTIVE` vẫn gọi API bình thường ≥ 24 giờ; chỉ kết nạp và đổi cấu hình bị chặn | APISIX giữ cấu hình đã nạp; token còn hạn 5 phút làm mới qua PH-12 |
 | NFR-01-008 | Hiệu lực cắt quyền | Từ lệnh tạm ngừng, thu hồi, thao tác khẩn đến khi cổng API từ chối HTTT ≤ 60 giây; ACL Kafka ≤ 2 phút | Ba bản sao APISIX, danh sách chặn theo SEC-25 |
 | NFR-01-009 | Không lộ bí mật | 0 bí mật trong CSDL PH-01, nhật ký, vết, phản hồi API, tệp xuất, thư điện tử; ngoại lệ duy nhất là phản hồi mở bàn giao | Ca kiểm thử rò rỉ với giá trị đánh dấu `DH-CANARY-…` ở D05-02 |
-| NFR-01-010 | Bàn giao một lần | Liên kết hết hạn ≤ 24 giờ (tham số tối đa 72 giờ); mã liên kết ≥ 256 bit; chỉ lưu băm; mở sai tối đa 5 lần rồi khóa | |
+| NFR-01-010 | Bàn giao một lần | Liên kết hết hạn ≤ 24 giờ (tham số tối đa 72 giờ); mã liên kết ≥ 256 bit; chỉ lưu băm liên kết và mã bọc đã mã hóa; mở sai tối đa 5 lần rồi khóa | |
 | NFR-01-011 | Bảo vệ tài liệu đính kèm | Mã hóa khi lưu (SEC-30), quét mã độc trước khi nhận (SEC-45); mỗi tenant một bucket | |
 | NFR-01-012 | Xác thực mạnh cho thao tác nhạy cảm | Phê duyệt, kích hoạt, tạm ngừng, thu hồi, xoay vòng, mở bàn giao yêu cầu xác thực hai yếu tố mới trong 5 phút | Keycloak `acr` cao, SEC-23 |
 | NFR-01-013 | Kiểm toán | Mọi quyết định thẩm định, phê duyệt, thao tác vòng đời được ghi kiểm toán; trực tuyến 12 tháng, WORM 5 năm (ADR-031); bảng nghiệp vụ giữ vĩnh viễn | Truy được quyết định từ 1 năm trước |
@@ -3810,7 +3810,7 @@ Danh sách trên gom 88 operation; API-01-087 (nhận kết quả bất đồng 
 
 ### 10.1. Danh sách màn hình
 
-PH-01 có 17 màn hình chia bốn nhóm: hồ sơ và thẩm định (UI-01-01…07), định danh và kiểm thử (08…10), vòng đời và rà soát (11…13), danh bạ, di trú, quản trị (14…17). Cột "Mẫu và đường dẫn" theo mẫu màn `PTN-*` của D03-06-00 §4 và quy ước đường dẫn ở §2.4; bố cục, thành phần, trạng thái của từng màn đặc tả ở D03-06-PH01. Màn UI-01-09 và UI-01-13 là trang riêng, không nằm trong menu, mở từ liên kết trong thư thông báo.
+PH-01 có 17 màn hình chia bốn nhóm: hồ sơ và thẩm định (UI-01-01…07), định danh và kiểm thử (08…10), vòng đời và rà soát (11…13), danh bạ, di trú, quản trị (14…17). Cột "Mẫu và đường dẫn" theo mẫu màn `PTN-*` của D03-06-00 §4 và quy ước đường dẫn ở §2.4; bố cục, thành phần, trạng thái của từng màn đặc tả ở D03-06-PH01. Màn UI-01-09 và UI-01-13 là trang riêng, không nằm trong menu, mở từ liên kết trong thư thông báo. Về phát hành, UI-01-17 thuộc Đợt 2 (chỉ báo FR-01-051), mười sáu màn còn lại thuộc MVP, trong đó hành động bật lại định danh tự vô hiệu ở UI-01-04 và UI-01-08 thuộc Đợt 2; UI-01-06 được viết ở mức siêu chi tiết, các màn khác ở mức đầy đủ (D03-06-PH01).
 
 | Mã | Tên | Mẫu và đường dẫn | Vai trò chính | Hành vi chính | FR |
 |---|---|---|---|---|---|
@@ -3824,7 +3824,7 @@ PH-01 có 17 màn hình chia bốn nhóm: hồ sơ và thẩm định (UI-01-01�
 | UI-01-08 | Định danh ứng dụng | PTN-02 · `/ket-noi/he-thong/{ma}/dinh-danh` | TA, OR | Danh sách định danh SANDBOX, PRODUCTION (không bí mật), tiến độ saga, đăng ký khóa, CSR, xoay vòng, thu hồi, nhãn sắp hết hạn | 020, 021, 025, 026, 027, 028 |
 | UI-01-09 | Bàn giao thông tin xác thực | Trang riêng · `/ket-noi/ban-giao/{token}` | Đầu mối kỹ thuật | Đăng nhập, MFA mới, hiển thị bí mật một lần với sao chép, tải về, cảnh báo; modal xoay vòng hiện bí mật một lần | 022, 025 |
 | UI-01-10 | Kiểm thử SANDBOX và kích hoạt | PTN-02 · `/ket-noi/he-thong/{ma}/kiem-thu` | OR, TA, IE | Kết quả kiểm thử hai bên, hướng dẫn khắc phục từng lỗi, danh sách điều kiện kích hoạt, nút Kích hoạt môi trường thật | 023, 024 |
-| UI-01-11 | Vòng đời và xử lý khẩn | Hộp thoại, ngăn kéo · `/ket-noi/he-thong/{ma}/vong-doi` | TA, SO | Phân tích tác động; tạm ngừng, khôi phục, chấm dứt (đề nghị, duyệt), xử lý khẩn, xác nhận bổ sung; lý do bắt buộc, xác thực lại | 026, 029, 030, 031, 032, 033 |
+| UI-01-11 | Vòng đời và xử lý khẩn | Hộp thoại, ngăn kéo · `/ket-noi/he-thong/{ma}/vong-doi?hanh-dong=…` | TA, SO | Phân tích tác động; tạm ngừng, khôi phục, chấm dứt (đề nghị, duyệt), xử lý khẩn, xác nhận bổ sung; lý do bắt buộc, xác thực lại | 026, 029, 030, 031, 032, 033 |
 | UI-01-12 | Rà soát quyền định kỳ | PTN-10 · `/ket-noi/ra-soat-quyen` | TA, SO, AU | Chọn kỳ; bảng phạm vi (số lần dùng, căn cứ, hiệu lực, đề xuất); nhãn "Không dùng trong kỳ", "Căn cứ hết hiệu lực", "Đơn vị chưa phản hồi"; gửi xác nhận; xử lý hàng loạt; báo cáo | 039…044 |
 | UI-01-13 | Xác nhận của đơn vị | Trang riêng · `/ket-noi/xac-nhan/{token}` | OR, đầu mối | Danh sách phạm vi của đơn vị kèm mức dùng thực tế; chọn Còn cần, Thu hẹp, Không cần nữa; gửi phản hồi | 041 |
 | UI-01-14 | Danh bạ đầu mối | PTN-01 · `/ket-noi/danh-ba` | Mọi người dùng; TA xử lý | Tra cứu theo tên, tổ chức, HTTT; khối "Cần xử lý" (thiếu đầu mối, thư không hoạt động); xuất | 045, 046, 047 |
@@ -4088,3 +4088,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo chuẩn trình bày kết hợp: tóm tắt cho hội đồng, giới thiệu sáu ý, 51 yêu cầu chức năng theo khối đặc tả 17 mục, 34 quy tắc nghiệp vụ, 22 yêu cầu phi chức năng, 50 mã lỗi, 15 sự kiện, 86 API, 17 màn hình, truy vết 4 mục LGC và 15 FR của SRS cũ, 16 câu hỏi mở và 16 đề nghị đồng bộ. Nguồn: D02-02 SRS, D03-01 SAD §4, D02-07 (DD-03…05), D02-08, D03-07, D00-03 phần A, `docs/07-srs/SRS-PH-01-onboarding.md` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo bảy tập: thêm API-01-087, 088 và ERR-01-051…054 (88 API, 54 mã lỗi); bổ sung 21 câu thông báo ở §9.2 cho khớp D03-06; FR-01-001, 020, 024, 034, 035, 044, 047, 050 cập nhật đầu ra và API theo D03-04 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1 |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH02
 ten: Thiết kế chi tiết phần mềm phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
 phan_he: PH-02
@@ -200,7 +200,7 @@ Bảng dưới liệt kê từng bên gọi hoặc được gọi, hướng gọ
 | PH-12 | PH-02 gọi | REST, token dịch vụ | Gắn, gỡ phạm vi `api:*` ở client Keycloak, cập nhật chính sách OPA (FR-02-048) |
 | PH-13 | PH-02 đọc | Truy vấn Mimir theo tenant (`X-Scope-OrgID`) | SLA thực tế, sức khỏe backend, thống kê (FR-02-025, 056, 058) |
 | PH-14 | PH-02 gọi | REST nội bộ, `Idempotency-Key` | Gửi, rút danh mục quốc gia (FR-02-053) |
-| PH-18 | PH-02 đọc, gửi | `ParameterApi` có đệm 60 giây; `TaskInboxApi`, `NotificationApi` | Tham số `02.*`, việc duyệt, thông báo |
+| PH-18 | PH-02 đọc, gửi | `ParameterApi` có đệm 60 giây; `TaskInboxApi`, `NotificationApi`; trạng thái đóng băng qua API-18-122 (`freeze-status`, scope `ops:calendar-read`) | Tham số `02.*`, việc duyệt, thông báo; PH-02 không giữ cửa sổ đóng băng riêng, đang đóng băng thì chặn thay đổi môi trường thật bằng ERR-02-039 |
 | PH-16 | PH-16 đọc | `catalog:metrics-read` (FR-02-059) | Chỉ số tuân thủ |
 | DD-12 (quét mã độc) | PH-02 gọi | ClamAV qua cổng chung | Tệp đặc tả, gói nhập (SEC-45) |
 
@@ -518,7 +518,8 @@ Hình cho thấy bốn phần phụ thuộc chặt vào phiên bản (đặc t�
 | `Plan` | điều kiện, hạn mức, đường dẫn cho phép | `version` | Đếm đăng ký hiệu lực khi đóng gói dưới khóa của phiên bản |
 | `Subscription` | trạng thái cấp quyền (`grantStatus`), lịch rà soát | `version` | Ràng buộc duy nhất một đăng ký hiệu lực mỗi (HTTT, phiên bản) |
 | `ReviewRequest` | các quyết định (`review_decision`) | `version`; một yêu cầu `OPEN` mỗi đối tượng | Gom đủ chữ ký cho API `SENSITIVE` (CA và TA) |
-| `NationalSyncRecord` | lần gửi, phản hồi | `version`; khóa duy nhất `(version_id, payload_hash)` | Hàng đợi bền |
+| `NationalSyncRecord` | lần gửi, phản hồi | `version`; khóa duy nhất từng phần `(version_id, payload_hash)` khi bản ghi chưa kết thúc | Hàng đợi bền; nội dung quay lại giá trị cũ sau khi đã `ACKED` vẫn xếp hàng được |
+| `ApiOwnerTransfer` | số, ngày văn bản, đơn vị trước và sau | chỉ thêm | Lưu việc chuyển chủ quản (FR-02-045, `api_owner_transfer`) |
 | `ChangeNotice` | danh sách người nhận, kênh | `version` | Phát bất đồng bộ |
 
 : Gốc tập hợp và khóa đồng thời
@@ -528,14 +529,14 @@ Các bất biến (invariant) dưới đây được giữ ở miền và có r�
 | Bất biến | BR | Miền | CSDL (ràng buộc) |
 |---|---|---|---|
 | Mã API, mã gói, số hiệu phiên bản bất biến và không dùng lại, kể cả đối tượng đã xóa | BR-02-021 | `CodeRegistry.reserve` | Bảng `code_registry(tenant_id, kind, code)` khóa duy nhất, chỉ thêm, không xóa |
-| Context-path duy nhất, đúng quy ước, không xung đột tiền tố, giữ chỗ 12 tháng sau `RETIRED` | BR-02-022 | `ContextPathService` dưới `pg_advisory_xact_lock` theo tenant | `context_path_reservation` khóa duy nhất `(tenant_id, path)`, cột `released_after` |
+| Context-path duy nhất, đúng quy ước, không xung đột tiền tố, giữ chỗ 12 tháng sau `RETIRED` | BR-02-022 | `ContextPathService` dưới `pg_advisory_xact_lock` theo tenant | `context_path_reservation` khóa duy nhất `(tenant_id, path)`, cột `released_after`; giữ chỗ theo (API, số chính) để phiên bản cùng số chính thay thế dùng lại đúng đường dẫn (BR-02-035); bí danh `legacyPath` nằm cùng bảng với `kind = LEGACY_ALIAS` |
 | Một đăng ký hiệu lực mỗi (HTTT, phiên bản) | BR-02-027 | `SubscriptionService.submit` | Chỉ mục duy nhất từng phần `WHERE status IN ('PENDING','ACTIVE','SUSPENDED')` |
 | Không `RETIRED` khi còn đăng ký hiệu lực; không nhận đăng ký khi phiên bản không `PUBLISHED` | BR-02-006, 011 | `RETIRED` giữ `FOR UPDATE` dòng phiên bản, đăng ký giữ `FOR SHARE` cùng dòng: hai việc tuần tự | Không (kiểm ở miền, có kiểm thử đua) |
 | Phiên bản sang `PENDING` cần ≥ 1 backend `ACTIVE` tổng trọng số > 0 và ≥ 1 gói | BR-02-024 | `VersionStateMachine` bảo vệ chuyển `submit` | Không |
 | Đặc tả bất biến từ `PENDING`; bản `PUBLISHED` không bao giờ sửa | BR-02-014 | `ApiSpec` chỉ thêm dòng; `current_spec_id` chỉ đổi ở `DRAFT` | `api_spec` không cấp quyền `UPDATE`, `DELETE` cho vai trò ứng dụng |
-| Kiểu xác thực tối thiểu theo mức phân loại | BR-02-016 | `AuthPolicyMatrix.check(dataClass, authType)` | Cột chắn `plan.min_auth_rank` so với `api.data_class_rank`, kiểm lại bằng tác vụ đêm |
+| Kiểu xác thực tối thiểu theo mức phân loại | BR-02-016 | `AuthPolicyMatrix.check(dataClass, authType)` | Cột sinh `plan.auth_rank` và `api.data_class_rank`, trigger `tg_plan_auth_policy` so sánh khi ghi gói, kiểm lại bằng tác vụ đêm khi API đổi mức phân loại |
 | Mức hiển thị phù hợp mức phân loại; nâng lên `NATIONAL`, `PUBLIC` cần CA duyệt | BR-02-037 | `Api.changeVisibility` | `CHECK` giữa `visibility` và `data_class` |
-| Bốn mắt: người duyệt khác người gửi, khác người sửa gần nhất; SV không giữ vai trò CA | BR-02-008 | `ReviewPolicy.assertIndependent` so theo định danh người dùng | Bảng `version_contributor`; `CHECK (decided_by <> requested_by)` |
+| Bốn mắt: người duyệt khác người gửi, khác người sửa gần nhất; SV không giữ vai trò CA | BR-02-008 | `ReviewPolicy.assertIndependent` so theo định danh người dùng | Bảng `version_contributor`; `review_decision` mang thêm `requested_by` qua khóa ngoại ba cột để ràng buộc `decided_by <> requested_by` kiểm được ở CSDL |
 | Mọi chuyển trạng thái có lý do (trừ tạo mới) và ghi kiểm toán trước, sau | BR-02-028 | `StateMachine.fire` bắt buộc `reason` | Cột `reason NOT NULL` ở bảng lịch sử trạng thái |
 | `DRAFT`, `PENDING` chỉ hiển thị cho chủ quản, TA, CA, PA | BR-02-039 | `VisibilityFilter` thêm điều kiện vào mọi truy vấn đọc danh mục | Không (RLS chỉ cách ly tenant); có ca kiểm thử rò rỉ trạng thái theo vai trò |
 
@@ -656,7 +657,7 @@ Chi tiết thiết kế:
 
 Nguyên tắc cứng: **chuỗi khớp không bao giờ rời `SecretScanner`**. Bộ quét trả `Finding` với vị trí, mã mẫu và bốn ký tự cuối đã che; thông điệp ngoại lệ, log, vết, sự kiện không chứa giá trị. Để "Đánh dấu không phải bí mật" (SO xác nhận) chỉ áp cho đúng giá trị đó mà không phải lưu giá trị, dấu vân tay phát hiện là `HMAC-SHA256(khóa tenant, giá trị)` cộng mã mẫu và con trỏ JSON; lần quét sau cùng vân tay thì giữ `ACKNOWLEDGED`, vân tay mới thì mở lại `OPEN`. Kiểm thử canary NFR-02-012 gieo giá trị `DH-CANARY-…` vào đặc tả rồi tìm trong log, vết, kết quả, sự kiện, CSDL: phải không thấy.
 
-Kết quả lưu ở `lint_finding` theo `(version_id, rule_id, fingerprint)`: lần chạy mới đánh `RESOLVED` các phát hiện không còn, giữ `ACKNOWLEDGED` của luật cho phép chấp nhận. Luật `ERROR` ở cột "Điều chỉnh ở tenant = Không" (LINT-02-01, 03, 04, 07, 08, 09, 11, 13, 14) không cho hạ mức và không cho chấp nhận; `lint_rule_override` chỉ ghi được cho luật có `adjustable = true` (FR-02-021, ERR-02-040 khi vượt giới hạn).
+Kết quả lưu ở `lint_finding` theo `(version_id, rule_id, fingerprint)`: lần chạy mới đánh `RESOLVED` các phát hiện không còn, giữ `ACKNOWLEDGED` của luật cho phép chấp nhận. Luật `ERROR` ở cột "Điều chỉnh ở tenant = Không" (LINT-02-01, 03, 04, 07, 08, 09, 11, 13, 14) không cho hạ mức và không cho chấp nhận; `lint_rule_override` chỉ ghi được cho luật có `adjustable = true` (FR-02-021, ERR-02-040 khi vượt giới hạn). Khả năng điều chỉnh mức của luật nằm ở cột `lint_rule.adjust_policy` ba mức (`NONE`, `RAISE`, `LOWER_LANG`); `adjustable` là cột sinh, và chỉ LINT-02-02 được hạ phần ngôn ngữ (FR-02-021).
 
 `DuplicateDetector` (FR-02-020) tính điểm giống nhau trong tenant: 0,5 × Jaccard của tập `(phương thức, mẫu đường dẫn)` đã chuẩn hóa (tên tham số đường dẫn thành `{}`), 0,3 × Jaccard của tập tên trường phản hồi, 0,2 × độ giống cosin của từ khóa tên và mô tả đã bỏ dấu. Để rẻ ở 2.000 API, mỗi phiên bản có chữ ký MinHash 128 giá trị lưu ở `api_version.minhash`; so sánh vét cạn 2.000 × 128 số nguyên chưa tới 10 ms, rồi tính chính xác cho năm ứng viên cao nhất. Ngưỡng `02.duplicate.threshold` (0,8); kết quả chỉ là gợi ý cho người duyệt, không chặn.
 
@@ -1497,6 +1498,7 @@ Thời gian chờ, thử lại, ngắt mạch của cuộc gọi ra ngoài ở b
 | `pending_command` (PH-04) | 1, 5, 15 phút, 1 giờ | Trong 24 giờ | Báo SV, huỷ lệnh |
 | Kỳ SLA `PENDING` | Mỗi giờ | 24 giờ | Danh mục giữ kỳ gần nhất kèm thời điểm |
 | Gửi thông báo | 1, 5, 15 phút | 3 | `FAILED` hiển thị ở UI-02-13 |
+| Dọn dữ liệu theo chương 7 của D03-03-PH02 và `SpecObjectAudit` (đối tượng đặc tả mồ côi ở kho) | Theo lịch của `worker` | Chạy lại được | Cảnh báo TO khi lệch kho; không xóa đối tượng còn dòng `api_spec` trỏ tới |
 
 : Thử lại của các việc bền
 
@@ -1849,3 +1851,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã `vn.datahub.connect.catalog`, 14 thành phần với bảng đặc tả 10 mục, 8 biểu đồ tuần tự, bảng chuyển trạng thái, xử lý lỗi và saga, cấu hình, khả năng mở rộng, bảo mật theo SEC, 10 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: số API 98; phạm vi `catalog:gateway-read` và `catalog:gateway-ack`; luồng ndjson của API-02-080; sửa backend sau công bố qua `BACKEND_CHANGE`; ghi giao diện vào của API-02-092…098; Giới thiệu theo khuôn; câu mở các mục; bỏ các đề nghị đồng bộ đã thực hiện |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: khớp DDL (api_owner_transfer, adjust_policy, auth_rank, khóa duy nhất từng phần, tác vụ dọn dữ liệu) và đọc đóng băng qua PH-18 |
