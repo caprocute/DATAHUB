@@ -238,15 +238,21 @@ CREATE INDEX ix_role_assignment_role ON ph12_iam.role_assignment (tenant_id, rol
 CREATE INDEX ix_role_assignment_expiry ON ph12_iam.role_assignment (valid_to) WHERE state = 'ACTIVE' AND valid_to IS NOT NULL;
 CREATE TRIGGER tg_role_assignment_touch BEFORE UPDATE ON ph12_iam.role_assignment FOR EACH ROW EXECUTE FUNCTION ph12_iam.tg_touch();
 CALL ph12_iam.p_enable_rls('ph12_iam.role_assignment', 'P');
-COMMENT ON TABLE ph12_iam.role_assignment IS 'EN-12-02 Gán vai trò chuẩn cho người dùng, có phạm vi (TENANT, ORG, WORKSPACE) và thời hạn (FR-12-012). Cặp xung đột bị trigger tg_role_assignment_sod chặn (BR-12-030); tenant còn ít nhất một TENANT_ADMIN (BR-12-033). Vai trò chỉ gán cho người, không gán cho nhóm (BR-12-039).';
+COMMENT ON TABLE ph12_iam.role_assignment IS 'EN-12-02 Gán vai trò chuẩn cho người dùng, có phạm vi (TENANT, ORG, WORKSPACE) và thời hạn (FR-12-012). Cặp xung đột bị trigger tg_role_assignment_sod chặn (BR-12-030); tenant còn ít nhất hai TENANT_ADMIN hiệu lực (BR-12-033, Q403). Vai trò chỉ gán cho người, không gán cho nhóm (BR-12-039).';
 COMMENT ON COLUMN ph12_iam.role_assignment.role_code IS 'Mã vai trò chuẩn bỏ tiền tố ROLE-, ví dụ TENANT_ADMIN; hoặc vai trò tùy biến CUSTOM_* (custom_role.code). Danh mục 22 vai trò chuẩn nằm ở roles.json sinh từ D02-08, không lưu bảng.';
 COMMENT ON COLUMN ph12_iam.role_assignment.scope_ref IS 'Mã đơn vị (ORG, cùng cây con) hoặc mã không gian làm việc của PH-04 (WORKSPACE); rỗng khi phạm vi TENANT.';
 COMMENT ON COLUMN ph12_iam.role_assignment.created_by IS 'Người gán (assignedBy); khác người nhận vai trò (BR-12-033).';
 -- @rollback DROP TABLE IF EXISTS ph12_iam.role_assignment CASCADE;
 
 -- @changeset ph12-0215-fn-last-admin splitStatements:false
--- Mỗi tenant luôn còn ít nhất một TENANT_ADMIN hoạt động (BR-12-033, ERR-12-046).
+-- Mỗi tenant có tối thiểu hai TENANT_ADMIN hiệu lực (BR-12-033, Q403 chốt 27/11/2026, ERR-12-046).
+-- TA hiệu lực: gán TENANT_ADMIN còn hạn, tài khoản ACTIVE, LOCKED (khóa tạm tự mở) hoặc PENDING_ACTIVATION.
+-- Thao tác làm số TA hiệu lực còn lại dưới hai (gỡ, hết hạn, thu hồi gán; vô hiệu hoặc khóa hẳn tài khoản) bị chặn.
 -- Khóa tư vấn theo tenant để hai giao dịch gỡ đồng thời không cùng thấy "còn người kia".
+-- Ngoại lệ (dịch vụ đặt SET LOCAL ph12.ta_floor_exception rồi tự phát cảnh báo khẩn và tạo việc bổ sung TA):
+--   INACTIVITY (tự vô hiệu không dùng, TCVN 14423:2026; lý do INACTIVE_45D, INACTIVE_30D_ADMIN được miễn cả khi không đặt biến),
+--   ATTT_INCIDENT (khóa do sự cố ATTT, kể cả BLOCKED do Keycloak sau ba lần khóa tạm),
+--   TENANT_NOT_ACTIVE (tenant chưa kích hoạt: bù trừ saga PH-20, không áp ngưỡng).
 CREATE OR REPLACE FUNCTION ph12_iam.f_other_active_admins(p_tenant text, p_exclude_user uuid, p_exclude_assignment uuid) RETURNS integer
   LANGUAGE sql STABLE AS $f$
   SELECT count(*)::integer
@@ -259,14 +265,19 @@ CREATE OR REPLACE FUNCTION ph12_iam.f_other_active_admins(p_tenant text, p_exclu
      AND u.state IN ('ACTIVE', 'LOCKED', 'PENDING_ACTIVATION')
 $f$;
 
+CREATE OR REPLACE FUNCTION ph12_iam.f_ta_floor_exempt() RETURNS boolean
+  LANGUAGE sql STABLE AS $f$
+  SELECT coalesce(current_setting('ph12.ta_floor_exception', true), '') IN ('INACTIVITY', 'ATTT_INCIDENT', 'TENANT_NOT_ACTIVE')
+$f$;
+
 CREATE OR REPLACE FUNCTION ph12_iam.tg_role_assignment_last_admin() RETURNS trigger
   LANGUAGE plpgsql AS $f$
 BEGIN
   IF OLD.role_code = 'TENANT_ADMIN' AND OLD.state = 'ACTIVE' AND OLD.tenant_id <> 'PLATFORM'
-     AND (TG_OP = 'DELETE' OR NEW.state <> 'ACTIVE') THEN
+     AND (TG_OP = 'DELETE' OR NEW.state <> 'ACTIVE') AND NOT ph12_iam.f_ta_floor_exempt() THEN
     PERFORM pg_advisory_xact_lock(hashtextextended('ph12:last-admin:' || OLD.tenant_id, 0));
-    IF ph12_iam.f_other_active_admins(OLD.tenant_id, NULL, OLD.id) = 0 THEN
-      RAISE EXCEPTION 'Không thể gỡ quản trị tỉnh cuối cùng của tenant %', OLD.tenant_id USING ERRCODE = 'P1246';
+    IF ph12_iam.f_other_active_admins(OLD.tenant_id, NULL, OLD.id) < 2 THEN
+      RAISE EXCEPTION 'Không thể gỡ quản trị tỉnh: tenant % phải còn ít nhất hai quản trị tỉnh hiệu lực', OLD.tenant_id USING ERRCODE = 'P1246';
     END IF;
   END IF;
   RETURN CASE TG_OP WHEN 'DELETE' THEN OLD ELSE NEW END;
@@ -276,12 +287,14 @@ $f$;
 CREATE OR REPLACE FUNCTION ph12_iam.tg_user_account_last_admin() RETURNS trigger
   LANGUAGE plpgsql AS $f$
 BEGIN
-  IF NEW.state = 'DISABLED' AND OLD.state <> 'DISABLED' AND NEW.tenant_id <> 'PLATFORM'
+  IF NEW.state IN ('DISABLED', 'BLOCKED') AND OLD.state IN ('ACTIVE', 'LOCKED', 'PENDING_ACTIVATION') AND NEW.tenant_id <> 'PLATFORM'
+     AND NOT ph12_iam.f_ta_floor_exempt()
+     AND coalesce(NEW.disabled_reason, '') NOT IN ('INACTIVE_45D', 'INACTIVE_30D_ADMIN')
      AND EXISTS (SELECT 1 FROM ph12_iam.role_assignment a
                   WHERE a.tenant_id = NEW.tenant_id AND a.user_id = NEW.id AND a.role_code = 'TENANT_ADMIN' AND a.state = 'ACTIVE') THEN
     PERFORM pg_advisory_xact_lock(hashtextextended('ph12:last-admin:' || NEW.tenant_id, 0));
-    IF ph12_iam.f_other_active_admins(NEW.tenant_id, NEW.id, NULL) = 0 THEN
-      RAISE EXCEPTION 'Không thể vô hiệu quản trị tỉnh cuối cùng của tenant %', NEW.tenant_id USING ERRCODE = 'P1246';
+    IF ph12_iam.f_other_active_admins(NEW.tenant_id, NEW.id, NULL) < 2 THEN
+      RAISE EXCEPTION 'Không thể khóa hoặc vô hiệu quản trị tỉnh: tenant % phải còn ít nhất hai quản trị tỉnh hiệu lực', NEW.tenant_id USING ERRCODE = 'P1246';
     END IF;
   END IF;
   RETURN NEW;
@@ -291,8 +304,10 @@ CREATE TRIGGER tg_role_assignment_last_admin BEFORE UPDATE OF state OR DELETE ON
   FOR EACH ROW EXECUTE FUNCTION ph12_iam.tg_role_assignment_last_admin();
 CREATE TRIGGER tg_user_account_last_admin BEFORE UPDATE OF state ON ph12_iam.user_account
   FOR EACH ROW EXECUTE FUNCTION ph12_iam.tg_user_account_last_admin();
-COMMENT ON FUNCTION ph12_iam.tg_role_assignment_last_admin() IS 'Chặn gỡ, hết hạn, thu hồi gán TENANT_ADMIN cuối cùng (ERR-12-046); hết hạn tự động của người cuối cùng thất bại và để lại cảnh báo cho tác vụ AssignmentExpiryJob.';
--- @rollback DROP TRIGGER IF EXISTS tg_user_account_last_admin ON ph12_iam.user_account; DROP TRIGGER IF EXISTS tg_role_assignment_last_admin ON ph12_iam.role_assignment; DROP FUNCTION IF EXISTS ph12_iam.tg_user_account_last_admin(); DROP FUNCTION IF EXISTS ph12_iam.tg_role_assignment_last_admin(); DROP FUNCTION IF EXISTS ph12_iam.f_other_active_admins(text, uuid, uuid);
+COMMENT ON FUNCTION ph12_iam.f_ta_floor_exempt() IS 'Đúng khi dịch vụ đặt ph12.ta_floor_exception là INACTIVITY, ATTT_INCIDENT hoặc TENANT_NOT_ACTIVE (ngoại lệ của ngưỡng hai TA, BR-12-033); biến chỉ sống trong giao dịch (SET LOCAL).';
+COMMENT ON FUNCTION ph12_iam.tg_role_assignment_last_admin() IS 'Chặn gỡ, hết hạn, thu hồi gán TENANT_ADMIN khi tenant sẽ còn dưới hai TA hiệu lực (ERR-12-046); hết hạn tự động làm xuống dưới hai thất bại và để lại cảnh báo cho tác vụ AssignmentExpiryJob.';
+COMMENT ON FUNCTION ph12_iam.tg_user_account_last_admin() IS 'Chặn vô hiệu hoặc khóa hẳn (BLOCKED) tài khoản TA khi tenant sẽ còn dưới hai TA hiệu lực (ERR-12-046); miễn cho lý do INACTIVE_45D, INACTIVE_30D_ADMIN và khi ph12.ta_floor_exception được đặt.';
+-- @rollback DROP TRIGGER IF EXISTS tg_user_account_last_admin ON ph12_iam.user_account; DROP TRIGGER IF EXISTS tg_role_assignment_last_admin ON ph12_iam.role_assignment; DROP FUNCTION IF EXISTS ph12_iam.tg_user_account_last_admin(); DROP FUNCTION IF EXISTS ph12_iam.tg_role_assignment_last_admin(); DROP FUNCTION IF EXISTS ph12_iam.f_ta_floor_exempt(); DROP FUNCTION IF EXISTS ph12_iam.f_other_active_admins(text, uuid, uuid);
 
 -- @changeset ph12-0220-sod-exception
 CREATE TABLE ph12_iam.sod_exception (

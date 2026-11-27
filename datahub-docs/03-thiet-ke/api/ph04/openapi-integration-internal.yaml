@@ -81,7 +81,7 @@ paths:
       x-datahub-permission:
         serviceScope: integration:testrun-steps
       description: 'Sandbox gửi theo lô mỗi 200 ms; lô cuối mang `final` (kết quả khẳng định và trạng thái cuối). `dh-integration` ghi `test_run_step`,
-        cập nhật trạng thái, đẩy SSE (API-04-042) và phát EVT-04-10. Gửi lại lô cùng `batchSeq` thì bỏ qua (không ghi trùng).'
+        cập nhật trạng thái, đẩy SSE (API-04-099) và phát EVT-04-10. Gửi lại lô cùng `batchSeq` thì bỏ qua (không ghi trùng).'
       parameters:
       - $ref: '#/components/parameters/RunId'
       requestBody:

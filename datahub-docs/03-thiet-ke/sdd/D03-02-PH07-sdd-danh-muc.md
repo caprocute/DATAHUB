@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH07
 ten: Thiết kế chi tiết phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Trưởng nhóm PH-07, Lập trình viên L-DATA, Kiểm thử viên, Nhóm vận hành
@@ -2553,7 +2553,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-07-052.
 
-**Giao diện vào.** API-07-075.
+**Giao diện vào.** API-07-075, 079.
 
 **Phụ thuộc ra.** OPA sidecar.
 
@@ -2570,7 +2570,7 @@ Chi tiết thiết kế:
 
 `AccessGrantService` hiện thực FR-07-052. Tài khoản dịch vụ của PH-08 (module `dq` cùng `dh-data`) không có quyền mặc định với danh mục `RESTRICTED`: PA cấp theo từng danh mục qua FR-07-052 như với HTTT; danh mục `PUBLIC` và `INTERNAL` PH-08 khai thác bình thường. Với danh mục `classification = RESTRICTED`, `RdmAuthorization.checkExploit(catalog, scope)` lấy `member_system_id` từ claim của token client do PH-01 gán khi cấp client (tên claim theo D02-08), tra cấp quyền hiệu lực trong bộ đệm L1 60 giây theo `(catalogId, memberSystemId)` và kiểm tra `scope` (`rdm.read`, `rdm.query`). Không có trả ERR-07-030. Cấp quyền quá `expires_at` tự hết tác dụng vì phép tra so với thời điểm hiện tại. PH-01 phát sự kiện khi HTTT chuyển `SUSPENDED` hoặc `REVOKED`; `MemberSystemListener` xóa mục đệm của HTTT đó trên mọi pod qua kênh `rdm:invalidate`.
 
-API-07-075 PUT thay toàn bộ danh sách trong một giao dịch: xóa dòng không còn, thêm dòng mới, ghi kiểm toán phần khác biệt. ETag của danh sách là `W/"g-{max(version)}-{count}"`.
+API-07-079 PUT thay toàn bộ danh sách trong một giao dịch: xóa dòng không còn, thêm dòng mới, ghi kiểm toán phần khác biệt. ETag của danh sách là `W/"g-{max(version)}-{count}"`.
 
 ### 4.19. Tham số theo tenant
 
@@ -3290,3 +3290,4 @@ FR-07-039 (đề xuất bổ sung lên NDXP, mức C) không thuộc MVP và đ�
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 10 mục cho 19 thành phần, bảng danh sách thành phần, thuật ngữ, cấu trúc tài liệu, chú thích bảng và hình |
 | 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bộ đệm tham số 60 giây, type ERR-07-nnn, snapshotItems, NdxpCatalogClient theo API-14-079…083, audit qua OutboxRelay; Chốt câu hỏi mở đợt đồng bộ: Q443 |
+| 0.5 | 2026-11-27 | Nhóm phân hệ PH-07 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, dẫn chiếu đã đổi theo ngữ cảnh |

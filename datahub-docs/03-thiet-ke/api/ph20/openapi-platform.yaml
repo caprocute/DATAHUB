@@ -582,7 +582,8 @@ paths:
       - Hồ sơ tenant
       operationId: postTenantsCheckReadiness005
       summary: Kiểm tra sẵn sàng cho hồ sơ chưa lưu
-      description: Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`.
+      description: Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`. Mục đầu mối `CONTACTS` yêu cầu tối thiểu hai
+        đầu mối `TENANT_ADMIN` (hai thư công vụ khác nhau) và một `TECHNICAL`.
       x-datahub-id: API-20-005
       x-datahub-fr:
       - FR-20-001
@@ -788,7 +789,8 @@ paths:
       - Đầu mối và hợp đồng
       operationId: postTenantsContacts008
       summary: Thêm đầu mối
-      description: Thêm đầu mối.
+      description: 'Thêm đầu mối của tenant. Loại `TENANT_ADMIN` cần tối thiểu hai đầu mối với hai thư công vụ khác nhau (Q403, chốt 27/11/2026): thư thứ nhất dùng
+        cho quản trị tỉnh đầu tiên mà API-12-080 tạo ở `S03_REALM`, thư thứ hai để PA tạo TA thứ hai ở PH-12 trước khi kích hoạt.'
       x-datahub-id: API-20-008
       x-datahub-fr:
       - FR-20-005
@@ -1213,7 +1215,9 @@ paths:
       operationId: postTenantsProvisioningRuns013
       summary: Chạy saga (`INITIAL`, `SUPPLEMENT`)
       description: Trả `202` kèm `Location` tới lần chạy. `runKind = INITIAL` chạy 17 bước `S01_RECORD` … `S17_ACTIVATE`; `SUPPLEMENT` chỉ chạy các bước, phân hệ
-        nêu ở `steps`, `modules`. Mỗi tenant chỉ một lần chạy tại một thời điểm (ERR-20-016). Bước bất đồng bộ chờ phân hệ báo qua API-20-166.
+        nêu ở `steps`, `modules`. Mỗi tenant chỉ một lần chạy tại một thời điểm (ERR-20-016). Bước bất đồng bộ chờ phân hệ báo qua API-20-166. `S03_REALM` gọi API-12-080
+        tạo realm và quản trị tỉnh đầu tiên; quản trị tỉnh thứ hai (mỗi tenant tối thiểu hai TA, Q403) do PA tạo ở PH-12 (API-12-003) từ thư công vụ của đầu mối `TENANT_ADMIN`
+        thứ hai trước `S17_ACTIVATE`.
       x-datahub-id: API-20-013
       x-datahub-fr:
       - FR-20-008
@@ -2067,8 +2071,10 @@ paths:
       - Saga khởi tạo
       operationId: postTenantsActivate023
       summary: Kích hoạt và bàn giao
-      description: Chuyển `ACTIVE`, gửi thông báo bàn giao cho đầu mối `TENANT_ADMIN`, đẩy KPI-12 sang PH-16. Cần kiểm tra khói đạt (ERR-20-020) và có đầu mối (ERR-20-021).
-        Phát EVT-20-03.
+      description: 'Chuyển `ACTIVE`, gửi thông báo bàn giao cho đầu mối `TENANT_ADMIN`, đẩy KPI-12 sang PH-16. Cần kiểm tra khói đạt (ERR-20-020) và có đầu mối (ERR-20-021).
+        Mỗi tenant phải có tối thiểu hai TA (quản trị tỉnh) hiệu lực khi kích hoạt (Q403, chốt 27/11/2026): hệ thống kiểm bằng `GET /users` của PH-12 lọc `roleCode=TENANT_ADMIN`,
+        `state=ACTIVE` hoặc `PENDING_ACTIVATION`; dưới hai thì ERR-20-021. Sau khi kích hoạt, PH-12 chặn mọi thao tác làm số TA xuống dưới hai (ERR-12-046). Phát
+        EVT-20-03.'
       x-datahub-id: API-20-023
       x-datahub-fr:
       - FR-20-013

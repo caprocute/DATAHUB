@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH07
 ten: Đặc tả API và sự kiện phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kiến trúc sư, lập trình viên L-DATA, đội phát triển HTTT thành viên, kiểm thử viên
@@ -159,7 +159,7 @@ Bảng dưới đây liệt kê toàn bộ endpoint, sinh từ `openapi-rdm.yaml
 | API-07-073 | POST | `/tenants/{tenantId}:seed` | Nạp gói danh mục nền cho tenant mới | 049 | PLATFORM | 1/1 |
 | API-07-074 | POST | `/catalogs/{catalogCode}/proposals` | Đề xuất bổ sung bản ghi lên danh mục quốc gia | 039 | PERM-07-sync | 1/1 |
 | API-07-075 | GET | `/catalogs/{catalogCode}/access-grants` | Danh sách HTTT được cấp quyền khai thác | 052 | PERM-07-read | 0/1 |
-| API-07-075 | PUT | `/catalogs/{catalogCode}/access-grants` | Thay toàn bộ danh sách cấp quyền khai thác | 052 | PERM-07-grant | 1/1 |
+| API-07-079 | PUT | `/catalogs/{catalogCode}/access-grants` | Thay toàn bộ danh sách cấp quyền khai thác | 052 | PERM-07-grant | 1/1 |
 
 : Danh mục endpoint
 
@@ -2106,7 +2106,7 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 **Ghi chú.** Áp dụng cho danh mục `RESTRICTED` (bắt buộc để HTTT khai thác) và cho danh mục bất kỳ khi cần cấp scope `rdm.write` cho HTTT làm nguồn cập nhật.
 :::
 
-#### Thay toàn bộ danh sách cấp quyền khai thác (API-07-075, PUT)
+#### API-07-079 · Thay toàn bộ danh sách cấp quyền khai thác
 
 ::: dac-ta
 **Mục đích.** Thay toàn bộ danh sách cấp quyền khai thác.
@@ -2158,6 +2158,16 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 
 <!-- gen:dac-ta-api:end -->
 
+## Phụ lục. Ánh xạ mã API cũ sang mã mới
+
+Trước 27/11/2026 hai operation về quyền khai thác dùng chung mã API-07-075. Operation đầu giữ mã cũ, operation còn lại nhận mã mới.
+
+| Mã cũ | Mã mới | Phương thức, đường dẫn | Nội dung |
+|---|---|---|---|
+| API-07-075 | API-07-079 | `PUT /catalogs/{catalogCode}/access-grants` | Thay toàn bộ danh sách cấp quyền khai thác |
+
+: Ánh xạ mã API cũ dùng chung sang mã mới
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung |
@@ -2165,5 +2175,6 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 | 0.1 | 2026-11-25 | Bản đầu: quy ước, xác thực, danh mục 76 endpoint, sự kiện, mã lỗi |
 | 0.2 | 2026-11-26 | Nâng theo chuẩn kết hợp: thêm Giới thiệu, chương 9 đặc tả từng endpoint 10 mục sinh từ OpenAPI, chú thích bảng |
 | 0.3 | 2026-11-27 | Đồng bộ chéo cuối: thêm tham số lọc API-07-001, xuất CSV XLSX, isLocalExtension, precision, allowedActions và disabledReasons; Chốt câu hỏi mở đợt đồng bộ: Q427, Q442, Q443 |
+| 0.4 | 2026-11-27 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, GET giữ API-07-075; thêm phụ lục ánh xạ mã cũ sang mã mới |
 
 : Lịch sử phiên bản

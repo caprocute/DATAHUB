@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH12
 ten: Đặc tả API và sự kiện phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, thư viện PEP, APISIX, giao diện; ATTT; đơn vị kết nối; hội đồng thẩm định
@@ -204,7 +204,7 @@ Bảy scope cấp cho tài khoản dịch vụ khi triển khai (FRS §3.3), kh�
 Module `iam` dùng thư viện PEP như mọi DU: chú thích `@RequiresPermission("PERM-12-user-lock")` ứng với khóa `x-datahub-permission` của OpenAPI; PEP hỏi OPA cục bộ và, khi từ chối, đổi quyết định thành `403`, `404` hoặc `401` theo bảng lý do (FRS §9.1). Hai điểm riêng của PH-12:
 
 1. **Không tự thao tác trên chính mình.** Khóa, vô hiệu, đặt lại yếu tố thứ hai, gán, gỡ vai trò đều từ chối khi người gọi trùng đối tượng (ERR-12-013, BR-12-033); người đề nghị không được tự duyệt (ERR-12-008, BR-12-008, BR-12-032).
-2. **Quản trị tỉnh cuối cùng được bảo vệ.** Không gỡ vai trò, khóa hay vô hiệu quản trị tỉnh cuối cùng đang hoạt động (ERR-12-046).
+2. **Tenant đã kích hoạt luôn có tối thiểu hai quản trị tỉnh.** Không gỡ vai trò, khóa hay vô hiệu quản trị tỉnh nếu tenant sẽ còn dưới hai TA hiệu lực (ERR-12-046, 409; Q403 chốt 27/11/2026). Ngoại lệ: tự vô hiệu do không dùng quá ngưỡng (tác vụ nội bộ) và khóa do sự cố ATTT (`incidentRef` ở API-12-005) vẫn thực hiện, kèm cảnh báo khẩn cho SO, PA và việc bổ sung TA.
 
 API quyết định (`/api/authz/v1`) khác phần còn lại: bên gọi là máy, cần scope `iam:decide`; mọi trường về chủ thể lấy từ token đã xác minh chứ không từ tham số của bên gọi (BR-12-004), và thân `DecisionRequest` ánh xạ trường theo SDD §3.4.
 
@@ -821,7 +821,7 @@ Bảng sau là danh sách chuẩn các mã lỗi của API quản trị PH-12 v�
 | ERR-12-043 | 422 | Vượt trần tham số hoặc giới hạn số lượng | 13 API (xem OpenAPI) |
 | ERR-12-044 | 412 | Phiên bản đối tượng đã thay đổi (`If-Match`) | 32 API (xem OpenAPI) |
 | ERR-12-045 | 422 | `Idempotency-Key` đã dùng với thân khác | 29 API (xem OpenAPI) |
-| ERR-12-046 | 409 | Không thể gỡ hoặc vô hiệu quản trị tỉnh cuối cùng | 005, 007, 027 |
+| ERR-12-046 | 409 | Không thể gỡ, khóa hoặc vô hiệu quản trị tỉnh khi tenant sẽ còn dưới hai quản trị tỉnh hiệu lực | 005, 007, 027 |
 | ERR-12-047 | 422 | Trường do danh bạ LDAP quản lý, chỉ đọc | 004 |
 
 : Mã lỗi control plane của PH-12
@@ -882,7 +882,7 @@ Bảng sau lấy nguyên từ FRS §9.2 để hai tài liệu không lệch; ngu
 | ERR-12-039 | "Kho bí mật tạm thời không khả dụng; chưa lưu hoặc chưa xoay. Thử lại sau." | Hộp cảnh báo lỗi |
 | ERR-12-043 | "Giá trị vượt giới hạn cho phép ({tối thiểu} đến {tối đa})." | Dưới trường tham số |
 | ERR-12-044 | "Thông tin này vừa được người khác sửa. Tải lại trang để xem bản mới nhất." | Thông báo nổi |
-| ERR-12-046 | "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động." | Hộp xác nhận |
+| ERR-12-046 | "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện." | Hộp xác nhận |
 | ERR-12-111 | "Tên đăng nhập hoặc mật khẩu không đúng." | Trang đăng nhập |
 | ERR-12-112 | "Tài khoản tạm khóa do đăng nhập sai nhiều lần. Thử lại sau {n} phút." | Trang đăng nhập |
 | ERR-12-113 | "Tài khoản đã bị khóa. Liên hệ quản trị tỉnh." | Trang đăng nhập |
@@ -1099,7 +1099,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `503`; mã lỗi của thao tác: ERR-12-001, ERR-12-003, ERR-12-006, ERR-12-007, ERR-12-013, ERR-12-014, ERR-12-038, ERR-12-044, ERR-12-046, ERR-12-116, ERR-12-120 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Khóa hẳn (`BLOCKED`), hủy mọi phiên. Không tự khóa chính mình.
+**Ghi chú.** Khóa hẳn (`BLOCKED`), hủy mọi phiên. Không tự khóa chính mình. Khóa TA làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì trả ERR-12-046 (409), trừ khi có `incidentRef` (sự cố ATTT): khi đó vẫn khóa, phát cảnh báo khẩn cho SO, PA và tạo việc bổ sung TA (BR-12-033).
 :::
 
 #### API-12-006 · Mở khóa tài khoản
@@ -1147,7 +1147,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `503`; mã lỗi của thao tác: ERR-12-001, ERR-12-003, ERR-12-006, ERR-12-007, ERR-12-013, ERR-12-014, ERR-12-038, ERR-12-044, ERR-12-046, ERR-12-116, ERR-12-120 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Vô hiệu (`DISABLED`), không xóa vật lý (BR-12-035). Quản trị tỉnh cuối cùng không vô hiệu được.
+**Ghi chú.** Vô hiệu (`DISABLED`), không xóa vật lý (BR-12-035). Vô hiệu TA làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì trả ERR-12-046 (409); không có ngoại lệ ở API này (ngoại lệ không dùng 45 ngày do tác vụ nội bộ).
 :::
 
 #### API-12-008 · Kích hoạt lại tài khoản
@@ -1583,7 +1583,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `503`; mã lỗi của thao tác: ERR-12-001, ERR-12-007, ERR-12-013, ERR-12-014, ERR-12-038, ERR-12-044, ERR-12-046, ERR-12-116, ERR-12-120 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Gỡ vai trò; yêu cầu `reason` ở tham số truy vấn.
+**Ghi chú.** Gỡ vai trò; yêu cầu `reason` ở tham số truy vấn. Gỡ `TENANT_ADMIN` làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì trả ERR-12-046 (409).
 :::
 
 ### Tham số và danh bạ
@@ -3759,3 +3759,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và K-TRINH-BAY |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: ERR-12-046 đổi sang ngưỡng dưới hai TA (API-12-005, 007, 027), ngoại lệ `incidentRef` ở API-12-005; sinh lại từ OpenAPI |

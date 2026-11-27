@@ -984,20 +984,20 @@ Tính năng: PH-03 · Cổng API
 
   @US-03-050 @FR-03-050 @M
   Kịch bản: US-03-050 dương · Ghi siêu dữ liệu lượt gọi có che dữ liệu
-    Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+    Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
     Khi sau mỗi lượt gọi, kể cả lượt bị từ chối ở bất kỳ chốt nào
-    Thì bản ghi siêu dữ liệu ở PH-13; chỉ số `dh_gateway_accesslog_sent_total`
+    Thì bản ghi siêu dữ liệu ở PH-13 (qua `kafka-logger`, topic `{tenant}.obs.access.logged.v1`); chỉ số `dh_gateway_accesslog_sent_total` và `dh_connect_config_revision` (phiên bản cấu hình đang chạy, PH-13 theo dõi độ lệch; đã chốt 27/11/2026)
     Và bản ghi nằm ở kho của PH-13 theo thời hạn lưu của NFR-03-026
 
   @US-03-050 @FR-03-050 @M @âm
   Kịch bản: US-03-050 âm 1 · Bộ đệm đĩa đầy do PH-13 ngừng lâu
-    Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+    Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
     Khi bộ đệm đĩa đầy do PH-13 ngừng lâu
     Thì bỏ bản ghi cũ nhất, cảnh báo Cao ở FR-03-054; không ảnh hưởng lượt gọi
 
   @US-03-050 @FR-03-050 @M @âm
   Kịch bản: US-03-050 âm 2 · Bản ghi chứa giá trị khớp mẫu dữ liệu nhạy cảm sau bước 4
-    Biết plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được
+    Biết plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin) …
     Khi bản ghi chứa giá trị khớp mẫu dữ liệu nhạy cảm sau bước 4
     Thì bộ quét mẫu của CI và kiểm thử chạy hằng ngày báo lỗi (NFR-03-014); không có ca ngoại lệ được chấp nhận
 

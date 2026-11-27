@@ -5,7 +5,7 @@ Tính năng: TS-04-25 · Catalog, chính sách thành phần, hồ sơ runtime
 
   @TC-04-146 @P2 @Dương
   Kịch bản: TC-04-146 Đề xuất cho phép thành phần và quyết định
-    # Truy vết: FR-04-080 · API-04-074, 072 · UI-04-17 · UC-04-21.
+    # Truy vết: FR-04-080 · API-04-110, 111, 072, 109 · UI-04-17 · UC-04-21.
     Biết `smb` có `policy = DENIED`; IE1, U-PA.
     Khi IE1 tạo đề xuất `ALLOW` `smb` với lý do 50 ký tự.
     Và U-PA `:decide` `ACCEPTED`, `policyDecision = PER_FLOW`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-25 · Catalog, chính sách thành phần, hồ sơ runtime
 
   @TC-04-147 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-147 Tỉnh chỉ thu hẹp được chính sách
-    # Truy vết: FR-04-080 · BR-04-014 · API-04-072.
+    # Truy vết: FR-04-080 · BR-04-014 · API-04-109.
     Biết U-T68-TA; `exec` bị cấm ở nền.
     Khi TA `PATCH /catalog/policies` với `{"changes":[{"kind":"COMPONENT","name":"ftp","decision":"DENIED","reason":"Tỉnh không dùng FTP thường"}]}`.
     Và TA `PATCH` với `exec` → `ALLOWED`.

@@ -659,7 +659,7 @@ Tính năng: PH-01 · Kết nạp hệ thống thông tin
   @US-01-032 @FR-01-032 @M
   Kịch bản: US-01-032 dương · Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT
     Biết HTTT `ACTIVE`, `SUSPENDED` hoặc `APPROVED`
-    Khi SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07
+    Khi SO bấm "Xử lý khẩn" ở UI-01-11; hoặc theo playbook sự cố của D03-07; hoặc SO mở việc đề xuất tạm ngừng do PH-13 gửi (FR-01-053) và chọn "Xử lý khẩn", khi đó `incidentRef` lấy sẵn từ đề xuất
     Thì hệ thống trả `200`; `{ "actionId", "status": "SUSPENDED", "confirmBy", "enforcement" }`
     Và HTTT `SUSPENDED` hoặc `TERMINATED`; thao tác khẩn ở `PENDING_CONFIRM`, `CONFIRMED` hoặc `OVERDUE`
     Và sự kiện được phát: EVT-01-15, EVT-01-03, EVT-01-07
@@ -781,6 +781,41 @@ Tính năng: PH-01 · Kết nạp hệ thống thông tin
     Biết phân hệ gọi có token dịch vụ với scope phù hợp
     Khi không thấy HTTT
     Thì hệ thống từ chối với ERR-01-001 (404)
+
+  @US-01-053 @FR-01-053 @M
+  Kịch bản: US-01-053 dương · Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+    Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+    Khi cán bộ an ninh ở PH-13 kết luận "Sự cố thật" và bấm "Đề xuất tạm ngừng HTTT" (API-13-060); PH-13 gọi API-01-089
+    Thì hệ thống trả `202`; `{ "systemCode", "alertId", "taskId", "accepted", "duplicate" }`
+    Và trạng thái HTTT không đổi; một việc khẩn mở cho SO của tenant
+    Và nhật ký kiểm toán ghi nhận thao tác
+
+  @US-01-053 @FR-01-053 @M @âm
+  Kịch bản: US-01-053 âm 1 · Không thấy HTTT hoặc thuộc tenant khác
+    Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+    Khi không thấy HTTT hoặc thuộc tenant khác
+    Thì hệ thống từ chối với ERR-01-001 (404)
+
+  @US-01-053 @FR-01-053 @M @âm
+  Kịch bản: US-01-053 âm 2 · HTTT không `ACTIVE`
+    Biết HTTT `ACTIVE`; PH-13 có token dịch vụ với scope phù hợp và tenant trong token trùng tenant của HTTT
+    Khi HTTT không `ACTIVE`
+    Thì hệ thống từ chối với ERR-01-005, ERR-01-048 (409)
+
+  @US-01-054 @FR-01-054 @S
+  Kịch bản: US-01-054 dương · Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp nhập
+    Biết tổ chức có `change = DISSOLVED` hoặc `MERGED` kèm `successorCode` của tổ chức `ACTIVE` (PH-20 đã giải chuỗi kế thừa)
+    Khi PH-01 nhận EVT-20-13 (`{tenant}.tenant.org.changed.v1`) có `change` là `DISSOLVED` hoặc `MERGED`
+    Thì mọi HTTT của tổ chức giải thể, sáp nhập có sẵn đề nghị đổi chủ quản chờ TA duyệt một lượt
+    Và yêu cầu `OWNER_CHANGE` `PENDING` cho từng HTTT thuộc diện; chưa HTTT nào đổi chủ quản cho tới khi TA duyệt
+    Và sự kiện được phát: EVT-01-04 (khi duyệt và áp dụng)
+    Và nhật ký kiểm toán ghi nhận thao tác
+
+  @US-01-054 @FR-01-054 @S @âm
+  Kịch bản: US-01-054 âm 1 · Yêu cầu đã được TA khác duyệt hoặc hủy trước
+    Biết tổ chức có `change = DISSOLVED` hoặc `MERGED` kèm `successorCode` của tổ chức `ACTIVE` (PH-20 đã giải chuỗi kế thừa)
+    Khi yêu cầu đã được TA khác duyệt hoặc hủy trước
+    Thì hệ thống từ chối với ERR-01-005 (409)
 
   # ---- EP-01-E · Rà soát quyền định kỳ
 

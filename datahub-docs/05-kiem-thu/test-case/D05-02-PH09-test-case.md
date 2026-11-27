@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH09
 ten: Kịch bản và test case phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -23,7 +23,7 @@ Phần này viết cho hội đồng thẩm định: tài liệu chứng minh đ
 - Không có giá trị dữ liệu cá nhân (DLCN) ở dạng rõ trong log, vết, topic, tệp xuất, bảng `ph09_privacy`, và không có đường nào để tenant này đọc dữ liệu quyền riêng tư của tenant khác.
 - Các thao tác đặc quyền (xem đầy đủ, khôi phục giá trị gốc, hủy khóa, xóa mật mã, gỡ nhãn bí mật) luôn có kiểm toán trước, người duyệt khác người đề nghị, tập ẩn danh phát hành đạt k ≥ 10 và đồng hồ vi phạm 72 giờ không bị bỏ sót.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->42<!--/gen--> kịch bản với <!--gen:so-tc-->150 (TC-09-001…150; 108 ca P1)<!--/gen--> test case và 9 kịch bản nghiệm thu người dùng (UAT-01…09). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi mã lỗi ERR-09 có ít nhất một ca, mọi màn hình UI-09 có ca; các API chính (quyết định mục đích, kế hoạch che, áp che, giả danh hóa, xem đầy đủ, khôi phục, ẩn danh hóa, yêu cầu chủ thể, vi phạm) có ca riêng. Ma trận mục 8 sinh bằng `ph09/tools/gen_matrix.py`. Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (nâng cấp) và LGC-NGSP-003 (giữ nguyên, PH-09 thêm kiểm soát) nên mục 7 nghiệm thu tương đương hệ cũ theo vai trò và đối chiếu mười một FR cũ của SRS repo.
+**Phạm vi.** Gồm <!--gen:so-ts-->42<!--/gen--> kịch bản với <!--gen:so-tc-->158 (TC-09-001…158; 115 ca P1)<!--/gen--> test case và 9 kịch bản nghiệm thu người dùng (UAT-01…09). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi mã lỗi ERR-09 có ít nhất một ca, mọi màn hình UI-09 có ca; các API chính (quyết định mục đích, kế hoạch che, áp che, giả danh hóa, xem đầy đủ, khôi phục, ẩn danh hóa, yêu cầu chủ thể, vi phạm) có ca riêng. Ma trận mục 8 sinh bằng `ph09/tools/gen_matrix.py`. Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (nâng cấp) và LGC-NGSP-003 (giữ nguyên, PH-09 thêm kiểm soát) nên mục 7 nghiệm thu tương đương hệ cũ theo vai trò và đối chiếu mười một FR cũ của SRS repo.
 
 **Căn cứ.** FRS D02-03-PH09, use case D02-04-PH09, màn hình D03-06-PH09, SDD D03-02-PH09, ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01 (cổng `RG-1…5`); Luật Bảo vệ dữ liệu cá nhân 91/2025, Nghị định 356/2025/NĐ-CP, Luật Dữ liệu, TCVN 14423:2026; cấu trúc theo ISO/IEC/IEEE 29119-3.
 
@@ -239,17 +239,17 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5; mục tiêu đầy
 |---|---|---|---|
 | TS-09-01 | Danh mục mức phân loại, loại dữ liệu cá nhân, tra cứu và xuất | UC-09-01 | 3 |
 | TS-09-02 | Đăng ký phần tử dữ liệu từ lược đồ và khai báo MVP | UC-09-02 | 3 |
-| TS-09-03 | Đề xuất, xác nhận và hạ mức phân loại trường | UC-09-03 | 4 |
+| TS-09-03 | Đề xuất, xác nhận và hạ mức phân loại trường | UC-09-03 | 6 |
 | TS-09-04 | Quét phát hiện trường nghi dữ liệu cá nhân | UC-09-04 | 3 |
 | TS-09-05 | Mức phân loại của hợp đồng | UC-09-05 | 3 |
-| TS-09-06 | Nhãn bí mật nhà nước và chặn dữ liệu | UC-09-06 | 4 |
+| TS-09-06 | Nhãn bí mật nhà nước và chặn dữ liệu | UC-09-06 | 7 |
 | TS-09-07 | Sổ hoạt động xử lý, liên kết và xuất sổ | UC-09-07 | 4 |
 | TS-09-08 | Cơ sở pháp lý, văn bản căn cứ và mục đích khai thác | UC-09-08 | 3 |
 | TS-09-09 | Lập yêu cầu khai thác theo mục đích | UC-09-09 | 3 |
 | TS-09-10 | Thẩm định, chấp thuận có điều kiện hoặc từ chối | UC-09-10 | 4 |
 | TS-09-11 | Gia hạn, sửa, tạm dừng, thu hồi và tự hết hạn chấp thuận | UC-09-11 | 4 |
 | TS-09-12 | Bundle OPA ký và phát hành | UC-09-12 | 4 |
-| TS-09-13 | Quyết định mục đích trực tuyến cho điểm thực thi | UC-09-13 | 5 |
+| TS-09-13 | Quyết định mục đích trực tuyến cho điểm thực thi | UC-09-13 | 7 |
 | TS-09-14 | Phát hiện khai thác bất thường và báo cáo theo mục đích | UC-09-14 | 3 |
 | TS-09-15 | Chặn kích hoạt hợp đồng mức Nhạy cảm | UC-09-15 | 3 |
 | TS-09-16 | Kiểu che và chính sách che | UC-09-16 | 3 |
@@ -276,10 +276,10 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5; mục tiêu đầy
 | TS-09-37 | Không lộ dữ liệu cá nhân ở sự kiện, tệp xuất và bề mặt tấn công | — | 3 |
 | TS-09-38 | Đóng an toàn, chịu lỗi và phục hồi | — | 4 |
 | TS-09-39 | Hiệu lực tức thời và đồng hồ | — | 5 |
-| TS-09-40 | Hiệu năng, quy mô và quan sát | — | 6 |
+| TS-09-40 | Hiệu năng, quy mô và quan sát | — | 7 |
 | TS-09-41 | Truy cập giao diện và hợp đồng API | — | 2 |
 | TS-09-42 | Tương đương hệ cũ và chức năng cũ của SRS repo | — | 3 |
-| **Tổng** | | | **150** (108 ca P1) |
+| **Tổng** | | | **158** (115 ca P1) |
 
 : Danh sách 42 kịch bản kèm use case và số ca
 <!--/gen-->
@@ -457,7 +457,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận đề xuất, xác nhận, từ chối, hàng loạt và hạ mức bốn mắt có văn bản căn cứ, người đề xuất không tự xác nhận.
 
-**Phủ.** FR-09-004; UC-09-03; API-09-015…019; UI-09-02, 03; BR-09-002, 003, 007; ERR-09-005, 012, 013.
+**Phủ.** FR-09-004; UC-09-03; API-09-015…019; UI-09-02, 03; BR-09-002, 003, 007, 063; ERR-09-005, 012, 013.
 
 #### TC-09-007 · Đề xuất rồi xác nhận nâng mức, sự kiện đổi phân loại <!--k:clf-propose-confirm-->
 
@@ -557,6 +557,56 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. SO `:reject` đề xuất `PROPOSED` kèm lý do.
 
 **Kết quả mong đợi.** Bước 1 `200`, 5 phần tử `CONFIRMED`, giữ đúng mức đã khai. Bước 2 `409` ERR-09-006. Bước 3 `200`, `REJECTED`.
+:::
+
+#### TC-09-151 · Bật noEgress cho trường qua đề xuất và xác nhận <!--k:egress-flag-on-->
+
+::: dac-ta
+**Mục đích.** Chứng minh thuộc tính `noEgress` đi qua cùng luồng đề xuất, xác nhận như mức phân loại và mặc định là `false` (BR-09-063).
+
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-004 · API-09-015, 016 · BR-09-063 · BR-09-002
+
+**Tiền điều kiện, dữ liệu.** T90; trường `cccd` và `soDienThoai` đang `CONFIRMED`, `noEgress = false`; U-T90-DS1, U-T90-DA1.
+
+**Các bước.**
+
+1. DS1 `PUT /data-elements/{elementId}/classification` cho `cccd` với `noEgress = true`, giữ nguyên mức và loại DLCN, `basis`, `reason` đủ.
+2. DS1 đề xuất cho `soDienThoai` không nêu `noEgress`.
+3. DA1 xác nhận cả hai đề xuất.
+4. Đọc phân loại hiện hành của hai trường.
+
+**Kết quả mong đợi.** Bước 1 và 2: `200`, `PROPOSED`. Bước 3: `200`, bản cũ `SUPERSEDED`, bản mới `CONFIRMED`. Bước 4: `cccd` có `noEgress = true`; `soDienThoai` có `noEgress = false` (mặc định). EVT: `classification.changed`; KT: có.
+:::
+
+#### TC-09-152 · Tắt noEgress được coi như hạ mức: cần căn cứ và người xác nhận thứ hai <!--k:egress-flag-off-neg-->
+
+::: dac-ta
+**Mục đích.** Chứng minh tắt `noEgress` đòi bốn mắt như hạ mức phân loại, không có đường tắt một người (BR-09-063).
+
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-004 · API-09-015, 016 · BR-09-063, 002 · ERR-09-013, 005
+
+**Tiền điều kiện, dữ liệu.** T90; `cccd` `CONFIRMED` với `noEgress = true` (kết quả ca TC-09-151); U-T90-DS1, U-T90-DA1, U-T90-TA.
+
+**Các bước.**
+
+1. DS1 đề xuất `noEgress = false` cho `cccd`, không nêu `basis`.
+2. DS1 đề xuất lại kèm `basis = CV-456/2026`, lý do 30 ký tự; DS1 tự xác nhận.
+3. DA1 xác nhận.
+4. Giữa bước 2 và 3, PH-14 gọi `classification:check` với `egressScope = OUT_OF_PROVINCE` cho `cccd`.
+
+**Kết quả mong đợi.** Bước 1: `422` ERR-09-013. Bước 2: đề xuất `PROPOSED`; tự xác nhận `403` ERR-09-005. Bước 3: `200`, `noEgress = false`. Bước 4: khi đề xuất còn `PROPOSED`, `cccd` vẫn bị chặn (`egressBlocked = true`) vì bản hiệu lực chưa đổi. KT: có kèm số văn bản.
 :::
 
 ### TS-09-04 · Quét phát hiện trường nghi dữ liệu cá nhân
@@ -718,7 +768,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận chặn tuyệt đối toàn bản tin khi có nhãn `STATE_SECRET`, thân lỗi không nêu trường, gỡ nhãn cần văn bản giải mật và hai người.
 
-**Phủ.** FR-09-007; UC-09-06; API-09-003…006, 231; UI-09-03; BR-09-005, 057; ERR-09-018, 019, 101; EVT-09-14.
+**Phủ.** FR-09-007; UC-09-06; API-09-003…006, 231; UI-09-03; BR-09-005, 057, 063; ERR-09-018, 019, 101, 106, 111; EVT-09-14; NFR-09-027.
 
 #### TC-09-017 · Gán nhãn rồi bản tin có trường nhãn bị chặn toàn bộ <!--k:lbl-block-->
 
@@ -815,6 +865,79 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. TA `:approve-release` khi PH-13 ngừng.
 
 **Kết quả mong đợi.** `503` ERR-09-010, nhãn còn `STATE_SECRET`; bật lại PH-13 thì thao tác chạy được.
+:::
+
+#### TC-09-153 · Kiểm cấm gửi ra ngoài tỉnh: có trường noEgress thì egressBlocked <!--k:egress-check-->
+
+::: dac-ta
+**Mục đích.** Chứng minh PH-14 nhận `egressBlocked` và tên trường bị chặn trước khi gửi ra ngoài tỉnh, và chỉ khi `egressScope` là `OUT_OF_PROVINCE` (BR-09-063).
+
+**Loại.** Dương, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-007 · API-09-231 · BR-09-063 · NFR-09-027
+
+**Tiền điều kiện, dữ liệu.** T90; F-MSG; `cccd` và `soTaiKhoan` có `noEgress = true` `CONFIRMED`, sáu trường còn lại `noEgress = false`; S-T90-PEP-04 đóng vai PH-14.
+
+**Các bước.**
+
+1. PEP `POST /privacy/v1/classification:check` cho F-MSG với `egressScope = OUT_OF_PROVINCE`.
+2. Gọi lại với `egressScope = NONE`, rồi bỏ trường `egressScope`.
+3. Gọi với `egressScope = OUT_OF_PROVINCE` nhưng `fields` chỉ gồm `hoTen`, `email`.
+
+**Kết quả mong đợi.** Bước 1: `200`, `blocked = false`, `egressBlocked = true`, `egressBlockedFields = ["cccd", "soTaiKhoan"]`. Bước 2: `200`, `egressBlocked = false`, không có `egressBlockedFields` (mặc định `NONE`). Bước 3: `200`, `egressBlocked = false`. Mỗi lần chặn có dòng kiểm toán (đích, hợp đồng, không ghi nội dung).
+:::
+
+#### TC-09-154 · Trường chưa CONFIRMED xử lý như noEgress bật; nhãn bí mật vẫn thắng <!--k:egress-unconfirmed-->
+
+::: dac-ta
+**Mục đích.** Chứng minh trường `PROPOSED` bị chặn ra ngoài tỉnh và nhãn `STATE_SECRET` vẫn chặn tuyệt đối, không nêu tên trường (BR-09-063, BR-09-005).
+
+**Loại.** Biên, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-007 · FR-09-004 · API-09-231 · BR-09-063, 005 · ERR-09-101
+
+**Tiền điều kiện, dữ liệu.** T90; `maBenhAn` có đề xuất phân loại `PROPOSED` (chưa xác nhận), `noEgress = false`; biến thể F-MSG có `soHieuMat` mang nhãn; S-T90-PEP-04.
+
+**Các bước.**
+
+1. PEP gọi `classification:check` cho F-MSG, `egressScope = OUT_OF_PROVINCE`.
+2. DA1 xác nhận đề xuất của `maBenhAn` (không bật `noEgress`); gọi lại.
+3. Gọi với biến thể có `soHieuMat` và `egressScope = OUT_OF_PROVINCE`.
+
+**Kết quả mong đợi.** Bước 1: `200`, `egressBlocked = true`, `egressBlockedFields` có `maBenhAn`. Bước 2: `egressBlocked = false` (không còn trường nào bật hoặc chưa xác nhận). Bước 3: `403` ERR-09-101, thân không nêu tên trường (cả `soHieuMat` lẫn trường `noEgress`), không có `egressBlockedFields`.
+:::
+
+#### TC-09-155 · Kiểm cấm gửi ra ngoài tỉnh với yêu cầu sai hoặc bên gọi không đủ quyền <!--k:egress-check-neg-->
+
+::: dac-ta
+**Mục đích.** Chứng minh các lỗi của data plane vẫn đúng khi có `egressScope`, không rò thông tin trường của tenant khác.
+
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-007 · API-09-231 · BR-09-063 · ERR-09-106, 111
+
+**Tiền điều kiện, dữ liệu.** T90, T91; F-MSG; S-T90-PEP-04, S-T90-NOSCOPE, S-T91-PEP.
+
+**Các bước.**
+
+1. PEP gọi với `egressScope = ABROAD`.
+2. PEP gọi thiếu `contractId`, rồi `fields` không phải mảng.
+3. S-T90-NOSCOPE gọi với `egressScope = OUT_OF_PROVINCE`.
+4. S-T91-PEP gọi cho hợp đồng của T90.
+
+**Kết quả mong đợi.** Bước 1 và 2: `400` ERR-09-106, không có `egressBlocked`. Bước 3: `403` ERR-09-111, không trả `egressBlockedFields`. Bước 4: không thấy trường của T90 (cách ly tenant), không có tên trường nào của T90 trong thân phản hồi.
 :::
 
 ### TS-09-07 · Sổ hoạt động xử lý, liên kết và xuất sổ
@@ -1395,7 +1518,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận quyết định theo mức phân loại, chấp thuận, nhãn bí mật và hạn chế xử lý của chủ thể, mã lỗi data plane và hạn mức gọi.
 
-**Phủ.** FR-09-019; UC-09-13; API-09-227; BR-09-005, 017, 019, 020, 047; ERR-09-101, 102, 103, 104, 111, 113; NFR-09-001, 004, 024.
+**Phủ.** FR-09-019; UC-09-13; API-09-227; BR-09-005, 017, 019, 020, 047; ERR-09-101, 102, 103, 104, 106, 111, 113; NFR-09-001, 004, 024, 027.
 
 #### TC-09-043 · Cho phép khi có chấp thuận, điều kiện đi kèm và bỏ qua chấp thuận ở mức thấp <!--k:dec-allow-->
 
@@ -1516,6 +1639,54 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Tăng lên 5.000 lượt mỗi giây toàn cụm 30 phút.
 
 **Kết quả mong đợi.** PEP có đệm p95 ≤ 20 ms (trúng đệm ≤ 2 ms); gọi trực tiếp p95 ≤ 50 ms, p99 ≤ 100 ms. Ở 5.000 lượt mỗi giây độ trễ tăng không quá 20 %, 0 lỗi `5xx`.
+:::
+
+#### TC-09-156 · purpose:decide trả ropaActivityId khi hợp đồng thuộc hoạt động xử lý ACTIVE <!--k:dec-ropa-->
+
+::: dac-ta
+**Mục đích.** Chứng minh PH-14 nhận `ropaActivityId` để kiểm "mục đích nằm trong sổ hoạt động xử lý", và trường này vắng khi hợp đồng chưa thuộc hoạt động nào.
+
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-019 · FR-09-010, 011 · API-09-227 · NFR-09-027
+
+**Tiền điều kiện, dữ liệu.** T90; API-HGD liên kết hoạt động `HD-TRACUU` `ACTIVE` (kết quả ca TC-09-023); API-DM chưa thuộc hoạt động nào; G1 `ACTIVE`; S-T90-PEP-04.
+
+**Các bước.**
+
+1. PEP `POST /privacy/v1/purpose:decide` cho API-HGD, HTTT-BH, `MD-TRACUU-HGD`.
+2. Gọi cho API-DM với mục đích thuộc danh mục.
+3. Ngừng hoạt động `HD-TRACUU` (không còn `ACTIVE`) rồi gọi lại như bước 1.
+
+**Kết quả mong đợi.** Bước 1: `200` `allow`, thân có `ropaActivityId` bằng mã của `HD-TRACUU`, cùng `grantId`, `planVersion`. Bước 2: `200`, không có `ropaActivityId`. Bước 3: không còn `ropaActivityId`. Giá trị trả về không lộ nội dung hoạt động (chỉ mã).
+:::
+
+#### TC-09-157 · purpose:decide: không có ropaActivityId khi bị từ chối, và lỗi bên gọi <!--k:dec-ropa-neg-->
+
+::: dac-ta
+**Mục đích.** Chứng minh DENY và lỗi bên gọi không làm lộ mã hoạt động xử lý của hợp đồng.
+
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API.
+
+**Truy vết.** FR-09-019 · API-09-227 · ERR-09-102, 103, 106, 111
+
+**Tiền điều kiện, dữ liệu.** T90, T91; API-HGD thuộc `HD-TRACUU` `ACTIVE`; HTTT-TK không có chấp thuận; S-T90-PEP-04, S-T90-NOSCOPE, S-T91-PEP.
+
+**Các bước.**
+
+1. PEP gọi cho API-HGD với HTTT-TK (không chấp thuận).
+2. PEP gọi thiếu mục đích; rồi sai lược đồ.
+3. S-T90-NOSCOPE và S-T91-PEP gọi cho API-HGD.
+
+**Kết quả mong đợi.** Bước 1: `403` ERR-09-102, thân không có `ropaActivityId`. Bước 2: `400` ERR-09-103; `400` ERR-09-106. Bước 3: `403` ERR-09-111 cho cả hai, thân không có `ropaActivityId`.
 :::
 
 ### TS-09-14 · Phát hiện khai thác bất thường và báo cáo theo mục đích
@@ -3860,7 +4031,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Mục tiêu.** Chứng minh các NFR-09 còn lại ở hồ sơ tỉnh vừa trên PERF.
 
-**Phủ.** NFR-09-002, 006, 012, 013, 016, 020, 022, 023.
+**Phủ.** NFR-09-002, 006, 012, 013, 016, 020, 022, 023, 027.
 
 #### TC-09-139 · Kế hoạch che p95 ≤ 50 ms với 200 trường <!--k:perf-plan-->
 
@@ -3993,6 +4164,30 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 1. Chạy mô phỏng; `GET /subject-request-reports`.
 
 **Kết quả mong đợi.** Tỷ lệ báo cáo khớp số tính độc lập; nhắc trước 3 ngày làm việc đạt 100 %.
+:::
+
+#### TC-09-158 · Kiểm cấm gửi ra ngoài tỉnh và ropaActivityId p95 ≤ 200 ms <!--k:perf-egress-->
+
+::: dac-ta
+**Mục đích.** Đo NFR-09-027: `classification:check` với `egressScope = OUT_OF_PROVINCE` (lô 200 trường) và `purpose:decide` khi trả `ropaActivityId`.
+
+**Loại.** Hiệu năng.
+
+**Ưu tiên.** P1.
+
+**Tự động.** k6.
+
+**Truy vết.** NFR-09-027 · BR-09-063 · API-09-231, 227
+
+**Tiền điều kiện, dữ liệu.** T97; 3 bản sao data plane; hợp đồng 200 trường, 40 trường bật `noEgress`; 3.000 chấp thuận, 500 hợp đồng thuộc hoạt động `ACTIVE`; S-T90-PEP-04 tương đương ở T97.
+
+**Các bước.**
+
+1. k6 1.000 lượt mỗi giây 15 phút `classification:check` 200 trường với `egressScope = OUT_OF_PROVINCE`.
+2. k6 1.000 lượt mỗi giây 15 phút `purpose:decide` cho hợp đồng có `ropaActivityId`.
+3. Lặp hai bước ở 3.000 lượt mỗi giây 10 phút.
+
+**Kết quả mong đợi.** Bước 1 và 2: p95 ≤ 200 ms, `egressBlockedFields` đúng 40 trường ở mọi lượt, 0 lỗi `5xx`. Bước 3: p95 vẫn ≤ 200 ms. Kiểm bằng cách so kết quả với kết quả tính độc lập.
 :::
 
 ### TS-09-41 · Truy cập giao diện và hợp đồng API
@@ -4195,14 +4390,14 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-09. FR mức
 | FR-09-001 | Quản lý danh mục mức phân loại và nhãn chặn  | M | 001 | 001 | Có |
 | FR-09-002 | Quản lý danh mục loại dữ liệu cá nhân | M | 001 | 001, 002 | Có |
 | FR-09-003 | Đăng ký phần tử dữ liệu từ phân hệ, lược đồ  | M | 004, 005 | 005, 006, 119 | Có |
-| FR-09-004 | Đề xuất, xác nhận phân loại trường (hạ mức c | M | 007, 009, 010, 149 | 008, 009, 010, 119, 124, 125, 149 | Có |
+| FR-09-004 | Đề xuất, xác nhận phân loại trường (hạ mức c | M | 007, 009, 010, 149, 151 | 008, 009, 010, 119, 124, 125, 149, 152 | Có |
 | FR-09-005 | Quét phát hiện trường nghi dữ liệu cá nhân c | S | 011 | 012 | Có |
 | FR-09-006 | Tính và công bố mức phân loại của hợp đồng A | M | 014 | 015 | Có |
-| FR-09-007 | Chặn dữ liệu bí mật nhà nước đi qua Datahub | M | 017, 019, 149 | 018, 019, 064, 149 | Có |
+| FR-09-007 | Chặn dữ liệu bí mật nhà nước đi qua Datahub | M | 017, 019, 149, 153 | 018, 019, 064, 149, 155 | Có |
 | FR-09-008 | Tra cứu, xuất danh mục phân loại và lịch sử  | S | 003 | 003 | Có |
 | FR-09-009 | Lập hoạt động xử lý dữ liệu cá nhân | M | 021 | 022, 119, 124 | Có |
-| FR-09-010 | Duyệt, phiên bản hóa hoạt động xử lý | M | 021 | 022, 125 | Có |
-| FR-09-011 | Liên kết hoạt động xử lý với trường, API, to | M | 023 | 023 | Có |
+| FR-09-010 | Duyệt, phiên bản hóa hoạt động xử lý | M | 021, 156 | 022, 125 | Có |
+| FR-09-011 | Liên kết hoạt động xử lý với trường, API, to | M | 023, 156 | 023 | Có |
 | FR-09-012 | Quản lý danh mục cơ sở pháp lý và căn cứ văn | M | 025 | 026 | Có |
 | FR-09-013 | Xuất sổ hoạt động xử lý theo mẫu | S | 024 | 024 | Có |
 | FR-09-014 | Quản lý danh mục mục đích khai thác | M | 025, 148 | 026, 119, 148 | Có |
@@ -4210,7 +4405,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-09. FR mức
 | FR-09-016 | Thẩm định, chấp thuận có điều kiện hoặc từ c | M | 031, 032, 148 | 032, 033, 125, 148 | Có |
 | FR-09-017 | Gia hạn, sửa, tạm dừng, thu hồi chấp thuận v | M | 035, 036, 037, 038 | 035, 036, 120 | Có |
 | FR-09-018 | Đồng bộ chấp thuận và chính sách sang bundle | M | 039, 042 | 040, 041 | Có |
-| FR-09-019 | Quyết định mục đích trực tuyến cho điểm thực | M | 037, 042, 043, 046, 102, 148, 150 | 044, 045, 126, 148 | Có |
+| FR-09-019 | Quyết định mục đích trực tuyến cho điểm thực | M | 037, 042, 043, 046, 102, 148, 150, 156 | 044, 045, 126, 148, 157 | Có |
 | FR-09-020 | Phát hiện khai thác vượt mục đích, vượt hạn  | S | 046, 048, 148 | 049, 148 | Có |
 | FR-09-021 | Báo cáo khai thác theo mục đích | S | 050 | 050 | Có |
 | FR-09-022 | Chặn kích hoạt hợp đồng mức Nhạy cảm khi chư | M | 052 | 051, 053 | Có |
@@ -4266,7 +4461,7 @@ Hai mã chức năng hệ cũ được PH-09 phủ theo FRS mục 11.1: LGC-TOOL
 | LGC | FR của PH-09 | TC | UAT |
 |---|---|---|---|
 | LGC-TOOL-012 | 023, 024, 027, 028, 030, 031, 032, 036 | 042, 054, 055, 057, 060, 063, 072, 075 (+6) | UAT-03, UAT-04 |
-| LGC-NGSP-003 | 014, 015, 016, 017, 018, 019, 020, 021, 022 | 025, 028, 030, 031, 032, 035, 036, 037 (+11) | UAT-01, UAT-02 |
+| LGC-NGSP-003 | 014, 015, 016, 017, 018, 019, 020, 021, 022 | 025, 028, 030, 031, 032, 035, 036, 037 (+12) | UAT-01, UAT-02 |
 
 : Chức năng hệ cũ liên quan gián tiếp tới FR, ca và UAT
 
@@ -4277,10 +4472,10 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ quy tắ
 | Mã | Test case |
 |---|---|
 | BR-09-001 | 004, 014, 053, 060, 149 |
-| BR-09-002 | 002, 009, 015 |
+| BR-09-002 | 002, 009, 015, 151, 152 |
 | BR-09-003 | 007, 008, 125 |
 | BR-09-004 | 014, 015 |
-| BR-09-005 | 017, 019, 044, 064 |
+| BR-09-005 | 017, 019, 044, 064, 154 |
 | BR-09-006 | 011 |
 | BR-09-007 | 005, 010 |
 | BR-09-008 | 023, 051, 052 |
@@ -4336,6 +4531,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ quy tắ
 | BR-09-060 | 003, 119, 120, 121, 122, 123 |
 | BR-09-061 | 099, 127 |
 | BR-09-062 | 150 |
+| BR-09-063 | 151, 152, 153, 154, 155, 158 |
 
 : Quy tắc nghiệp vụ tới test case
 
@@ -4349,9 +4545,9 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ mã lỗ
 |---|---|
 | ERR-09-001 | 002, 003, 098, 119, 120 |
 | ERR-09-002 | 002, 026 |
-| ERR-09-003 | 001, 005, 029, 117 |
+| ERR-09-003 | 001, 005, 029, 076, 117 |
 | ERR-09-004 | 127 |
-| ERR-09-005 | 008, 009, 019, 022, 033, 059, 077, 083, 093, 097 (+3) |
+| ERR-09-005 | 008, 009, 019, 022, 033, 059, 077, 083, 093, 097 (+4) |
 | ERR-09-006 | 006, 010, 012, 030, 036, 037, 095, 098, 113 |
 | ERR-09-007 | 032, 036, 049, 069 |
 | ERR-09-008 | 029, 033, 124 |
@@ -4359,7 +4555,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ mã lỗ
 | ERR-09-010 | 020, 070, 084, 131 |
 | ERR-09-011 | 002, 026 |
 | ERR-09-012 | 008 |
-| ERR-09-013 | 009 |
+| ERR-09-013 | 009, 152 |
 | ERR-09-014…015 | 005 |
 | ERR-09-016 | 012, 130 |
 | ERR-09-017 | 012 |
@@ -4412,16 +4608,17 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ mã lỗ
 | ERR-09-080 | 058 |
 | ERR-09-081 | 127 |
 | ERR-09-082 | 090 |
-| ERR-09-101 | 017, 044, 064 |
-| ERR-09-102 | 037, 038, 044, 122, 148 |
-| ERR-09-103 | 044 |
+| ERR-09-101 | 017, 044, 064, 154 |
+| ERR-09-102 | 037, 038, 044, 122, 148, 157 |
+| ERR-09-103 | 044, 157 |
 | ERR-09-104 | 044, 102 |
 | ERR-09-105 | 061 |
-| ERR-09-106…107 | 065 |
+| ERR-09-106 | 065, 155, 157 |
+| ERR-09-107 | 065 |
 | ERR-09-108 | 066, 080 |
 | ERR-09-109 | 065, 080 |
 | ERR-09-110 | 066 |
-| ERR-09-111 | 045, 062, 122, 126, 130 |
+| ERR-09-111 | 045, 062, 122, 126, 130, 155, 157 |
 | ERR-09-112 | 068, 137 |
 | ERR-09-113 | 045 |
 
@@ -4459,6 +4656,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ yêu c�
 | NFR-09-024 | 135, 150 |
 | NFR-09-025 | 038 |
 | NFR-09-026 | 046 |
+| NFR-09-027 | 153, 156, 158 |
 
 : Yêu cầu phi chức năng tới test case
 
@@ -4518,8 +4716,8 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ api này
 | API-09-012 | 004, 018 |
 | API-09-013 | 005, 018 |
 | API-09-014 | 005 |
-| API-09-015 | 007, 008, 009, 124 |
-| API-09-016 | 007, 008, 009, 125 |
+| API-09-015 | 007, 008, 009, 124, 151, 152 |
+| API-09-016 | 007, 008, 009, 125, 151, 152 |
 | API-09-017…018 | 010 |
 | API-09-019 | 007 |
 | API-09-020 | 011, 012, 013, 134 |
@@ -4653,11 +4851,11 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ api này
 | API-09-224 | 118, 119 |
 | API-09-225 | 118, 124, 127 |
 | API-09-226 | 118 |
-| API-09-227 | 037, 042, 043, 044, 045, 046, 047, 102, 122, 126 (+6) |
+| API-09-227 | 037, 042, 043, 044, 045, 046, 047, 102, 122, 126 (+9) |
 | API-09-228 | 042, 060, 061, 062, 122, 139 |
 | API-09-229 | 063, 064, 065, 066, 067, 126, 130, 147 |
 | API-09-230 | 078, 079, 080, 081, 126 |
-| API-09-231 | 017 |
+| API-09-231 | 017, 153, 154, 155, 158 |
 | API-09-232 | 060, 122 |
 | API-09-233 | 039, 041, 122 |
 | API-09-234 | 107, 108, 122, 126 |
@@ -4805,5 +5003,6 @@ Các việc dưới thuộc tài liệu dùng chung hoặc tập của người 
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-09-01…42, test case TC-09, ma trận truy vết, Gherkin, bảng tính theo FRS 0.1 |
 | 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: ERR-09-079…082, API-09-238…245, NFR-09-024…026, BR-09-062; sửa mã lỗi ở TC-09-006, 090, 116, 117; thêm TC-09-150; thu hẹp mục 10.1, bỏ Q09-40, thêm Q09-45 |
 | 0.3 | 2026-11-27 | Đồng bộ chéo cuối: tên trường JSON theo OpenAPI (`statutory`, `confirmInconsistency`); ca xoay khóa chờ ERR-09-003 khi chưa xác nhận |
+| 0.4 | 2026-11-27 | Bổ sung ca cho BR-09-063 (noEgress, egressScope, egressBlocked: TC-09-151…155), ropaActivityId ở purpose:decide (TC-09-156, 157) và NFR-09-027 (TC-09-158); 158 ca |
 
 : Lịch sử phiên bản

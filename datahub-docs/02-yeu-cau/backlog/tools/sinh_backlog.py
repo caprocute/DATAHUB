@@ -440,7 +440,7 @@ def write_main(data, stories):
 APPX_HEAD = """---
 ma_tai_lieu: D02-05-01
 ten: Phụ lục tiêu chí chấp nhận Gherkin của backlog user story
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư phát triển, kiểm thử viên, PO hai phía
@@ -521,7 +521,8 @@ def write_appx(data, stories):
                 feat += g + [""]
         (OUT / "gherkin" / f"us-{ph}.feature").write_text("\n".join(feat).rstrip() + "\n", encoding="utf-8")
     L += ["## Lịch sử phiên bản", "", "| Phiên bản | Ngày | Người | Nội dung |", "|---|---|---|---|",
-          "| 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, sinh tự động từ SRS và 20 FRS |", ""]
+          "| 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, sinh tự động từ SRS và 20 FRS |",
+          "| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Sinh lại sau khi tách mã API trùng của PH-04, PH-07: dẫn chiếu API trong FRS đổi theo mã mới |", ""]
     APPX.write_text("\n".join(L), encoding="utf-8")
 
 

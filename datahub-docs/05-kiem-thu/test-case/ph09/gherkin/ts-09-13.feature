@@ -51,3 +51,23 @@ Tính năng: TS-09-13 · Quyết định mục đích trực tuyến cho điểm
     Khi k6 1.000 lượt mỗi giây 15 phút qua PEP có đệm, rồi gọi trực tiếp `purpose:decide`.
     Và tăng lên 5.000 lượt mỗi giây toàn cụm 30 phút.
     Thì PEP có đệm p95 ≤ 20 ms (trúng đệm ≤ 2 ms); gọi trực tiếp p95 ≤ 50 ms, p99 ≤ 100 ms. Ở 5.000 lượt mỗi giây độ trễ tăng không quá 20 %, 0 lỗi `5xx`.
+
+  @TC-09-156 @P1 @Dương
+  Kịch bản: TC-09-156 purpose:decide trả ropaActivityId khi hợp đồng thuộc hoạt động xử lý ACTIVE
+    # Truy vết: FR-09-019 · FR-09-010, 011 · API-09-227 · NFR-09-027
+    # Mục đích: Chứng minh PH-14 nhận `ropaActivityId` để kiểm "mục đích nằm trong sổ hoạt động xử lý", và trường này vắng khi hợp đồng chưa thuộc hoạt động nào.
+    Biết T90; API-HGD liên kết hoạt động `HD-TRACUU` `ACTIVE` (kết quả ca TC-09-023); API-DM chưa thuộc hoạt động nào; G1 `ACTIVE`; S-T90-PEP-04.
+    Khi PEP `POST /privacy/v1/purpose:decide` cho API-HGD, HTTT-BH, `MD-TRACUU-HGD`.
+    Và gọi cho API-DM với mục đích thuộc danh mục.
+    Và ngừng hoạt động `HD-TRACUU` (không còn `ACTIVE`) rồi gọi lại như bước 1.
+    Thì bước 1: `200` `allow`, thân có `ropaActivityId` bằng mã của `HD-TRACUU`, cùng `grantId`, `planVersion`. Bước 2: `200`, không có `ropaActivityId`. Bước 3: không còn `ropaActivityId`. Giá trị trả về không lộ nội dung hoạt động (chỉ mã).
+
+  @TC-09-157 @P2 @Âm @Bảo @mật
+  Kịch bản: TC-09-157 purpose:decide: không có ropaActivityId khi bị từ chối, và lỗi bên gọi
+    # Truy vết: FR-09-019 · API-09-227 · ERR-09-102, 103, 106, 111
+    # Mục đích: Chứng minh DENY và lỗi bên gọi không làm lộ mã hoạt động xử lý của hợp đồng.
+    Biết T90, T91; API-HGD thuộc `HD-TRACUU` `ACTIVE`; HTTT-TK không có chấp thuận; S-T90-PEP-04, S-T90-NOSCOPE, S-T91-PEP.
+    Khi PEP gọi cho API-HGD với HTTT-TK (không chấp thuận).
+    Và PEP gọi thiếu mục đích; rồi sai lược đồ.
+    Và S-T90-NOSCOPE và S-T91-PEP gọi cho API-HGD.
+    Thì bước 1: `403` ERR-09-102, thân không có `ropaActivityId`. Bước 2: `400` ERR-09-103; `400` ERR-09-106. Bước 3: `403` ERR-09-111 cho cả hai, thân không có `ropaActivityId`.

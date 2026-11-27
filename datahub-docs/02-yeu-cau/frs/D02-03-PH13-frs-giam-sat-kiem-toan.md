@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH13
 ten: Đặc tả yêu cầu chức năng phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, đội vận hành nền tảng, cán bộ an toàn thông tin, kiểm toán viên, kiểm thử viên
@@ -3912,13 +3912,13 @@ Sơ đồ cho thấy hai nguồn phát hiện (luật trên log, chỉ số và 
 
 **Kích hoạt.** Người dùng mở UI-13-15 hoặc nhấn liên kết trong thông báo.
 
-**Đầu vào.** Hành động `acknowledge`, `close` (kèm `verdict`, `note`), `propose-suspension` (kèm `systemCode`, `reason`); `If-Match`.
+**Đầu vào.** Hành động `acknowledge`, `close` (kèm `verdict`, `note`), `propose-suspension` (kèm `systemCode`, `reason`; PH-13 tự lấy `alertId`, `severity`, `incidentRef`, `evidenceUrl` từ cảnh báo gốc); `If-Match`.
 
 **Luồng xử lý chính.**
 
 1. SO mở cảnh báo; giao diện hiện luật, nguồn, chủ thể, bằng chứng (liên kết tới bản ghi kiểm toán và log), mức, thời điểm phát hiện, runbook điều tra.
 2. SO bấm "Tiếp nhận"; hệ thống chuyển `ACKNOWLEDGED`, ghi người xử lý, dừng leo thang tới TA.
-3. SO điều tra qua các liên kết (FR-13-020, 026, 028) và có thể bấm "Đề xuất tạm ngừng HTTT"; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do và gửi đề xuất sang PH-01 bằng API-01-089 (token dịch vụ, scope `onboarding:suspension-proposal`); PH-01 tạo việc khẩn cho SO của tenant, kèm liên kết sâu về cảnh báo này.
+3. SO điều tra qua các liên kết (FR-13-020, 026, 028) và có thể bấm "Đề xuất tạm ngừng HTTT", nút chỉ hiện khi cảnh báo ở mức `HIGH` hoặc `CRITICAL`; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do, lấy `alertId`, `severity`, `incidentRef` và liên kết sâu `evidenceUrl` từ cảnh báo gốc rồi gửi đề xuất sang PH-01 bằng API-01-089 (token dịch vụ, scope `onboarding:suspension-proposal`); PH-01 tạo việc khẩn cho SO của tenant, kèm liên kết sâu về cảnh báo này. Nếu PH-01 trả ERR-01-048 (409, HTTT đã bị tạm ngừng) thì PH-13 coi đề xuất đã được đáp ứng và không báo lỗi; nếu trả ERR-01-005 (409) thì PH-13 báo người dùng HTTT không ở trạng thái cho phép tạm ngừng.
 4. PH-13 chỉ đề xuất. SO ở PH-01 (`PERM-01-suspend`) quyết định bằng thao tác khẩn FR-01-032 (hoặc đóng việc không tạm ngừng) và được kiểm toán ở PH-01; PH-13 chỉ ghi liên kết và nhận kết quả qua EVT-01-03, EVT-01-15 (đã chốt 27/11/2026, Q13-12).
 5. SO đóng cảnh báo bằng kết luận `CONFIRMED_INCIDENT`, `FALSE_POSITIVE` hoặc `ACCEPTED_RISK` kèm ghi chú; thiếu kết luận thì từ chối (ERR-13-023).
 6. Kết luận `CONFIRMED_INCIDENT` mở hồ sơ sự cố theo quy trình ứng cứu (D03-07 §8) và gợi ý lập báo cáo (FR-13-055).
@@ -3930,6 +3930,8 @@ Sơ đồ cho thấy hai nguồn phát hiện (luật trên log, chỉ số và 
 - Đóng thiếu kết luận: ERR-13-023 (422), "Chọn kết luận (sự cố thật, báo nhầm, chấp nhận rủi ro) trước khi đóng cảnh báo an ninh."
 - Cảnh báo đã đóng: ERR-13-020 (409), "Cảnh báo đã ở trạng thái {trạng thái}, thao tác này không còn áp dụng."
 - PH-01 không khả dụng khi đề xuất: ERR-13-014 (503), đề xuất chưa gửi, SO thử lại.
+- Cảnh báo ở mức thấp hơn `HIGH` (nút đề xuất ẩn) mà vẫn gọi API: ERR-13-003 (400); "Chỉ cảnh báo mức Cao hoặc Nghiêm trọng mới đề xuất tạm ngừng HTTT được."
+- PH-01 trả ERR-01-048: đề xuất coi như đã được đáp ứng, PH-13 không báo lỗi, không thử lại. PH-01 trả ERR-01-005: "HTTT {mã} không ở trạng thái cho phép tạm ngừng."
 - HTTT không thuộc tenant: ERR-13-001 (404); thiếu quyền: ERR-13-009 (403).
 
 **Đầu ra.** `200`: cảnh báo sau cập nhật (`status`, `assignee`, `verdict`, `verdictNote`, `proposedAction`, `incidentRef`).
@@ -5130,4 +5132,5 @@ PH-13 được nghiệm thu khi đạt đủ mười tiêu chí dưới đây tr
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 61 yêu cầu chức năng theo tám nhóm viết ở dạng khối đặc tả 17 mục; 35 quy tắc nghiệp vụ; 31 yêu cầu phi chức năng; 25 tham số `13.*`; 70 mã lỗi, 14 sự kiện, 90 API; 18 màn hình; truy vết 20 hàng `LGC` của D00-03 cùng 2 hàng `LGC-NFR` và ánh xạ mã SRS repo; 19 câu hỏi mở Q13-01…19; đề nghị đồng bộ D02-08, D02-02, D03-07, D03-09, D03-10, D03-06-00, D03-05 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: cột UI, API, UC của mục 5 khớp mục 9.4, 10.1 và D02-04; thêm UC vào trường "Truy vết" của 61 FR; FR-13-005, 006 gắn UI-13-06, 09; FR-13-040 thống nhất quyền với D03-04 và D03-06; ghi đề nghị đồng bộ danh sách ngoại lệ kiểm tra mã |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, bước S08_OBSERVABILITY, quyền theo D02-08 0.5, khớp DDL mục 4.2 và 4.7, nhãn kỹ thuật, giới hạn xác nhận hàng loạt 50; chốt câu hỏi mở đợt đồng bộ: Q390, Q419 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | FR-13-053: PH-13 lấy `alertId`, `severity`, `incidentRef`, `evidenceUrl` từ cảnh báo gốc; chỉ đề xuất khi mức `HIGH` hoặc `CRITICAL` (thấp hơn ẩn nút, gọi API trả ERR-13-003); ERR-01-048 coi là đã đáp ứng, ERR-01-005 báo người dùng |
 

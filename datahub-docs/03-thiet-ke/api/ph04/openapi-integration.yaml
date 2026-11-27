@@ -136,7 +136,7 @@ paths:
       - Không gian làm việc
       operationId: updateWorkspace
       summary: Sửa không gian làm việc
-      x-datahub-id: API-04-002
+      x-datahub-id: API-04-095
       x-datahub-fr:
       - FR-04-007
       x-datahub-permission:
@@ -267,7 +267,7 @@ paths:
       - Không gian làm việc
       operationId: replaceWorkspaceMembers
       summary: Thay danh sách thành viên
-      x-datahub-id: API-04-004
+      x-datahub-id: API-04-096
       x-datahub-fr:
       - FR-04-007
       x-datahub-permission:
@@ -1368,7 +1368,7 @@ paths:
       - Di trú
       operationId: getLegacyImport
       summary: Kết quả chuyển đổi
-      x-datahub-id: API-04-028
+      x-datahub-id: API-04-097
       x-datahub-fr:
       - FR-04-082
       x-datahub-permission:
@@ -1456,7 +1456,7 @@ paths:
       - Phiên bản
       operationId: endSession
       summary: Kết thúc phiên soạn
-      x-datahub-id: API-04-034
+      x-datahub-id: API-04-098
       x-datahub-fr:
       - FR-04-024
       x-datahub-permission:
@@ -1861,7 +1861,7 @@ paths:
       - Chạy thử
       operationId: streamTestRun
       summary: Luồng sự kiện lần chạy thử (SSE)
-      x-datahub-id: API-04-042
+      x-datahub-id: API-04-099
       x-datahub-fr:
       - FR-04-030
       x-datahub-permission:
@@ -1907,7 +1907,7 @@ paths:
       - Chạy thử
       operationId: getTestRunBody
       summary: Thân bản tin đầy đủ của một chặng
-      x-datahub-id: API-04-042
+      x-datahub-id: API-04-100
       x-datahub-fr:
       - FR-04-030
       x-datahub-permission:
@@ -2044,7 +2044,7 @@ paths:
       - Chạy thử
       operationId: createTestCase
       summary: Tạo ca kiểm thử
-      x-datahub-id: API-04-044
+      x-datahub-id: API-04-101
       x-datahub-fr:
       - FR-04-031
       x-datahub-permission:
@@ -2109,7 +2109,7 @@ paths:
       - Chạy thử
       operationId: updateTestCase
       summary: Sửa ca kiểm thử
-      x-datahub-id: API-04-044
+      x-datahub-id: API-04-102
       x-datahub-fr:
       - FR-04-031
       x-datahub-permission:
@@ -2171,7 +2171,7 @@ paths:
       - Chạy thử
       operationId: deleteTestCase
       summary: Xóa (ngừng dùng) ca kiểm thử
-      x-datahub-id: API-04-044
+      x-datahub-id: API-04-103
       x-datahub-fr:
       - FR-04-031
       x-datahub-permission:
@@ -2507,7 +2507,7 @@ paths:
       - Triển khai
       operationId: releaseVersion
       summary: Phát hành phiên bản lên môi trường
-      x-datahub-id: API-04-054
+      x-datahub-id: API-04-104
       x-datahub-fr:
       - FR-04-042
       - FR-04-075
@@ -2575,7 +2575,7 @@ paths:
       - Triển khai
       operationId: getDeployment
       summary: Chi tiết triển khai
-      x-datahub-id: API-04-054
+      x-datahub-id: API-04-105
       x-datahub-fr:
       - FR-04-042
       x-datahub-permission:
@@ -2618,7 +2618,7 @@ paths:
       - Triển khai
       operationId: streamDeployment
       summary: Tiến trình triển khai (SSE)
-      x-datahub-id: API-04-054
+      x-datahub-id: API-04-106
       x-datahub-fr:
       - FR-04-042
       x-datahub-permission:
@@ -2899,7 +2899,7 @@ paths:
       - Vận hành
       operationId: getCommand
       summary: Trạng thái lệnh
-      x-datahub-id: API-04-061
+      x-datahub-id: API-04-107
       x-datahub-fr:
       - FR-04-050
       x-datahub-permission:
@@ -2944,7 +2944,7 @@ paths:
       - Vận hành
       operationId: resendCommand
       summary: Gửi lại lệnh chưa đủ xác nhận
-      x-datahub-id: API-04-061
+      x-datahub-id: API-04-108
       x-datahub-fr:
       - FR-04-050
       x-datahub-permission:
@@ -3252,7 +3252,7 @@ paths:
       - Danh mục thành phần
       operationId: updatePolicies
       summary: Sửa chính sách thành phần
-      x-datahub-id: API-04-072
+      x-datahub-id: API-04-109
       x-datahub-fr:
       - FR-04-080
       x-datahub-permission:
@@ -3381,7 +3381,7 @@ paths:
       - Danh mục thành phần
       operationId: createProposal
       summary: Đề xuất cho phép hoặc bổ sung thành phần
-      x-datahub-id: API-04-074
+      x-datahub-id: API-04-110
       x-datahub-fr:
       - FR-04-080
       x-datahub-permission:
@@ -3424,7 +3424,7 @@ paths:
       - Danh mục thành phần
       operationId: decideProposal
       summary: Quyết định đề xuất
-      x-datahub-id: API-04-074
+      x-datahub-id: API-04-111
       x-datahub-fr:
       - FR-04-080
       x-datahub-permission:
@@ -3624,7 +3624,7 @@ paths:
       - Khuôn mẫu
       operationId: deprecateTemplate
       summary: Ngừng dùng khuôn của tỉnh
-      x-datahub-id: API-04-082
+      x-datahub-id: API-04-112
       x-datahub-fr:
       - FR-04-025
       x-datahub-permission:
@@ -3706,7 +3706,7 @@ paths:
       - Tham số
       operationId: replaceEnvVars
       summary: Thay biến môi trường {{dh.env.*}}
-      x-datahub-id: API-04-090
+      x-datahub-id: API-04-113
       x-datahub-fr:
       - FR-04-084
       x-datahub-permission:

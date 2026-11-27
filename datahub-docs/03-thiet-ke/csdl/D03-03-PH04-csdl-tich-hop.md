@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH04
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư dữ liệu, DBA, lập trình viên L-INT, kiểm thử viên, nhóm vận hành
@@ -994,7 +994,7 @@ Bảng dưới là danh sách 26 bảng theo thứ tự trong DDL; cột "RLS" g
 ### 3.19. `component_proposal`
 
 ::: dac-ta
-**Mục đích.** EN-04-18 · Đề xuất cho phép, bổ sung thành phần (API-04-074). PA đọc liên tenant qua hàng đợi của PH-18 (sự kiện), không qua bảng.
+**Mục đích.** EN-04-18 · Đề xuất cho phép, bổ sung thành phần (API-04-074, 110, 111). PA đọc liên tenant qua hàng đợi của PH-18 (sự kiện), không qua bảng.
 
 **FR phục vụ.** FR-04-080.
 
@@ -1544,3 +1544,4 @@ Các điểm dưới cần tập khác đối chiếu; tài liệu này không s
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu: 26 bảng, RLS, di trú W2, đã chạy thử | Nhóm phân hệ PH-04 |
 | 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-CSDL: chương Giới thiệu, ERD có chú thích và thuyết minh, danh sách bảng, bảng đặc tả 10 mục cho 26 bảng sinh từ DDL (công cụ `gen_tables_md.py` mở rộng), chú thích mọi bảng; chạy lại DDL trên PostgreSQL 16.15, sửa hai lỗi (thiếu `pg_trgm`, chủ sở hữu schema W2), thêm bài kiểm `ph04_isolation_test.sql` 23 khối; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |
+| 0.3 | 27/11/2026 | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8) | Nhóm viết tài liệu (Claude) |

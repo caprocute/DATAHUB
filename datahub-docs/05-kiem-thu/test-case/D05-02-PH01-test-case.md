@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH01
 ten: Kịch bản và test case phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
 phan_he: PH-01
@@ -20,7 +20,7 @@ tai_lieu_lien_quan: D02-03-PH01; D02-04-PH01; D03-02-PH01; D03-03-PH01; D03-04-P
 - Không mất chức năng của hệ cũ: danh sách và tạo Application của APIM (LGC-APIM-019; 020), quản lý publisher và subscriber của Hub (LGC-HUB-010, 011).
 - Không có đường nào để bí mật của HTTT lộ ra ngoài lần bàn giao một lần, không có đường nào để quyền của HTTT rộng hơn phạm vi đã được thẩm định, và không có đường nào để tỉnh này thấy hay sửa hồ sơ của tỉnh khác.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản (TS-01-01…35) với <!--gen:so-tc-->143 (TC-01-001…143; 92 ca P1)<!--/gen--> test case và 11 kịch bản nghiệm thu người dùng (UAT-01…11). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi FR, UC, API, UI, sự kiện EVT và mã lỗi ERR đều có ít nhất một ca. Ma trận ở chương 8 sinh tự động từ chính tài liệu này bằng `ph01/tools/gen_matrix.py`.
+**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản (TS-01-01…35) với <!--gen:so-tc-->151 (TC-01-001…151; 97 ca P1)<!--/gen--> test case và 11 kịch bản nghiệm thu người dùng (UAT-01…11). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi FR, UC, API, UI, sự kiện EVT và mã lỗi ERR đều có ít nhất một ca. Ma trận ở chương 8 sinh tự động từ chính tài liệu này bằng `ph01/tools/gen_matrix.py`.
 
 **Căn cứ.** Tài liệu cùng bộ PH-01 (FRS D02-03-PH01, use case D02-04-PH01, SDD D03-02-PH01, CSDL D03-03-PH01, API D03-04-PH01, màn hình D03-06-PH01); ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01; cổng CI D04-02; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP, TCVN 14423:2026; căn cứ nghiệp vụ CMP-LAW-03, CMP-LAW-05, CMP-LAW-09.
 
@@ -207,6 +207,7 @@ Tên nhân vật trùng D02-04-PH01. Mọi người dùng vai trò TA, SO, IE c�
 | S-INT | — | Token dịch vụ `onboarding:internal-read` | PH-02, 03, 04, 05, 10 | API nội bộ |
 | S-RECON | — | Token dịch vụ `onboarding:reconcile` | Tác vụ đối chiếu | API-01-062 |
 | S-CB | — | Token dịch vụ `onboarding:provision-callback` | PH-12 giả lập | API-01-087 |
+| S-SP, S-SP-T01 | — | Token dịch vụ `onboarding:suspension-proposal` của T68, của T01 | PH-13 giả lập | API-01-089 |
 
 : Người dùng kiểm thử
 
@@ -238,10 +239,10 @@ Bảng dưới trình bày hệ giả lập.
 | PH-12 (Keycloak, OPA) | Máy chủ giả có lệnh đặt `fail`, `slow`, `duplicate-client` | Ca saga, thu hồi |
 | PH-03 (APISIX control) | Giả lập consumer, danh sách chặn; đo thời gian chặn | Ca cắt quyền 60 giây |
 | OpenBao | Thật, cấu hình dev | Dừng bằng Chaos |
-| PH-20 (danh mục tổ chức) | Giả lập, có tổ chức ngừng hoạt động | Ca ERR-01-004, 046 |
+| PH-20 (danh mục tổ chức) | Giả lập, có tổ chức ngừng hoạt động; phát được EVT-20-13 (`DISSOLVED`, `MERGED`) | Ca ERR-01-004, 046; ca đổi chủ quản hàng loạt |
 | PH-18 | Hộp thư giả lập `mail-sink` (đọc được nội dung thư) | Ca không gửi bí mật qua thư |
 | Quét mã độc | Giả lập, nhận tệp EICAR là mã độc | ERR-01-014 |
-| PH-13 | Bộ thu kiểm toán giả lập | Đối chiếu KT |
+| PH-13 | Bộ thu kiểm toán giả lập; gọi được API-01-089 bằng S-SP | Đối chiếu KT; ca đề xuất tạm ngừng |
 | PH-02, 04, 05, 10 | Giả lập `dependents` trả danh sách phụ thuộc | TS-01-20 |
 | Hệ cũ | Tệp xuất ẩn danh của Application (APIM) và publisher, subscriber (Hub) | TS-01-28 |
 
@@ -298,8 +299,8 @@ Bảng sau sinh tự động từ các mục `### TS-01-nn` bằng `ph01/tools/f
 | TS-01-19 | Danh sách, thu hồi, nhắc hạn, tự vô hiệu định danh | Xác nhận định danh liệt kê không lộ bí mật, thu hồi cắt quyền đúng hạn, nhắc hạn theo mốc, hết hạn tự vô hiệu, và định danh không dùng 90 ngày tự vô hiệu (đợt 2) | UC-01-19, 25 | 4 |
 | TS-01-20 | Tạm ngừng, khôi phục HTTT và phân tích tác động | Xác nhận tạm ngừng cắt quyền trong 60 giây, phải xác nhận tác động trước khi tiếp tục, khôi phục chỉ khi đủ điều kiện, và sự kiện lan sang phân hệ khác chỉ một lần | UC-01-20 | 6 |
 | TS-01-21 | Chấm dứt tư cách thành viên | Xác nhận chấm dứt cần đề nghị và duyệt bởi hai người khác nhau, xác nhận tác động, chờ giao dịch đang xử lý, thu hồi mọi định danh và giữ hồ sơ | UC-01-21 | 3 |
-| TS-01-22 | Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT | Xác nhận SO cắt quyền HTTT ngay khi nghi lộ bí mật, TA xác nhận bổ sung trong hạn, quá hạn chỉ cảnh báo chứ không tự hoàn tác | UC-01-22 | 3 |
-| TS-01-23 | Đề nghị thay đổi hồ sơ và mở rộng trần phạm vi | Xác nhận thay đổi hồ sơ sau kết nạp được duyệt theo mức, mở rộng phạm vi luôn qua thẩm định pháp lý lại, và trần không đổi trước khi duyệt | UC-01-23, 24 | 4 |
+| TS-01-22 | Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT | Xác nhận SO cắt quyền HTTT ngay khi nghi lộ bí mật, TA xác nhận bổ sung trong hạn, quá hạn chỉ cảnh báo chứ không tự hoàn tác | UC-01-22 | 9 |
+| TS-01-23 | Đề nghị thay đổi hồ sơ và mở rộng trần phạm vi | Xác nhận thay đổi hồ sơ sau kết nạp được duyệt theo mức, mở rộng phạm vi luôn qua thẩm định pháp lý lại, và trần không đổi trước khi duyệt | UC-01-23, 24 | 6 |
 | TS-01-24 | Đồng bộ trạng thái và bản sao đọc cho phân hệ khác | Xác nhận mọi chuyển trạng thái phát sự kiện trong cùng giao dịch, không mất khi Kafka ngừng, có ảnh chụp đối chiếu, và bản sao đọc nội bộ đúng phạm vi | UC-01-26 | 3 |
 | TS-01-25 | Rà soát quyền: mở kỳ, mức sử dụng, hiệu lực căn cứ | Xác nhận kỳ rà soát mở đúng chu kỳ, tổng hợp mức dùng thực tế theo từng phạm vi, và căn cứ pháp lý hết hiệu lực làm tạm ngừng phạm vi ngay | UC-01-27 | 3 |
 | TS-01-26 | Xác nhận của đơn vị, xử lý kết quả và báo cáo rà soát | Xác nhận phiếu xác nhận chỉ gửi và mở đúng người, đơn vị không phản hồi thì đề xuất thu hẹp, quyết định có lý do và MFA, và báo cáo giữ bằng chứng | UC-01-28, 29 | 5 |
@@ -312,7 +313,7 @@ Bảng sau sinh tự động từ các mục `### TS-01-nn` bằng `ph01/tools/f
 | TS-01-33 | Chịu lỗi, cách ly sự cố, kiểm toán, cảnh báo, lưu giữ | Chứng minh PH-01 ngừng thì HTTT đã kết nạp vẫn chạy, phục hồi không mất việc, mọi quyết định có kiểm toán, và cảnh báo vận hành phát đúng | — | 6 |
 | TS-01-34 | Truy cập và giao diện | Chứng minh 17 màn UI-01-01…17 đạt WCAG 2.2 AA, có đủ trạng thái chuẩn, đúng route, và các trang dùng liên kết một lần không làm rò bí mật | — | 4 |
 | TS-01-35 | Hợp đồng API, máy trạng thái, nhận lặp và đồng thời | Chứng minh API đúng hợp đồng OpenAPI và RFC 9457, chuyển trạng thái cấm bị chặn, nhận lặp an toàn và không có đua quyết định | — | 3 |
-| **Tổng** | | | | **143** (92 ca P1) |
+| **Tổng** | | | | **151** (97 ca P1) |
 
 : Danh sách kịch bản kiểm thử PH-01
 <!--/gen-->
@@ -2281,7 +2282,7 @@ Mỗi kịch bản gồm mục tiêu, phạm vi phủ và các ca. Các kịch b
 
 **Mục tiêu.** Xác nhận SO cắt quyền HTTT ngay khi nghi lộ bí mật, TA xác nhận bổ sung trong hạn, quá hạn chỉ cảnh báo chứ không tự hoàn tác.
 
-**Phủ.** FR-01-032; UC-01-22; API-01-054, 055; UI-01-11; BR-01-009, 010, 023; ERR-01-033, 035, 036; EVT-01-15, 03, 07; NFR-01-008.
+**Phủ.** FR-01-032, 053; UC-01-22; API-01-054, 055, 089; UI-01-11; BR-01-009, 010, 023; ERR-01-001, 003, 005, 033, 035, 036, 048, 052; EVT-01-15, 03, 07; NFR-01-008.
 
 #### TC-01-086 · SO tạm ngừng khẩn, TA xác nhận <!--k:emerg-ok-->
 
@@ -2347,11 +2348,145 @@ Mỗi kịch bản gồm mục tiêu, phạm vi phủ và các ca. Các kịch b
 **Kết quả mong đợi.** `EVT-01-15` loại "quá hạn", cảnh báo mức cao tới TA, PO; HTTT vẫn `SUSPENDED`, không tự khôi phục.
 :::
 
+#### TC-01-144 · TA khác xác nhận thao tác khẩn khi TA đầu vắng <!--k:emerg-alt-ta-->
+
+::: dac-ta
+**Loại.** Dương, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** IT, E2E.
+
+**Truy vết.** FR-01-032 · UC-01-22 · API-01-054, 055 · UI-01-11 · BR-01-010
+
+**Tiền điều kiện, dữ liệu.** Thao tác khẩn `PENDING_CONFIRM` do U-T68-SO tạo trên `HT-DVC`; U-T68-TA1 (Minh) đặt vắng, không đăng nhập; U-T68-TA2 (Quang) hoạt động; tenant T68 có đúng hai TA hoạt động.
+
+**Các bước.**
+
+1. Việc xác nhận gửi tới cả TA1 và TA2; kiểm hộp việc của TA2.
+2. TA2 `POST /emergency-actions/{actionId}:confirm` kèm MFA mới.
+3. Xem lịch sử thao tác khẩn ở UI-01-11 và nhật ký kiểm toán.
+
+**Kết quả mong đợi.** Bước 1: việc xác nhận có ở hộp việc của TA2, người gửi không phải SO. Bước 2: `200`, thao tác khẩn `CONFIRMED`, HTTT vẫn `SUSPENDED`. Bước 3: người xác nhận là TA2, không có lần xác nhận nào của SO. EVT: `EVT-01-15` (xác nhận). KT: có.
+:::
+
+#### TC-01-145 · Không ai ngoài TA xác nhận thay; xác nhận lần hai bị từ chối <!--k:emerg-alt-ta-neg-->
+
+::: dac-ta
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-01-032 · API-01-055 · BR-01-010 · ERR-01-036, 052
+
+**Tiền điều kiện, dữ liệu.** Thao tác khẩn `PENDING_CONFIRM` trên `HT-DVC`; PA (U-PA, không giữ `PERM-01-approve` của T68); U-T68-SO; TA1, TA2.
+
+**Các bước.**
+
+1. PA `POST /emergency-actions/{actionId}:confirm`.
+2. SO tự xác nhận thao tác do chính mình tạo.
+3. TA2 xác nhận; sau đó TA1 xác nhận lần hai cùng thao tác.
+
+**Kết quả mong đợi.** Bước 1: `403` ERR-01-052 (không có `PERM-01-approve`). Bước 2: `403` ERR-01-052. Bước 3: lần của TA2 `200`; lần của TA1 `409` ERR-01-036. Thao tác khẩn chỉ có một người xác nhận (TA2).
+:::
+
+#### TC-01-146 · PH-13 gửi đề xuất tạm ngừng, SO nhận việc khẩn <!--k:susp-prop-ok-->
+
+::: dac-ta
+**Loại.** Dương, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** IT, API.
+
+**Truy vết.** FR-01-053 · FR-01-032 · UC-01-22 · API-01-089 · UI-01-11 · BR-01-009, 010
+
+**Tiền điều kiện, dữ liệu.** `HT-QLVB` ACTIVE ở T68; S-SP (token dịch vụ `onboarding:suspension-proposal` của T68); U-T68-SO; `mail-sink` và hộp việc PH-18 giả lập.
+
+**Các bước.**
+
+1. S-SP `POST /internal/suspension-proposals` với `systemCode = HT-QLVB`, `alertId` mới, `severity = HIGH`, `reason` 40 ký tự, `evidenceUrl`, `incidentRef = SEC-ALERT-2026-0142`.
+2. Đọc hộp việc của SO và của TA.
+3. Đọc trạng thái `HT-QLVB` và nhật ký kiểm toán.
+
+**Kết quả mong đợi.** Bước 1: `202` có `Location`, thân `{ systemCode, alertId, taskId, accepted = true, duplicate = false }`. Bước 2: SO có một việc loại `ph01.review-suspension-proposal`, mức khẩn, kèm lý do, mức nghiêm trọng, liên kết UI-01-11 và liên kết sâu về cảnh báo; TA không có việc này. Bước 3: `HT-QLVB` vẫn `ACTIVE`, không có sự kiện EVT-01-03, EVT-01-15; có một dòng kiểm toán (bên gửi PH-13, `alertId`, HTTT, lý do). KT: có.
+:::
+
+#### TC-01-147 · Đề xuất lặp cùng alertId không tạo việc thứ hai <!--k:susp-prop-dup-->
+
+::: dac-ta
+**Loại.** Biên.
+
+**Ưu tiên.** P2.
+
+**Tự động.** IT.
+
+**Truy vết.** FR-01-053 · API-01-089 · BR-01-010
+
+**Tiền điều kiện, dữ liệu.** Như ca `susp-prop-ok`; đã có một đề xuất với `alertId` A cho `HT-QLVB`.
+
+**Các bước.**
+
+1. S-SP gửi lại đúng đề xuất (cùng `systemCode`, `alertId = A`).
+2. S-SP gửi đề xuất mới với `alertId = B` cho cùng HTTT.
+3. Đếm việc `ph01.review-suspension-proposal` của SO.
+
+**Kết quả mong đợi.** Bước 1: `202`, `duplicate = true`, `taskId` trùng lần đầu. Bước 2: `202`, `duplicate = false`, `taskId` mới. Bước 3: hai việc (A và B), không có việc thứ ba.
+:::
+
+#### TC-01-148 · Đề xuất tạm ngừng sai điều kiện <!--k:susp-prop-neg-->
+
+::: dac-ta
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API.
+
+**Truy vết.** FR-01-053 · API-01-089 · ERR-01-001, 003, 005, 048, 052
+
+**Tiền điều kiện, dữ liệu.** S-SP của T68; S-INT (scope khác); token người dùng của U-T68-SO; `HT-QLVB` ACTIVE; `tc-susp` SUSPENDED; `HT-HOTICH-SB` APPROVED; `HT-TC-KHAC` chỉ có ở T01; S-SP-T01 (token của T01).
+
+**Các bước.**
+
+1. Gọi không token; rồi bằng S-INT; rồi bằng token của SO.
+2. S-SP-T01 gửi đề xuất cho `HT-QLVB` (HTTT thuộc T68).
+3. S-SP gửi `systemCode = HT-TC-KHAC` (T01), rồi mã không tồn tại.
+4. S-SP gửi cho `tc-susp` (SUSPENDED), rồi cho `HT-HOTICH-SB` (APPROVED).
+5. S-SP gửi `reason` 5 ký tự; `severity = LOW`; `alertId` không phải UUID; thiếu `alertId`.
+
+**Kết quả mong đợi.** Bước 1: `401` ERR-01-052 khi không token; `403` ERR-01-052 với S-INT và token người dùng. Bước 2: `403` ERR-01-052 (tenant của token không trùng). Bước 3: `404` ERR-01-001, thân giống hệt nhau (404-ẩn). Bước 4: `409` ERR-01-048 cho `tc-susp`; `409` ERR-01-005 cho `HT-HOTICH-SB`. Bước 5: `400` ERR-01-003 kèm `errors[].path` đúng trường. Không ca nào tạo việc cho SO.
+:::
+
+#### TC-01-149 · SO xử lý việc đề xuất: xử lý khẩn hoặc không tạm ngừng <!--k:susp-prop-so-->
+
+::: dac-ta
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** E2E, IT.
+
+**Truy vết.** FR-01-053 · FR-01-032 · API-01-054, 089 · UI-01-11 · BR-01-009, 010
+
+**Tiền điều kiện, dữ liệu.** Hai việc đề xuất đang mở cho U-T68-SO: việc P1 cho `HT-QLVB` (có `incidentRef`), việc P2 cho `HT-DATDAI`; SO có MFA mới.
+
+**Các bước.**
+
+1. SO mở việc P1, xem lý do và tác động phụ thuộc (FR-01-033), chọn "Xử lý khẩn" chế độ `SUSPEND`.
+2. SO mở việc P2, chọn "Không tạm ngừng" kèm lý do.
+3. Đọc hộp việc, trạng thái hai HTTT và kiểm toán.
+
+**Kết quả mong đợi.** Bước 1: màn hình thao tác khẩn có sẵn `incidentRef` của đề xuất; `200`, `HT-QLVB` `SUSPENDED`; việc P1 tự đóng; EVT-01-15, EVT-01-03. Bước 2: việc P2 đóng, `HT-DATDAI` vẫn `ACTIVE`. Bước 3: không còn việc mở; kiểm toán ghi người đóng việc và quyết định của từng việc. Không có đường nào tạm ngừng mà SO không bấm.
+:::
+
 ### TS-01-23 · Đề nghị thay đổi hồ sơ và mở rộng trần phạm vi
 
 **Mục tiêu.** Xác nhận thay đổi hồ sơ sau kết nạp được duyệt theo mức, mở rộng phạm vi luôn qua thẩm định pháp lý lại, và trần không đổi trước khi duyệt.
 
-**Phủ.** FR-01-034, 035; UC-01-23, 24; API-01-057, 058, 059, 060; UI-01-04, 06, 07; BR-01-001, 003, 012, 025, 029; ERR-01-015, 016, 037, 038, 047, 049; EVT-01-04, 11.
+**Phủ.** FR-01-034, 035, 054; UC-01-23, 24; API-01-057, 058, 059, 060; UI-01-04, 06, 07; BR-01-001, 003, 012, 025, 029; ERR-01-015, 016, 037, 038, 047, 049; EVT-01-04, 11.
 
 #### TC-01-089 · Ba mức duyệt của thay đổi hồ sơ <!--k:chg-levels-->
 
@@ -2441,6 +2576,53 @@ Mỗi kịch bản gồm mục tiêu, phạm vi phủ và các ca. Các kịch b
 4. Gửi khi đã có mở rộng đang chờ.
 
 **Kết quả mong đợi.** `422` ERR-01-015; `422` ERR-01-016; `422` ERR-01-047; `409` ERR-01-038.
+:::
+
+#### TC-01-150 · Tổ chức giải thể: tạo sẵn đề nghị đổi chủ quản cho cả lô <!--k:owner-batch-ok-->
+
+::: dac-ta
+**Loại.** Dương.
+
+**Ưu tiên.** P2.
+
+**Tự động.** IT, E2E.
+
+**Truy vết.** FR-01-054 · FR-01-034 · UC-01-23 · API-01-058, 059 · UI-01-04, 07 · BR-01-017, 029 · EVT-01-04
+
+**Tiền điều kiện, dữ liệu.** Tổ chức `TC-ORG-CU` có ba HTTT: `tc-own-act` ACTIVE, `tc-own-sus` SUSPENDED, `tc-own-app` APPROVED; thêm `tc-own-ter` TERMINATED; tổ chức kế thừa `TC-ORG-MOI` ACTIVE; PH-20 giả lập phát EVT-20-13 với `change = DISSOLVED`, `successorCode = TC-ORG-MOI`; TA1, TA2.
+
+**Các bước.**
+
+1. PH-20 giả lập phát EVT-20-13 một lần.
+2. TA1 `GET /change-requests?type=OWNER_CHANGE&status=PENDING` (API-01-058) và mở lô ở UI-01-07.
+3. TA1 bấm "Duyệt cả lô" (giao diện gọi API-01-059 từng yêu cầu).
+4. Đọc `ownerOrgId` của bốn HTTT và nhật ký kiểm toán.
+
+**Kết quả mong đợi.** Bước 2: đúng ba yêu cầu `OWNER_CHANGE` `PENDING` sang `TC-ORG-MOI` (không có cho `tc-own-ter`); người đề nghị `system:ph01-org-successor`, `owner_confirmed_by = system:ph20-successor`, `diff.source = EVT-20-13`, mã lô là mã sự kiện; TA có một việc `ph01.approve-change` gom ba yêu cầu. Bước 1: chưa HTTT nào đổi chủ quản. Bước 3: ba lần `200`, kết quả riêng từng HTTT; `ownerOrgId = TC-ORG-MOI` cho ba HTTT, `tc-own-ter` giữ nguyên. EVT: `EVT-01-04` ba lần. KT: có sự kiện nguồn, từng yêu cầu và người duyệt.
+:::
+
+#### TC-01-151 · Giải thể, sáp nhập: trường hợp không tạo, trùng, duyệt lệch <!--k:owner-batch-neg-->
+
+::: dac-ta
+**Loại.** Âm, Biên.
+
+**Ưu tiên.** P2.
+
+**Tự động.** IT.
+
+**Truy vết.** FR-01-054 · FR-01-034 · API-01-058, 059 · BR-01-017, 029 · ERR-01-005
+
+**Tiền điều kiện, dữ liệu.** Như ca `owner-batch-ok`; thêm `tc-own-pend` ACTIVE của `TC-ORG-CU` đã có yêu cầu thay đổi khác `PENDING`; tổ chức `TC-ORG-NGHI` (không ACTIVE); TA1, TA2.
+
+**Các bước.**
+
+1. PH-20 giả lập phát EVT-20-13 `DISSOLVED` cho `TC-ORG-CU` (có `tc-own-pend`), rồi phát lại đúng sự kiện đó (cùng mã sự kiện).
+2. Phát EVT-20-13 `DISSOLVED` thiếu `successorCode`; rồi với `successorCode = TC-ORG-NGHI`.
+3. Phát EVT-20-13 cho tổ chức không có HTTT.
+4. Với lô ở ca `owner-batch-ok`, TA2 duyệt `tc-own-act` trước; sau đó TA1 duyệt cả lô.
+5. TA1 từ chối yêu cầu của `tc-own-app`.
+
+**Kết quả mong đợi.** Bước 1: lần đầu không tạo yêu cầu cho `tc-own-pend` (chỉ mục duy nhất của EN-01-13), HTTT vào danh sách "chờ tạo lại" của lô và TA được nhắc xử lý yêu cầu cũ; lần phát lại bị bỏ qua nhờ `inbox(event_id)`, không tạo thêm yêu cầu. Bước 2: không tạo yêu cầu, TA nhận nhắc đổi chủ quản từng HTTT theo FR-01-034. Bước 3: không phát sinh việc. Bước 4: dòng `tc-own-act` của TA1 trả `409` ERR-01-005, các dòng khác `200`. Bước 5: `tc-own-app` giữ chủ quản cũ, hiện cờ "chủ quản đã giải thể".
 :::
 
 ### TS-01-24 · Đồng bộ trạng thái và bản sao đọc cho phân hệ khác
@@ -3536,8 +3718,8 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-01. FR mức
 | FR | Tên | Mức | LGC | Dương | Âm | Ca khác | Đạt quy tắc |
 |---|---|---|---|---|---|---|---|
 | FR-01-001 | Liệt kê, tìm kiếm, lọc HTTT thành viên | M | LGC-APIM-019 | 001, 136 | 002, 121, 136 | 006, 125, 126, 130 | Có |
-| FR-01-002 | Xem chi tiết HTTT thành viên | M | LGC-APIM-019; LGC-HUB-010, LGC-HUB-011 | 003, 136 | 002, 004, 136 | 117, 125 | Có |
-| FR-01-003 | Tạo hồ sơ kết nạp nháp | M | LGC-APIM-020; LGC-HUB-010, LGC-HUB-011 | 007 | 008, 009, 012, 121, 124 | 010 | Có |
+| FR-01-002 | Xem chi tiết HTTT thành viên | M | LGC-APIM-019, LGC-HUB-010, LGC-HUB-011 | 003, 136 | 002, 004, 136 | 117, 125 | Có |
+| FR-01-003 | Tạo hồ sơ kết nạp nháp | M | LGC-APIM-020, LGC-HUB-010, LGC-HUB-011 | 007 | 008, 009, 012, 121, 124 | 010 | Có |
 | FR-01-004 | Sửa hồ sơ nháp, tự lưu | M | LGC-APIM-020 | 013 | 011 | 010 | Có |
 | FR-01-005 | Đính kèm, xem, xóa tài liệu hồ sơ | M | mới | 017, 021 | 020 | 120 | Có |
 | FR-01-006 | Khai hồ sơ năng lực kỹ thuật và đề xuất nhóm HTTT | M | mới | 014, 016 | 015, 016 | — | Có |
@@ -3566,13 +3748,15 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-01. FR mức
 | FR-01-029 | Tạm ngừng HTTT | M | mới | 078, 133 | 079, 082, 121, 140 | 128 | Có |
 | FR-01-030 | Khôi phục HTTT | M | mới | 080 | 081, 140 | — | Có |
 | FR-01-031 | Chấm dứt tư cách thành viên | M | mới | 083, 133 | 084, 122, 140 | 085 | Có |
-| FR-01-032 | Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT | M | mới | 086, 133, 134 | 087 | 088, 128 | Có |
+| FR-01-032 | Thu hồi, tạm ngừng khẩn cấp bởi Cán bộ ATTT | M | mới | 086, 133, 134, 144, 146, 149 | 087, 145 | 088, 128 | Có |
 | FR-01-033 | Phân tích tác động phụ thuộc trước khi tạm ngừng, chấm dứt | M | mới | 077 | 077 | — | Có |
-| FR-01-034 | Đề nghị thay đổi hồ sơ HTTT đã kết nạp theo mức duyệt | S | mới | 089 | 090 | — | Có |
+| FR-01-034 | Đề nghị thay đổi hồ sơ HTTT đã kết nạp theo mức duyệt | S | mới | 089, 150 | 090, 151 | — | Có |
 | FR-01-035 | Đề nghị mở rộng trần phạm vi khai thác | M | mới | 091 | 092 | — | Có |
 | FR-01-036 | Tự tạm ngừng định danh không hoạt động | S | mới | 076 | 076 | — | Có |
 | FR-01-037 | Đồng bộ trạng thái HTTT tới phân hệ khác | M | mới | 093, 094 | 094, 124 | 129, 131, 132 | Có |
 | FR-01-038 | Cung cấp bản sao đọc HTTT cho phân hệ khác | M | LGC-HUB-010, LGC-HUB-011 | 095 | 095, 124 | — | Có |
+| FR-01-053 | Tiếp nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho | M | mới | 146, 149 | 148 | 147 | Có |
+| FR-01-054 | Tạo sẵn đề nghị đổi chủ quản HTTT khi tổ chức giải thể, sáp  | S | mới | 150 | 151 | — | Có |
 | FR-01-039 | Mở kỳ rà soát quyền định kỳ | M | mới | 096 | 097 | — | Có |
 | FR-01-040 | Tổng hợp mức sử dụng từng phạm vi | M | mới | 096, 142 | 097 | — | Có |
 | FR-01-041 | Gửi xác nhận cho đơn vị chủ quản và theo dõi phản hồi | M | mới | 099 | 100 | 101, 137 | Có |
@@ -3582,7 +3766,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-01. FR mức
 | FR-01-045 | Tra cứu danh bạ đầu mối trong phạm vi cơ quan nhà nước | M | mới | 104 | 105 | 130 | Có |
 | FR-01-046 | Cảnh báo tổ chức thiếu đầu mối và nhắc cập nhật | M | mới | 106 | 106 | — | Có |
 | FR-01-047 | Xuất danh bạ đầu mối | C | mới | 107 | 107 | — | Có |
-| FR-01-048 | Nhập HTTT từ hệ cũ | M | LGC-APIM-019; LGC-APIM-020; LGC-HUB-010… | 108 | 109 | 110 | Có |
+| FR-01-048 | Nhập HTTT từ hệ cũ | M | LGC-APIM-019, LGC-HUB-010, LGC-HUB-011 | 108 | 109 | 110 | Có |
 | FR-01-049 | Tham số phân hệ theo tenant | M | mới | 111 | 111 | — | Có |
 | FR-01-050 | Xuất danh sách HTTT thành viên | S | LGC-APIM-019 | 005 | 005 | 115 | Có |
 | FR-01-051 | Thống kê kết nạp và thời gian xử lý | S | mới | 112 | 112 | — | Có |
@@ -3596,7 +3780,7 @@ Bốn chức năng hệ cũ do PH-01 chịu trách nhiệm (Application của AP
 | LGC | FR | TC tự động | UAT |
 |---|---|---|---|
 | LGC-APIM-019 | 001, 002, 028, 048, 050 | 001, 003, 005, 073, 108, 136 | UAT-01, UAT-02, UAT-08, UAT-09, UAT-10 |
-| LGC-APIM-020 | 003, 004, 012, 020, 048 | 007, 013, 028, 047, 052, 108, 133, 134 | UAT-03, UAT-06, UAT-07, UAT-09 |
+| LGC-APIM-020 | 003, 004, 012, 020 | 007, 013, 028, 047, 052, 133, 134 | UAT-03, UAT-06, UAT-07, UAT-09 |
 | LGC-HUB-010 | 002, 003, 038, 048 | 003, 007, 095, 108, 136 | UAT-04, UAT-09, UAT-11 |
 | LGC-HUB-011 | 002, 003, 038, 048 | 003, 007, 095, 108, 136 | UAT-05, UAT-09, UAT-11 |
 
@@ -3616,15 +3800,15 @@ Bảng dưới liệt kê từng quy tắc nghiệp vụ của PH-01 và các te
 | BR-01-006 | 058, 059, 062, 063, 137 |
 | BR-01-007 | 052, 055, 057, 058, 073, 110, 113, 116 |
 | BR-01-008 | 064, 067, 068 |
-| BR-01-009 | 050, 070, 071, 074, 078, 080, 102, 111 (+1) |
-| BR-01-010 | 081, 086, 088 |
+| BR-01-009 | 050, 070, 071, 074, 078, 080, 102, 111 (+3) |
+| BR-01-010 | 081, 086, 088, 144, 145, 146, 147, 149 |
 | BR-01-011 | 034, 036, 051, 083 |
 | BR-01-012 | 090, 091 |
 | BR-01-013 | 025, 027, 068, 106 |
 | BR-01-014 | 096, 097, 099, 101, 111 |
 | BR-01-015 | 081, 098 |
 | BR-01-016 | 042 |
-| BR-01-017 | 028, 038, 041, 045, 049, 050, 067, 068 (+2) |
+| BR-01-017 | 028, 038, 041, 045, 049, 050, 067, 068 (+4) |
 | BR-01-018 | 007, 008, 036, 051, 083, 108 |
 | BR-01-019 | 041, 046, 055, 056 |
 | BR-01-020 | 075, 111 |
@@ -3636,7 +3820,7 @@ Bảng dưới liệt kê từng quy tắc nghiệp vụ của PH-01 và các te
 | BR-01-026 | 022, 027, 041, 046, 068, 092 |
 | BR-01-027 | 026, 104, 105 |
 | BR-01-028 | 024, 027, 106 |
-| BR-01-029 | 089 |
+| BR-01-029 | 089, 150, 151 |
 | BR-01-030 | 002, 004, 033, 095, 117, 118, 119, 120 (+1) |
 | BR-01-031 | 007, 028, 049, 052, 093, 140, 141 |
 | BR-01-032 | 030, 039, 047 |
@@ -3651,11 +3835,11 @@ Bảng dưới liệt kê từng mã lỗi của PH-01 và các test case phủ 
 
 | Mã | Test case |
 |---|---|
-| ERR-01-001 | 004, 021, 073, 079, 095, 104, 118, 119 (+1) |
+| ERR-01-001 | 004, 021, 073, 079, 095, 104, 118, 119 (+2) |
 | ERR-01-002 | 008, 036 |
-| ERR-01-003 | 006, 008, 015, 018, 024, 062, 095, 098 (+1) |
+| ERR-01-003 | 006, 008, 015, 018, 024, 062, 095, 098 (+2) |
 | ERR-01-004 | 009 |
-| ERR-01-005 | 011, 016, 021, 030, 035, 036, 079, 140 |
+| ERR-01-005 | 011, 016, 021, 030, 035, 036, 079, 140 (+2) |
 | ERR-01-006 | 009, 124 |
 | ERR-01-007 | 011, 030, 141 |
 | ERR-01-008 | 027 |
@@ -3686,7 +3870,7 @@ Bảng dưới liệt kê từng mã lỗi của PH-01 và các test case phủ 
 | ERR-01-033 | 035, 048, 050, 071, 074, 079, 084, 087 (+3) |
 | ERR-01-034 | 074, 078, 084 |
 | ERR-01-035 | 050, 061, 068, 071, 074, 079, 087, 102 (+2) |
-| ERR-01-036 | 081, 087 |
+| ERR-01-036 | 081, 087, 145 |
 | ERR-01-037 | 090 |
 | ERR-01-038 | 090, 092 |
 | ERR-01-039 | 097 |
@@ -3698,11 +3882,11 @@ Bảng dưới liệt kê từng mã lỗi của PH-01 và các test case phủ 
 | ERR-01-045 | 105, 107 |
 | ERR-01-046 | 020, 031, 043, 066, 077, 097, 131 |
 | ERR-01-047 | 027, 041, 046, 092 |
-| ERR-01-048 | 062, 082 |
+| ERR-01-048 | 062, 082, 148 |
 | ERR-01-049 | 010, 090 |
 | ERR-01-050 | 025, 106 |
 | ERR-01-051 | 012, 030, 141 |
-| ERR-01-052 | 005, 016, 054, 094, 095, 103, 107, 121 (+4) |
+| ERR-01-052 | 005, 016, 054, 094, 095, 103, 107, 121 (+6) |
 | ERR-01-053 | 054 |
 | ERR-01-054 | 012, 141 |
 
@@ -3766,8 +3950,8 @@ Bảng dưới liệt kê từng use case của PH-01 và các test case phủ n
 | UC-01-19 | 073, 074, 075 |
 | UC-01-20 | 077, 078, 080 |
 | UC-01-21 | 083, 085 |
-| UC-01-22 | 086 |
-| UC-01-23 | 089 |
+| UC-01-22 | 086, 144, 146 |
+| UC-01-23 | 089, 150 |
 | UC-01-24 | 091 |
 | UC-01-25 | 076 |
 | UC-01-26 | 093, 095 |
@@ -3841,12 +4025,12 @@ Bảng dưới liệt kê từng api của PH-01 và các test case phủ nó (b
 | API-01-051 | 078, 079, 119, 121, 123 |
 | API-01-052 | 080, 081 |
 | API-01-053 | 083, 084, 085, 122 |
-| API-01-054 | 086, 087, 123 |
-| API-01-055 | 086, 087 |
+| API-01-054 | 086, 087, 123, 144, 149 |
+| API-01-055 | 086, 087, 144, 145 |
 | API-01-056 | 077 |
 | API-01-057 | 089, 090, 119 |
-| API-01-058 | 089, 118 |
-| API-01-059 | 083, 084, 085, 089, 091, 122 |
+| API-01-058 | 089, 118, 150, 151 |
+| API-01-059 | 083, 084, 085, 089, 091, 122, 150, 151 |
 | API-01-060 | 091, 092 |
 | API-01-061 | 076 |
 | API-01-062 | 094, 124 |
@@ -3876,6 +4060,7 @@ Bảng dưới liệt kê từng api của PH-01 và các test case phủ nó (b
 | API-01-086 | 112 |
 | API-01-087 | 054, 124, 139 |
 | API-01-088 | 005, 107, 115, 119, 139 |
+| API-01-089 | 146, 147, 148, 149 |
 
 : Ma trận api với test case của PH-01
 
@@ -3888,14 +4073,14 @@ Bảng dưới liệt kê từng màn hình của PH-01 và các test case phủ
 | UI-01-01 | 007, 011, 013, 014, 017, 018, 027, 028 (+2) |
 | UI-01-02 | 033, 034, 047, 135 |
 | UI-01-03 | 001, 005, 135, 136 |
-| UI-01-04 | 003, 023, 026, 073, 076, 089, 091, 135 (+1) |
+| UI-01-04 | 003, 023, 026, 073, 076, 089, 091, 135 (+2) |
 | UI-01-05 | 038, 135, 136 |
 | UI-01-06 | 041, 042, 044, 047, 091, 135 |
-| UI-01-07 | 049, 051, 089, 091, 135 |
+| UI-01-07 | 049, 051, 089, 091, 135, 150 |
 | UI-01-08 | 052, 055, 070, 073, 135 |
 | UI-01-09 | 058, 070, 135, 137 |
 | UI-01-10 | 064, 067, 135 |
-| UI-01-11 | 074, 077, 078, 080, 083, 086, 135 |
+| UI-01-11 | 074, 077, 078, 080, 083, 086, 135, 144 (+2) |
 | UI-01-12 | 096, 098, 099, 102, 103, 135, 136 |
 | UI-01-13 | 099, 135, 137 |
 | UI-01-14 | 104, 106, 107, 135, 136 |
@@ -3914,7 +4099,7 @@ Bảng dưới liệt kê từng sự kiện của PH-01 và các test case ph�
 | EVT-01-01 | 028 |
 | EVT-01-02 | 040, 041, 044, 047, 049 |
 | EVT-01-03 | 007, 028, 034, 037, 047, 049, 051, 067 (+10) |
-| EVT-01-04 | 089, 093 |
+| EVT-01-04 | 089, 093, 150 |
 | EVT-01-05 | 052, 055, 067, 132 |
 | EVT-01-06 | 055, 070, 072 |
 | EVT-01-07 | 074, 075, 076, 078, 083, 086 |
@@ -4033,3 +4218,4 @@ Tập này không sửa tài liệu dùng chung. Việc cần làm ở tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 35 kịch bản, ca chức năng, bảo mật, phi chức năng, 11 UAT, ma trận truy vết FR, LGC, BR, ERR, NFR, UC, API, UI, EVT sinh tự động; công cụ chép từ ph05 và chỉnh cho PH-01 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm chú thích cho các bảng ma trận (sinh bằng gen_matrix.py), mục 0.1…0.3 của phần giới thiệu, đoạn mở cho các mục; đóng Q01-42 vì FRS đã có đủ 54 mã lỗi và 88 API |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca cho yêu cầu chốt 27/11/2026: FR-01-053 và API-01-089 (TC-01-146…149), TA khác xác nhận thao tác khẩn của FR-01-032 (TC-01-144, 145), FR-01-054 (TC-01-150, 151); thêm token S-SP, người dùng, hệ giả lập PH-13, PH-20 (151 ca) |

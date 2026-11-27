@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH14
 ten: Kịch bản và test case phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.4
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
 phan_he: PH-14
@@ -20,7 +20,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH14 F
 - Không mất chức năng kết nối quốc gia của hệ cũ: tư pháp, hộ tịch, bảo hiểm xã hội, hồ sơ cấp mã ĐVQHNS, đăng ký doanh nghiệp, văn bản quy phạm pháp luật, danh mục dùng chung và lấy token (LGC-NGSP-001…008, LGC-DMDC-019).
 - Không có đường nào để thông tin xác thực với nền tảng quốc gia, khóa riêng chữ ký số hay dữ liệu cá nhân lộ ra ngoài; không có lượt gọi nào ra quốc gia mà thiếu mục đích, nhật ký khai thác và chữ ký khi dịch vụ yêu cầu.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->38<!--/gen--> kịch bản (TS-14-01…38) với <!--gen:so-tc-->157 (TC-14-001…157; 112 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API, màn hình, use case và mã lỗi của phân hệ có ít nhất một ca. Ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph14/tools/gen_matrix.py`. Nền tảng quốc gia được thay bằng bộ giả lập (WireMock REST và SOAP có ký, có trễ, có ngắt mạch); kiểm thử với NDXP thật chỉ làm ở UAT khi trung ương cấp môi trường thử (Q14-40).
+**Phạm vi.** Gồm <!--gen:so-ts-->38<!--/gen--> kịch bản (TS-14-01…38) với <!--gen:so-tc-->161 (TC-14-001…161; 113 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API, màn hình, use case và mã lỗi của phân hệ có ít nhất một ca. Ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph14/tools/gen_matrix.py`. Nền tảng quốc gia được thay bằng bộ giả lập (WireMock REST và SOAP có ký, có trễ, có ngắt mạch); kiểm thử với NDXP thật chỉ làm ở UAT khi trung ương cấp môi trường thử (Q14-40).
 
 **Căn cứ.** Tài liệu cùng bộ PH-14 (FRS D02-03-PH14, use case D02-04-PH14, SDD D03-02-PH14, CSDL D03-03-PH14, API D03-04-PH14, màn hình D03-06-PH14); ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01; cổng CI D04-02; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP, TCVN 14423:2026; kết nối chia sẻ dữ liệu theo Nghị định 278/2025/NĐ-CP (CMP-LAW-03, CMP-LAW-19); bảo vệ dữ liệu cá nhân theo Luật 91/2025 (CMP-LAW-05).
 
@@ -225,6 +225,8 @@ Bảng sau nêu các nền tảng, dịch vụ và chứng thư mẫu đã nạp
 
 : Nền tảng, dịch vụ, chứng thư mẫu
 
+PH-09 được giả lập bằng WireMock `ph09-sim` ở các ca kiểm mục đích và kiểm cấm gửi ra ngoài tỉnh: `purpose:decide` (API-09-227) trả `allow` có hoặc không có `ropaActivityId`; `classification:check` (API-09-231) trả `egressBlocked` và `egressBlockedFields` theo kịch bản; có công tắc `down`. WireMock ghi lại thân yêu cầu và thời điểm để so với lần gửi tới `sim-ndxp`.
+
 Mọi thông tin xác thực nạp sẵn có dạng `DH-CANARY-{mã}-{uuid}`; hồ sơ DLCN mẫu có CCCD, họ tên, địa chỉ mang mồi `DH-CANARY-PII-…`, để TS-14-32 dò được.
 
 ### 2.4. Nguyên tắc dữ liệu
@@ -249,7 +251,7 @@ Mỗi kịch bản nhóm các ca cùng mục tiêu. Bảng dưới sinh tự đ�
 | TS-14-07 | Cung cấp lại dịch vụ quốc gia cho HTTT | Xác nhận HTTT chỉ nhận dịch vụ đã cung cấp lại, với trường đúng hợp đồng, không giữ thông tin xác thực quốc gia | UC-14-07 | 2 |
 | TS-14-08 | Bảng định tuyến | Xác nhận luật định tuyến cần bốn mắt, mô phỏng đúng, và dự phòng chỉ cho thao tác đọc | UC-14-08 | 4 |
 | TS-14-09 | Gọi dịch vụ quốc gia qua điểm gọi chung | Xác nhận HTTT chỉ cần một API của Datahub; lỗi quốc gia được phân loại, che nội dung kỹ thuật; thao tác ghi có `Idempotency-Key` và không thử lại khi kết quả chưa rõ | UC-14-09 | 10 |
-| TS-14-10 | Mục đích khai thác và ủy quyền theo mục đích | Xác nhận mọi lượt gọi dịch vụ chứa DLCN có mục đích hợp lệ, mã thủ tục, mã hồ sơ; không kiểm tra được thì từ chối an toàn | UC-14-09, 35 | 2 |
+| TS-14-10 | Mục đích khai thác và ủy quyền theo mục đích | Xác nhận mọi lượt gọi dịch vụ chứa DLCN có mục đích hợp lệ, mã thủ tục, mã hồ sơ; không kiểm tra được thì từ chối an toàn | UC-14-09, 35 | 3 |
 | TS-14-11 | Gọi bất đồng bộ qua hàng chờ | Xác nhận yêu cầu dài hoặc lô đi qua hàng chờ, theo dõi, hủy được trước khi gửi | UC-14-10 | 2 |
 | TS-14-12 | Bộ điều hợp tư pháp: lý lịch tư pháp, hộ tịch | Xác nhận không mất chức năng tư pháp của hệ cũ | UC-14-11 | 5 |
 | TS-14-13 | Bộ điều hợp bảo hiểm xã hội | Xác nhận tra hộ gia đình, giới hạn thành viên, không đệm DLCN | UC-14-12 | 3 |
@@ -265,7 +267,7 @@ Mỗi kịch bản nhóm các ca cùng mục tiêu. Bảng dưới sinh tự đ�
 | TS-14-23 | Ngắt mạch và thử lại | Xác nhận ngắt mạch mở khi lỗi quá ngưỡng, thử lại có giới hạn và không thử lại thao tác ghi | UC-14-25 | 3 |
 | TS-14-24 | Chiều vào: đăng ký, tiếp nhận, chuyển luồng PH-04 | Xác nhận bản tin từ quốc gia chỉ được xử lý khi xác minh đạt, nguồn được phép, không lặp; tenant xác định từ điểm cuối | UC-14-26, 27 | 5 |
 | TS-14-25 | Thông báo thay đổi từ quốc gia | Xác nhận thông báo đổi danh mục hay dịch vụ từ quốc gia sinh đề xuất cập nhật, không tự sửa cấu hình (Đợt 2) | UC-14-28 | 1 |
-| TS-14-26 | Đồng bộ: danh mục dịch vụ, dữ liệu chủ, dữ liệu mở | Xác nhận chỉ gửi dịch vụ chia sẻ `PUBLISHED` của đúng tenant, dữ liệu chủ và dữ liệu mở qua kiểm tra PH-07, PH-09 | UC-14-29, 30, 31 | 6 |
+| TS-14-26 | Đồng bộ: danh mục dịch vụ, dữ liệu chủ, dữ liệu mở | Xác nhận chỉ gửi dịch vụ chia sẻ `PUBLISHED` của đúng tenant, dữ liệu chủ và dữ liệu mở qua kiểm tra PH-07, PH-09 | UC-14-29, 30, 31 | 9 |
 | TS-14-27 | Tổng quan và kiểm tra kết nối chủ động | Xác nhận tổng quan phản ánh đúng sức khỏe, phát hiện mất kết nối ≤ 3 phút, giới hạn kiểm tra tay | UC-14-32 | 3 |
 | TS-14-28 | Giao dịch, đối soát, xem nội dung đầy đủ, xuất bằng chứng | Xác nhận mọi giao dịch tra được bằng mã đối soát; nội dung đầy đủ chỉ SO xem có lý do và xác thực nhiều yếu tố | UC-14-33, 34 | 7 |
 | TS-14-29 | Nhật ký khai thác, cảnh báo bất thường, báo cáo | Xác nhận 100 % lượt gọi có nhật ký khai thác, phát hiện tra cứu hàng loạt | UC-14-35, 36 | 6 |
@@ -278,7 +280,7 @@ Mỗi kịch bản nhóm các ca cùng mục tiêu. Bảng dưới sinh tự đ�
 | TS-14-36 | Chịu lỗi và phục hồi | Xác nhận phục hồi khi quốc gia, OpenBao hay một bản sao sự cố, không mất bản tin | — | 7 |
 | TS-14-37 | Truy cập, giao diện, truy vết, hợp đồng API | Xác nhận 17 màn đạt WCAG 2.2 AA, mọi giao dịch truy vết được, hợp đồng API tương thích | — | 2 |
 | TS-14-38 | Kiểm toán và bảo vệ bằng chứng | Xác nhận mọi thay đổi và mọi lượt gọi, kể cả bị từ chối, để lại bằng chứng không sửa được, không chứa bí mật, đủ cho thanh tra | — | 4 |
-| **Tổng** | | | | **157** (112 ca P1) |
+| **Tổng** | | | | **161** (113 ca P1) |
 
 : Danh sách kịch bản kiểm thử
 <!--/gen-->
@@ -1107,7 +1109,7 @@ Bảng sau nêu máy trạng thái của từng đối tượng và kịch bản
 
 **Mục tiêu.** Xác nhận mọi lượt gọi dịch vụ chứa DLCN có mục đích hợp lệ, mã thủ tục, mã hồ sơ; không kiểm tra được thì từ chối an toàn.
 
-**Phủ.** FR-14-011, 052; UC-14-09, 35; API-14-075, 065; UI-14-13; BR-14-008, 009; LGC-NGSP-003.
+**Phủ.** FR-14-011, 052; UC-14-09, 35; API-14-075, 065; UI-14-13; BR-14-008, 009; ERR-14-106, 132; LGC-NGSP-003.
 
 #### TC-14-028 · Gọi dịch vụ DLCN đủ mục đích, mã thủ tục, mã hồ sơ <!--k:purpose-ok-->
 
@@ -1151,6 +1153,29 @@ Bảng sau nêu máy trạng thái của từng đối tượng và kịch bản
 4. Chuyển giờ giả lập 22:00, gọi đúng; rồi dừng OPA và gọi lại.
 
 **Kết quả mong đợi.** Bước 1, 2 `403` ERR-14-106; bước 3 `422` ERR-14-107; bước 4 lần một `403` ERR-14-106, lần hai `503` ERR-14-132 (từ chối an toàn). Không lượt nào chạm `sim-ndxp`; mỗi lượt từ chối có dòng nhật ký.
+:::
+
+#### TC-14-158 · Dịch vụ từ Hạn chế: PH-09 trả ropaActivityId thì cho phép, vắng thì từ chối <!--k:purpose-ropa-->
+
+::: dac-ta
+**Loại.** Dương, Âm, Bảo mật.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API, IT.
+
+**Truy vết.** FR-14-011 · API-14-075 · ERR-14-106, 132 · BR-14-008, 009 · SEC-37 · API-09-227
+
+**Tiền điều kiện, dữ liệu.** S-HT-MC được cấp V-BHXH (mục `SENSITIVE`) và V-HT (mục `NORMAL`, `purposeRequired = false`); PH-09 giả lập `purpose:decide` có công tắc: trả `ropaActivityId`, bỏ `ropaActivityId`, `down`.
+
+**Các bước.**
+
+1. S-HT-MC gọi V-BHXH với mục đích, mã thủ tục, mã hồ sơ đủ; PH-09 trả `allow` kèm `ropaActivityId`.
+2. PH-09 trả `allow` nhưng không có `ropaActivityId` (mục đích chưa nằm trong sổ hoạt động xử lý); gọi lại V-BHXH.
+3. Dừng PH-09 (`down`); gọi lại V-BHXH.
+4. Gọi V-HT (dịch vụ `NORMAL`).
+
+**Kết quả mong đợi.** Bước 1: `200`; PH-09 nhận đúng một lần `purpose:decide` trước khi gọi `sim-ndxp`; quyết định, `ropaActivityId` ghi vào nhật ký khai thác (không có DLCN). Bước 2: `403` ERR-14-106 (mục đích chưa có trong sổ), không chạm `sim-ndxp`, lượt có trạng thái `REJECTED` và dòng nhật ký. Bước 3: `503` ERR-14-132, từ chối an toàn, không chạm `sim-ndxp`. Bước 4: `200`, PH-09 không bị hỏi (bỏ qua bước kiểm sổ hoạt động xử lý).
 :::
 
 ### TS-14-11 · Gọi bất đồng bộ qua hàng chờ
@@ -2562,7 +2587,7 @@ Bảng sau nêu máy trạng thái của từng đối tượng và kịch bản
 
 **Mục tiêu.** Xác nhận chỉ gửi dịch vụ chia sẻ `PUBLISHED` của đúng tenant, dữ liệu chủ và dữ liệu mở qua kiểm tra PH-07, PH-09.
 
-**Phủ.** FR-14-043, 044, 045, 046; UC-14-29, 30, 31; API-14-053, 054, 055, 056, 057, 087, 088; UI-14-11; BR-14-010, 026, 035.
+**Phủ.** FR-14-043, 044, 045, 046; UC-14-29, 30, 31; API-14-053, 054, 055, 056, 057, 087, 088; UI-14-11; ERR-14-126, 132; BR-14-010, 026, 035.
 
 #### TC-14-065 · Đồng bộ danh mục dịch vụ lên Bộ, chỉ dịch vụ đã công bố <!--k:sync-catalog-->
 
@@ -2696,6 +2721,71 @@ Bảng sau nêu máy trạng thái của từng đối tượng và kịch bản
 5. Gỡ tập đã `WITHDRAWN`.
 
 **Kết quả mong đợi.** Bước 1 `403` ERR-14-126 "Nguồn chứa trường không được công bố: {danh sách}. Loại trường đó khỏi tập dữ liệu mở.", không gửi gì. Bước 2 `403` ERR-14-007. Bước 3 `422` ERR-14-028 "Nền tảng dữ liệu mở từ chối tập {mã}: {lý do}." Bước 4 `503` ERR-14-103, lô giữ lại thử theo lịch. Bước 5 `409` ERR-14-004. Không bước nào làm tập chuyển trạng thái đã công bố.
+:::
+
+#### TC-14-159 · Dữ liệu chủ chiều lên: bộ đồng bộ gọi PH-09 kiểm egressScope trước khi gửi <!--k:master-egress-ok-->
+
+::: dac-ta
+**Loại.** Dương, Bảo mật.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API, IT.
+
+**Truy vết.** FR-14-044 · API-14-056 · UC-14-30 · BR-14-010 · EVT-14-12 · API-09-231
+
+**Tiền điều kiện, dữ liệu.** S-PH06; lô nguồn 100 bản ghi đủ ánh xạ ở PH-07, không có trường `noEgress`; PH-09 giả lập `classification:check` ghi lại thân yêu cầu và thời điểm; `sim-ndxp` `OK`.
+
+**Các bước.**
+
+1. `POST /sync/master-data-runs` hướng `UP`, `batchRef = B2`.
+2. Đọc nhật ký PH-09 giả lập và `sim-ndxp` để so thứ tự thời điểm.
+
+**Kết quả mong đợi.** Bước 1: `202`. Bước 2: PH-09 nhận đúng một `classification:check` với `egressScope = OUT_OF_PROVINCE` và danh sách trường của lô trước lần gửi đầu tiên tới `sim-ndxp`; PH-09 trả `egressBlocked = false`, lô được ký và gửi, `sync_run` `kind = MASTER_DATA`. Lô gửi lại với `batchRef` mới vẫn gọi PH-09 lần nữa (bắt buộc trước mỗi lần gửi ra ngoài tỉnh).
+:::
+
+#### TC-14-160 · Dữ liệu chủ: PH-09 chặn trường noEgress hoặc không trả lời thì không gửi <!--k:master-egress-neg-->
+
+::: dac-ta
+**Loại.** Âm, Bảo mật.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API, IT.
+
+**Truy vết.** FR-14-044 · API-14-056 · UC-14-30 · ERR-14-126, 132 · BR-14-010 · API-09-231
+
+**Tiền điều kiện, dữ liệu.** S-PH06; lô 100 bản ghi có trường `cccd` bật `noEgress` ở PH-09 giả lập (`egressBlocked = true`, `egressBlockedFields = ["cccd"]`); `sim-ndxp` `OK`.
+
+**Các bước.**
+
+1. `POST /sync/master-data-runs` hướng `UP` với lô có `cccd`.
+2. Dừng PH-09 giả lập; chạy lô hợp lệ.
+3. Chạy lô hợp lệ khi PH-09 trả `egressBlocked = false`.
+
+**Kết quả mong đợi.** Bước 1: `403` ERR-14-126 "Lô dữ liệu chủ chứa trường không được gửi ra ngoài tỉnh: cccd." (danh sách lấy từ `egressBlockedFields`), không có yêu cầu nào tới `sim-ndxp`, không có `sync_run` thành công. Bước 2: `503` ERR-14-132, không gửi (PH-09 không trả lời thì không gửi). Bước 3: `202`, gửi bình thường.
+:::
+
+#### TC-14-161 · Công bố dữ liệu mở: kiểm egressScope với PH-09 trước khi gửi lên NDOP <!--k:open-data-egress-->
+
+::: dac-ta
+**Loại.** Dương, Âm, Bảo mật.
+
+**Ưu tiên.** P3.
+
+**Tự động.** API, IT.
+
+**Truy vết.** FR-14-045 · API-14-087, 088 · UC-14-31 · ERR-14-126 · BR-14-010 · API-09-231
+
+**Tiền điều kiện, dữ liệu.** U-T68-TA, U-T68-IA; P-NDOP; tập `tc-dm-sach` mức `PUBLIC` không trường `noEgress`; tập `tc-dm-noegress` mức `PUBLIC` nhưng một cột bật `noEgress` ở PH-09 giả lập; PH-09 giả lập.
+
+**Các bước.**
+
+1. TA `POST /open-datasets` cho `tc-dm-sach`; IA duyệt lần đầu.
+2. TA công bố `tc-dm-noegress`.
+3. Gọi lại bước 1 cho phiên bản cập nhật của `tc-dm-sach` theo lịch.
+
+**Kết quả mong đợi.** Bước 1: PH-09 nhận `classification:check` với `egressScope = OUT_OF_PROVINCE` trước khi gửi, trả `egressBlocked = false`; tập được gửi, có biên nhận. Bước 2: `403` ERR-14-126 "Nguồn chứa trường không được công bố: {cột}. Loại trường đó khỏi tập dữ liệu mở.", không gửi gì tới NDOP. Bước 3: lần cập nhật nào cũng gọi PH-09 trước khi gửi.
 :::
 
 ### TS-14-27 · Tổng quan và kiểm tra kết nối chủ động
@@ -3872,7 +3962,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-14. FR mức
 | FR-14-008 | Nạp đặc tả dịch vụ có phiên bản và phát hiện lệch | M | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 015 | 016 | — | Có |
 | FR-14-009 | Cung cấp lại dịch vụ quốc gia cho HTTT của tỉnh | M | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 019 | 020 | — | Có |
 | FR-14-010 | Gọi dịch vụ quốc gia qua điểm gọi chung | M | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 023, 100 | 025, 095, 101, 102, 150 | 085 | Có |
-| FR-14-011 | Kiểm tra mục đích khai thác và ủy quyền theo mục đích | M | mới | 028 | 029, 152 | — | Có |
+| FR-14-011 | Kiểm tra mục đích khai thác và ủy quyền theo mục đích | M | mới | 028, 158 | 029, 152, 158 | — | Có |
 | FR-14-012 | Định tuyến tới nền tảng và dịch vụ đích | M | mới | 021, 098 | 026, 099 | — | Có |
 | FR-14-013 | Quản lý bảng định tuyến | M | mới | 021, 098, 151 | 022, 086, 099 | 092 | Có |
 | FR-14-014 | Chuyển đổi bản tin theo hợp đồng dịch vụ | M | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 023, 103 | 026, 104 | — | Có |
@@ -3905,8 +3995,8 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-14. FR mức
 | FR-14-041 | Chuyển cho luồng PH-04 và trả phản hồi có ký | M | LGC-NGSP-001 | 062 | 063 | — | Có |
 | FR-14-042 | Tiếp nhận thông báo thay đổi từ quốc gia | S | mới | 064 | 127 | — | Có |
 | FR-14-043 | Đồng bộ danh mục dịch vụ lên Bộ | M | mới | 065 | 066 | — | Có |
-| FR-14-044 | Cầu nối đồng bộ dữ liệu chủ hai chiều | S | mới | 128 | 067 | — | Có |
-| FR-14-045 | Công bố dữ liệu mở lên NDOP | S | mới | 068 | 068, 129 | — | Có |
+| FR-14-044 | Cầu nối đồng bộ dữ liệu chủ hai chiều | S | mới | 128, 159 | 067, 160 | — | Có |
+| FR-14-045 | Công bố dữ liệu mở lên NDOP | S | mới | 068, 161 | 068, 129, 161 | — | Có |
 | FR-14-046 | Theo dõi trạng thái đồng bộ, xử lý lỗi và lệch | M | mới | 065 | 066 | — | Có |
 | FR-14-047 | Kiểm tra kết nối chủ động | M | mới | 005, 069 | 070 | — | Có |
 | FR-14-048 | Tổng quan kết nối quốc gia | M | mới | 069, 130 | 070 | — | Có |
@@ -3955,9 +4045,9 @@ Mỗi quy tắc nghiệp vụ của FRS D02-03-PH14 được truy tới các tes
 | BR-14-005 | 040, 041, 081, 112, 113, 138, 140, 151 |
 | BR-14-006 | 085 |
 | BR-14-007 | 019, 023, 087, 101 |
-| BR-14-008 | 028, 029, 108, 134, 152 |
-| BR-14-009 | 019, 028, 034, 103, 108 |
-| BR-14-010 | 067, 068, 128, 129 |
+| BR-14-008 | 028, 029, 108, 134, 152, 158 |
+| BR-14-009 | 019, 028, 034, 103, 108, 158 |
+| BR-14-010 | 067, 068, 128, 129, 159, 160, 161 |
 | BR-14-011 | 053 |
 | BR-14-012 | 055, 119, 120, 142, 149 |
 | BR-14-013 | 055, 109, 121, 155 |
@@ -4039,7 +4129,7 @@ Mỗi mã lỗi chuẩn ở D03-04-PH14 §6 được truy tới các test case g
 | ERR-14-103 | 057, 058, 059, 099, 125, 126, 129 |
 | ERR-14-104 | 055, 105, 109, 120, 121, 125, 126, 142, 149, 152 |
 | ERR-14-105 | 025, 026, 099, 152 |
-| ERR-14-106 | 029, 087, 108, 123, 152 |
+| ERR-14-106 | 029, 087, 108, 123, 152, 158 |
 | ERR-14-107 | 029, 108, 152 |
 | ERR-14-108 | 025, 026, 033, 035, 104, 105, 107, 108, 109, 110 (+1) |
 | ERR-14-109 | 044, 051, 140 |
@@ -4059,13 +4149,13 @@ Mỗi mã lỗi chuẩn ở D03-04-PH14 §6 được truy tới các test case g
 | ERR-14-123 | 063, 142 |
 | ERR-14-124 | 063 |
 | ERR-14-125 | 067 |
-| ERR-14-126 | 067, 068, 129 |
+| ERR-14-126 | 067, 068, 129, 160, 161 |
 | ERR-14-127 | 024, 081, 140 |
 | ERR-14-128 | 024, 036, 104, 140 |
 | ERR-14-129 | 031 |
 | ERR-14-130 | 031 |
 | ERR-14-131 | 016, 104 |
-| ERR-14-132 | 029, 152 |
+| ERR-14-132 | 029, 152, 158, 160 |
 | ERR-14-133 | 095, 149 |
 
 : Mã lỗi và test case
@@ -4172,3 +4262,4 @@ Các việc sau cần làm ở tài liệu khác để khớp với bộ test ca
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca dương, âm riêng cho mọi FR mức M, phi chức năng (hiệu năng, chịu lỗi, bảo mật, cách ly tenant, kiểm toán): thêm 56 ca, kịch bản TS-14-38; cập nhật ma trận, Gherkin, bảng tính |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm TC-14-157 (157 ca) |
 | 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: TC-14-097 thêm bước Pact với PH-04, PH-07 và giả lập NDXP bằng WireMock |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca PH-14 gọi PH-09: kiểm ropaActivityId ở FR-14-011 (TC-14-158), kiểm egressScope ở FR-14-044, 045 (TC-14-159…161); thêm PH-09 giả lập (161 ca) |

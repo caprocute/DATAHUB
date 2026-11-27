@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH12
 ten: Đặc tả use case phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -613,7 +613,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 **Kích hoạt.** Người dùng chọn "Khóa", "Mở khóa", "Vô hiệu" hoặc "Kích hoạt lại" ở UI-12-02 hoặc UI-12-03.
 
-**Đảm bảo tối thiểu.** Không tự thao tác trên mình; không để tỉnh hết quản trị tỉnh; thất bại thì trạng thái cũ giữ nguyên.
+**Đảm bảo tối thiểu.** Không tự thao tác trên mình; không để tỉnh đã kích hoạt còn dưới hai quản trị tỉnh hiệu lực (BR-12-033, Q403 chốt 27/11/2026); thất bại thì trạng thái cũ giữ nguyên.
 
 **Đảm bảo thành công.** Tài khoản ở trạng thái mới; với khóa, vô hiệu thì phiên, refresh token bị hủy và cổng từ chối token cũ không quá 60 giây (qua UC-12-28).
 
@@ -621,7 +621,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 1. Dũng mở UI-12-02 của `nguyenvana`, bấm "Vô hiệu", nhập lý do "Nghỉ việc theo quyết định 123/QĐ-STP" trong hộp xác nhận (FR-00-050).
 2. Nếu thao tác nhạy cảm, hệ thống yêu cầu xác thực lại bước lên (LP-12-03); Dũng xác nhận.
-3. Hệ thống gọi API-12-007; kiểm tra Dũng khác chủ tài khoản, lý do đủ 10 ký tự, chuyển `ACTIVE` sang `DISABLED` hợp lệ, và không phải quản trị tỉnh cuối cùng.
+3. Hệ thống gọi API-12-007; kiểm tra Dũng khác chủ tài khoản, lý do đủ 10 ký tự, chuyển `ACTIVE` sang `DISABLED` hợp lệ, và nếu `nguyenvana` đang giữ `TENANT_ADMIN` thì tỉnh vẫn còn ít nhất hai quản trị tỉnh hiệu lực khác sau thao tác.
 4. Hệ thống đặt trạng thái ở Keycloak, hủy mọi phiên, thu hồi refresh token và đẩy mục danh sách chặn theo `sub` (UC-12-28).
 5. Hệ thống ghi kiểm toán kèm lý do, phát EVT-12-02 và EVT-12-05, trả `200`.
 6. Sau đó, khi cán bộ quay lại làm việc, Mai bấm "Kích hoạt lại" (API-12-008); hệ thống đặt `PENDING_ACTIVATION`, buộc đặt mật khẩu mới và đăng ký lại yếu tố thứ hai nếu thuộc nhóm bắt buộc, gửi liên kết (tiếp UC-12-02 bước 6).
@@ -631,13 +631,14 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 - **1a. Mở khóa tài khoản `LOCKED`, `BLOCKED`.** Mai bấm "Mở khóa" (API-12-006); hệ thống xóa bộ đếm sai và bộ đếm khóa tạm 24 giờ, tài khoản về `ACTIVE`.
 - **1b. Khóa tạm thủ công.** Dũng chọn "Khóa" (API-12-005) khi cần chặn gấp nhưng chưa quyết định vô hiệu.
 - **3a. Tài khoản thuộc nhóm `_ADMIN`.** Chỉ SO hoặc quản trị cấp trên thực hiện được; TA không khóa được TA khác cùng cấp.
+- **3b. Khóa do sự cố ATTT khi tỉnh chỉ còn hai TA.** Dũng chọn "Khóa" kèm `incidentRef` cho một TA nghi bị chiếm tài khoản, hoặc Keycloak chuyển `BLOCKED` sau ba lần khóa tạm; thao tác vẫn thực hiện dù tỉnh xuống dưới hai TA. Hệ thống phát cảnh báo khẩn cho SO và PA, tạo việc "Bổ sung quản trị tỉnh" cho PA và ghi kiểm toán mã lý do `TA_BELOW_MIN`. Vô hiệu thủ công không có ngoại lệ này.
 
 **Luồng ngoại lệ.**
 
 - **E1. Tự thao tác (bước 3).** ERR-12-013 (403); "Anh/chị không thể tự khóa hoặc vô hiệu tài khoản của mình."
 - **E2. Thiếu lý do (bước 1).** ERR-12-014 (400); "Nhập lý do (ít nhất 10 ký tự)."
 - **E3. Chuyển trạng thái sai (bước 3).** ERR-12-006 (409); "Tài khoản đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
-- **E4. Vô hiệu quản trị tỉnh cuối cùng (bước 3).** ERR-12-046 (409); "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động."
+- **E4. Khóa hoặc vô hiệu làm tỉnh còn dưới hai quản trị tỉnh (bước 3).** ERR-12-046 (409); "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện."
 - **E5. Chưa xác thực bước lên (bước 2).** ERR-12-120 (401); "Cần xác thực lại để thực hiện thao tác này."
 
 **Quy tắc áp dụng.** BR-12-014, 028, 033, 035.
@@ -779,6 +780,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 - **1a. Quyền có thời hạn còn hiệu lực.** Tài khoản đang giữ quyền có thời hạn (UC-12-13) được bỏ qua lượt này.
 - **1b. Tenant siết ngưỡng trong miền cho phép.** Ngưỡng mới áp dụng từ lượt chạy kế tiếp.
+- **3a. Người dùng vượt ngưỡng là TA và việc vô hiệu làm tỉnh xuống dưới hai TA.** Đây là ngoại lệ của ERR-12-046 (BR-12-033, TCVN 14423:2026): hệ thống vẫn vô hiệu, rồi phát cảnh báo khẩn cho SO và PA, tạo việc "Bổ sung quản trị tỉnh" cho PA và ghi kiểm toán mã lý do `TA_BELOW_MIN`.
 - **5a. Đơn vị chia tách thành nhiều đơn vị.** Không tự chuyển; đưa người dùng vào danh sách "cần rà soát" để TA chọn (UC-12-03).
 
 **Luồng ngoại lệ.**
@@ -862,7 +864,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 **Kích hoạt.** Mai bấm "Gán vai trò" ở UI-12-02 hoặc UI-12-06; hoặc UC-12-02, UC-12-05 gọi khi tạo.
 
-**Đảm bảo tối thiểu.** Không ai tự gán, gỡ vai trò của mình; mỗi tenant luôn còn ít nhất một quản trị tỉnh; thất bại thì không gán gì.
+**Đảm bảo tối thiểu.** Không ai tự gán, gỡ vai trò của mình; tenant đã kích hoạt luôn còn ít nhất hai quản trị tỉnh hiệu lực (BR-12-033, Q403 chốt 27/11/2026); thất bại thì không gán gì.
 
 **Đảm bảo thành công.** Bản gán lưu kèm phạm vi, hiệu lực; dữ liệu gói chính sách yêu cầu tái sinh; EVT-12-03 đã phát.
 
@@ -878,8 +880,8 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 
 **Luồng thay thế.**
 
-- **1a. Gỡ vai trò.** Mai chọn "Gỡ" (API-12-027); bước 3 đến 5 bỏ qua; hệ thống kiểm tra không gỡ quản trị tỉnh cuối cùng và thu hồi mọi phiên của người dùng nếu là hạ quyền (BR-12-036).
-- **1b. Gán có hiệu lực từ ngày sau, hoặc có hạn.** Bản gán chỉ sinh hiệu lực trong khoảng `validFrom` đến `validTo`; hết hạn tự gỡ.
+- **1a. Gỡ vai trò.** Mai chọn "Gỡ" (API-12-027); bước 3 đến 5 bỏ qua; hệ thống kiểm tra việc gỡ `TENANT_ADMIN` không làm tỉnh còn dưới hai quản trị tỉnh hiệu lực và thu hồi mọi phiên của người dùng nếu là hạ quyền (BR-12-036).
+- **1b. Gán có hiệu lực từ ngày sau, hoặc có hạn.** Bản gán chỉ sinh hiệu lực trong khoảng `validFrom` đến `validTo`; hết hạn tự gỡ. Gán `TENANT_ADMIN` mà việc hết hạn làm tỉnh xuống dưới hai TA thì không tự gỡ: hệ thống giữ gán, cảnh báo TA, SO và PA từ bảy ngày trước hạn và báo ERR-12-046 cho tới khi gia hạn hoặc có TA khác.
 - **2a. Xem danh sách bản gán.** Mai lọc bản gán theo người, vai trò, phạm vi (API-12-025) ở UI-12-02.
 
 **Luồng ngoại lệ.**
@@ -887,7 +889,7 @@ Bốn mươi hai use case dưới đây xếp theo nhóm của FRS: tài khoản
 - **E1. Tự gán hoặc gỡ cho chính mình (bước 2).** ERR-12-013 (403); "Anh/chị không thể tự gán hoặc gỡ vai trò của mình."
 - **E2. Vai trò hoặc phạm vi sai (bước 3, 4).** ERR-12-010 (422); "Vai trò {vai trò} không gán được với phạm vi {phạm vi} cho người dùng này."
 - **E3. Xung đột tách nhiệm vụ (bước 5).** ERR-12-009 (409); "Anh/chị không được giữ cùng lúc {vai trò A} và {vai trò B}: {lý do}. Có thể đề nghị ngoại lệ có thời hạn." Mai có thể chuyển sang UC-12-10.
-- **E4. Gỡ quản trị tỉnh cuối cùng (bước 1a).** ERR-12-046 (409); "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động."
+- **E4. Gỡ làm tỉnh còn dưới hai quản trị tỉnh (bước 1a).** ERR-12-046 (409); "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện."
 - **E5. Thiếu lý do (bước 2).** ERR-12-014 (400); "Nhập lý do gán hoặc gỡ vai trò."
 - **E6. Chưa xác thực bước lên (điều kiện).** ERR-12-120 (401); "Cần xác thực lại để thực hiện thao tác này."
 - **E7. Vai trò hoặc người dùng không tồn tại, hoặc thuộc tenant khác (bước 1).** ERR-12-001 (404) theo LP-12-06; "Không tìm thấy đối tượng này trong tỉnh của anh/chị."
@@ -2659,3 +2661,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc tập khác do lu�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, 42 use case khối 15 mục phủ 62 FR của FRS 0.1, bảy sơ đồ use case tổng, ba bảng truy vết (FR, UI và API, REQ, BP và LGC), bảy luồng phụ dùng chung, năm câu hỏi mở (Q12-45…49) |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên bước S01_RECORD theo D03-10 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: UC-12-04, UC-12-09 chặn thao tác đưa tenant xuống dưới hai TA (ERR-12-046); ngoại lệ vô hiệu do không dùng (UC-12-07) và khóa do sự cố ATTT |

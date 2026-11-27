@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH20
 ten: Thiết kế giao diện lập trình Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ gọi PH-20, kỹ sư console quản trị, kiểm thử viên, hội đồng thẩm định
@@ -709,7 +709,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-20-003, ERR-20-004, ERR-20-011, ERR-20-012, ERR-20-013, ERR-20-014, ERR-20-015, ERR-20-017, ERR-20-021, ERR-20-062 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`.
+**Ghi chú.** Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`. Mục đầu mối `CONTACTS` yêu cầu tối thiểu hai đầu mối `TENANT_ADMIN` (hai thư công vụ khác nhau) và một `TECHNICAL`.
 :::
 
 #### API-20-006 · Kiểm tra lại sẵn sàng trước khi chạy saga
@@ -783,7 +783,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-20-002, ERR-20-004, ERR-20-009, ERR-20-010, ERR-20-021, ERR-20-022 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Thêm đầu mối.
+**Ghi chú.** Thêm đầu mối của tenant. Loại `TENANT_ADMIN` cần tối thiểu hai đầu mối với hai thư công vụ khác nhau (Q403, chốt 27/11/2026): thư thứ nhất dùng cho quản trị tỉnh đầu tiên mà API-12-080 tạo ở `S03_REALM`, thư thứ hai để PA tạo TA thứ hai ở PH-12 trước khi kích hoạt.
 :::
 
 #### API-20-009 · Sửa, ngừng đầu mối
@@ -905,7 +905,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-20-002, ERR-20-004, ERR-20-006, ERR-20-009, ERR-20-010, ERR-20-016, ERR-20-017, ERR-20-062 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Trả `202` kèm `Location` tới lần chạy. `runKind = INITIAL` chạy 17 bước `S01_RECORD` … `S17_ACTIVATE`; `SUPPLEMENT` chỉ chạy các bước, phân hệ nêu ở `steps`, `modules`. Mỗi tenant chỉ một lần chạy tại một thời điểm (ERR-20-016). Bước bất đồng bộ chờ phân hệ báo qua API-20-166.
+**Ghi chú.** Trả `202` kèm `Location` tới lần chạy. `runKind = INITIAL` chạy 17 bước `S01_RECORD` … `S17_ACTIVATE`; `SUPPLEMENT` chỉ chạy các bước, phân hệ nêu ở `steps`, `modules`. Mỗi tenant chỉ một lần chạy tại một thời điểm (ERR-20-016). Bước bất đồng bộ chờ phân hệ báo qua API-20-166. `S03_REALM` gọi API-12-080 tạo realm và quản trị tỉnh đầu tiên; quản trị tỉnh thứ hai (mỗi tenant tối thiểu hai TA, Q403) do PA tạo ở PH-12 (API-12-003) từ thư công vụ của đầu mối `TENANT_ADMIN` thứ hai trước `S17_ACTIVATE`.
 :::
 
 #### API-20-014 · Các lần chạy saga của tenant
@@ -1145,7 +1145,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `503`; mã lỗi của thao tác: ERR-20-002, ERR-20-004, ERR-20-005, ERR-20-006, ERR-20-009, ERR-20-010, ERR-20-020, ERR-20-021, ERR-20-062, ERR-00-428 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Chuyển `ACTIVE`, gửi thông báo bàn giao cho đầu mối `TENANT_ADMIN`, đẩy KPI-12 sang PH-16. Cần kiểm tra khói đạt (ERR-20-020) và có đầu mối (ERR-20-021). Phát EVT-20-03.
+**Ghi chú.** Chuyển `ACTIVE`, gửi thông báo bàn giao cho đầu mối `TENANT_ADMIN`, đẩy KPI-12 sang PH-16. Cần kiểm tra khói đạt (ERR-20-020) và có đầu mối (ERR-20-021). Mỗi tenant phải có tối thiểu hai TA (quản trị tỉnh) hiệu lực khi kích hoạt (Q403, chốt 27/11/2026): hệ thống kiểm bằng `GET /users` của PH-12 lọc `roleCode=TENANT_ADMIN`, `state=ACTIVE` hoặc `PENDING_ACTIVATION`; dưới hai thì ERR-20-021. Sau khi kích hoạt, PH-12 chặn mọi thao tác làm số TA xuống dưới hai (ERR-12-046). Phát EVT-20-03.
 :::
 
 #### API-20-024 · Thời gian khởi tạo theo tenant, theo bước
@@ -5189,5 +5189,6 @@ Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 200
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153 (`apisix-int`, `ops:merge-transfer`), bên nhận sự kiện, mã kế hoạch `SN-yyyy-nnn`, `maxItems` của `sourceTenants`; chốt Q417: không thêm quyền PERM-20 mới cho API-20-137, 139, 161 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: ghi tối thiểu hai TA ở API-20-005 (kiểm sẵn sàng), API-20-008 (đầu mối), API-20-013 (TA thứ hai tạo trước `S17_ACTIVATE`), API-20-023 (kích hoạt); sinh lại từ nguồn |
 
 : Lịch sử phiên bản

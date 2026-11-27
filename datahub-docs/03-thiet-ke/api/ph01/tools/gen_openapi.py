@@ -211,7 +211,7 @@ X = {
   "063": ("listReplicaSystems", None, "ReplicaPage", ["003"], "Đồng bộ gia tăng bằng `updatedSince`; dùng khi khởi tạo bản sao và đối chiếu, còn lại nghe EVT-01-03. Không có liên hệ cá nhân, bí mật.",
           [Q("updatedSince", TS), QA("status", R("SystemStatus")), Q("systemCode", R("SystemCode")), "Page", "ReplicaSize"]),
   "064": ("getReplicaSystem", None, "ReplicaSystem", [], "Tra một HTTT (cùng trường rút gọn với API-01-063).", []),
-  "089": ("receiveSuspensionProposal", "SuspensionProposal", "SuspensionProposalAck", ["005", "048"],
+  "089": ("receiveSuspensionProposal", "SuspensionProposal", "SuspensionProposalAck", ["001", "005", "048"],
           "PH-13 gửi đề xuất tạm ngừng HTTT từ cảnh báo an ninh (FR-13-053, API-13-060); PH-01 không đổi trạng thái HTTT. Kiểm token dịch vụ và tenant của token; HTTT phải `ACTIVE` (đang `SUSPENDED` trả ERR-01-048, trạng thái khác ERR-01-005). Tạo một việc khẩn trong hộp việc cho mọi SO của tenant (loại `ph01.review-suspension-proposal`, mức khẩn, liên kết tới UI-01-11 hành động khẩn) qua `notify_outbox`; lũy đẳng theo `(systemCode, alertId)` (lặp trả `duplicate = true`, không tạo việc thứ hai). SO quyết định bằng thao tác khẩn API-01-054 (FR-01-032) với `incidentRef` của đề xuất, hoặc đóng việc không tạm ngừng; thao tác khẩn vẫn do SO tự quyết, không có đường tự động.", []),
   "087": ("receiveProvisioningCallback", "ProvisioningCallback", "CallbackAck", ["053"],
           "PH-12, PH-03 trả kết quả bước saga ở trạng thái `ACCEPTED` khi `onboarding.saga.async-callback = true` (SDD §4.6). Kiểm token dịch vụ, `sagaId` và tenant của token; lũy đẳng theo `(sagaId, step)` (lặp trả `duplicate = true`). Quá 5 phút không có callback thì bước coi như thất bại.", []),

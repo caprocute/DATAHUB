@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH04
 ten: Thiết kế chi tiết phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, trưởng nhóm PH-04, lập trình viên L-INT và L-RT, lập trình viên giao diện, kiểm thử viên, nhóm vận hành
@@ -544,7 +544,7 @@ Bốn thành phần lõi nghiệp vụ của control plane; thuật toán chi ti
 
 **FR hiện thực.** FR-04-025, 082.
 
-**Giao diện vào.** API-04-028, 080…082.
+**Giao diện vào.** API-04-028, 097, 080…082, 112.
 
 **Phụ thuộc ra.** `VersionService`, `ValidationEngine`.
 
@@ -1021,7 +1021,7 @@ Cô lập lỗi: mỗi luồng nạp riêng; lỗi nạp một luồng không ch
 
 **FR hiện thực.** FR-04-042, 044, 045, 075.
 
-**Giao diện vào.** API-04-054, 055, 056; Argo CD; nhịp tim.
+**Giao diện vào.** API-04-054, 104, 105, 106, 055, 056; Argo CD; nhịp tim.
 
 **Phụ thuộc ra.** `ValidationEngine` mức `PUBLISH`, `FreezeWindowGuard`, `GitConfigRepository`, ConfigMap `dh-runtime-manifests`.
 
@@ -1601,7 +1601,7 @@ Cô lập:
    - `fromNodeId`: các chặng trước đánh dấu `SKIPPED`, bản tin đặt tại chặng đó.
 4. `StepTracer` (Camel `Tracer` tùy biến, `BacklogTracer` tắt) phát sự kiện mỗi chặng: `nodeId`, `status`, `startOffsetMs`, `durationMs`, tiêu đề đã lọc, thân đã che (≤ 64 KiB mỗi lần, cắt có đánh dấu); gửi về `POST /internal/v1/testruns/{id}/steps` theo lô 200 ms.
 5. Hết luồng hoặc hết thời hạn: chạy khẳng định (§8.3), gửi kết quả cuối; thân đầy đủ (khi `captureBodies`) ghi `s3://dh-int-testrun/{tenant}/{runId}/{nodeId}-{in|out}.json` có khóa mã hóa phía máy chủ, vòng đời xóa sau `04.test.body-retention-days`.
-6. `dh-integration` ghi `test_run_step`, cập nhật trạng thái, đẩy SSE (API-04-042: sự kiện `step`, `status`, `completed`), phát EVT-04-10.
+6. `dh-integration` ghi `test_run_step`, cập nhật trạng thái, đẩy SSE (API-04-099: sự kiện `step`, `status`, `completed`), phát EVT-04-10.
 
 ```{.mermaid caption="Trình tự một lần chạy thử ở chế độ MOCK"}
 sequenceDiagram
@@ -1786,7 +1786,7 @@ Chương này mô tả tạm dừng, tiếp tục, dừng khẩn mà vẫn giữ
 
 **FR hiện thực.** FR-04-050; BR-04-018.
 
-**Giao diện vào.** API-04-061.
+**Giao diện vào.** API-04-061, 107, 108.
 
 **Phụ thuộc ra.** OpenBao `transit/keys/dh-integration-cmd`; Kafka; `GitConfigRepository`.
 
@@ -1979,7 +1979,7 @@ Chương này liệt kê khóa cấu hình, chỉ số control plane và ước 
 
 **FR hiện thực.** FR-04-084; BR-04-022.
 
-**Giao diện vào.** API-04-090; `ReleaseService`, `CommandService`, `TestRunService`.
+**Giao diện vào.** API-04-090, 113; `ReleaseService`, `CommandService`, `TestRunService`.
 
 **Phụ thuộc ra.** PH-18.
 
@@ -2115,3 +2115,4 @@ Các điểm dưới cần tập khác đối chiếu; tài liệu này không s
 | 0.1 | 25/11/2026 | Bản đầu | Nhóm phân hệ PH-04 |
 | 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-SDD: chương Giới thiệu, danh sách và bảng đặc tả 10 mục cho 28 thành phần, bốn sơ đồ trình tự, chú thích bảng và hình, đề nghị đồng bộ; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |
 | 0.3 | 27/11/2026 | Đồng bộ chéo cuối: mức phân loại Hạn chế, dh-data-classes | Nhóm viết tài liệu (Claude); chốt câu hỏi mở đợt đồng bộ: Q410 |
+| 0.4 | 27/11/2026 | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8) | Nhóm viết tài liệu (Claude) |

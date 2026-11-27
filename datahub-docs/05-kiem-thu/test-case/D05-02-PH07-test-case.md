@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH07
 ten: Kịch bản và test case phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-07, Kiến trúc sư, ATTT, Cán bộ nghiệp vụ nghiệm thu, Chủ đầu tư
@@ -6240,7 +6240,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 **Mục tiêu.** Xác nhận chỉ HTTT được cấp quyền mới khai thác được danh mục hạn chế, cấp quyền có hiệu lực theo thời hạn và mất tác dụng ngay khi HTTT bị đình chỉ.
 
-**Phủ.** FR-07-052; BR-07-019; API-07-075; ERR-07-003, 009, 018, 030.
+**Phủ.** FR-07-052; BR-07-019; API-07-075, 079; ERR-07-003, 009, 018, 030.
 
 #### TC-07-268 · Thay danh sách cấp quyền và khai thác
 
@@ -6251,7 +6251,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 **Tự động.** API.
 
-**Truy vết.** FR-07-052 · BR-07-019 · API-07-075.
+**Truy vết.** FR-07-052 · BR-07-019 · API-07-075, 079.
 
 **Tiền điều kiện, dữ liệu.** CAT-RES cấp cho `HT-DATDAI`.
 
@@ -7524,5 +7524,6 @@ Tệp Gherkin dùng làm đặc tả có thể đọc được cho cán bộ ngh
 | 0.2 | 2026-11-25 | Đồng bộ mã lỗi theo bảng ERR-07 của D03-04-PH07 |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp: mỗi test case một khối đặc tả bảy mục, công cụ `tc_parse.py` đọc khối mới, sinh lại ma trận, Gherkin và bảng tính |
 | 0.4 | 2026-11-27 | Đồng bộ chéo cuối: TC rò rỉ tenant coi chuỗi rỗng là thiếu tenant, sinh lại gherkin và xlsx |
+| 0.5 | 2026-11-27 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, dẫn chiếu đã đổi theo ngữ cảnh; sinh lại gherkin và xlsx |
 
 : Lịch sử phiên bản

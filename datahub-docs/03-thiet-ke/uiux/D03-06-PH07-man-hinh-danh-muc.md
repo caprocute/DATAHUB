@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH07
 ten: Thiết kế giao diện màn hình phân hệ Danh mục dùng chung
-phien_ban: 0.5
+phien_ban: 0.6
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện, Thiết kế UX/UI, Phân tích nghiệp vụ, Kiểm thử, Kiến trúc sư
@@ -726,7 +726,7 @@ Tab chỉ hiện với danh mục `NATIONAL` hoặc `HYBRID` mở rộng từ da
 
 ### 8.11. Tab Quyền khai thác
 
-Tab chỉ hiện khi `classification = RESTRICTED` (FR-07-052). Bảng liệt kê HTTT được cấp quyền (API-07-075 GET): Hệ thống thông tin (tên, mã từ PH-01), Phạm vi (`rdm.read`, `rdm.query`), Người cấp, Ngày cấp, Hết hạn. Người có `PERM-07-grant` (đề xuất bổ sung D02-08) thấy nút "Cấp quyền" mở `CMP-Drawer` với: chọn HTTT (`Select` tìm từ xa danh sách HTTT thành viên PH-01, bắt buộc), phạm vi (`Checkbox.Group`, ít nhất một), ngày hết hạn (`DatePicker`, tùy chọn, phải sau hôm nay), lý do (bắt buộc, 10–500 ký tự). Lưu bằng API-07-075 PUT toàn bộ danh sách với `If-Match`. Thu hồi một quyền là xóa khỏi danh sách và PUT lại, có xác nhận "Thu hồi quyền khai thác của {HTTT}? Các lượt gọi tiếp theo của hệ thống này sẽ bị từ chối (ERR-07-030)."
+Tab chỉ hiện khi `classification = RESTRICTED` (FR-07-052). Bảng liệt kê HTTT được cấp quyền (API-07-075 GET): Hệ thống thông tin (tên, mã từ PH-01), Phạm vi (`rdm.read`, `rdm.query`), Người cấp, Ngày cấp, Hết hạn. Người có `PERM-07-grant` (đề xuất bổ sung D02-08) thấy nút "Cấp quyền" mở `CMP-Drawer` với: chọn HTTT (`Select` tìm từ xa danh sách HTTT thành viên PH-01, bắt buộc), phạm vi (`Checkbox.Group`, ít nhất một), ngày hết hạn (`DatePicker`, tùy chọn, phải sau hôm nay), lý do (bắt buộc, 10–500 ký tự). Lưu bằng API-07-079 PUT toàn bộ danh sách với `If-Match`. Thu hồi một quyền là xóa khỏi danh sách và PUT lại, có xác nhận "Thu hồi quyền khai thác của {HTTT}? Các lượt gọi tiếp theo của hệ thống này sẽ bị từ chối (ERR-07-030)."
 
 ### 8.12. Tab Lịch sử
 
@@ -2130,5 +2130,6 @@ Luồng API xử lý Phụ lục B trong một lần sửa `openapi-rdm.yaml`; k
 | 0.3 | 2026-11-26 | Đối chiếu D03-05-01…04 và D03-06-00, dùng tên token và thành phần chuẩn |
 | 0.4 | 2026-11-26 | Nâng theo chuẩn kết hợp: khối đặc tả đầu mỗi màn, ảnh hi-fi ngay dưới khối, mục người đọc, chú thích bảng và hình |
 | 0.5 | 2026-11-27 | Chốt câu hỏi mở đợt đồng bộ: Q442, Q443 |
+| 0.6 | 2026-11-27 | Tách mã API trùng: PUT access-grants nhận mã API-07-079, dẫn chiếu đã đổi theo ngữ cảnh |
 
 : Lịch sử phiên bản

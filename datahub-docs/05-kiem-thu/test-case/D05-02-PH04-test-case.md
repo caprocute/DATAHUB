@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH04
 ten: Kịch bản và test case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-04 (L-INT, frontend console), Kiến trúc sư, ATTT, Vận hành, Cán bộ nghiệm thu, Chủ đầu tư
@@ -63,7 +63,7 @@ Ca được viết để kiểm thử viên chạy được ngay trên SIT với
 
 PH-04 có hai phần chạy rất khác nhau, nên được kiểm thử theo hai trục:
 
-- **Control plane** `dh-integration`, module `flow`: API REST `/api/integration/v1` (API-04-001…091) và giao diện UI-04-01…21. Rủi ro chính là phân quyền, bốn mắt, xung đột soạn đồng thời, mất dữ liệu khi quay vòng YAML, và triển khai phiên bản chưa duyệt.
+- **Control plane** `dh-integration`, module `flow`: API REST `/api/integration/v1` (API-04-001…091 và API-04-095…113) và giao diện UI-04-01…21. Rủi ro chính là phân quyền, bốn mắt, xung đột soạn đồng thời, mất dữ liệu khi quay vòng YAML, và triển khai phiên bản chưa duyệt.
 - **Data plane** `dh-runtime` và `dh-runtime-sandbox`: các luồng Camel đã phát hành. Rủi ro chính là rò rỉ tenant, lộ dữ liệu cá nhân trong log, ghi CSDL nguồn, nhận lệnh giả mạo, và mất bản tin.
 
 Kế hoạch kiểm thử tổng thể ở D05-01. Tài liệu này kế thừa mọi quy định chung từ đó và theo đúng độ sâu của mẫu D05-02-PH07, D05-02-PH05. Thành phần ngoài phạm vi chỉ được giả lập, liệt kê ở mục 1.1.
@@ -121,7 +121,7 @@ Mục 1 nêu đối tượng, mức, môi trường, công cụ, tiêu chí và 
 
 | Đối tượng | Đơn vị triển khai | Ghi chú |
 |---|---|---|
-| Module `flow` (package `vn.datahub.integration.flow`) | `dh-integration` (Spring Boot 4, Java 21, Spring Modulith) | API-04-001…091, `ValidationEngine`, `SecretDetector`, `SqlPolicy`, `GitOpsWriter`, `CommandSigner`, `HeartbeatConsumer`, outbox `ph04.outbox` |
+| Module `flow` (package `vn.datahub.integration.flow`) | `dh-integration` (Spring Boot 4, Java 21, Spring Modulith) | API-04-001…091, API-04-095…113, `ValidationEngine`, `SecretDetector`, `SqlPolicy`, `GitOpsWriter`, `CommandSigner`, `HeartbeatConsumer`, outbox `ph04.outbox` |
 | Thư viện runtime `dh-runtime-lib` | Nhúng trong `dh-runtime` | Kamelet nền `dh-*-action`, `routeConfiguration` `dh-default-config`, `TenantGuard`, `FlowLoader`, `CommandListener`, hàm JQ `dh_map` |
 | Ảnh runtime theo hồ sơ | `dh-runtime` (Camel Quarkus 3.33.2, Camel 4.18) | `core-native`, `files-native`, `soap-jvm`, `legacy-jvm` |
 | Sandbox | `dh-runtime-sandbox` (namespace `dh-sandbox`, Q04-20) | Nhận lần chạy thử từ Valkey Stream `dh:int:testrun:queue` |
@@ -672,7 +672,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API.
 
-**Truy vết.** FR-04-007 · API-04-002 · ERR-04-027, 028.
+**Truy vết.** FR-04-007 · API-04-002, 095 · ERR-04-027, 028.
 
 **Tiền điều kiện, dữ liệu.** U-T68-TA.
 
@@ -694,7 +694,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API.
 
-**Truy vết.** FR-04-007 · BR-04-021 · API-04-004, 022 · UC-04-01.
+**Truy vết.** FR-04-007 · BR-04-021 · API-04-004, 096, 022 · UC-04-01.
 
 **Tiền điều kiện, dữ liệu.** U-T68-IA1 (mức `MAINTAIN` trên WS-HOTICH); F-HT v4 `DRAFT`.
 
@@ -2566,7 +2566,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 ### TS-04-13 · Ca kiểm thử của luồng
 
-**Phủ.** FR-04-031; BR-04-004; UC-04-09; API-04-044; UI-04-13; ERR-04-030.
+**Phủ.** FR-04-031; BR-04-004; UC-04-09; API-04-044, 101, 102, 103; UI-04-13; ERR-04-030.
 
 #### TC-04-080 · Tạo ca kiểm thử và chạy tất cả <!--k:case-->
 
@@ -2577,7 +2577,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-04-031 · API-04-044, 040 · UI-04-13 · UC-04-09.
+**Truy vết.** FR-04-031 · API-04-044, 101, 040 · UI-04-13 · UC-04-09.
 
 **Tiền điều kiện, dữ liệu.** F-HT v4.
 
@@ -2599,7 +2599,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API.
 
-**Truy vết.** FR-04-031 · API-04-044 · ERR-04-030, 006.
+**Truy vết.** FR-04-031 · API-04-044, 101, 102 · ERR-04-030, 006.
 
 **Tiền điều kiện, dữ liệu.** Ca KS-01 đã đạt trên băm cũ.
 
@@ -2973,7 +2973,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Mục tiêu.** Chỉ phiên bản `APPROVED` đi vào runtime, và chỉ qua Git. Thứ tự môi trường được giữ. `SYNCED` chỉ khi mọi bản sao báo đúng băm. Nhóm ca bắt buộc 100%.
 
-**Phủ.** FR-04-042, 045; BR-04-012, 018, 019, 022; UC-04-12; API-04-054, 056; UI-04-15; ERR-04-005, 009, 022, 023, 029, 041; EVT-04-06, 07, 12; NFR-04-009.
+**Phủ.** FR-04-042, 045; BR-04-012, 018, 019, 022; UC-04-12; API-04-054, 104, 105, 106, 056; UI-04-15; ERR-04-005, 009, 022, 023, 029, 041; EVT-04-06, 07, 12; NFR-04-009.
 
 #### TC-04-096 · Phát hành lên TEST tới SYNCED <!--k:deploy-sync-->
 
@@ -2984,7 +2984,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, GO, E2E.
 
-**Truy vết.** FR-04-042 · BR-04-012 · API-04-054 · UI-04-15 · UC-04-12 · EVT-04-06, 07, 12.
+**Truy vết.** FR-04-042 · BR-04-012 · API-04-104, 106 · UI-04-15 · UC-04-12 · EVT-04-06, 07, 12.
 
 **Tiền điều kiện, dữ liệu.** F-HT v4 `APPROVED`; IA1.
 
@@ -3074,7 +3074,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, GO.
 
-**Truy vết.** FR-04-042 · API-04-054 · ERR-04-022.
+**Truy vết.** FR-04-042 · API-04-104 · ERR-04-022.
 
 **Tiền điều kiện, dữ liệu.** Gitea trả `500` cho mọi lệnh đẩy (Chaos Mesh hoặc WireMock trước Gitea).
 
@@ -3157,7 +3157,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-04-042, 081 · UC-04-12 · API-04-054 · UI-04-15 · ERR-04-009, 042.
+**Truy vết.** FR-04-042, 081 · UC-04-12 · API-04-104 · UI-04-15 · ERR-04-009, 042.
 
 **Tiền điều kiện, dữ liệu.** U-T68-IA1; F-HT v4 `APPROVED` nhưng chặng `deliver` dùng topic vừa bị thu hồi quyền (VR-05 mức `PUBLISH` thành `ERROR`); F-SOAP v3 `APPROVED` soạn trên `cv-1` trong khi catalog hiện hành là `cv-2`.
 
@@ -3179,7 +3179,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** GO.
 
-**Truy vết.** FR-04-042, 045 · BR-04-012 · UC-04-12 · API-04-054 · EVT-04-06, 07, 12 · NFR-04-009.
+**Truy vết.** FR-04-042, 045 · BR-04-012 · UC-04-12 · API-04-104, 106 · EVT-04-06, 07, 12 · NFR-04-009.
 
 **Tiền điều kiện, dữ liệu.** U-T68-IA1; F-HT v4 `APPROVED`, đã `SYNCED`, `HEALTHY` ở TEST và STAGING đủ thời gian ổn định; nhánh `env/prod` của `dh-flows-t68` được bảo vệ; có thể giữ nhịp tim của runtime PROD 60 giây (D03-02-PH04 §5.5, hình phát hành tới SYNCED).
 
@@ -3284,7 +3284,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Mục tiêu.** Thay Start/Stop qua JMX-Jolokia của Bus cũ bằng lệnh có ký, hạn ngắn, xác nhận theo từng bản sao. Mọi trạng thái mong muốn cuối cùng phải về Git. Nhóm ca bắt buộc 100% (thẻ `signed-command`).
 
-**Phủ.** FR-04-050; BR-04-017, 018; UC-04-14, 15; API-04-061; UI-04-02; ERR-04-023, 024, 025; EVT-04-08, 11, 13; NFR-04-010; LGC-BUS-009, 012.
+**Phủ.** FR-04-050; BR-04-017, 018; UC-04-14, 15; API-04-061, 107, 108; UI-04-02; ERR-04-023, 024, 025; EVT-04-08, 11, 13; NFR-04-010; LGC-BUS-009, 012.
 
 #### TC-04-108 · Tạm dừng một route ở PROD <!--k:pause-->
 
@@ -3381,7 +3381,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, Chaos.
 
-**Truy vết.** FR-04-050 · API-04-061 · ERR-04-024.
+**Truy vết.** FR-04-050 · API-04-061, 107, 108 · ERR-04-024.
 
 **Tiền điều kiện, dữ liệu.** Chaos Mesh cắt mạng Kafka của bản sao thứ hai.
 
@@ -4223,7 +4223,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-04-080 · API-04-074, 072 · UI-04-17 · UC-04-21.
+**Truy vết.** FR-04-080 · API-04-110, 111, 072, 109 · UI-04-17 · UC-04-21.
 
 **Tiền điều kiện, dữ liệu.** `smb` có `policy = DENIED`; IE1, U-PA.
 
@@ -4245,7 +4245,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, IT.
 
-**Truy vết.** FR-04-080 · BR-04-014 · API-04-072.
+**Truy vết.** FR-04-080 · BR-04-014 · API-04-109.
 
 **Tiền điều kiện, dữ liệu.** U-T68-TA; `exec` bị cấm ở nền.
 
@@ -4346,7 +4346,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 ### TS-04-26 · Chuyển Camel XML của Bus cũ
 
-**Phủ.** FR-04-082; UC-04-20; API-04-028; UI-04-18; ERR-04-032; LGC-BUS-020…029, LGC-TOOL-001.
+**Phủ.** FR-04-082; UC-04-20; API-04-028, 097; UI-04-18; ERR-04-032; LGC-BUS-020…029, LGC-TOOL-001.
 
 #### TC-04-151 · Chuyển gói XML ba route <!--k:legacy-ok-->
 
@@ -4357,7 +4357,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-04-082 · API-04-028 · UI-04-18 · UC-04-20.
+**Truy vết.** FR-04-082 · API-04-028, 097 · UI-04-18 · UC-04-20.
 
 **Tiền điều kiện, dữ liệu.** XML-OK; bảng ánh xạ kết nối cũ → PH-05 (`connectionMap`).
 
@@ -4379,7 +4379,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API.
 
-**Truy vết.** FR-04-082 · API-04-028 · ERR-04-032, 046.
+**Truy vết.** FR-04-082 · API-04-028, 097 · ERR-04-032, 046.
 
 **Tiền điều kiện, dữ liệu.** XML-BAD, XML-EXEC, XML có thực thể ngoài (XXE `<!ENTITY x SYSTEM "file:///etc/passwd">`), tệp 3 MiB, tệp `.exe` đổi tên.
 
@@ -4416,7 +4416,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 ### TS-04-27 · Tham số PH-04 và đóng băng thay đổi
 
-**Phủ.** FR-04-084; BR-04-022; UC-04-01 (mục 7.1); API-04-090; UI-04-20; ERR-04-010, 041; LGC-BUS-031.
+**Phủ.** FR-04-084; BR-04-022; UC-04-01 (mục 7.1); API-04-090, 113; UI-04-20; ERR-04-010, 041; LGC-BUS-031.
 
 #### TC-04-153 · Đọc tham số và đặt khoảng đóng băng <!--k:params-->
 
@@ -4471,7 +4471,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 
 **Tự động.** API.
 
-**Truy vết.** FR-04-084 · API-04-090 · ERR-04-010.
+**Truy vết.** FR-04-084 · API-04-113 · ERR-04-010.
 
 **Tiền điều kiện, dữ liệu.** U-T68-TA.
 
@@ -5630,3 +5630,4 @@ Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở
 | 0.1 | 2026-11-25 | Bản đầu: 32 kịch bản, 186 ca, 12 UAT, mẫu tự động hóa, công cụ sinh ma trận |
 | 0.2 | 2026-11-26 | Theo chuẩn trình bày D00-04-KTB: Giới thiệu đủ sáu mục; bảng danh sách test case 3.3; chuyển 186 ca (kể cả 14 ca hiệu năng) sang khối đặc tả, giữ nguyên dữ liệu, bước, mong đợi, truy vết; thêm 16 ca (TC-04-187…202): ngoại lệ UC-04-05 E5, 06 E4, 12 E1, 17 E7, 18 E2; ca đầu cuối cho bốn trình tự SDD; di trú W2 khi schema có chủ khác; trạng thái màn UI-04-09, 16, 17, 18, 19, 21; `fill_doc.py`, chú thích bảng ở ma trận; mục 11 đề nghị đồng bộ |
 | 0.3 | 2026-11-27 | Đồng bộ chéo cuối: dh-dlq-error-code, TC-04-158, sinh lại gherkin và xlsx |
+| 0.4 | 2026-11-27 | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8); sinh lại mục 8, gherkin và xlsx |

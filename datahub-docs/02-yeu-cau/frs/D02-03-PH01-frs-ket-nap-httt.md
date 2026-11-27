@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH01
 ten: Đặc tả yêu cầu chức năng phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị tỉnh, kỹ sư dh-connect, kiểm thử viên
@@ -2793,7 +2793,7 @@ Hình cho thấy thứ tự quyền lực: cắt trước, hỏi sau, nhưng b�
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm token dịch vụ, scope và tenant của token (sai: `403`, ERR-01-052).
+1. Hệ thống kiểm token dịch vụ, scope và tenant của token (thiếu hoặc sai token: `401`; sai scope hoặc tenant: `403`; cùng ERR-01-052).
 2. Hệ thống kiểm HTTT tồn tại trong tenant (ERR-01-001) và đang `ACTIVE` (đang `SUSPENDED`: ERR-01-048; trạng thái khác: ERR-01-005).
 3. Hệ thống kiểm lũy đẳng theo `(systemCode, alertId)`; đã có thì trả `duplicate = true` và không tạo việc thứ hai.
 4. Trong cùng giao dịch, hệ thống ghi bản ghi `notify_outbox` loại việc khẩn `ph01.review-suspension-proposal` cho mọi SO của tenant, kèm lý do, mức nghiêm trọng, liên kết tới UI-01-11 "Xử lý khẩn" và liên kết sâu về cảnh báo ở PH-13; việc đi tới hộp việc chung của PH-18 (thử lại tới 24 giờ nếu PH-18 lỗi, không mất đề xuất).
@@ -2807,7 +2807,8 @@ Hình cho thấy thứ tự quyền lực: cắt trước, hỏi sau, nhưng b�
 - Không thấy HTTT hoặc thuộc tenant khác: ERR-01-001 (404).
 - HTTT không `ACTIVE`: ERR-01-005 (409); đang tạm ngừng: ERR-01-048 (409).
 - Thân yêu cầu sai lược đồ: ERR-01-003 (400).
-- Thiếu hoặc sai scope: ERR-01-052 (403).
+- Thiếu hoặc sai token dịch vụ: ERR-01-052 (401).
+- Sai scope hoặc tenant của token không trùng tenant của HTTT: ERR-01-052 (403).
 
 **Đầu ra.** `202`; `{ "systemCode", "alertId", "taskId", "accepted", "duplicate" }`.
 
@@ -4195,3 +4196,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo chuẩn trình bày kết hợp: tóm tắt cho hội đồng, giới thiệu sáu ý, 51 yêu cầu chức năng theo khối đặc tả 17 mục, 34 quy tắc nghiệp vụ, 22 yêu cầu phi chức năng, 50 mã lỗi, 15 sự kiện, 86 API, 17 màn hình, truy vết 4 mục LGC và 15 FR của SRS cũ, 16 câu hỏi mở và 16 đề nghị đồng bộ. Nguồn: D02-02 SRS, D03-01 SAD §4, D02-07 (DD-03…05), D02-08, D03-07, D00-03 phần A, `docs/07-srs/SRS-PH-01-onboarding.md` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo bảy tập: thêm API-01-087, 088 và ERR-01-051…054 (88 API, 54 mã lỗi); bổ sung 21 câu thông báo ở §9.2 cho khớp D03-06; FR-01-001, 020, 024, 034, 035, 044, 047, 050 cập nhật đầu ra và API theo D03-04 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1; chốt câu hỏi mở đợt đồng bộ: Q380 (PH-12 không nghe EVT-01-11), Q381 (nhật ký SANDBOX lấy từ PH-13), Q382 (Q01-02), Q389 (Q01-14); Q395 (hai API đọc nội bộ cho PH-15, mã dự trữ), Q390, Q401, Q403, Q408 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | FR-01-053: tách dòng 401 (thiếu hoặc sai token dịch vụ) khỏi 403 (sai scope, tenant) cho khớp OpenAPI; ERR-01-001 (404) có trong hợp đồng API-01-089 |

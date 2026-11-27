@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH12
 ten: Thiết kế giao diện màn hình phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, cán bộ ATTT, hội đồng thẩm định
@@ -354,7 +354,7 @@ Bảng này là nguồn chuẩn cho mọi câu hiển thị của PH-12. Câu n�
 | ERR-12-042 | "Realm đang được đối chiếu hoặc áp cấu hình. Đợi xong rồi thử lại." | `CMP-Banner` |
 | ERR-12-043 | "Giá trị vượt giới hạn cho phép ({tối thiểu} đến {tối đa})." | Dưới trường tham số |
 | ERR-12-044 | "Thông tin này vừa được người khác sửa. Tải lại trang để xem bản mới nhất." | `CMP-ConflictDialog` (ST-13) |
-| ERR-12-046 | "Tỉnh phải còn ít nhất một quản trị tỉnh đang hoạt động." | Hộp xác nhận |
+| ERR-12-046 | "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn {n}. Bổ sung quản trị tỉnh khác trước khi thực hiện." | Hộp xác nhận |
 | ERR-12-047 | "Trường này do thư mục LDAP quản lý, chỉ đọc. Sửa ở thư mục của tỉnh." | Trường chỉ đọc kèm biểu tượng khóa |
 | ERR-12-111 | "Tên đăng nhập hoặc mật khẩu không đúng." | Trang đăng nhập |
 | ERR-12-112 | "Tài khoản tạm khóa do đăng nhập sai nhiều lần. Thử lại sau {n} phút." | Trang đăng nhập |
@@ -529,9 +529,9 @@ Bảng sau liệt kê các hành động trên thanh tiêu đề của màn Chi 
 
 | Hành động | Hiện khi | Hộp thoại | API | Ghi chú |
 |---|---|---|---|---|
-| Khóa | `PERM-12-user-lock`, trạng thái `ACTIVE` | `CMP-ReasonDialog` | API-12-005 | Không áp cho chính mình (ERR-12-013) |
+| Khóa | `PERM-12-user-lock`, trạng thái `ACTIVE` | `CMP-ReasonDialog`; khóa TA làm tỉnh còn dưới hai TA báo ERR-12-046, trừ khi SO nhập mã sự cố ATTT (`incidentRef`), khi đó hộp thoại cảnh báo "Tỉnh sẽ còn dưới hai quản trị tỉnh; hệ thống sẽ báo khẩn cho SO và PA và tạo việc bổ sung" | API-12-005 | Không áp cho chính mình (ERR-12-013) |
 | Mở khóa | `LOCKED`, `BLOCKED` | `CMP-ReasonDialog` | API-12-006 | `BLOCKED` chỉ TA, SO mở |
-| Vô hiệu, Kích hoạt lại | `PERM-12-user-lock` | `CMP-ReasonDialog`; vô hiệu quản trị tỉnh cuối cùng báo ERR-12-046 | API-12-007, 008 | Không xóa vật lý (BR-12-035) |
+| Vô hiệu, Kích hoạt lại | `PERM-12-user-lock` | `CMP-ReasonDialog`; vô hiệu quản trị tỉnh làm tỉnh còn dưới hai TA báo ERR-12-046 | API-12-007, 008 | Không xóa vật lý (BR-12-035); với TA, nút có thể tắt kèm tooltip lấy từ `disabledReasons` của API |
 | Buộc đăng xuất | `PERM-12-user-lock`, có phiên | `CMP-ConfirmDialog` nêu số phiên | API-12-017 | Hiệu lực khi token hết hạn tối đa 5 phút |
 | Thu hồi truy cập | `PERM-12-user-lock` | `CMP-ReasonDialog` kèm "hiệu lực trong 60 giây" | API-12-018 | Khác buộc đăng xuất: chặn cả token đang sống |
 | Đặt lại yếu tố thứ hai | `PERM-12-mfa-reset`; tài khoản quản trị chuyển UI-12-17 chờ SO | `CMP-ReasonDialog` + xác thực lại mức 3 | API-12-015 | ERR-12-017 khi cần quản trị cấp trên |
@@ -546,7 +546,7 @@ Bảng sau mô tả các tab của màn chi tiết người dùng, mỗi tab nê
 | Tab | Nội dung | `CMP-*` | API |
 |---|---|---|---|
 | Tổng quan | Họ tên, tên đăng nhập, thư, đơn vị, người quản lý trực tiếp, nguồn đăng nhập, ngày tạo, đăng nhập gần nhất | `CMP-DescriptionList` | API-12-002 |
-| Vai trò | Bảng vai trò đang gán (vai trò, phạm vi, hiệu lực, người gán, lý do); nút "Gán vai trò" mở UI-12-06; "Gỡ" từng dòng | `CMP-DataTable`, `CMP-Drawer` | API-12-025…027 |
+| Vai trò | Bảng vai trò đang gán (vai trò, phạm vi, hiệu lực, người gán, lý do); nút "Gán vai trò" mở UI-12-06; "Gỡ" từng dòng (gỡ `TENANT_ADMIN` làm tỉnh còn dưới hai TA báo ERR-12-046, nút tắt kèm tooltip khi API trả `disabledReasons`) | `CMP-DataTable`, `CMP-Drawer` | API-12-025…027 |
 | Quyền hiệu lực | Danh sách `PERM-*` theo phân hệ, mỗi quyền ghi vai trò sinh ra nó; ô tìm; nút "Vì sao?" mở giải thích | `CMP-DataTable`, `CMP-Popover` | API-12-013 |
 | Yếu tố xác thực | Loại, tên gọi, ngày đăng ký, lần dùng cuối; không hiện giá trị | `CMP-DataTable` | API-12-002 |
 | Phiên | Thiết bị, địa chỉ IP che một phần, bắt đầu, hoạt động cuối; "Buộc đăng xuất" từng phiên | `CMP-DataTable` | API-12-016, 017 |
@@ -2049,3 +2049,4 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập màn hình PH-12: 19 màn UI-12-01…19 theo mẫu PH-05 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thông báo ERR-12-002 theo FRS |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi đã có công tắc phím tắt một ký tự (D03-05-04 §12.9, PTN-12); chốt câu hỏi mở đợt đồng bộ: Q444, Q445, Q446 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: thông báo ERR-12-046 đổi sang "ít nhất hai quản trị tỉnh"; hộp thoại khóa, vô hiệu, gỡ vai trò TA và cảnh báo khi khóa do sự cố ATTT |

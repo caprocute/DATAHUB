@@ -1080,11 +1080,11 @@ Tính năng: PH-17 · Trợ lý AI và quản trị AI
     Và người dùng thấy thông báo "Bạn đã gửi phản hồi cho câu trả lời này."
 
   @US-17-052 @FR-17-052 @M @âm
-  Kịch bản: US-17-052 âm 2 · Ghi chú quá dài
+  Kịch bản: US-17-052 âm 2 · Sửa quá 10 phút hoặc phản hồi đã được phân loại
     Biết có câu trả lời của trợ lý
-    Khi ghi chú quá dài
-    Thì hệ thống từ chối với ERR-17-003 (400)
-    Và người dùng thấy thông báo "Dữ liệu không hợp lệ: ghi chú tối đa 1.000 ký tự."
+    Khi sửa quá 10 phút hoặc phản hồi đã được phân loại
+    Thì hệ thống từ chối với ERR-17-006 (409)
+    Và người dùng thấy thông báo "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 
   @US-17-053 @FR-17-053 @S
   Kịch bản: US-17-053 dương · Chỉ số chất lượng và cảnh báo suy giảm

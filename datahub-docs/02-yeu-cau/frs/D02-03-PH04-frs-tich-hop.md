@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH04
 ten: Đặc tả chức năng phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Chủ đầu tư, hội đồng thẩm định, nhóm phân tích nghiệp vụ, kiến trúc sư, đội phát triển dh-integration và dh-runtime, đội giao diện dh-console, đội kiểm thử, đội di trú
@@ -1398,7 +1398,7 @@ Mọi đường trong hình hội tụ về FR-04-017: sơ đồ, Inspector và 
 3. IE gõ tìm; giao diện xếp kết quả theo quy tắc 5 trong ≤ 50 ms mỗi lần gõ.
 4. IE kéo thành phần vào sơ đồ; với thành phần "cần kết nối PH-05" giao diện mở ngay ô chọn kết nối (FR-04-016).
 
-**Luồng thay thế.** IE bấm "Đề xuất thành phần mới": giao diện mở yêu cầu tới PA theo FR-04-080 (API-04-074).
+**Luồng thay thế.** IE bấm "Đề xuất thành phần mới": giao diện mở yêu cầu tới PA theo FR-04-080 (API-04-110).
 
 **Luồng ngoại lệ.**
 
@@ -2077,7 +2077,7 @@ Quy tắc chức năng của trình ánh xạ:
 3. Hệ thống kiểm tra khuôn tồn tại, được phép cho tenant (ERR-04-039) và tham số đúng lược đồ (ERR-04-049).
 4. Hệ thống điền tham số và chuyển sang FR-04-003 với `origin = TEMPLATE`.
 
-**Luồng thay thế.** TA tạo khuôn của tỉnh từ phiên bản đã duyệt (API-04-082) hoặc ngừng dùng khuôn của tỉnh.
+**Luồng thay thế.** TA tạo khuôn của tỉnh từ phiên bản đã duyệt (API-04-082) hoặc ngừng dùng khuôn của tỉnh (API-04-112).
 
 **Luồng ngoại lệ.**
 
@@ -2257,7 +2257,7 @@ Sơ đồ cho thấy chạy thử (FR-04-030) là trung tâm của nhóm: ca ki�
 - `SANDBOX_LIVE` dùng kết nối thiếu giá trị TEST: ERR-04-013 (422); "Kết nối "{connection}" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
 - Quá thời gian: ERR-04-020 (không phải mã HTTP, là `errorCode` của lần chạy `TIMED_OUT` kèm `hungNodeId`), đánh dấu chặng đang chạy là chặng treo; "Lần chạy thử quá {n} giây và đã dừng ở chặng "{node}"."
 
-**Đầu ra.** `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE).
+**Đầu ra.** `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE, API-04-099).
 
 **Kết quả.** IE thấy bản tin đi qua từng chặng, chặng nào lỗi, mất bao lâu, dữ liệu vào ra ở mỗi chặng; lần chạy đạt mở đường gửi duyệt.
 
@@ -2351,7 +2351,7 @@ Hình cho thấy `dh-integration` chỉ điều phối: Camel chạy trong `Came
 
 **Quy tắc nghiệp vụ.** BR-04-004 (mọi ca đạt khi gửi duyệt).
 
-**Màn hình, API.** UI-04-13; API-04-044.
+**Màn hình, API.** UI-04-13; API-04-044, 101, 102, 103.
 :::
 
 #### FR-04-032 · Nhật ký chạy thử, xem lại, so sánh hai lần chạy, dọn nhật ký
@@ -2629,7 +2629,7 @@ Hai chốt quan trọng nằm ở máy chủ: điều kiện chạy thử đạt
 - Đang đóng băng thay đổi: ERR-04-041 (423); "Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn."
 - Quá hạn đồng bộ: triển khai `FAILED` (không phải mã HTTP), nhãn "Triển khai lỗi" kèm lý do từ Argo CD.
 
-**Đầu ra.** `202 Accepted` với `deploymentId`; tiến trình qua API-04-054 (SSE).
+**Đầu ra.** `202 Accepted` với `deploymentId`; tiến trình qua API-04-106 (SSE).
 
 **Kết quả.** Người dùng thấy triển khai đi qua các bước "Đã ghi kho cấu hình", "Argo CD đồng bộ", "Runtime đã nạp đúng băm", và luồng chuyển "Đang chạy".
 
@@ -2641,7 +2641,7 @@ Hai chốt quan trọng nằm ở máy chủ: điều kiện chạy thử đạt
 
 **Quy tắc nghiệp vụ.** BR-04-012; BR-04-018; BR-04-019; BR-04-022.
 
-**Màn hình, API.** UI-04-15; API-04-054.
+**Màn hình, API.** UI-04-15; API-04-054, 104, 105, 106.
 :::
 
 ```{.mermaid caption="Trình tự phát hành qua GitOps tới khi đồng bộ (FR-04-042)"}
@@ -2872,7 +2872,7 @@ Sơ đồ cho thấy người vận hành đọc tình trạng runtime (FR-04-05
 - Runtime từ chối hoặc không xác nhận: ERR-04-024 (không phải mã HTTP; lệnh `REJECTED`, `PARTIAL`); "Runtime chưa xác nhận lệnh ({k}/{n} bản sao) hoặc đã từ chối lệnh." kèm "Gửi lại lệnh", "Xem bản sao chưa xác nhận".
 - Thiếu quyền dừng khẩn: ERR-04-045 (403).
 
-**Đầu ra.** `202` với `commandId`; trạng thái lệnh qua API-04-061.
+**Đầu ra.** `202` với `commandId`; trạng thái lệnh qua API-04-107.
 
 **Kết quả.** Luồng hoặc route dừng, chạy lại trên mọi bản sao (p95 < 10 s; khẩn < 5 s, NFR-04-010) và không bị Argo CD bật lại.
 
@@ -2884,7 +2884,7 @@ Sơ đồ cho thấy người vận hành đọc tình trạng runtime (FR-04-05
 
 **Quy tắc nghiệp vụ.** BR-04-017; BR-04-018; BR-04-022.
 
-**Màn hình, API.** UI-04-02 tab Triển khai; API-04-061.
+**Màn hình, API.** UI-04-02 tab Triển khai; API-04-061, 107, 108.
 :::
 
 ```{.mermaid caption="Trình tự tạm dừng luồng có xác nhận và đối soát Git (FR-04-050)"}
@@ -3944,7 +3944,7 @@ Sơ đồ cho thấy danh mục thành phần khớp với runtime là nguồn c
 3. PA hoặc TA sửa chính sách; hệ thống kiểm TA chỉ thu hẹp so với nền tảng (mở rộng: ERR-04-045) và ghi kiểm toán.
 4. Hệ thống đánh dấu các luồng đang dùng thành phần vừa bị cấm; danh sách luồng hiện cảnh báo, kiểm tra VR-04 báo ERR-04-011.
 
-**Luồng thay thế.** IE gửi đề xuất cho phép hoặc bổ sung thành phần (API-04-074); PA, SO quyết định đề xuất.
+**Luồng thay thế.** IE gửi đề xuất cho phép hoặc bổ sung thành phần (API-04-110); PA, SO quyết định đề xuất (API-04-111).
 
 **Luồng ngoại lệ.**
 
@@ -4057,7 +4057,7 @@ Chính sách nền mặc định: cho phép thành phần trong các nhóm HTTP,
 
 **Quy tắc nghiệp vụ.** BR-04-003; BR-04-014.
 
-**Màn hình, API.** UI-04-18; API-04-028, 011.
+**Màn hình, API.** UI-04-18; API-04-028, 097, 011.
 :::
 
 ```{.mermaid caption="Trình tự chuyển luồng XML của Bus cũ sang YAML (FR-04-082)"}
@@ -4169,7 +4169,7 @@ Mật khẩu của hệ cũ bị gỡ ngay trong công cụ chuyển (bước 4)
 
 **Quy tắc nghiệp vụ.** BR-04-022.
 
-**Màn hình, API.** UI-04-20; API-04-090.
+**Màn hình, API.** UI-04-20; API-04-090, 113.
 :::
 
 ## 7. Quy tắc nghiệp vụ
@@ -4379,16 +4379,16 @@ EVT-04-02, EVT-04-04 và EVT-04-07 mang thêm trường tùy chọn `restOperati
 | FR-04-012, 080, 081 | API-04-070…074 |
 | FR-04-014 | API-04-071 |
 | FR-04-022 | API-04-022 |
-| FR-04-075 | API-04-054, 073 |
+| FR-04-075 | API-04-054, 104, 105, 106, 073 |
 | FR-04-015, 020 | API-04-032, 033 |
 | FR-04-023 | API-04-030, 031 |
 | FR-04-025 | API-04-011, 080…082 |
 | FR-04-027, 082 | API-04-026, 027, 028 |
 | FR-04-030…032 | API-04-040…044 |
 | FR-04-040, 041 | API-04-050…053 |
-| FR-04-042…045 | API-04-025, 052, 054, 055, 056 |
+| FR-04-042…045 | API-04-025, 052, 054, 104, 105, 106, 055, 056 |
 | FR-04-050…053 | API-04-060…063 |
-| FR-04-083, 084 | API-04-090, 091 |
+| FR-04-083, 084 | API-04-090, 113, 091 |
 : API của PH-04 theo FR
 
 ## 10. Giao diện
@@ -4720,5 +4720,6 @@ Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cầ
 | 0.1 | 25/11/2026 | Nhóm phân hệ PH-04 | Bản đầu: 60 FR dạng bảng "Trường \| Nội dung", quy tắc, tham số, NFR, truy vết hệ cũ, màn hình mức chức năng |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Tổ chức lại theo K-FRS (Giới thiệu, Tổng quan có mục tiêu đo được, vị trí kiến trúc, sơ đồ trình tự luồng chính, quy trình nghiệp vụ, ma trận quyền, danh sách chức năng, thông báo hiển thị, giao diện tiêu biểu, Phụ lục B); chuyển 60 FR sang khối đặc tả 17 mục theo chuẩn kết hợp, giữ toàn bộ chi tiết kỹ thuật của bản 0.1; viết đủ nhóm F theo D03-02-PH04 §4; thêm sơ đồ trình tự cho FR-04-030, 040–042, 044, 050, 061, 070, 072, 082 và sơ đồ quan hệ chức năng cho từng nhóm; không đổi, không xóa mã |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: DLQ theo bảng 4.1b và replay EVT-18-09, dh-data-classes bốn mức, Kamelet nền, luồng BPM, PERM-13-dashboard |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Tách mã API trùng: các operation tách ra nhận mã mới API-04-095 đến API-04-113, dẫn chiếu đã đổi theo ngữ cảnh (xem D03-04-PH04 chương 8) |
 
 : Lịch sử phiên bản

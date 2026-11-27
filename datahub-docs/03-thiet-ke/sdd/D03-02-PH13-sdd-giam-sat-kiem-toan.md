@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH13
 ten: Thiết kế chi tiết phần mềm phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư nền tảng quan sát, ATTT, vận hành, kiến trúc sư, hội đồng thẩm định
@@ -1389,7 +1389,7 @@ Chi tiết thiết kế:
 
 **Tinh chỉnh ngưỡng (FR-13-051).** `PATCH /detection-rules/{ruleCode}` cần `PERM-13-security`, xác thực lại phiên, lý do; ngưỡng mới phải nằm trong `threshold_limit` (nới tối đa 2 lần mặc định, siết tự do, BR-13-025); luật `can_disable = false` (mức Nghiêm trọng kiểu "mọi sự kiện") không tắt, không đổi ngưỡng (ERR-13-024). Thay đổi ghi `SECURITY.RULE.TUNE` với giá trị trước, sau và phát EVT-13-10; luật theo chỉ số đến Ruler trong 60 giây.
 
-**Xử lý cảnh báo an ninh (FR-13-053).** `SecurityAlertService` thực thi máy trạng thái §8.1: `acknowledge` ghi `assignee`; `close` bắt buộc `verdict` ∈ `CONFIRMED_INCIDENT`, `FALSE_POSITIVE`, `ACCEPTED_RISK` (có ghi chú, ERR-13-023). `SuspensionProposer` kiểm HTTT thuộc tenant, ghi lý do rồi gọi API-01-089 của PH-01 (thời gian chờ 3 giây, lỗi thì ERR-13-014 và đề xuất chưa gửi, SO thử lại; lũy đẳng theo `alertId` nên thử lại không tạo việc thứ hai); PH-13 chỉ đề xuất, SO ở PH-01 quyết định bằng thao tác khẩn FR-01-032 (Q13-12, đã chốt 27/11/2026). Kết luận "sự cố thật" gắn `incidentRef` của quy trình ứng cứu (D03-07 §8). `SECURITY.ALERT.PROPOSE_SUSPENSION` được thêm vào bảng hành động phải ghi kiểm toán (đề nghị đồng bộ FR-13-019).
+**Xử lý cảnh báo an ninh (FR-13-053).** `SecurityAlertService` thực thi máy trạng thái §8.1: `acknowledge` ghi `assignee`; `close` bắt buộc `verdict` ∈ `CONFIRMED_INCIDENT`, `FALSE_POSITIVE`, `ACCEPTED_RISK` (có ghi chú, ERR-13-023). `SuspensionProposer` kiểm cảnh báo ở mức `HIGH` hoặc `CRITICAL` (thấp hơn: ERR-13-003, nút đề xuất ẩn ở UI-13-15), kiểm HTTT thuộc tenant, ghi lý do, lấy `alertId`, `severity`, `incidentRef`, `evidenceUrl` từ cảnh báo gốc rồi gọi API-01-089 của PH-01 (thời gian chờ 3 giây, lỗi thì ERR-13-014 và đề xuất chưa gửi, SO thử lại; lũy đẳng theo `alertId` nên thử lại không tạo việc thứ hai; ERR-01-048 coi là đã đáp ứng, ERR-01-005 báo người dùng HTTT không ở trạng thái cho phép tạm ngừng); PH-13 chỉ đề xuất, SO ở PH-01 quyết định bằng thao tác khẩn FR-01-032 (Q13-12, đã chốt 27/11/2026). Kết luận "sự cố thật" gắn `incidentRef` của quy trình ứng cứu (D03-07 §8). `SECURITY.ALERT.PROPOSE_SUSPENSION` được thêm vào bảng hành động phải ghi kiểm toán (đề nghị đồng bộ FR-13-019).
 
 **Báo cáo sự cố (FR-13-055, Đợt sau).** `IncidentReportGenerator` dựng bản nháp từ mẫu và bằng chứng của cảnh báo, đếm ngược 72 giờ từ `detected_at` cho `DLCN_BREACH` và nhắc ở 24, 48, 60 giờ qua `NotificationService`; việc gửi cho cơ quan do chủ quản thực hiện ngoài hệ thống (Q13-10). Cờ `obs.incident-report.enabled` tắt ở MVP.
 
@@ -1831,7 +1831,7 @@ sequenceDiagram
   SA->>SA: Phát EVT-13-04
   SO->>SA: Tiếp nhận cảnh báo
   SO->>SA: Đề xuất tạm ngừng HTTT kèm systemCode, lý do
-  SA->>P01: POST API-01-089 đề xuất tạm ngừng (systemCode, alertId, lý do)
+  SA->>P01: POST API-01-089 đề xuất tạm ngừng (systemCode, alertId, severity, lý do, incidentRef, evidenceUrl)
   SO->>SA: Đóng với kết luận CONFIRMED_INCIDENT
   SA->>PG: CLOSED và SECURITY.ALERT.CLOSE
 ```
@@ -2443,4 +2443,5 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, vị trí trong kiến trúc, cấu trúc mã hai module và thư viện `dh-audit`, 21 thành phần với bảng đặc tả 10 mục, mười sơ đồ trình tự, đa tenant, bảo mật, máy trạng thái và lỗi, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, rủi ro, 8 câu hỏi mở (Q13-20…27), đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: p_archive_partition thay DETACH CONCURRENTLY, quyền INSERT theo cột của ph13_app, trigger tg_audit_chain_guard và tg_audit_event_covered; chốt câu hỏi mở đợt đồng bộ: Q390 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | FR-13-053: `SuspensionProposer` kiểm mức HIGH, CRITICAL, lấy `alertId`, `severity`, `incidentRef`, `evidenceUrl` từ cảnh báo gốc và xử lý ERR-01-048, ERR-01-005; cập nhật sơ đồ lời gọi API-01-089 |
 

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH13
 ten: Đặc tả API và sự kiện phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, giao diện, PH-16, PH-18, PH-20, kiểm thử viên, ATTT, hội đồng thẩm định
@@ -3026,3 +3026,4 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước chung, xác thực, danh mục 90 endpoint, 14 sự kiện và hai topic vào, hợp đồng với phân hệ khác, bảng mã lỗi, kiểm tra hợp đồng, ánh xạ hệ cũ, 5 câu hỏi mở (Q13-55…59), chương đặc tả từng endpoint sinh từ OpenAPI, đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tiêu đề X-DH-Grant-Id thay claim xt_session, ETag và ánh xạ lỗi CSDL, sessionId, spansTotal, quarantineCount |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ghi rõ không có API xác nhận hàng loạt, bên gọi của API-13-072, 073, 089; thêm ví dụ `AuditRecordPage`, `AuditRecordDetail` vào OpenAPI; chốt câu hỏi mở đợt đồng bộ: Q390 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | API-13-060: `ProposeSuspensionRequest` thêm `alertId`, `severity` (HIGH, CRITICAL), `incidentRef`, `evidenceUrl` cho đủ trường API-01-089; mức cảnh báo an ninh dùng `SecuritySeverity`; mức thấp hơn HIGH trả ERR-13-003; sinh lại từ nguồn |

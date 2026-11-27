@@ -458,7 +458,7 @@ Tính năng: PH-04 · Lõi tích hợp và trình thiết kế luồng
   Kịch bản: US-04-030 dương · Chạy thử luồng trên sandbox với đích mô phỏng
     Biết phiên bản không có lỗi mức `ERROR` ở mức `DESIGN`; tenant chưa vượt hạn mức chạy thử đồng thời (`04.test.max-concurrent`, mặc định 5)
     Khi IE bấm "Chạy thử" trên UI-04-04 hoặc UI-04-11; bộ chạy ca kiểm thử gọi khi gửi duyệt (FR-04-040)
-    Thì hệ thống trả `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE)
+    Thì hệ thống trả `202 Accepted` với `runId`, sau đó kết quả qua API-04-042 hoặc luồng sự kiện máy chủ (SSE, API-04-099)
     Và một `test_run` và các `test_run_step`; phiên bản được đánh dấu "có lần chạy thử đạt" nếu `PASSED` ở chế độ không mô phỏng
     Và sự kiện được phát: EVT-04-10 `testrun.completed`
     Và nhật ký kiểm toán ghi nhận thao tác
@@ -577,7 +577,7 @@ Tính năng: PH-04 · Lõi tích hợp và trình thiết kế luồng
   Kịch bản: US-04-042 dương · Phát hành qua GitOps và theo dõi tình trạng triển khai
     Biết phiên bản `APPROVED`; kiểm tra mức `PUBLISH` cho môi trường đích không có `ERROR`; không trong thời gian đóng băng thay đổi
     Khi duyệt ở FR-04-041 (mặc định), hoặc IA bấm "Phát hành" trên UI-04-15. Phát hành theo lịch (`scheduledAt`) thuộc đợt 2
-    Thì hệ thống trả `202 Accepted` với `deploymentId`; tiến trình qua API-04-054 (SSE)
+    Thì hệ thống trả `202 Accepted` với `deploymentId`; tiến trình qua API-04-106 (SSE)
     Và một `deployment` `PENDING`; commit trong kho cấu hình
     Và sự kiện được phát: EVT-04-06 `deployment.requested`; sau đó EVT-04-07 `deployment.status-changed` mỗi lần trạng thái đổi
     Và nhật ký kiểm toán ghi nhận thao tác
@@ -646,7 +646,7 @@ Tính năng: PH-04 · Lõi tích hợp và trình thiết kế luồng
   Kịch bản: US-04-050 dương · Kích hoạt, tạm dừng, tiếp tục luồng và từng route có lý do
     Biết luồng có triển khai `SYNCED` ở môi trường chọn
     Khi người dùng bấm "Tạm dừng", "Tiếp tục" hoặc "Dừng khẩn" trên tab Triển khai của UI-04-02
-    Thì hệ thống trả `202` với `commandId`; trạng thái lệnh qua API-04-061
+    Thì hệ thống trả `202` với `commandId`; trạng thái lệnh qua API-04-107
     Và lệnh `RuntimeCommand` (EN-04-10); khi tất cả bản sao xác nhận, trạng thái mong muốn ghi vào kho cấu hình để lần đồng bộ sau không bật lại luồng
     Và sự kiện được phát: EVT-04-11 `runtime.command` (topic điều khiển), EVT-04-08 `flow.runtime-state-changed` khi đã xác nhận
     Và nhật ký kiểm toán ghi nhận thao tác

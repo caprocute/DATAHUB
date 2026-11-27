@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH09
 ten: Đặc tả API và sự kiện phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư tích hợp, kỹ sư dh-data, ATTT, kiểm thử viên, hội đồng thẩm định
@@ -2092,7 +2092,7 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`; mã lỗi của thao tác: ERR-09-101, ERR-09-106, ERR-09-111 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope` là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh; p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026).
+**Ghi chú.** Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope` là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh; p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026). `egressScope` ngoài `NONE`, `OUT_OF_PROVINCE` trả ERR-09-106 (400).
 :::
 
 #### API-09-232 · Bản chụp chỉ mục phân loại (ETag)
@@ -2247,3 +2247,4 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-API và K-TRINH-BAY: 237 operation (226 control plane, 11 data plane), 33 kênh sự kiện, 91 mã lỗi, OpenAPI 3.1 và AsyncAPI 3.0 sinh từ FRS, ví dụ kiểm khớp lược đồ, đặc tả 10 mục cho 35 operation trọng yếu, năm câu hỏi mở Q09-55…59 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thêm API-09-238 đến 245 (245 operation, 234 control plane), ERR-09-082 và đưa 079 đến 081 về FRS, `requestKind`, `renewsGrantId`, `serverTime`, `remainingThisHour`, hạn 60 giây của kết quả khôi phục, giới hạn bản tin 1 MiB, 329 lược đồ, 37 operation trọng yếu, chốt bốn trong năm câu hỏi mở |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: API-09-203 thêm scope `privacy:register` cho PH-18; thân xoay khóa API-09-116 thêm `confirmInconsistency`; bên tiêu thụ EVT-09-01, EVT-09-03; chốt câu hỏi mở đợt đồng bộ: Q393 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | API-09-231: ghi `egressScope` ngoài `NONE`, `OUT_OF_PROVINCE` trả ERR-09-106 (400); sinh lại từ nguồn |

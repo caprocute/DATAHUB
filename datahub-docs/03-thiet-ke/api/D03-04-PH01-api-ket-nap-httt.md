@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH01
 ten: Đặc tả API và sự kiện phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, giao diện, kỹ sư các phân hệ gọi PH-01; ATTT; kiểm thử viên; hội đồng thẩm định
@@ -5261,3 +5261,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác c�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 88 endpoint REST, 15 sự kiện Kafka, 54 mã lỗi ERR-01, ánh xạ từ hệ cũ, 5 câu hỏi mở, đề nghị đồng bộ; OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script, đã kiểm trong CI |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: API-01-059 thêm FR-01-035; ghi trạng thái đồng bộ các đề nghị 1 đến 5; thêm đề nghị 16 về bảy đề nghị bổ sung API của tập màn hình (OpenAPI cập nhật x-datahub-fr của API-01-059) |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12; chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (EVT-01-11 không còn bên nghe PH-12); Q395, Q390, Q401, Q408 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Thêm 404 vào API-01-089: HTTT không có hoặc thuộc tenant khác trả 404 ERR-01-001 (FR-01-053); sinh lại từ nguồn |

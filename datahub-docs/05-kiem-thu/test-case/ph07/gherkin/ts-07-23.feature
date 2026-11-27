@@ -5,7 +5,7 @@ Tính năng: TS-07-23 · Khai thác danh mục RESTRICTED
 
   @TC-07-268 @P1 @Dương
   Kịch bản: TC-07-268 Thay danh sách cấp quyền và khai thác
-    # Truy vết: FR-07-052 · BR-07-019 · API-07-075
+    # Truy vết: FR-07-052 · BR-07-019 · API-07-075, 079
     Biết CAT-RES cấp cho `HT-DATDAI`.
     Khi U-T68-TA `PUT /catalogs/TRAM_QUAN_TRAC/access-grants` với `If-Match`, `reason`, thêm `HT-HOTICH` scope `rdm.read`, `expiresAt` = 2026-11-21T10:00+07:00.
     Và trong ≤ 10 giây, APP-T68-READ gọi `GET /catalogs/TRAM_QUAN_TRAC/items`.

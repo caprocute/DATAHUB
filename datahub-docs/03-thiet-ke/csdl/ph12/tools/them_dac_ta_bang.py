@@ -62,12 +62,12 @@ FR_BANG = {
 }
 
 GHI_CHU = {
-    'user_account': 'Chứa dữ liệu cá nhân (họ tên, thư điện tử; mục 5); `ph12_readonly` không đọc được `email` và `full_name`. Trigger `tg_user_account_last_admin` giữ tenant còn ít nhất một quản trị tỉnh (ERR-12-046). Ước lượng 3.000 dòng mỗi tỉnh vừa (GĐ-12-02), thiết kế tới 10.000 (NFR-12-023). Lưu giữ: vĩnh viễn (mục 8).',
+    'user_account': 'Chứa dữ liệu cá nhân (họ tên, thư điện tử; mục 5); `ph12_readonly` không đọc được `email` và `full_name`. Trigger `tg_user_account_last_admin` giữ tenant còn ít nhất hai quản trị tỉnh hiệu lực khi vô hiệu hoặc khóa hẳn (BR-12-033, ERR-12-046); miễn cho lý do `INACTIVE_45D`, `INACTIVE_30D_ADMIN` và khi dịch vụ đặt `ph12.ta_floor_exception`. Ước lượng 3.000 dòng mỗi tỉnh vừa (GĐ-12-02), thiết kế tới 10.000 (NFR-12-023). Lưu giữ: vĩnh viễn (mục 8).',
     'user_import': 'Tệp gốc ở bucket `dh-iam-import`, xóa sau 24 giờ; bản ghi giữ 30 ngày sau khi xong (giả định) rồi tác vụ dọn dữ liệu hết hạn xóa, cùng với các dòng của lần nhập.',
     'user_import_row': 'Có dữ liệu cá nhân của người được nhập; cột `raw` không nhận mật khẩu (CHECK `ck_user_import_row_no_secret`). Xóa theo lần nhập sau 30 ngày (giả định).',
     'sod_pair': 'Dữ liệu `COMMON`, 10 dòng sinh từ D02-08 §4 bằng changeset `runOnChange` (mục 6). Đổi ma trận là đổi changeset và đi qua duyệt chính sách nền tảng (FR-12-051).',
     'legacy_role_map': 'Dữ liệu `COMMON`, 17 dòng (mục 6): 15 vai trò của SRS repo (FRS §11.4) và 2 vai trò của realm `lgsp` ở compose. Đầu vào của nhập người dùng và di trú.',
-    'role_assignment': 'Hai trigger chốt tách nhiệm vụ (`tg_role_assignment_sod`, khóa tư vấn theo người dùng) và tenant còn quản trị cuối cùng. `AssignmentExpiryJob` đặt EXPIRED mỗi phút; hết hạn đã có hiệu lực ngay ở OPA vì Rego kiểm `valid_to` ở mọi quyết định (SDD §4.3). Không xóa vật lý: gỡ là REVOKED.',
+    'role_assignment': 'Hai trigger chốt tách nhiệm vụ (`tg_role_assignment_sod`, khóa tư vấn theo người dùng) và tenant còn ít nhất hai quản trị tỉnh hiệu lực (ERR-12-046). `AssignmentExpiryJob` đặt EXPIRED mỗi phút; hết hạn gán `TENANT_ADMIN` làm tenant xuống dưới hai TA bị trigger chặn (tác vụ giữ gán và cảnh báo); hết hạn đã có hiệu lực ngay ở OPA vì Rego kiểm `valid_to` ở mọi quyết định (SDD §4.3). Không xóa vật lý: gỡ là REVOKED.',
     'sod_exception': 'Trigger `tg_sod_exception_guard` từ chối cặp có `allow_exception = false`. Hết hạn thì `AssignmentExpiryJob` đặt EXPIRED và gỡ vai trò thứ hai. Cột `approved_by` ghi người quyết định cả khi từ chối hoặc thu hồi.',
     'org_group': '`path` là `ltree` do trigger tính; chỉ mục GiST phục vụ truy vấn cây con (phạm vi `ORG`). Cây này vào gói dữ liệu tenant dưới dạng `org_tree`. Nhóm còn thành viên không xóa được (ERR-12-011).',
     'org_group_member': 'Bảng nối, không có cột sửa; thêm hoặc bớt thành viên là thêm hoặc xóa dòng.',

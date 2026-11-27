@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH12
 ten: Kịch bản và test case phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
@@ -20,7 +20,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH12 F
 - Không mất chức năng của hệ IAM cũ: SSO Keycloak, tạo realm, client, vai trò, người dùng, TOTP, LDAP/AD, quản lý phiên (LGC-IAM-001…006, 008), cùng quản lý group của Bus và tạo Application của APIM (LGC-BUS-032, LGC-APIM-020). Chức năng bị loại có chủ đích (đăng nhập mạng xã hội LGC-IAM-007, grant `password` LGC-IAM-006) được kiểm là **không còn** hoạt động.
 - Mặc định từ chối, từ chối thắng cho phép, cách ly tenant và không lộ bí mật là bất biến hệ thống: không có đường nào để quyết định ủy quyền sai theo hướng cho phép, và không có đường nào để tỉnh này thấy hay dùng định danh, client, chính sách của tỉnh khác.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->37<!--/gen--> kịch bản (TS-12-01…) với <!--gen:so-tc-->127 (TC-12-001…127; 99 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi FR, UC, API, UI và mã lỗi `ERR-12-*` có ít nhất một ca; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph12/tools/gen_matrix.py`.
+**Phạm vi.** Gồm <!--gen:so-ts-->37<!--/gen--> kịch bản (TS-12-01…) với <!--gen:so-tc-->130 (TC-12-001…130; 102 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi FR, UC, API, UI và mã lỗi `ERR-12-*` có ít nhất một ca; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph12/tools/gen_matrix.py`.
 
 **Căn cứ.** Tài liệu cùng bộ PH-12 (FRS D02-03-PH12, use case D02-04-PH12, SDD D03-02-PH12, CSDL D03-03-PH12, API D03-04-PH12, màn hình D03-06-PH12); ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01; cổng CI D04-02; cấu trúc theo ISO/IEC/IEEE 29119-3; ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP, TCVN 14423:2026 (mật khẩu ≥ 14 ký tự, khóa phiên 15 phút, vô hiệu tài khoản sau 45 ngày); Luật BVDLCN 91/2025 và Nghị định 356/2025 cho dữ liệu cá nhân trong danh bạ.
 
@@ -146,7 +146,8 @@ Tên nhân vật trùng D02-04-PH12. Mọi người dùng vai trò TA, SO, PA, P
 |---|---|---|---|
 | U-PA, U-PA2 | PLATFORM | PA | Quản trị nền tảng; người thứ hai cho bốn mắt |
 | U-PO | PLATFORM | PO | Vận hành, xin quyền có thời hạn |
-| U-T68-TA1, U-T68-TA2 | T68 | TA | Quản trị tỉnh; TA2 để kiểm "không tự thao tác" và "tenant luôn còn một TA" |
+| U-T68-TA1, U-T68-TA2 | T68 | TA | Quản trị tỉnh (T68 đã kích hoạt, tối thiểu hai TA theo Q403); TA2 để kiểm "không tự thao tác" và "tenant luôn còn ít nhất hai TA" |
+| U-T68-TA3 | T68 | TA | TA thứ ba, tạo thêm ở ca cần dư một TA hoặc để bổ sung sau khi bị chặn (ERR-12-046) |
 | U-T68-SO, U-T68-SO2 | T68 | SO | Cán bộ ATTT, người duyệt thứ hai |
 | U-T68-AU | T68 | AU | Kiểm toán, chỉ đọc |
 | U-T68-IE, U-T68-IA | T68 | IE, IA | Vai trò kết nối; xung đột tách nhiệm khi gán cả hai |
@@ -211,8 +212,8 @@ Mỗi kịch bản tự tạo đối tượng có tiền tố `tc-` và dọn kh
 |---|---|---|---|---|
 | TS-12-01 | Danh sách, chi tiết và danh bạ người dùng | Xác nhận tra cứu người dùng theo tenant và tổ chức, không rò rỉ chéo tenant, danh bạ chỉ trả thông tin tối thiểu | UC-12-01, 42 | 6 |
 | TS-12-02 | Tạo tài khoản, kích hoạt lần đầu và sửa thông tin | Xác nhận tạo tài khoản qua danh bạ đơn vị, kích hoạt một lần với mật khẩu đạt chuẩn, chuyển đơn vị có kiểm tra | UC-12-02, 03 | 7 |
-| TS-12-03 | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | Xác nhận máy trạng thái tài khoản, bắt buộc có lý do, cấm tự thao tác, giữ tenant luôn có quản trị | UC-12-04 | 4 |
-| TS-12-04 | Đặt lại mật khẩu, tác vụ định kỳ và đồng bộ đơn vị | Xác nhận quên mật khẩu không lộ sự tồn tại của tài khoản, tự vô hiệu sau 45 ngày, đồng bộ thuộc tính từ danh mục đơn vị | UC-12-06, 07 | 5 |
+| TS-12-03 | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | Xác nhận máy trạng thái tài khoản, bắt buộc có lý do, cấm tự thao tác, giữ tenant đã kích hoạt luôn có ít nhất hai quản trị tỉnh hiệu lực (Q403) và các ngoại lệ của ngưỡng này | UC-12-04, 09 | 6 |
+| TS-12-04 | Đặt lại mật khẩu, tác vụ định kỳ và đồng bộ đơn vị | Xác nhận quên mật khẩu không lộ sự tồn tại của tài khoản, tự vô hiệu sau 45 ngày (kể cả TA khi tenant xuống dưới hai TA, ngoại lệ của ERR-12-046), đồng bộ thuộc tính từ danh mục đơn vị | UC-12-06, 07 | 6 |
 | TS-12-05 | Nhập người dùng hàng loạt và ánh xạ vai trò hệ cũ | Xác nhận nhập hai pha, không nhận mật khẩu qua tệp, ánh xạ vai trò hệ cũ có kiểm soát | UC-12-05 | 4 |
 | TS-12-06 | Danh mục vai trò chuẩn và quyền hiệu lực | Xác nhận danh mục vai trò, quyền khớp D02-08, quyền hiệu lực tính đúng ba lớp | UC-12-08 | 3 |
 | TS-12-07 | Gán và gỡ vai trò cho người dùng | Xác nhận gán, gỡ vai trò có phạm vi, có hiệu lực đúng hạn, cấm tự gán và gán vai trò nền tảng ở tenant thường | UC-12-09 | 2 |
@@ -246,7 +247,7 @@ Mỗi kịch bản tự tạo đối tượng có tiền tố `tc-` và dọn kh
 | TS-12-35 | Chịu lỗi, độc lập control plane và phục hồi | Chứng minh Keycloak và OPA vẫn phục vụ khi control plane ngừng, sẵn sàng theo SLO, phục hồi `pg-iam` trong RPO, RTO | — | 3 |
 | TS-12-36 | Hiệu năng, tải và quy mô | Chứng minh NFR-12-001…009 và 023…025 ở cấu hình `QM-VUA` với dữ liệu GĐ | — | 11 |
 | TS-12-37 | Bảo mật ứng dụng, giám sát và truy cập | Chứng minh mật khẩu băm đúng chuẩn, TLS, quét ASVS, chỉ số vận hành, truy cập WCAG 2.2 AA, tương thích hợp đồng | — | 4 |
-| **Tổng** | | | | **127** (99 ca P1) |
+| **Tổng** | | | | **130** (102 ca P1) |
 
 : Danh sách kịch bản và số ca
 <!--/gen-->
@@ -400,9 +401,9 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 
 ### TS-12-03 · Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản
 
-**Mục tiêu.** Xác nhận máy trạng thái tài khoản, bắt buộc có lý do, cấm tự thao tác, giữ tenant luôn có quản trị.
+**Mục tiêu.** Xác nhận máy trạng thái tài khoản, bắt buộc có lý do, cấm tự thao tác, giữ tenant đã kích hoạt luôn có ít nhất hai quản trị tỉnh hiệu lực (Q403) và các ngoại lệ của ngưỡng này.
 
-**Phủ.** FR-12-005; BR-12-033, 035; UC-12-04; UI-12-02, 03; API-12-005, 006, 007, 008; ERR-12-006, 013, 014, 046.
+**Phủ.** FR-12-005, 012, 021; BR-12-033, 035; UC-12-04, 09; UI-12-02, 03; API-12-005, 006, 007, 008, 027; ERR-12-006, 013, 014, 046.
 
 #### TC-12-014 · Khóa rồi mở khóa tài khoản thu phiên ngay <!--k:usr-lock-unlock-->
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -433,21 +434,45 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
   3. `POST …:lock` thiếu `reason`.
 - **Mong đợi** Bước 1, 2 `409` ERR-12-006; bước 3 `400` ERR-12-014.
 
-#### TC-12-017 · Không tự khóa, không bỏ TA cuối cùng <!--k:usr-self-last-ta-->
+#### TC-12-017 · Không tự khóa, tenant luôn còn ít nhất hai TA <!--k:usr-self-last-ta-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
 - **Truy vết** FR-12-005 · BR-12-033 · API-12-005, 007 · ERR-12-013 · ERR-12-046
-- **Tiền điều kiện / dữ liệu** U-T68-TA1, U-T68-TA2 (hai TA duy nhất của T68).
+- **Tiền điều kiện / dữ liệu** U-T68-TA1, U-T68-TA2, U-T68-TA3 (ba TA hiệu lực của T68 đã kích hoạt).
 - **Bước**
   1. TA1 khóa chính mình.
-  2. TA1 vô hiệu TA2 (thành công), rồi TA1 vô hiệu chính mình khi là TA cuối.
-  3. Khôi phục TA2 bằng U-PA.
-- **Mong đợi** Bước 1 `403` ERR-12-013; lần vô hiệu cuối ở bước 2 `409` ERR-12-046; tenant còn ít nhất một TA.
+  2. TA1 vô hiệu TA3 (còn TA1, TA2).
+  3. TA1 vô hiệu TA2 (sẽ còn một TA).
+  4. Khôi phục TA3 bằng U-PA.
+- **Mong đợi** Bước 1 `403` ERR-12-013; bước 2 thành công vì tenant còn đúng hai TA; bước 3 `409` ERR-12-046 với câu "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn 1."; sau bước 4 tenant có ba TA hiệu lực.
+
+#### TC-12-128 · Chặn gỡ vai trò, khóa, vô hiệu, hết hạn gán TA khi tenant còn hai TA <!--k:ta-floor-block-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, DB, E2E
+- **Truy vết** FR-12-005, FR-12-012 · UC-12-04, 09 · UI-12-02, 06 · BR-12-033 · API-12-005, 007, 027 · ERR-12-046
+- **Tiền điều kiện / dữ liệu** T68 đã kích hoạt và có đúng hai TA hiệu lực là U-T68-TA1, U-T68-TA2; gán `TENANT_ADMIN` của TA2 có `validTo` sau 2 phút.
+- **Bước**
+  1. TA1 gỡ vai trò `TENANT_ADMIN` của TA2 (`DELETE` bản gán, API-12-027).
+  2. U-T68-SO khóa TA2 không kèm `incidentRef` (API-12-005).
+  3. U-T68-SO vô hiệu TA2 (API-12-007).
+  4. Chờ quá `validTo` của gán TA2, chạy `AssignmentExpiryJob`.
+  5. Mở UI-12-02 của TA2 bằng TA1; sau đó bước bù: U-PA tạo TA3 (API-12-003 rồi API-12-026), TA1 gỡ vai trò của TA2.
+  6. Cập nhật bằng SQL trực tiếp (kiểm DB) gán `TENANT_ADMIN` của TA3 sang `REVOKED`.
+- **Mong đợi** Bước 1, 2, 3 `409` ERR-12-046 với câu "Tỉnh phải luôn có ít nhất hai quản trị tỉnh đang hoạt động; thao tác này làm chỉ còn 1. Bổ sung quản trị tỉnh khác trước khi thực hiện.", trạng thái và gán của TA2 không đổi, không có EVT-12-02, EVT-12-03; bước 4 gán TA2 vẫn `ACTIVE`, tác vụ ghi cảnh báo cho TA, SO, PA, ở OPA TA2 vẫn có quyền cho tới khi gia hạn; không có đường xóa vật lý (không có `DELETE /users`, BR-12-035) nên "xóa tài khoản TA" chỉ là vô hiệu, đã bị chặn ở bước 3; bước 5 nút "Gỡ", "Vô hiệu", "Khóa" của TA2 tắt kèm tooltip (từ `disabledReasons`), sau khi có TA3 việc gỡ TA2 thành công `204`; bước 6 CSDL từ chối với `SQLSTATE` `P1246` khi tenant còn hai TA nhưng gỡ một TA làm còn một. KT: có (các lần bị chặn ghi `reject`).
+
+#### TC-12-129 · Ngoại lệ khóa do sự cố ATTT khi tenant còn hai TA <!--k:ta-floor-attt-lock-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-12-005, FR-12-021, FR-12-059 · UC-12-04 · BR-12-033 · API-12-005 · ERR-12-046
+- **Tiền điều kiện / dữ liệu** T68 có đúng hai TA hiệu lực (U-T68-TA1, U-T68-TA2); mã sự cố ATTT `INC-2026-118` do SO mở.
+- **Bước**
+  1. U-T68-SO khóa TA2 kèm `incidentRef` = `INC-2026-118` (API-12-005).
+  2. Mô phỏng ba lần khóa tạm trong 24 giờ của TA1 ở Keycloak (EVT-12-16) để TA1 chuyển `BLOCKED`.
+  3. Kiểm thông báo và việc được tạo; mở khóa cả hai bằng U-PA sau sự cố.
+- **Mong đợi** Bước 1 `200`, TA2 `BLOCKED`, phiên bị thu; bước 2 TA1 `BLOCKED` không bị ERR-12-046 chặn; SO và PA nhận cảnh báo khẩn trong 60 giây (nêu tenant còn 0 TA hiệu lực), PA có việc "Bổ sung quản trị tỉnh"; kiểm toán ghi mã lý do `TA_BELOW_MIN`; sau bước 3 cả hai về `ACTIVE`. Lần khóa không kèm `incidentRef` vẫn `409` ERR-12-046 (đã kiểm ở ca chặn gỡ, khóa).
 
 ### TS-12-04 · Đặt lại mật khẩu, tác vụ định kỳ và đồng bộ đơn vị
 
-**Mục tiêu.** Xác nhận quên mật khẩu không lộ sự tồn tại của tài khoản, tự vô hiệu sau 45 ngày, đồng bộ thuộc tính từ danh mục đơn vị.
+**Mục tiêu.** Xác nhận quên mật khẩu không lộ sự tồn tại của tài khoản, tự vô hiệu sau 45 ngày (kể cả TA khi tenant xuống dưới hai TA, ngoại lệ của ERR-12-046), đồng bộ thuộc tính từ danh mục đơn vị.
 
-**Phủ.** FR-12-007, 008, 010; BR-12-017, 020; UC-12-06, 07; UI-12-15, 18; ERR-12-016.
+**Phủ.** FR-12-007, 008, 010; BR-12-017, 020, 033; UC-12-06, 07; UI-12-15, 18; ERR-12-016, 046.
 
 #### TC-12-018 · Quên mật khẩu không phân biệt tài khoản có hay không <!--k:pwd-reset-enum-->
 - **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** E2E, API
@@ -472,6 +497,16 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 - **Bước**
   1. Chạy tác vụ ở ngày 45; chạy lại ở ngày 46.
 - **Mong đợi** VW 46 ngày và PA 31 ngày (ngưỡng quản trị 30) thành `DISABLED` không quá 24 giờ sau ngưỡng; U-T68-OLD còn `ACTIVE` ở ngày 44; báo cáo lượt chạy ở UI-12-15; chạy lại không đổi thêm.
+
+#### TC-12-130 · Tự vô hiệu TA không dùng quá ngưỡng khi tenant còn hai TA <!--k:ta-floor-inactive-->
+- **Loại** Dương, Biên, Bảo mật · **Ưu tiên** P1 · **Tự động** IT, DB
+- **Truy vết** FR-12-008 · UC-12-07 · UI-12-15 · BR-12-020 · BR-12-033 · ERR-12-046 · CMP-LAW-08
+- **Tiền điều kiện / dữ liệu** T68 có đúng hai TA hiệu lực; TA2 có đăng nhập cuối cách đây 31 ngày (ngưỡng quản trị 30), TA1 vừa đăng nhập.
+- **Bước**
+  1. Chạy tác vụ tự vô hiệu; kiểm trạng thái TA2 và thư cảnh báo bảy ngày trước ngưỡng.
+  2. Kiểm cảnh báo khẩn và việc bổ sung TA sau lượt chạy.
+  3. Cập nhật bằng SQL trực tiếp TA1 sang `DISABLED` với lý do `MANUAL` (kiểm DB).
+- **Mong đợi** Bước 1 TA2 thành `DISABLED` (lý do `INACTIVE_30D_ADMIN`) không bị ERR-12-046 chặn dù tenant xuống còn một TA; hệ thống đã gửi trước đó cảnh báo bảy ngày tới SO và PA nêu việc vô hiệu làm tenant dưới hai TA; bước 2 SO và PA nhận cảnh báo khẩn, PA có việc "Bổ sung quản trị tỉnh", kiểm toán ghi mã lý do `TA_BELOW_MIN`, chỉ số `iam_inactive_disabled_total` tăng; bước 3 CSDL từ chối `P1246` (vô hiệu thủ công không có ngoại lệ).
 
 #### TC-12-021 · Tạm ngừng client không gọi 90 ngày <!--k:auto-suspend-client-->
 - **Loại** Biên · **Ưu tiên** P2 · **Tự động** IT
@@ -1586,14 +1621,14 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-12. FR mức
 | FR-12-002 | Xem chi tiết người dùng | M | LGC-IAM-002; LGC-IAM-005 | 003 | 004 | 107 | Có |
 | FR-12-003 | Tạo tài khoản người dùng | M | LGC-IAM-002 | 007, 102 | 008, 009, 011, 102, 104 | 103 | Có |
 | FR-12-004 | Sửa thông tin và chuyển đơn vị của người dùng | M | LGC-IAM-002 | 012 | 013 | — | Có |
-| FR-12-005 | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | M | LGC-IAM-005 | 014, 015 | 016, 017 | — | Có |
+| FR-12-005 | Khóa, mở khóa, vô hiệu và kích hoạt lại tài khoản | M | LGC-IAM-005 | 014, 015, 129 | 016, 017, 128 | — | Có |
 | FR-12-006 | Kích hoạt tài khoản lần đầu | M | LGC-IAM-002 | 007 | 010, 011 | 105 | Có |
 | FR-12-007 | Đặt lại mật khẩu khi quên | M | LGC-IAM-002 | 019 | 018 | — | Có |
-| FR-12-008 | Tự vô hiệu tài khoản và tạm ngừng client không hoạt động | M | mới | 020 | 020 | 021 | Có |
+| FR-12-008 | Tự vô hiệu tài khoản và tạm ngừng client không hoạt động | M | mới | 020, 130 | 020 | 021 | Có |
 | FR-12-009 | Nhập người dùng hàng loạt và ánh xạ vai trò hệ cũ | M | LGC-IAM-002 | 023 | 024, 025, 026 | — | Có |
 | FR-12-010 | Đồng bộ thuộc tính người dùng từ danh mục đơn vị | S | mới | 022 | 022 | — | Có |
 | FR-12-011 | Xem danh mục vai trò chuẩn và quyền | M | LGC-IAM-002 | 027 | 027 | — | Có |
-| FR-12-012 | Gán và gỡ vai trò cho người dùng | M | LGC-BUS-032; LGC-IAM-002 | 030 | 031 | — | Có |
+| FR-12-012 | Gán và gỡ vai trò cho người dùng | M | LGC-BUS-032; LGC-IAM-002 | 030 | 031, 128 | — | Có |
 | FR-12-013 | Chặn cặp vai trò xung đột và duyệt ngoại lệ có thời hạn | M | mới | 033 | 032, 034 | — | Có |
 | FR-12-014 | Quản lý nhóm và đơn vị tổ chức | M | LGC-BUS-032; LGC-IAM-002 | 035 | 036 | — | Có |
 | FR-12-015 | Tạo vai trò tùy biến của tenant | S | LGC-IAM-002 | 037 | 038 | — | Có |
@@ -1602,7 +1637,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-12. FR mức
 | FR-12-018 | Rà soát quyền định kỳ | S | mới | 041 | 042 | — | Có |
 | FR-12-019 | Chuyển định danh và vai trò khi sáp nhập tenant | S | mới | 043 | 044 | — | Có |
 | FR-12-020 | Xác thực người dùng theo OIDC Authorization Code và PKCE | M | LGC-IAM-001; LGC-IAM-006; LGC-IAM-008 | 045, 048 | 046, 047, 048 | 110, 111, 119 | Có |
-| FR-12-021 | Chống dò mật khẩu và khóa tài khoản | M | mới | 049 | 049 | 050 | Có |
+| FR-12-021 | Chống dò mật khẩu và khóa tài khoản | M | mới | 049, 129 | 049 | 050 | Có |
 | FR-12-022 | Đăng ký và dùng yếu tố thứ hai TOTP, WebAuthn | M | LGC-IAM-003 | 051 | 051 | 105 | Có |
 | FR-12-023 | Xác thực lại bước lên cho thao tác nhạy cảm | M | mới | 052 | 052 | — | Có |
 | FR-12-024 | Đặt lại yếu tố thứ hai khi mất thiết bị | M | LGC-IAM-003 | 053 | 054 | — | Có |
@@ -1633,14 +1668,14 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-12. FR mức
 | FR-12-049 | Quyết định theo lô | S | mới | 087 | — | — | Có |
 | FR-12-050 | Bộ đệm quyết định | S | mới | 088 | — | 121 | Có |
 | FR-12-051 | Sinh dữ liệu vai trò–quyền cho OPA từ ma trận D02-08 | M | mới | 089 | 089 | 116 | Có |
-| FR-12-052 | Soạn và kiểm thử chính sách | M | mới | 090 | 091 | 122 | Có |
+| FR-12-052 | Soạn và kiểm thử chính sách | M | mới | 090 | 090, 091 | 122 | Có |
 | FR-12-053 | Chạy khô chính sách trên lưu lượng thật | M | mới | 092 | 092 | — | Có |
 | FR-12-054 | Duyệt bốn mắt và phát hành gói chính sách ký | M | mới | 093 | 094, 095 | 116 | Có |
 | FR-12-055 | Thu hồi và quay lui chính sách | M | mới | 096 | 096 | — | Có |
 | FR-12-056 | Ghi vết sự kiện xác thực và quản trị định danh | M | LGC-IAM-005 | 097, 125 | 097 | — | Có |
 | FR-12-057 | Ghi vết quyết định ủy quyền | M | mới | 098, 125 | 098 | — | Có |
 | FR-12-058 | Tra cứu nhật ký quyết định | M | mới | 098 | 098 | 109 | Có |
-| FR-12-059 | Phát hiện hành vi bất thường và cảnh báo | S | mới | 099 | — | — | Có |
+| FR-12-059 | Phát hiện hành vi bất thường và cảnh báo | S | mới | 099, 129 | — | — | Có |
 | FR-12-060 | Báo cáo tình trạng tài khoản và xác thực hai yếu tố | S | mới | 100 | — | — | Có |
 | FR-12-061 | Tham số phân hệ theo tenant | M | mới | 101 | 101 | — | Có |
 | FR-12-062 | Tra cứu danh bạ người dùng cho phân hệ khác | M | mới | 006 | 006 | — | Có |
@@ -1660,7 +1695,7 @@ Mỗi chức năng của IAM cũ (`LGC-IAM`) và các chức năng quản lý gr
 | LGC-IAM-002 | 001, 002, 003, 004, 006, 007, 009, 011, 012, 014, 015, 016, 041 | 001, 003, 007, 012, 018, 019, 023, 026 (+7) | UAT-01 |
 | LGC-IAM-003 | 022, 024 | 051, 053 | UAT-03 |
 | LGC-IAM-004 | 026 | 057 | UAT-04 |
-| LGC-IAM-005 | 002, 005, 029, 038, 040, 056 | 003, 014, 015, 048, 061, 072, 074, 097 (+1) | UAT-05 |
+| LGC-IAM-005 | 002, 005, 029, 038, 040, 056 | 003, 014, 015, 048, 061, 072, 074, 097 (+2) | UAT-05 |
 | LGC-IAM-006 | 020, 032, 035 | 045, 046, 048, 065, 068 | UAT-06 |
 | LGC-IAM-007 | 028 | 060 | UAT-08 |
 | LGC-IAM-008 | 020, 025 | 045, 048, 055 | UAT-07 |
@@ -1693,7 +1728,7 @@ Bảng sau cho biết mỗi quy tắc nghiệp vụ BR-12 được kiểm bởi 
 | BR-12-017 | 018, 050 |
 | BR-12-018 | 007, 010, 019 |
 | BR-12-019 | 049 |
-| BR-12-020 | 020, 021 |
+| BR-12-020 | 020, 021, 130 |
 | BR-12-021 | 046, 069 |
 | BR-12-022 | 019, 048, 101 |
 | BR-12-023 | 062, 067, 105 |
@@ -1706,7 +1741,7 @@ Bảng sau cho biết mỗi quy tắc nghiệp vụ BR-12 được kiểm bởi 
 | BR-12-030 | 032, 033, 034 |
 | BR-12-031 | 031, 040, 059, 082 |
 | BR-12-032 | 039, 040 |
-| BR-12-033 | 017, 031, 034, 040, 042, 054, 075 |
+| BR-12-033 | 017, 031, 034, 040, 042, 054, 075, 128, 129, 130 |
 | BR-12-034 | 053, 054 |
 | BR-12-035 | 015, 020 |
 | BR-12-036 | 012, 014, 030, 061 |
@@ -1773,7 +1808,7 @@ Bảng sau cho biết mỗi mã lỗi ERR-12 được kích hoạt và kiểm tr
 | ERR-12-043 | 101, 103 |
 | ERR-12-044 | 013, 101 |
 | ERR-12-045 | 102 |
-| ERR-12-046 | 017 |
+| ERR-12-046 | 017, 128, 129, 130 |
 | ERR-12-047 | 013, 058 |
 | ERR-12-101 | 084, 087 |
 | ERR-12-102 | 084 |
@@ -1849,9 +1884,9 @@ Bảng sau cho biết mỗi API-12 được gọi trong những test case nào, 
 | API-12-002 | 003, 004, 005, 107 |
 | API-12-003 | 007, 008, 009, 102, 103, 104, 105, 106 |
 | API-12-004 | 012, 013 |
-| API-12-005 | 014, 016, 017 |
+| API-12-005 | 014, 016, 017, 128, 129 |
 | API-12-006 | 014, 016 |
-| API-12-007 | 015, 017 |
+| API-12-007 | 015, 017, 128 |
 | API-12-008 | 015, 016 |
 | API-12-009 | 011 |
 | API-12-010 | 023, 025 |
@@ -1871,7 +1906,7 @@ Bảng sau cho biết mỗi API-12 được gọi trong những test case nào, 
 | API-12-024 | 037, 038 |
 | API-12-025 | 030, 107 |
 | API-12-026 | 030, 031, 032, 108 |
-| API-12-027 | 030 |
+| API-12-027 | 030, 128 |
 | API-12-028 | 032 |
 | API-12-029 | 033, 034 |
 | API-12-030 | 033, 034 |
@@ -1970,12 +2005,12 @@ Bảng sau cho biết mỗi use case UC-12 được phủ bởi những test cas
 | UC-12-01 | 001, 003, 126 |
 | UC-12-02 | 007, 102, 126 |
 | UC-12-03 | 012 |
-| UC-12-04 | 014 |
+| UC-12-04 | 014, 128, 129 |
 | UC-12-05 | 023 |
 | UC-12-06 | 018 |
-| UC-12-07 | 020, 021, 022 |
+| UC-12-07 | 020, 021, 022, 130 |
 | UC-12-08 | 027, 028 |
-| UC-12-09 | 030, 126 |
+| UC-12-09 | 030, 126, 128 |
 | UC-12-10 | 032, 033 |
 | UC-12-11 | 035 |
 | UC-12-12 | 037 |
@@ -2019,11 +2054,11 @@ Bảng sau cho biết mỗi màn UI-12 được kiểm bởi những test case n
 | Mã | Test case |
 |---|---|
 | UI-12-01 | 001, 002, 126 |
-| UI-12-02 | 003, 012, 014, 028, 051, 053, 061, 074, 126 |
+| UI-12-02 | 003, 012, 014, 028, 051, 053, 061, 074, 126, 128 |
 | UI-12-03 | 007, 011, 012, 015, 126 |
 | UI-12-04 | 023, 126 |
 | UI-12-05 | 027, 037, 126 |
-| UI-12-06 | 030, 032, 126 |
+| UI-12-06 | 030, 032, 126, 128 |
 | UI-12-07 | 022, 035, 126 |
 | UI-12-08 | 039, 126 |
 | UI-12-09 | 041, 126 |
@@ -2032,7 +2067,7 @@ Bảng sau cho biết mỗi màn UI-12 được kiểm bởi những test case n
 | UI-12-12 | 089, 090, 096, 126 |
 | UI-12-13 | 092, 093, 095, 126 |
 | UI-12-14 | 098, 126 |
-| UI-12-15 | 020, 097, 099, 100, 126 |
+| UI-12-15 | 020, 097, 099, 100, 126, 130 |
 | UI-12-16 | 101, 126 |
 | UI-12-17 | 033, 039, 053, 093, 126 |
 | UI-12-18 | 007, 010, 018, 019, 045, 048, 049, 051, 052, 059 (+2) |
@@ -2117,3 +2152,4 @@ Danh sách sau gom các đề nghị với tài liệu chung và các tập khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: kịch bản và test case chức năng, phi chức năng, UAT tương đương hệ IAM cũ, ma trận truy vết sinh tự động |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph12_isolation_test.sql và TenantIsolationIT; chốt câu hỏi mở đợt đồng bộ: Q450 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: sửa TC-12-017 sang ngưỡng hai TA; thêm TC-12-128 (chặn gỡ, khóa, vô hiệu, hết hạn gán TA khi còn hai TA), TC-12-129 (ngoại lệ khóa do sự cố ATTT), TC-12-130 (ngoại lệ tự vô hiệu không dùng); thêm dữ liệu U-T68-TA3; sinh lại feature, xlsx, ma trận |

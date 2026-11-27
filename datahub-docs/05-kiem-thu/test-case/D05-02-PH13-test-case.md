@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH13
 ten: Kịch bản và test case phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.3
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, kiểm toán viên, chủ đầu tư (UAT)
@@ -20,7 +20,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH13 F
 - Không mất chức năng giám sát của hệ cũ: histogram và chi tiết agent, route, endpoint của Bus (LGC-BUS-007, 014…019, 027, 029, 030, 038), đồ thị CPU, bộ nhớ của Hub (LGC-HUB-005, 006), log request, danh sách và giám sát gateway, audit của APIM (LGC-APIM-022…027), log có cấu trúc và sao lưu log (LGC-NFR-004, 005).
 - Nhật ký kiểm toán đúng là bằng chứng: mọi thao tác có bản ghi, không sửa được, phát hiện được can thiệp, tenant này không thấy dữ liệu của tenant khác, không có giá trị Nhạy cảm nào lọt vào log, trace, chỉ số hay bản ghi kiểm toán.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->41<!--/gen--> kịch bản (TS-13-01…) với <!--gen:so-tc-->126 (TC-13-001…126; 92 ca P1)<!--/gen--> test case và 12 kịch bản nghiệm thu người dùng (UAT-01…12). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API-13-001…090, UI-13-01…18, UC-13-01…42 và mọi mã ERR-13 có ít nhất một ca; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph13/tools/gen_matrix.py`. Các kịch bản chấp nhận `AT-13-001…034` của SRS cũ được ánh xạ vào các ca ở đây (FRS D02-03-PH13, mục 11).
+**Phạm vi.** Gồm <!--gen:so-ts-->41<!--/gen--> kịch bản (TS-13-01…) với <!--gen:so-tc-->135 (TC-13-001…135; 96 ca P1)<!--/gen--> test case và 12 kịch bản nghiệm thu người dùng (UAT-01…12). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API-13-001…090, UI-13-01…18, UC-13-01…43 và mọi mã ERR-13 có ít nhất một ca; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph13/tools/gen_matrix.py`. Các kịch bản chấp nhận `AT-13-001…034` của SRS cũ được ánh xạ vào các ca ở đây (FRS D02-03-PH13, mục 11).
 
 **Căn cứ.** Tài liệu cùng bộ PH-13 (FRS D02-03-PH13, use case D02-04-PH13, SDD D03-02-PH13, CSDL D03-03-PH13, API D03-04-PH13, màn hình D03-06-PH13); ma trận phân quyền D02-08 (PERM-13); biện pháp SEC-60…67 ở D03-07; kế hoạch kiểm thử D05-01; cổng CI D04-02; cấu trúc theo ISO/IEC/IEEE 29119-3; ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP, TCVN 14423:2026; nhật ký kiểm toán online 12 tháng, WORM 5 năm (ADR-030).
 
@@ -201,6 +201,7 @@ Viết tắt vai trò theo FRS D02-03-PH13 mục 3.1. Mọi người dùng vai t
 | S-PH20 | — | PH-20 | Scope `obs:tenant-provision` |
 | S-AM | — | Alertmanager | Chứng thư mTLS cho API-13-090 |
 | S-HIST | — | DU chủ đối tượng | Scope `audit:history-read` |
+| U-OPS | PLATFORM | Đội vận hành (vai trò di trú, không có `PERM-13-*`) | Chạy `AuditRestore` trong cửa sổ bảo trì (FR-13-062) |
 
 : Người dùng
 
@@ -221,6 +222,7 @@ Các bộ dữ liệu dưới đây được sinh bằng công cụ của PH-13 
 | F-DU-SIM | DU giả lập phát bản ghi kiểm toán, chỉ số, log; có thể phát sai (thiếu trường, trùng `id`, sai tenant, đồng hồ lệch) | TS-13-01, 05, 09 |
 | F-SIM-SIEM | Máy thu syslog và HTTP giả, có thể ngắt | TS-13-31 |
 | F-SIM-CHAN | Kênh thông báo giả: thư điện tử, SMS, webhook, ứng dụng; ghi thời điểm nhận | TS-13-25, 27 |
+| F-AUD-LAG | Chuỗi T68 và T01 như F-AUD-1K nhưng cơ sở dữ liệu khôi phục PITR về trước lô WORM mới nhất khoảng 4 phút (bảng đứng sau WORM); WORM đủ bản ghi, có neo | TS-13-08 (FR-13-062) |
 | F-SEC-EVT | Chuỗi bản ghi kiểm toán dựng sẵn khớp từng luật UC-SEC (đăng nhập thất bại hàng loạt, giải mã dữ liệu bất thường, sửa quyền ngoài giờ…) | TS-13-29, 30 |
 
 : Bộ dữ liệu kiểm thử
@@ -234,6 +236,7 @@ Các bộ dữ liệu dưới đây được sinh bằng công cụ của PH-13 
 | F-DU-SIM | Ba DU giả `dh-connect`, `dh-integration`, `dh-data` có chứng thư thật của SIT, phát bản ghi theo kịch bản và đếm số bản ghi phát |
 | F-SIM-SIEM | Máy thu `siem.sim.test` hai cổng: TCP syslog và HTTPS ECS; có công tắc ngắt |
 | F-SIM-CHAN | Máy chủ thư và cổng SMS giả; webhook `chan.sim.test` |
+| PH-01 giả lập | Nhận API-01-089 bằng token dịch vụ `onboarding:suspension-proposal`, ghi lại thân yêu cầu; công tắc `down` (503), `suspended` (409 ERR-01-048), `not-allowed` (409 ERR-01-005), `duplicate` (202 với `duplicate = true`) |
 | F-WORM | Kho WORM SIT (Ceph RGW Object Lock) có bucket riêng cho mỗi tenant; tài khoản ghi không có quyền xóa |
 
 : Hệ giả lập
@@ -256,7 +259,7 @@ Không dùng dữ liệu thật. Số định danh và số điện thoại tron
 | TS-13-05 | Tiếp nhận và chuỗi băm theo tenant | Xác nhận bản ghi từ DU được xác thực, ghi chỉ-thêm và nối chuỗi băm liên tục theo từng tenant; bản ghi sai bị cách ly, trùng bị bỏ | UC-13-05 | 4 |
 | TS-13-06 | Neo băm ký hằng giờ và sao lô sang WORM | Xác nhận neo băm được ký bằng khóa OpenBao, lưu ở ba nơi độc lập, và bản ghi được sao lô sang kho WORM không xóa được | UC-13-06 | 4 |
 | TS-13-07 | Kiểm tra toàn vẹn chuỗi | Xác nhận kiểm tra toàn vẹn hằng ngày, gia tăng khi neo và theo yêu cầu cho kết quả đúng, chỉ đọc, có lý do | UC-13-07 | 3 |
-| TS-13-08 | Xử lý đứt chuỗi và neo không khớp | Xác nhận mọi can thiệp vào bản ghi đã neo bị phát hiện, báo ngay mức Nghiêm trọng, và hệ thống không tự sửa | UC-13-08 | 3 |
+| TS-13-08 | Xử lý đứt chuỗi và neo không khớp | Xác nhận mọi can thiệp vào bản ghi đã neo bị phát hiện, báo ngay mức Nghiêm trọng, và hệ thống không tự sửa | UC-13-08 | 8 |
 | TS-13-09 | Chịu lỗi, đệm bản ghi và đối chiếu số lượng | Xác nhận không mất bản ghi kiểm toán khi PH-13 hay kho ngừng, DU từ chối thao tác nhạy cảm khi không ghi vết được, và bộ đếm của DU khớp số nhận | UC-13-09 | 5 |
 | TS-13-10 | Lưu giữ, lưu trữ phân vùng và tự kiểm toán của PH-13 | Xác nhận phân vùng quá 12 tháng chỉ lưu trữ khi WORM đã xác minh đủ, và mọi thao tác trên PH-13 đều có bản ghi kiểm toán | UC-13-10, 11 | 4 |
 | TS-13-11 | Tra cứu nhật ký kiểm toán | Xác nhận tra cứu kiểm toán bắt buộc lý do, giới hạn khoảng và phạm vi, xác thực lại phiên, và chính lượt tra cứu bị ghi vết; thay "Audit" của APIM | UC-13-12, 14 | 4 |
@@ -278,7 +281,7 @@ Không dùng dữ liệu thật. Số định danh và số điện thoại tron
 | TS-13-27 | Lịch trực, nhóm nhận, kênh thông báo | Xác nhận lịch trực không hở, không chồng, nhóm Nghiêm trọng có đường độc lập; thử gửi kênh | UC-13-30 | 2 |
 | TS-13-28 | Giám sát chính hệ thống giám sát và thống kê hiệu quả cảnh báo | Xác nhận có "giám sát người giám sát" độc lập và thống kê cảnh báo giả | UC-13-31, 32 | 2 |
 | TS-13-29 | Luật phát hiện UC-SEC | Xác nhận bộ luật phát hiện UC-SEC nạp sẵn, tinh chỉnh ngưỡng trong biên, luật "mọi sự kiện" không tắt | UC-13-33 | 2 |
-| TS-13-30 | Phát hiện bất thường và xử lý cảnh báo an ninh | Xác nhận bộ phát hiện sinh cảnh báo an ninh từ bản ghi kiểm toán, đóng cần kết luận, đề xuất tạm ngừng HTTT chuyển PH-01 chứ không tự thực hiện | UC-13-34, 35 | 4 |
+| TS-13-30 | Phát hiện bất thường và xử lý cảnh báo an ninh | Xác nhận bộ phát hiện sinh cảnh báo an ninh từ bản ghi kiểm toán, đóng cần kết luận, đề xuất tạm ngừng HTTT chuyển PH-01 chứ không tự thực hiện | UC-13-34, 35 | 8 |
 | TS-13-31 | Đẩy sang SIEM, SOC và báo cáo sự cố | Xác nhận log và cảnh báo an ninh sang SIEM đã loại dữ liệu cá nhân, chuẩn ECS hoặc OCSF; hàng đợi đĩa khi SIEM ngừng; báo cáo sự cố sinh từ cảnh báo | UC-13-36, 37 | 3 |
 | TS-13-32 | Dịch vụ cho phân hệ khác | Xác nhận PH-16 lấy số liệu tổng hợp và PH-18 lấy ngữ cảnh chẩn đoán qua scope hẹp, đúng tenant | UC-13-38, 39 | 2 |
 | TS-13-33 | Vòng đời tenant: khởi tạo và đóng chuỗi | Xác nhận PH-20 khởi tạo quan sát và chuỗi kiểm toán cho tenant mới, lũy đẳng; đóng chuỗi khi ngừng hoặc sáp nhập, có neo cuối | UC-13-40, 41 | 3 |
@@ -290,7 +293,7 @@ Không dùng dữ liệu thật. Số định danh và số điện thoại tron
 | TS-13-39 | Chịu lỗi và không chặn data plane | Chứng minh PH-13 hay kho quan sát ngừng không làm gateway, runtime, DU lỗi và 0 bản ghi kiểm toán mất | — | 3 |
 | TS-13-40 | Truy cập và giao diện | Chứng minh mọi màn UI-13 đạt WCAG 2.2 AA và dùng được bằng bàn phím, trình đọc màn hình, không chỉ dựa vào màu | — | 2 |
 | TS-13-41 | Bất biến nhật ký kiểm toán | Chứng minh không vai trò nào, kể cả quản trị cơ sở dữ liệu, sửa hoặc xóa được nhật ký ngoài tiến trình lưu trữ hợp lệ, và can thiệp bị phát hiện | — | 2 |
-| **Tổng** | | | | **126** (92 ca P1) |
+| **Tổng** | | | | **135** (96 ca P1) |
 
 : Danh sách kịch bản
 <!--/gen-->
@@ -627,6 +630,53 @@ Bảng dưới liệt kê các đối tượng có vòng đời ở PH-13 và k�
 - **Bước**
   1. Chạy kiểm tra liên tiếp 7 lần với ghi liên tục.
 - **Mong đợi** 7 lần `PASSED`; 0 cảnh báo đứt chuỗi; 0 EVT `chain-broken`.
+
+#### TC-13-127 · Khôi phục chuỗi sau sự cố: nạp lại nguyên văn từ WORM, xác minh đạt, biên bản ký <!--k:restore-ok-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** Thủ công, IT
+- **Truy vết** FR-13-062 · UC-13-43 · BR-13-002, 033 · FR-13-011, 012, 013, 014 · ERR-13-109
+- **Tiền điều kiện / dữ liệu** F-AUD-LAG (chuỗi T68 khôi phục PITR về trước 4 phút so với lô WORM mới nhất, WORM đủ bản ghi); `ingest` chưa mở; U-OPS chạy `AuditRestore`; U-T68-SO, U-T68-TA đã ký biên bản mở và cửa sổ bảo trì.
+- **Bước**
+  1. So `head_seq`, `head_hash` của T68 với lô WORM mới nhất và neo gần nhất.
+  2. Chạy `AuditRestore`; sau đó mở lại `ingest` và để DU giả lập gửi lại bản ghi chưa lên WORM (có bản trùng `id`).
+  3. Chạy xác minh `ON_DEMAND` toàn chuỗi; đọc chuỗi `PLATFORM`.
+  4. SO và TA ký biên bản; U-OPS lưu ở `dh-evidence`.
+  5. Tìm API, màn hình hay quyền `PERM-13-*` cho thao tác khôi phục.
+- **Mong đợi** Bước 1: bảng đứng sau WORM khoảng 4 phút. Bước 2: bản ghi được chèn nguyên văn (giữ `seq`, `recorded_at`, `prev_hash`, `hash`) theo thứ tự, không bản ghi nào bị sửa hay dựng mới; bản trùng `id` bị bỏ qua (ERR-13-102), bản còn lại nhận `seq` nối tiếp. Bước 3: kết quả `PASSED` toàn chuỗi; có `AUDIT.CHAIN.RESTORE` (lý do, số tenant, khoảng `seq` nạp lại) ở chuỗi `PLATFORM` và ở SIEM. Bước 4: biên bản có chữ ký của cả SO và TA, lưu ở `dh-evidence`. Bước 5: không có API, màn hình hay quyền nào cho thao tác này (không đường nào sửa, nối lại hay dựng lại chuỗi). KT: có.
+
+#### TC-13-128 · Khôi phục chuỗi: bảng không đứng sau WORM, và nhiều tenant mất dữ liệu <!--k:restore-alt-->
+- **Loại** Dương, Biên · **Ưu tiên** P3 · **Tự động** Thủ công, IT
+- **Truy vết** FR-13-062 · UC-13-43 · BR-13-033
+- **Tiền điều kiện / dữ liệu** Hai tình huống: (a) F-AUD-1K của T68 còn nguyên so với WORM; (b) T68, T01 cùng mất dữ liệu (F-AUD-LAG cho cả hai); chữ ký SO và TA đủ.
+- **Bước**
+  1. Tình huống (a): chạy thủ tục.
+  2. Tình huống (b): chạy lần lượt T68 rồi T01; theo dõi thời điểm mở `ingest` của từng tenant.
+- **Mong đợi** Tình huống (a): bỏ bước nạp lại, không chèn bản ghi nào, chỉ xác minh `PASSED` và lập biên bản. Tình huống (b): mỗi tenant được xác minh đạt rồi mới mở `ingest` cho tenant đó; `AUDIT.CHAIN.RESTORE` ghi số tenant và khoảng `seq` của từng tenant.
+
+#### TC-13-129 · Khôi phục chuỗi: băm WORM không khớp neo hoặc trigger từ chối thì dừng <!--k:restore-neg-hash-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-13-062 · UC-13-43 · BR-13-002, 033 · FR-13-015 · ERR-13-109, 110
+- **Tiền điều kiện / dữ liệu** F-AUD-LAG; một lô WORM thử bị đổi một bản ghi (băm không khớp neo); biến thể khác: bản ghi cần chèn không liền kề (thiếu một `seq`); biên bản đã ký.
+- **Bước**
+  1. Chạy `AuditRestore` với lô bị đổi.
+  2. Chạy với lô thiếu một `seq` giữa chừng.
+  3. Thử chèn thủ công một bản ghi bằng tài khoản DBA thử để vượt `tg_audit_chain_guard`.
+- **Mong đợi** Bước 1: dừng ngay, không chèn thêm bản ghi nào; xử lý như đứt chuỗi theo FR-13-015: ERR-13-109 hoặc ERR-13-110 mức Nghiêm trọng, cảnh báo SO và TA, EVT `audit.chain-broken`. Bước 2: `tg_audit_chain_guard` từ chối bản ghi không liền kề, thủ tục dừng. Bước 3: bị từ chối, không có đường vượt qua trigger; chuỗi giữ nguyên.
+
+#### TC-13-130 · Khôi phục chuỗi: thiếu chữ ký SO hoặc TA thì không chạy <!--k:restore-neg-sign-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** Thủ công
+- **Truy vết** FR-13-062 · UC-13-43 · BR-13-033
+- **Tiền điều kiện / dữ liệu** F-AUD-LAG; biên bản mở và cửa sổ bảo trì: biến thể 1 chỉ SO ký, biến thể 2 chỉ TA ký, biến thể 3 chưa ai ký.
+- **Bước**
+  1. U-OPS yêu cầu mở cửa sổ bảo trì và chạy `AuditRestore` với từng biến thể.
+- **Mong đợi** Cả ba biến thể: không mở cửa sổ bảo trì, không chạy `AuditRestore`, `ingest` vẫn đóng, chuỗi không đổi; yêu cầu bị ghi nhận có lý do. Chỉ khi cả SO và TA cùng ký mới chạy được.
+
+#### TC-13-131 · Khôi phục chuỗi: xác minh toàn chuỗi không đạt sau khi nạp <!--k:restore-neg-verify-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-13-062 · UC-13-43 · FR-13-014, 015 · ERR-13-109
+- **Tiền điều kiện / dữ liệu** F-AUD-LAG; một bản ghi trong khoảng đã nạp có băm sai mà vẫn liền kề (dựng bằng DBA thử ở SIT); biên bản đã ký.
+- **Bước**
+  1. Chạy `AuditRestore`, rồi xác minh `ON_DEMAND` toàn chuỗi.
+- **Mong đợi** Xác minh `BROKEN`, nêu `seq` đầu tiên sai; chuỗi giữ trạng thái đứt, không mở `ingest` cho tenant, mở sự cố theo FR-13-015 (ERR-13-109); không ghi `AUDIT.CHAIN.RESTORE` loại thành công.
 
 ### TS-13-09 · Chịu lỗi, đệm bản ghi và đối chiếu số lượng
 
@@ -1255,7 +1305,7 @@ Bảng dưới liệt kê các đối tượng có vòng đời ở PH-13 và k�
 
 **Mục tiêu.** Xác nhận bộ phát hiện sinh cảnh báo an ninh từ bản ghi kiểm toán, đóng cần kết luận, đề xuất tạm ngừng HTTT chuyển PH-01 chứ không tự thực hiện.
 
-**Phủ.** FR-13-052, 053; UC-13-34, 35; API-13-056, 057, 058, 059, 060; UI-13-15; BR-13-024; ERR-13-020, 023, 008, 028; EVT-13-04.
+**Phủ.** FR-13-052, 053; UC-13-34, 35; API-13-056, 057, 058, 059, 060; API-01-089; UI-13-15; BR-13-024; ERR-13-020, 023, 008, 028, 014, 001, 009, 003; ERR-01-005, 048; EVT-13-04.
 
 #### TC-13-084 · Chuỗi đăng nhập thất bại sinh cảnh báo an ninh <!--k:secalert-detect-->
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT
@@ -1289,6 +1339,47 @@ Bảng dưới liệt kê các đối tượng có vòng đời ở PH-13 và k�
 - **Bước**
   1. Đóng không kết luận; tiếp nhận cảnh báo đã `CLOSED`; đề xuất tạm ngừng không lý do; phiên chưa xác thực lại.
 - **Mong đợi** ERR-13-023; ERR-13-020; ERR-13-008; ERR-13-028.
+
+#### TC-13-132 · Đề xuất tạm ngừng gửi sang PH-01 qua API-01-089 bằng token dịch vụ <!--k:susp-send-ok-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-13-053 · UC-13-35 · API-13-060 · BR-13-024 · API-01-089 · FR-01-053
+- **Tiền điều kiện / dữ liệu** Cảnh báo an ninh `ACKNOWLEDGED` của `HT-NDXP` (T68, ACTIVE) mức `HIGH`; U-T68-SO; PH-01 giả lập nhận API-01-089 (scope `onboarding:suspension-proposal`) và ghi lại thân yêu cầu.
+- **Bước**
+  1. SO `POST /security-alerts/{alertId}:propose-suspension` với `systemCode = HT-NDXP`, `reason` 40 ký tự, `If-Match` đúng.
+  2. Đọc yêu cầu PH-01 giả lập nhận được.
+  3. Đọc cảnh báo và nhật ký kiểm toán PH-13.
+- **Mong đợi** Bước 1: `200`, cảnh báo có `proposedAction`. Bước 2: một lời gọi `POST /internal/suspension-proposals` bằng token dịch vụ của PH-13 (không phải token người dùng), thân có `systemCode = HT-NDXP`, `alertId` đúng cảnh báo, `severity = HIGH`, `reason` nguyên văn, liên kết sâu `evidenceUrl` về cảnh báo; PH-01 trả `202`, `duplicate = false`. Bước 3: có bản ghi `SECURITY.ALERT.PROPOSE_SUSPENSION` kèm HTTT, lý do; PH-13 không gọi API đổi trạng thái HTTT và không chờ quyết định.
+
+#### TC-13-133 · Đề xuất tạm ngừng khi PH-01 lỗi, từ chối hoặc báo trùng <!--k:susp-send-neg-->
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-13-053 · API-13-060 · API-01-089 · ERR-13-014, 001, 009 · BR-13-024
+- **Tiền điều kiện / dữ liệu** Cảnh báo an ninh `ACKNOWLEDGED`; PH-01 giả lập có công tắc `down`, `suspended` (trả `409` ERR-01-048), `duplicate`; HTTT `HT-TC-KHAC` thuộc T01; U-T68-SO, U-T68-AU.
+- **Bước**
+  1. Bật `down`; SO đề xuất.
+  2. Tắt `down`; SO đề xuất lại.
+  3. Bật `suspended`: SO đề xuất cho HTTT đã bị tạm ngừng.
+  4. SO đề xuất lần hai cùng cảnh báo khi PH-01 trả `duplicate = true`.
+  5. SO đề xuất cho `HT-TC-KHAC`; AU đề xuất.
+- **Mong đợi** Bước 1: `503` ERR-13-014, đề xuất chưa gửi, cảnh báo không ghi `proposedAction`, SO thử lại được. Bước 2: `200`, một đề xuất tới PH-01. Bước 3: PH-13 coi đề xuất đã được đáp ứng, không báo lỗi cho SO và không thử lại. Bước 4: `200`, không tạo việc thứ hai ở PH-01, không có bản ghi đề xuất trùng. Bước 5: `404` ERR-13-001 và PH-13 không gọi PH-01; AU `403` ERR-13-009. Không ca nào làm HTTT đổi trạng thái.
+
+#### TC-13-134 · Đề xuất tạm ngừng từ cảnh báo mức thấp hơn HIGH bị từ chối <!--k:susp-low-severity-->
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-13-053 · UC-13-35 · API-13-060 · UI-13-15 · ERR-13-003 · BR-13-024
+- **Tiền điều kiện / dữ liệu** Hai cảnh báo an ninh `ACKNOWLEDGED` của `HT-NDXP` (T68, ACTIVE), một mức `MEDIUM`, một mức `HIGH`; U-T68-SO; PH-01 giả lập ghi lại mọi yêu cầu nhận được.
+- **Bước**
+  1. SO mở chi tiết cảnh báo mức `MEDIUM` ở UI-13-15.
+  2. SO `POST /security-alerts/{alertId}:propose-suspension` cho cảnh báo `MEDIUM` với `systemCode = HT-NDXP`, `reason` 40 ký tự, `If-Match` đúng.
+  3. SO mở chi tiết cảnh báo mức `HIGH`.
+- **Mong đợi** Bước 1: nút "Đề xuất tạm ngừng HTTT" không hiện. Bước 2: `400` ERR-13-003 "Chỉ cảnh báo mức Cao hoặc Nghiêm trọng mới đề xuất tạm ngừng HTTT được."; PH-01 giả lập không nhận yêu cầu nào, cảnh báo không ghi `proposedAction`, HTTT giữ nguyên `ACTIVE`. Bước 3: nút hiện và dùng được.
+
+#### TC-13-135 · Đề xuất tạm ngừng khi PH-01 báo HTTT không ở trạng thái cho phép <!--k:susp-state-not-allowed-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-13-053 · UC-13-35 · API-13-060 · API-01-089 · UI-13-15 · ERR-01-005 · BR-13-024
+- **Tiền điều kiện / dữ liệu** Cảnh báo an ninh `ACKNOWLEDGED` mức `HIGH` của `HT-NDXP`; PH-01 giả lập bật công tắc `not-allowed` (trả `409` ERR-01-005); U-T68-SO.
+- **Bước**
+  1. SO đề xuất tạm ngừng `HT-NDXP` kèm `reason` 40 ký tự.
+  2. Đọc cảnh báo và nhật ký kiểm toán PH-13.
+- **Mong đợi** Bước 1: PH-13 báo cho SO "HTTT HT-NDXP không ở trạng thái cho phép tạm ngừng." (khác ca PH-01 trả ERR-01-048 là coi đã đáp ứng, không báo lỗi); không thử lại. Bước 2: cảnh báo không ghi `proposedAction`; HTTT không đổi trạng thái.
 
 ### TS-13-31 · Đẩy sang SIEM, SOC và báo cáo sự cố
 
@@ -1644,25 +1735,26 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-13. FR mức
 
 | FR | Tên | Mức | LGC | Dương | Âm | Ca khác | Đạt quy tắc |
 |---|---|---|---|---|---|---|---|
-| FR-13-001 | Thu thập chỉ số từ mọi thành phần | M | LGC-APIM-025; LGC-BUS-030 | 001 | 002 | 003, 005, 104, 113 | Có |
+| FR-13-001 | Thu thập chỉ số từ mọi thành phần | M | LGC-APIM-025, LGC-BUS-030 | 001 | 002 | 003, 005, 104, 113 | Có |
 | FR-13-002 | Thu thập log có cấu trúc | M | LGC-BUS-029, LGC-NFR-004 | 001 | 121 | 005, 105 | Có |
 | FR-13-003 | Thu thập vết truy nguyên | M | LGC-BUS-038 | 001, 004 | 121 | 105 | Có |
 | FR-13-004 | Lấy mẫu trace theo đuôi | M | mới | 004 | 121 | — | Có |
 | FR-13-005 | Che dữ liệu Nhạy cảm và quét phát hiện lọt | M | mới | 006 | 007, 008 | 097 | Có |
-| FR-13-006 | Thu siêu dữ liệu lượt gọi API | M | LGC-APIM-022; LGC-BUS-027 | 009 | 010 | — | Có |
-| FR-13-007 | Thu chỉ số thành phần nền và hạ tầng | M | LGC-APIM-025; LGC-BUS-016, LGC-HUB-005… | 011 | 011 | — | Có |
+| FR-13-006 | Thu siêu dữ liệu lượt gọi API | M | LGC-APIM-022, LGC-BUS-027 | 009 | 010 | — | Có |
+| FR-13-007 | Thu chỉ số thành phần nền và hạ tầng | M | LGC-APIM-025, LGC-BUS-016, LGC-HUB-005… | 011 | 011 | — | Có |
 | FR-13-008 | Kiểm tra tổng hợp mỗi phút | M | mới | 012 | 013, 014 | — | Có |
 | FR-13-009 | Cách ly dữ liệu quan sát theo tenant | M | mới | 001 | 002, 015 | 100 | Có |
 | FR-13-010 | Tiếp nhận và xác thực bản ghi kiểm toán | M | LGC-APIM-027 | 016 | 008, 017 | 018, 097, 109, 115 | Có |
-| FR-13-011 | Ghi chỉ-thêm và nối chuỗi băm theo tenant | M | LGC-APIM-027 | 016 | 017 | 019, 100, 109, 115, 119 | Có |
-| FR-13-012 | Neo băm ký hằng giờ | M | mới | 020 | 021 | — | Có |
-| FR-13-013 | Sao lô sang kho WORM | M | LGC-APIM-027; LGC-NFR-005 | 022 | 023 | 100, 116 | Có |
-| FR-13-014 | Kiểm tra toàn vẹn chuỗi | M | mới | 024, 026 | 025, 027 | 102, 111 | Có |
-| FR-13-015 | Xử lý đứt chuỗi và neo không khớp | M | mới | 029 | 027, 028 | 120 | Có |
+| FR-13-011 | Ghi chỉ-thêm và nối chuỗi băm theo tenant | M | LGC-APIM-027 | 016, 127 | 017 | 019, 100, 109, 115, 119 | Có |
+| FR-13-012 | Neo băm ký hằng giờ | M | mới | 020, 127 | 021 | — | Có |
+| FR-13-013 | Sao lô sang kho WORM | M | LGC-APIM-027, LGC-NFR-005 | 022, 127 | 023 | 100, 116 | Có |
+| FR-13-014 | Kiểm tra toàn vẹn chuỗi | M | mới | 024, 026, 127 | 025, 027, 131 | 102, 111 | Có |
+| FR-13-015 | Xử lý đứt chuỗi và neo không khớp | M | mới | 029 | 027, 028, 129, 131 | 120 | Có |
 | FR-13-016 | Chịu lỗi và đệm bản ghi khi PH-13 hoặc kho ngừng | M | mới | 030 | 023, 031, 034 | 114 | Có |
 | FR-13-017 | Đối chiếu số bản ghi với bộ đếm của DU | M | mới | 032 | 033 | — | Có |
 | FR-13-018 | Vòng đời lưu giữ và lưu trữ phân vùng | M | LGC-NFR-005 | 035 | 036 | — | Có |
 | FR-13-019 | Kiểm toán chính thao tác của PH-13 | M | mới | 037 | 122 | — | Có |
+| FR-13-062 | Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu | C | mới | 127, 128 | 129, 130, 131 | — | Có |
 | FR-13-020 | Tra cứu nhật ký kiểm toán | M | LGC-APIM-027 | 038 | 039, 065 | 041, 099, 101, 102, 110, 118 | Có |
 | FR-13-021 | Xem chi tiết bản ghi và xác minh băm | M | LGC-APIM-027 | 038 | 039 | — | Có |
 | FR-13-022 | Lịch sử theo đối tượng cho tab "Lịch sử" | M | LGC-PAY-019 | 042 | 043 | 099 | Có |
@@ -1673,13 +1765,13 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-13. FR mức
 | FR-13-027 | Chi tiết dòng log, ngữ cảnh và theo dõi trực tiếp | S | LGC-BUS-029 | 051 | — | — | Có |
 | FR-13-028 | Tìm trace và biểu đồ thác nước | M | LGC-BUS-038 | 052 | 053 | 099, 107, 118 | Có |
 | FR-13-029 | Liên kết chỉ số, trace, log, kiểm toán bằng trace_id | M | mới | 052 | 053 | — | Có |
-| FR-13-030 | Tra nhật ký truy cập API | M | LGC-APIM-022; LGC-PAY-021 | 054 | 055 | 099, 108 | Có |
-| FR-13-031 | Bảng điều khiển tổng quan nền tảng | M | LGC-APIM-026; LGC-BUS-014 | 056 | 057 | 106, 117, 118 | Có |
+| FR-13-030 | Tra nhật ký truy cập API | M | LGC-APIM-022, LGC-PAY-021 | 054 | 055 | 099, 108 | Có |
+| FR-13-031 | Bảng điều khiển tổng quan nền tảng | M | LGC-APIM-026, LGC-BUS-014 | 056 | 057 | 106, 117, 118 | Có |
 | FR-13-032 | Bảng điều khiển đơn vị triển khai và tài nguyên | M | LGC-BUS-014, LGC-BUS-015, LGC-BUS-016… | 058 | 059 | — | Có |
 | FR-13-033 | Bảng điều khiển theo luồng và route | M | LGC-BUS-007, LGC-BUS-019 | 058 | 059 | — | Có |
 | FR-13-034 | Thống kê theo endpoint | M | LGC-BUS-027 | 058 | 059 | — | Có |
-| FR-13-035 | Bảng điều khiển theo API và theo HTTT | M | LGC-APIM-022; LGC-APIM-026 | 060 | 061 | 099 | Có |
-| FR-13-036 | Danh sách và chi tiết nút gateway | M | LGC-APIM-023; LGC-APIM-024 | 062 | 063 | — | Có |
+| FR-13-035 | Bảng điều khiển theo API và theo HTTT | M | LGC-APIM-022, LGC-APIM-026 | 060 | 061 | 099 | Có |
+| FR-13-036 | Danh sách và chi tiết nút gateway | M | LGC-APIM-023, LGC-APIM-024 | 062 | 063 | — | Có |
 | FR-13-037 | Giám sát tài nguyên nút gateway | M | LGC-APIM-025 | 062 | 063 | — | Có |
 | FR-13-038 | Bảng điều khiển cụm Kafka | M | LGC-HUB-005, LGC-HUB-006 | 062 | 063 | — | Có |
 | FR-13-039 | Bảng điều khiển hoạt động nghiệp vụ | M | mới | 064 | 065 | — | Có |
@@ -1696,7 +1788,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-13. FR mức
 | FR-13-050 | Thống kê hiệu quả cảnh báo | S | mới | 081 | — | — | Có |
 | FR-13-051 | Nạp và tinh chỉnh bộ luật phát hiện UC-SEC | M | mới | 082 | 083 | — | Có |
 | FR-13-052 | Phát hiện bất thường từ bản ghi kiểm toán | M | mới | 084 | 125 | — | Có |
-| FR-13-053 | Xử lý cảnh báo an ninh, đề xuất tạm ngừng HTTT | M | mới | 084, 085 | 086 | 101, 102 | Có |
+| FR-13-053 | Xử lý cảnh báo an ninh, đề xuất tạm ngừng HTTT | M | mới | 084, 085, 132 | 086, 133, 134, 135 | 101, 102 | Có |
 | FR-13-054 | Đẩy log và cảnh báo an ninh sang SIEM, SOC | M | mới | 087 | 088 | — | Có |
 | FR-13-055 | Mẫu báo cáo sự cố và thông báo vi phạm DLCN | C | mới | 089 | 089 | — | Có |
 | FR-13-056 | Cung cấp số liệu cho PH-16 | M | mới | 090 | 091 | — | Có |
@@ -1716,10 +1808,10 @@ Mỗi chức năng giám sát, nhật ký của Bus (`LGC-BUS`), Hub (`LGC-HUB`)
 |---|---|---|---|
 | LGC-APIM-022 | 006, 030, 035 | 009, 054, 060 | UAT-08 |
 | LGC-APIM-023 | 036 | 062 | UAT-07 |
-| LGC-APIM-024 | 036 | 062 | UAT-07 |
-| LGC-APIM-025 | 001, 007, 037 | 001, 011, 062 | UAT-07 |
+| LGC-APIM-024 | 036 | 062 | — |
+| LGC-APIM-025 | 001, 007, 037 | 001, 011, 062 | — |
 | LGC-APIM-026 | 031, 035 | 056, 060 | UAT-01 |
-| LGC-APIM-027 | 010, 011, 013, 020, 021, 024 | 016, 022, 038, 044 | UAT-09, UAT-12 |
+| LGC-APIM-027 | 010, 011, 013, 020, 021, 024 | 016, 022, 038, 044, 127 | UAT-09, UAT-12 |
 | LGC-BUS-007 | 033 | 058 | UAT-02 |
 | LGC-BUS-014 | 031, 032 | 056, 058 | UAT-01 |
 | LGC-BUS-015 | 032 | 058 | UAT-03 |
@@ -1733,7 +1825,7 @@ Mỗi chức năng giám sát, nhật ký của Bus (`LGC-BUS`), Hub (`LGC-HUB`)
 | LGC-HUB-005 | 007, 038 | 011, 062 | UAT-06 |
 | LGC-HUB-006 | 007, 038 | 011, 062 | UAT-06 |
 | LGC-NFR-004 | 002, 026 | 001, 049 | UAT-05 |
-| LGC-NFR-005 | 013, 018 | 022, 035 | UAT-11 |
+| LGC-NFR-005 | 013, 018 | 022, 035, 127 | UAT-11 |
 | LGC-PAY-009 | 043 | 123 | UAT-10 |
 | LGC-PAY-019 | 022 | 042 | — |
 | LGC-PAY-021 | 030 | 054 | UAT-08 |
@@ -1747,7 +1839,7 @@ Bảng sau cho biết mỗi quy tắc nghiệp vụ BR-13 được kiểm bởi 
 | Mã | Test case |
 |---|---|
 | BR-13-001 | 017, 018, 031, 032, 033 |
-| BR-13-002 | 035, 036, 119, 120 |
+| BR-13-002 | 035, 036, 119, 120, 127, 129 |
 | BR-13-003 | 031 |
 | BR-13-004 | 016, 030, 115 |
 | BR-13-005 | 040 |
@@ -1769,7 +1861,7 @@ Bảng sau cho biết mỗi quy tắc nghiệp vụ BR-13 được kiểm bởi 
 | BR-13-021 | 076, 077, 124 |
 | BR-13-022 | 074, 075, 079 |
 | BR-13-023 | 076, 077, 081 |
-| BR-13-024 | 085, 086 |
+| BR-13-024 | 085, 086, 132, 133, 134, 135 |
 | BR-13-025 | 082, 083, 125 |
 | BR-13-026 | 002, 003 |
 | BR-13-027 | 001, 002 |
@@ -1778,7 +1870,7 @@ Bảng sau cho biết mỗi quy tắc nghiệp vụ BR-13 được kiểm bởi 
 | BR-13-030 | 015, 048, 055, 057, 061, 099 |
 | BR-13-031 | 071 |
 | BR-13-032 | 066, 070, 123 |
-| BR-13-033 | 026, 027 |
+| BR-13-033 | 026, 027, 127, 128, 129, 130 |
 | BR-13-034 | 087, 088 |
 | BR-13-035 | 008, 097 |
 
@@ -1790,20 +1882,20 @@ Bảng sau cho biết mỗi mã lỗi ERR-13 được kích hoạt và kiểm th
 
 | Mã | Test case |
 |---|---|
-| ERR-13-001 | 043, 053, 055, 059, 061, 063, 071, 089, 098, 099 |
+| ERR-13-001 | 043, 053, 055, 059, 061, 063, 071, 089, 098, 099 (+1) |
 | ERR-13-002 | 050, 069, 079, 088 |
-| ERR-13-003 | 126 |
+| ERR-13-003 | 126, 134 |
 | ERR-13-004 | 039, 050, 055, 091 |
 | ERR-13-005 | 039, 050, 055, 059, 091 |
 | ERR-13-006 | 050, 091 |
 | ERR-13-007 | 014, 069, 077, 096 |
 | ERR-13-008 | 025, 046, 069, 083, 086, 089, 094, 096 |
-| ERR-13-009 | 025, 046, 057, 061, 063, 065, 067, 077, 083, 096 (+2) |
+| ERR-13-009 | 025, 046, 057, 061, 063, 065, 067, 077, 083, 096 (+3) |
 | ERR-13-010 | 057, 101 |
 | ERR-13-011 | 041, 050, 091 |
 | ERR-13-012 | 039, 046, 122 |
 | ERR-13-013 | 039, 046 |
-| ERR-13-014 | 045, 114 |
+| ERR-13-014 | 045, 114, 133 |
 | ERR-13-015 | 039, 041, 051, 091 |
 | ERR-13-016 | 067 |
 | ERR-13-017 | 069 |
@@ -1842,8 +1934,8 @@ Bảng sau cho biết mỗi mã lỗi ERR-13 được kích hoạt và kiểm th
 | ERR-13-106 | 019 |
 | ERR-13-107 | 021 |
 | ERR-13-108 | 023 |
-| ERR-13-109 | 027, 029, 120 |
-| ERR-13-110 | 028 |
+| ERR-13-109 | 027, 029, 120, 127, 129, 131 |
+| ERR-13-110 | 028, 129 |
 | ERR-13-111 | 033 |
 | ERR-13-112 | 007, 097 |
 | ERR-13-113 | 002 |
@@ -2012,3 +2104,5 @@ Các đề nghị dưới đây thuộc tài liệu dùng chung hoặc tập c�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 41 kịch bản, 12 UAT, ma trận truy vết sinh tự động, công cụ `ph13/tools/` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: chương 0 tách thành các mục theo khuôn; thêm UC-13-08 vào TC-13-027, 028, 029; thêm chú thích và đoạn mở cho bảng ma trận (bộ sinh `gen_matrix.py`, `fill_doc.py` đã sửa để giữ chú thích khi sinh lại) |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph13_isolation_test.sql và ca rò rỉ ClickHouse T90, T91; chốt câu hỏi mở đợt đồng bộ: Q451 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca cho FR-13-062, UC-13-43 (TC-13-127…131) và gửi đề xuất tạm ngừng qua API-01-089 (TC-13-132, 133); thêm F-AUD-LAG, U-OPS, PH-01 giả lập (133 ca) |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | FR-13-053: thêm ca đề xuất từ cảnh báo mức thấp hơn HIGH (ERR-13-003) và ca PH-01 trả ERR-01-005 (TC-13-134, 135); công tắc `not-allowed` của PH-01 giả lập |

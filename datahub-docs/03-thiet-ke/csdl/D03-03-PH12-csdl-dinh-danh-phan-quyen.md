@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH12
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư dữ liệu, DBA, kỹ sư dh-platform, cán bộ ATTT, kiểm thử viên, hội đồng thẩm định
@@ -19,7 +19,7 @@ PH-12 trả lời "người gọi là ai" và "người gọi được làm gì"
 Bốn điểm thiết kế chính:
 
 1. **Không có bí mật trong CSDL.** Không bảng nào chứa mật khẩu, mã TOTP, bí mật client, khóa riêng hay token. Bảng chỉ giữ tham chiếu OpenBao (`secret_ref`), dấu vân tay chứng thư, `wrap_accessor` và băm HMAC. Mọi cột JSON nhận dữ liệu từ ngoài bị `CHECK` chặn khóa tên bí mật (kể cả lồng), nên một lỗi lập trình ở dịch vụ cũng không ghi được `wrappingToken` hay `clientSecret` xuống đĩa (BR-12-023, BR-12-045, NFR-12-020).
-2. **Quy tắc phân quyền chốt ở CSDL, không chỉ ở dịch vụ.** Cặp vai trò xung đột bị trigger chặn trừ khi có ngoại lệ còn hiệu lực (BR-12-030); mỗi tenant luôn còn một quản trị tỉnh (BR-12-033); người duyệt không được là người soạn, người gửi hay người đóng góp (BR-12-008); phiên bản chính sách chỉ gửi duyệt khi đã kiểm thử đạt và chạy khô trên đúng băm nội dung (BR-12-009, ADR-069); mức hợp đồng của HTTT quyết định phương thức xác thực của client (BR-12-024); mỗi nguồn chỉ đặt đúng loại scope của mình (BR-12-025); quyền có thời hạn không quá 4 giờ (BR-12-032).
+2. **Quy tắc phân quyền chốt ở CSDL, không chỉ ở dịch vụ.** Cặp vai trò xung đột bị trigger chặn trừ khi có ngoại lệ còn hiệu lực (BR-12-030); mỗi tenant luôn còn ít nhất hai quản trị tỉnh hiệu lực (BR-12-033, Q403 chốt 27/11/2026); người duyệt không được là người soạn, người gửi hay người đóng góp (BR-12-008); phiên bản chính sách chỉ gửi duyệt khi đã kiểm thử đạt và chạy khô trên đúng băm nội dung (BR-12-009, ADR-069); mức hợp đồng của HTTT quyết định phương thức xác thực của client (BR-12-024); mỗi nguồn chỉ đặt đúng loại scope của mình (BR-12-025); quyền có thời hạn không quá 4 giờ (BR-12-032).
 3. **Cách ly tỉnh bằng CSDL.** 41 bảng có `tenant_id` đều bật `FORCE ROW LEVEL SECURITY` với 164 chính sách theo ba mẫu (riêng tenant, dùng chung `COMMON`, quyền có thời hạn vào tenant khác); mọi khóa ngoại giữa các bảng của tenant mang kèm `tenant_id` (chỉ khóa tới bảng dùng chung `sod_pair` không có). Đã chạy thử ngày 26/11/2026 trên PostgreSQL 16.16: [bài kiểm](ph12/test/ph12_isolation_test.sql) đạt 100 khối thuộc 24 nhóm, gồm đọc chéo, ghi chéo, khóa ngoại chéo tỉnh, ba mẫu RLS và từng quy tắc ở điểm 2 (mục 4.2).
 4. **Nhỏ, nên đơn giản và vẫn chịu được sự cố.** Với tỉnh vừa (3.000 cán bộ, 200 HTTT, giả định GĐ-12-02) schema chỉ khoảng 75 MB (mục 8.1) nên không phân vùng; khối lượng lớn (nhật ký quyết định, sự kiện xác thực) đi qua Loki và chuỗi kiểm toán PH-13, không vào PostgreSQL. Cụm `pg-core` thuộc tầng phục hồi `TPH-1`; khi control plane ngừng, Keycloak (`pg-iam`, `TPH-0`) vẫn đăng nhập và OPA vẫn quyết định với gói đã nạp (NFR-12-013).
 
@@ -546,7 +546,7 @@ Chương này đặc tả từng bảng theo thứ tự trong DDL (mục 3.1 đ�
 
 **Phân vùng, chỉ thêm.** Không phân vùng (bảng nhỏ); Không xóa vật lý, kết thúc bằng trạng thái (trigger `tg_user_account_no_delete`, BR-12-035); Trigger nghiệp vụ `tg_user_account_last_admin` (hàm `tg_user_account_last_admin`).
 
-**Ghi chú.** Chứa dữ liệu cá nhân (họ tên, thư điện tử; mục 5); `ph12_readonly` không đọc được `email` và `full_name`. Trigger `tg_user_account_last_admin` giữ tenant còn ít nhất một quản trị tỉnh (ERR-12-046). Ước lượng 3.000 dòng mỗi tỉnh vừa (GĐ-12-02), thiết kế tới 10.000 (NFR-12-023). Lưu giữ: vĩnh viễn (mục 8).
+**Ghi chú.** Chứa dữ liệu cá nhân (họ tên, thư điện tử; mục 5); `ph12_readonly` không đọc được `email` và `full_name`. Trigger `tg_user_account_last_admin` giữ tenant còn ít nhất hai quản trị tỉnh hiệu lực khi vô hiệu hoặc khóa hẳn (BR-12-033, ERR-12-046); miễn cho lý do `INACTIVE_45D`, `INACTIVE_30D_ADMIN` và khi dịch vụ đặt `ph12.ta_floor_exception`. Ước lượng 3.000 dòng mỗi tỉnh vừa (GĐ-12-02), thiết kế tới 10.000 (NFR-12-023). Lưu giữ: vĩnh viễn (mục 8).
 :::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
@@ -754,7 +754,7 @@ Chương này đặc tả từng bảng theo thứ tự trong DDL (mục 3.1 đ�
 ### 3.6. `role_assignment`
 
 ::: dac-ta
-**Mục đích.** EN-12-02 Gán vai trò chuẩn cho người dùng, có phạm vi (TENANT, ORG, WORKSPACE) và thời hạn (FR-12-012). Cặp xung đột bị trigger tg_role_assignment_sod chặn (BR-12-030); tenant còn ít nhất một TENANT_ADMIN (BR-12-033). Vai trò chỉ gán cho người, không gán cho nhóm (BR-12-039).
+**Mục đích.** EN-12-02 Gán vai trò chuẩn cho người dùng, có phạm vi (TENANT, ORG, WORKSPACE) và thời hạn (FR-12-012). Cặp xung đột bị trigger tg_role_assignment_sod chặn (BR-12-030); tenant còn ít nhất hai TENANT_ADMIN hiệu lực (BR-12-033, Q403). Vai trò chỉ gán cho người, không gán cho nhóm (BR-12-039).
 
 **FR phục vụ.** FR-12-004, 011…013, 016, 018, 046, 051.
 
@@ -772,7 +772,7 @@ Chương này đặc tả từng bảng theo thứ tự trong DDL (mục 3.1 đ�
 
 **Phân vùng, chỉ thêm.** Không phân vùng (bảng nhỏ); Trigger nghiệp vụ `tg_role_assignment_last_admin` (hàm `tg_role_assignment_last_admin`); Trigger nghiệp vụ `tg_role_assignment_sod` (hàm `tg_role_assignment_sod`).
 
-**Ghi chú.** Hai trigger chốt tách nhiệm vụ (`tg_role_assignment_sod`, khóa tư vấn theo người dùng) và tenant còn quản trị cuối cùng. `AssignmentExpiryJob` đặt EXPIRED mỗi phút; hết hạn đã có hiệu lực ngay ở OPA vì Rego kiểm `valid_to` ở mọi quyết định (SDD §4.3). Không xóa vật lý: gỡ là REVOKED.
+**Ghi chú.** Hai trigger chốt tách nhiệm vụ (`tg_role_assignment_sod`, khóa tư vấn theo người dùng) và tenant còn ít nhất hai quản trị tỉnh hiệu lực (ERR-12-046). `AssignmentExpiryJob` đặt EXPIRED mỗi phút; hết hạn gán `TENANT_ADMIN` làm tenant xuống dưới hai TA bị trigger chặn (tác vụ giữ gán và cảnh báo); hết hạn đã có hiệu lực ngay ở OPA vì Rego kiểm `valid_to` ở mọi quyết định (SDD §4.3). Không xóa vật lý: gỡ là REVOKED.
 :::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
@@ -2429,7 +2429,7 @@ Hai lớp bảo vệ chồng nhau: dịch vụ kiểm trước để trả thôn
 | 1 | `tg_role_assignment_sod`, `sod_pair` | Gán vai trò thứ hai tạo cặp xung đột (D02-08 §4) bị chặn trừ khi có `sod_exception` `ACTIVE` còn hạn; khóa tư vấn theo người dùng chống hai giao dịch gán đồng thời | BR-12-030, FR-12-013 | `P1209` → ERR-12-009 |
 | 2 | `tg_sod_exception_guard`, `fk_sod_exception_pair` | Ngoại lệ chỉ cho cặp có trong `sod_pair` và `allow_exception`; cặp `AUDITOR` với vai trò ghi của PH-19 không có ngoại lệ | BR-12-030 | `P1210` → ERR-12-010 |
 | 3 | `ck_sod_exception_max_days`, `_reason`, `_four_eyes`, `_decided` | Ngoại lệ tối đa 90 ngày, lý do từ 30 ký tự, người duyệt khác người đề nghị, `ACTIVE` phải có người duyệt và thời điểm | BR-12-030 | `23514` → ERR-12-043 (hạn), ERR-12-014 (lý do), ERR-12-008 (bốn mắt) |
-| 4 | `tg_role_assignment_last_admin`, `tg_user_account_last_admin` | Không gỡ, hết hạn, thu hồi hay vô hiệu người giữ `TENANT_ADMIN` cuối cùng của tenant tỉnh; khóa tư vấn theo tenant | BR-12-033, FR-12-012 | `P1246` → ERR-12-046 |
+| 4 | `tg_role_assignment_last_admin`, `tg_user_account_last_admin` | Không gỡ, hết hạn, thu hồi, vô hiệu hay khóa hẳn người giữ `TENANT_ADMIN` nếu tenant tỉnh sẽ còn dưới hai TA hiệu lực; khóa tư vấn theo tenant. Miễn khi lý do vô hiệu là `INACTIVE_45D`, `INACTIVE_30D_ADMIN` hoặc dịch vụ đặt `ph12.ta_floor_exception` là `INACTIVITY`, `ATTT_INCIDENT`, `TENANT_NOT_ACTIVE` (hàm `f_ta_floor_exempt`) | BR-12-033, FR-12-012 | `P1246` → ERR-12-046 |
 | 5 | `ck_role_assignment_no_self`, `ck_revocation_entry_no_self`, `ck_recert_item_no_self` | Không tự gán, gỡ vai trò, không tự thu hồi truy cập, không tự rà soát quyền của mình | BR-12-033, BR-12-044 | `23514` → ERR-12-013 |
 | 6 | `ck_role_assignment_platform`, `ck_role_assignment_machine` | Vai trò `PLATFORM_*` chỉ ở tenant `PLATFORM`; `PARTNER_SYSTEM` chỉ gán cho client, không gán cho người | BR-12-031 | `23514` → ERR-12-010 |
 | 7 | `uq_role_assignment_active` | Một gán `ACTIVE` cho mỗi (người, vai trò, loại phạm vi, phạm vi) | FR-12-012 | `23505` → ERR-12-002 |
@@ -2864,4 +2864,5 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-CSDL và K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu; chiến lược lưu trữ (vai trò, ba mẫu RLS P, S, G, quy ước, danh mục 43 bảng, quyền); bốn ERD; đặc tả 43 bảng với khối 10 mục sinh từ DDL; 25 quy tắc chốt ở CSDL kèm ánh xạ `SQLSTATE` sang ERR; DDL sáu tệp đã chạy thử trên PostgreSQL 16.16 và bài kiểm 100 khối PASS; dữ liệu cá nhân và không lưu bí mật; dữ liệu khởi tạo; kho ngoài PostgreSQL; sao lưu, khôi phục, lưu giữ; ánh xạ hệ cũ; 5 câu hỏi mở (Q12-50…Q12-54); đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên bước S03_REALM theo D03-10 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Theo Q403: trigger `tg_role_assignment_last_admin`, `tg_user_account_last_admin` đổi ngưỡng từ không còn TA sang dưới hai TA hiệu lực (ERR-12-046, `P1246`), thêm hàm `f_ta_floor_exempt` cho ngoại lệ không dùng 45 ngày và sự cố ATTT; sinh lại bảng từ DDL |
 

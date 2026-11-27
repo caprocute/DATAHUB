@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH14
 ten: Đặc tả yêu cầu chức năng phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-integration và dh-runtime, cán bộ ATTT, kiểm thử viên
@@ -3311,6 +3311,7 @@ Mỗi lô gửi lên hoặc kéo xuống có tối đa 10.000 khóa; PH-06 đặ
 
 - Thiếu ánh xạ ở PH-07: ERR-14-125 (422); "Lô dữ liệu chủ có trường chưa ánh xạ sang từ điển quốc gia: {danh sách}. Bổ sung ánh xạ ở phân hệ Danh mục dùng chung."
 - PH-09 chặn: ERR-14-126 (403); "Lô dữ liệu chủ chứa trường không được gửi ra ngoài tỉnh: {danh sách}."
+- PH-09 không trả lời khi kiểm tra trước khi gửi: ERR-14-132 (503); "Chưa kiểm tra được lô dữ liệu chủ trước khi gửi ra ngoài tỉnh nên lô không được gửi. Thử lại sau ít phút." Lô được giữ trong hàng chờ.
 - CSDL tổng hợp không khả dụng: ERR-14-103 (503); lô được giữ trong hàng chờ.
 
 **Đầu ra.** `202`; `runId`, `state`, thống kê đối soát.
@@ -3348,7 +3349,7 @@ Mỗi lô gửi lên hoặc kéo xuống có tối đa 10.000 khóa; PH-06 đặ
 **Luồng xử lý chính.**
 
 1. TA chọn nguồn (danh mục công khai ở PH-07 hoặc tệp đã qua kiểm tra) và khai siêu dữ liệu.
-2. Hệ thống gọi PH-09 xác nhận nguồn không chứa trường dữ liệu cá nhân hay trường mức Hạn chế trở lên, và gọi `classification:check` với `egressScope` là `OUT_OF_PROVINCE` để kiểm cờ `noEgress` (không đạt: ERR-14-126).
+2. Hệ thống gọi PH-09 xác nhận nguồn không chứa trường dữ liệu cá nhân hay trường mức Hạn chế trở lên, và gọi `classification:check` với `egressScope` là `OUT_OF_PROVINCE` để kiểm cờ `noEgress` (không đạt: ERR-14-126). Lời gọi này bắt buộc trước mỗi lần công bố, cùng nguyên tắc chặn như FR-14-044: PH-09 không trả lời thì không công bố (ERR-14-132, 503).
 3. Hệ thống kiểm tra siêu dữ liệu đủ trường theo đặc tả NDOP đang dùng và hiện nhãn "đặc tả tạm thời" nếu `PROVISIONAL`.
 4. Với lần công bố đầu, hệ thống tạo việc duyệt; người duyệt khác người đề nghị duyệt (ERR-14-007 nếu trùng).
 5. Bộ đồng bộ chuyển tập dữ liệu sang định dạng NDOP (CSV hoặc JSON), gửi theo lô qua cổng với chống trùng theo (mã tập, phiên bản).
@@ -3359,6 +3360,7 @@ Mỗi lô gửi lên hoặc kéo xuống có tối đa 10.000 khóa; PH-06 đặ
 **Luồng ngoại lệ.**
 
 - Nguồn có dữ liệu bị cấm: ERR-14-126 (403); "Nguồn chứa trường không được công bố: {danh sách}. Loại trường đó khỏi tập dữ liệu mở."
+- PH-09 không trả lời khi kiểm tra trước khi công bố: ERR-14-132 (503); "Chưa kiểm tra được tập dữ liệu trước khi công bố nên chưa công bố. Thử lại sau ít phút." Không có lô nào được gửi.
 - NDOP từ chối: ERR-14-028 (422); "Nền tảng dữ liệu mở từ chối tập {mã}: {lý do}."
 - NDOP không khả dụng: ERR-14-103 (503); lô thử lại theo lịch.
 
@@ -4684,6 +4686,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-14: 57 chức năng chia chín nhóm, theo khuôn K-FRS và chuẩn trình bày K-TRINH-BAY (khối đặc tả 17 mục). Căn cứ: SRS cũ của repo (14 FR, ánh xạ ở mục 11.2), phụ lục NGSP ở D00-03 §4.7 (9 mục `LGC`), GĐ-02, ADR-057, SEC-16, 24, 33, 36, THR-51…53. Kiến trúc thay Vault bằng OpenBao (ADR-012), thay Camel chung bằng hồ sơ `national-gateway` của Camel Quarkus (ADR-002). Có 14 câu hỏi mở (Q14-01…14) và mục Đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117; chốt Q392, Q448: PH-02 thêm loại API dịch vụ quốc gia nhận bản nháp từ PH-14, chỉ tạo DRAFT, không tự công bố; thêm API-14-093, 094 (duyệt bốn mắt chung) vào §9.4; chốt câu hỏi mở đợt đồng bộ: Q420, Q393 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | FR-14-044, FR-14-045: ghi hành vi khi PH-09 không trả lời lúc kiểm tra trước khi gửi hoặc công bố (không gửi, ERR-14-132, 503), khớp OpenAPI API-14-056, API-14-087 |
 
 
 

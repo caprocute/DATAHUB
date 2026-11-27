@@ -310,7 +310,8 @@ paths:
         perms:
         - PERM-12-user-lock
         scopes: []
-      description: Khóa hẳn (`BLOCKED`), hủy mọi phiên. Không tự khóa chính mình.
+      description: 'Khóa hẳn (`BLOCKED`), hủy mọi phiên. Không tự khóa chính mình. Khóa TA làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì
+        trả ERR-12-046 (409), trừ khi có `incidentRef` (sự cố ATTT): khi đó vẫn khóa, phát cảnh báo khẩn cho SO, PA và tạo việc bổ sung TA (BR-12-033).'
       parameters:
       - $ref: '#/components/parameters/userIdPath'
       - $ref: '#/components/parameters/IfMatch'
@@ -429,7 +430,8 @@ paths:
         perms:
         - PERM-12-user-lock
         scopes: []
-      description: Vô hiệu (`DISABLED`), không xóa vật lý (BR-12-035). Quản trị tỉnh cuối cùng không vô hiệu được.
+      description: Vô hiệu (`DISABLED`), không xóa vật lý (BR-12-035). Vô hiệu TA làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì trả ERR-12-046
+        (409); không có ngoại lệ ở API này (ngoại lệ không dùng 45 ngày do tác vụ nội bộ).
       parameters:
       - $ref: '#/components/parameters/userIdPath'
       - $ref: '#/components/parameters/IfMatch'
@@ -1514,7 +1516,8 @@ paths:
         perms:
         - PERM-12-user-admin
         scopes: []
-      description: Gỡ vai trò; yêu cầu `reason` ở tham số truy vấn.
+      description: Gỡ vai trò; yêu cầu `reason` ở tham số truy vấn. Gỡ `TENANT_ADMIN` làm tenant đã kích hoạt còn dưới hai TA hiệu lực thì trả
+        ERR-12-046 (409).
       parameters:
       - $ref: '#/components/parameters/assignmentIdPath'
       - name: reason
@@ -6356,6 +6359,7 @@ components:
         incidentRef:
           type: string
           maxLength: 64
+          description: Mã sự cố ATTT do SO mở; chỉ API-12-005 dùng để miễn ngưỡng hai TA của ERR-12-046 (BR-12-033).
       additionalProperties: false
       required:
       - reason

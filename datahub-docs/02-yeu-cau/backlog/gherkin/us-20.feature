@@ -261,7 +261,7 @@ Tính năng: PH-20 · Quản trị tenant và phát hành sản phẩm
 
   @US-20-013 @FR-20-013 @M
   Kịch bản: US-20-013 dương · Kích hoạt tenant và bàn giao cho quản trị tỉnh
-    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
+    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
     Khi bộ thực thi tới `S17_ACTIVATE`; hoặc PA bấm "Kích hoạt" ở UI-20-04 khi mẫu yêu cầu kích hoạt tay (ví dụ chờ lễ khai trương)
     Thì hệ thống trả `200`; tenant `ACTIVE`, `activatedAt`, `handoverDelivery` (`SENT`, `FAILED`)
     Và tenant `ACTIVE`; lần chạy `SUCCEEDED`
@@ -270,17 +270,17 @@ Tính năng: PH-20 · Quản trị tenant và phát hành sản phẩm
 
   @US-20-013 @FR-20-013 @M @âm
   Kịch bản: US-20-013 âm 1 · Kiểm tra khói chưa đạt
-    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
+    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
     Khi kiểm tra khói chưa đạt
     Thì hệ thống từ chối với ERR-20-020 (422)
     Và người dùng thấy thông báo "Kiểm tra khói chưa đạt ({số} ca lỗi). Không thể kích hoạt tenant."
 
   @US-20-013 @FR-20-013 @M @âm
-  Kịch bản: US-20-013 âm 2 · Trạng thái không phù hợp
-    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử)
-    Khi trạng thái không phù hợp
-    Thì hệ thống từ chối với ERR-20-006 (409)
-    Và người dùng thấy thông báo "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}."
+  Kịch bản: US-20-013 âm 2 · Chưa đủ hai quản trị tỉnh
+    Biết `S16_SMOKE` `SUCCEEDED` (hoặc `SKIPPED` với tenant kiểm thử); tenant có ít nhất hai đầu mối `TENANT_ADMIN` và ít nhất hai tài khoản `ROLE-TENANT_ADMIN` đang hoạt động ở realm (kiểm bằng `GET /users` của PH-12 lọc `roleCode` và `state` …
+    Khi chưa đủ hai quản trị tỉnh
+    Thì hệ thống từ chối với ERR-20-021 (422)
+    Và người dùng thấy thông báo "Cần đủ đầu mối {vai trò} trước khi {thao tác}."
 
   @US-20-014 @FR-20-014 @S
   Kịch bản: US-20-014 dương · Đo và báo thời gian khởi tạo tenant (KPI-12) cho PH-16
