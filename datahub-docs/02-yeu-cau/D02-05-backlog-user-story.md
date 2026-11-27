@@ -331,8 +331,8 @@ Bảng sau là kết quả áp công thức cho toàn bộ backlog. Phân bố l
 | Điểm | Số story | Tỷ lệ | Tổng điểm |
 |---|---|---|---|
 | 1 | 95 | 7,4% | 95 |
-| 2 | 381 | 29,6% | 762 |
-| 3 | 446 | 34,7% | 1338 |
+| 2 | 380 | 29,5% | 760 |
+| 3 | 447 | 34,7% | 1341 |
 | 5 | 293 | 22,8% | 1465 |
 | 8 | 72 | 5,6% | 576 |
 
@@ -342,7 +342,7 @@ Bảng sau là kết quả áp công thức cho toàn bộ backlog. Phân bố l
 
 <!-- sinh:de-nghi-tach -->
 
-Có **8** story điểm thô trên 19 (đã chặn trần 8 điểm) được đánh dấu "đề nghị tách" để nhóm xem lại ở buổi làm rõ backlog trước khi đưa vào sprint: US-07-015, US-07-016, US-07-021, US-07-036, US-07-037, US-07-051, US-10-035, US-19-023.
+Có **9** story điểm thô trên 19 (đã chặn trần 8 điểm) được đánh dấu "đề nghị tách" để nhóm xem lại ở buổi làm rõ backlog trước khi đưa vào sprint: US-07-015, US-07-016, US-07-021, US-07-036, US-07-037, US-07-051, US-10-008, US-10-035, US-19-023.
 
 <!-- /sinh:de-nghi-tach -->
 
@@ -368,7 +368,7 @@ Với hệ số đó, một đội 5–6 người làm 10 ngày mỗi sprint, t�
 | PH-07 | Danh mục dùng chung | 8 | 53 | 221 | 48 | 4 | 1 | W2 |
 | PH-08 | Chất lượng dữ liệu | 10 | 61 | 161 | 36 | 21 | 4 | W4–W5 |
 | PH-09 | Quyền riêng tư | 11 | 64 | 140 | 47 | 13 | 4 | W4 |
-| PH-10 | Sự kiện | 11 | 76 | 265 | 66 | 8 | 2 | W2 |
+| PH-10 | Sự kiện | 11 | 76 | 266 | 66 | 8 | 2 | W2 |
 | PH-11 | Quy trình liên thông | 10 | 66 | 147 | 48 | 16 | 2 | W4 |
 | PH-12 | Định danh và phân quyền | 8 | 62 | 316 | 52 | 9 | 1 | W1 |
 | PH-13 | Giám sát và kiểm toán | 8 | 61 | 216 | 52 | 8 | 1 | W1–W2 |
@@ -379,7 +379,7 @@ Với hệ số đó, một đội 5–6 người làm 10 ngày mỗi sprint, t�
 | PH-18 | Vận hành và xử lý lỗi | 10 | 72 | 202 | 57 | 12 | 3 | W2 |
 | PH-19 | Thanh toán điện tử | 15 | 69 | 237 | 58 | 10 | 1 | W4 |
 | PH-20 | Quản trị tenant và phát hành sản phẩm | 10 | 70 | 207 | 51 | 19 | 0 | W2 |
-| **Cộng** |  | 195 | **1287** | **4236** | 1022 | 231 | 34 |  |
+| **Cộng** |  | 195 | **1287** | **4237** | 1022 | 231 | 34 |  |
 
 : Số epic, story, điểm và mức ưu tiên theo phân hệ (sinh tự động)
 
@@ -423,7 +423,7 @@ Hình cho thấy W3 và W4 chạy song song theo D01-02 §3.2: trong khi đội 
 |---|---|---|---|
 | W1 | 359 | 1336 | 1249 |
 | W1–W2 | 59 | 210 | 189 |
-| W2 | 310 | 1087 | 995 |
+| W2 | 310 | 1088 | 996 |
 | W4 | 298 | 841 | 588 |
 | W4–W5 | 121 | 344 | 270 |
 | W5 | 135 | 406 | 266 |
@@ -528,7 +528,7 @@ Epic gồm 4 story, 7 điểm (4 story mức M).
 | US-00-040 | Là người dùng, tôi muốn phạm vi thao tác phải ghi kiểm toán, để mọi thao tác thuộc danh sách đều có bản ghi kiểm toán tra cứu được. | M | 2 | MVP, W1 | FR-00-040 |
 | US-00-041 | Là kiểm toán viên, tôi muốn hệ thống nội dung bắt buộc của bản ghi kiểm toán, để kiểm toán viên đọc một bản ghi là biết đủ ai, ở đâu, làm gì, với đối tượng nào, trước và sau ra sao, kết quả, lý do. | M | 2 | MVP, W1 | FR-00-041 |
 | US-00-042 | Là kiểm toán viên, tôi muốn hệ thống có nhật ký không sửa, không xóa, có chuỗi băm, để nhật ký kiểm toán không sửa, không xóa được qua bất kỳ giao diện nào. | M | 2 | MVP, W1 | FR-00-042 |
-| US-00-043 | Là người dùng, tôi muốn có tab "Lịch sử" trên màn chi tiết đối tượng, để mỗi màn chi tiết đối tượng có tab "Lịch sử" hiển thị nhật ký kiểm toán của đối tượng đó. | M | 1 | MVP, W1 | FR-00-043 |
+| US-00-043 | Là kiểm toán viên, tôi muốn có tab "Lịch sử" trên màn chi tiết đối tượng, để mỗi màn chi tiết đối tượng có tab "Lịch sử" hiển thị nhật ký kiểm toán của đối tượng đó. | M | 1 | MVP, W1 | FR-00-043 |
 
 : Story của epic EP-00-E Nhật ký kiểm toán
 
@@ -1840,7 +1840,7 @@ Epic gồm 4 story, 4 điểm (2 story mức M).
 
 ### 6.11. PH-10 · Sự kiện
 
-Phân hệ có 11 epic, 76 story, tổng 265 điểm; wave phát triển W2, đợt MVP. Nguồn: D02-03-PH10 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
+Phân hệ có 11 epic, 76 story, tổng 266 điểm; wave phát triển W2, đợt MVP. Nguồn: D02-03-PH10 chương 6. Tiêu chí chấp nhận Gherkin của từng story ở D02-05-01 mục tương ứng.
 
 #### EP-10-A · Dự án tích hợp
 
@@ -1864,7 +1864,7 @@ Epic gồm 11 story, 50 điểm (10 story mức M).
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-10-006 | Là người dùng có quyền xem, tôi muốn liệt kê, tìm kiếm và lọc topic, để người dùng thấy bảng topic đã lọc, cờ cảnh báo lag và topic kế nhiệm nếu có. | M | 2 | MVP, W2 | FR-10-006; UC-10-02 |
 | US-10-007 | Là người dùng có quyền xem, tôi muốn xem chi tiết topic, để người dùng thấy các tab Tổng quan, Cấu hình, Lược đồ, Publication, Subscription, DLQ, Cách kết nối, Chuyển đổi phiên bản, Lịch sử; nút thao tác hiện theo quyền và trạng thái. | M | 2 | MVP, W2 | FR-10-007; UC-10-02 |
-| US-10-008 | Là kỹ sư tích hợp, tôi muốn tạo topic và gửi duyệt, để topic mới hiện ở trạng thái "Nháp" hoặc "Chờ duyệt"; người duyệt thấy yêu cầu trong "Việc của tôi". | M | 8 | MVP, W2 | FR-10-008; UC-10-02 |
+| US-10-008 | Là kỹ sư tích hợp, tôi muốn tạo topic và gửi duyệt, để topic mới hiện ở trạng thái "Nháp" hoặc "Chờ duyệt"; người duyệt thấy yêu cầu trong "Việc của tôi". | M | 8* | MVP, W2 | FR-10-008; UC-10-02 |
 | US-10-009 | Là người duyệt tích hợp, tôi muốn duyệt tạo topic và cấp phát trên cụm, để người duyệt thấy yêu cầu đã xử lý; người tạo nhận thông báo và thấy topic chuyển "Đang cấp phát" rồi "Đang hoạt động". | M | 8 | MVP, W2 | FR-10-009; UC-10-03 |
 | US-10-010 | Là quản trị tỉnh, tôi muốn hệ thống theo dõi cấp phát và xử lý cấp phát thất bại, để kỹ sư thấy lỗi cấp phát rõ ràng trên chi tiết topic và nút xử lý; người vận hành nhận cảnh báo lệch cấu hình. | M | 3 | MVP, W2 | FR-10-010; UC-10-03 |
 | US-10-011 | Là kỹ sư tích hợp, tôi muốn tăng số phân vùng của topic đang hoạt động, để người đề nghị thấy yêu cầu chờ duyệt; sau khi áp dụng, tab Cấu hình hiện số phân vùng mới và gợi ý chỉnh số worker. | M | 5 | MVP, W2 | FR-10-011; UC-10-04 |
@@ -1990,12 +1990,12 @@ Epic gồm 6 story, 8 điểm (6 story mức M).
 
 #### EP-10-J · Đăng ký máy với máy
 
-Epic gồm 4 story, 14 điểm (4 story mức M).
+Epic gồm 4 story, 15 điểm (4 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-10-066 | Là kỹ sư tích hợp, tôi muốn hệ thống đăng ký topic hộ PH-05 cho CDC, để PH-05 có topic để bật CDC. | M | 8 | MVP, W2 | FR-10-066; UC-10-23 |
-| US-10-067 | Là quản trị nền tảng, tôi muốn hệ thống đăng ký topic cho DU nội bộ và topic nền tảng, để DU có topic miền sẵn sàng khi khởi động. | M | 2 | MVP, W2 | FR-10-067; UC-10-24 |
+| US-10-067 | Là quản trị nền tảng, tôi muốn hệ thống đăng ký topic cho DU nội bộ và topic nền tảng, để DU có topic miền sẵn sàng khi khởi động. | M | 3 | MVP, W2 | FR-10-067; UC-10-24 |
 | US-10-068 | Là kỹ sư tích hợp, tôi muốn hệ thống xử lý thông báo thay đổi lược đồ CDC, để bên nhận được báo trước khi cấu trúc đổi. | M | 2 | MVP, W2 | FR-10-068; UC-10-23 |
 | US-10-069 | Là kỹ sư tích hợp, tôi muốn hệ thống kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế, để luồng không vào vận hành khi thiếu quyền trên trục. | M | 2 | MVP, W2 | FR-10-069; UC-10-25 |
 
@@ -2350,7 +2350,7 @@ Epic gồm 10 story, 41 điểm (10 story mức M).
 | US-13-014 | Là cán bộ ATTT, tôi muốn hệ thống kiểm tra toàn vẹn chuỗi, để kiểm toán viên và cán bộ ATTT thấy kết quả "Đạt" hoặc vị trí đứt chuỗi đầu tiên, và tối đa sau 24 giờ biết nếu có ai sửa bản ghi. | M | 5 | MVP, W1–W2 | FR-13-014; UC-13-07 |
 | US-13-015 | Là cán bộ ATTT, tôi muốn hệ thống xử lý đứt chuỗi và neo không khớp, để cán bộ ATTT biết trong vài phút khoảng nhật ký nào không còn đáng tin và có sẵn chứng cứ để điều tra. | M | 5 | MVP, W1–W2 | FR-13-015; UC-13-08 |
 | US-13-016 | Là vận hành nền tảng, tôi muốn hệ thống chịu lỗi và đệm bản ghi khi PH-13 hoặc kho ngừng, để người dùng không thấy gián đoạn; người vận hành thấy backlog và biết khi nào hết. | M | 3 | MVP, W1–W2 | FR-13-016; UC-13-09 |
-| US-13-017 | Là vận hành nền tảng, tôi muốn hệ thống đối chiếu số bản ghi với bộ đếm của DU, để báo cáo đối chiếu hằng ngày chứng minh độ phủ kiểm toán 100%. | M | 5 | MVP, W1–W2 | FR-13-017; UC-13-09 |
+| US-13-017 | Là cán bộ ATTT, tôi muốn hệ thống đối chiếu số bản ghi với bộ đếm của DU, để báo cáo đối chiếu hằng ngày chứng minh độ phủ kiểm toán 100%. | M | 5 | MVP, W1–W2 | FR-13-017; UC-13-09 |
 | US-13-018 | Là quản trị nền tảng, tôi muốn hệ thống có vòng đời lưu giữ và lưu trữ phân vùng, để bản ghi trong 12 tháng tra ngay; bản cũ hơn vẫn có trên WORM và xuất được thành bằng chứng. | M | 5 | MVP, W1–W2 | FR-13-018; UC-13-10 |
 | US-13-019 | Là vận hành tỉnh, tôi muốn hệ thống kiểm toán chính thao tác của PH-13, để mọi thao tác nhạy cảm ở PH-13 truy được tới người thực hiện, lý do, thời điểm. | M | 2 | MVP, W1–W2 | FR-13-019; UC-13-11 |
 

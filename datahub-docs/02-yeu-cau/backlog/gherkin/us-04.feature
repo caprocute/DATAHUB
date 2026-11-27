@@ -674,7 +674,7 @@ Tính năng: PH-04 · Lõi tích hợp và trình thiết kế luồng
   Kịch bản: US-04-052 dương · Danh sách điểm kết nối của luồng và số liệu theo điểm kết nối
     Biết phiên bản có chỉ mục điểm kết nối (EN-04-04)
     Khi người dùng mở tab Điểm kết nối của UI-04-02 và chọn khoảng thời gian
-    Thì hệ thống trả `200`; điểm vào, ra của luồng: chiều, thành phần, URI đã che, phương thức, đường dẫn, HTTT liên quan, API PH-02 công bố điểm vào này (nếu có), topic PH-10 …
+    Thì hệ thống trả `200`; API này cũng là API đọc điểm vào REST của luồng mà PH-02 dùng khi khai backend loại `FLOW` (FR-02-022) …
 
   @US-04-053 @FR-04-053 @S
   Kịch bản: US-04-053 dương · Giám sát theo luồng nhúng từ PH-13
@@ -811,7 +811,7 @@ Tính năng: PH-04 · Lõi tích hợp và trình thiết kế luồng
     Biết có `dh-data-classes` (chặng `schema`) và `dh-obligations` (chặng `authz`); chính sách che của PH-09 đã nạp
     Khi bản tin tới chặng `respond` hoặc bất kỳ chặng gửi đích nào
     Thì phản hồi hoặc bản tin gửi đích đã che
-    Và log và vết không bao giờ chứa giá trị trường phân loại Cá nhân hoặc Nhạy cảm
+    Và log và vết không bao giờ chứa giá trị trường phân loại Hạn chế hoặc Nhạy cảm (DD-08)
 
   @US-04-068 @FR-04-068 @M
   Kịch bản: US-04-068 dương · Định tuyến theo nội dung, tách, gộp, gọi song song, gửi đích

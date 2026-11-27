@@ -305,7 +305,7 @@ Kịch bản: US-00-004 âm 1 · Không có quyền ở tenant đích
 Kịch bản: US-00-004 âm 2 · Tenant đích đang tạm ngừng
   Biết người dùng đã đăng nhập (FR-00-001)
   Khi tenant đích đang tạm ngừng
-  Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
+  Thì hệ thống từ chối với ERR-12-121, ERR-20-001
   Và người dùng thấy thông báo ""Tenant {mã} đang tạm ngừng hoạt động.""
 {code}",High,2,PH-00,MVP,,W1,PH-00
 US-00-005,EP-00-A,Story,US-00-005 · Xem và thu hồi phiên đăng nhập của mình,"Là người dùng, tôi muốn xem và thu hồi phiên đăng nhập của mình, để người dùng thấy rõ mình đang đăng nhập ở đâu và cắt được phiên không mong muốn ngay.
@@ -701,7 +701,7 @@ Kịch bản: US-00-042 âm 2 · Phát hiện đứt chuỗi
   Khi phát hiện đứt chuỗi
   Thì cảnh báo mức nghiêm trọng trên PH-13 cho người trực, nêu `seq` đầu tiên không khớp
 {code}",High,2,PH-00,MVP,,W1,PH-00
-US-00-043,EP-00-E,Story,"US-00-043 · Tab ""Lịch sử"" trên màn chi tiết đối tượng","Là người dùng, tôi muốn có tab ""Lịch sử"" trên màn chi tiết đối tượng, để mỗi màn chi tiết đối tượng có tab ""Lịch sử"" hiển thị nhật ký kiểm toán của đối tượng đó.
+US-00-043,EP-00-E,Story,"US-00-043 · Tab ""Lịch sử"" trên màn chi tiết đối tượng","Là kiểm toán viên, tôi muốn có tab ""Lịch sử"" trên màn chi tiết đối tượng, để mỗi màn chi tiết đối tượng có tab ""Lịch sử"" hiển thị nhật ký kiểm toán của đối tượng đó.
 
 Truy vết: FR-00-043; UC: —; REQ-13; LGC-PAY-019
 Màn hình, API: PTN-02 (D03-06-00 §4.5), `CMP-Timeline`, `CMP-DiffViewer`; route `/{ma}/lich-su`
@@ -6697,7 +6697,7 @@ Tiêu chí chấp nhận:
 Kịch bản: US-04-052 dương · Danh sách điểm kết nối của luồng và số liệu theo điểm kết nối
   Biết phiên bản có chỉ mục điểm kết nối (EN-04-04)
   Khi người dùng mở tab Điểm kết nối của UI-04-02 và chọn khoảng thời gian
-  Thì hệ thống trả `200`; điểm vào, ra của luồng: chiều, thành phần, URI đã che, phương thức, đường dẫn, HTTT liên quan, API PH-02 công bố điểm vào này (nếu có), topic PH-10 …
+  Thì hệ thống trả `200`; API này cũng là API đọc điểm vào REST của luồng mà PH-02 dùng khi khai backend loại `FLOW` (FR-02-022) …
 {code}",High,2,PH-04,MVP,,W1,PH-04
 US-04-053,EP-04-E,Story,US-04-053 · Giám sát theo luồng nhúng từ PH-13,"Là kỹ sư tích hợp, tôi muốn giám sát theo luồng nhúng từ PH-13, để người dùng theo dõi luồng ngay trên màn chi tiết.
 
@@ -6895,7 +6895,7 @@ Kịch bản: US-04-067 dương · Che, giả danh dữ liệu cá nhân theo ch
   Biết có `dh-data-classes` (chặng `schema`) và `dh-obligations` (chặng `authz`); chính sách che của PH-09 đã nạp
   Khi bản tin tới chặng `respond` hoặc bất kỳ chặng gửi đích nào
   Thì phản hồi hoặc bản tin gửi đích đã che
-  Và log và vết không bao giờ chứa giá trị trường phân loại Cá nhân hoặc Nhạy cảm
+  Và log và vết không bao giờ chứa giá trị trường phân loại Hạn chế hoặc Nhạy cảm (DD-08)
 {code}",High,1,PH-04,MVP,,W1,PH-04
 US-04-068,EP-04-F,Story,"US-04-068 · Định tuyến theo nội dung, tách, gộp, gọi song song, gửi đích","Là kỹ sư tích hợp, tôi muốn hệ thống định tuyến theo nội dung, tách, gộp, gọi song song, gửi đích, để bản tin tới đúng HTTT đích theo nội dung.
 
@@ -10103,7 +10103,7 @@ Kịch bản: US-06-051 âm 1 · Thiếu thỏa thuận hoặc mục đích
 {code}",Medium,2,PH-06,Đợt-3,,W4–W5,PH-06
 US-06-052,EP-06-G,Story,US-06-052 · Che dữ liệu theo phân loại và mục đích PH-09,"Là cán bộ quản lý dữ liệu, tôi muốn hệ thống che dữ liệu theo phân loại và mục đích PH-09, để không đường nào lộ giá trị nhạy cảm ngoài mục đích được chấp thuận.
 
-Truy vết: FR-06-052; UC: UC-06-21; REQ-06; REQ-09; CMP-LAW-05; SEC-31; SEC-32
+Truy vết: FR-06-052; UC: UC-06-21; REQ-06; REQ-09; CMP-LAW-05; SEC-31; SEC-32; FR-09-027 (kế hoạch che trực tuyến), FR-09-028 (áp che)
 Màn hình, API: Áp cho mọi UI, API của PH-06
 
 Tiêu chí chấp nhận:
@@ -15185,12 +15185,11 @@ Kịch bản: US-10-008 âm 1 · Tên sai quy ước hoặc miền dành riêng
   Và người dùng thấy thông báo ""Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký.""
 
 @US-10-008 @FR-10-008 @M @âm
-Kịch bản: US-10-008 âm 2 · Tên trùng
+Kịch bản: US-10-008 âm 2 · Người dùng gửi `topicKind` khác `BUSINESS` hoặc gửi sẵn `topicName` (chỉ tài khoản dịch vụ có `event:topic-register` đượ …
   Biết dự án `ACTIVE`; tenant chưa vượt `maxTopics`, `maxPartitionsTotal`
-  Khi tên trùng
-  Thì hệ thống từ chối với ERR-10-002 (409)
-  Và người dùng thấy thông báo ""Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác.""
-{code}",High,8,PH-10,MVP,,W2,PH-10
+  Khi người dùng gửi `topicKind` khác `BUSINESS` hoặc gửi sẵn `topicName` (chỉ tài khoản dịch vụ có `event:topic-register` được dùng hai trường này, FR-10-066, 067)
+  Thì hệ thống từ chối với ERR-10-003 (400)
+{code}",High,8,PH-10,MVP,de-nghi-tach,W2,PH-10
 US-10-009,EP-10-B,Story,US-10-009 · Duyệt tạo topic và cấp phát trên cụm,"Là người duyệt tích hợp, tôi muốn duyệt tạo topic và cấp phát trên cụm, để người duyệt thấy yêu cầu đã xử lý; người tạo nhận thông báo và thấy topic chuyển ""Đang cấp phát"" rồi ""Đang hoạt động"".
 
 Truy vết: FR-10-009; UC: UC-10-03; REQ-10; LGC-HUB-009; FR repo FR-10-001, 005; ADR-072
@@ -15441,11 +15440,10 @@ Kịch bản: US-10-017 âm 1 · Cú pháp sai
   Và người dùng thấy thông báo ""Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}.""
 
 @US-10-017 @FR-10-017 @M @âm
-Kịch bản: US-10-017 âm 2 · Thiếu trường khóa
+Kịch bản: US-10-017 âm 2 · `content` vượt 256 KiB
   Biết topic không `RETIRED`; không có phiên bản khác `PENDING_APPROVAL` cho cùng topic
-  Khi thiếu trường khóa
-  Thì hệ thống từ chối với ERR-10-017 (422)
-  Và người dùng thấy thông báo ""Lược đồ thiếu trường khóa phân vùng '{trường}' hoặc trường này không phải chuỗi, số, hoặc cho phép null.""
+  Khi `content` vượt 256 KiB
+  Thì hệ thống từ chối với ERR-10-003, ERR-10-015 (400)
 {code}",High,5,PH-10,MVP,,W2,PH-10
 US-10-018,EP-10-C,Story,US-10-018 · Kiểm tra tương thích với các phiên bản đã có,"Là kỹ sư tích hợp, tôi muốn kiểm tra tương thích với các phiên bản đã có, để người dùng thấy khối kết quả ""Đạt"" hoặc bảng vi phạm theo trường kèm gợi ý.
 
@@ -15743,7 +15741,7 @@ Tiêu chí chấp nhận:
 @US-10-029 @FR-10-029 @M
 Kịch bản: US-10-029 dương · Đồng bộ trạng thái với PH-01 và PH-04
   Biết bên tham gia gắn HTTT hoặc luồng
-  Khi sự kiện đổi trạng thái HTTT của PH-01 (giả định `{tenant}.connect.system.state-changed.v1`, Q10-17); EVT-04-09 `{tenant}.integration.flow.retired.v1` của PH-04; lịch đối chiếu mỗi giờ
+  Khi sự kiện đổi trạng thái HTTT của PH-01 (EVT-01-03 `{tenant}.connect.system.state-changed.v1` của PH-01); EVT-04-09 `{tenant}.integration.flow.retired.v1` của PH-04; lịch đối chiếu mỗi giờ
   Thì cán bộ thấy bên tham gia chuyển ""Tạm ngừng"" với lý do ""Theo PH-01"" ngay sau khi HTTT bị tạm ngừng
   Và trạng thái bên khớp phân hệ nguồn sau ≤ 60 giây hoặc sau chu kỳ đối chiếu
   Và sự kiện được phát: EVT-10-07, EVT-10-09
@@ -16577,7 +16575,7 @@ Kịch bản: US-10-060 âm 2 · Thiếu quyền
   Biết danh mục nền tảng đã nạp
   Khi thiếu quyền
   Thì hệ thống từ chối với ERR-10-054 (403)
-  Và người dùng thấy thông báo ""Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant.""
+  Và người dùng thấy thông báo ""Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền.""
 {code}",High,1,PH-10,MVP,,W2,PH-10
 US-10-061,EP-10-I,Story,US-10-061 · Danh mục chế độ định tuyến,"Là quản trị tỉnh, tôi muốn danh mục chế độ định tuyến, để biểu mẫu chỉ còn chế độ đã bật.
 
@@ -16669,7 +16667,7 @@ Tiêu chí chấp nhận:
 @US-10-064 @FR-10-064 @M
 Kịch bản: US-10-064 dương · Cách ly đa tenant trên trục sự kiện
   Biết tenant đã có mã
-  Khi mọi thao tác tạo, cấp phát; lịch chạy bộ kiểm thử rò rỉ; PH-20 khởi tạo tenant
+  Khi mọi thao tác tạo, cấp phát; lịch chạy bộ kiểm thử rò rỉ; PH-20 khởi tạo tenant (nghe EVT-20-01 `platform.tenant.created.v1`)
   Thì tenant chỉ thấy tài nguyên của mình
   Và nhật ký kiểm toán ghi nhận thao tác
 
@@ -16765,7 +16763,7 @@ Kịch bản: US-10-067 âm 2 · Người dùng sửa cấu hình topic `SYSTEM`
   Khi người dùng sửa cấu hình topic `SYSTEM`, `CDC` ngoài mô tả
   Thì hệ thống từ chối với ERR-10-045 (422)
   Và người dùng thấy thông báo ""Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa.""
-{code}",High,2,PH-10,MVP,,W2,PH-10
+{code}",High,3,PH-10,MVP,,W2,PH-10
 US-10-068,EP-10-J,Story,US-10-068 · Xử lý thông báo thay đổi lược đồ CDC,"Là kỹ sư tích hợp, tôi muốn hệ thống xử lý thông báo thay đổi lược đồ CDC, để bên nhận được báo trước khi cấu trúc đổi.
 
 Truy vết: FR-10-068; UC: UC-10-23; Hợp đồng EVT-05-11
@@ -19782,7 +19780,7 @@ Tiêu chí chấp nhận:
 {code:gherkin}
 @US-12-041 @FR-12-041 @M
 Kịch bản: US-12-041 dương · Khởi tạo realm của tenant từ mẫu
-  Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+  Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
   Khi PH-20 gọi API tạo realm kèm mã tenant
   Thì hệ thống trả `201`; `realmName`, `state`, `clients[]` (không có bí mật), `firstAdmin` (`userId`, `state`)
   Và realm `ACTIVE` ở `pg-iam`, giống mẫu bản `gitCommit`; bí mật client chỉ ở OpenBao
@@ -19791,14 +19789,14 @@ Kịch bản: US-12-041 dương · Khởi tạo realm của tenant từ mẫu
 
 @US-12-041 @FR-12-041 @M @âm
 Kịch bản: US-12-041 âm 1 · Realm đã có ở trạng thái khác `PROVISIONING`
-  Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+  Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
   Khi realm đã có ở trạng thái khác `PROVISIONING`
   Thì hệ thống từ chối với ERR-12-041 (409)
   Và người dùng thấy thông báo ""Realm của tỉnh {mã} đã tồn tại.""
 
 @US-12-041 @FR-12-041 @M @âm
 Kịch bản: US-12-041 âm 2 · Keycloak hoặc kho cấu hình không khả dụng
-  Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+  Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
   Khi Keycloak hoặc kho cấu hình không khả dụng
   Thì hệ thống từ chối với ERR-12-038, ERR-12-040 (503)
 {code}",High,8,PH-12,MVP,,W1,PH-12
@@ -20801,7 +20799,7 @@ Kịch bản: US-13-016 âm 2 · Không ghi được vào PostgreSQL
   Thì hệ thống từ chối với ERR-13-106
   Và người dùng thấy thông báo ""Không ghi được bản ghi vào bảng kiểm toán; sẽ thử lại.""
 {code}",High,3,PH-13,MVP,,W1–W2,PH-13
-US-13-017,EP-13-B,Story,US-13-017 · Đối chiếu số bản ghi với bộ đếm của DU,"Là vận hành nền tảng, tôi muốn hệ thống đối chiếu số bản ghi với bộ đếm của DU, để báo cáo đối chiếu hằng ngày chứng minh độ phủ kiểm toán 100%.
+US-13-017,EP-13-B,Story,US-13-017 · Đối chiếu số bản ghi với bộ đếm của DU,"Là cán bộ ATTT, tôi muốn hệ thống đối chiếu số bản ghi với bộ đếm của DU, để báo cáo đối chiếu hằng ngày chứng minh độ phủ kiểm toán 100%.
 
 Truy vết: FR-13-017; UC: UC-13-09; REQ-13; UC-13-09; KPI-07; FR-00-040; SEC-60; NFR-13-026; CMP-LAW-01
 Màn hình, API: UI-13-18; API-13-086
@@ -26212,7 +26210,7 @@ Tiêu chí chấp nhận:
 Kịch bản: US-16-041 dương · So sánh liên tenant ẩn danh cho quản trị nền tảng
   Biết ít nhất `16.compare.min-tenants` tenant có giá trị chính thức của chỉ tiêu trong kỳ
   Khi mở UI-16-18
-  Thì hệ thống trả `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`
+  Thì hệ thống trả `200`; `distribution`, `tenants[]` (`alias`, `value`, `status`), `tenantCount`, và `rank`, `peerCount` của tenant gọi (ẩn danh, chỉ khi tenant cho phép so sánh)
   Và nhật ký kiểm toán ghi nhận thao tác
 
 @US-16-041 @FR-16-041 @C @âm
@@ -28650,7 +28648,7 @@ Tiêu chí chấp nhận:
 {code:gherkin}
 @US-18-013 @FR-18-013 @M
 Kịch bản: US-18-013 dương · Tiêu thụ topic DLQ và lập chỉ mục bền
-  Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+  Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
   Khi có bản tin mới trên topic
   Thì người vận hành thấy mục lỗi mới trên UI-18-01 trong ≤ 5 giây sau khi runtime ghi
   Và mỗi bản ghi đã commit offset có đúng một mục DLQ (hoặc tăng đếm lần gặp của mục trùng)
@@ -28658,14 +28656,14 @@ Kịch bản: US-18-013 dương · Tiêu thụ topic DLQ và lập chỉ mục b
 
 @US-18-013 @FR-18-013 @M @âm
 Kịch bản: US-18-013 âm 1 · Không giải mã được bản ghi
-  Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+  Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
   Khi không giải mã được bản ghi
   Thì hệ thống từ chối với ERR-18-101
   Và người dùng thấy thông báo ""Bản tin không đọc được định dạng. Xem nội dung thô để chẩn đoán.""
 
 @US-18-013 @FR-18-013 @M @âm
 Kịch bản: US-18-013 âm 2 · Tenant trong header không khớp topic
-  Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+  Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
   Khi tenant trong header không khớp topic
   Thì hệ thống từ chối với ERR-18-103
   Và người dùng thấy thông báo ""Có bản tin lỗi mang tenant {mã} trên topic của tenant khác.""
@@ -29459,7 +29457,7 @@ Tiêu chí chấp nhận:
 @US-18-044 @FR-18-044 @M
 Kịch bản: US-18-044 dương · Hiển thị Việc của tôi, nhắc và quá hạn
   Biết người dùng đã chọn tenant
-  Khi người dùng mở `/ca-nhan/viec` hoặc xem thẻ ""Việc của tôi"" trên trang chủ
+  Khi người dùng mở `/viec-cua-toi` hoặc xem thẻ ""Việc của tôi"" trên trang chủ
   Thì hệ thống trả `200` danh sách hoặc tóm tắt
   Và sự kiện được phát: EVT-18-14 khi nhận việc
 
@@ -31799,7 +31797,7 @@ Tiêu chí chấp nhận:
 @US-19-064 @FR-19-064 @M
 Kịch bản: US-19-064 dương · Khởi tạo và tạm ngừng phân hệ theo tenant
   Biết tenant tồn tại ở PH-20; với bật lần đầu: chưa có `tenant_payment_config`
-  Khi PH-20 phát sự kiện `tenant.module-enabled.v1` hoặc `tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ
+  Khi PH-20 phát sự kiện `platform.tenant.module-enabled.v1` hoặc `platform.tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ
   Thì hệ thống trả `tenant_payment_config` với `module_enabled` và `provisioning_state`; tài nguyên hạ tầng của tenant
   Và bật: tenant có đủ tài nguyên của PH-19 và cấu hình mặc định
 
@@ -32221,14 +32219,14 @@ Kịch bản: US-20-011 âm 2 · Tenant đã từng hoạt động
 {code}",High,5,PH-20,MVP,,W2,PH-20
 US-20-012,EP-20-B,Story,US-20-012 · Kiểm tra khói sau khởi tạo,"Là quản trị nền tảng, tôi muốn hệ thống kiểm tra khói sau khởi tạo, để PA thấy bốn dấu tích xanh trước khi nút ""Kích hoạt"" sáng.
 
-Truy vết: FR-20-012; UC: UC-20-07; REQ-20; D03-10 §5.2 bước 9; FR-00-011; SEC-87
+Truy vết: FR-20-012; UC: UC-20-07; REQ-20; D03-10 §5.2 bước `S16_SMOKE`; FR-00-011; SEC-87
 Màn hình, API: UI-20-04 khối ""Kiểm tra khói""; API-20-015, API-20-022
 
 Tiêu chí chấp nhận:
 {code:gherkin}
 @US-20-012 @FR-20-012 @M
 Kịch bản: US-20-012 dương · Kiểm tra khói sau khởi tạo
-  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
   Khi bộ thực thi tới `S16_SMOKE`; hoặc PA bấm ""Chạy lại kiểm tra khói"" ở UI-20-04
   Thì hệ thống trả `202` khi chạy lại; kết quả trong chi tiết lần chạy (`smokeResults[]` gồm `case`, `result`, `durationMs`, `evidence`)
   Và EN-20-12 có kết quả; không còn tài khoản tạm
@@ -32236,21 +32234,21 @@ Kịch bản: US-20-012 dương · Kiểm tra khói sau khởi tạo
 
 @US-20-012 @FR-20-012 @M @âm
 Kịch bản: US-20-012 âm 1 · Một ca lỗi (runtime)
-  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
   Khi một ca lỗi (runtime)
   Thì hệ thống từ chối với ERR-20-117
   Và người dùng thấy thông báo ""Ca kiểm tra khói {ca} lỗi: {chi tiết}.""
 
 @US-20-012 @FR-20-012 @M @âm
 Kịch bản: US-20-012 âm 2 · Ca `CROSS_TENANT_LEAK` trả khác `404`
-  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+  Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
   Khi ca `CROSS_TENANT_LEAK` trả khác `404`
   Thì hệ thống từ chối với ERR-20-111
   Và người dùng thấy thông báo ""Phát hiện rò rỉ chéo tenant ở {API}.""
 {code}",High,3,PH-20,MVP,,W2,PH-20
 US-20-013,EP-20-B,Story,US-20-013 · Kích hoạt tenant và bàn giao cho quản trị tỉnh,"Là quản trị nền tảng, tôi muốn hệ thống kích hoạt tenant và bàn giao cho quản trị tỉnh, để quản trị tỉnh nhận thư, đăng nhập `dh-console` của tỉnh và bắt đầu làm việc.
 
-Truy vết: FR-20-013; UC: UC-20-07; REQ-20; BO-06; KPI-12; D03-10 §5.2 bước 10
+Truy vết: FR-20-013; UC: UC-20-07; REQ-20; BO-06; KPI-12; D03-10 §5.2 bước `S17_ACTIVATE`
 Màn hình, API: UI-20-04; API-20-023
 
 Tiêu chí chấp nhận:
@@ -32616,7 +32614,7 @@ Tiêu chí chấp nhận:
 @US-20-027 @FR-20-027 @M
 Kịch bản: US-20-027 dương · Đổi hạn mức có duyệt và đẩy xuống nơi thực thi
   Biết tenant `ACTIVE` hoặc `SUSPENDED`
-  Khi UI-20-05 ""Đề nghị đổi hạn mức""; PA khác duyệt ở UI-20-05 (hộp duyệt toàn nền tảng chưa có: Q20-46)
+  Khi UI-20-05 ""Đề nghị đổi hạn mức""; PA khác duyệt ở UI-20-05 của chính tenant; hộp duyệt toàn nền tảng ở UI-20-08 chỉ gồm đề nghị vòng đời (API-20-073), không gồm đề nghị đổi hạn mức
   Thì hệ thống trả `201` đề nghị; `200` khi duyệt, từ chối; `appliedTargets[]` (nơi, thời điểm xác nhận)
   Và EN-20-14 `DONE` hoặc `REJECTED`; EN-20-13 cập nhật
   Và sự kiện được phát: EVT-20-05

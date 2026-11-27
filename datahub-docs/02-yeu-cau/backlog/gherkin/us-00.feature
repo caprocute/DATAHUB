@@ -88,7 +88,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-004 âm 2 · Tenant đích đang tạm ngừng
     Biết người dùng đã đăng nhập (FR-00-001)
     Khi tenant đích đang tạm ngừng
-    Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
+    Thì hệ thống từ chối với ERR-12-121, ERR-20-001
     Và người dùng thấy thông báo "Tenant {mã} đang tạm ngừng hoạt động."
 
   @US-00-005 @FR-00-005 @S

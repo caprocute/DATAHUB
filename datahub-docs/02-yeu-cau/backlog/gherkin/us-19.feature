@@ -1202,7 +1202,7 @@ Tính năng: PH-19 · Thanh toán điện tử
   @US-19-064 @FR-19-064 @M
   Kịch bản: US-19-064 dương · Khởi tạo và tạm ngừng phân hệ theo tenant
     Biết tenant tồn tại ở PH-20; với bật lần đầu: chưa có `tenant_payment_config`
-    Khi PH-20 phát sự kiện `tenant.module-enabled.v1` hoặc `tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ
+    Khi PH-20 phát sự kiện `platform.tenant.module-enabled.v1` hoặc `platform.tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ
     Thì hệ thống trả `tenant_payment_config` với `module_enabled` và `provisioning_state`; tài nguyên hạ tầng của tenant
     Và bật: tenant có đủ tài nguyên của PH-19 và cấu hình mặc định
 

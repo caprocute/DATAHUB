@@ -5005,7 +5005,7 @@ Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này
 | PH-19 | Xuất chỉ số lỗi kết nối nhà cung cấp cho luật `payment-provider-connection-error` |
 | PH-20 | Gọi API-13-072, 073 trong saga khởi tạo và đóng tenant |
 | Mọi DU | Dùng `dh-audit` với bộ đếm `dh_audit_emitted_total`; log JSON có `trace_id`, `tenant_id`; che theo SEC-32 |
-| `build/tools/kiem_tra_ngoai_le.txt` | Ghi nhận ba mã `PERM-13-admin`, `PERM-13-alert-ack`, `PERM-13-security` là "thiếu có chủ đích" cho tới khi D02-08 thêm theo §3.4 (kiem_tra_ma báo ba lỗi mới do thiếu này); gỡ dòng `PERM-13-read` đã cũ vì không tập PH-13 nào còn dùng mã đó |
+| `build/tools/kiem_tra_ngoai_le.txt` | Ghi nhận ba mã `PERM-13-admin`, `PERM-13-alert-ack`, `PERM-13-security` là "thiếu có chủ đích" cho tới khi D02-08 thêm theo §3.4 (kiem_tra_ma báo ba lỗi mới do thiếu này); gỡ dòng mã đọc cũ của PH-13 đã cũ vì không tập PH-13 nào còn dùng mã đó |
 | D02-04-PH13, D03-02-PH13, D03-03-PH13, D03-04-PH13, D03-06-PH13, D05-02-PH13 | Bảy tập của PH-13 đã được rà chéo (phiên `ra-soat`): mã FR, UC, API, UI, TC, ERR, EVT, PERM khớp hai chiều và dùng đúng tên thực thể, tham số, enum, quyền của tập này |
 
 : Đề nghị đồng bộ cho tài liệu khác

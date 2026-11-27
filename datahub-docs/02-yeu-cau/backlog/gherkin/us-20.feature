@@ -239,7 +239,7 @@ Tính năng: PH-20 · Quản trị tenant và phát hành sản phẩm
 
   @US-20-012 @FR-20-012 @M
   Kịch bản: US-20-012 dương · Kiểm tra khói sau khởi tạo
-    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
     Khi bộ thực thi tới `S16_SMOKE`; hoặc PA bấm "Chạy lại kiểm tra khói" ở UI-20-04
     Thì hệ thống trả `202` khi chạy lại; kết quả trong chi tiết lần chạy (`smokeResults[]` gồm `case`, `result`, `durationMs`, `evidence`)
     Và EN-20-12 có kết quả; không còn tài khoản tạm
@@ -247,14 +247,14 @@ Tính năng: PH-20 · Quản trị tenant và phát hành sản phẩm
 
   @US-20-012 @FR-20-012 @M @âm
   Kịch bản: US-20-012 âm 1 · Một ca lỗi (runtime)
-    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
     Khi một ca lỗi (runtime)
     Thì hệ thống từ chối với ERR-20-117
     Và người dùng thấy thông báo "Ca kiểm tra khói {ca} lỗi: {chi tiết}."
 
   @US-20-012 @FR-20-012 @M @âm
   Kịch bản: US-20-012 âm 2 · Ca `CROSS_TENANT_LEAK` trả khác `404`
-    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`
+    Biết các bước `S01`…`S15` `SUCCEEDED` hoặc `SKIPPED`; `20.smoke.enabled = true`; ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường
     Khi ca `CROSS_TENANT_LEAK` trả khác `404`
     Thì hệ thống từ chối với ERR-20-111
     Và người dùng thấy thông báo "Phát hiện rò rỉ chéo tenant ở {API}."
@@ -526,7 +526,7 @@ Tính năng: PH-20 · Quản trị tenant và phát hành sản phẩm
   @US-20-027 @FR-20-027 @M
   Kịch bản: US-20-027 dương · Đổi hạn mức có duyệt và đẩy xuống nơi thực thi
     Biết tenant `ACTIVE` hoặc `SUSPENDED`
-    Khi UI-20-05 "Đề nghị đổi hạn mức"; PA khác duyệt ở UI-20-05 (hộp duyệt toàn nền tảng chưa có: Q20-46)
+    Khi UI-20-05 "Đề nghị đổi hạn mức"; PA khác duyệt ở UI-20-05 của chính tenant; hộp duyệt toàn nền tảng ở UI-20-08 chỉ gồm đề nghị vòng đời (API-20-073), không gồm đề nghị đổi hạn mức
     Thì hệ thống trả `201` đề nghị; `200` khi duyệt, từ chối; `appliedTargets[]` (nơi, thời điểm xác nhận)
     Và EN-20-14 `DONE` hoặc `REJECTED`; EN-20-13 cập nhật
     Và sự kiện được phát: EVT-20-05

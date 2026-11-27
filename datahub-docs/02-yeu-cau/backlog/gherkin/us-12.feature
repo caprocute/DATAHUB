@@ -875,7 +875,7 @@ Tính năng: PH-12 · Định danh và phân quyền
 
   @US-12-041 @FR-12-041 @M
   Kịch bản: US-12-041 dương · Khởi tạo realm của tenant từ mẫu
-    Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+    Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
     Khi PH-20 gọi API tạo realm kèm mã tenant
     Thì hệ thống trả `201`; `realmName`, `state`, `clients[]` (không có bí mật), `firstAdmin` (`userId`, `state`)
     Và realm `ACTIVE` ở `pg-iam`, giống mẫu bản `gitCommit`; bí mật client chỉ ở OpenBao
@@ -884,14 +884,14 @@ Tính năng: PH-12 · Định danh và phân quyền
 
   @US-12-041 @FR-12-041 @M @âm
   Kịch bản: US-12-041 âm 1 · Realm đã có ở trạng thái khác `PROVISIONING`
-    Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+    Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
     Khi realm đã có ở trạng thái khác `PROVISIONING`
     Thì hệ thống từ chối với ERR-12-041 (409)
     Và người dùng thấy thông báo "Realm của tỉnh {mã} đã tồn tại."
 
   @US-12-041 @FR-12-041 @M @âm
   Kịch bản: US-12-041 âm 2 · Keycloak hoặc kho cấu hình không khả dụng
-    Biết bản ghi tenant đã tạo (bước 1 của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
+    Biết bản ghi tenant đã tạo (bước `S01_RECORD` của saga); mẫu realm `dh-realm-template` có ở kho cấu hình; chưa có realm cùng tên
     Khi Keycloak hoặc kho cấu hình không khả dụng
     Thì hệ thống từ chối với ERR-12-038, ERR-12-040 (503)
 

@@ -258,7 +258,7 @@ Tính năng: PH-18 · Vận hành và xử lý lỗi
 
   @US-18-013 @FR-18-013 @M
   Kịch bản: US-18-013 dương · Tiêu thụ topic DLQ và lập chỉ mục bền
-    Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+    Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
     Khi có bản tin mới trên topic
     Thì người vận hành thấy mục lỗi mới trên UI-18-01 trong ≤ 5 giây sau khi runtime ghi
     Và mỗi bản ghi đã commit offset có đúng một mục DLQ (hoặc tăng đếm lần gặp của mục trùng)
@@ -266,14 +266,14 @@ Tính năng: PH-18 · Vận hành và xử lý lỗi
 
   @US-18-013 @FR-18-013 @M @âm
   Kịch bản: US-18-013 âm 1 · Không giải mã được bản ghi
-    Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+    Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
     Khi không giải mã được bản ghi
     Thì hệ thống từ chối với ERR-18-101
     Và người dùng thấy thông báo "Bản tin không đọc được định dạng. Xem nội dung thô để chẩn đoán."
 
   @US-18-013 @FR-18-013 @M @âm
   Kịch bản: US-18-013 âm 2 · Tenant trong header không khớp topic
-    Biết topic `{tenant}.ops.dlq.v1` đã được PH-10 cấp theo GitOps với PH-18 là chủ, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
+    Biết topic `{tenant}.ops.dlq.v1` là topic DLQ chuẩn của nền tảng, PH-18 là chủ topic (tên và bộ header do PH-18 quy định); PH-10 cấp theo GitOps, ACL ghi cho `dh-runtime-{tenant}` và ACL đọc cho PH-18
     Khi tenant trong header không khớp topic
     Thì hệ thống từ chối với ERR-18-103
     Và người dùng thấy thông báo "Có bản tin lỗi mang tenant {mã} trên topic của tenant khác."
@@ -858,7 +858,7 @@ Tính năng: PH-18 · Vận hành và xử lý lỗi
   @US-18-044 @FR-18-044 @M
   Kịch bản: US-18-044 dương · Hiển thị Việc của tôi, nhắc và quá hạn
     Biết người dùng đã chọn tenant
-    Khi người dùng mở `/ca-nhan/viec` hoặc xem thẻ "Việc của tôi" trên trang chủ
+    Khi người dùng mở `/viec-cua-toi` hoặc xem thẻ "Việc của tôi" trên trang chủ
     Thì hệ thống trả `200` danh sách hoặc tóm tắt
     Và sự kiện được phát: EVT-18-14 khi nhận việc
 

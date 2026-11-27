@@ -1765,4 +1765,4 @@ Bảng dưới tổng hợp các câu hỏi mở phát sinh trong tài liệu, c
 |---|---|---|---|
 | 0.1 | 2026-11-21 | Nhóm phân hệ PH-07 | Bản đầu, 17 use case |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 15 mục cho mọi use case, câu thông báo theo mã lỗi, tóm tắt cho hội đồng, người đọc, sơ đồ tổng chia hai hình, chú thích bảng và hình |
-| 0.3 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: sửa mã FR-00-045 thành FR-07-050, BR-07-041; UC-07-11 trỏ UC-14-15 |
+| 0.3 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: sửa mã FR của SRS dẫn sai thành FR-07-050, BR-07-041; UC-07-11 trỏ UC-14-15 |
