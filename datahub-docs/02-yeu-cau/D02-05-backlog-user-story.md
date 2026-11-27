@@ -74,7 +74,7 @@ Thuật ngữ dưới đây là thuật ngữ riêng của backlog; thuật ng�
 | Điểm (story point) | Đơn vị ước lượng tương đối độ lớn của story, dùng dãy Fibonacci 1, 2, 3, 5, 8 |
 | Vận tốc (velocity) | Số điểm một đội làm xong trong một sprint |
 | DoR, DoD | Định nghĩa sẵn sàng, định nghĩa hoàn thành của story (D01-02 §3.6) |
-| Gherkin | Ngôn ngữ viết tiêu chí chấp nhận dạng Biết (Given), Khi (When), Thì (Then), Và (And) |
+| Gherkin | Ngôn ngữ viết tiêu chí chấp nhận dạng Biết (Given), Khi (When), Thì (Then), Và (And). "Biết" là từ khóa tiếng Việt chuẩn của Gherkin cho Given; D01-02 gọi bước này là "Cho trước", hai cách gọi cùng nghĩa |
 | Wave, sprint, cổng | W0…W5, chu kỳ 2 tuần, G0…G5 theo D01-02 §3.2 |
 | Đợt | MVP, Đợt 2, Đợt 3 theo D03-01 §4.1; "Đợt sau" là ngoài phạm vi v1.0 |
 | M, S, C | Mức ưu tiên Phải có, Nên có, Có thể có (MoSCoW, D00-01) |
@@ -101,7 +101,7 @@ Backlog được sinh từ các tài liệu sau và phải được sinh lại k
 
 ### Cấu trúc tài liệu
 
-Chương 1 đến 5 viết tay, chương 6 và các bảng có ghi "sinh tự động" do script tạo.
+Chương 1 đến 5 và 7 đến 9 viết tay; chương 6 và các bảng có ghi "sinh tự động" (ở chương 4, 5 và phần tóm tắt) do script tạo.
 
 | Chương | Nội dung |
 |---|---|
@@ -165,7 +165,7 @@ Mã `US` đã có trong hệ mã của D00-01 §3.1 với tài liệu gốc là 
 
 ### 2.2. Thành phần của một story
 
-Mỗi story có mười thành phần. Bảy thành phần đầu sinh từ FR; ba thành phần cuối do đội Scrum điền khi làm việc.
+Mỗi story có mười thành phần. Tám thành phần đầu sinh từ FR; hai thành phần cuối do đội Scrum điền khi làm việc.
 
 | Thành phần | Nội dung | Nguồn |
 |---|---|---|
@@ -292,6 +292,8 @@ Kịch bản: US-07-021 dương · Nhập bản ghi từ Excel/CSV vào bản nh
 ```
 
 Ví dụ cho thấy giới hạn của cách sinh tự động: câu "Thì" và "Và" giữ ngôn ngữ kỹ thuật của FR (mã HTTP, tên trường), phù hợp với kiểm thử tự động nhưng khô với người dùng nghiệp vụ. PO đọc phần "Kết quả" trong câu chuyện để nắm giá trị nghiệp vụ; kiểm thử viên đọc kịch bản để viết ca.
+
+Cách sinh tự động còn ba giới hạn đã biết, PO soát ở buổi làm rõ backlog. Thứ nhất, với FR mà tác nhân là hệ thống, vai trò trong phần "Là" là người hưởng lợi đầu tiên tìm thấy, có khi chưa sát; các trường hợp đã soát được ghi đè trong bảng `STORY_OVERRIDE` của script (hiện sáu FR: FR-00-002, 010, 011, 012, FR-07-021, FR-19-023) và PO bổ sung bảng này thay vì sửa tay backlog. Thứ hai, phần "để" lấy câu đầu của Kết quả nên đôi khi lặp ý với phần "tôi muốn" hoặc viết theo góc nhìn bên thứ ba. Thứ ba, kịch bản âm lấy từ luồng ngoại lệ; khi luồng ngoại lệ chưa có mã ERR, câu "Thì" giữ nguyên mô tả của FR (ví dụ "Keycloak hiển thị thông báo và đếm lần sai"), và kiểm thử viên đối chiếu D03-04 để bổ sung mã khi mã được cấp.
 
 ## 4. Ước lượng điểm
 
@@ -440,16 +442,16 @@ Sức chứa của một wave là số đội phát triển nhân số sprint nh
 | Wave | Đội phát triển | Sprint | Đội-sprint | Sức chứa (điểm) | Điểm cần làm | Vận tốc cần mỗi đội-sprint | Đánh giá |
 |---|---|---|---|---|---|---|---|
 | W1 | A, B, C | 8 | 24 | 1.176 | 1.336 + nửa W1–W2 (105) = 1.441 | 60 | Thiếu khoảng 265 điểm |
-| W2 | A, B, C | 8 | 24 | 1.176 | 1.087 + nửa W1–W2 (105) = 1.192 | 50 | Vừa đủ |
-| W4 | D, E | 10 | 20 | 980 | 841 + nửa W4–W5 (172) = 1.013 | 51 | Vừa đủ, không dư |
-| W5 | F, nửa G | 6 | 9 | 441 | 406 + nửa W4–W5 (172) = 578 | 64 | Thiếu khoảng 135 điểm |
+| W2 | A, B, C | 8 | 24 | 1.176 | 1.087 + nửa W1–W2 (105) = 1.192 | 50 | Thiếu nhẹ, khoảng 16 điểm |
+| W4 | D, E | 10 | 20 | 980 | 841 + nửa W4–W5 (172) = 1.013 | 51 | Thiếu nhẹ, khoảng 33 điểm |
+| W5 | F, nửa G | 6 | 9 | 441 | 406 + nửa W4–W5 (172) = 578 | 64 | Thiếu khoảng 137 điểm |
 
 : Đối chiếu điểm cần làm với sức chứa theo wave
 
-Kết quả khớp với nhận định của D01-02 §2.6 rằng W1–W2 vượt sức chứa khoảng 15–20 người-tháng: 265 điểm thiếu ở W1 tương đương khoảng 11 người-tháng theo GĐ-BL-01. Cách xử lý theo thứ tự ưu tiên:
+Kết quả cùng chiều với nhận định của D01-02 §2.6 rằng W1–W2 vượt sức chứa khoảng 15–20 người-tháng, nhưng thấp hơn: 265 điểm thiếu ở W1 cộng 16 điểm ở W2 tương đương khoảng 12 người-tháng theo GĐ-BL-01. W4 thiếu nhẹ 33 điểm, nằm trong sai số ước lượng. Cách xử lý theo thứ tự ưu tiên:
 
-1. **Dời mức S của W1 sang W2 và đầu W3.** W1 có khoảng 90 điểm mức S (1.336 trừ 1.249 điểm mức M); dời toàn bộ sang W2, nơi còn dư nhỏ, và sang ba sprint đầu W3 như D01-02 đã dự kiến cho phần sửa lỗi cuối.
-2. **Ước lượng lại PH-04 và PH-12 ở sprint đầu W1** (Q370): hai phân hệ này chiếm gần 40% điểm W1; sai số ước lượng ở đây ảnh hưởng lớn nhất.
+1. **Dời mức S của W1 sang đầu W3.** W1 có khoảng 90 điểm mức S (1.336 trừ 1.249 điểm mức M); vì W2 cũng thiếu nhẹ, dời toàn bộ sang ba sprint đầu W3 như D01-02 đã dự kiến cho phần sửa lỗi cuối.
+2. **Ước lượng lại PH-04 và PH-12 ở sprint đầu W1** (Q370): hai phân hệ này chiếm khoảng một phần ba điểm W1 (434 trên 1.336); sai số ước lượng ở đây ảnh hưởng lớn nhất.
 3. **Theo dõi vận tốc thật của ba sprint đầu.** Nếu vận tốc đạt từ 55 điểm (đội dùng AI agent theo D01-02 §3.8 có thể vượt mức nền), giữ phạm vi; nếu dưới 45, kích hoạt quy trình thay đổi để co mức S của PH-13 và PH-18 như D01-02 §2.6.
 4. **W5 thiếu sức chứa** được xử lý bằng cách đưa đội G vào toàn thời gian sau khi tenant tỉnh thứ hai ổn định, hoặc dời story mức C, S của PH-16, PH-17 ra sau G5; quyết định ở cổng G4 (Q371).
 
@@ -470,7 +472,7 @@ Epic gồm 5 story, 14 điểm (4 story mức M).
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-00-001 | Là người dùng, tôi muốn đăng nhập một lần qua Keycloak, để truy cập bất kỳ trang nào khi chưa đăng nhập được chuyển tới trang đăng nhập của realm tenant; sau đăng nhập người dùng quay về đúng trang đã mở, kể cả bộ lọc trên URL. | M | 5 | MVP, W1 | FR-00-001 |
-| US-00-002 | Là người dùng, tôi muốn bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt, để người dùng có vai trò quản trị chưa đăng ký yếu tố thứ hai bị buộc đăng ký trước khi vào; người đã đăng ký phải qua yếu tố thứ hai mỗi lần đăng nhập. | M | 3 | MVP, W1 | FR-00-002 |
+| US-00-002 | Là quản trị nền tảng, tôi muốn hệ thống bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt, để người dùng có vai trò quản trị chưa đăng ký yếu tố thứ hai bị buộc đăng ký trước khi vào; người đã đăng ký phải qua yếu tố thứ hai mỗi lần đăng nhập. | M | 3 | MVP, W1 | FR-00-002 |
 | US-00-003 | Là quản trị tỉnh, tôi muốn tự khóa phiên khi không thao tác, để người dùng rời máy quá thời gian cấu hình thì phải đăng nhập lại; dữ liệu đang nhập trong biểu mẫu không gửi đi mà không có phiên. | M | 2 | MVP, W1 | FR-00-003 |
 | US-00-004 | Là người dùng, tôi muốn chọn và đổi tenant làm việc, để mọi màn hình hiển thị tenant hiện tại ở thanh trên. | M | 2 | MVP, W1 | FR-00-004 |
 | US-00-005 | Là người dùng, tôi muốn xem và thu hồi phiên đăng nhập của mình, để người dùng thấy rõ mình đang đăng nhập ở đâu và cắt được phiên không mong muốn ngay. | S | 2 | MVP, W1 | FR-00-005 |
@@ -483,9 +485,9 @@ Epic gồm 3 story, 5 điểm (3 story mức M).
 
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
-| US-00-010 | Là người dùng, tôi muốn gắn bản ghi với tenant từ ngữ cảnh xác thực, để gửi `tenant_id` khác trong thân yêu cầu bị bỏ qua hoặc từ chối `ERR-00-003`; bản ghi luôn thuộc tenant của người gọi. | M | 2 | MVP, W1 | FR-00-010 |
-| US-00-011 | Là người dùng, tôi muốn không rò rỉ dữ liệu giữa các tenant, để người dùng và hệ thống của tenant A không thấy dấu vết nào của dữ liệu tenant B. Bộ kiểm thử rò rỉ chéo tenant (D05-01) đạt 100% trên mọi API. | M | 1 | MVP, W1 | FR-00-011 |
-| US-00-012 | Là quản trị tỉnh, tôi muốn truy cập liên tenant có lý do và kiểm toán, để vai trò nền tảng xem được dữ liệu cần thiết để hỗ trợ, tỉnh biết ai đã vào, khi nào, vì sao. | M | 2 | MVP, W1 | FR-00-012 |
+| US-00-010 | Là quản trị nền tảng, tôi muốn hệ thống gắn bản ghi với tenant từ ngữ cảnh xác thực, để mọi bản ghi luôn thuộc tenant của người gọi; `tenant_id` khác gửi trong thân yêu cầu bị bỏ qua hoặc từ chối `ERR-00-003`. | M | 2 | MVP, W1 | FR-00-010 |
+| US-00-011 | Là quản trị nền tảng, tôi muốn hệ thống không để rò rỉ dữ liệu giữa các tenant, để người dùng và hệ thống của tenant A không thấy dấu vết nào của dữ liệu tenant B. | M | 1 | MVP, W1 | FR-00-011 |
+| US-00-012 | Là quản trị nền tảng, tôi muốn truy cập liên tenant có lý do và kiểm toán, để vai trò nền tảng xem được dữ liệu cần thiết để hỗ trợ, tỉnh biết ai đã vào, khi nào, vì sao. | M | 2 | MVP, W1 | FR-00-012 |
 
 : Story của epic EP-00-B Đa tenant
 
@@ -1433,7 +1435,7 @@ Epic gồm 6 story, 26 điểm (6 story mức M).
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-07-020 | Là cán bộ quản lý dữ liệu, tôi muốn tải tệp mẫu Excel/CSV sinh theo lược đồ của danh mục, để người dùng có tệp Excel hoặc CSV đúng cột, đúng kiểu, có hướng dẫn và danh sách chọn, nhập dữ liệu mà không phải đoán khuôn. | M | 2 | MVP, W2 | FR-07-020; UC-07-03 |
-| US-07-021 | Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi từ Excel/CSV vào bản nháp, để bản ghi trong tệp vào bản nháp sau khi người dùng đã thấy trước số dòng thêm, sửa, lỗi; lỗi được báo theo từng dòng và từng ô. | M | 8* | MVP, W2 | FR-07-021; UC-07-03 |
+| US-07-021 | Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi từ Excel/CSV vào bản nháp, để thấy trước số dòng thêm, sửa, lỗi trước khi ghi vào bản nháp và biết lỗi theo từng dòng, từng ô. | M | 8* | MVP, W2 | FR-07-021; UC-07-03 |
 | US-07-022 | Là cán bộ quản lý dữ liệu, tôi muốn tạo danh mục mới từ tệp, hỗ trợ khuôn hệ cũ Aita, để danh mục mới kèm bản nháp phiên bản 1 chứa bản ghi từ tệp, sẵn sàng rà soát và trình duyệt. | M | 5 | MVP, W2 | FR-07-022; UC-07-04 |
 | US-07-023 | Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi qua API theo lô, idempotent, để HTTT nguồn cập nhật danh mục tự động mà không cần người nhập tay; kết quả trả theo từng bản ghi. | M | 5 | MVP, W2 | FR-07-023; UC-07-05 |
 | US-07-024 | Là người dùng, tôi muốn xuất phiên bản ra Excel, CSV, JSON, để người dùng tải được tệp Excel, CSV hoặc JSON đúng phiên bản đã chọn, kèm thông tin phiên bản và ngày hiệu lực. | M | 5 | MVP, W2 | FR-07-024; UC-07-08 |
@@ -3273,7 +3275,7 @@ Epic gồm 7 story, 34 điểm (6 story mức M).
 | US | Câu chuyện người dùng | ƯT | Điểm | Đợt, wave | FR; UC |
 |-----------|------------------------------------------------|----|--------|-----------|--------------|
 | US-19-022 | Là HTTT khai thác, tôi muốn tạo giao dịch thanh toán, để đối tác nhận mã giao dịch, địa chỉ trang thanh toán và thời hạn; người nộp được chuyển sang trang PayGov để chọn ngân hàng, ví và trả tiền. | M | 8 | MVP, W4 | FR-19-022; UC-19-11 |
-| US-19-023 | Là kế toán đối soát, tôi muốn hệ thống kiểm tra hợp lệ yêu cầu thanh toán, để đối tác biết chính xác điều kiện nào chưa đạt qua mã lỗi và câu mô tả; sửa xong có thể gửi lại cùng `Idempotency-Key`. | M | 8* | MVP, W4 | FR-19-023; UC-19-11 |
+| US-19-023 | Là HTTT đối tác thanh toán, tôi muốn hệ thống kiểm tra hợp lệ yêu cầu thanh toán, để đối tác biết chính xác điều kiện nào chưa đạt qua mã lỗi và câu mô tả; sửa xong có thể gửi lại cùng `Idempotency-Key`. | M | 8* | MVP, W4 | FR-19-023; UC-19-11 |
 | US-19-024 | Là kế toán đối soát, tôi muốn hệ thống khởi tạo thanh toán tại nhà cung cấp qua adapter, để đối tác nhận `paymentUrl` để chuyển người nộp, hoặc nhận lỗi rõ ràng khi NCC từ chối, hoặc nhận lỗi "chưa xác định" kèm hướng dẫn gửi lại cùng khóa. | M | 5 | MVP, W4 | FR-19-024; UC-19-11 |
 | US-19-025 | Là người nộp tiền, tôi muốn xử lý người nộp quay về, để người nộp thấy trang UI-19-28 báo kết quả theo dữ liệu đã xác thực trong CSDL, sau 5 giây tự về cổng dịch vụ của đối tác cùng mã giao dịch và trạng thái có chữ ký. | M | 5 | MVP, W4 | FR-19-025; UC-19-12 |
 | US-19-026 | Là HTTT khai thác, tôi muốn hủy giao dịch chưa thanh toán, để giao dịch hiện "Đã hủy" và đối tác nhận webhook `transaction.cancelled`; nếu người nộp đã kịp trả tiền thì giao dịch được ghi nhận thành công thay vì bị hủy. | S | 3 | Đợt 2, W4 | FR-19-026; UC-19-14 |

@@ -76,7 +76,7 @@ Tính năng: PH-15 · Cổng nhà phát triển
   Kịch bản: US-15-004 âm 2 · Không có kết quả
     Biết bản sao danh mục đã nạp
     Khi không có kết quả
-    Thì không phải lỗi; thông báo
+    Thì không phải lỗi; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Không có dịch vụ nào khớp. Thử bỏ bớt bộ lọc."
 
   @US-15-005 @FR-15-005 @M

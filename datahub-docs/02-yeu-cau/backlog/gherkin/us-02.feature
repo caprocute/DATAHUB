@@ -998,7 +998,7 @@ Tính năng: PH-02 · Danh mục dịch vụ
   Kịch bản: US-02-048 âm 1 · HTTT chưa có định danh máy
     Biết đăng ký `ACTIVE` chưa có `grantStatus = GRANTED`; HTTT khai thác có định danh máy ở PH-01 (client Keycloak, và chứng thư với `OAUTH2_MTLS`)
     Khi HTTT chưa có định danh máy
-    Thì `AWAITING_CREDENTIAL` (không phải lỗi), thông báo cho OR; tiếp tục tự động khi PH-01 cấp xong
+    Thì hệ thống trả `AWAITING_CREDENTIAL` (không phải lỗi), thông báo cho OR; tiếp tục tự động khi PH-01 cấp xong
 
   @US-02-048 @FR-02-048 @M @âm
   Kịch bản: US-02-048 âm 2 · PH-12 hoặc PH-03 không khả dụng
@@ -1105,7 +1105,7 @@ Tính năng: PH-02 · Danh mục dịch vụ
   Kịch bản: US-02-053 âm 2 · Nền tảng quốc gia từ chối một dịch vụ
     Biết có phiên bản `PUBLISHED`, `DEPRECATED`, `SUSPENDED` hoặc `RETIRED` của API có mức hiển thị `NATIONAL`, `PUBLIC` và `dataClass` khác `SENSITIVE`; PH-14 đã cấu hình kết nối tới Nền tảng quốc gia của tenant
     Khi nền tảng quốc gia từ chối một dịch vụ
-    Thì bản ghi `REJECTED` kèm lý do; thông báo
+    Thì bản ghi `REJECTED` kèm lý do; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Nền tảng quốc gia từ chối API {mã}: {lý do}. Sửa thông tin rồi gửi lại."
 
   @US-02-054 @FR-02-054 @M

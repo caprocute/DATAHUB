@@ -981,7 +981,7 @@ Tính năng: PH-13 · Giám sát và kiểm toán
   Kịch bản: US-13-049 âm 1 · Mất nhịp tim
     Biết có bộ nhận nhịp tim ngoài hạ tầng của site do nhóm nền tảng vận hành (không phụ thuộc Mimir, Alertmanager của site)
     Khi mất nhịp tim
-    Thì cảnh báo `CRITICAL` qua kênh độc lập; thông báo gửi PA, PO
+    Thì cảnh báo `CRITICAL` qua kênh độc lập; người dùng thấy thông báo lỗi gửi PA, PO
     Và người dùng thấy thông báo "Hệ thống giám sát có thể đang ngừng, kiểm tra Ruler và Alertmanager."
 
   @US-13-049 @FR-13-049 @M @âm

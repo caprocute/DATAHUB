@@ -229,6 +229,20 @@ def exceptions(fr, n):
     return out
 
 
+# Ngoại lệ câu chuyện: những FR mà luật tự động chọn vai trò hoặc lợi ích chưa sát.
+# Khóa là mã FR; giá trị ghi đè "who", "want", "benefit" (thiếu khóa thì giữ kết quả tự động).
+STORY_OVERRIDE = {
+    "FR-00-002": {"who": "quản trị nền tảng", "want": "hệ thống bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt"},
+    "FR-00-010": {"who": "quản trị nền tảng", "want": "hệ thống gắn bản ghi với tenant từ ngữ cảnh xác thực",
+                  "benefit": "mọi bản ghi luôn thuộc tenant của người gọi; `tenant_id` khác gửi trong thân yêu cầu bị bỏ qua hoặc từ chối `ERR-00-003`"},
+    "FR-00-011": {"who": "quản trị nền tảng", "want": "hệ thống không để rò rỉ dữ liệu giữa các tenant",
+                  "benefit": "người dùng và hệ thống của tenant A không thấy dấu vết nào của dữ liệu tenant B"},
+    "FR-00-012": {"who": "quản trị nền tảng"},
+    "FR-07-021": {"benefit": "thấy trước số dòng thêm, sửa, lỗi trước khi ghi vào bản nháp và biết lỗi theo từng dòng, từng ô"},
+    "FR-19-023": {"who": "HTTT đối tác thanh toán"},
+}
+
+
 def build_story(fr, uc_map):
     f = fr["f"]
     who, system, roles = actor_of(fr)
@@ -245,6 +259,8 @@ def build_story(fr, uc_map):
     benefit = lower_first(first_sentence(f["Kết quả"], 220))
     if not benefit or benefit.startswith("Không"):
         benefit = lower_first(first_sentence(f["Mục đích"], 220))
+    ov = STORY_OVERRIDE.get(fr["fr"], {})
+    who, want, benefit = ov.get("who", who), ov.get("want", want), ov.get("benefit", benefit)
     story = f"Là {who}, tôi muốn {want}, để {benefit}."
     ucs = uc_map.get(fr["fr"], [])
     num = fr["fr"][-3:]
@@ -294,6 +310,9 @@ def gherkin(s):
         else:
             r2 = re.sub(r"[\"“][^\"”]*[\"”]", "thông báo", rest).strip()
             r2 = first_sentence(r2, 200) if r2 and not r2.startswith("thông báo") else "hệ thống từ chối thao tác"
+            r2 = re.sub(r";\s*thông báo\b", "; người dùng thấy thông báo lỗi", r2)
+            if r2[:1] in "`0123456789":
+                r2 = "hệ thống trả " + r2
             L.append(f"    Thì {gh(lower_first(r2))}")
         if msg:
             L.append(f"    Và người dùng thấy thông báo \"{gh(msg)}\"")

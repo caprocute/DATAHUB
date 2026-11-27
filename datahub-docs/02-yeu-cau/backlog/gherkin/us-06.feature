@@ -417,7 +417,7 @@ Tính năng: PH-06 · Dữ liệu chủ
   Kịch bản: US-06-020 âm 2 · Ứng viên có khóa khác với khóa của bản ghi vàng đang liên kết
     Biết ứng viên `NORMALIZED`; bộ quy tắc `ACTIVE`
     Khi ứng viên có khóa khác với khóa của bản ghi vàng đang liên kết
-    Thì `CONFLICT`, lý do `IDENTIFIER_CONFLICT`
+    Thì hệ thống trả `CONFLICT`, lý do `IDENTIFIER_CONFLICT`
 
   @US-06-021 @FR-06-021 @M
   Kịch bản: US-06-021 dương · Đối sánh xác suất trực tuyến

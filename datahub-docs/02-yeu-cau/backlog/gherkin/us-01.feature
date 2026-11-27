@@ -774,7 +774,7 @@ Tính năng: PH-01 · Kết nạp hệ thống thông tin
   Kịch bản: US-01-038 âm 1 · Token thiếu scope
     Biết phân hệ gọi có token dịch vụ với scope phù hợp
     Khi token thiếu scope
-    Thì `403`; không có mã ERR riêng (lỗi xác thực dùng chung theo FR-00-080)
+    Thì hệ thống trả `403`; không có mã ERR riêng (lỗi xác thực dùng chung theo FR-00-080)
 
   @US-01-038 @FR-01-038 @M @âm
   Kịch bản: US-01-038 âm 2 · Không thấy HTTT
@@ -1011,7 +1011,7 @@ Tính năng: PH-01 · Kết nạp hệ thống thông tin
   Kịch bản: US-01-050 âm 1 · Không có dòng nào khớp
     Biết người dùng đã đăng nhập; danh sách hiện hành có dữ liệu
     Khi không có dòng nào khớp
-    Thì `204`; thông báo
+    Thì hệ thống trả `204`; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Không có dữ liệu để xuất."
 
   @US-01-051 @FR-01-051 @S

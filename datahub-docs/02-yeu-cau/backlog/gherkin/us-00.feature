@@ -60,7 +60,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-003 âm 1 · Gọi API sau khi phiên đã khóa
     Biết người dùng đang có phiên BFF
     Khi gọi API sau khi phiên đã khóa
-    Thì `401`; giao diện hiện thông báo và tự chuyển sau 5 giây
+    Thì hệ thống trả `401`; giao diện hiện thông báo và tự chuyển sau 5 giây
     Và người dùng thấy thông báo "Phiên làm việc đã hết hạn. Hệ thống sẽ đưa bạn tới trang đăng nhập và quay lại đúng trang này."
 
   @US-00-003 @FR-00-003 @M @âm
@@ -81,14 +81,14 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-004 âm 1 · Không có quyền ở tenant đích
     Biết người dùng đã đăng nhập (FR-00-001)
     Khi không có quyền ở tenant đích
-    Thì `403`; thông báo
+    Thì hệ thống trả `403`; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền."
 
   @US-00-004 @FR-00-004 @M @âm
   Kịch bản: US-00-004 âm 2 · Tenant đích đang tạm ngừng
     Biết người dùng đã đăng nhập (FR-00-001)
     Khi tenant đích đang tạm ngừng
-    Thì `403`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+    Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
     Và người dùng thấy thông báo "Tenant {mã} đang tạm ngừng hoạt động."
 
   @US-00-005 @FR-00-005 @S
@@ -138,7 +138,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-011 âm 1 · Mở đối tượng của tenant khác bằng mã hoặc định danh
     Biết FR-00-010 được áp dụng
     Khi mở đối tượng của tenant khác bằng mã hoặc định danh
-    Thì `404` như đối tượng không tồn tại, không trả `403` để không lộ sự tồn tại
+    Thì hệ thống trả `404` như đối tượng không tồn tại, không trả `403` để không lộ sự tồn tại
 
   @US-00-012 @FR-00-012 @M
   Kịch bản: US-00-012 dương · Truy cập liên tenant có lý do và kiểm toán
@@ -152,7 +152,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-012 âm 1 · Không phải vai trò nền tảng
     Biết người dùng có vai trò nền tảng ở tenant `PLATFORM`, đã xác thực WebAuthn
     Khi không phải vai trò nền tảng
-    Thì `403`; thông báo
+    Thì hệ thống trả `403`; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền."
 
   @US-00-012 @FR-00-012 @M @âm
@@ -266,7 +266,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-031 âm 1 · Tải sau 24 giờ
     Biết số dòng theo bộ lọc lớn hơn 10.000
     Khi tải sau 24 giờ
-    Thì `410`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+    Thì hệ thống trả `410`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
     Và người dùng thấy thông báo "Tệp đã hết hạn tải. Vui lòng xuất lại."
 
   @US-00-031 @FR-00-031 @M @âm
@@ -401,7 +401,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-050 âm 1 · Gọi API ảnh hưởng vận hành không kèm `reason`
     Biết người dùng có quyền với thao tác
     Khi gọi API ảnh hưởng vận hành không kèm `reason`
-    Thì `400`; thông báo
+    Thì hệ thống trả `400`; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Vui lòng nêu lý do cho thao tác này."
 
   @US-00-051 @FR-00-051 @M
@@ -417,14 +417,14 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-051 âm 1 · Còn phụ thuộc
     Biết đối tượng là đối tượng nghiệp vụ (không phải bản ghi kiểm toán, không phải dữ liệu tạm)
     Khi còn phụ thuộc
-    Thì `409`; thông báo (mã lỗi riêng theo phân hệ)
+    Thì hệ thống trả `409`; người dùng thấy thông báo lỗi (mã lỗi riêng theo phân hệ)
     Và người dùng thấy thông báo "Không xóa được vì {đối tượng} đang được {n} {loại phụ thuộc} sử dụng."
 
   @US-00-051 @FR-00-051 @M @âm
   Kịch bản: US-00-051 âm 2 · Khôi phục trùng mã với đối tượng mới tạo sau đó
     Biết đối tượng là đối tượng nghiệp vụ (không phải bản ghi kiểm toán, không phải dữ liệu tạm)
     Khi khôi phục trùng mã với đối tượng mới tạo sau đó
-    Thì `409`; thông báo
+    Thì hệ thống trả `409`; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Đã có đối tượng khác dùng mã {mã}. Đổi mã trước khi khôi phục."
 
   @US-00-052 @FR-00-052 @M
@@ -446,7 +446,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-052 âm 2 · Thiếu `If-Match` ở API sửa
     Biết đối tượng có cột `version`; giao diện đã nhận `ETag` khi mở đối tượng
     Khi thiếu `If-Match` ở API sửa
-    Thì `428` (mã lỗi chưa có, xem đề nghị đồng bộ)
+    Thì hệ thống trả `428` (mã lỗi chưa có, xem đề nghị đồng bộ)
 
   @US-00-053 @FR-00-053 @M
   Kịch bản: US-00-053 dương · Nhãn trạng thái thống nhất và hành động theo trạng thái
@@ -458,7 +458,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-053 âm 1 · Gọi API chuyển trạng thái không hợp lệ
     Biết đối tượng có máy trạng thái khai báo ở FRS phân hệ
     Khi gọi API chuyển trạng thái không hợp lệ
-    Thì `409`; thông báo (mã lỗi riêng theo phân hệ)
+    Thì hệ thống trả `409`; người dùng thấy thông báo lỗi (mã lỗi riêng theo phân hệ)
     Và người dùng thấy thông báo "Không thể {hành động} khi đối tượng đang ở trạng thái {trạng thái}."
 
   @US-00-054 @FR-00-054 @M
@@ -495,7 +495,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-060 âm 1 · Đối tượng trong liên kết đã bị xóa hoặc người dùng mất quyền
     Biết người dùng đã đăng nhập
     Khi đối tượng trong liên kết đã bị xóa hoặc người dùng mất quyền
-    Thì trang đích hiện `404` hoặc `403` theo FR-00-080; thông báo vẫn giữ trong lịch sử
+    Thì trang đích hiện `404` hoặc `403` theo FR-00-080; người dùng thấy thông báo lỗi vẫn giữ trong lịch sử
 
   @US-00-061 @FR-00-061 @S
   Kịch bản: US-00-061 dương · Chọn kênh nhận theo loại thông báo
@@ -521,7 +521,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-062 âm 1 · Gửi thư lỗi
     Biết người dùng bật kênh thư cho loại thông báo (FR-00-061)
     Khi gửi thư lỗi
-    Thì dịch vụ thử lại theo chính sách chung, ghi log vận hành; thông báo trong ứng dụng vẫn có, người vận hành thấy cảnh báo trên PH-13
+    Thì dịch vụ thử lại theo chính sách chung, ghi log vận hành; người dùng thấy thông báo lỗi trong ứng dụng vẫn có, người vận hành thấy cảnh báo trên PH-13
 
   # ---- EP-00-H · Duyệt
 
@@ -550,7 +550,7 @@ Tính năng: PH-00 · Yêu cầu chức năng dùng chung (FR-00)
   Kịch bản: US-00-071 âm 1 · Người tạo gọi API duyệt
     Biết loại duyệt được FRS phân hệ đánh dấu áp dụng bốn mắt
     Khi người tạo gọi API duyệt
-    Thì `403`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+    Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
     Và người dùng thấy thông báo "Bạn là người gửi yêu cầu này nên không thể tự duyệt."
 
   @US-00-072 @FR-00-072 @M

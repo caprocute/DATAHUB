@@ -90,7 +90,7 @@ Kịch bản: US-00-001 âm 2 · Tài khoản bị khóa tạm
 
 #### US-00-002 · Bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt
 
-Là người dùng, tôi muốn bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt, để người dùng có vai trò quản trị chưa đăng ký yếu tố thứ hai bị buộc đăng ký trước khi vào; người đã đăng ký phải qua yếu tố thứ hai mỗi lần đăng nhập.
+Là quản trị nền tảng, tôi muốn hệ thống bắt buộc xác thực hai yếu tố cho vai trò quản trị, duyệt, để người dùng có vai trò quản trị chưa đăng ký yếu tố thứ hai bị buộc đăng ký trước khi vào; người đã đăng ký phải qua yếu tố thứ hai mỗi lần đăng nhập.
 
 *Epic* EP-00-A · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 3 · *FR* FR-00-002.
 
@@ -140,7 +140,7 @@ Kịch bản: US-00-003 dương · Tự khóa phiên khi không thao tác
 Kịch bản: US-00-003 âm 1 · Gọi API sau khi phiên đã khóa
   Biết người dùng đang có phiên BFF
   Khi gọi API sau khi phiên đã khóa
-  Thì `401`; giao diện hiện thông báo và tự chuyển sau 5 giây
+  Thì hệ thống trả `401`; giao diện hiện thông báo và tự chuyển sau 5 giây
   Và người dùng thấy thông báo "Phiên làm việc đã hết hạn. Hệ thống sẽ đưa bạn tới trang đăng nhập và quay lại đúng trang này."
 
 @US-00-003 @FR-00-003 @M @âm
@@ -171,14 +171,14 @@ Kịch bản: US-00-004 dương · Chọn và đổi tenant làm việc
 Kịch bản: US-00-004 âm 1 · Không có quyền ở tenant đích
   Biết người dùng đã đăng nhập (FR-00-001)
   Khi không có quyền ở tenant đích
-  Thì `403`; thông báo
+  Thì hệ thống trả `403`; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền."
 
 @US-00-004 @FR-00-004 @M @âm
 Kịch bản: US-00-004 âm 2 · Tenant đích đang tạm ngừng
   Biết người dùng đã đăng nhập (FR-00-001)
   Khi tenant đích đang tạm ngừng
-  Thì `403`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+  Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
   Và người dùng thấy thông báo "Tenant {mã} đang tạm ngừng hoạt động."
 ```
 
@@ -212,7 +212,7 @@ Epic gồm 3 story, 5 điểm.
 
 #### US-00-010 · Gắn bản ghi với tenant từ ngữ cảnh xác thực
 
-Là người dùng, tôi muốn gắn bản ghi với tenant từ ngữ cảnh xác thực, để gửi `tenant_id` khác trong thân yêu cầu bị bỏ qua hoặc từ chối `ERR-00-003`; bản ghi luôn thuộc tenant của người gọi.
+Là quản trị nền tảng, tôi muốn hệ thống gắn bản ghi với tenant từ ngữ cảnh xác thực, để mọi bản ghi luôn thuộc tenant của người gọi; `tenant_id` khác gửi trong thân yêu cầu bị bỏ qua hoặc từ chối `ERR-00-003`.
 
 *Epic* EP-00-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 2 · *FR* FR-00-010.
 
@@ -242,7 +242,7 @@ Kịch bản: US-00-010 âm 2 · Token thiếu claim `tenant` hoặc realm khôn
 
 #### US-00-011 · Không rò rỉ dữ liệu giữa các tenant
 
-Là người dùng, tôi muốn không rò rỉ dữ liệu giữa các tenant, để người dùng và hệ thống của tenant A không thấy dấu vết nào của dữ liệu tenant B. Bộ kiểm thử rò rỉ chéo tenant (D05-01) đạt 100% trên mọi API.
+Là quản trị nền tảng, tôi muốn hệ thống không để rò rỉ dữ liệu giữa các tenant, để người dùng và hệ thống của tenant A không thấy dấu vết nào của dữ liệu tenant B.
 
 *Epic* EP-00-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 1 · *FR* FR-00-011.
 
@@ -260,12 +260,12 @@ Kịch bản: US-00-011 dương · Không rò rỉ dữ liệu giữa các tenan
 Kịch bản: US-00-011 âm 1 · Mở đối tượng của tenant khác bằng mã hoặc định danh
   Biết FR-00-010 được áp dụng
   Khi mở đối tượng của tenant khác bằng mã hoặc định danh
-  Thì `404` như đối tượng không tồn tại, không trả `403` để không lộ sự tồn tại
+  Thì hệ thống trả `404` như đối tượng không tồn tại, không trả `403` để không lộ sự tồn tại
 ```
 
 #### US-00-012 · Truy cập liên tenant có lý do và kiểm toán
 
-Là quản trị tỉnh, tôi muốn truy cập liên tenant có lý do và kiểm toán, để vai trò nền tảng xem được dữ liệu cần thiết để hỗ trợ, tỉnh biết ai đã vào, khi nào, vì sao.
+Là quản trị nền tảng, tôi muốn truy cập liên tenant có lý do và kiểm toán, để vai trò nền tảng xem được dữ liệu cần thiết để hỗ trợ, tỉnh biết ai đã vào, khi nào, vì sao.
 
 *Epic* EP-00-B · *Ưu tiên* M · *Đợt* MVP · *Wave* W1 · *Điểm* 2 · *FR* FR-00-012.
 
@@ -284,7 +284,7 @@ Kịch bản: US-00-012 dương · Truy cập liên tenant có lý do và kiểm
 Kịch bản: US-00-012 âm 1 · Không phải vai trò nền tảng
   Biết người dùng có vai trò nền tảng ở tenant `PLATFORM`, đã xác thực WebAuthn
   Khi không phải vai trò nền tảng
-  Thì `403`; thông báo
+  Thì hệ thống trả `403`; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tỉnh nếu cần được cấp quyền."
 
 @US-00-012 @FR-00-012 @M @âm
@@ -472,7 +472,7 @@ Kịch bản: US-00-031 dương · Xuất lớn chạy nền, có hạn tải
 Kịch bản: US-00-031 âm 1 · Tải sau 24 giờ
   Biết số dòng theo bộ lọc lớn hơn 10.000
   Khi tải sau 24 giờ
-  Thì `410`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+  Thì hệ thống trả `410`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
   Và người dùng thấy thông báo "Tệp đã hết hạn tải. Vui lòng xuất lại."
 
 @US-00-031 @FR-00-031 @M @âm
@@ -691,7 +691,7 @@ Kịch bản: US-00-050 dương · Xác nhận và lý do cho thao tác phá h�
 Kịch bản: US-00-050 âm 1 · Gọi API ảnh hưởng vận hành không kèm `reason`
   Biết người dùng có quyền với thao tác
   Khi gọi API ảnh hưởng vận hành không kèm `reason`
-  Thì `400`; thông báo
+  Thì hệ thống trả `400`; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Vui lòng nêu lý do cho thao tác này."
 ```
 
@@ -717,14 +717,14 @@ Kịch bản: US-00-051 dương · Xóa mềm và khôi phục
 Kịch bản: US-00-051 âm 1 · Còn phụ thuộc
   Biết đối tượng là đối tượng nghiệp vụ (không phải bản ghi kiểm toán, không phải dữ liệu tạm)
   Khi còn phụ thuộc
-  Thì `409`; thông báo (mã lỗi riêng theo phân hệ)
+  Thì hệ thống trả `409`; người dùng thấy thông báo lỗi (mã lỗi riêng theo phân hệ)
   Và người dùng thấy thông báo "Không xóa được vì {đối tượng} đang được {n} {loại phụ thuộc} sử dụng."
 
 @US-00-051 @FR-00-051 @M @âm
 Kịch bản: US-00-051 âm 2 · Khôi phục trùng mã với đối tượng mới tạo sau đó
   Biết đối tượng là đối tượng nghiệp vụ (không phải bản ghi kiểm toán, không phải dữ liệu tạm)
   Khi khôi phục trùng mã với đối tượng mới tạo sau đó
-  Thì `409`; thông báo
+  Thì hệ thống trả `409`; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Đã có đối tượng khác dùng mã {mã}. Đổi mã trước khi khôi phục."
 ```
 
@@ -756,7 +756,7 @@ Kịch bản: US-00-052 âm 1 · Phiên bản không khớp
 Kịch bản: US-00-052 âm 2 · Thiếu `If-Match` ở API sửa
   Biết đối tượng có cột `version`; giao diện đã nhận `ETag` khi mở đối tượng
   Khi thiếu `If-Match` ở API sửa
-  Thì `428` (mã lỗi chưa có, xem đề nghị đồng bộ)
+  Thì hệ thống trả `428` (mã lỗi chưa có, xem đề nghị đồng bộ)
 ```
 
 #### US-00-053 · Nhãn trạng thái thống nhất và hành động theo trạng thái
@@ -778,7 +778,7 @@ Kịch bản: US-00-053 dương · Nhãn trạng thái thống nhất và hành 
 Kịch bản: US-00-053 âm 1 · Gọi API chuyển trạng thái không hợp lệ
   Biết đối tượng có máy trạng thái khai báo ở FRS phân hệ
   Khi gọi API chuyển trạng thái không hợp lệ
-  Thì `409`; thông báo (mã lỗi riêng theo phân hệ)
+  Thì hệ thống trả `409`; người dùng thấy thông báo lỗi (mã lỗi riêng theo phân hệ)
   Và người dùng thấy thông báo "Không thể {hành động} khi đối tượng đang ở trạng thái {trạng thái}."
 ```
 
@@ -837,7 +837,7 @@ Kịch bản: US-00-060 dương · Trung tâm thông báo trong ứng dụng
 Kịch bản: US-00-060 âm 1 · Đối tượng trong liên kết đã bị xóa hoặc người dùng mất quyền
   Biết người dùng đã đăng nhập
   Khi đối tượng trong liên kết đã bị xóa hoặc người dùng mất quyền
-  Thì trang đích hiện `404` hoặc `403` theo FR-00-080; thông báo vẫn giữ trong lịch sử
+  Thì trang đích hiện `404` hoặc `403` theo FR-00-080; người dùng thấy thông báo lỗi vẫn giữ trong lịch sử
 ```
 
 #### US-00-061 · Chọn kênh nhận theo loại thông báo
@@ -883,7 +883,7 @@ Kịch bản: US-00-062 dương · Thư thông báo chỉ chứa liên kết, kh
 Kịch bản: US-00-062 âm 1 · Gửi thư lỗi
   Biết người dùng bật kênh thư cho loại thông báo (FR-00-061)
   Khi gửi thư lỗi
-  Thì dịch vụ thử lại theo chính sách chung, ghi log vận hành; thông báo trong ứng dụng vẫn có, người vận hành thấy cảnh báo trên PH-13
+  Thì dịch vụ thử lại theo chính sách chung, ghi log vận hành; người dùng thấy thông báo lỗi trong ứng dụng vẫn có, người vận hành thấy cảnh báo trên PH-13
 ```
 
 ### 1.8. EP-00-H · Duyệt
@@ -934,7 +934,7 @@ Kịch bản: US-00-071 dương · Nguyên tắc bốn mắt: người tạo kh�
 Kịch bản: US-00-071 âm 1 · Người tạo gọi API duyệt
   Biết loại duyệt được FRS phân hệ đánh dấu áp dụng bốn mắt
   Khi người tạo gọi API duyệt
-  Thì `403`; thông báo (mã lỗi chưa có, xem đề nghị đồng bộ)
+  Thì hệ thống trả `403`; người dùng thấy thông báo lỗi (mã lỗi chưa có, xem đề nghị đồng bộ)
   Và người dùng thấy thông báo "Bạn là người gửi yêu cầu này nên không thể tự duyệt."
 ```
 
@@ -2315,7 +2315,7 @@ Kịch bản: US-01-038 dương · Cung cấp bản sao đọc HTTT cho phân h�
 Kịch bản: US-01-038 âm 1 · Token thiếu scope
   Biết phân hệ gọi có token dịch vụ với scope phù hợp
   Khi token thiếu scope
-  Thì `403`; không có mã ERR riêng (lỗi xác thực dùng chung theo FR-00-080)
+  Thì hệ thống trả `403`; không có mã ERR riêng (lỗi xác thực dùng chung theo FR-00-080)
 
 @US-01-038 @FR-01-038 @M @âm
 Kịch bản: US-01-038 âm 2 · Không thấy HTTT
@@ -2678,7 +2678,7 @@ Kịch bản: US-01-050 dương · Xuất danh sách HTTT thành viên
 Kịch bản: US-01-050 âm 1 · Không có dòng nào khớp
   Biết người dùng đã đăng nhập; danh sách hiện hành có dữ liệu
   Khi không có dòng nào khớp
-  Thì `204`; thông báo
+  Thì hệ thống trả `204`; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Không có dữ liệu để xuất."
 ```
 
@@ -4197,7 +4197,7 @@ Kịch bản: US-02-048 dương · Cấp phạm vi truy cập theo đăng ký đ
 Kịch bản: US-02-048 âm 1 · HTTT chưa có định danh máy
   Biết đăng ký `ACTIVE` chưa có `grantStatus = GRANTED`; HTTT khai thác có định danh máy ở PH-01 (client Keycloak, và chứng thư với `OAUTH2_MTLS`)
   Khi HTTT chưa có định danh máy
-  Thì `AWAITING_CREDENTIAL` (không phải lỗi), thông báo cho OR; tiếp tục tự động khi PH-01 cấp xong
+  Thì hệ thống trả `AWAITING_CREDENTIAL` (không phải lỗi), thông báo cho OR; tiếp tục tự động khi PH-01 cấp xong
 
 @US-02-048 @FR-02-048 @M @âm
 Kịch bản: US-02-048 âm 2 · PH-12 hoặc PH-03 không khả dụng
@@ -4356,7 +4356,7 @@ Kịch bản: US-02-053 âm 1 · PH-14 hoặc Nền tảng quốc gia không kh�
 Kịch bản: US-02-053 âm 2 · Nền tảng quốc gia từ chối một dịch vụ
   Biết có phiên bản `PUBLISHED`, `DEPRECATED`, `SUSPENDED` hoặc `RETIRED` của API có mức hiển thị `NATIONAL`, `PUBLIC` và `dataClass` khác `SENSITIVE`; PH-14 đã cấu hình kết nối tới Nền tảng quốc gia của tenant
   Khi nền tảng quốc gia từ chối một dịch vụ
-  Thì bản ghi `REJECTED` kèm lý do; thông báo
+  Thì bản ghi `REJECTED` kèm lý do; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Nền tảng quốc gia từ chối API {mã}: {lý do}. Sửa thông tin rồi gửi lại."
 ```
 
@@ -9719,7 +9719,7 @@ Kịch bản: US-05-059 dương · Đồng bộ danh mục Kamelet với catalog
 Kịch bản: US-05-059 âm 1 · Runtime yêu cầu băm không có
   Biết có hồ sơ runtime mặc định và `runtime-manifest.json`
   Khi runtime yêu cầu băm không có
-  Thì `404`, runtime từ chối nạp luồng và báo lỗi cấu hình
+  Thì hệ thống trả `404`, runtime từ chối nạp luồng và báo lỗi cấu hình
 
 @US-05-059 @FR-05-059 @M @âm
 Kịch bản: US-05-059 âm 2 · Kamelet đã thu hồi
@@ -9803,7 +9803,7 @@ Kịch bản: US-05-062 dương · Báo cáo sử dụng kết nối và bộ đ
 Kịch bản: US-05-062 âm 1 · Tháng chưa có dữ liệu
   Biết có dữ liệu sử dụng của tháng
   Khi tháng chưa có dữ liệu
-  Thì `200` với số liệu rỗng và ghi chú thông báo
+  Thì hệ thống trả `200` với số liệu rỗng và ghi chú thông báo
   Và người dùng thấy thông báo "Chưa có dữ liệu cho tháng {tháng}."
 ```
 
@@ -10430,7 +10430,7 @@ Kịch bản: US-06-020 âm 1 · Hai bản ghi vàng cùng khóa (dữ liệu h�
 Kịch bản: US-06-020 âm 2 · Ứng viên có khóa khác với khóa của bản ghi vàng đang liên kết
   Biết ứng viên `NORMALIZED`; bộ quy tắc `ACTIVE`
   Khi ứng viên có khóa khác với khóa của bản ghi vàng đang liên kết
-  Thì `CONFLICT`, lý do `IDENTIFIER_CONFLICT`
+  Thì hệ thống trả `CONFLICT`, lý do `IDENTIFIER_CONFLICT`
 ```
 
 #### US-06-021 · Đối sánh xác suất trực tuyến
@@ -12264,7 +12264,7 @@ Kịch bản: US-07-020 âm 2 · `format` không hỗ trợ
 
 #### US-07-021 · Nhập bản ghi từ Excel/CSV vào bản nháp
 
-Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi từ Excel/CSV vào bản nháp, để bản ghi trong tệp vào bản nháp sau khi người dùng đã thấy trước số dòng thêm, sửa, lỗi; lỗi được báo theo từng dòng và từng ô.
+Là cán bộ quản lý dữ liệu, tôi muốn nhập bản ghi từ Excel/CSV vào bản nháp, để thấy trước số dòng thêm, sửa, lỗi trước khi ghi vào bản nháp và biết lỗi theo từng dòng, từng ô.
 
 *Epic* EP-07-C · *Ưu tiên* M · *Đợt* MVP · *Wave* W2 · *Điểm* 8 (đề nghị tách) · *FR* FR-07-021 · *UC* UC-07-03.
 
@@ -21419,7 +21419,7 @@ Kịch bản: US-12-010 dương · Đồng bộ thuộc tính người dùng t�
 Kịch bản: US-12-010 âm 1 · PH-07 không khả dụng
   Biết PH-07 có danh mục đơn vị hành chính hiện hành của tenant
   Khi PH-07 không khả dụng
-  Thì bỏ qua lượt này, ghi cảnh báo, dùng bản đệm gần nhất; thông báo hiển thị ở UI-12-07
+  Thì bỏ qua lượt này, ghi cảnh báo, dùng bản đệm gần nhất; người dùng thấy thông báo lỗi hiển thị ở UI-12-07
   Và người dùng thấy thông báo "Danh mục đơn vị chưa cập nhật được từ {thời điểm}"
 ```
 
@@ -21823,7 +21823,7 @@ Kịch bản: US-12-023 dương · Xác thực lại bước lên cho thao tác 
 Kịch bản: US-12-023 âm 1 · Xác thực lại thất bại
   Biết người dùng có phiên; token mang `acr`, `auth_time`
   Khi xác thực lại thất bại
-  Thì tính vào số lần sai (FR-12-021); thông báo
+  Thì tính vào số lần sai (FR-12-021); người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Xác thực lại không thành công. Thử lại."
 
 @US-12-023 @FR-12-023 @M @âm
@@ -21988,7 +21988,7 @@ Kịch bản: US-12-028 dương · Liên kết đăng nhập VNeID
 Kịch bản: US-12-028 âm 1 · Số định danh chưa liên kết và người dùng không có tài khoản nội bộ
   Biết cơ quan đã được cấp quyền tích hợp VNeID (giả định GĐ-12-01); tenant bật `12.vneid.enabled`; cấu hình khách VNeID đã nạp ở OpenBao
   Khi số định danh chưa liên kết và người dùng không có tài khoản nội bộ
-  Thì từ chối, **không** tự tạo tài khoản (BR-12-029); thông báo
+  Thì từ chối, **không** tự tạo tài khoản (BR-12-029); người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Số định danh này chưa được liên kết với tài khoản Datahub. Liên hệ quản trị tỉnh."
 ```
 
@@ -22571,7 +22571,7 @@ Kịch bản: US-12-046 âm 1 · Thiếu vai trò
 Kịch bản: US-12-046 âm 2 · Ngoài phạm vi tổ chức
   Biết dữ liệu gói gồm `role_perms`, `assignments`, `org_tree`, `client_scopes` (FR-12-051)
   Khi ngoài phạm vi tổ chức
-  Thì `ORG_SCOPE_MISMATCH`; đối tượng của tổ chức khác trả `404` như không tồn tại (BR-12-041)
+  Thì hệ thống trả `ORG_SCOPE_MISMATCH`; đối tượng của tổ chức khác trả `404` như không tồn tại (BR-12-041)
 ```
 
 #### US-12-047 · Tính mặt nạ trường và chế độ bảo vệ theo mục đích
@@ -22594,14 +22594,14 @@ Kịch bản: US-12-047 dương · Tính mặt nạ trường và chế độ b�
 Kịch bản: US-12-047 âm 1 · Thực thể chưa khai báo
   Biết thực thể trả về đã khai báo tập trường và mức phân loại từng trường (ở PH-07, PH-02 hoặc PH-09 từ Đợt 2)
   Khi thực thể chưa khai báo
-  Thì `fieldMask` rỗng, cảnh báo `ENTITY_FIELDS_UNDECLARED`; API trả `403` với thông báo khi yêu cầu cần trường
+  Thì hệ thống trả `fieldMask` rỗng, cảnh báo `ENTITY_FIELDS_UNDECLARED`; API trả `403` với thông báo khi yêu cầu cần trường
   Và người dùng thấy thông báo "Dữ liệu này chưa được khai báo cách chia sẻ. Liên hệ quản trị."
 
 @US-12-047 @FR-12-047 @M @âm
 Kịch bản: US-12-047 âm 2 · Mục đích thiếu với dữ liệu mức Hạn chế
   Biết thực thể trả về đã khai báo tập trường và mức phân loại từng trường (ở PH-07, PH-02 hoặc PH-09 từ Đợt 2)
   Khi mục đích thiếu với dữ liệu mức Hạn chế
-  Thì `PURPOSE_NOT_DECLARED` (từ FR-12-045)
+  Thì hệ thống trả `PURPOSE_NOT_DECLARED` (từ FR-12-045)
 ```
 
 #### US-12-048 · Bộ chuyển đổi XACML 3.0
@@ -24533,7 +24533,7 @@ Kịch bản: US-13-049 dương · Giám sát chính hệ thống giám sát
 Kịch bản: US-13-049 âm 1 · Mất nhịp tim
   Biết có bộ nhận nhịp tim ngoài hạ tầng của site do nhóm nền tảng vận hành (không phụ thuộc Mimir, Alertmanager của site)
   Khi mất nhịp tim
-  Thì cảnh báo `CRITICAL` qua kênh độc lập; thông báo gửi PA, PO
+  Thì cảnh báo `CRITICAL` qua kênh độc lập; người dùng thấy thông báo lỗi gửi PA, PO
   Và người dùng thấy thông báo "Hệ thống giám sát có thể đang ngừng, kiểm tra Ruler và Alertmanager."
 
 @US-13-049 @FR-13-049 @M @âm
@@ -24924,7 +24924,7 @@ Kịch bản: US-14-001 âm 1 · `size` lớn hơn 100
 Kịch bản: US-14-001 âm 2 · Chưa chọn tenant
   Biết người dùng đã đăng nhập và chọn tenant làm việc (FR-00-004)
   Khi chưa chọn tenant
-  Thì lỗi chung FR-00-004; thông báo
+  Thì lỗi chung FR-00-004; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Hãy chọn tỉnh làm việc ở thanh trên."
 ```
 
@@ -25624,7 +25624,7 @@ Kịch bản: US-14-023 dương · Cổng tiếp hợp danh mục dùng chung qu
 Kịch bản: US-14-023 âm 1 · Không phải PH-07 hoặc thiếu scope
   Biết dịch vụ nhóm `DMDC` `ACTIVE` ở nền tảng `NDXP` của tenant hoặc của `COMMON`; PH-07 có lịch đồng bộ hoặc người dùng yêu cầu đồng bộ
   Khi không phải PH-07 hoặc thiếu scope
-  Thì 403 theo FR-00; thông báo
+  Thì hệ thống trả 403 theo FR-00; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Chỉ phân hệ Danh mục dùng chung được gọi cổng này."
 
 @US-14-023 @FR-14-023 @M @âm
@@ -26049,7 +26049,7 @@ Kịch bản: US-14-036 dương · Vô hiệu đệm
 Kịch bản: US-14-036 âm 1 · Phạm vi `ALL` bởi người không phải TA
   Biết dịch vụ tồn tại; đệm có thể trống
   Khi phạm vi `ALL` bởi người không phải TA
-  Thì 403 theo FR-00; thông báo
+  Thì hệ thống trả 403 theo FR-00; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Chỉ quản trị tỉnh được xóa toàn bộ đệm."
 ```
 
@@ -26272,7 +26272,7 @@ Kịch bản: US-14-043 âm 1 · Hệ thống của Bộ không khả dụng
 Kịch bản: US-14-043 âm 2 · Quá `14.sync.stale-alert-days` ngày (mặc định 7) không đồng bộ thành công
   Biết có nền tảng loại `REGISTRY` `ACTIVE`; định dạng đăng ký của hệ thống nhận đã cấu hình (Q14-05)
   Khi quá `14.sync.stale-alert-days` ngày (mặc định 7) không đồng bộ thành công
-  Thì cảnh báo tuân thủ cho TA, SO và lãnh đạo (BR-14-026); thông báo
+  Thì cảnh báo tuân thủ cho TA, SO và lãnh đạo (BR-14-026); người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Đã {n} ngày chưa đăng ký được danh mục dịch vụ lên hệ thống của Bộ."
 ```
 
@@ -26394,7 +26394,7 @@ Kịch bản: US-14-047 âm 1 · Vượt số lần kiểm tra tay mỗi giờ
 Kịch bản: US-14-047 âm 2 · Địa chỉ ngoài danh sách egress
   Biết nền tảng ở trạng thái từ `DRAFT` trở đi; địa chỉ nằm trong egress
   Khi địa chỉ ngoài danh sách egress
-  Thì kết quả `EGRESS_DENIED` (không phải lỗi HTTP); thông báo
+  Thì kết quả `EGRESS_DENIED` (không phải lỗi HTTP); người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Địa chỉ chưa được phép đi ra ngoài. Đề nghị quản trị tỉnh bổ sung vào danh sách đích."
 ```
 
@@ -26798,7 +26798,7 @@ Kịch bản: US-15-004 âm 1 · Giá trị lọc sai miền
 Kịch bản: US-15-004 âm 2 · Không có kết quả
   Biết bản sao danh mục đã nạp
   Khi không có kết quả
-  Thì không phải lỗi; thông báo
+  Thì không phải lỗi; người dùng thấy thông báo lỗi
   Và người dùng thấy thông báo "Không có dịch vụ nào khớp. Thử bỏ bớt bộ lọc."
 ```
 
@@ -34939,7 +34939,7 @@ Kịch bản: US-19-022 âm 2 · Mạch ngắt mở, NCC tạm dừng
 
 #### US-19-023 · Kiểm tra hợp lệ yêu cầu thanh toán
 
-Là kế toán đối soát, tôi muốn hệ thống kiểm tra hợp lệ yêu cầu thanh toán, để đối tác biết chính xác điều kiện nào chưa đạt qua mã lỗi và câu mô tả; sửa xong có thể gửi lại cùng `Idempotency-Key`.
+Là HTTT đối tác thanh toán, tôi muốn hệ thống kiểm tra hợp lệ yêu cầu thanh toán, để đối tác biết chính xác điều kiện nào chưa đạt qua mã lỗi và câu mô tả; sửa xong có thể gửi lại cùng `Idempotency-Key`.
 
 *Epic* EP-19-D · *Ưu tiên* M · *Đợt* MVP · *Wave* W4 · *Điểm* 8 (đề nghị tách) · *FR* FR-19-023 · *UC* UC-19-11.
 

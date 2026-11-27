@@ -1072,7 +1072,7 @@ Tính năng: PH-05 · Bộ điều hợp và kết nối
   Kịch bản: US-05-059 âm 1 · Runtime yêu cầu băm không có
     Biết có hồ sơ runtime mặc định và `runtime-manifest.json`
     Khi runtime yêu cầu băm không có
-    Thì `404`, runtime từ chối nạp luồng và báo lỗi cấu hình
+    Thì hệ thống trả `404`, runtime từ chối nạp luồng và báo lỗi cấu hình
 
   @US-05-059 @FR-05-059 @M @âm
   Kịch bản: US-05-059 âm 2 · Kamelet đã thu hồi
@@ -1124,5 +1124,5 @@ Tính năng: PH-05 · Bộ điều hợp và kết nối
   Kịch bản: US-05-062 âm 1 · Tháng chưa có dữ liệu
     Biết có dữ liệu sử dụng của tháng
     Khi tháng chưa có dữ liệu
-    Thì `200` với số liệu rỗng và ghi chú thông báo
+    Thì hệ thống trả `200` với số liệu rỗng và ghi chú thông báo
     Và người dùng thấy thông báo "Chưa có dữ liệu cho tháng {tháng}."

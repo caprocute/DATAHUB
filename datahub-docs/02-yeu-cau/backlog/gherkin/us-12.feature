@@ -216,7 +216,7 @@ Tính năng: PH-12 · Định danh và phân quyền
   Kịch bản: US-12-010 âm 1 · PH-07 không khả dụng
     Biết PH-07 có danh mục đơn vị hành chính hiện hành của tenant
     Khi PH-07 không khả dụng
-    Thì bỏ qua lượt này, ghi cảnh báo, dùng bản đệm gần nhất; thông báo hiển thị ở UI-12-07
+    Thì bỏ qua lượt này, ghi cảnh báo, dùng bản đệm gần nhất; người dùng thấy thông báo lỗi hiển thị ở UI-12-07
     Và người dùng thấy thông báo "Danh mục đơn vị chưa cập nhật được từ {thời điểm}"
 
   # ---- EP-12-B · Vai trò, nhóm và quyền
@@ -486,7 +486,7 @@ Tính năng: PH-12 · Định danh và phân quyền
   Kịch bản: US-12-023 âm 1 · Xác thực lại thất bại
     Biết người dùng có phiên; token mang `acr`, `auth_time`
     Khi xác thực lại thất bại
-    Thì tính vào số lần sai (FR-12-021); thông báo
+    Thì tính vào số lần sai (FR-12-021); người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Xác thực lại không thành công. Thử lại."
 
   @US-12-023 @FR-12-023 @M @âm
@@ -601,7 +601,7 @@ Tính năng: PH-12 · Định danh và phân quyền
   Kịch bản: US-12-028 âm 1 · Số định danh chưa liên kết và người dùng không có tài khoản nội bộ
     Biết cơ quan đã được cấp quyền tích hợp VNeID (giả định GĐ-12-01); tenant bật `12.vneid.enabled`; cấu hình khách VNeID đã nạp ở OpenBao
     Khi số định danh chưa liên kết và người dùng không có tài khoản nội bộ
-    Thì từ chối, **không** tự tạo tài khoản (BR-12-029); thông báo
+    Thì từ chối, **không** tự tạo tài khoản (BR-12-029); người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Số định danh này chưa được liên kết với tài khoản Datahub. Liên hệ quản trị tỉnh."
 
   @US-12-029 @FR-12-029 @M
@@ -998,7 +998,7 @@ Tính năng: PH-12 · Định danh và phân quyền
   Kịch bản: US-12-046 âm 2 · Ngoài phạm vi tổ chức
     Biết dữ liệu gói gồm `role_perms`, `assignments`, `org_tree`, `client_scopes` (FR-12-051)
     Khi ngoài phạm vi tổ chức
-    Thì `ORG_SCOPE_MISMATCH`; đối tượng của tổ chức khác trả `404` như không tồn tại (BR-12-041)
+    Thì hệ thống trả `ORG_SCOPE_MISMATCH`; đối tượng của tổ chức khác trả `404` như không tồn tại (BR-12-041)
 
   @US-12-047 @FR-12-047 @M
   Kịch bản: US-12-047 dương · Tính mặt nạ trường và chế độ bảo vệ theo mục đích
@@ -1011,14 +1011,14 @@ Tính năng: PH-12 · Định danh và phân quyền
   Kịch bản: US-12-047 âm 1 · Thực thể chưa khai báo
     Biết thực thể trả về đã khai báo tập trường và mức phân loại từng trường (ở PH-07, PH-02 hoặc PH-09 từ Đợt 2)
     Khi thực thể chưa khai báo
-    Thì `fieldMask` rỗng, cảnh báo `ENTITY_FIELDS_UNDECLARED`; API trả `403` với thông báo khi yêu cầu cần trường
+    Thì hệ thống trả `fieldMask` rỗng, cảnh báo `ENTITY_FIELDS_UNDECLARED`; API trả `403` với thông báo khi yêu cầu cần trường
     Và người dùng thấy thông báo "Dữ liệu này chưa được khai báo cách chia sẻ. Liên hệ quản trị."
 
   @US-12-047 @FR-12-047 @M @âm
   Kịch bản: US-12-047 âm 2 · Mục đích thiếu với dữ liệu mức Hạn chế
     Biết thực thể trả về đã khai báo tập trường và mức phân loại từng trường (ở PH-07, PH-02 hoặc PH-09 từ Đợt 2)
     Khi mục đích thiếu với dữ liệu mức Hạn chế
-    Thì `PURPOSE_NOT_DECLARED` (từ FR-12-045)
+    Thì hệ thống trả `PURPOSE_NOT_DECLARED` (từ FR-12-045)
 
   @US-12-048 @FR-12-048 @M
   Kịch bản: US-12-048 dương · Bộ chuyển đổi XACML 3.0

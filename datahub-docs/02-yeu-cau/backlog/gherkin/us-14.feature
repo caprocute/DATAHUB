@@ -22,7 +22,7 @@ Tính năng: PH-14 · Kết nối quốc gia
   Kịch bản: US-14-001 âm 2 · Chưa chọn tenant
     Biết người dùng đã đăng nhập và chọn tenant làm việc (FR-00-004)
     Khi chưa chọn tenant
-    Thì lỗi chung FR-00-004; thông báo
+    Thì lỗi chung FR-00-004; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Hãy chọn tỉnh làm việc ở thanh trên."
 
   @US-14-002 @FR-14-002 @M
@@ -498,7 +498,7 @@ Tính năng: PH-14 · Kết nối quốc gia
   Kịch bản: US-14-023 âm 1 · Không phải PH-07 hoặc thiếu scope
     Biết dịch vụ nhóm `DMDC` `ACTIVE` ở nền tảng `NDXP` của tenant hoặc của `COMMON`; PH-07 có lịch đồng bộ hoặc người dùng yêu cầu đồng bộ
     Khi không phải PH-07 hoặc thiếu scope
-    Thì 403 theo FR-00; thông báo
+    Thì hệ thống trả 403 theo FR-00; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Chỉ phân hệ Danh mục dùng chung được gọi cổng này."
 
   @US-14-023 @FR-14-023 @M @âm
@@ -789,7 +789,7 @@ Tính năng: PH-14 · Kết nối quốc gia
   Kịch bản: US-14-036 âm 1 · Phạm vi `ALL` bởi người không phải TA
     Biết dịch vụ tồn tại; đệm có thể trống
     Khi phạm vi `ALL` bởi người không phải TA
-    Thì 403 theo FR-00; thông báo
+    Thì hệ thống trả 403 theo FR-00; người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Chỉ quản trị tỉnh được xóa toàn bộ đệm."
 
   @US-14-037 @FR-14-037 @M
@@ -938,7 +938,7 @@ Tính năng: PH-14 · Kết nối quốc gia
   Kịch bản: US-14-043 âm 2 · Quá `14.sync.stale-alert-days` ngày (mặc định 7) không đồng bộ thành công
     Biết có nền tảng loại `REGISTRY` `ACTIVE`; định dạng đăng ký của hệ thống nhận đã cấu hình (Q14-05)
     Khi quá `14.sync.stale-alert-days` ngày (mặc định 7) không đồng bộ thành công
-    Thì cảnh báo tuân thủ cho TA, SO và lãnh đạo (BR-14-026); thông báo
+    Thì cảnh báo tuân thủ cho TA, SO và lãnh đạo (BR-14-026); người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Đã {n} ngày chưa đăng ký được danh mục dịch vụ lên hệ thống của Bộ."
 
   @US-14-044 @FR-14-044 @S
@@ -1018,7 +1018,7 @@ Tính năng: PH-14 · Kết nối quốc gia
   Kịch bản: US-14-047 âm 2 · Địa chỉ ngoài danh sách egress
     Biết nền tảng ở trạng thái từ `DRAFT` trở đi; địa chỉ nằm trong egress
     Khi địa chỉ ngoài danh sách egress
-    Thì kết quả `EGRESS_DENIED` (không phải lỗi HTTP); thông báo
+    Thì kết quả `EGRESS_DENIED` (không phải lỗi HTTP); người dùng thấy thông báo lỗi
     Và người dùng thấy thông báo "Địa chỉ chưa được phép đi ra ngoài. Đề nghị quản trị tỉnh bổ sung vào danh sách đích."
 
   @US-14-048 @FR-14-048 @M
