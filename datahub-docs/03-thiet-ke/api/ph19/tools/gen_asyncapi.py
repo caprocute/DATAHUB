@@ -30,7 +30,7 @@ BREQ = ["eventId", "occurredAt", "tenantId", "traceId", "sequence"]
 def ev(props, req=()):
     return obj({**BASE, **props}, BREQ + list(req))
 TXN = {"transactionId": UUID, "transactionCode": S(pattern="^T[0-9]{2}[0-9]{6}[0-9A-HJKMNP-TV-Z]{10}$"), "partnerCode": S(maxLength=64),
-       "partnerOrderId": S(maxLength=64), "serviceCode": S(maxLength=64)}
+       "partnerOrderId": S(maxLength=64), "serviceCode": S(maxLength=64), "isTest": B}
 TREQ = ["transactionId", "transactionCode", "partnerOrderId"]
 SCHEMAS = {
   "ProviderStatusChanged": ev({"providerId": UUID, "providerCode": S(), "fromStatus": NUL(en("ProviderStatus")), "toStatus": en("ProviderStatus"), "reason": S(maxLength=1000)},

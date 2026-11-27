@@ -189,7 +189,7 @@ table(['Scope máy', 'Bên giữ', 'Operation', 'Ghi chú'], [
     ['`tenant:org-read`', 'PH-01, 06, 07, 08, 12, 16', rng(perm_ops['scope:tenant:org-read']), 'Chỉ tổ chức của tenant trong thông tin xác thực máy'],
     ['`tenant:provision-report`', 'Phân hệ tham gia saga, PH-18, phân hệ xuất gói', rng(perm_ops['scope:tenant:provision-report']), 'Báo tiến độ bước saga, chuyển sáp nhập, xuất gói; chỉ bên thực hiện của bước (ERR-20-104)'],
 ], 'Scope máy do PH-20 cấp cho phân hệ khác')
-W('Scope PH-20 dùng khi gọi ra: `iam:realm-provision` (PH-12), `obs:tenant-provision` (PH-13), `platform.tenant.provision` (PH-07, giả định của PH-07), `event:topic-register` (PH-10), `kpi.ingest` (PH-16); chi tiết ở mục 2.10.')
+W('Scope PH-20 dùng khi gọi ra: `iam:realm-provision` (PH-12), `obs:tenant-provision` (PH-13), `platform.tenant.provision` (PH-07, giả định của PH-07), `event:topic-register` (PH-10), `kpi.ingest` (PH-16), `ops:merge-transfer` (PH-18); chi tiết ở mục 2.10.')
 W('')
 
 W('### 2.3. Tenant từ token và tách nhiệm vụ')
@@ -262,7 +262,7 @@ table(['Nhóm', 'Giới hạn đề xuất', 'Cơ sở giả định'], [
 
 W('### 2.10. Lời gọi ra phân hệ khác')
 W('')
-W('Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; PH-20 chỉ dựa vào các mã sau. Mỗi lời gọi mang `Idempotency-Key` bằng `{runId}:{stepCode}` (saga) hoặc `{mergePlanId}:{module}` (sáp nhập).')
+W('Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; PH-20 chỉ dựa vào các mã sau. Mỗi lời gọi mang `Idempotency-Key` bằng `{runId}:{stepCode}` (saga) hoặc `{mergePlanId}:{module}` (sáp nhập; thêm `:DELTA` cho lượt bù cuối, `:DRYRUN` cho chạy thử; thân gọi PH-18 có `mode` `FULL` hoặc `DELTA` và `since`; `module` dạng `PH-nn`).')
 W('')
 table(['Phân hệ', 'Lời gọi', 'Scope hoặc kênh', 'Dùng ở'], [
     ['PH-12', 'API-12-080 tạo realm, client, vai trò; API-12-084, 085 tạm ngừng, khôi phục realm; API-12-045, 046 kế hoạch và thực hiện chuyển định danh', '`iam:realm-provision`', '`S03_REALM`, API-20-079, API-20-104'],
@@ -270,8 +270,8 @@ table(['Phân hệ', 'Lời gọi', 'Scope hoặc kênh', 'Dùng ở'], [
     ['PH-07', 'API-07-073 `/api/platform/rdm/v1/tenants/{tenantId}:seed`', '`platform.tenant.provision`', '`S11_SEED_RDM`'],
     ['PH-10', 'Đăng ký topic `platform.tenant.*.v1`, `platform.release.*.v1`; nghe EVT-20-01', '`event:topic-register`', '`S06_EVENTING`'],
     ['PH-16', 'API-16-030 đẩy chỉ tiêu `thoi-gian-khoi-tao-tenant` (KPI-12)', '`kpi.ingest`', '`S17_ACTIVATE`'],
-    ['PH-09', 'FR-09-043 xóa mật mã tenant (sau bàn giao, hai người duyệt); nhận EVT-09-21', 'mTLS mesh', 'API-20-079 chấm dứt'],
-    ['PH-18', '`POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (giả định, Phụ lục A); `NotificationApi` gửi thư; đọc API-20-162', 'mTLS mesh', 'API-20-098, 128, `S17_ACTIVATE`'],
+    ['PH-09', 'FR-09-043 xóa mật mã tenant: đề nghị API-09-159, theo dõi API-09-160, hai người duyệt API-09-161 (D03-04-PH09); nhận EVT-09-21', 'mTLS mesh', 'API-20-079 chấm dứt'],
+    ['PH-18', '`POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (API-18-150…153, tài khoản máy `client_credentials` qua `apisix-int`); API-18-030 `params:seed-defaults` (scope `ops:param-write`, lũy đẳng, gọi sau EVT-20-01, `added = 0` nếu PH-18 đã tự gieo); `NotificationApi` gửi thư; đọc API-20-162; theo dõi chuyển sáp nhập bằng API-18-152 hoặc EVT-18-24 (báo cáo chính thức vẫn vào API-20-167), nhận EVT-18-21 khi khôi phục tenant', '`ops:merge-transfer` (merge-transfers); mTLS mesh (còn lại)', 'API-20-098, 128, `S17_ACTIVATE`'],
     ['OpenBao, Ceph RGW, Git, Argo CD', 'API của hạ tầng (không phải API Datahub)', 'Tài khoản dịch vụ `svc-ph20-gitops`', '`S02`, `S04`, `S05`, `S07`, API-20-040'],
 ], 'Lời gọi ra phân hệ khác của PH-20')
 
@@ -359,7 +359,7 @@ table(['Mục', 'Quy tắc'], [
     ['Nhận', 'Khử trùng theo `ce_id` ở bảng `inbox_event`; xử lý lại một sự kiện không đổi kết quả'],
     ['Lưu giữ, phân vùng', 'Lưu giữ 7 ngày, 3 phân vùng, 3 bản sao, `min.insync.replicas` 2 (giả định theo mức của PH-05, PH-10)'],
     ['Dữ liệu cá nhân', 'Không có: chỉ mã, trạng thái, số đếm; đường dẫn tải gói bàn giao không nằm ở EVT-20-16'],
-    ['Lệch tên topic', 'PH-19 đang nghe `tenant.module-enabled.v1` và kiểm thử PH-10 dùng `dh.platform.tenant.created.v1`; PH-20 giữ tên của FRS 9.3, đề nghị hai phân hệ đổi (Phụ lục A)'],
+    ['Tên topic', 'Tên của phân hệ phát là chuẩn: PH-19 nghe `platform.tenant.module-enabled.v1` (EVT-20-07) và PH-10 dùng `platform.tenant.created.v1` (EVT-20-01) trong kiểm thử; không dùng dạng `tenant.module-enabled.v1` hay `dh.platform.tenant.created.v1`'],
     ['Bước bất đồng bộ', 'Phân hệ nhận EVT-20-01 hoặc EVT-20-07 phải báo kết quả bằng API-20-166 trong `20.provision.step-timeout-minutes`; EVT-20-10 đi cùng báo API-20-167'],
 ], 'Quy tắc chung của sự kiện PH-20')
 
@@ -587,7 +587,7 @@ W('Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 
 W('')
 W('## Lịch sử phiên bản')
 W('')
-table(['Phiên bản', 'Ngày', 'Người', 'Nội dung'], [['0.1', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant'], ['0.2', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167']], 'Lịch sử phiên bản')
+table(['Phiên bản', 'Ngày', 'Người', 'Nội dung'], [['0.1', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant'], ['0.2', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167'], ['0.3', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Đồng bộ chéo cuối: merge-transfers theo API-18-150…153 (`apisix-int`, `ops:merge-transfer`), bên nhận sự kiện, mã kế hoạch `SN-yyyy-nnn`, `maxItems` của `sourceTenants`']], 'Lịch sử phiên bản')
 
 open(MD, 'w', encoding='utf-8').write('\n'.join(L).rstrip('\n') + '\n')
 print('Đã ghi', MD, os.path.getsize(MD))

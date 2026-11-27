@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH19
 ten: Thiết kế chi tiết phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, trưởng nhóm PH-19, lập trình viên dh-payment và dh-console, kiểm thử viên, nhóm vận hành, cán bộ ATTT
@@ -191,7 +191,7 @@ Hình cho thấy ba vai trò tiến trình của cùng một ảnh container, ra
 | PH-12 (Keycloak) | Vào | JWT, JWKS đệm 10 phút; API quản trị client | Token còn hạn vẫn chạy (≤ 5 phút); cấp client mới bị chặn |
 | OPA | Vào | Quyết định quyền, gói chính sách đệm cục bộ | Dùng gói đệm cuối cùng |
 | PH-07 | Đọc | API tra mã, sự kiện `catalog.item-changed.v1` | Đệm mã (Caffeine 10 phút, Valkey 24 giờ); ghi mới cần kiểm tra bị chặn ERR-19-039 |
-| PH-09 | Đọc | API chính sách che | Quy tắc che mặc định BR-19-031 |
+| PH-09 | Đọc | `dh-privacy-client` (API chính sách che), khai `FailMode = CLOSED` khi khởi tạo, xóa đệm theo EVT-09-07, 08, 12 | Không có kế hoạch che hợp lệ thì dùng quy tắc che mặc định BR-19-031, không trả dữ liệu chưa che |
 | PH-13 | Ra | Kafka `audit.recorded.v1`, OTLP, luật cảnh báo | Kiểm toán nằm trong outbox chờ phát |
 | PH-20 | Vào | Sự kiện bật, tắt mô-đun | Không ảnh hưởng tenant đã bật |
 | PH-05 | Đọc | Kết nối chỉ đọc CSDL hệ cũ (di trú) | Di trú bằng tệp |
@@ -907,7 +907,9 @@ Mọi bảng có `tenant_id` và chính sách RLS `USING (tenant_id = current_se
 
 ### 9.6. Kiểm toán
 
-Danh mục hành động (`action`) gửi PH-13: `PROVIDER_CREATE`, `PROVIDER_UPDATE`, `PROVIDER_DELETE`, `CREDENTIAL_BIND`, `CREDENTIAL_ROTATE`, `CONNECTION_TEST`, `TEST_TRANSACTION`, `PROVIDER_SUSPEND`, `PROVIDER_RESUME`, `RESULT_MAPPING_CHANGE_REQUEST`, `RESULT_MAPPING_APPLIED`, `SERVICE_GROUP_*`, `SERVICE_*`, `PARTNER_*`, `PARTNER_CLIENT_ISSUE`, `PARTNER_CLIENT_REVOKE`, `SERVICE_GRANT_SET`, `WEBHOOK_ENDPOINT_*`, `WEBHOOK_SECRET_ROTATE`, `ROUTING_MODE_REQUEST`, `TRANSACTION_CANCEL`, `TRANSACTION_SYNC`, `CALLBACK_REPLAY`, `PII_VIEW`, `REFUND_CREATE`, `REFUND_EXECUTE`, `REFUND_CONFIRM_MANUAL`, `RECON_SESSION_CREATE`, `RECON_FILE_UPLOAD`, `RECON_RERUN`, `RECON_CLOSE`, `RECON_REOPEN_REQUEST`, `DISCREPANCY_ASSIGN`, `DISCREPANCY_ESCALATE`, `DISCREPANCY_NOTE`, `DISCREPANCY_PROPOSE`, `DISCREPANCY_RESOLVE`, `APPROVAL_DECISION`, `APPROVAL_WITHDRAW`, `EXPORT_CREATE`, `EXPORT_DOWNLOAD`, `CONFIG_VERSION_CREATE`, `MIGRATION_RUN`, `WEBHOOK_RESEND`, `ACCESS_DENIED`. `AuditWriter` loại giá trị bí mật và che dữ liệu cá nhân trong `before`, `after`. Không ghi được outbox thì thao tác bị hủy (ERR-19-050, BR-19-029).
+Danh mục hành động (`action`) gửi PH-13: `PROVIDER_CREATE`, `PROVIDER_UPDATE`, `PROVIDER_DELETE`, `CREDENTIAL_BIND`, `CREDENTIAL_ROTATE`, `CONNECTION_TEST`, `TEST_TRANSACTION`, `PROVIDER_SUSPEND`, `PROVIDER_RESUME`, `RESULT_MAPPING_CHANGE_REQUEST`, `RESULT_MAPPING_APPLIED`, `SERVICE_GROUP_*`, `SERVICE_*`, `PARTNER_*`, `PARTNER_CLIENT_ISSUE`, `PARTNER_CLIENT_REVOKE`, `SERVICE_GRANT_SET`, `WEBHOOK_ENDPOINT_*`, `WEBHOOK_SECRET_ROTATE`, `ROUTING_MODE_REQUEST`, `TRANSACTION_CANCEL`, `TRANSACTION_SYNC`, `CALLBACK_REPLAY`, `PII_VIEW`, `REFUND_CREATE`, `REFUND_EXECUTE`, `REFUND_CONFIRM_MANUAL`, `RECON_SESSION_CREATE`, `RECON_FILE_UPLOAD`, `RECON_RERUN`, `RECON_CLOSE`, `RECON_REOPEN_REQUEST`, `DISCREPANCY_ASSIGN`, `DISCREPANCY_ESCALATE`, `DISCREPANCY_NOTE`, `DISCREPANCY_PROPOSE`, `DISCREPANCY_RESOLVE`, `APPROVAL_DECISION`, `APPROVAL_WITHDRAW`, `EXPORT_CREATE`, `EXPORT_DOWNLOAD`, `CONFIG_VERSION_CREATE`, `MIGRATION_RUN`, `WEBHOOK_RESEND`, `MODULE_ENABLE`, `MODULE_DISABLE` (bật, tắt phân hệ theo tenant, chủ thể là PH-20, FR-19-064), `ACCESS_DENIED`. `AuditWriter` loại giá trị bí mật và che dữ liệu cá nhân trong `before`, `after`. Không ghi được outbox thì thao tác bị hủy (ERR-19-050, BR-19-029).
+
+Đường vận chuyển bản ghi kiểm toán tách khỏi sự kiện miền. `AuditWriter` gọi `AuditRecorder.record` của thư viện `dh-audit`, ghi vào hộp thư đi kiểm toán `audit_outbox` trong cùng giao dịch với thao tác và tăng bộ đếm `audit_emit_counter` trong giao dịch đó để PH-13 đối chiếu số lượng. Bản ghi kiểm toán đi bằng `OutboxRelay` có xác nhận của `dh-audit` (chỉ đặt `published_at` sau khi Kafka xác nhận `acks=all`), không đi qua Debezium dù DU có dùng Debezium cho sự kiện miền ở `outbox_event`. Hai bảng `audit_outbox`, `audit_emit_counter` do migration của thư viện `dh-audit` tạo trong schema của DU nên không khai riêng ở D03-03-PH19.
 
 ## 10. Hoàn tiền
 
@@ -1305,3 +1307,4 @@ Ca kiểm thử chi tiết ở D05-02-PH19 (TS-19-01…34).
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: kiến trúc DU ba vai trò, cổng NCC và adapter PayGov giả định, giao dịch, lũy đẳng, inbox, outbox, webhook, bảng ánh xạ mã mặc định, phía đọc, bảo mật, hoàn tiền, đối soát, phê duyệt, di trú, chịu lỗi, dung lượng, kiểm thử, lộ trình | Nhóm phân hệ PH-19 |
 | 0.2 | 26/11/2026 | Nâng theo quy chuẩn trình bày K-TRINH-BAY: thuật ngữ, cấu trúc tài liệu; danh sách 10 thành phần; bảng đặc tả 10 mục đầu mỗi chương thành phần; bốn sơ đồ trình tự mới (IPN, hoàn tiền, đối soát, bốn mắt); chú thích bảng, hình | Nhóm phân hệ PH-19 |
+| 0.3 | 27/11/2026 | Nâng theo quy chuẩn trình bày K-TRINH-BAY: thuật ngữ, cấu trúc tài liệu; danh sách 10 thành phần; bảng đặc tả 10 mục đầu mỗi chương thành phần; bốn sơ đồ trình tự mới (IPN, hoàn tiền, đối soát, bốn mắt); chú thích bảng, hình | Đồng bộ chéo cuối: dh-privacy-client `CLOSED`, kiểm toán qua OutboxRelay, mã `MODULE_ENABLE`, `MODULE_DISABLE` |

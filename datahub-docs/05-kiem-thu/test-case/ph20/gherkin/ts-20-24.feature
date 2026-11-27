@@ -11,12 +11,12 @@ Tính năng: TS-20-24 · Lập kế hoạch và bảng ánh xạ sáp nhập
     Và `GET P/merge-plans?status=DRAFT&tenantCode=T91` bằng `U-PO`
     Và `GET P/merge-plans/{mergePlanId}`
     Và `PATCH P/merge-plans/{mergePlanId}` đổi `name` và `transitionMonths = 8`, kèm `If-Match`
-    Thì bước 1 `201`, mã `MG-2026-001`, `status = DRAFT`, phân hệ bật ở nguồn mà đích chưa bật được cảnh báo kèm gợi ý FR-20-034. Bước 2 có kế hoạch. Bước 3 `progress.modulesTotal` đúng số phân hệ, `allowedActions[]`. Bước 4 `200`, `transitionMonths = 8`. KT mọi thao tác ghi.
+    Thì bước 1 `201`, mã `SN-2026-001`, `status = DRAFT`, phân hệ bật ở nguồn mà đích chưa bật được cảnh báo kèm gợi ý FR-20-034. Bước 2 có kế hoạch. Bước 3 `progress.modulesTotal` đúng số phân hệ, `allowedActions[]`. Bước 4 `200`, `transitionMonths = 8`. KT mọi thao tác ghi.
 
   @TC-20-109 @P1 @Âm
   Kịch bản: TC-20-109 Kế hoạch không hợp lệ: nguồn trùng đích, tenant không đủ điều kiện, thuộc kế hoạch khác, chuyển tiếp quá dài
     # Truy vết: FR-20-045 · API-20-086, 089 · BR-20-022, 025 · ERR-20-004, ERR-20-040, ERR-20-041, ERR-20-045
-    Biết `U-PA1`; `T90`, `T91` `ACTIVE`; `T92` `SUSPENDED`; `T93` đã thuộc `MG-2026-001` chưa kết thúc.
+    Biết `U-PA1`; `T90`, `T91` `ACTIVE`; `T92` `SUSPENDED`; `T93` đã thuộc `SN-2026-001` chưa kết thúc.
     Khi `POST P/merge-plans` với `sourceTenants = [T90]`, `targetTenant = T90`
     Và `POST` với nguồn `T92` (`SUSPENDED`) hoặc `PLATFORM`
     Và `POST` với nguồn `T93` đang thuộc kế hoạch khác

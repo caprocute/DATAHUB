@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH19
 ten: Đặc tả use case phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển dh-payment và dh-console, đội kiểm thử, Sở Tài chính tỉnh thí điểm, hội đồng thẩm định
@@ -1992,8 +1992,8 @@ Use case đưa một tỉnh vào dùng PH-19: quản trị tenant bật mô-đun
 
 **Luồng chính.**
 
-1. TEN (Đỗ Quang Khải) bật mô-đun ở PH-20; PH-20 phát `tenant.module-enabled.v1`.
-2. Hệ thống chạy các bước khởi tạo của FR-19-064, ghi `provisioning_state` từng bước; hoàn tất thì `module_enabled = true`.
+1. TEN (Đỗ Quang Khải) bật mô-đun ở PH-20; PH-20 phát `platform.tenant.module-enabled.v1`.
+2. Hệ thống chạy các bước khởi tạo của FR-19-064, ghi `provisioning_state` từng bước; hoàn tất thì `module_enabled = true` và báo bước `S15_MODULES` về PH-20 qua API-20-166.
 3. ADM mở UI-19-26 (API-19-085), đổi `19.refund.two-level-threshold` từ 5.000.000 lên 10.000.000 đ theo văn bản của Sở Tài chính, hiệu lực từ 01/12/2026, nhập lý do (API-19-086).
 4. Hệ thống kiểm tra miền, tạo phiên bản 2 hẹn giờ, thông báo nhóm APR; tới thời điểm hiệu lực, mọi pod nạp lại trong ≤ 60 giây.
 
@@ -2188,3 +2188,4 @@ Bảng dưới tổng hợp các câu hỏi mở phát sinh khi đặc tả use 
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm phân hệ PH-19 | Bản đầu: 29 use case, sáu sơ đồ tuần tự, luồng phụ phê duyệt và tải tệp, ma trận BR |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-19 | Chuẩn kết hợp theo K-UC và K-TRINH-BAY: chương Giới thiệu đủ mục (người đọc, thuật ngữ và viết tắt, tài liệu tham chiếu, cấu trúc tài liệu); mọi use case chuyển sang khối đặc tả 15 mục, bổ sung mục Truy vết, Quy tắc áp dụng, Màn hình, API, đoạn bối cảnh; luồng ngoại lệ kèm mã HTTP, câu thông báo và nơi hiển thị lấy từ D03-06-PH19 §5; sơ đồ tổng chia ba hình; bảng 5.3 truy vết REQ, BP, LGC; sơ đồ trạng thái đề nghị phê duyệt; mọi bảng và hình có chú thích, mọi sơ đồ có thuyết minh. Giữ nguyên toàn bộ luồng, mã và số liệu của bản 0.1 |
+| 0.3 | 2026-11-27 | Nhóm phân hệ PH-19 | Đồng bộ chéo cuối: topic `platform.tenant.module-enabled.v1`, báo `S15_MODULES` |

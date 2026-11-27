@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH20
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -67,7 +67,7 @@ Tài liệu bám theo các tài liệu dưới đây; khi có mâu thuẫn, D02-
 
 | Tài liệu | Nội dung dùng |
 |---|---|
-| D03-10 Thiết kế đa tenant | §4 mẫu RLS `tenant_isolation`, §5 máy trạng thái, saga 10 bước, hạn mức, sáp nhập |
+| D03-10 Thiết kế đa tenant | §4 mẫu RLS `tenant_isolation`, §5 máy trạng thái, saga 17 bước `S01`…`S17`, hạn mức, sáp nhập |
 | D02-07 Từ điển dữ liệu | DD-01 Tenant, DD-02 Tổ chức, DD-11 Outbox, DD-12 Tệp |
 | D02-03-PH20 FRS | EN-20-01…37, FR-20-001…070, Phụ lục A liệt kê, mã lỗi `ERR-20-*` |
 | D03-03-PH16 CSDL Báo cáo chỉ tiêu | Mẫu khung DDL, bộ công cụ sinh và kiểm thử |
@@ -1407,7 +1407,7 @@ Cột khác: `size_bytes` bigint; `sha256` char(64); `file_id` uuid; `error_mess
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `plan_code` | `varchar(48)` | Mã kế hoạch dạng `sap-nhap-t68-t69`, dùng ở route `/nen-tang/sap-nhap/{ma}`. |
+| `plan_code` | `varchar(48)` | Mã kế hoạch dạng `SN-2026-001` (cũng là `mergePlanId` ở API), dùng ở route `/nen-tang/sap-nhap/{ma}`. |
 | `status` | `varchar(20)`, mặc định `'DRAFT'` | Trạng thái: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `DRY_RUN`, `TRANSFERRING`, `CONFLICT_REVIEW`, `IDENTITY_TRANSFER`, `CUTOVER`, `TRANSITION`, `COMPLETED`, `CANCELLED`, `FAILED`. |
 | `source_tenant_code` | `varchar(16)` | Tenant nguồn (sẽ sang `MERGED`). |
 | `target_tenant_code` | `varchar(16)` | Tenant đích nhận dữ liệu. |
@@ -2565,5 +2565,6 @@ Bảng dưới liệt kê điều cần đồng bộ giữa tập CSDL PH-20 và
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Kỹ sư CSDL PH-20 | Bản đầu: 45 bảng, bốn chế độ RLS cùng bộ chính sách riêng cho bảng `tenant`, DDL chạy thử trên PostgreSQL 16.15, 14 tệp Liquibase, bài kiểm cô lập 236 khối PASS, ánh xạ EN-20, FR-20 sang bảng, câu hỏi mở Q20-50…54 |
 | 0.2 | 27/11/2026 | Kỹ sư CSDL PH-20 | Đồng bộ với FRS 0.2: `uq_provisioning_run_active` gồm `PENDING`; `TemplateState` dùng `PUBLISHED`, `ContactRole` theo FRS 4.2; mã mẫu `tinh-chuan`; cửa sổ bảo trì 120 đến 360 phút; sinh lại DDL, Liquibase, đặc tả; 29 tham số `20.*` |
+| 0.3 | 27/11/2026 | Kỹ sư CSDL PH-20 | Đồng bộ chéo cuối: mã kế hoạch `SN-yyyy-nnn`, saga 17 bước |
 
 : Lịch sử phiên bản

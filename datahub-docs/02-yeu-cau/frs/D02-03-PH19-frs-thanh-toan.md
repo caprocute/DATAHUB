@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH19
 ten: Đặc tả chức năng phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 mo_ta: Đặc tả 69 yêu cầu chức năng, 34 quy tắc nghiệp vụ và 32 yêu cầu phi chức năng của phân hệ thanh toán điện tử PH-19, dùng làm căn cứ thiết kế, lập trình, kiểm thử và thẩm định
 tai_lieu_lien_quan: D02-01-PH19 BRD; D02-02 SRS; D02-03-PH19-00 khung truy vết; D02-04-PH19; D03-02-PH19; D03-03-PH19; D03-04-PH19; D03-06-PH19; D05-02-PH19
@@ -4593,6 +4593,7 @@ Mẫu trình bày XLSX và PDF theo thể thức hành chính (NĐ 30/2020): qu�
 |---|---|---|
 | `payment_transactions_total` | `tenant`, `provider`, `status` | Tỷ lệ `FAILED` 15 phút > 20% → cảnh báo |
 | `payment_provider_latency_seconds` (histogram) | `tenant`, `provider`, `operation` | p95 15 phút > 5 s → cảnh báo |
+| `payment_provider_errors_total` | `tenant`, `provider`, `operation`, `error_class` (`CONNECT`, `TIMEOUT`, `HTTP_5XX`) | Tỷ lệ lỗi kết nối > 5% trong 5 phút → nghiêm trọng (luật `payment-provider-connection-error` của PH-13, FR-13-043) |
 | `payment_provider_circuit_state` | `tenant`, `provider` | `OPEN` → khẩn |
 | `payment_pending_age_seconds` (gauge, giao dịch cũ nhất) | `tenant`, `provider` | > 30 phút → cảnh báo; > 2 giờ → khẩn |
 | `payment_inbox_backlog`, `payment_outbox_backlog` | `tenant` | > 1.000 trong 5 phút → cảnh báo |
@@ -4846,7 +4847,7 @@ Khởi tạo phân hệ tạo cấu hình mặc định; sau đó quản trị t
 ::: dac-ta
 **Mục đích.** Chức năng giúp PH-20 bật PH-19 cho một tỉnh với đủ hạ tầng riêng (cấu hình, topic, bucket, kho bí mật, luật cảnh báo, tuyến API), và tạm ngừng phân hệ mà không làm dở dang việc thu đã bắt đầu.
 
-**Tác nhân, quyền.** PH-20 (sự kiện `tenant.module-enabled.v1`, `tenant.module-disabled.v1`); quản trị tenant.
+**Tác nhân, quyền.** PH-20 (sự kiện `platform.tenant.module-enabled.v1`, `platform.tenant.module-disabled.v1`); quản trị tenant.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -4854,7 +4855,7 @@ Khởi tạo phân hệ tạo cấu hình mặc định; sau đó quản trị t
 
 **Tiền điều kiện.** Tenant tồn tại ở PH-20; với bật lần đầu: chưa có `tenant_payment_config`.
 
-**Kích hoạt.** PH-20 phát sự kiện `tenant.module-enabled.v1` hoặc `tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ.
+**Kích hoạt.** PH-20 phát sự kiện `platform.tenant.module-enabled.v1` hoặc `platform.tenant.module-disabled.v1` khi quản trị tenant bật, tắt gói phân hệ.
 
 **Đầu vào.** Sự kiện PH-20 gồm mã tenant, phân hệ `PH-19`, thao tác bật hoặc tắt.
 
@@ -4862,7 +4863,7 @@ Khởi tạo phân hệ tạo cấu hình mặc định; sau đó quản trị t
 
 1. PH-20 phát sự kiện bật hoặc tắt phân hệ cho tenant; PH-19 nhận qua PH-10.
 2. Khi bật, hệ thống tạo lần lượt các tài nguyên ở đoạn "Khi bật" sau khối đặc tả (cấu hình mặc định, topic, bucket thường và WORM, đường bí mật, luật cảnh báo, ánh xạ mã mặc định, tuyến APISIX) và ghi tiến độ vào `provisioning_state`.
-3. Hệ thống đánh dấu `module_enabled = true` khi mọi bước xong; lỗi giữa chừng được thử lại từ bước dở vì mỗi bước lũy đẳng.
+3. Hệ thống đánh dấu `module_enabled = true` khi mọi bước xong và báo kết quả bước `S15_MODULES` của saga (D03-10 §5.2) về PH-20 qua API-20-166 (scope `tenant:provision-report`); lỗi giữa chừng được thử lại từ bước dở vì mỗi bước lũy đẳng.
 4. Khi tắt, hệ thống đặt `module_enabled = false`; từ đó tạo giao dịch, đối tác, NCC, dịch vụ mới trả ERR-19-049, còn các việc dở vẫn chạy như đoạn "Khi tắt".
 5. Hệ thống ghi kiểm toán thao tác bật, tắt.
 
@@ -4881,7 +4882,7 @@ Khởi tạo phân hệ tạo cấu hình mặc định; sau đó quản trị t
 
 **Sự kiện phát ra.** Không phát EVT-19; tiến độ khởi tạo báo lại PH-20.
 
-**Kiểm toán.** Kiểm toán theo hành động bật, tắt phân hệ với chủ thể là PH-20 (mã hành động bổ sung vào danh mục SDD §9 khi chốt, mục Đề nghị đồng bộ).
+**Kiểm toán.** Kiểm toán theo hành động bật, tắt phân hệ với chủ thể là PH-20 (mã hành động `MODULE_ENABLE`, `MODULE_DISABLE` ở danh mục SDD §9.6).
 
 **Quy tắc nghiệp vụ.** Không có quy tắc riêng; áp dụng quy định chung ở mục 6.1.1.
 
@@ -5469,12 +5470,12 @@ Mười tám sự kiện của PH-19 phát lên topic `{tenant}.payment.{thực-
 | EVT-19-02 | `provider.health-changed.v1` | `providerId` | `providerCode`, `healthStatus`, `circuitState`, `errorRate`, `p95LatencyMs` | PH-13, PH-18 | FR-19-011 |
 | EVT-19-03 | `service.status-changed.v1` | `serviceId` | `serviceCode`, `fromStatus`, `toStatus`, `catalogInvalid` | HTTT đối tác, PH-16 | FR-19-015, 016 |
 | EVT-19-04 | `partner.status-changed.v1` | `partnerId` | `partnerCode`, `fromStatus`, `toStatus`, `routingMode` | PH-13, PH-03 (định tuyến strangler) | FR-19-018, 066 |
-| EVT-19-05 | `transaction.created.v1` | `transactionId` | `transactionCode`, `partnerCode`, `partnerOrderId`, `serviceCode`, `amount`, `expiresAt` | PH-16, lớp dữ liệu dùng chung | FR-19-022 |
-| EVT-19-06 | `transaction.pending.v1` | `transactionId` | `transactionCode`, `providerCode`, `providerReference` | PH-16 | FR-19-024 |
-| EVT-19-07 | `transaction.succeeded.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `amount`, `paidAt`, `providerReference`, `channelCode`, `bankCode`, `latePaid` | HTTT đối tác (webhook), PH-16, lớp dữ liệu dùng chung | FR-19-030, 031, 060 |
-| EVT-19-08 | `transaction.failed.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `reasonCode`, `providerResultCode` | HTTT đối tác (webhook), PH-16 | FR-19-024, 030 |
-| EVT-19-09 | `transaction.cancelled.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `cancelledBy` | HTTT đối tác (webhook), PH-16 | FR-19-026 |
-| EVT-19-10 | `transaction.expired.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `needsReconciliation` | HTTT đối tác (webhook), PH-16 | FR-19-027 |
+| EVT-19-05 | `transaction.created.v1` | `transactionId` | `transactionCode`, `partnerCode`, `partnerOrderId`, `serviceCode`, `amount`, `expiresAt`, `isTest` | PH-16, lớp dữ liệu dùng chung | FR-19-022 |
+| EVT-19-06 | `transaction.pending.v1` | `transactionId` | `transactionCode`, `providerCode`, `providerReference`, `isTest` | PH-16 | FR-19-024 |
+| EVT-19-07 | `transaction.succeeded.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `amount`, `paidAt`, `providerReference`, `channelCode`, `bankCode`, `latePaid`, `isTest` | HTTT đối tác (webhook), PH-16, lớp dữ liệu dùng chung | FR-19-030, 031, 060 |
+| EVT-19-08 | `transaction.failed.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `reasonCode`, `providerResultCode`, `isTest` | HTTT đối tác (webhook), PH-16 | FR-19-024, 030 |
+| EVT-19-09 | `transaction.cancelled.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `cancelledBy`, `isTest` | HTTT đối tác (webhook), PH-16 | FR-19-026 |
+| EVT-19-10 | `transaction.expired.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `needsReconciliation`, `isTest` | HTTT đối tác (webhook), PH-16 | FR-19-027 |
 | EVT-19-11 | `refund.requested.v1` | `transactionId` | `refundCode`, `transactionCode`, `amount`, `reasonCode`, `requestedByType` | PH-13, PH-16 | FR-19-038 |
 | EVT-19-12 | `refund.decided.v1` | `transactionId` | `refundCode`, `decision` (`APPROVED`/`REJECTED`), `approvalLevel` | HTTT đối tác (webhook), PH-13 | FR-19-039 |
 | EVT-19-13 | `refund.succeeded.v1` | `transactionId` | `refundCode`, `transactionCode`, `amount`, `completedAt`, `transactionStatus` | HTTT đối tác (webhook), PH-16 | FR-19-041, 060 |
@@ -5936,3 +5937,4 @@ Bản 0.2 không tạo mã mới trong các dải FR, BR, NFR, ERR, EVT, API, UI
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 69 FR (68 FR của khung và FR-19-069 đề xuất), 34 BR, 32 NFR, tham số `19.*`, ánh xạ GĐ-03, ma trận truy vết, phạm vi MVP, AC-19-01…13 | Nhóm phân hệ PH-19 |
 | 0.2 | 26/11/2026 | Nâng chuẩn trình bày theo K-FRS và K-TRINH-BAY §4: sắp lại 14 chương (Giới thiệu đủ sáu mục; Tổng quan có mục tiêu đo được, vị trí kiến trúc, thành phần và luồng chính, quy trình, chức năng hệ cũ; danh sách chức năng; mã lỗi, thông báo, sự kiện; giao diện tiêu biểu); 69 FR chuyển sang khối đặc tả 17 mục kèm sơ đồ quan hệ mỗi nhóm và sơ đồ trình tự cho FR có từ ba thành phần hoặc bốn mắt; máy trạng thái giao dịch; giữ nguyên toàn bộ chi tiết kỹ thuật của bản 0.1 | Nhóm phân hệ PH-19 |
+| 0.3 | 27/11/2026 | Nâng chuẩn trình bày theo K-FRS và K-TRINH-BAY §4: sắp lại 14 chương (Giới thiệu đủ sáu mục; Tổng quan có mục tiêu đo được, vị trí kiến trúc, thành phần và luồng chính, quy trình, chức năng hệ cũ; danh sách chức năng; mã lỗi, thông báo, sự kiện; giao diện tiêu biểu); 69 FR chuyển sang khối đặc tả 17 mục kèm sơ đồ quan hệ mỗi nhóm và sơ đồ trình tự cho FR có từ ba thành phần hoặc bốn mắt; máy trạng thái giao dịch; giữ nguyên toàn bộ chi tiết kỹ thuật của bản 0.1 | Đồng bộ chéo cuối: topic nghe `platform.tenant.module-enabled.v1`, báo `S15_MODULES`, chỉ số lỗi kết nối NCC, `isTest` ở EVT-19-05…10, mã kiểm toán bật tắt phân hệ |

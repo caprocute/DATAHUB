@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH20
 ten: Thiết kế giao diện màn hình phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, quản trị nền tảng, vận hành nền tảng, quản trị tỉnh, kiểm thử viên, hội đồng thẩm định
@@ -176,7 +176,7 @@ Route chính lấy đúng FRS §10.1. Tab con, tham số truy vấn của từng
 
 : Route và quyền vào của 22 màn PH-20
 
-Đoạn `{ma-tenant}` đúng mẫu `^T\d{2}$`; `{ma-to-chuc}` đúng `^[A-Z0-9][A-Z0-9-]{1,49}$`; `{ma-sap-nhap}` dạng `MG-2026-001`; `{phien-ban}` là SemVer. Các đoạn cố định `moi`, `nhap`, `sua` không trùng mã tổ chức vì mã tổ chức viết hoa còn các đoạn này viết thường. `/nen-tang/*` chỉ mở khi người dùng ở tenant `PLATFORM`; ngoài ra giao diện trả `ST-07` (403) mà không tiết lộ route tồn tại.
+Đoạn `{ma-tenant}` đúng mẫu `^T\d{2}$`; `{ma-to-chuc}` đúng `^[A-Z0-9][A-Z0-9-]{1,49}$`; `{ma-sap-nhap}` dạng `SN-2026-001`; `{phien-ban}` là SemVer. Các đoạn cố định `moi`, `nhap`, `sua` không trùng mã tổ chức vì mã tổ chức viết hoa còn các đoạn này viết thường. `/nen-tang/*` chỉ mở khi người dùng ở tenant `PLATFORM`; ngoài ra giao diện trả `ST-07` (403) mà không tiết lộ route tồn tại.
 
 ### 2.3. Sơ đồ điều hướng
 
@@ -197,7 +197,7 @@ flowchart TB
   M --> SD["UI-20-06 Sử dụng<br/>/su-dung"]
   M --> SN["UI-20-11 Danh sách sáp nhập<br/>/sap-nhap"]
   SN --> S9["UI-20-09 Lập kế hoạch<br/>/sap-nhap/moi"]
-  SN --> S10["UI-20-10 Theo dõi<br/>/sap-nhap/MG-2026-001"]
+  SN --> S10["UI-20-10 Theo dõi<br/>/sap-nhap/SN-2026-001"]
   M --> PH["UI-20-18 Phiên bản và kênh<br/>/phat-hanh"]
   PH --> P19["UI-20-19 Kế hoạch sóng<br/>/phat-hanh/2.4.1/ke-hoach"]
   M --> MK["UI-20-21 Mẫu khởi tạo<br/>/mau-khoi-tao"]
@@ -244,7 +244,7 @@ Breadcrumb đi theo cây ở mục 2.3 và dùng mã tenant làm nút giữa. Ti
 |---|---|---|
 | UI-20-03 | Nền tảng › Tenant › T01 | Chi tiết tenant · T01 · Datahub |
 | UI-20-04 | Nền tảng › Tenant › T68 › Khởi tạo | Tiến độ khởi tạo · T68 · Datahub |
-| UI-20-10 | Nền tảng › Sáp nhập › MG-2026-001 | Sáp nhập MG-2026-001 · Datahub |
+| UI-20-10 | Nền tảng › Sáp nhập › SN-2026-001 | Sáp nhập SN-2026-001 · Datahub |
 | UI-20-15 | Quản trị › Tổ chức › SO-TTTT › Sửa | Sửa tổ chức SO-TTTT · Datahub |
 
 : Breadcrumb và tiêu đề tab trình duyệt tiêu biểu
@@ -307,7 +307,7 @@ Khi người dùng chỉ đọc mở biểu mẫu qua đường dẫn trực ti�
 
 ### 3.4. Hộp thoại lý do và mã phiếu
 
-Mọi thao tác ghi của PA vào một tenant tỉnh phải có lý do tối thiểu 20 ký tự (`20.lifecycle.reason-min-length`) và mã phiếu (BR-20-009), ghi vào kiểm toán của chuỗi tenant bị tác động (SEC-85). Giao diện dùng một hộp thoại duy nhất: `CMP-ReasonDialog` biến thể `operational` mở rộng thành `tenant-action` (đề nghị A-01 ở Phụ lục A), gọi qua `useDhReason()`.
+Mọi thao tác ghi của PA vào một tenant tỉnh phải có lý do tối thiểu 20 ký tự (`20.lifecycle.reason-min-length`) và mã phiếu (BR-20-009), ghi vào kiểm toán của chuỗi tenant bị tác động (SEC-85). Giao diện dùng một hộp thoại duy nhất: `CMP-ReasonDialog` biến thể `operational` với `minLength = 20` và `extraFields` là trường mã phiếu (D03-05-04 mục 7.4), gọi qua `useDhReason()`.
 
 | Thành phần của hộp thoại | Quy tắc |
 |---|---|
@@ -806,7 +806,7 @@ Hình 4. UI-20-04 Tiến độ khởi tạo T68, bước S06 quá hạn chờ b�
 | 1 | Đầu trang | `CMP-PageHeader`, `CMP-StatusTag` | Mã tenant, trạng thái lần chạy, loại chạy (`INITIAL`, `SUPPLEMENT`, `ISOLATION_CHANGE`); nút "Thử lại từ bước lỗi", "Bù trừ và hủy…" | Mỗi nút mở `CMP-ReasonDialog` (mục 3.4) |
 | 2 | Dải lỗi | `CMP-Banner` mức lỗi | Câu ERR-20-106, 107 hoặc 108 kèm gợi ý thao tác | Chỉ hiện khi lần chạy `FAILED` |
 | 3 | Bốn thẻ số | `CMP-KpiCard` | Thời gian đã chạy so ngưỡng `20.provision.timeout-minutes`; tiến độ `n/17`; ước còn lại (trung vị 20 lần chạy `SUCCEEDED` gần nhất); mẫu và phiên bản mẫu | Đồng hồ chuyển vàng khi vượt 45 phút, đỏ khi vượt 60 |
-| 4 | Sổ bước saga | `CMP-Steps` biến thể `ledger` (A-02), `CMP-DataTable` | 17 dòng: biểu tượng trạng thái, mã bước, việc, bên thực hiện, thời gian, số lần thử, mã lỗi gốc; nhóm song song `S06`, `S09`, `S10`, `S12` thụt vào | Dòng lỗi nền `color-error` nhạt, viền trái đậm; dòng bước bỏ qua hiện lý do |
+| 4 | Sổ bước saga | `CMP-Steps` biến thể `checklist` (D03-05-04), `CMP-DataTable` | 17 dòng: biểu tượng trạng thái, mã bước, việc, bên thực hiện, thời gian, số lần thử, mã lỗi gốc; nhóm song song `S06`, `S09`, `S10`, `S12` thụt vào | Dòng lỗi nền `color-error` nhạt, viền trái đậm; dòng bước bỏ qua hiện lý do |
 | 5 | Chi tiết bước | `CMP-Drawer` | Đầu vào, `outputRef`, nhật ký thử lại, khóa lũy đẳng `{runId}:{stepCode}`, thân báo tiến độ | Mở khi bấm dòng bước |
 | 6 | Luồng tiến độ | `CMP-JobProgress` `card` | Chỉ báo SSE ("Đang nhận" hoặc "Đang nối lại…"), thanh tiến độ, kết quả kiểm tra sẵn sàng và kiểm tra khói | Nhận API-20-016 |
 | 7 | Báo cáo nhận được | `CMP-Timeline` | Các lần phân hệ báo qua API-20-166, EVT-20-01 đã phát, theo giờ giảm dần | Cuối trang trên màn hẹp |
@@ -882,7 +882,7 @@ Phím tắt: `Alt+R` thử lại từ bước lỗi (mở hộp thoại, không 
 
 ### 7.7. Thành phần và token
 
-`CMP-PageHeader`, `CMP-StatusTag`, `CMP-Banner`, `CMP-KpiCard`, `CMP-Steps` (biến thể `ledger` đề nghị A-02), `CMP-DataTable`, `CMP-Drawer`, `CMP-JobProgress`, `CMP-Timeline`, `CMP-ReasonDialog`, `CMP-ConfirmDialog`, `CMP-Duration`, `CMP-Timestamp`, `CMP-Alert`. Token: `color-surface-solid`, `color-success`, `color-info`, `color-warning`, `color-error`, `color-error-text`, `font-mono`, `font-display`, `space-3`, `space-4`, `radius-md`, `motion-duration-fast`.
+`CMP-PageHeader`, `CMP-StatusTag`, `CMP-Banner`, `CMP-KpiCard`, `CMP-Steps` (biến thể `checklist`), `CMP-DataTable`, `CMP-Drawer`, `CMP-JobProgress`, `CMP-Timeline`, `CMP-ReasonDialog`, `CMP-ConfirmDialog`, `CMP-Duration`, `CMP-Timestamp`, `CMP-Alert`. Token: `color-surface-solid`, `color-success`, `color-info`, `color-warning`, `color-error`, `color-error-text`, `font-mono`, `font-display`, `space-3`, `space-4`, `radius-md`, `motion-duration-fast`.
 
 ## 8. UI-20-05 Hạn mức tenant
 
@@ -1019,7 +1019,7 @@ Hình 6. UI-20-06 Sử dụng tài nguyên toàn nền tảng
 | 1 | Thanh lọc | `CMP-DateRangePicker`, `CMP-Select` | Kỳ (mặc định 30 ngày), tenant, tài nguyên; nút "Lập báo cáo kỳ…", "Xuất…" | Khoảng tối đa theo ERR-20-032 |
 | 2 | Dải thiếu số | `CMP-Alert` vàng | "Thiếu số liệu {tài nguyên} của {tenant} từ {giờ}." | Hiện khi có ô thiếu |
 | 3 | Thẻ số | `CMP-KpiCard` | Tenant hoạt động, số chạm 80 %, số chạm 100 %, ghi đè hiệu lực, thời điểm dữ liệu mới nhất | Ảnh chụp mỗi giờ |
-| 4 | Ma trận sử dụng | `CMP-Chart` `heatmap` (A-03) kèm `CMP-DataTable` thay thế | Hàng tenant, cột tài nguyên, ô "% mức dùng" kèm biểu tượng | Bấm ô mở UI-20-05 hoặc UI-20-03 |
+| 4 | Ma trận sử dụng | `CMP-Chart` `heatmap` kèm `CMP-DataTable` thay thế | Hàng tenant, cột tài nguyên, ô "% mức dùng" kèm biểu tượng | Bấm ô mở UI-20-05 hoặc UI-20-03 |
 | 5 | Cảnh báo đang mở | `CMP-DataTable` | Tenant, tài nguyên, mức, từ, trạng thái; nút "Xác nhận đã xử lý" | PO chỉ xem |
 | 6 | Xu hướng | `CMP-Chart` `line` | Số tenant chạm 80 %, 100 % theo tháng; có bảng thay thế | Đường 100 % nét đứt |
 
@@ -1202,7 +1202,7 @@ Màn gom bốn việc nặng nhất của vòng đời tenant: tạm ngừng, kh
 
 Hình 8. UI-20-08 Vòng đời tenant T09 đang tạm ngừng, hộp thoại đề nghị chấm dứt
 
-Ảnh cho thấy trang nền (dải đỏ T09 đang tạm ngừng, thanh năm bước vòng đời, hành động hợp lệ, gói bàn giao `EXP-0007` thu thập 4 trên 9 phân hệ, lịch sử) và hộp thoại `CMP-ReasonDialog` biến thể `tenant-action`: mô tả hậu quả có số liệu (38 HTTT, 41 API, 214 người dùng, 9,8 GB), lý do 96 ký tự, mã phiếu, văn bản quyết định, ngày dự kiến sớm nhất (tạm ngừng cộng 30 ngày) và nút "Gửi duyệt" kiểu phá hủy.
+Ảnh cho thấy trang nền (dải đỏ T09 đang tạm ngừng, thanh năm bước vòng đời, hành động hợp lệ, gói bàn giao `EXP-0007` thu thập 4 trên 9 phân hệ, lịch sử) và hộp thoại `CMP-ReasonDialog` biến thể `operational` (`minLength = 20`, trường mã phiếu ở `extraFields`): mô tả hậu quả có số liệu (38 HTTT, 41 API, 214 người dùng, 9,8 GB), lý do 96 ký tự, mã phiếu, văn bản quyết định, ngày dự kiến sớm nhất (tạm ngừng cộng 30 ngày) và nút "Gửi duyệt" kiểu phá hủy.
 
 ### 11.2. Bố cục vùng
 
@@ -1222,7 +1222,7 @@ Hình 8. UI-20-08 Vòng đời tenant T09 đang tạm ngừng, hộp thoại đ�
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Nguồn API |
 |---|---|---|---|---|
-| `reason` | `SuspendReason` | Khi tạm ngừng | `MANAGEMENT_DECISION`, `SECURITY_INCIDENT`, `CONTRACT_EXPIRED`, `TENANT_REQUEST`, `OTHER` | API-20-071 |
+| `suspendReason` | `SuspendReason` | Khi tạm ngừng | `MANAGEMENT_DECISION`, `SECURITY_INCIDENT`, `CONTRACT_EXPIRED`, `TENANT_REQUEST`, `OTHER` | API-20-071 |
 | `reasonText` | T-TEXT | Có | 20…1.000 ký tự | API-20-071 |
 | `ticketRef` | T-CODE | Có | Mã phiếu | API-20-071 |
 | `decisionDocNo`, `decisionDocDate`, `decisionFileId` | text, ngày, T-ID | Khi quyết định quản lý, hết hợp đồng, chấm dứt | Số, ngày, tệp quyết định | API-20-071 |
@@ -1327,7 +1327,7 @@ Hình 9. UI-20-09 Lập kế hoạch sáp nhập, bước 3 Bảng ánh xạ
 
 | Trường | Kiểu | Ràng buộc | Nguồn API |
 |---|---|---|---|
-| `sourceTenants[]`, `targetTenant` | T-TENANT | Nguồn khác đích, đều `ACTIVE`, đều `PROVINCE` (ERR-20-040, 041) | API-20-086 |
+| `sourceTenants[]` (đúng một phần tử), `targetTenant` | T-TENANT | Nguồn khác đích, đều `ACTIVE`, đều `PROVINCE` (ERR-20-040, 041) | API-20-086 |
 | `decisionDocNo`, `decisionDocDate`, `decisionFileId` | text, ngày, T-ID | Bắt buộc | API-20-086 |
 | `effectiveDate`, `transitionMonths` | ngày, số | Chuyển tiếp tối đa 12 tháng mặc định (ERR-20-045) | API-20-086 |
 | `modules[]` | T-CODE[] | Phân hệ tham gia; phân hệ bật ở nguồn mà thiếu ở đích hiện cảnh báo | API-20-086 |
@@ -1341,7 +1341,7 @@ Hình 9. UI-20-09 Lập kế hoạch sáp nhập, bước 3 Bảng ánh xạ
 
 | Hành động | Điều kiện | API | Kết quả |
 |---|---|---|---|
-| Lưu kế hoạch bản nháp | `PERM-20-merge` | API-20-086, 089 | Mã `MG-{năm}-{số}` |
+| Lưu kế hoạch bản nháp | `PERM-20-merge` | API-20-086, 089 | Mã `SN-{năm}-{số}` |
 | Gợi ý tự động | `PERM-20-merge` | API-20-095 | Điền hành động đề xuất cho từng dòng; không ghi đè dòng đã sửa tay |
 | Sửa dòng ánh xạ | `PERM-20-merge` | API-20-096 | Kiểm tại chỗ; ERR-20-002, 003 |
 | Chạy thử | Không còn dòng bắt buộc chưa quyết | API-20-097 | Tác vụ nền; ERR-20-042 nếu còn dòng |
@@ -1400,9 +1400,9 @@ Màn theo dõi một kế hoạch sáp nhập từ chuyển dữ liệu đến c
 
 ### 13.1. Bản hi-fi
 
-![UI-20-10 Theo dõi sáp nhập MG-2026-001](ph20/hifi/ui-20-10.png)
+![UI-20-10 Theo dõi sáp nhập SN-2026-001](ph20/hifi/ui-20-10.png)
 
-Hình 10. UI-20-10 Theo dõi sáp nhập MG-2026-001, đang xử lý xung đột
+Hình 10. UI-20-10 Theo dõi sáp nhập SN-2026-001, đang xử lý xung đột
 
 Ảnh cho thấy đầu trang với nhãn "Xử lý xung đột" và nút "Thực hiện cutover…" đang khóa, dải vàng ERR-20-044, thanh tiến trình tám giai đoạn ngang, bốn tab, bảng tám phân hệ (thứ tự, trạng thái, bản ghi nguồn, đã nhập đích, xung đột, kiểm đếm trong đó PH-05 lệch) và khối xung đột `DM-LOAIVB` với `CMP-DiffViewer` hai bản và năm cách xử lý.
 
@@ -1417,7 +1417,7 @@ Hình 10. UI-20-10 Theo dõi sáp nhập MG-2026-001, đang xử lý xung đột
 | 5 | Tab Phân hệ | `CMP-DataTable` | Thứ tự, phân hệ, trạng thái, bản ghi nguồn, đã nhập đích, xung đột, kiểm đếm; nút "Chạy lại phân hệ" | Lệch: "Kiểm đếm PH-05 lệch: nguồn 33, đích 31." |
 | 6 | Tab Xung đột | `CMP-DataTable`, `CMP-DiffViewer` | Lọc theo loại; hai bản cạnh nhau; chọn cách xử lý; xử lý hàng loạt | Cách `MERGE_ITEMS` chỉ cho danh mục |
 | 7 | Tab Chuyển tiếp | `CMP-DataTable` | HTTT, trạng thái thông tin xác thực song song (`ISSUED`, `IN_USE_NEW`, `OLD_ONLY`), hạn; nút "Gia hạn" | TA hai tỉnh chỉ thấy HTTT của tỉnh mình |
-| 8 | Cutover | `CMP-ConfirmDialog` `dangerous` | Gõ lại mã kế hoạch `MG-2026-001`, lý do và mã phiếu | Theo FRS §10.2 |
+| 8 | Cutover | `CMP-ConfirmDialog` `dangerous` | Gõ lại mã kế hoạch `SN-2026-001`, lý do và mã phiếu | Theo FRS §10.2 |
 
 : UI-20-10 Theo dõi sáp nhập, bố cục vùng
 
@@ -1504,7 +1504,7 @@ Danh sách mọi kế hoạch sáp nhập của nền tảng, là điểm vào c
 
 Hình 11. UI-20-11 Danh sách sáp nhập với năm kế hoạch ở các trạng thái khác nhau
 
-Ảnh cho thấy thanh lọc theo trạng thái có số đếm (Tất cả 5, Bản nháp 1, Chờ duyệt 1, Đang chuyển 1, Chuyển tiếp 1, Hoàn tất 1) và bảng với `MG-2026-001` T12 sang T13 đang "Xử lý xung đột", 7 trên 8 phân hệ, 3 xung đột mở. Trạng thái luôn có biểu tượng và chữ cạnh màu.
+Ảnh cho thấy thanh lọc theo trạng thái có số đếm (Tất cả 5, Bản nháp 1, Chờ duyệt 1, Đang chuyển 1, Chuyển tiếp 1, Hoàn tất 1) và bảng với `SN-2026-001` T12 sang T13 đang "Xử lý xung đột", 7 trên 8 phân hệ, 3 xung đột mở. Trạng thái luôn có biểu tượng và chữ cạnh màu.
 
 ### 14.2. Bố cục vùng
 
@@ -1521,7 +1521,7 @@ Hình 11. UI-20-11 Danh sách sáp nhập với năm kế hoạch ở các trạ
 
 | Cột | Kiểu | Sắp xếp | Nguồn API |
 |---|---|---|---|
-| Mã kế hoạch | T-CODE `MG-{năm}-{số}` | Có | API-20-087 |
+| Mã kế hoạch | T-CODE `SN-{năm}-{số}` | Có | API-20-087 |
 | Nguồn sang đích | T-TENANT, T-TENANT | Không | API-20-087 |
 | Hiệu lực | ngày | Có | API-20-087 |
 | Trạng thái | `MergeStatus` | Có | API-20-087 |
@@ -1602,7 +1602,7 @@ Hình 12. UI-20-12 Cài đặt tỉnh T68 phiên bản cấu hình v6
 | 2 | Đầu trang | `CMP-PageHeader`, `CMP-SaveIndicator` | Phiên bản cấu hình `v6`; nút hủy, lưu | Lưu khóa khi không đổi gì |
 | 3 | Tab | `CMP-Tabs` | Thông tin hiển thị, Chủ quản CNTT, An toàn đăng nhập, Phiên bản và bảo trì | Dấu chấm ở tab có thay đổi chưa lưu |
 | 4 | Biểu mẫu | `CMP-Form`, `CMP-FormField` | Trường kèm ghi chú "Giới hạn nền tảng: …" | Trường vượt giới hạn: ERR-20-023 |
-| 5 | Tab Phiên bản | `CMP-DescriptionList`, `CMP-DateRangePicker` | Phiên bản đang chạy, kênh, ghi chú phát hành, cửa sổ bảo trì ưa thích | Cửa sổ ghi bằng API-20-160 |
+| 5 | Tab Phiên bản | `CMP-DescriptionList`, `CMP-TimeRangePicker` | Phiên bản đang chạy, kênh, ghi chú phát hành, cửa sổ bảo trì ưa thích | Cửa sổ ghi bằng API-20-160 |
 | 6 | Liên kết | `CMP-Link` | "Sử dụng tài nguyên" (UI-20-13), "Truy cập liên tenant" (UI-20-22) | |
 
 : UI-20-12 Cài đặt tỉnh, bố cục vùng
@@ -2058,7 +2058,7 @@ Hình 17. UI-20-17 Phiên bản cấu hình T01 với dải lệch ERR-20-025
 | 2 | Dải cảnh báo | `CMP-Banner` | ERR-20-025 khi còn lệch; ERR-20-109 khi Argo CD lỗi |
 | 3 | Tab | `CMP-Tabs` | Phiên bản, Lệch cấu hình (số đếm) |
 | 4 | Tab Phiên bản | `CMP-VersionTimeline` hoặc `CMP-DataTable` | Phiên bản, thời điểm, người, tệp đổi, trạng thái ghi Git (`COMMITTED`, `APPLIED`), lý do |
-| 5 | So sánh | `CMP-DiffViewer` | Chọn hai phiên bản; so theo khóa YAML (đề nghị bổ sung ở Phụ lục A) |
+| 5 | So sánh | `CMP-DiffViewer` | Chọn hai phiên bản; biến thể `fields`, so theo khóa YAML đã phân tích (D03-05-04) |
 | 6 | Tab Lệch | `CMP-DataTable` | Khóa, giá trị trong Git, giá trị đang chạy, mức (`SECURITY` đánh dấu), nút xử lý |
 
 : UI-20-17 Phiên bản và lệch cấu hình, bố cục vùng
@@ -2083,7 +2083,7 @@ Hình 17. UI-20-17 Phiên bản cấu hình T01 với dải lệch ERR-20-025
 |---|---|---|---|
 | Đối chiếu ngay | `PERM-20-admin` | API-20-045 | Tác vụ nền, cập nhật tab Lệch |
 | So sánh hai phiên bản | `PERM-20-read` | API-20-042 | Mở khung so sánh |
-| Khôi phục phiên bản | `PERM-20-admin` | API-20-043 | `CMP-ReasonDialog` `tenant-action` (A-01); phiên bản mới ghi Git; ERR-20-026 nếu không được |
+| Khôi phục phiên bản | `PERM-20-admin` | API-20-043 | `CMP-ReasonDialog` `operational` (`minLength = 20`, mã phiếu ở `extraFields`); phiên bản mới ghi Git; ERR-20-026 nếu không được |
 | Xử lý lệch (áp lại, nhận vào Git) | `PERM-20-admin` | API-20-046 | Lệch an ninh cần lý do; ERR-20-024 nếu ghi Git lỗi |
 
 : UI-20-17 Phiên bản và lệch cấu hình, hành động
@@ -2326,7 +2326,7 @@ Hình 20. UI-20-20 Bảng điều khiển nền tảng, môi trường PROD
 | 1 | Đầu trang | `CMP-PageHeader`, `CMP-Segmented` | Tên, chọn PROD hoặc STAGING; nút "Chạy kiểm thử rò rỉ…" |
 | 2 | Hàng KPI | `CMP-KpiCard` | Sáu thẻ, mỗi thẻ có giá trị, ngưỡng, ghi chú phụ |
 | 3 | Việc cần xử lý | `CMP-DataTable` | Loại, đối tượng, mã lỗi, hành động; sắp theo mức |
-| 4 | Bản đồ nhiệt | `CMP-Chart` heatmap | Tenant theo 12 tài nguyên, chữ phần trăm trong ô (A-03, Q20-38) |
+| 4 | Bản đồ nhiệt | `CMP-Chart` heatmap | Tenant theo 12 tài nguyên, chữ phần trăm trong ô (Q20-38) |
 | 5 | Kiểm thử rò rỉ | `CMP-DataTable` | Lần chạy gần nhất, kết quả từng ca |
 
 : UI-20-20 Bảng điều khiển đa tenant, bố cục vùng
@@ -2605,7 +2605,7 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 |---|---|---|
 | `ui-20-01.png` … `ui-20-07.png` | UI-20-01 đến 07 | T68, T01, T90 |
 | `ui-20-08.png` | UI-20-08 | T09 tạm ngừng, gói EXP-0007 |
-| `ui-20-09.png`, `ui-20-10.png`, `ui-20-11.png` | UI-20-09 đến 11 | MG-2026-001, T12 sang T13 |
+| `ui-20-09.png`, `ui-20-10.png`, `ui-20-11.png` | UI-20-09 đến 11 | SN-2026-001, T12 sang T13 |
 | `ui-20-12.png`, `ui-20-13.png` | UI-20-12, 13 | T68 |
 | `ui-20-14.png`, `ui-20-15.png`, `ui-20-16.png` | UI-20-14 đến 16 | T68, SO-TTTT |
 | `ui-20-17.png` | UI-20-17 | T01 |
@@ -2664,5 +2664,6 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm PH-20 | Bản đầu: 22 màn UI-20-01 đến 22, 22 ảnh hi-fi, ma trận, câu hỏi mở |
 | 0.2 | 27/11/2026 | Nhóm PH-20 | Đồng bộ với FRS 0.2: cột FR khớp FRS §10.1, UI-20-08 gồm FR-038…042, tên ca kiểm tra khói, câu ERR-20-051 nguyên văn, đóng Q20-39 |
+| 0.3 | 27/11/2026 | Nhóm PH-20 | Đồng bộ chéo cuối: dùng thành phần có sẵn của D03-05, `suspendReason`, mã kế hoạch `SN-yyyy-nnn` |
 
 : Lịch sử phiên bản

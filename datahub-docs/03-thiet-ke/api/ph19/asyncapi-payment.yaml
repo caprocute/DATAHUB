@@ -988,6 +988,7 @@ components:
         serviceCode: &id013
           type: string
           maxLength: 64
+        isTest: *id009
         amount: &id014
           type: integer
           minimum: 1
@@ -1019,6 +1020,7 @@ components:
         partnerCode: *id011
         partnerOrderId: *id012
         serviceCode: *id013
+        isTest: *id009
         providerCode:
           type: string
         providerReference:
@@ -1050,6 +1052,7 @@ components:
         partnerCode: *id011
         partnerOrderId: *id012
         serviceCode: *id013
+        isTest: *id009
         amount: *id014
         paidAt: *id003
         providerReference:
@@ -1095,6 +1098,7 @@ components:
         partnerCode: *id011
         partnerOrderId: *id012
         serviceCode: *id013
+        isTest: *id009
         reasonCode:
           type: string
         reasonMessage:
@@ -1128,6 +1132,7 @@ components:
         partnerCode: *id011
         partnerOrderId: *id012
         serviceCode: *id013
+        isTest: *id009
         cancelledBy:
           type: string
           enum:
@@ -1158,6 +1163,7 @@ components:
         partnerCode: *id011
         partnerOrderId: *id012
         serviceCode: *id013
+        isTest: *id009
         needsReconciliation: *id009
       additionalProperties: false
       required:

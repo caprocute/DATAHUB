@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH20
 ten: Thiết kế giao diện lập trình Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ gọi PH-20, kỹ sư console quản trị, kiểm thử viên, hội đồng thẩm định
@@ -128,7 +128,7 @@ D02-08 hiện có `PERM-20-admin` và `PERM-20-read`; mười quyền còn lại
 
 : Scope máy do PH-20 cấp cho phân hệ khác
 
-Scope PH-20 dùng khi gọi ra: `iam:realm-provision` (PH-12), `obs:tenant-provision` (PH-13), `platform.tenant.provision` (PH-07, giả định của PH-07), `event:topic-register` (PH-10), `kpi.ingest` (PH-16); chi tiết ở mục 2.10.
+Scope PH-20 dùng khi gọi ra: `iam:realm-provision` (PH-12), `obs:tenant-provision` (PH-13), `platform.tenant.provision` (PH-07, giả định của PH-07), `event:topic-register` (PH-10), `kpi.ingest` (PH-16), `ops:merge-transfer` (PH-18); chi tiết ở mục 2.10.
 
 ### 2.3. Tenant từ token và tách nhiệm vụ
 
@@ -205,7 +205,7 @@ Giới hạn do APISIX (PH-03) thực thi, trả `429` kèm `Retry-After` và `R
 
 ### 2.10. Lời gọi ra phân hệ khác
 
-Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; PH-20 chỉ dựa vào các mã sau. Mỗi lời gọi mang `Idempotency-Key` bằng `{runId}:{stepCode}` (saga) hoặc `{mergePlanId}:{module}` (sáp nhập).
+Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; PH-20 chỉ dựa vào các mã sau. Mỗi lời gọi mang `Idempotency-Key` bằng `{runId}:{stepCode}` (saga) hoặc `{mergePlanId}:{module}` (sáp nhập; thêm `:DELTA` cho lượt bù cuối, `:DRYRUN` cho chạy thử; thân gọi PH-18 có `mode` `FULL` hoặc `DELTA` và `since`; `module` dạng `PH-nn`).
 
 | Phân hệ | Lời gọi | Scope hoặc kênh | Dùng ở |
 |---|---|---|---|
@@ -214,8 +214,8 @@ Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; 
 | PH-07 | API-07-073 `/api/platform/rdm/v1/tenants/{tenantId}:seed` | `platform.tenant.provision` | `S11_SEED_RDM` |
 | PH-10 | Đăng ký topic `platform.tenant.*.v1`, `platform.release.*.v1`; nghe EVT-20-01 | `event:topic-register` | `S06_EVENTING` |
 | PH-16 | API-16-030 đẩy chỉ tiêu `thoi-gian-khoi-tao-tenant` (KPI-12) | `kpi.ingest` | `S17_ACTIVATE` |
-| PH-09 | FR-09-043 xóa mật mã tenant (sau bàn giao, hai người duyệt); nhận EVT-09-21 | mTLS mesh | API-20-079 chấm dứt |
-| PH-18 | `POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (giả định, Phụ lục A); `NotificationApi` gửi thư; đọc API-20-162 | mTLS mesh | API-20-098, 128, `S17_ACTIVATE` |
+| PH-09 | FR-09-043 xóa mật mã tenant: đề nghị API-09-159, theo dõi API-09-160, hai người duyệt API-09-161 (D03-04-PH09); nhận EVT-09-21 | mTLS mesh | API-20-079 chấm dứt |
+| PH-18 | `POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (API-18-150…153, tài khoản máy `client_credentials` qua `apisix-int`); API-18-030 `params:seed-defaults` (scope `ops:param-write`, lũy đẳng, gọi sau EVT-20-01, `added = 0` nếu PH-18 đã tự gieo); `NotificationApi` gửi thư; đọc API-20-162; theo dõi chuyển sáp nhập bằng API-18-152 hoặc EVT-18-24 (báo cáo chính thức vẫn vào API-20-167), nhận EVT-18-21 khi khôi phục tenant | `ops:merge-transfer` (merge-transfers); mTLS mesh (còn lại) | API-20-098, 128, `S17_ACTIVATE` |
 | OpenBao, Ceph RGW, Git, Argo CD | API của hạ tầng (không phải API Datahub) | Tài khoản dịch vụ `svc-ph20-gitops` | `S02`, `S04`, `S05`, `S07`, API-20-040 |
 
 : Lời gọi ra phân hệ khác của PH-20
@@ -2959,7 +2959,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`; mã lỗi của thao tác: ERR-20-002, ERR-20-004, ERR-20-005, ERR-20-006, ERR-20-008, ERR-20-009, ERR-20-043, ERR-00-428 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Phát EVT-20-10, gọi PH-18 `POST /api/ops/v1/merge-transfers` cho từng phân hệ; kế hoạch sang `TRANSFERRING`. Trả `202`.
+**Ghi chú.** Phát EVT-20-10, gọi PH-18 `POST /api/ops/v1/merge-transfers` (API-18-150) cho từng phân hệ; kế hoạch sang `TRANSFERRING`. Trả `202`.
 :::
 
 #### API-20-099 · Tiến độ theo phân hệ
@@ -4740,14 +4740,14 @@ Sự kiện qua outbox (`ph20_tenant.outbox`, cùng giao dịch nghiệp vụ) l
 
 | Mã | Topic | Khóa phân vùng | Bên nhận chính | FR | Lược đồ dữ liệu |
 |---|---|---|---|---|---|
-| EVT-20-01 | `platform.tenant.created.v1` | `tenantCode` | PH-10, PH-03, PH-04, PH-06, PH-13 | 008 | `TenantCreatedData` |
+| EVT-20-01 | `platform.tenant.created.v1` | `tenantCode` | PH-10, PH-03, PH-04, PH-06, PH-13, PH-18 | 008 | `TenantCreatedData` |
 | EVT-20-02 | `platform.tenant.provisioning-failed.v1` | `tenantCode` | PH-13, PH-18 | 008, 010 | `ProvisioningFailedData` |
 | EVT-20-03 | `platform.tenant.activated.v1` | `tenantCode` | mọi DU, PH-16 | 013, 014 | `TenantActivatedData` |
-| EVT-20-04 | `platform.tenant.status-changed.v1` | `tenantCode` | PH-01, PH-03, PH-04, PH-12, PH-13, PH-19 | 038–044, 048, 051, 052 | `TenantStatusChangedData` |
+| EVT-20-04 | `platform.tenant.status-changed.v1` | `tenantCode` | PH-01, PH-03, PH-04, PH-12, PH-13, PH-18, PH-19 | 038–044, 048, 051, 052 | `TenantStatusChangedData` |
 | EVT-20-05 | `platform.tenant.quota-changed.v1` | `tenantCode` | PH-03, PH-04, PH-10, PH-12 | 026, 027, 032 | `QuotaChangedData` |
 | EVT-20-06 | `platform.tenant.quota-threshold-reached.v1` | `tenantCode` | PH-13, PH-18 | 029 | `QuotaThresholdReachedData` |
-| EVT-20-07 | `platform.tenant.module-enabled.v1` | `tenantCode` | phân hệ được bật | 034 | `ModuleEnabledData` |
-| EVT-20-08 | `platform.tenant.module-disabled.v1` | `tenantCode` | phân hệ bị tắt | 035 | `ModuleDisabledData` |
+| EVT-20-07 | `platform.tenant.module-enabled.v1` | `tenantCode` | phân hệ được bật (PH-19, PH-17, PH-11, PH-14, PH-15) | 034 | `ModuleEnabledData` |
+| EVT-20-08 | `platform.tenant.module-disabled.v1` | `tenantCode` | phân hệ bị tắt (PH-19, PH-17, PH-11, PH-14, PH-15) | 035 | `ModuleDisabledData` |
 | EVT-20-09 | `platform.tenant.config-changed.v1` | `tenantCode` | PH-03, PH-12, dh-console | 018–021, 025 | `ConfigChangedData` |
 | EVT-20-10 | `platform.tenant.merge-started.v1` | `mergePlanId` | phân hệ có dữ liệu, PH-18 | 048 | `MergeStartedData` |
 | EVT-20-11 | `platform.tenant.merge-cutover.v1` | `mergePlanId` | PH-03, PH-12, PH-01 | 051 | `MergeCutoverData` |
@@ -4800,7 +4800,7 @@ Thân Kafka là JSON của `data` (lược đồ ở cột cuối bảng 5.1). T
 | Nhận | Khử trùng theo `ce_id` ở bảng `inbox_event`; xử lý lại một sự kiện không đổi kết quả |
 | Lưu giữ, phân vùng | Lưu giữ 7 ngày, 3 phân vùng, 3 bản sao, `min.insync.replicas` 2 (giả định theo mức của PH-05, PH-10) |
 | Dữ liệu cá nhân | Không có: chỉ mã, trạng thái, số đếm; đường dẫn tải gói bàn giao không nằm ở EVT-20-16 |
-| Lệch tên topic | PH-19 đang nghe `tenant.module-enabled.v1` và kiểm thử PH-10 dùng `dh.platform.tenant.created.v1`; PH-20 giữ tên của FRS 9.3, đề nghị hai phân hệ đổi (Phụ lục A) |
+| Tên topic | Tên của phân hệ phát là chuẩn: PH-19 nghe `platform.tenant.module-enabled.v1` (EVT-20-07) và PH-10 dùng `platform.tenant.created.v1` (EVT-20-01) trong kiểm thử; không dùng dạng `tenant.module-enabled.v1` hay `dh.platform.tenant.created.v1` |
 | Bước bất đồng bộ | Phân hệ nhận EVT-20-01 hoặc EVT-20-07 phải báo kết quả bằng API-20-166 trong `20.provision.step-timeout-minutes`; EVT-20-10 đi cùng báo API-20-167 |
 
 : Quy tắc chung của sự kiện PH-20
@@ -5182,5 +5182,6 @@ Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 200
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153 (`apisix-int`, `ops:merge-transfer`), bên nhận sự kiện, mã kế hoạch `SN-yyyy-nnn`, `maxItems` của `sourceTenants` |
 
 : Lịch sử phiên bản

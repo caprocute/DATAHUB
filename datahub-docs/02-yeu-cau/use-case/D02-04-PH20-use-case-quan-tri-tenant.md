@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH20
 ten: Đặc tả use case phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị nền tảng, vận hành nền tảng, quản trị tỉnh, kỹ sư dh-platform, kiểm thử viên
@@ -87,7 +87,7 @@ Quy ước chung không nhắc lại từng use case: lệnh `POST` tạo hoặc
 | TO, SO, AU | **Chi** (vận hành tỉnh), **Dũng** (ATTT tỉnh), **Bảo** (kiểm toán viên tỉnh) | Xem sử dụng, nhật ký liên tenant |
 | DS, VW | **Lan** (quản lý dữ liệu), **Hùng** (lãnh đạo UBND tỉnh) | Xem danh mục tổ chức |
 | Tenant | `T68` "Tỉnh Lâm Viên" (giả định), hồ sơ `QM-VUA`, `HT-B`, `SHARED`; `T67` tỉnh nguồn; `T91`, `T92` tenant kiểm thử | Giả định tỉnh quy mô vừa 200 HTTT |
-| Mẫu, kế hoạch | Mẫu `tinh-chuan` phiên bản 3; kế hoạch sáp nhập `MG-2026-001`; phiên bản sản phẩm `1.4.0`; kế hoạch nâng cấp `UP-2026-007` | Mã ví dụ, không phải mã thật |
+| Mẫu, kế hoạch | Mẫu `tinh-chuan` phiên bản 3; kế hoạch sáp nhập `SN-2026-001`; phiên bản sản phẩm `1.4.0`; kế hoạch nâng cấp `UP-2026-007` | Mã ví dụ, không phải mã thật |
 
 : Người, hệ thống và đối tượng giả lập dùng trong ví dụ
 
@@ -1702,7 +1702,7 @@ Mọi lần đổi trạng thái để lại một dòng lịch sử chỉ thêm
 Khi hai tỉnh sáp nhập theo quyết định hành chính, kế hoạch ghi căn cứ, tenant nguồn, đích, ngày hiệu lực, thời gian chuyển tiếp; bảng ánh xạ xác định trước mỗi đối tượng của tỉnh nguồn thành gì ở tỉnh đích.
 
 ::: dac-ta
-**Mục tiêu.** Hà lập kế hoạch `MG-2026-001` sáp nhập `T67` (nguồn) vào `T68` (đích) với chuyển tiếp 6 tháng, rồi dùng "Gợi ý tự động" lập ánh xạ tổ chức, HTTT, mã danh mục, tiền tố API, người dùng, topic và quyết từng dòng.
+**Mục tiêu.** Hà lập kế hoạch `SN-2026-001` sáp nhập `T67` (nguồn) vào `T68` (đích) với chuyển tiếp 6 tháng, rồi dùng "Gợi ý tự động" lập ánh xạ tổ chức, HTTT, mã danh mục, tiền tố API, người dùng, topic và quyết từng dòng.
 
 **Tác nhân chính.** PA; TA hai tỉnh xem phần tỉnh mình, góp ý qua phiếu.
 
@@ -1720,7 +1720,7 @@ Khi hai tỉnh sáp nhập theo quyết định hành chính, kế hoạch ghi c
 
 **Đảm bảo tối thiểu.** Không dữ liệu nào di chuyển ở bước này; mỗi tenant thuộc tối đa một kế hoạch chưa kết thúc; không hai nguồn cùng `CREATE` ra một mã.
 
-**Đảm bảo thành công.** Kế hoạch `DRAFT` mã `MG-2026-001`; bảng ánh xạ có đủ dòng, dòng bắt buộc đã quyết.
+**Đảm bảo thành công.** Kế hoạch `DRAFT` mã `SN-2026-001`; bảng ánh xạ có đủ dòng, dòng bắt buộc đã quyết.
 
 **Luồng chính.**
 1. Hà nhập nguồn `T67`, đích `T68`, văn bản căn cứ, `effectiveDate`, `transitionMonths = 6`; hệ thống kiểm nguồn khác đích, đều `ACTIVE` và `PROVINCE`, không thuộc kế hoạch khác, `transitionMonths` ≤ `20.merge.transition-max-months`.
@@ -1749,7 +1749,7 @@ Khi hai tỉnh sáp nhập theo quyết định hành chính, kế hoạch ghi c
 Trước khi duyệt phải biết sẽ chuyển bao nhiêu bản ghi, bao nhiêu xung đột, mất bao lâu, mà không ghi gì vào tenant đích; việc duyệt cần người thứ hai.
 
 ::: dac-ta
-**Mục tiêu.** Hà chạy thử `MG-2026-001`, thấy 184.000 bản ghi, 37 xung đột dự kiến, ước 5 giờ; gửi duyệt, Khoa duyệt; TA hai tỉnh được báo.
+**Mục tiêu.** Hà chạy thử `SN-2026-001`, thấy 184.000 bản ghi, 37 xung đột dự kiến, ước 5 giờ; gửi duyệt, Khoa duyệt; TA hai tỉnh được báo.
 
 **Tác nhân chính.** PA (Hà lập, gửi; Khoa duyệt).
 
@@ -1801,7 +1801,7 @@ sequenceDiagram
   participant K as PH-20
   participant O as PH-18
   participant M as Các phân hệ
-  Ha->>K: Chạy thử MG-2026-001
+  Ha->>K: Chạy thử SN-2026-001
   K->>O: merge-transfers dryRun true từng phân hệ
   O->>M: Xuất nguồn và kiểm nhập đích trên bản sao
   O-->>K: API-20-167 số bản ghi, xung đột, thời gian
@@ -1818,7 +1818,7 @@ Hình cho thấy chạy thử đi qua PH-18 nhưng không ghi vào đích, và k
 Dữ liệu tỉnh nguồn được chuyển sang tỉnh đích từng phân hệ một, đúng thứ tự phụ thuộc, có kiểm đếm, trong khi tỉnh nguồn vẫn phục vụ.
 
 ::: dac-ta
-**Mục tiêu.** Hà bắt đầu chuyển `MG-2026-001`; hệ thống chuyển `T67` sang `MERGING` và chạy tuần tự tổ chức, danh mục, HTTT, API, topic, luồng; mỗi phân hệ báo tiến độ và kiểm đếm khớp.
+**Mục tiêu.** Hà bắt đầu chuyển `SN-2026-001`; hệ thống chuyển `T67` sang `MERGING` và chạy tuần tự tổ chức, danh mục, HTTT, API, topic, luồng; mỗi phân hệ báo tiến độ và kiểm đếm khớp.
 
 **Tác nhân chính.** PA.
 
@@ -1866,7 +1866,7 @@ sequenceDiagram
   participant K as PH-20
   participant O as PH-18
   participant M as Phân hệ theo thứ tự
-  Ha->>K: Bắt đầu chuyển MG-2026-001
+  Ha->>K: Bắt đầu chuyển SN-2026-001
   K->>K: T67 MERGING, EVT-20-10 và EVT-20-04
   K->>O: merge-transfers cho phân hệ đầu tiên
   O->>M: Xuất nguồn, nhập đích, kiểm đếm
@@ -1977,7 +1977,7 @@ sequenceDiagram
   participant K as PH-20
   participant I as PH-12
   participant G as PH-03, PH-01
-  Ha->>K: Chuyển định danh MG-2026-001
+  Ha->>K: Chuyển định danh SN-2026-001
   K->>I: API-12-045 và 046 tạo người dùng, client song song
   I-->>K: HTTT ở trạng thái ISSUED
   Ha->>K: Cutover trong cửa sổ bảo trì
@@ -2470,5 +2470,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Claude | Bản đầu: 36 use case phủ 70 FR (51 M, 19 S), 12 sơ đồ trình tự, sáu luồng phụ, câu hỏi mở Q20-45…49, 10 đề nghị đồng bộ |
 | 0.2 | 2026-11-27 | Claude | Đồng bộ với FRS 0.2: tên ca kiểm tra khói theo OpenAPI, cửa sổ bảo trì 2 đến 6 giờ, 29 tham số, `RESOLVED`, mã KPI-12 `thoi-gian-khoi-tao-tenant`, cột FR của UI-20-20 (đóng A-01) |
+| 0.3 | 2026-11-27 | Claude | Đồng bộ chéo cuối: dẫn API-18-150, mã kế hoạch `SN-yyyy-nnn` |
 
 : Lịch sử phiên bản

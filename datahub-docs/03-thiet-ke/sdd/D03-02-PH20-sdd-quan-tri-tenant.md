@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH20
 ten: Thiết kế chi tiết phần mềm phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
@@ -95,7 +95,7 @@ Thiết kế dựa trên FRS, thiết kế CSDL, thiết kế đa tenant, kiến
 |---|---|
 | D02-03-PH20 FRS 0.2 | 70 FR, 42 BR, 24 NFR, 29 tham số, 16 sự kiện, 86 mã lỗi, 171 API, Phụ lục A enum |
 | D03-03-PH20 CSDL 0.2 | Schema `ph20_tenant`: 45 bảng, RLS năm chế độ, bốn vai kết nối, phân vùng `usage_snapshot`, DDL chạy thử |
-| D03-10 Thiết kế đa tenant | Máy trạng thái tenant (§5.1), saga 10 bước (§5.2, mở rộng thành 17), hạn mức (§5.3), sáp nhập (§5.4) |
+| D03-10 Thiết kế đa tenant | Máy trạng thái tenant (§5.1), saga 17 bước `S01`…`S17` (§5.2), hạn mức (§5.3), sáp nhập (§5.4) |
 | D03-01 SAD khối `dh-platform` | Vùng Z3, hai hồ sơ triển khai, phụ thuộc hạ tầng |
 | D03-02-PH12, PH13, PH16, PH07, PH10, PH03 | Hợp đồng phía phân hệ được gọi: API-12-080, API-13-072, API-16-030, API-07-073, FR-10-064, FR-03-037 |
 | ADR-001, 003, 004, 009, 012, 013, 031, 034, 036, 041, 042, 046, 047, 059, 068, 072 | Spring Boot 4 và Modulith, RLS, Kafka, Argo CD, OpenBao, tách control và data plane, kiểm toán chuỗi băm, DR, air-gapped, lũy đẳng, outbox và inbox, bốn mắt, phân vùng, CDC Debezium, kho Git theo tenant, cấp phát topic qua GitOps |
@@ -502,7 +502,7 @@ Bảng dưới là hợp đồng của 17 executor: ai thực hiện, gọi bằ
 | Bước | Chế độ | Cách gọi (qua adapter) | Cách lũy đẳng | Bù trừ | Chờ tối đa |
 |---|---|---|---|---|---|
 | `S01_RECORD` | Đồng bộ | Nội bộ: `p_init_tenant_quota`, dòng cấu hình, `tenant_module` theo mẫu | Upsert theo (tenant, tài nguyên) và (tenant, phân hệ) | Xóa hạn mức, cấu hình, phân hệ mặc định; giữ dòng `tenant` (mã không tái cấp) | 30 giây |
-| `S02_CONFIG_REPO` | Đồng bộ | `GitOpsConfigWriter`: tạo `tenants/{ma}/` gồm `tenant.yaml`, `settings.yaml`, `quota.yaml`, `modules.yaml`, `release.yaml` | Tìm commit có trailer `Dh-Idempotency: {runId}:S02` trước khi commit | Revert commit bằng commit mới có ký | 2 phút |
+| `S02_CONFIG_REPO` | Đồng bộ | `GitOpsConfigWriter`: tạo `tenants/{ma}/` gồm `tenant.yaml`, `settings.yaml`, `quota.yaml`, `modules.yaml`, `release.yaml`; chế độ `DEDICATED_DB` thêm khối `database` (tên cụm, bản CloudNativePG, kích thước, không chứa bí mật) vào `tenant.yaml` thay vì thêm tệp riêng, nên `ConfigScope` vẫn năm giá trị | Tìm commit có trailer `Dh-Idempotency: {runId}:S02` trước khi commit | Revert commit bằng commit mới có ký | 2 phút |
 | `S03_REALM` | Đồng bộ | `IamClient` POST API-12-080, `Idempotency-Key` | PH-12 tiếp tục từ bước dở của `realm_provision_step` | Xóa realm còn `PROVISIONING` | 10 phút |
 | `S04_SECRETS` | Đồng bộ | `BaoClient`: đường dẫn `kv/dh/{ma}/...`, chính sách theo đường dẫn, khóa transit `dh-{ma}-pii` (SEC-88) | Kiểm tồn tại rồi tạo; tên xác định theo mã tenant | Xóa đường dẫn, chính sách, KEK chưa dùng (KEK đã dùng thì chỉ chặn xóa) | 1 phút |
 | `S05_BUCKETS` | Đồng bộ | `ObjectStoreClient`: `dh-{ma}-files`, `-exports`, `-backup`, `-audit`; khóa SSE riêng, hạn mức bucket | Tên bucket xác định; tạo nếu chưa có | Xóa bucket rỗng; bucket có dữ liệu thì ERR-20-019 | 2 phút |
@@ -784,7 +784,7 @@ PA cấp liên kết tải có thời hạn (24 giờ, giả định) tới đ�
 
 **Giao diện vào.** API-20-086…108, API-20-167 (phân hệ báo tiến độ); `PERM-20-merge`, `PERM-20-approve`, scope `tenant:provision-report`.
 
-**Phụ thuộc ra.** PH-18 `POST /api/ops/v1/merge-transfers` (giả định, Q20-15), PH-12 (API-12-045, 046), PH-03 (qua API-20-164 và EVT-20-11), PH-01 (cấp song song thông tin xác thực HTTT), PH-13 (đóng chuỗi), `OpsClient`.
+**Phụ thuộc ra.** PH-18 `POST /api/ops/v1/merge-transfers` (API-18-150…153, tài khoản máy qua `apisix-int`, scope `ops:merge-transfer`; khóa lũy đẳng `{mergePlanId}:{module}`, thêm `:DELTA` cho lượt bù cuối và `:DRYRUN` cho chạy thử; thân có `mode` (`FULL`, `DELTA`) và `since`), PH-12 (API-12-045, 046), PH-03 (qua API-20-164 và EVT-20-11), PH-01 (cấp song song thông tin xác thực HTTT), PH-13 (đóng chuỗi), `OpsClient`.
 
 **Dữ liệu.** `merge_plan`, `merge_mapping`, `merge_participant_run`, `merge_conflict`, `tenant`, `tenant_status_history`.
 
@@ -797,7 +797,7 @@ PA cấp liên kết tải có thời hạn (24 giờ, giả định) tới đ�
 
 Chi tiết thiết kế:
 
-**Hợp đồng bên tham gia (`MergeParticipant`).** PH-20 không biết dữ liệu của phân hệ khác; mỗi phân hệ có dữ liệu cung cấp một hợp đồng gồm ba năng lực theo gói: xuất phần dữ liệu của tenant nguồn, nhập vào tenant đích theo bảng ánh xạ (giữ `id` gốc, ghi `origin_tenant_id`, BR-20-023), và kiểm đếm. PH-18 chạy công cụ chuyển dữ liệu gọi các năng lực này; PH-20 chỉ gọi PH-18 `POST /api/ops/v1/merge-transfers` với thân `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`, `phase`, lũy đẳng theo `{mergePlanId}:{module}:{phase}`, và nhận tiến độ qua API-20-167. Ánh xạ `mappingRef` là tham chiếu tới bộ `merge_mapping` đã xác nhận, kèm `mappingHash`. Chính PH-20 cũng là một bên tham gia cho dữ liệu của mình (tổ chức): `OrgMergeParticipant` hiện thực cùng hợp đồng trong tiến trình.
+**Hợp đồng bên tham gia (`MergeParticipant`).** PH-20 không biết dữ liệu của phân hệ khác; mỗi phân hệ có dữ liệu cung cấp một hợp đồng gồm ba năng lực theo gói: xuất phần dữ liệu của tenant nguồn, nhập vào tenant đích theo bảng ánh xạ (giữ `id` gốc, ghi `origin_tenant_id`, BR-20-023), và kiểm đếm. PH-18 chạy công cụ chuyển dữ liệu gọi các năng lực này; PH-20 chỉ gọi PH-18 `POST /api/ops/v1/merge-transfers` với thân `mergePlanId`, `module`, `sourceTenant`, `targetTenant`, `mappingRef`, `dryRun`, `phase`, lũy đẳng theo `{mergePlanId}:{module}`, và nhận tiến độ qua API-20-167. Ánh xạ `mappingRef` là tham chiếu tới bộ `merge_mapping` đã xác nhận, kèm `mappingHash`. Chính PH-20 cũng là một bên tham gia cho dữ liệu của mình (tổ chức): `OrgMergeParticipant` hiện thực cùng hợp đồng trong tiến trình.
 
 **Kế hoạch và ánh xạ.** `MergePlanService` kiểm nguồn và đích `ACTIVE`, loại `PROVINCE`, nguồn chưa thuộc kế hoạch mở khác (ERR-20-040, 041), thời gian chuyển tiếp ≤ `20.merge.transition-max-months` (ERR-20-045). `MappingService` sinh gợi ý (API-20-095) cho sáu loại ánh xạ: tổ chức theo ĐVHC và tên, HTTT theo mã, mã danh mục trùng, `contextPath` API trùng tiền tố, người dùng theo tên đăng nhập hoặc thư điện tử hoặc liên kết LDAP, topic theo tên cộng tiền tố tenant đích; mỗi dòng có hành động `MAP`, `CREATE` hoặc `SKIP`. Dòng bắt buộc chưa quyết định chặn chạy thử (ERR-20-042).
 
@@ -1388,7 +1388,7 @@ sequenceDiagram
   PG-->>K: EVT-20-12
 ```
 
-Điểm cần chú ý: PH-20 chỉ điều phối và so đếm, không chạm dữ liệu của phân hệ khác; mọi bước chạy lại được vì khóa lũy đẳng là `{mergePlanId}:{module}:{phase}`. Cutover là một giao dịch ngắn sau lượt bù cuối nên khoảng không nhất quán rất nhỏ; trước cutover kế hoạch hủy được và nguồn về `ACTIVE`, sau cutover thì không. Xung đột không bao giờ ghi đè tự động mà chờ quyết định của con người.
+Điểm cần chú ý: PH-20 chỉ điều phối và so đếm, không chạm dữ liệu của phân hệ khác; mọi bước chạy lại được vì khóa lũy đẳng là `{mergePlanId}:{module}`. Cutover là một giao dịch ngắn sau lượt bù cuối nên khoảng không nhất quán rất nhỏ; trước cutover kế hoạch hủy được và nguồn về `ACTIVE`, sau cutover thì không. Xung đột không bao giờ ghi đè tự động mà chờ quyết định của con người.
 
 ### 5.7. Đổi hạn mức có duyệt, đẩy xuống nơi thực thi và cảnh báo (FR-20-027, 028, 029)
 
@@ -1657,7 +1657,7 @@ stateDiagram-v2
   DECOMMISSIONED --> [*]
 ```
 
-Điểm cần chú ý: `DECOMMISSIONED` là trạng thái cuối, dòng `tenant` không bao giờ bị xóa và mã không được tái cấp. Ở chấm dứt, trạng thái này đặt ở giai đoạn 1 để data plane dừng ngay; các giai đoạn sau dọn tài nguyên (lệch với FRS ghi ở Phụ lục A).
+Điểm cần chú ý: `DECOMMISSIONED` là trạng thái cuối, dòng `tenant` không bao giờ bị xóa và mã không được tái cấp. Ở chấm dứt, trạng thái này đặt ở giai đoạn 1 để data plane dừng ngay; các giai đoạn sau dọn tài nguyên (FRS FR-20-042 đã khớp).
 
 ### 8.2. Máy trạng thái bước saga và lần chạy
 
@@ -1720,14 +1720,14 @@ Thử lại luôn có khóa lũy đẳng. Tự động thử lại chỉ cho l�
 
 | Đích | Lệnh gọi | Hết thời gian | Thử lại | Lũy đẳng | Khi hết thử |
 |---|---|---|---|---|---|
-| PH-12 | API-12-080 tạo realm (`S03`) | 60 giây | 10, 30, 90 giây ±20%, tối đa `20.provision.step-retry-max` | `{runId}:S03_REALM` | Bước `FAILED`, `ERR-20-062` |
+| PH-12 | API-12-080 tạo realm (`S03`, trả `202`, chờ hoàn tất bằng EVT-12-13 hoặc thăm dò API-12-081) | 15 giây nhận `202`, rồi chờ tối đa 4 phút | 10, 30, 90 giây ±20%, tối đa `20.provision.step-retry-max` | `{runId}:S03_REALM` | Bước `FAILED`, `ERR-20-062` |
 | PH-12 | API-12-084, 085 tạm ngừng, khôi phục | 15 giây | 1, 5, 15 phút | `{historyId}:iam` | Đề nghị giữ `EXECUTING`, hiệu lực data plane không chờ |
 | PH-12 | API-12-045, 046 định danh sáp nhập | 120 giây | 3 lần | `{mergePlanId}:identity` | Kế hoạch `FAILED` |
 | PH-13 | API-13-072 dựng quan sát (`S08`) | 60 giây | 3 lần, `ERR-13-014` cũng thử lại | `{runId}:S08_OBSERVE` | Bước `FAILED` |
 | PH-13 | API-13-073 đóng chuỗi | 30 giây | 3 lần | `{tenantId}:close-audit` | Giai đoạn chấm dứt chờ, thử tiếp |
 | PH-07 | API-07-073 danh mục nền (`S11`) | 120 giây | 3 lần | `{runId}:S11_CATALOG` | Bước `FAILED` |
 | PH-16 | API-16-030 KPI thời gian khởi tạo | 15 giây | 3 lần, không chặn kích hoạt | `{runId}:kpi` | Ghi cảnh báo, không `FAILED` |
-| PH-18 | Thông báo, merge-transfers | 15 giây, 600 giây (chuyển dữ liệu) | 3 lần, 1 phút giữa các lần | `{mergePlanId}:{module}:{phase}` | Chuyển sang `FAILED` hoặc việc dọn |
+| PH-18 | Thông báo, merge-transfers | 15 giây, 600 giây (chuyển dữ liệu) | 3 lần, 1 phút giữa các lần | `{mergePlanId}:{module}` | Chuyển sang `FAILED` hoặc việc dọn |
 | Git | Đẩy commit | 30 giây | Kéo lại, sinh lại, tối đa 3 lần | `Dh-Idempotency` | `ERR-20-024` |
 | Argo CD | Hỏi trạng thái | 10 giây | Hỏi mỗi 10 giây tới 5 phút | không cần | `ERR-20-109` |
 | OpenBao | `S04` và ký commit | 10 giây | 3 lần | tên đường dẫn cố định | Bước `FAILED` |
@@ -2082,7 +2082,7 @@ W2 kéo dài 4 tháng (khoảng 17 tuần). WBS 1.20 gồm 13 người-tháng: S
 
 : Lộ trình hiện thực trong W2
 
-Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13-072) ở bản giả lập từ tuần 3, bản thật từ tuần 9; M3 cần PH-03 đọc API-20-164; M5 cần PH-18 chốt `merge-transfers`. Nếu PH khác trễ, M2 và M5 chạy trên bản giả lập (WireMock) và đổi sang bản thật khi sẵn sàng; không làm trễ hiện thực nội bộ.
+Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13-072) ở bản giả lập từ tuần 3, bản thật từ tuần 9; M3 cần PH-03 đọc API-20-164; M5 dùng API-18-150…153 của PH-18 (`merge-transfers`, hợp đồng đã chốt). Nếu PH khác trễ, M2 và M5 chạy trên bản giả lập (WireMock) và đổi sang bản thật khi sẵn sàng; không làm trễ hiện thực nội bộ.
 
 ### 13.2. Truy vết hệ cũ
 
@@ -2139,7 +2139,7 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 |---|---|---|---|
 | Q20-20 | Saga có chạy ở Deployment `worker` riêng, tách khỏi `api` | 2.2, 11.4 | Có, hai Deployment cùng ảnh |
 | Q20-21 | Kỹ thuật ký commit: OpenBao transit hay khóa cấp phát ngắn hạn | 4.6, 7.3 | Transit, khóa không rời OpenBao |
-| Q20-22 | `merge-transfers` đồng bộ hay bất đồng bộ, lũy đẳng theo khóa nào | 4.12 | Bất đồng bộ, khóa `{mergePlanId}:{module}:{phase}` |
+| Q20-22 | `merge-transfers` đồng bộ hay bất đồng bộ, lũy đẳng theo khóa nào | 4.12 | Bất đồng bộ, khóa `{mergePlanId}:{module}` |
 | Q20-23 | Cách ước `DATABASE_GB` ở `SHARED` | 4.8 | Tổng kích thước theo `tenant_id` mỗi giờ, đánh dấu ước lượng |
 | Q20-24 | Định nghĩa tỷ lệ lỗi sóng: theo lượt gọi hay theo tenant | 4.15 | 5xx trên tổng lượt gọi gộp, mẫu ≥ 200 |
 | Q20-25 | `RUNTIME_CPU` khi nhiều tenant dùng chung namespace | 4.8 | Tính theo nhãn `tenant` của pod, không tách được thì chia theo lưu lượng |
@@ -2217,5 +2217,6 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Kiến trúc sư phần mềm | Bản đầu: 19 thành phần, 15 sơ đồ, bảng lỗi, tham số, rủi ro, câu hỏi mở Q20-20…29, Phụ lục A |
 | 0.2 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ với FRS 0.2: 29 khóa `20.*`, miền `20.registry.cache-seconds`, cửa sổ bảo trì 2 đến 6 giờ, mã KPI-12; đánh dấu L-01, 02, 03, 05, 06, 07, 12, 13 đã xử lý |
+| 0.3 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, chờ API-12-080 tối đa 4 phút, `database` trong `tenant.yaml` |
 
 : Lịch sử phiên bản

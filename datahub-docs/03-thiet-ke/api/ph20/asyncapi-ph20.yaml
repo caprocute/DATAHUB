@@ -27,8 +27,8 @@ channels:
   tenantCreated:
     address: platform.tenant.created.v1
     title: EVT-20-01
-    description: 'Khai báo xong, saga bắt đầu (`PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166. Bên nhận: PH-10,
-      PH-03, PH-04, PH-06, PH-13.'
+    description: 'Phát sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008, tenant còn `PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo
+      tiến độ qua API-20-166; PH-18 gieo tham số mặc định. Bên nhận: PH-10, PH-03, PH-04, PH-06, PH-13, PH-18.'
     messages:
       tenantCreated:
         $ref: '#/components/messages/tenantCreated'
@@ -79,7 +79,7 @@ channels:
   tenantStatusChanged:
     address: platform.tenant.status-changed.v1
     title: EVT-20-04
-    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-19.'
+    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-18, PH-19.'
     messages:
       tenantStatusChanged:
         $ref: '#/components/messages/tenantStatusChanged'
@@ -130,7 +130,7 @@ channels:
   tenantModuleEnabled:
     address: platform.tenant.module-enabled.v1
     title: EVT-20-07
-    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật.'
+    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật (PH-19, PH-17, PH-11, PH-14, PH-15).'
     messages:
       tenantModuleEnabled:
         $ref: '#/components/messages/tenantModuleEnabled'
@@ -147,7 +147,7 @@ channels:
   tenantModuleDisabled:
     address: platform.tenant.module-disabled.v1
     title: EVT-20-08
-    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt.'
+    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt (PH-19, PH-17, PH-11, PH-14, PH-15).'
     messages:
       tenantModuleDisabled:
         $ref: '#/components/messages/tenantModuleDisabled'
@@ -361,9 +361,9 @@ operations:
   sendTenantCreated:
     action: send
     title: EVT-20-01
-    summary: Khai báo xong, saga bắt đầu (`PROVISIONING`)
-    description: 'Khai báo xong, saga bắt đầu (`PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166. Bên nhận: PH-10,
-      PH-03, PH-04, PH-06, PH-13.'
+    summary: Phát sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008, tenant còn `PROVISIONING`)
+    description: 'Phát sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008, tenant còn `PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo
+      tiến độ qua API-20-166; PH-18 gieo tham số mặc định. Bên nhận: PH-10, PH-03, PH-04, PH-06, PH-13, PH-18.'
     channel:
       $ref: '#/channels/tenantCreated'
     messages:
@@ -390,7 +390,7 @@ operations:
     action: send
     title: EVT-20-04
     summary: Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`).
-    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-19.'
+    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-18, PH-19.'
     channel:
       $ref: '#/channels/tenantStatusChanged'
     messages:
@@ -417,7 +417,7 @@ operations:
     action: send
     title: EVT-20-07
     summary: Bật phân hệ cho tenant
-    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật.'
+    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật (PH-19, PH-17, PH-11, PH-14, PH-15).'
     channel:
       $ref: '#/channels/tenantModuleEnabled'
     messages:
@@ -426,7 +426,7 @@ operations:
     action: send
     title: EVT-20-08
     summary: Tắt hoặc tạm ngừng phân hệ cho tenant.
-    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt.'
+    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt (PH-19, PH-17, PH-11, PH-14, PH-15).'
     channel:
       $ref: '#/channels/tenantModuleDisabled'
     messages:
@@ -571,7 +571,7 @@ components:
     tenantCreated:
       name: tenantCreated
       title: EVT-20-01
-      summary: Khai báo xong, saga bắt đầu (`PROVISIONING`)
+      summary: Phát sau bước `S05_BUCKETS` của saga khởi tạo (FR-20-008, tenant còn `PROVISIONING`)
       contentType: application/json
       headers:
         type: object

@@ -23,7 +23,7 @@ maps = [
 ]
 cls_ = [None, None, "d-del", None, "d-del", "d-del", None, None, None]
 body = f"""
-{head("Lập kế hoạch sáp nhập", '<span class="tag t-info">Bản nháp MG-2026-004</span>')}
+{head("Lập kế hoạch sáp nhập", '<span class="tag t-info">Bản nháp SN-2026-004</span>')}
 <div class="steps"><div class="done">✓ 1 Nguồn và đích</div><div class="done">✓ 2 Căn cứ</div><div class="on"><b>3 Bảng ánh xạ</b></div><div>4 Chạy thử</div><div>5 Gửi duyệt</div></div>
 {alert("e", "<b>ERR-20-042</b> · Bảng ánh xạ còn 3 dòng bắt buộc chưa quyết định. Chưa chạy thử được.")}
 <div class="cols2">
@@ -41,7 +41,7 @@ body = f"""
 """
 P["09"] = ("Lập kế hoạch sáp nhập", SC + " › Lập mới", body, "", dict(active="sn"))
 
-# ------------------------------------------------------------------ 10 Theo dõi sáp nhập (MG-2026-001, CONFLICT_REVIEW)
+# ------------------------------------------------------------------ 10 Theo dõi sáp nhập (SN-2026-001, CONFLICT_REVIEW)
 mods = [["1", "PH-20 Tổ chức", "● Xong", "212", "212", "0", "● Khớp"], ["2", "PH-07 Danh mục", "● Xong", "1.844", "1.844", "1", "● Khớp"], ["3", "PH-01 HTTT", "● Xong", "86", "86", "0", "● Khớp"],
         ["4", "PH-02 Dịch vụ", "● Xong", "94", "94", "0", "● Khớp"], ["5", "PH-10 Topic", "◔ Đang chuyển", "301", "188", "1", "—"], ["6", "PH-04 Luồng", "◔ Đang chuyển", "57", "40", "1", "—"],
         ["6", "PH-05 Bộ điều hợp", "✕ Lỗi", "33", "31", "0", "<span class='err-t'>✕ Lệch (ERR-20-113)</span>"], ["7", "PH-03 Cổng API", "○ Chờ", "—", "—", "0", "—"]]
@@ -51,7 +51,7 @@ for r in mods:
     mrows.append([r[0], f"<b>{r[1]}</b>", f"<span class='tag t-{st_}'>{r[2]}</span>", r[3], r[4], r[5], r[6]])
 mrows[6][2] = mrows[6][2]
 body = f"""
-<div class="head"><h1>Sáp nhập <span class="mono">MG-2026-001</span></h1><span class="tag t-warn">⚑ Xử lý xung đột</span><span class="muted"><span class="mono">T12</span> → <span class="mono">T13</span> · hiệu lực 01/01/2027</span><div class="sp"></div>{btn("Chạy lại phân hệ")}{btn("Thực hiện cutover…", "dis")}</div>
+<div class="head"><h1>Sáp nhập <span class="mono">SN-2026-001</span></h1><span class="tag t-warn">⚑ Xử lý xung đột</span><span class="muted"><span class="mono">T12</span> → <span class="mono">T13</span> · hiệu lực 01/01/2027</span><div class="sp"></div>{btn("Chạy lại phân hệ")}{btn("Thực hiện cutover…", "dis")}</div>
 {banner("w", "ERR-20-044 · Còn 3 xung đột sáp nhập chưa xử lý. Chưa thực hiện được cutover.", "Mở tab Xung đột")}
 <div class="step" style="margin-top:0"><div class="d">Lập, duyệt</div><div class="d">Chạy thử</div><div class="c"><b>Chuyển dữ liệu</b></div><div class="c">Xung đột</div><div>Định danh</div><div>Cutover</div><div>Chuyển tiếp 6 tháng</div><div>Hoàn tất</div></div>
 {tabs(["Phân hệ", "Xung đột 3", "Chuyển tiếp", "Kiểm toán"], 0)}
@@ -67,12 +67,12 @@ body = f"""
  </div>
 </div>
 """
-P["10"] = ("Theo dõi sáp nhập", SC + " › MG-2026-001", body, "", dict(active="sn"))
+P["10"] = ("Theo dõi sáp nhập", SC + " › SN-2026-001", body, "", dict(active="sn"))
 
 # ------------------------------------------------------------------ 11 Danh sách sáp nhập
-pl = [["<b class='mono'>MG-2026-001</b>", "<span class='mono'>T12</span> → <span class='mono'>T13</span>", "01/01/2027", "<span class='tag t-warn'>⚑ Xử lý xung đột</span>", "7 / 8 phân hệ", "3", "Nguyễn Văn An"],
-      ["<b class='mono'>MG-2026-002</b>", "<span class='mono'>T05</span> + <span class='mono'>T06</span> → <span class='mono'>T08</span>", "01/07/2027", "<span class='tag t-info'>✎ Bản nháp</span>", "—", "—", "Trần Thị Bình"],
-      ["<b class='mono'>MG-2026-003</b>", "<span class='mono'>T10</span> → <span class='mono'>T11</span>", "01/03/2027", "<span class='tag t-warn'>⏳ Chờ duyệt</span>", "—", "—", "Nguyễn Văn An"],
+pl = [["<b class='mono'>SN-2026-001</b>", "<span class='mono'>T12</span> → <span class='mono'>T13</span>", "01/01/2027", "<span class='tag t-warn'>⚑ Xử lý xung đột</span>", "7 / 8 phân hệ", "3", "Nguyễn Văn An"],
+      ["<b class='mono'>SN-2026-002</b>", "<span class='mono'>T05</span> + <span class='mono'>T06</span> → <span class='mono'>T08</span>", "01/07/2027", "<span class='tag t-info'>✎ Bản nháp</span>", "—", "—", "Trần Thị Bình"],
+      ["<b class='mono'>SN-2026-003</b>", "<span class='mono'>T10</span> → <span class='mono'>T11</span>", "01/03/2027", "<span class='tag t-warn'>⏳ Chờ duyệt</span>", "—", "—", "Nguyễn Văn An"],
       ["<b class='mono'>MG-2025-001</b>", "<span class='mono'>T31</span> → <span class='mono'>T30</span>", "01/07/2026", "<span class='tag t-ok'>● Chuyển tiếp đến 01/01/2027</span>", "8 / 8 phân hệ", "0", "Trần Thị Bình"],
       ["<b class='mono'>MG-2025-002</b>", "<span class='mono'>T21</span> → <span class='mono'>T22</span>", "01/01/2026", "<span class='tag t-mute'>✓ Hoàn tất</span>", "8 / 8 phân hệ", "0", "Nguyễn Văn An"]]
 body = f"""
