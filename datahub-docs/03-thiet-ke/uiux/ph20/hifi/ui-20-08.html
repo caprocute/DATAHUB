@@ -1,0 +1,27 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=1440">
+<title>UI-20-08 · Đổi trạng thái tenant</title><link rel="stylesheet" href="hifi.css"></head><body>
+<div class="shell"><header class="top"><div class="logo"><b>Datahub</b> · Quản trị</div><div class="search">Tìm tenant, tổ chức, phiên bản…  ⌘K</div><div class="sp"></div>
+<span class="tray">⟳ 2 tác vụ nền</span><span class="tray">PLATFORM · Nền tảng Datahub ▾</span><div class="avatar">NA</div></header>
+<nav class="side" aria-label="Điều hướng chính"><div class="grp">Nền tảng</div><a class="" href="#">Tổng quan nền tảng </a><a class="on" href="#">Tenant </a><a class="" href="#">Sáp nhập </a><a class="" href="#">Phát hành </a><a class="" href="#">Sử dụng tài nguyên </a><a class="" href="#">Mẫu khởi tạo </a><div class="grp">Giám sát</div><a class="" href="#">Bảng giám sát </a><a class="" href="#">Nhật ký kiểm toán </a><div class="grp">Vận hành</div><a class="" href="#">Tham số hệ thống </a><a class="" href="#">Việc của tôi <span class='tag t-info'>3</span></a></nav>
+<main><div class="crumb">Nền tảng › Tenant › T09 › Vòng đời</div>
+<div class="head"><h1>Vòng đời <span class="mono">T09</span> · Tỉnh Mẫu G</h1><span class='tag t-err'>⏸ Tạm ngừng</span><div class="sp"></div><span class="btn pri">Khôi phục tenant</span><span class="btn danger">Đề nghị chấm dứt…</span><span class="btn ">Xuất gói bàn giao</span></div>
+<div class="banner e" role="alert"><span>✕</span><span>Tenant T09 đang tạm ngừng từ 08/06/2026 (hết hợp đồng). Mọi API của tỉnh trả ERR-20-001. Chờ hết thời gian nguội 30 ngày mới chấm dứt được.</span></div>
+<div class="steps"><div class="done">✓ Tạm ngừng 08/06</div><div class="on"><b>Đề nghị chấm dứt</b></div><div>Duyệt (PA khác)</div><div>Gói bàn giao</div><div>Thực hiện, xóa mật mã</div></div>
+<div class="cols2">
+ <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Hành động hợp lệ</h3>
+  <div class="node2"><b>Khôi phục tenant</b><div class="muted">Chạy kiểm tra khói rút gọn rồi về Đang hoạt động. Cần lý do, mã phiếu.</div></div>
+  <div class="node2"><b>Đề nghị chấm dứt</b><div class="muted">Cần văn bản quyết định, tạm ngừng ≥ 30 ngày. Hai quản trị nền tảng khác nhau.</div></div>
+  <div class="node2"><b>Xuất gói bàn giao dữ liệu</b><div class="muted">Mọi phân hệ tham gia, JSONL hoặc CSV kèm lược đồ, lưu 90 ngày.</div></div></div>
+ <div class="card"><h3 style="margin:0 0 8px;font-size:15px">Gói bàn giao <span class="mono">EXP-0007</span> <span class='tag t-warn'>◔ Đang thu thập 4/9</span></h3>
+  <table aria-label="Tiến độ theo phân hệ"><thead><tr><th>Phân hệ</th><th>Trạng thái</th><th class=num>Bản ghi</th><th class=num>Kích thước</th></tr></thead><tbody><tr><td>PH-01</td><td>● Xong</td><td class=num>38</td><td class=num>0,2 GB</td></tr><tr><td>PH-02</td><td>● Xong</td><td class=num>41</td><td class=num>0,1 GB</td></tr><tr><td>PH-07</td><td>● Xong</td><td class=num>1.204</td><td class=num>0,6 GB</td></tr><tr><td>PH-10</td><td>● Xong</td><td class=num>212</td><td class=num>3,1 GB</td></tr><tr><td>PH-13</td><td>◔ Đang xuất</td><td class=num>—</td><td class=num>—</td></tr></tbody></table>
+  <div class="muted" style="margin-top:6px">Người duyệt chấm dứt không được xác nhận bàn giao (ERR-20-007).</div></div>
+</div>
+<div class="card" style="margin-top:12px"><h3 style="margin:0 0 6px;font-size:15px">Lịch sử vòng đời</h3><div class="vtl"><div><b>08/06/2026 08:15</b> ACTIVE → SUSPENDED · Hết hợp đồng · PA Nguyễn Văn An · SR-2026-1120</div><div><b>08/06/2026 08:16</b> Thông báo gửi 3 đầu mối, 214 người dùng</div></div></div>
+</main></div><div class="scrim"></div><div class="modal" role="dialog" aria-label="Đề nghị chấm dứt tenant T09">
+<h3 style="margin:0 0 6px">Đề nghị chấm dứt tenant <span class="mono">T09</span></h3>
+<div class="alert w" style="margin-bottom:10px"><span>Dữ liệu sẽ bị xóa sau khi bàn giao và hai người duyệt. Thao tác không hoàn tác. Đang có 38 HTTT, 41 API, 214 người dùng, 9,8 GB.</span></div>
+<div class="field"><label>Lý do (bắt buộc, tối thiểu 20 ký tự) *</label><span class="input" style="height:64px;align-items:flex-start;padding-top:6px;color:#1a1d23">Hợp đồng dịch vụ hết hạn ngày 31/05/2026, tỉnh không gia hạn theo công văn số 214/UBND.</span><div class="muted">96 / 1.000 ký tự</div></div>
+<div class="row"><div class="field"><label>Mã phiếu *</label><span class="input" style="color:#1a1d23">SR-2026-1203</span></div><div class="field"><label>Văn bản quyết định *</label><span class="input" style="color:#1a1d23">214/UBND · 02/06/2026</span></div></div>
+<div class="row"><div class="field"><label>Dự kiến thực hiện *</label><span class="input" style="color:#1a1d23">08/07/2026</span><div class="muted">Sớm nhất 08/07/2026 (tạm ngừng 08/06 + 30 ngày)</div></div><div class="field"><label>Xuất gói bàn giao trước</label><span class="muted"><span class="sw "></span> Bắt buộc</span></div></div>
+<div class="muted">Lý do và mã phiếu được ghi vào nhật ký kiểm toán của tenant T09 và không sửa được.</div>
+<div class="foot"><span class="btn ">Hủy</span><span class="btn ">Lưu nháp</span><span class="btn danger">Gửi duyệt</span></div></div><div class="hint">Bản hi-fi minh họa · D03-06-PH20 · UI-20-08 · dữ liệu giả định</div></body></html>

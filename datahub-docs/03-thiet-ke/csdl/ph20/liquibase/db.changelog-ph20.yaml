@@ -1,0 +1,46 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_platform_migrator (thành viên ph20_owner), defaultSchemaName=ph20_tenant.
+# Context: bootstrap (vai trò, schema). Dữ liệu nền nạp bằng changeset ph20-0930 (p_seed_platform); khởi tạo hạn mức tenant bằng p_init_tenant_quota (20-0090-seed.sql).
+databaseChangeLog:
+  - include:
+      file: changes/20-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0010-core.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0020-module.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0030-config.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0040-provision.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0050-quota.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0060-lifecycle.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0070-merge.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0075-orgimport.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0080-release.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0085-ops.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0090-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-0900-grants.sql
+      relativeToChangelogFile: true

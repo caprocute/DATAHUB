@@ -1,0 +1,2854 @@
+# D03-04-PH20 · AsyncAPI PH-20. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: '3.0.0'
+info:
+  title: 'Datahub PH-20 Quản trị tenant và phát hành sản phẩm: sự kiện'
+  version: 0.2.0-draft
+  description: 'Hợp đồng sự kiện EVT-20-01…16 phát ra và 6 sự kiện tiêu thụ (D03-04-PH20 chương 5, FRS 9.3). Ghi vào `ph20_tenant.outbox` cùng giao dịch nghiệp vụ,
+    Debezium đưa lên Kafka; CloudEvents 1.0 chế độ nhị phân, tiêu đề `ce_*` và thuộc tính mở rộng `dhtenant` (`ce_dhtenant`). Sự kiện vòng đời tenant và phát hành
+    đi trên tiền tố nền tảng `platform.` vì tenant mới chưa có tiền tố Kafka riêng; sự kiện tổ chức đi trên `{tenant}.tenant.org.changed.v1`. Khóa phân vùng là mã
+    đối tượng. Không sự kiện nào mang dữ liệu cá nhân (BR-20-039). Lưu giữ 7 ngày, ít nhất một lần, bên nhận khử trùng theo `ce_id`. Tương thích BACKWARD: chỉ thêm
+    trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  contact:
+    name: Nhóm phân hệ PH-20
+  tags:
+  - name: tenant
+  - name: release
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU, `dh-runtime`, Kafka Connect; mTLS, ACL theo tiền tố tenant và tiền tố `platform.`.'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  tenantCreated:
+    address: platform.tenant.created.v1
+    title: EVT-20-01
+    description: 'Khai báo xong, saga bắt đầu (`PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166. Bên nhận: PH-10,
+      PH-03, PH-04, PH-06, PH-13.'
+    messages:
+      tenantCreated:
+        $ref: '#/components/messages/tenantCreated'
+    bindings:
+      kafka:
+        topic: platform.tenant.created.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantProvisioningFailed:
+    address: platform.tenant.provisioning-failed.v1
+    title: EVT-20-02
+    description: 'Saga dừng `FAILED`; PH-18 mở việc xử lý, PH-13 cảnh báo. Bên nhận: PH-13, PH-18.'
+    messages:
+      tenantProvisioningFailed:
+        $ref: '#/components/messages/tenantProvisioningFailed'
+    bindings:
+      kafka:
+        topic: platform.tenant.provisioning-failed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantActivated:
+    address: platform.tenant.activated.v1
+    title: EVT-20-03
+    description: 'Tenant `ACTIVE`; PH-16 ghi nhận thời gian khởi tạo. Bên nhận: mọi DU, PH-16.'
+    messages:
+      tenantActivated:
+        $ref: '#/components/messages/tenantActivated'
+    bindings:
+      kafka:
+        topic: platform.tenant.activated.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantStatusChanged:
+    address: platform.tenant.status-changed.v1
+    title: EVT-20-04
+    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-19.'
+    messages:
+      tenantStatusChanged:
+        $ref: '#/components/messages/tenantStatusChanged'
+    bindings:
+      kafka:
+        topic: platform.tenant.status-changed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantQuotaChanged:
+    address: platform.tenant.quota-changed.v1
+    title: EVT-20-05
+    description: 'Hạn mức hợp đồng hoặc ghi đè đổi; nơi thực thi xác nhận bằng EVT-03-11. Bên nhận: PH-03, PH-04, PH-10, PH-12.'
+    messages:
+      tenantQuotaChanged:
+        $ref: '#/components/messages/tenantQuotaChanged'
+    bindings:
+      kafka:
+        topic: platform.tenant.quota-changed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantQuotaThresholdReached:
+    address: platform.tenant.quota-threshold-reached.v1
+    title: EVT-20-06
+    description: 'Sử dụng chạm 80% hoặc 100% hạn mức. Bên nhận: PH-13, PH-18.'
+    messages:
+      tenantQuotaThresholdReached:
+        $ref: '#/components/messages/tenantQuotaThresholdReached'
+    bindings:
+      kafka:
+        topic: platform.tenant.quota-threshold-reached.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantModuleEnabled:
+    address: platform.tenant.module-enabled.v1
+    title: EVT-20-07
+    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật.'
+    messages:
+      tenantModuleEnabled:
+        $ref: '#/components/messages/tenantModuleEnabled'
+    bindings:
+      kafka:
+        topic: platform.tenant.module-enabled.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantModuleDisabled:
+    address: platform.tenant.module-disabled.v1
+    title: EVT-20-08
+    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt.'
+    messages:
+      tenantModuleDisabled:
+        $ref: '#/components/messages/tenantModuleDisabled'
+    bindings:
+      kafka:
+        topic: platform.tenant.module-disabled.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantConfigChanged:
+    address: platform.tenant.config-changed.v1
+    title: EVT-20-09
+    description: 'Cấu hình nền tảng hoặc cài đặt tỉnh đổi, kèm số phiên bản cấu hình. Bên nhận: PH-03, PH-12, dh-console.'
+    messages:
+      tenantConfigChanged:
+        $ref: '#/components/messages/tenantConfigChanged'
+    bindings:
+      kafka:
+        topic: platform.tenant.config-changed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantMergeStarted:
+    address: platform.tenant.merge-started.v1
+    title: EVT-20-10
+    description: 'Sáp nhập được duyệt, bắt đầu chuyển dữ liệu; khóa phân vùng là `mergePlanId`. Bên nhận: phân hệ có dữ liệu, PH-18.'
+    messages:
+      tenantMergeStarted:
+        $ref: '#/components/messages/tenantMergeStarted'
+    bindings:
+      kafka:
+        topic: platform.tenant.merge-started.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantMergeCutover:
+    address: platform.tenant.merge-cutover.v1
+    title: EVT-20-11
+    description: 'Tenant nguồn `MERGED`, chuyển tiếp lượt gọi bật. Bên nhận: PH-03, PH-12, PH-01.'
+    messages:
+      tenantMergeCutover:
+        $ref: '#/components/messages/tenantMergeCutover'
+    bindings:
+      kafka:
+        topic: platform.tenant.merge-cutover.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantMergeCompleted:
+    address: platform.tenant.merge-completed.v1
+    title: EVT-20-12
+    description: 'Kết thúc sáp nhập. Bên nhận: PH-13, PH-16, PH-03.'
+    messages:
+      tenantMergeCompleted:
+        $ref: '#/components/messages/tenantMergeCompleted'
+    bindings:
+      kafka:
+        topic: platform.tenant.merge-completed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  orgChanged:
+    address: '{tenant}.tenant.org.changed.v1'
+    title: EVT-20-13
+    description: 'Tổ chức tạo, sửa, ngừng, giải thể, có tổ chức kế thừa; topic theo tiền tố của tenant. Bên nhận: PH-01, PH-06, PH-07, PH-08, PH-12, PH-16.'
+    messages:
+      orgChanged:
+        $ref: '#/components/messages/orgChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.tenant.org.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  releasePublished:
+    address: platform.release.published.v1
+    title: EVT-20-14
+    description: 'Phiên bản sản phẩm sang `PREVIEW` hoặc `STABLE`; `dhtenant` là `PLATFORM`. Bên nhận: PH-18.'
+    messages:
+      releasePublished:
+        $ref: '#/components/messages/releasePublished'
+    bindings:
+      kafka:
+        topic: platform.release.published.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantUpgradeChanged:
+    address: platform.tenant.upgrade-changed.v1
+    title: EVT-20-15
+    description: 'Nâng cấp của một tenant đổi trạng thái. Bên nhận: PH-13, PH-18.'
+    messages:
+      tenantUpgradeChanged:
+        $ref: '#/components/messages/tenantUpgradeChanged'
+    bindings:
+      kafka:
+        topic: platform.tenant.upgrade-changed.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tenantExportReady:
+    address: platform.tenant.export-ready.v1
+    title: EVT-20-16
+    description: 'Gói bàn giao dữ liệu sẵn sàng; liên kết tải cấp riêng ở API-20-083. Bên nhận: PH-18.'
+    messages:
+      tenantExportReady:
+        $ref: '#/components/messages/tenantExportReady'
+    bindings:
+      kafka:
+        topic: platform.tenant.export-ready.v1
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  adminUnitReorganizedIn:
+    address: common.rdm.adminunit.reorganized.v1
+    title: EVT-07-10
+    description: 'Do PH-07 phát, PH-20 tiêu thụ: Sinh đề xuất đồng bộ tổ chức (API-20-157), FR-20-056.'
+    messages:
+      adminUnitReorganizedIn:
+        $ref: '#/components/messages/adminUnitReorganizedIn'
+  realmChangedIn:
+    address: '{tenant}.iam.realm.changed.v1'
+    title: EVT-12-13
+    description: 'Do PH-12 phát, PH-20 tiêu thụ: Cập nhật trạng thái realm trong registry, FR-20-019, 050.'
+    messages:
+      realmChangedIn:
+        $ref: '#/components/messages/realmChangedIn'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  cryptoShredCompletedIn:
+    address: '{tenant}.privacy.crypto-shred.completed.v1'
+    title: EVT-09-21
+    description: 'Do PH-09 phát, PH-20 tiêu thụ: Ghi xác nhận xóa mật mã, kết thúc chấm dứt tenant, FR-20-042.'
+    messages:
+      cryptoShredCompletedIn:
+        $ref: '#/components/messages/cryptoShredCompletedIn'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  capacityWarningIn:
+    address: '{tenant}.obs.capacity.warning.v1'
+    title: EVT-13-14
+    description: 'Do PH-13 phát, PH-20 tiêu thụ: Đưa vào kiểm tra sẵn sàng và bảng điều khiển, FR-20-007, 067.'
+    messages:
+      capacityWarningIn:
+        $ref: '#/components/messages/capacityWarningIn'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  tenantRedirectChangedIn:
+    address: '{tenant}.gateway.tenant-redirect.changed.v1'
+    title: EVT-03-10
+    description: 'Do PH-03 phát, PH-20 tiêu thụ: Xác nhận chuyển tiếp đã bật hoặc tắt, FR-20-051, 052.'
+    messages:
+      tenantRedirectChangedIn:
+        $ref: '#/components/messages/tenantRedirectChangedIn'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  gatewayLimitChangedIn:
+    address: '{tenant}.gateway.limit.changed.v1'
+    title: EVT-03-11
+    description: 'Do PH-03 phát, PH-20 tiêu thụ: Xác nhận hạn mức đã áp ở gateway, FR-20-027.'
+    messages:
+      gatewayLimitChangedIn:
+        $ref: '#/components/messages/gatewayLimitChangedIn'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+operations:
+  sendTenantCreated:
+    action: send
+    title: EVT-20-01
+    summary: Khai báo xong, saga bắt đầu (`PROVISIONING`)
+    description: 'Khai báo xong, saga bắt đầu (`PROVISIONING`); PH-10, PH-03, PH-04, PH-06 tự khởi tạo phần của mình và báo tiến độ qua API-20-166. Bên nhận: PH-10,
+      PH-03, PH-04, PH-06, PH-13.'
+    channel:
+      $ref: '#/channels/tenantCreated'
+    messages:
+    - $ref: '#/channels/tenantCreated/messages/tenantCreated'
+  sendTenantProvisioningFailed:
+    action: send
+    title: EVT-20-02
+    summary: Saga dừng `FAILED`
+    description: 'Saga dừng `FAILED`; PH-18 mở việc xử lý, PH-13 cảnh báo. Bên nhận: PH-13, PH-18.'
+    channel:
+      $ref: '#/channels/tenantProvisioningFailed'
+    messages:
+    - $ref: '#/channels/tenantProvisioningFailed/messages/tenantProvisioningFailed'
+  sendTenantActivated:
+    action: send
+    title: EVT-20-03
+    summary: Tenant `ACTIVE`
+    description: 'Tenant `ACTIVE`; PH-16 ghi nhận thời gian khởi tạo. Bên nhận: mọi DU, PH-16.'
+    channel:
+      $ref: '#/channels/tenantActivated'
+    messages:
+    - $ref: '#/channels/tenantActivated/messages/tenantActivated'
+  sendTenantStatusChanged:
+    action: send
+    title: EVT-20-04
+    summary: Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`).
+    description: 'Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`). Bên nhận: PH-01, PH-03, PH-04, PH-12, PH-13, PH-19.'
+    channel:
+      $ref: '#/channels/tenantStatusChanged'
+    messages:
+    - $ref: '#/channels/tenantStatusChanged/messages/tenantStatusChanged'
+  sendTenantQuotaChanged:
+    action: send
+    title: EVT-20-05
+    summary: Hạn mức hợp đồng hoặc ghi đè đổi
+    description: 'Hạn mức hợp đồng hoặc ghi đè đổi; nơi thực thi xác nhận bằng EVT-03-11. Bên nhận: PH-03, PH-04, PH-10, PH-12.'
+    channel:
+      $ref: '#/channels/tenantQuotaChanged'
+    messages:
+    - $ref: '#/channels/tenantQuotaChanged/messages/tenantQuotaChanged'
+  sendTenantQuotaThresholdReached:
+    action: send
+    title: EVT-20-06
+    summary: Sử dụng chạm 80% hoặc 100% hạn mức.
+    description: 'Sử dụng chạm 80% hoặc 100% hạn mức. Bên nhận: PH-13, PH-18.'
+    channel:
+      $ref: '#/channels/tenantQuotaThresholdReached'
+    messages:
+    - $ref: '#/channels/tenantQuotaThresholdReached/messages/tenantQuotaThresholdReached'
+  sendTenantModuleEnabled:
+    action: send
+    title: EVT-20-07
+    summary: Bật phân hệ cho tenant
+    description: 'Bật phân hệ cho tenant; phân hệ được bật tự khởi tạo rồi báo xong qua API-20-166. Bên nhận: phân hệ được bật.'
+    channel:
+      $ref: '#/channels/tenantModuleEnabled'
+    messages:
+    - $ref: '#/channels/tenantModuleEnabled/messages/tenantModuleEnabled'
+  sendTenantModuleDisabled:
+    action: send
+    title: EVT-20-08
+    summary: Tắt hoặc tạm ngừng phân hệ cho tenant.
+    description: 'Tắt hoặc tạm ngừng phân hệ cho tenant. Bên nhận: phân hệ bị tắt.'
+    channel:
+      $ref: '#/channels/tenantModuleDisabled'
+    messages:
+    - $ref: '#/channels/tenantModuleDisabled/messages/tenantModuleDisabled'
+  sendTenantConfigChanged:
+    action: send
+    title: EVT-20-09
+    summary: Cấu hình nền tảng hoặc cài đặt tỉnh đổi, kèm số phiên bản cấu hình.
+    description: 'Cấu hình nền tảng hoặc cài đặt tỉnh đổi, kèm số phiên bản cấu hình. Bên nhận: PH-03, PH-12, dh-console.'
+    channel:
+      $ref: '#/channels/tenantConfigChanged'
+    messages:
+    - $ref: '#/channels/tenantConfigChanged/messages/tenantConfigChanged'
+  sendTenantMergeStarted:
+    action: send
+    title: EVT-20-10
+    summary: Sáp nhập được duyệt, bắt đầu chuyển dữ liệu
+    description: 'Sáp nhập được duyệt, bắt đầu chuyển dữ liệu; khóa phân vùng là `mergePlanId`. Bên nhận: phân hệ có dữ liệu, PH-18.'
+    channel:
+      $ref: '#/channels/tenantMergeStarted'
+    messages:
+    - $ref: '#/channels/tenantMergeStarted/messages/tenantMergeStarted'
+  sendTenantMergeCutover:
+    action: send
+    title: EVT-20-11
+    summary: Tenant nguồn `MERGED`, chuyển tiếp lượt gọi bật.
+    description: 'Tenant nguồn `MERGED`, chuyển tiếp lượt gọi bật. Bên nhận: PH-03, PH-12, PH-01.'
+    channel:
+      $ref: '#/channels/tenantMergeCutover'
+    messages:
+    - $ref: '#/channels/tenantMergeCutover/messages/tenantMergeCutover'
+  sendTenantMergeCompleted:
+    action: send
+    title: EVT-20-12
+    summary: Kết thúc sáp nhập.
+    description: 'Kết thúc sáp nhập. Bên nhận: PH-13, PH-16, PH-03.'
+    channel:
+      $ref: '#/channels/tenantMergeCompleted'
+    messages:
+    - $ref: '#/channels/tenantMergeCompleted/messages/tenantMergeCompleted'
+  sendOrgChanged:
+    action: send
+    title: EVT-20-13
+    summary: Tổ chức tạo, sửa, ngừng, giải thể, có tổ chức kế thừa
+    description: 'Tổ chức tạo, sửa, ngừng, giải thể, có tổ chức kế thừa; topic theo tiền tố của tenant. Bên nhận: PH-01, PH-06, PH-07, PH-08, PH-12, PH-16.'
+    channel:
+      $ref: '#/channels/orgChanged'
+    messages:
+    - $ref: '#/channels/orgChanged/messages/orgChanged'
+  sendReleasePublished:
+    action: send
+    title: EVT-20-14
+    summary: Phiên bản sản phẩm sang `PREVIEW` hoặc `STABLE`
+    description: 'Phiên bản sản phẩm sang `PREVIEW` hoặc `STABLE`; `dhtenant` là `PLATFORM`. Bên nhận: PH-18.'
+    channel:
+      $ref: '#/channels/releasePublished'
+    messages:
+    - $ref: '#/channels/releasePublished/messages/releasePublished'
+  sendTenantUpgradeChanged:
+    action: send
+    title: EVT-20-15
+    summary: Nâng cấp của một tenant đổi trạng thái.
+    description: 'Nâng cấp của một tenant đổi trạng thái. Bên nhận: PH-13, PH-18.'
+    channel:
+      $ref: '#/channels/tenantUpgradeChanged'
+    messages:
+    - $ref: '#/channels/tenantUpgradeChanged/messages/tenantUpgradeChanged'
+  sendTenantExportReady:
+    action: send
+    title: EVT-20-16
+    summary: Gói bàn giao dữ liệu sẵn sàng
+    description: 'Gói bàn giao dữ liệu sẵn sàng; liên kết tải cấp riêng ở API-20-083. Bên nhận: PH-18.'
+    channel:
+      $ref: '#/channels/tenantExportReady'
+    messages:
+    - $ref: '#/channels/tenantExportReady/messages/tenantExportReady'
+  receiveAdminUnitReorganizedIn:
+    action: receive
+    title: EVT-07-10
+    summary: Sinh đề xuất đồng bộ tổ chức (API-20-157)
+    description: 'PH-20 nhận từ PH-07: Sinh đề xuất đồng bộ tổ chức (API-20-157), FR-20-056.'
+    channel:
+      $ref: '#/channels/adminUnitReorganizedIn'
+    messages:
+    - $ref: '#/channels/adminUnitReorganizedIn/messages/adminUnitReorganizedIn'
+  receiveRealmChangedIn:
+    action: receive
+    title: EVT-12-13
+    summary: Cập nhật trạng thái realm trong registry
+    description: 'PH-20 nhận từ PH-12: Cập nhật trạng thái realm trong registry, FR-20-019, 050.'
+    channel:
+      $ref: '#/channels/realmChangedIn'
+    messages:
+    - $ref: '#/channels/realmChangedIn/messages/realmChangedIn'
+  receiveCryptoShredCompletedIn:
+    action: receive
+    title: EVT-09-21
+    summary: Ghi xác nhận xóa mật mã
+    description: 'PH-20 nhận từ PH-09: Ghi xác nhận xóa mật mã, kết thúc chấm dứt tenant, FR-20-042.'
+    channel:
+      $ref: '#/channels/cryptoShredCompletedIn'
+    messages:
+    - $ref: '#/channels/cryptoShredCompletedIn/messages/cryptoShredCompletedIn'
+  receiveCapacityWarningIn:
+    action: receive
+    title: EVT-13-14
+    summary: Đưa vào kiểm tra sẵn sàng và bảng điều khiển
+    description: 'PH-20 nhận từ PH-13: Đưa vào kiểm tra sẵn sàng và bảng điều khiển, FR-20-007, 067.'
+    channel:
+      $ref: '#/channels/capacityWarningIn'
+    messages:
+    - $ref: '#/channels/capacityWarningIn/messages/capacityWarningIn'
+  receiveTenantRedirectChangedIn:
+    action: receive
+    title: EVT-03-10
+    summary: Xác nhận chuyển tiếp đã bật hoặc tắt
+    description: 'PH-20 nhận từ PH-03: Xác nhận chuyển tiếp đã bật hoặc tắt, FR-20-051, 052.'
+    channel:
+      $ref: '#/channels/tenantRedirectChangedIn'
+    messages:
+    - $ref: '#/channels/tenantRedirectChangedIn/messages/tenantRedirectChangedIn'
+  receiveGatewayLimitChangedIn:
+    action: receive
+    title: EVT-03-11
+    summary: Xác nhận hạn mức đã áp ở gateway
+    description: 'PH-20 nhận từ PH-03: Xác nhận hạn mức đã áp ở gateway, FR-20-027.'
+    channel:
+      $ref: '#/channels/gatewayLimitChangedIn'
+    messages:
+    - $ref: '#/channels/gatewayLimitChangedIn/messages/gatewayLimitChangedIn'
+components:
+  securitySchemes:
+    mtls:
+      type: X509
+      description: mTLS, ACL theo CN và tiền tố.
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  messages:
+    tenantCreated:
+      name: tenantCreated
+      title: EVT-20-01
+      summary: Khai báo xong, saga bắt đầu (`PROVISIONING`)
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.created.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/TenantCreatedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000001
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.created.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/TenantCreated/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          tenantId: 0193a000-1111-7000-8000-000000000001
+          isolationMode: SHARED
+          scaleProfile: QM-VUA
+          deploymentProfile: HT-B
+          templateCode: tinh-chuan
+          templateVersion: 3
+          runId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
+          modules:
+          - PH-03
+          - PH-04
+          - PH-06
+          - PH-10
+          apiHost: api.t68.datahub.example.vn
+          apiPrefix: /t68
+          realm: dh-t68
+          kafkaPrefix: t68.
+          quotas:
+          - resource: API_RPS
+            effectiveValue: 500
+    tenantProvisioningFailed:
+      name: tenantProvisioningFailed
+      title: EVT-20-02
+      summary: Saga dừng `FAILED`
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.provisioning-failed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ProvisioningFailedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000002
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.provisioning-failed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ProvisioningFailed/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          runId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
+          failedStep: S06_EVENTING
+          errorCode: ERR-20-106
+          errorMessage: Bước S06_EVENTING chưa nhận báo cáo từ PH-10 sau 15 phút.
+          attempt: 3
+    tenantActivated:
+      name: tenantActivated
+      title: EVT-20-03
+      summary: Tenant `ACTIVE`
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.activated.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/TenantActivatedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000003
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.activated.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/TenantActivated/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          tenantId: 0193a000-1111-7000-8000-000000000001
+          activatedAt: '2026-11-27T09:15:00+07:00'
+          runId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
+          isolationMode: SHARED
+          provisionMinutes: 47.5
+    tenantStatusChanged:
+      name: tenantStatusChanged
+      title: EVT-20-04
+      summary: Mọi đổi trạng thái tenant (tạm ngừng, khôi phục, `MERGING`, `MERGED`, `DECOMMISSIONED`)
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.status-changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/TenantStatusChangedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000004
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.status-changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/TenantStatusChanged/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          fromStatus: ACTIVE
+          toStatus: SUSPENDED
+          requestId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e02
+          effectiveAt: '2026-11-27T09:15:00+07:00'
+          readOnly: false
+          essentialApisAllowed: false
+    tenantQuotaChanged:
+      name: tenantQuotaChanged
+      title: EVT-20-05
+      summary: Hạn mức hợp đồng hoặc ghi đè đổi
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.quota-changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/QuotaChangedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000005
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.quota-changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/QuotaChanged/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          items:
+          - resource: API_RPS
+            effectiveValue: 800
+            previousValue: 500
+          source: CONTRACT
+          effectiveAt: '2026-11-27T09:15:00+07:00'
+          configVersion: 8
+    tenantQuotaThresholdReached:
+      name: tenantQuotaThresholdReached
+      title: EVT-20-06
+      summary: Sử dụng chạm 80% hoặc 100% hạn mức
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.quota-threshold-reached.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/QuotaThresholdReachedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000006
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.quota-threshold-reached.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/QuotaThresholdReached/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          resource: API_RPS
+          alertLevel: WARN_80
+          alertId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e06
+          used: 412
+          limit: 500
+          percent: 82.4
+          raisedAt: '2026-11-27T09:15:00+07:00'
+    tenantModuleEnabled:
+      name: tenantModuleEnabled
+      title: EVT-20-07
+      summary: Bật phân hệ cho tenant
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.module-enabled.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ModuleEnabledData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000007
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.module-enabled.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ModuleEnabled/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          moduleCode: PH-17
+          runId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
+          reportPath: /internal/tenant/v1/provisioning-runs/0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01/steps/S15_MODULES:report
+          configVersion: 8
+    tenantModuleDisabled:
+      name: tenantModuleDisabled
+      title: EVT-20-08
+      summary: Tắt hoặc tạm ngừng phân hệ cho tenant
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.module-disabled.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ModuleDisabledData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000008
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.module-disabled.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ModuleDisabled/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          moduleCode: PH-17
+          mode: DISABLE
+          effectiveAt: '2026-11-27T09:15:00+07:00'
+    tenantConfigChanged:
+      name: tenantConfigChanged
+      title: EVT-20-09
+      summary: Cấu hình nền tảng hoặc cài đặt tỉnh đổi, kèm số phiên bản cấu hình
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.config-changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ConfigChangedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000009
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.config-changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ConfigChanged/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          scope: SETTINGS
+          changeKind: TENANT_SETTINGS
+          configVersionNo: 8
+          commitSha: a1b2c3d4e5f60718293a4b5c6d7e8f9012345678
+          changedKeys:
+          - publicHost
+          - sessionIdleMinutes
+          effectiveAt: '2026-11-27T09:15:00+07:00'
+    tenantMergeStarted:
+      name: tenantMergeStarted
+      title: EVT-20-10
+      summary: Sáp nhập được duyệt, bắt đầu chuyển dữ liệu
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.merge-started.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/MergeStartedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `mergePlanId`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000010
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.merge-started.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: SN-2026-001
+          ce_dhtenant: T90
+          ce_dataschema: https://schema.datahub.example.vn/ph20/MergeStarted/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          mergePlanId: SN-2026-001
+          sourceTenants:
+          - T91
+          targetTenant: T90
+          modules:
+          - PH-01
+          - PH-03
+          effectiveDate: '2026-12-15'
+          mappingHash: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    tenantMergeCutover:
+      name: tenantMergeCutover
+      title: EVT-20-11
+      summary: Tenant nguồn `MERGED`, chuyển tiếp lượt gọi bật
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.merge-cutover.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/MergeCutoverData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `mergePlanId`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000011
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.merge-cutover.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: SN-2026-001
+          ce_dhtenant: T90
+          ce_dataschema: https://schema.datahub.example.vn/ph20/MergeCutover/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          mergePlanId: SN-2026-001
+          sourceTenants:
+          - T91
+          targetTenant: T90
+          cutoverAt: '2026-11-27T09:15:00+07:00'
+          transitionEndsAt: '2026-11-27T09:15:00+07:00'
+          redirects:
+          - fromPrefix: /t91
+            toTenant: T90
+            toPrefix: /t90
+    tenantMergeCompleted:
+      name: tenantMergeCompleted
+      title: EVT-20-12
+      summary: Kết thúc sáp nhập
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.merge-completed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/MergeCompletedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `mergePlanId`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000012
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.merge-completed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: SN-2026-001
+          ce_dhtenant: T90
+          ce_dataschema: https://schema.datahub.example.vn/ph20/MergeCompleted/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          mergePlanId: SN-2026-001
+          sourceTenants:
+          - T91
+          targetTenant: T90
+          completedAt: '2026-11-27T09:15:00+07:00'
+          modulesTransferred: 3
+          conflictsResolved: 3
+    orgChanged:
+      name: orgChanged
+      title: EVT-20-13
+      summary: Tổ chức tạo, sửa, ngừng, giải thể, có tổ chức kế thừa
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.tenant.org.changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/OrgChangedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `orgCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000013
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.tenant.org.changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: SO-KHCN
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/OrgChanged/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          orgCode: SO-KHCN
+          change: DISSOLVED
+          status: DISSOLVED
+          parentCode: UBND-TINH
+          successorCode: SO-TTTT
+          effectiveFrom: '2025-07-01'
+          effectiveTo: '2026-12-31'
+          isDataOwner: false
+          version: 4
+    releasePublished:
+      name: releasePublished
+      title: EVT-20-14
+      summary: Phiên bản sản phẩm sang `PREVIEW` hoặc `STABLE`
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.release.published.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ReleasePublishedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `releaseVersion`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000014
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.release.published.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: '2.4.0'
+          ce_dhtenant: PLATFORM
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ReleasePublished/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          releaseVersion: '2.4.0'
+          status: PREVIEW
+          channel: PREVIEW
+          breakingChange: false
+          publishedAt: '2026-11-27T09:15:00+07:00'
+          releaseNotesUrl: https://nen-tang.datahub.example.vn/phat-hanh/2.4.0
+    tenantUpgradeChanged:
+      name: tenantUpgradeChanged
+      title: EVT-20-15
+      summary: Nâng cấp của một tenant đổi trạng thái
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.upgrade-changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/UpgradeChangedData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000015
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.upgrade-changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/UpgradeChanged/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          planId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e04
+          releaseVersion: '2.4.0'
+          fromStatus: IN_WINDOW
+          toStatus: UPGRADING
+          waveNo: 1
+          attempt: 1
+          at: '2026-11-27T09:15:00+07:00'
+    tenantExportReady:
+      name: tenantExportReady
+      title: EVT-20-16
+      summary: Gói bàn giao dữ liệu sẵn sàng
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-platform/tenant
+          ce_type:
+            type: string
+            const: vn.datahub.platform.tenant.export-ready.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/ExportReadyData'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenantCode`.'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000016
+          ce_source: /datahub/dh-platform/tenant
+          ce_type: vn.datahub.platform.tenant.export-ready.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+          ce_dataschema: https://schema.datahub.example.vn/ph20/ExportReady/1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantCode: T68
+          packageId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e03
+          requestId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e02
+          itemCount: 2
+          sizeBytes: 96426008
+          manifestSha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          expiresAt: '2026-11-27T09:15:00+07:00'
+    adminUnitReorganizedIn:
+      name: adminUnitReorganizedIn
+      title: EVT-07-10
+      summary: Sinh đề xuất đồng bộ tổ chức (API-20-157)
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.common.rdm.adminunit.reorganized.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/AdminUnitReorganizedIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000101
+          ce_source: /datahub/ph-07
+          ce_type: vn.datahub.common.rdm.adminunit.reorganized.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          changes:
+          - oldCode: XA-0101
+            newCode: XA-0105
+            effectiveDate: '2026-12-01'
+            decisionDoc: 12/NQ-HĐND
+          catalogVersion: '2026.11'
+    realmChangedIn:
+      name: realmChangedIn
+      title: EVT-12-13
+      summary: Cập nhật trạng thái realm trong registry
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.iam.realm.changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/RealmChangedIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000102
+          ce_source: /datahub/ph-12
+          ce_type: vn.datahub.iam.realm.changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          realmCode: dh-t68
+          status: ACTIVE
+          changedAt: '2026-11-27T09:15:00+07:00'
+    cryptoShredCompletedIn:
+      name: cryptoShredCompletedIn
+      title: EVT-09-21
+      summary: Ghi xác nhận xóa mật mã
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.privacy.crypto-shred.completed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/CryptoShredCompletedIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000103
+          ce_source: /datahub/ph-09
+          ce_type: vn.datahub.privacy.crypto-shred.completed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          tenantCode: T68
+          requestId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e02
+          completedAt: '2026-11-27T09:15:00+07:00'
+    capacityWarningIn:
+      name: capacityWarningIn
+      title: EVT-13-14
+      summary: Đưa vào kiểm tra sẵn sàng và bảng điều khiển
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.obs.capacity.warning.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/CapacityWarningIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000104
+          ce_source: /datahub/ph-13
+          ce_type: vn.datahub.obs.capacity.warning.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          resource: pg-core
+          level: WARN
+          percent: 86.0
+    tenantRedirectChangedIn:
+      name: tenantRedirectChangedIn
+      title: EVT-03-10
+      summary: Xác nhận chuyển tiếp đã bật hoặc tắt
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.gateway.tenant-redirect.changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/TenantRedirectChangedIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000105
+          ce_source: /datahub/ph-03
+          ce_type: vn.datahub.gateway.tenant-redirect.changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          tenantCode: T68
+          fromPrefix: /t91
+          toTenant: T90
+          enabled: true
+          changedAt: '2026-11-27T09:15:00+07:00'
+    gatewayLimitChangedIn:
+      name: gatewayLimitChangedIn
+      title: EVT-03-11
+      summary: Xác nhận hạn mức đã áp ở gateway
+      contentType: application/json
+      headers:
+        type: object
+        description: Tiêu đề Kafka theo CloudEvents 1.0 chế độ nhị phân.
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_subject
+        - ce_dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của bên tiêu thụ.
+          ce_source:
+            type: string
+            description: Nguồn do bên phát đặt.
+          ce_type:
+            type: string
+            const: vn.datahub.gateway.limit.changed.v1
+          ce_time:
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: 'Khóa phân vùng: mã đối tượng.'
+          ce_dhtenant:
+            type: string
+            description: Mã tenant bị tác động (`PLATFORM` với sự kiện cấp nền tảng).
+          ce_dataschema:
+            type: string
+            format: uri
+          traceparent:
+            type: string
+      payload:
+        $ref: '#/components/schemas/LimitChangedIn'
+      examples:
+      - name: vi-du
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 0193a0c3-0000-7000-8000-000000000106
+          ce_source: /datahub/ph-03
+          ce_type: vn.datahub.gateway.limit.changed.v1
+          ce_time: '2026-11-27T09:15:00+07:00'
+          ce_subject: T68
+          ce_dhtenant: T68
+        payload:
+          tenantCode: T68
+          resource: API_RPS
+          appliedValue: 800
+          appliedAt: '2026-11-27T09:15:00+07:00'
+  schemas:
+    AdminUnitChange:
+      type: object
+      description: Một thay đổi đơn vị hành chính.
+      properties:
+        oldCode:
+          type: string
+        newCode:
+          type: string
+        effectiveDate:
+          type: string
+          format: date
+        decisionDoc:
+          type: string
+      required:
+      - oldCode
+      - newCode
+      - effectiveDate
+    AdminUnitReorganizedIn:
+      type: object
+      description: Sắp xếp đơn vị hành chính (EVT-07-10).
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUnitChange'
+          minItems: 1
+        catalogVersion:
+          type: string
+      required:
+      - changes
+    CapacityWarningIn:
+      type: object
+      description: Cảnh báo dung lượng (EVT-13-14).
+      properties:
+        resource:
+          type: string
+        level:
+          type: string
+        percent:
+          type: number
+      required:
+      - resource
+      - level
+    ConfigChangeKind:
+      type: string
+      enum:
+      - TENANT_PROFILE
+      - TENANT_SETTINGS
+      - PLATFORM_CONFIG
+      - CROSS_TENANT_POLICY
+      - ISOLATION_MODE
+      - FEATURE_FLAG
+      description: Loại thay đổi cấu hình theo FRS (EVT-20-09).
+    ConfigChangedData:
+      type: object
+      description: Cấu hình nền tảng hoặc cài đặt tỉnh đổi (FR-20-018…021, 025).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        scope:
+          $ref: '#/components/schemas/ConfigScope'
+        changeKind:
+          $ref: '#/components/schemas/ConfigChangeKind'
+        configVersionNo:
+          type: integer
+        commitSha:
+          type: string
+        changedKeys:
+          type: array
+          items:
+            type: string
+        effectiveAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - scope
+      - configVersionNo
+      - effectiveAt
+    ConfigScope:
+      type: string
+      enum:
+      - PLATFORM_CONFIG
+      - SETTINGS
+      - QUOTA
+      - MODULES
+      - ALL
+      description: Phạm vi một phiên bản cấu hình.
+    CryptoShredCompletedIn:
+      type: object
+      description: Xóa mật mã tenant xong (EVT-09-21); không chứa khóa.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        requestId:
+          type: string
+          format: uuid
+        completedAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - completedAt
+    DeploymentProfile:
+      type: string
+      enum:
+      - HT-B
+      - HT-A
+      description: Hồ sơ triển khai.
+    ExportReadyData:
+      type: object
+      description: Gói bàn giao dữ liệu sẵn sàng (FR-20-041); không kèm liên kết tải.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        packageId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        itemCount:
+          type: integer
+        sizeBytes:
+          type: integer
+        manifestSha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - packageId
+      - itemCount
+    IsolationMode:
+      type: string
+      enum:
+      - SHARED
+      - DEDICATED_DB
+      - DEDICATED_CLUSTER
+      description: Chế độ cách ly.
+    LimitChangedIn:
+      type: object
+      description: Hạn mức đã áp ở gateway (EVT-03-11).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        appliedValue:
+          type: number
+        appliedAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - resource
+      - appliedValue
+    MergeCompletedData:
+      type: object
+      description: Kết thúc sáp nhập (FR-20-052).
+      properties:
+        mergePlanId:
+          type: string
+        sourceTenants:
+          type: array
+          items:
+            type: string
+            pattern: ^T[0-9]{2}$
+            description: Mã tenant dạng `T` và hai chữ số.
+        targetTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        completedAt:
+          type: string
+          format: date-time
+        modulesTransferred:
+          type: integer
+        conflictsResolved:
+          type: integer
+      required:
+      - mergePlanId
+      - sourceTenants
+      - targetTenant
+      - completedAt
+    MergeCutoverData:
+      type: object
+      description: Tenant nguồn `MERGED`, chuyển tiếp bật (FR-20-051).
+      properties:
+        mergePlanId:
+          type: string
+        sourceTenants:
+          type: array
+          items:
+            type: string
+            pattern: ^T[0-9]{2}$
+            description: Mã tenant dạng `T` và hai chữ số.
+        targetTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        cutoverAt:
+          type: string
+          format: date-time
+        transitionEndsAt:
+          type: string
+          format: date-time
+        redirects:
+          type: array
+          items:
+            $ref: '#/components/schemas/RedirectPair'
+      required:
+      - mergePlanId
+      - sourceTenants
+      - targetTenant
+      - cutoverAt
+      - transitionEndsAt
+      - redirects
+    MergeStartedData:
+      type: object
+      description: Sáp nhập được duyệt, bắt đầu chuyển dữ liệu (FR-20-048).
+      properties:
+        mergePlanId:
+          type: string
+        sourceTenants:
+          type: array
+          items:
+            type: string
+            pattern: ^T[0-9]{2}$
+            description: Mã tenant dạng `T` và hai chữ số.
+        targetTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        modules:
+          type: array
+          items:
+            type: string
+            pattern: ^PH-[0-9]{2}$
+            description: Mã phân hệ dạng `PH-nn`.
+        effectiveDate:
+          type: string
+          format: date
+        mappingHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      required:
+      - mergePlanId
+      - sourceTenants
+      - targetTenant
+      - modules
+    ModuleDisabledData:
+      type: object
+      description: Tắt hoặc tạm ngừng phân hệ (FR-20-035).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        moduleCode:
+          type: string
+          pattern: ^PH-[0-9]{2}$
+          description: Mã phân hệ dạng `PH-nn`.
+        mode:
+          $ref: '#/components/schemas/ModuleMode'
+        effectiveAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - moduleCode
+      - mode
+      - effectiveAt
+    ModuleEnabledData:
+      type: object
+      description: Bật phân hệ cho tenant (FR-20-034, saga bước `S15_MODULES`); phân hệ báo xong qua API-20-166.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        moduleCode:
+          type: string
+          pattern: ^PH-[0-9]{2}$
+          description: Mã phân hệ dạng `PH-nn`.
+        runId:
+          type: string
+          format: uuid
+        reportPath:
+          type: string
+        configVersion:
+          type: integer
+      required:
+      - tenantCode
+      - moduleCode
+      - reportPath
+    ModuleMode:
+      type: string
+      enum:
+      - DISABLE
+      - SUSPEND
+      description: Cách tắt phân hệ.
+    OrgChange:
+      type: string
+      enum:
+      - CREATED
+      - UPDATED
+      - DEACTIVATED
+      - REACTIVATED
+      - DISSOLVED
+      - MERGED
+      description: Loại thay đổi tổ chức.
+    OrgChangedData:
+      type: object
+      description: Tổ chức tạo, sửa, ngừng, giải thể, kế thừa (FR-20-053…056, 058); không chứa thông tin cá nhân.
+      properties:
+        orgCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        change:
+          $ref: '#/components/schemas/OrgChange'
+        status:
+          $ref: '#/components/schemas/OrgStatus'
+        parentCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        successorCode:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9-]{1,49}$
+        effectiveFrom:
+          type: string
+          format: date
+        effectiveTo:
+          type: string
+          format: date
+        isDataOwner:
+          type: boolean
+        version:
+          type: integer
+      required:
+      - orgCode
+      - change
+      - status
+    OrgStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      - DISSOLVED
+      - MERGED
+      description: Trạng thái tổ chức.
+    ProvisioningFailedData:
+      type: object
+      description: Saga dừng `FAILED`.
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        runId:
+          type: string
+          format: uuid
+        failedStep:
+          $ref: '#/components/schemas/StepCode'
+        errorCode:
+          type: string
+          pattern: ^ERR-20-[0-9]{3}$
+        errorMessage:
+          type: string
+        attempt:
+          type: integer
+      required:
+      - tenantCode
+      - runId
+      - failedStep
+      - errorCode
+    QuotaAlertLevel:
+      type: string
+      enum:
+      - WARN_80
+      - LIMIT_100
+      description: Mức cảnh báo hạn mức.
+    QuotaChangedData:
+      type: object
+      description: Hạn mức hợp đồng hoặc ghi đè đổi (FR-20-026, 027, 032).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaPair'
+        source:
+          type: string
+          enum:
+          - CONTRACT
+          - OVERRIDE
+          - OVERRIDE_EXPIRED
+        effectiveAt:
+          type: string
+          format: date-time
+        configVersion:
+          type: integer
+      required:
+      - tenantCode
+      - items
+      - source
+      - effectiveAt
+    QuotaPair:
+      type: object
+      description: Hạn mức hiệu lực của một tài nguyên.
+      properties:
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        effectiveValue:
+          type: number
+        previousValue:
+          type: number
+      required:
+      - resource
+      - effectiveValue
+    QuotaResource:
+      type: string
+      enum:
+      - API_RPS
+      - ACTIVE_FLOWS
+      - KAFKA_PRODUCE_MBPS
+      - KAFKA_CONSUME_MBPS
+      - OBJECT_STORAGE_GB
+      - DATABASE_GB
+      - USERS
+      - MEMBER_SYSTEMS
+      - PUBLISHED_APIS
+      - TOPICS
+      - RUNTIME_CPU
+      - RUNTIME_MEMORY_GB
+      description: Tài nguyên có hạn mức.
+    QuotaThresholdReachedData:
+      type: object
+      description: Sử dụng chạm 80% hoặc 100% (FR-20-029).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        resource:
+          $ref: '#/components/schemas/QuotaResource'
+        alertLevel:
+          $ref: '#/components/schemas/QuotaAlertLevel'
+        alertId:
+          type: string
+          format: uuid
+        used:
+          type: number
+        limit:
+          type: number
+        percent:
+          type: number
+        raisedAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - resource
+      - alertLevel
+      - alertId
+      - used
+      - limit
+      - percent
+      - raisedAt
+    RealmChangedIn:
+      type: object
+      description: Realm đổi trạng thái (EVT-12-13).
+      properties:
+        realmCode:
+          type: string
+        status:
+          type: string
+        changedAt:
+          type: string
+          format: date-time
+      required:
+      - realmCode
+      - status
+    RedirectPair:
+      type: object
+      description: Ánh xạ chuyển tiếp.
+      properties:
+        fromPrefix:
+          type: string
+        toTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        toPrefix:
+          type: string
+      required:
+      - fromPrefix
+      - toTenant
+      - toPrefix
+    ReleaseChannel:
+      type: string
+      enum:
+      - STABLE
+      - PREVIEW
+      description: Kênh phát hành.
+    ReleasePublishStatus:
+      type: string
+      enum:
+      - PREVIEW
+      - STABLE
+      description: Trạng thái phiên bản khi công bố.
+    ReleasePublishedData:
+      type: object
+      description: Phiên bản sản phẩm sang `PREVIEW` hoặc `STABLE` (FR-20-060).
+      properties:
+        releaseVersion:
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+          description: Phiên bản theo SemVer.
+        status:
+          $ref: '#/components/schemas/ReleasePublishStatus'
+        channel:
+          $ref: '#/components/schemas/ReleaseChannel'
+        breakingChange:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        releaseNotesUrl:
+          type: string
+          format: uri
+      required:
+      - releaseVersion
+      - status
+      - channel
+      - breakingChange
+      - publishedAt
+    ScaleProfile:
+      type: string
+      enum:
+      - QM-VUA
+      - QM-NHO
+      - QM-LON
+      - QM-CHUNG
+      description: Hồ sơ quy mô.
+    StepCode:
+      type: string
+      enum:
+      - S01_RECORD
+      - S02_CONFIG_REPO
+      - S03_REALM
+      - S04_SECRETS
+      - S05_BUCKETS
+      - S06_EVENTING
+      - S07_DATABASE
+      - S08_OBSERVABILITY
+      - S09_GATEWAY
+      - S10_INTEGRATION
+      - S11_SEED_RDM
+      - S12_SEED_MDM
+      - S13_ORG_SEED
+      - S14_KPI
+      - S15_MODULES
+      - S16_SMOKE
+      - S17_ACTIVATE
+      description: Mã bước saga khởi tạo.
+    TenantActivatedData:
+      type: object
+      description: Tenant `ACTIVE` (FR-20-013).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        tenantId:
+          type: string
+          format: uuid
+        activatedAt:
+          type: string
+          format: date-time
+        runId:
+          type: string
+          format: uuid
+        isolationMode:
+          $ref: '#/components/schemas/IsolationMode'
+        provisionMinutes:
+          type: number
+      required:
+      - tenantCode
+      - tenantId
+      - activatedAt
+    TenantCreatedData:
+      type: object
+      description: Tenant khai báo xong, saga bắt đầu (FR-20-008).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        tenantId:
+          type: string
+          format: uuid
+        isolationMode:
+          $ref: '#/components/schemas/IsolationMode'
+        scaleProfile:
+          $ref: '#/components/schemas/ScaleProfile'
+        deploymentProfile:
+          $ref: '#/components/schemas/DeploymentProfile'
+        templateCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        templateVersion:
+          type: integer
+        runId:
+          type: string
+          format: uuid
+        modules:
+          type: array
+          items:
+            type: string
+            pattern: ^PH-[0-9]{2}$
+            description: Mã phân hệ dạng `PH-nn`.
+        apiHost:
+          type: string
+        apiPrefix:
+          type: string
+        realm:
+          type: string
+        kafkaPrefix:
+          type: string
+        quotas:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaPair'
+      required:
+      - tenantCode
+      - tenantId
+      - isolationMode
+      - runId
+      - modules
+    TenantRedirectChangedIn:
+      type: object
+      description: Chuyển tiếp lượt gọi bật hoặc tắt (EVT-03-10).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        fromPrefix:
+          type: string
+        toTenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        enabled:
+          type: boolean
+        changedAt:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - enabled
+    TenantStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - PROVISIONING
+      - SUSPENDED
+      - MERGING
+      - MERGED
+      - DECOMMISSIONED
+      - FAILED
+      description: Trạng thái tenant (DD-01).
+    TenantStatusChangedData:
+      type: object
+      description: Mọi đổi trạng thái tenant (FR-20-038…044, 051, 052).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        fromStatus:
+          $ref: '#/components/schemas/TenantStatus'
+        toStatus:
+          $ref: '#/components/schemas/TenantStatus'
+        requestId:
+          type: string
+          format: uuid
+        effectiveAt:
+          type: string
+          format: date-time
+        readOnly:
+          type: boolean
+        essentialApisAllowed:
+          type: boolean
+        mergedInto:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+      required:
+      - tenantCode
+      - fromStatus
+      - toStatus
+      - effectiveAt
+    TenantUpgradeStatus:
+      type: string
+      enum:
+      - DONE
+      - PENDING
+      - IN_WINDOW
+      - UPGRADING
+      - VERIFYING
+      - FAILED
+      - ROLLED_BACK
+      - SKIPPED
+      description: Trạng thái nâng cấp một tenant.
+    UpgradeChangedData:
+      type: object
+      description: Nâng cấp của một tenant đổi trạng thái (FR-20-061, 062).
+      properties:
+        tenantCode:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Mã tenant dạng `T` và hai chữ số.
+        planId:
+          type: string
+          format: uuid
+        releaseVersion:
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+          description: Phiên bản theo SemVer.
+        fromStatus:
+          $ref: '#/components/schemas/TenantUpgradeStatus'
+        toStatus:
+          $ref: '#/components/schemas/TenantUpgradeStatus'
+        waveNo:
+          type: integer
+        errorCode:
+          type: string
+          pattern: ^ERR-20-[0-9]{3}$
+        attempt:
+          type: integer
+        at:
+          type: string
+          format: date-time
+      required:
+      - tenantCode
+      - planId
+      - releaseVersion
+      - toStatus
+      - at

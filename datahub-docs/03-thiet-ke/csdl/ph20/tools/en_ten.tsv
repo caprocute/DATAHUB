@@ -1,0 +1,37 @@
+EN-20-01	Tenant (DD-01)	`tenant`
+EN-20-02	Tổ chức (DD-02)	`organization`
+EN-20-03	Đầu mối tenant	`tenant_contact`
+EN-20-04	Hợp đồng dịch vụ	`tenant_contract`
+EN-20-05	Cấu hình nền tảng của tenant	`tenant_platform_config`
+EN-20-06	Cài đặt tỉnh	`tenant_settings`
+EN-20-07	Phiên bản cấu hình (bản chiếu commit Git)	`tenant_config_version`
+EN-20-08	Lệch cấu hình	`config_drift`
+EN-20-09	Mẫu khởi tạo	`provisioning_template`
+EN-20-10	Lần chạy saga	`provisioning_run`
+EN-20-11	Bước saga	`provisioning_step`
+EN-20-12	Kết quả kiểm tra khói	`smoke_test_result`
+EN-20-13	Hạn mức hợp đồng	`tenant_quota`
+EN-20-14	Đề nghị đổi hạn mức	`quota_change_request`
+EN-20-15	Ghi đè hạn mức tạm thời	`quota_override`
+EN-20-16	Ảnh chụp sử dụng tài nguyên	`usage_snapshot` (phân vùng tháng)
+EN-20-17	Cảnh báo hạn mức	`quota_alert`
+EN-20-18	Phân hệ của nền tảng	`platform_module` (dữ liệu `PLATFORM`)
+EN-20-19	Phụ thuộc phân hệ	`module_dependency`
+EN-20-20	Phân hệ theo tenant	`tenant_module`
+EN-20-21	Cờ tính năng theo tenant	`tenant_feature_flag`
+EN-20-22	Đề nghị vòng đời có duyệt	`lifecycle_request`
+EN-20-23	Sự kiện vòng đời (lịch sử trạng thái)	`tenant_status_history`
+EN-20-24	Gói bàn giao dữ liệu	`data_export_package`, `data_export_item`
+EN-20-25	Kế hoạch sáp nhập	`merge_plan`
+EN-20-26	Ánh xạ sáp nhập	`merge_mapping`
+EN-20-27	Lần chuyển theo phân hệ	`merge_participant_run`
+EN-20-28	Xung đột sáp nhập	`merge_conflict`
+EN-20-29	Chính sách tiếp nhận liên tenant	`cross_tenant_policy`
+EN-20-30	Lô nhập tổ chức	`org_import_job`, `org_import_row`
+EN-20-31	Phiên bản sản phẩm	`product_release`, `release_component`
+EN-20-32	Đăng ký kênh của tenant	`tenant_release_subscription`
+EN-20-33	Cửa sổ bảo trì	`maintenance_window`
+EN-20-34	Kế hoạch nâng cấp và sóng	`upgrade_plan`, `upgrade_wave`
+EN-20-35	Nâng cấp theo tenant	`tenant_upgrade`
+EN-20-36	Lần kiểm thử rò rỉ chéo	`leak_test_run`
+EN-20-37	Báo cáo sử dụng	`usage_report`
