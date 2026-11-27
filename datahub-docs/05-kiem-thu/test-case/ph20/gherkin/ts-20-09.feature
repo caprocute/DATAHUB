@@ -33,7 +33,7 @@ Tính năng: TS-20-09 · Cấu hình nền tảng của tenant và ghi vào kho 
     Và bật lại `git-sim`, quan sát outbox thử lại
     Và chèn commit khác vào `tenants/T90/` rồi lưu cấu hình
     Và `argo-sim` trả `Degraded` hơn 10 phút
-    Thì bước 1 `502` `ERR-20-024`; giao dịch nghiệp vụ đã lưu, `syncStatus = PENDING`, UI-20-17 hiện "chờ ghi Git". Bước 2 outbox thử lại và `APPLIED`, sự kiện EVT-20-09 phát một lần. Bước 3 hệ thống kéo lại, sinh lại tệp từ CSDL, thử tối đa 3 lần, kết quả đúng. Bước 4 `syncStatus = SYNC_FAILED`, `ERR-20-109` ("Argo CD không áp được cấu hình ...") ở nhật ký, cảnh báo PO.
+    Thì bước 1 `502` `ERR-20-024`; giao dịch nghiệp vụ đã lưu, `syncStatus = PENDING`, UI-20-17 hiện "chờ ghi Git". Bước 2 outbox thử lại và `APPLIED`, sự kiện EVT-20-09 phát một lần. Bước 3 hệ thống kéo lại, sinh lại tệp từ CSDL, thử tối đa 3 lần, kết quả đúng. Bước 4 `syncStatus = SYNC_FAILED`, `ERR-20-109` ("Argo CD không áp được cấu hình 8: kho Git từ chối kết nối.") ở nhật ký, cảnh báo PO.
 
   @TC-20-044 @P1 @Bảo @mật
   Kịch bản: TC-20-044 Không lưu bí mật trong CSDL hay kho Git

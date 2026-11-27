@@ -33,7 +33,7 @@ Tính năng: TS-20-32 · Quản lý phiên bản sản phẩm và kênh phát h�
     Khi `POST P/releases/2.4.1:preview` kèm `If-Match`
     Và tiến đồng hồ 14 ngày; `POST P/releases/2.4.1:promote` kèm `If-Match`
     Và `GET P/releases/2.4.1`
-    Thì bước 1 `200`, `PREVIEW`, EVT-20-14. Bước 2 `200`, `STABLE`, EVT-20-14 thứ hai. Bước 3 trạng thái `STABLE`, mốc `promotedAt`.
+    Thì bước 1 `200`, `PREVIEW`, EVT-20-14. Bước 2 `200`, `STABLE`, EVT-20-14 thứ hai. Bước 3 trạng thái `STABLE`, mốc `stableAt`.
 
   @TC-20-155 @P1 @Âm
   Kịch bản: TC-20-155 Promote khi chưa đủ 14 ngày, có sự cố mức 1, sai trạng thái

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH20
 ten: Thiết kế giao diện lập trình Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ gọi PH-20, kỹ sư console quản trị, kiểm thử viên, hội đồng thẩm định
@@ -136,7 +136,7 @@ Scope PH-20 dùng khi gọi ra: `iam:realm-provision` (PH-12), `obs:tenant-provi
 |---|---|---|
 | Tenant từ token | Nhóm `/api/tenant/v1` và tổ chức nội bộ lấy tenant từ claim `tenant` hoặc thông tin xác thực máy; thân yêu cầu có `tenantCode` khác tenant của token bị bỏ qua và ghi cảnh báo | Không có (bỏ qua) |
 | Đối tượng của tenant khác | Đối tượng không thuộc tenant của người gọi trả `404`, không phân biệt với đối tượng không tồn tại | ERR-20-002 |
-| Vai trò sai nhóm | TA, TO… gọi `/api/platform/v1`, hoặc PA gọi `/api/tenant/v1` để ghi dữ liệu của tỉnh, bị chặn ở lớp xác thực | ERR-00-403 |
+| Vai trò sai nhóm | Token không thuộc tenant `PLATFORM` (TA, TO…) gọi `/api/platform/v1` trả `403`, vì đường dẫn nền tảng không phải tài nguyên của một tỉnh nên không có gì để che; PA gọi `/api/tenant/v1` để ghi dữ liệu của tỉnh cũng bị chặn ở lớp xác thực. Tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả `404` | ERR-00-403 (nhóm nền tảng), ERR-20-002 (tài nguyên tenant khác) |
 | Tenant đặc biệt | `PLATFORM`, `COMMON` không đổi trạng thái, không chấm dứt, không sáp nhập | ERR-20-010 |
 | Lý do và mã phiếu | Mọi thao tác ghi của PA vào tenant tỉnh có `reason` từ `20.lifecycle.reason-min-length` ký tự và `ticketRef`; ghi kiểm toán vào chuỗi của tenant bị tác động (SEC-85) | ERR-20-008 |
 | Bốn mắt | Người lập, gửi đề nghị chấm dứt, kế hoạch sáp nhập, đổi chế độ cách ly, hạ hạn mức khác người duyệt; người duyệt chấm dứt khác người xác nhận bàn giao | ERR-20-007 |
@@ -173,8 +173,8 @@ Content-Type: application/problem+json
 
 {"type": "https://datahub.example.vn/errors/ERR-20-011", "title": "ĐVHC đã có tenant", "status": 409,
  "code": "ERR-20-011", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
- "detail": "Đơn vị hành chính đã gắn với tenant T68.", "instance": "/api/platform/v1/tenants",
- "errors": [{"field": "adminUnitId", "message": "Đã có tenant dùng đơn vị hành chính này.", "code": "ERR-20-011"}]}
+ "detail": "Đơn vị hành chính Lâm Viên đã có tenant T68 đang sử dụng.", "instance": "/api/platform/v1/tenants",
+ "errors": [{"field": "adminUnitId", "message": "Đơn vị hành chính Lâm Viên đã có tenant T68 đang sử dụng.", "code": "ERR-20-011"}]}
 ```
 
 Ví dụ lỗi khai báo tenant trùng đơn vị hành chính. Ba nhóm lỗi hay gặp: `422` do quy tắc nghiệp vụ (ERR-20-008, 013, 017, 029, 030), `409` do trạng thái hoặc trùng (ERR-20-003, 006, 011, 016, 067), `503` do phụ thuộc không khả dụng (ERR-20-062). Lỗi không có mã HTTP (ERR-20-106…113, 116, 117) chỉ ghi ở bước saga, lần chạy hoặc cảnh báo, không bao giờ nằm ở phản hồi của operation.
@@ -213,7 +213,7 @@ Hợp đồng của phía bị gọi nằm ở tập API của phân hệ đó; 
 | PH-13 | API-13-072 `POST /api/platform/v1/tenants/{tenantCode}/observability:provision`; API-13-073 đóng chuỗi kiểm toán | `obs:tenant-provision` | `S08_OBSERVABILITY`, bù trừ |
 | PH-07 | API-07-073 `/api/platform/rdm/v1/tenants/{tenantId}:seed` | `platform.tenant.provision` | `S11_SEED_RDM` |
 | PH-10 | Đăng ký topic `platform.tenant.*.v1`, `platform.release.*.v1`; nghe EVT-20-01 | `event:topic-register` | `S06_EVENTING` |
-| PH-16 | API-16-030 đẩy chỉ tiêu `ph20.tenant.provision-lead-time` (KPI-12) | `kpi.ingest` | `S17_ACTIVATE` |
+| PH-16 | API-16-030 đẩy chỉ tiêu `thoi-gian-khoi-tao-tenant` (KPI-12) | `kpi.ingest` | `S17_ACTIVATE` |
 | PH-09 | FR-09-043 xóa mật mã tenant (sau bàn giao, hai người duyệt); nhận EVT-09-21 | mTLS mesh | API-20-079 chấm dứt |
 | PH-18 | `POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (giả định, Phụ lục A); `NotificationApi` gửi thư; đọc API-20-162 | mTLS mesh | API-20-098, 128, `S17_ACTIVATE` |
 | OpenBao, Ceph RGW, Git, Argo CD | API của hạ tầng (không phải API Datahub) | Tài khoản dịch vụ `svc-ph20-gitops` | `S02`, `S04`, `S05`, `S07`, API-20-040 |
@@ -261,7 +261,7 @@ Bảng tổng hợp sinh từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph20.yaml)
 | API-20-002 | POST | `/tenants` | 001 | provision | I | 201 |
 | API-20-003 | GET | `/tenants/{tenantCode}` | 003 | read | - | 200 |
 | API-20-004 | PATCH | `/tenants/{tenantCode}` | 004 | admin | M | 200 |
-| API-20-005 | POST | `/tenants:check-readiness` | 007 | provision | - | 200 |
+| API-20-005 | POST | `/tenants:check-readiness` | 001,007 | provision | - | 200 |
 | API-20-006 | POST | `/tenants/{tenantCode}:check-readiness` | 007 | provision | - | 200 |
 
 : Các API nhóm Hồ sơ tenant
@@ -413,7 +413,7 @@ Bảng tổng hợp sinh từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph20.yaml)
 | API-20-082 | GET | `/export-packages/{packageId}` | 041 | read | - | 200 |
 | API-20-083 | POST | `/export-packages/{packageId}:issue-link` | 041 | lifecycle | I | 200 |
 | API-20-084 | POST | `/export-packages/{packageId}:confirm-delivery` | 041 | lifecycle | I | 200 |
-| API-20-085 | GET | `/tenants/{tenantCode}/status-history` | 043 | read | - | 200 |
+| API-20-085 | GET | `/tenants/{tenantCode}/status-history` | 043,044 | read | - | 200 |
 
 : Các API nhóm Vòng đời tenant
 
@@ -555,7 +555,7 @@ Bảng tổng hợp sinh từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph20.yaml)
 |---|---|---|---|---|---|---|
 | API-20-162 | GET | `/tenants` | 065 | scope tenant:registry-read | - | 200 |
 | API-20-163 | GET | `/tenants/{tenantCode}` | 037,065,066 | scope tenant:registry-read | - | 200 |
-| API-20-164 | GET | `/tenants/{tenantCode}/enforcement` | 027,051,066 | scope tenant:registry-read | - | 200 |
+| API-20-164 | GET | `/tenants/{tenantCode}/enforcement` | 026,027,051,066 | scope tenant:registry-read | - | 200 |
 | API-20-165 | GET | `/tenants/{tenantCode}/cross-tenant-policy` | 023 | scope tenant:registry-read | - | 200 |
 
 : Các API nhóm Registry tenant
@@ -566,8 +566,8 @@ Bảng tổng hợp sinh từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph20.yaml)
 
 | Mã | PT | Đường dẫn | FR | Quyền | Khóa | HTTP |
 |---|---|---|---|---|---|---|
-| API-20-166 | POST | `/provisioning-runs/{runId}/steps/{stepCode}:report` | 008 | scope tenant:provision-report | I | 200 |
-| API-20-167 | POST | `/merge-plans/{mergePlanId}/participants/{module}:report` | 048 | scope tenant:provision-report | I | 200 |
+| API-20-166 | POST | `/provisioning-runs/{runId}/steps/{stepCode}:report` | 008,034 | scope tenant:provision-report | I | 200 |
+| API-20-167 | POST | `/merge-plans/{mergePlanId}/participants/{module}:report` | 047,048 | scope tenant:provision-report | I | 200 |
 | API-20-168 | POST | `/export-packages/{packageId}/items/{module}:report` | 041 | scope tenant:provision-report | I | 200 |
 
 : Các API nhóm Báo tiến độ
@@ -697,7 +697,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Quyền.** `PERM-20-provision`.
 
-**FR hiện thực.** FR-20-007.
+**FR hiện thực.** FR-20-001, FR-20-007.
 
 **Tham số.** Không.
 
@@ -707,7 +707,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Phản hồi thành công.** `200` thành công, `ReadinessResult`; trường bắt buộc: `ready`, `checkedAt`, `items`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `422`, `503`; mã lỗi của thao tác: ERR-20-004, ERR-20-013, ERR-20-014, ERR-20-017, ERR-20-062 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-20-003, ERR-20-004, ERR-20-011, ERR-20-012, ERR-20-013, ERR-20-014, ERR-20-015, ERR-20-017, ERR-20-021, ERR-20-062 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`.
 :::
@@ -2633,7 +2633,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Quyền.** `PERM-20-read`.
 
-**FR hiện thực.** FR-20-043.
+**FR hiện thực.** FR-20-043, FR-20-044.
 
 **Tham số.** `tenantCode` (path, string, bắt buộc); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `type` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
 
@@ -2643,7 +2643,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Phản hồi thành công.** `200` thành công, `StatusHistoryPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-20-002, ERR-20-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `503`; mã lỗi của thao tác: ERR-20-002, ERR-20-004, ERR-20-062 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lịch sử trạng thái kèm quyết định, nguyên nhân và trạng thái thông báo cho đầu mối (FR-20-044).
 :::
@@ -3877,7 +3877,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `412`, `422`, `428`; mã lỗi của thao tác: ERR-20-001, ERR-20-004, ERR-20-005, ERR-20-023, ERR-20-115, ERR-00-428 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Trong giới hạn nền tảng (`sessionIdleMinutes` 5…15, `passwordMinLength` 14…64, vai trò `ROLE-TENANT_ADMIN` luôn bắt buộc MFA) trả ERR-20-023 khi vượt. Phát EVT-20-09.
+**Ghi chú.** Trong giới hạn nền tảng (`sessionIdleMinutes` 5…15, `passwordMinLength` 14…64, vai trò `ROLE-TENANT_ADMIN` luôn bắt buộc MFA) trả ERR-20-023 khi vượt. Trường `maintenanceWindowPref` nằm trong bộ cài đặt, dài 2…6 giờ (ERR-20-059), cùng giá trị với API-20-160. Phát EVT-20-09.
 :::
 
 #### API-20-137 · Chính sách tiếp nhận liên tenant
@@ -4457,7 +4457,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `412`, `422`, `428`; mã lỗi của thao tác: ERR-20-001, ERR-20-004, ERR-20-005, ERR-20-023, ERR-20-055, ERR-20-056, ERR-20-059, ERR-20-115, ERR-00-428 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Cửa sổ dài 2 đến 6 giờ theo múi giờ `Asia/Ho_Chi_Minh` (ERR-20-059); kế hoạch nâng cấp chỉ xếp tenant vào cửa sổ này.
+**Ghi chú.** Cửa sổ dài 2 đến 6 giờ theo múi giờ `Asia/Ho_Chi_Minh` (ERR-20-059); kế hoạch nâng cấp chỉ xếp tenant vào cửa sổ này. Phân vai: đây là nơi TA đặt riêng cửa sổ ưa thích của tỉnh; API-20-136 lưu trọn bộ cài đặt nên mang cùng trường `maintenanceWindowPref` và áp cùng kiểm tra; lịch cụ thể của từng kế hoạch nâng cấp do PA đặt ở API-20-121 và không đổi cửa sổ ưa thích.
 :::
 
 #### API-20-161 · Nhật ký kiểm toán PH-20 của tỉnh
@@ -4543,7 +4543,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Quyền.** Scope tenant:registry-read.
 
-**FR hiện thực.** FR-20-027, FR-20-051, FR-20-066.
+**FR hiện thực.** FR-20-026, FR-20-027, FR-20-051, FR-20-066.
 
 **Tham số.** `tenantCode` (path, string, bắt buộc).
 
@@ -4593,7 +4593,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Quyền.** Scope tenant:provision-report.
 
-**FR hiện thực.** FR-20-008.
+**FR hiện thực.** FR-20-008, FR-20-034.
 
 **Tham số.** `runId` (path, string, bắt buộc); `stepCode` (path, StepCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
 
@@ -4617,7 +4617,7 @@ Chương này sinh tự động từ [`ph20/openapi-ph20.yaml`](ph20/openapi-ph2
 
 **Quyền.** Scope tenant:provision-report.
 
-**FR hiện thực.** FR-20-048.
+**FR hiện thực.** FR-20-047, FR-20-048.
 
 **Tham số.** `mergePlanId` (path, string, bắt buộc); `module` (path, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
 
@@ -4813,7 +4813,7 @@ Nguồn chuẩn là FRS D02-03-PH20 mục 9.1. Cột "HTTP" là mã trả ở ph
 |---|---|---|---|---|
 | ERR-20-001 | 403 | Tenant tạm ngừng | Data plane, control plane khi `SUSPENDED` (FR-038, 066) | 136, 138, 144, 146…150, 152, 153, 155, 158, 160 |
 | ERR-20-002 | 404 | Không tìm thấy | Mọi FR tra theo mã | 003, 004, 006…023, 027…032, 037…055, 057…062, 064…072, 074…085, 088…108, 111…128, 134, 145…149, 151, 152, 154, 155, 158, 162…171 |
-| ERR-20-003 | 409 | Trùng mã | Tạo tenant, mẫu, tổ chức, phiên bản | 002, 026, 028, 030…032, 036…038, 095, 096, 102, 103, 110, 112, 115, 116, 144, 146 |
+| ERR-20-003 | 409 | Trùng mã | Tạo tenant, mẫu, tổ chức, phiên bản | 002, 005, 026, 028, 030…032, 036…038, 095, 096, 102, 103, 110, 112, 115, 116, 144, 146 |
 | ERR-20-004 | 400 | Dữ liệu sai định dạng | Mọi FR có đầu vào | 001…005, 008, 009, 011…013, 017…021, 023…026, 028…030, 032…038, 040…044, 046, 047, 049…061, 063, 065…073, 076…081, 083…087, 089, 091…094, 096…098, 100…104, 106…110, 112, 115…118, 120, 122, 124…133, 136, 138…140, 143, 144, 146…150, 152…154, 156…158, 160…162, 166…169, 171 |
 | ERR-20-005 | 412 | Phiên bản lệch (`If-Match`) | Mọi thao tác sửa | 004, 009, 012, 017…021, 023, 030…032, 040, 043, 049, 052, 053, 070, 075…079, 089…093, 096, 098, 102, 104, 106…108, 112…117, 120…125, 136, 138, 146…149, 152, 160 |
 | ERR-20-006 | 409 | Trạng thái không cho phép | Mọi máy trạng thái | 004, 013, 017…023, 026, 028, 030…034, 036…038, 043, 045, 046, 050, 052…055, 059, 065…068, 071, 075…080, 083, 084, 090…093, 095, 097, 098, 100, 102…104, 106…108, 110, 112…116, 121…125, 127, 128, 147…150, 152, 153, 155, 158 |
@@ -4821,17 +4821,17 @@ Nguồn chuẩn là FRS D02-03-PH20 mục 9.1. Cột "HTTP" là mã trả ở ph
 | ERR-20-008 | 422 | Thiếu lý do, phiếu | Mọi thao tác thay đổi tenant tỉnh | 004, 009, 012, 019…021, 040, 043, 045, 046, 049, 050, 054, 065…068, 070, 071, 079, 098, 116 |
 | ERR-20-009 | 409 | Khóa chống lặp dùng cho yêu cầu khác | Mọi `POST` có `Idempotency-Key` | 002, 008, 011, 013, 017…023, 026, 028, 031, 032, 034, 036…038, 043, 045…047, 050, 052…055, 059, 060, 065…068, 071, 075…080, 083, 084, 086, 090…093, 097, 098, 100, 102…104, 106…108, 110, 113…116, 118, 121…125, 127, 128, 132, 144, 147…150, 153, 155, 158 |
 | ERR-20-010 | 403 | Tenant đặc biệt | FR-006 | 004, 008, 009, 011…013, 022, 023, 040, 043, 046, 047, 049, 050, 054, 055, 065…068, 070, 071, 080, 117 |
-| ERR-20-011 | 409 | ĐVHC đã có tenant | FR-001, 007 | 002 |
-| ERR-20-012 | 422 | ĐVHC không hợp lệ | FR-001, 053 | 002 |
+| ERR-20-011 | 409 | ĐVHC đã có tenant | FR-001, 007 | 002, 005 |
+| ERR-20-012 | 422 | ĐVHC không hợp lệ | FR-001, 053 | 002, 005 |
 | ERR-20-013 | 422 | Hết sức chứa nền tảng | FR-007 | 005, 006 |
 | ERR-20-014 | 422 | Thiếu tài nguyên cụm | FR-007 | 005, 006 |
-| ERR-20-015 | 422 | Mẫu không dùng được | FR-007, 015 | 002 |
+| ERR-20-015 | 422 | Mẫu không dùng được | FR-007, 015 | 002, 005 |
 | ERR-20-016 | 409 | Đang có lần chạy | FR-008, 016 | 013, 022 |
 | ERR-20-017 | 422 | Kiểm tra sẵn sàng chưa đạt | FR-007, 008 | 002, 005, 006, 013 |
 | ERR-20-018 | 409 | Không thử lại được | FR-010 | 017…019 |
 | ERR-20-019 | 409 | Không bù trừ được | FR-011 | 020, 021 |
 | ERR-20-020 | 422 | Kiểm tra khói chưa đạt | FR-012, 013 | 023 |
-| ERR-20-021 | 422 | Thiếu đầu mối | FR-005, 013 | 002, 008, 009, 011, 012, 023 |
+| ERR-20-021 | 422 | Thiếu đầu mối | FR-005, 013 | 002, 005, 008, 009, 011, 012, 023 |
 | ERR-20-022 | 422 | Hợp đồng không hợp lệ | FR-005, 026 | 008, 009, 011, 012 |
 | ERR-20-023 | 422 | Vượt giới hạn nền tảng | FR-018 | 136, 160 |
 | ERR-20-024 | 502 | Ghi GitOps lỗi | FR-020 | 040 |
@@ -4872,7 +4872,7 @@ Nguồn chuẩn là FRS D02-03-PH20 mục 9.1. Cột "HTTP" là mã trả ở ph
 | ERR-20-059 | 422 | Cửa sổ bảo trì không hợp lệ | FR-051, 061, 064 | 047, 076, 077, 079, 106, 118, 120, 121, 160 |
 | ERR-20-060 | 422 | Tham số ngoài miền | FR-069 | Dữ liệu, data plane |
 | ERR-20-061 | 409 | Đổi kênh khi đang nâng cấp | FR-060 | 113, 114, 117 |
-| ERR-20-062 | 503 | Phụ thuộc không khả dụng | Mọi FR gọi phân hệ khác | 002, 005, 006, 013, 023, 079, 095, 104, 105, 128…130, 139, 147…150, 161 |
+| ERR-20-062 | 503 | Phụ thuộc không khả dụng | Mọi FR gọi phân hệ khác | 002, 005, 006, 013, 023, 079, 085, 095, 104, 105, 128…130, 139, 147…150, 161 |
 | ERR-20-063 | 409 | Mẫu đã phát hành | FR-015 | 026, 028, 030…032 |
 | ERR-20-064 | 422 | Cụm chưa đạt | FR-017 | 002, 036…038 |
 | ERR-20-065 | 422 | Không phải tenant kiểm thử | FR-070 | 132 |
@@ -5034,7 +5034,7 @@ Nguyên tắc: người gọi không thể biết đối tượng của tenant k
 | L-01 | TA của T68 gọi `GET /api/tenant/v1/organizations/{orgCode}` với mã tổ chức chỉ có ở T91 | `404` ERR-20-002 | Truy vấn theo `tenant_id` của token, RLS lọc dòng của T91 |
 | L-02 | TA của T68 gọi `PUT /api/tenant/v1/organizations/{orgCode}/data-owner` với mã của T91 | `404` ERR-20-002 | Không phân biệt không tồn tại và thuộc tenant khác, thân giống nhau |
 | L-03 | TA của T68 gọi `GET /api/tenant/v1/organization-imports/{importId}` của lô nhập T91 | `404` ERR-20-002 | Lô nhập có `tenant_id`, RLS chuẩn |
-| L-04 | TA của T68 gọi `GET /api/platform/v1/tenants/T91` | `403` ERR-00-403 | Vai trò sai nhóm, bị chặn ở lớp xác thực trước khi tới dữ liệu; không lộ sự tồn tại của T91 |
+| L-04 | TA của T68 gọi `GET /api/platform/v1/tenants/T91` | `403` ERR-00-403 | Token không thuộc `PLATFORM` gọi nhóm nền tảng: `403` ở lớp xác thực trước khi tới dữ liệu; đường dẫn nền tảng không phải tài nguyên tỉnh nên không lộ sự tồn tại của T91 |
 | L-05 | TA của T68 gửi `tenantCode = T91` trong thân `PUT /api/tenant/v1/settings` | Ghi cài đặt của T68, bỏ qua `tenantCode` lạ | Tenant luôn lấy từ token |
 | L-06 | Client mang scope `tenant:org-read` của PH-01 ở ngữ cảnh T68 gọi `GET /internal/tenant/v1/organizations/{orgCode}` mã của T91 | `404` ERR-20-002 | Tổ chức đọc theo tenant ngữ cảnh của thông tin xác thực máy |
 | L-07 | Client mang scope `tenant:org-read` gọi `POST /internal/tenant/v1/organizations:lookup` có lẫn mã T91 | `200`, mã T91 nằm ở `notFound` | Tra hàng loạt không trả lỗi từng dòng, chỉ liệt kê mã không tìm thấy |
@@ -5052,7 +5052,7 @@ HTTP/1.1 404 Not Found
 Content-Type: application/problem+json
 
 {"type": "https://datahub.example.vn/errors/ERR-20-002", "title": "Không tìm thấy", "status": 404, "code": "ERR-20-002",
- "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "detail": "Không tìm thấy tổ chức.", "instance": "/api/tenant/v1/organizations/SO-CHI-CO-O-T91"}
+ "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "detail": "Không tìm thấy tổ chức SO-CHI-CO-O-T91 trong phạm vi được xem.", "instance": "/api/tenant/v1/organizations/SO-CHI-CO-O-T91"}
 ```
 
 Ví dụ ca L-01: thân lỗi không chứa mã tenant lạ và không khác thân của mã không tồn tại. FR-20-070 điều phối kiểm thử rò rỉ hằng đêm giữa hai tenant kiểm thử T90 và T91, phủ 100% operation của ba nhóm; API-20-132, 133, 134 chạy và đọc kết quả, phát hiện rò rỉ ghi ERR-20-111 và cảnh báo PH-13. Kiểm thử không chạy ở `PROD` (Q20-18) và chỉ giữa tenant kiểm thử (ERR-20-065). Ca L-01…L-10 là ca hợp đồng bắt buộc của D05-02-PH20.
@@ -5063,7 +5063,7 @@ Mỗi FR-20-001…070 phải có ít nhất một API hoặc lý do không có A
 
 | FR | Tên chức năng | API-20- |
 |---|---|---|
-| FR-20-001 | Khai báo tenant mới | 002 |
+| FR-20-001 | Khai báo tenant mới | 002, 005 |
 | FR-20-002 | Liệt kê, tìm, lọc tenant toàn nền tảng | 001 |
 | FR-20-003 | Xem chi tiết tenant | 003 |
 | FR-20-004 | Sửa hồ sơ hành chính của tenant | 004 |
@@ -5088,7 +5088,7 @@ Mỗi FR-20-001…070 phải có ít nhất một API hoặc lý do không có A
 | FR-20-023 | Chính sách tiếp nhận truy cập liên tenant của tỉnh | 137, 138, 165 |
 | FR-20-024 | Xem nhật ký truy cập liên tenant vào tỉnh | 139 |
 | FR-20-025 | Chuyển chế độ cách ly của tenant | 047, 076, 077, 079 |
-| FR-20-026 | Đặt hạn mức hợp đồng của tenant | 048, 049 |
+| FR-20-026 | Đặt hạn mức hợp đồng của tenant | 048, 049, 164 |
 | FR-20-027 | Đổi hạn mức có duyệt và đẩy xuống nơi thực thi | 050…053, 164 |
 | FR-20-028 | Thu thập sử dụng tài nguyên theo tenant | Không có API riêng: tác vụ nền thu số liệu, kết quả đọc ở API-20-056, 057, 140 |
 | FR-20-029 | Cảnh báo ngưỡng hạn mức 80% và 100% | 058, 059 |
@@ -5096,7 +5096,7 @@ Mỗi FR-20-001…070 phải có ít nhất một API hoặc lý do không có A
 | FR-20-031 | Báo cáo sử dụng tài nguyên theo kỳ, xuất tệp | 060…062 |
 | FR-20-032 | Ghi đè hạn mức tạm thời có thời hạn | 048, 054, 055 |
 | FR-20-033 | Danh mục phân hệ của nền tảng và ma trận phụ thuộc | 063 |
-| FR-20-034 | Bật phân hệ cho tenant | 064, 065 |
+| FR-20-034 | Bật phân hệ cho tenant | 064, 065, 166 |
 | FR-20-035 | Tắt, tạm ngừng phân hệ cho tenant | 064, 066…068 |
 | FR-20-036 | Cờ tính năng theo tenant | 069, 070 |
 | FR-20-037 | Cung cấp trạng thái phân hệ cho menu và giao diện | 142, 163 |
@@ -5106,10 +5106,10 @@ Mỗi FR-20-001…070 phải có ít nhất một API hoặc lý do không có A
 | FR-20-041 | Xuất gói bàn giao dữ liệu tenant | 080…084, 168 |
 | FR-20-042 | Thực hiện chấm dứt tenant | 079 |
 | FR-20-043 | Lịch sử vòng đời và quyết định | 072, 074, 085 |
-| FR-20-044 | Thông báo thay đổi trạng thái tenant | Không có API riêng: trạng thái gửi thư đọc ở API-20-085 |
+| FR-20-044 | Thông báo thay đổi trạng thái tenant | 085 |
 | FR-20-045 | Lập kế hoạch sáp nhập | 086…093 |
 | FR-20-046 | Lập bảng ánh xạ sáp nhập | 094…096 |
-| FR-20-047 | Chạy thử sáp nhập | 097 |
+| FR-20-047 | Chạy thử sáp nhập | 097, 167 |
 | FR-20-048 | Điều phối chuyển dữ liệu theo phân hệ | 088, 098…100, 167 |
 | FR-20-049 | Xử lý xung đột sáp nhập | 101…103 |
 | FR-20-050 | Chuyển định danh và cấp song song thông tin xác thực HTTT | 104, 105 |
@@ -5136,7 +5136,7 @@ Mỗi FR-20-001…070 phải có ít nhất một API hoặc lý do không có A
 
 : Truy vết FR sang API
 
-FR không có API riêng: FR-20-006, FR-20-028, FR-20-044 (lý do ở cột cuối bảng). Mọi API-20-001…171 đều có ít nhất một FR hiện thực.
+FR không có API riêng: FR-20-006, FR-20-028 (lý do ở cột cuối bảng). Mọi API-20-001…171 đều có ít nhất một FR hiện thực.
 
 ## 10. Câu hỏi mở
 
@@ -5163,14 +5163,13 @@ Tập API không sửa tài liệu khác; các lệch và đề nghị dưới �
 | FRS D02-03-PH20, D02-08 | API-20-137, API-20-139 ghi quyền "SO, AU đọc" và API-20-161 ghi "TA, AU" nhưng không có `PERM-20-*` tương ứng; đề nghị thêm hai quyền đọc mới (một cho SO, AU, TA đọc truy cập liên tenant; một cho TA, AU đọc nhật ký kiểm toán của tỉnh), hoặc xác nhận dùng vai trò trực tiếp |
 | FRS D02-03-PH20 | API-20-162: `?status=ACTIVE` ghi ở FRS; API còn nhận `isolationMode`, `module`, `updatedSince`, `size` tối đa 1.000 (thêm để đồng bộ tăng dần, tương thích ngược) |
 | D02-08 | Thêm mười quyền `PERM-20-provision`, `PERM-20-lifecycle`, `PERM-20-approve`, `PERM-20-quota`, `PERM-20-merge`, `PERM-20-release`, `PERM-20-settings`, `PERM-20-org`, `PERM-20-org-read`, `PERM-20-usage-read`; scope `tenant:registry-read`, `tenant:org-read`, `tenant:provision-report` (các mã PERM-20 mới này chưa có ở D02-08 nên `kiem_tra_ma.py` báo thiếu cho tới khi D02-08 cập nhật) |
-| CSDL D03-03-PH20 | `tenant_contact.contact_type` (`PRIMARY`, `TECHNICAL`, `SECURITY`, `BILLING`) lệch FRS 4.2 và API (`LEADER`, `TENANT_ADMIN`, `TECHNICAL`, `SECURITY`); `provisioning_template.status` dùng `ACTIVE` còn FRS, API dùng `PUBLISHED`; đề nghị đổi DDL theo FRS |
 | CSDL D03-03-PH20 | Chưa có bảng cho: cụm đích `DEDICATED_CLUSTER` (`clusterCode`, `state`, API-20-035…038), đợt khởi tạo bổ sung (`planId`, API-20-033, 034), đề xuất đồng bộ tổ chức (`proposalId`, API-20-157, 158), thông báo phát hành (`announcementId`, API-20-128), lần đối chiếu cấu hình (`reconcileId`, API-20-045); đề nghị thêm `dedicated_cluster`, `supplement_plan`, `org_sync_proposal`, `release_announcement` hoặc ghi rõ lưu ở bảng nào |
 | CSDL D03-03-PH20 | `merge_plan.plan_code` là `mergePlanId` ở API (dạng `SN-2026-001`); `usage_report.status` `GENERATING` được API giữ; `tenant_config_version.config_scope` giữ năm giá trị như API `ConfigScope` |
 | D03-06-PH20 và D05-02-PH20 | Màn hình gọi đúng mã API-20 ở chương 3; ca L-01…L-10 ở chương 8 là ca hợp đồng bắt buộc của test case; ca "Idempotency-Key lặp khác thân" và "If-Match thiếu, lệch" cho mọi operation có khóa |
-| PH-18 | Chốt `POST /api/ops/v1/merge-transfers` (một phân hệ của một kế hoạch, kèm `Idempotency-Key = {mergePlanId}:{module}`) và `NotificationApi`; gọi API-20-167 báo tiến độ, API-20-162 với `?status=ACTIVE` cho tác vụ nền; đăng ký 28 khóa `20.*`; PH-20 chỉ đọc giá trị hiệu lực ở API-20-131 |
+| PH-18 | Chốt `POST /api/ops/v1/merge-transfers` (một phân hệ của một kế hoạch, kèm `Idempotency-Key = {mergePlanId}:{module}`) và `NotificationApi`; gọi API-20-167 báo tiến độ, API-20-162 với `?status=ACTIVE` cho tác vụ nền; đăng ký 29 khóa `20.*`; PH-20 chỉ đọc giá trị hiệu lực ở API-20-131 |
 | PH-19, PH-10 | PH-19 đổi tên topic nghe sang `platform.tenant.module-enabled.v1`; PH-10 đổi tên topic trong kiểm thử `dh.platform.tenant.created.v1` sang `platform.tenant.created.v1` và nhận phần báo tiến độ qua API-20-166 |
 | PH-12 | Nhận scope `iam:realm-provision` cho PH-20 (API-12-080, 084, 085, 045, 046); đọc API-20-165 khi cấp truy cập liên tenant; nghe EVT-20-04, EVT-20-11 |
-| PH-13, PH-03, PH-07, PH-16, PH-09 | PH-13: scope `obs:tenant-provision`, nhận EVT-20-12, nhãn `tenant` cho `dh_tenant_*`; PH-03: đọc API-20-164, phát EVT-03-10, EVT-03-11, thực thi ERR-20-001 và `Deprecation`, `Sunset`; PH-07: scope `platform.tenant.provision` cho API-07-073; PH-16: nhận API-16-030 với `metricCode` `ph20.tenant.provision-lead-time`; PH-09: FR-09-043 và EVT-09-21 |
+| PH-13, PH-03, PH-07, PH-16, PH-09 | PH-13: scope `obs:tenant-provision`, nhận EVT-20-12, nhãn `tenant` cho `dh_tenant_*`; PH-03: đọc API-20-164, phát EVT-03-10, EVT-03-11, thực thi ERR-20-001 và `Deprecation`, `Sunset`; PH-07: scope `platform.tenant.provision` cho API-07-073; PH-16: nhận API-16-030 với `metricCode` `thoi-gian-khoi-tao-tenant`; PH-09: FR-09-043 và EVT-09-21 |
 | D00-04 | Ghi quy ước tiêu đề CloudEvents `ce_dhtenant` cho sự kiện cấp nền tảng (`PLATFORM`) và sự kiện sáp nhập (tenant đích); ghi dải Q20-55…59 |
 
 : Đề nghị đồng bộ với tài liệu khác
@@ -5182,5 +5181,6 @@ Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 200
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167 |
 
 : Lịch sử phiên bản

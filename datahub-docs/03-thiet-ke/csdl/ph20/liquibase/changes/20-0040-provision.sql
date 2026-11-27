@@ -39,13 +39,13 @@ CREATE TABLE ph20_tenant.provisioning_run (
   CONSTRAINT fk_provisioning_run_tenant FOREIGN KEY (tenant_id) REFERENCES ph20_tenant.tenant (code),
   CONSTRAINT fk_provisioning_run_template FOREIGN KEY (template_id) REFERENCES ph20_tenant.provisioning_template (id)
 );
-CREATE UNIQUE INDEX uq_provisioning_run_active ON ph20_tenant.provisioning_run (tenant_id) WHERE status IN ('RUNNING', 'WAITING', 'COMPENSATING');
+CREATE UNIQUE INDEX uq_provisioning_run_active ON ph20_tenant.provisioning_run (tenant_id) WHERE status IN ('PENDING', 'RUNNING', 'WAITING', 'COMPENSATING');
 CREATE INDEX ix_provisioning_run_tenant_started ON ph20_tenant.provisioning_run (tenant_id, started_at DESC);
 CREATE TRIGGER tg_provisioning_run_touch BEFORE UPDATE ON ph20_tenant.provisioning_run FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CREATE TRIGGER tg_provisioning_run_immutable BEFORE UPDATE ON ph20_tenant.provisioning_run FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_immutable('run_kind');
 CREATE TRIGGER tg_provisioning_run_transition BEFORE UPDATE ON ph20_tenant.provisioning_run FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_transition('status', '{"PENDING": ["RUNNING", "CANCELLED"], "RUNNING": ["WAITING", "FAILED", "COMPENSATING", "SUCCEEDED", "CANCELLED"], "WAITING": ["RUNNING", "FAILED", "COMPENSATING"], "FAILED": ["RUNNING", "COMPENSATING", "CANCELLED"], "COMPENSATING": ["COMPENSATED", "FAILED"]}');
 CALL ph20_tenant.p_enable_rls('ph20_tenant.provisioning_run', 'CTL');
-COMMENT ON TABLE ph20_tenant.provisioning_run IS 'EN-20-10 Lần chạy saga (FR-20-008…011, 016, 017): khởi tạo ban đầu, khởi tạo bổ sung, đổi chế độ cách ly. Mỗi tenant tối đa một lần chạy đang hoạt động (RUNNING, WAITING, COMPENSATING). Saga điều phối trên PostgreSQL (ADR-200), có khóa ShedLock ở dịch vụ.';
+COMMENT ON TABLE ph20_tenant.provisioning_run IS 'EN-20-10 Lần chạy saga (FR-20-008…011, 016, 017): khởi tạo ban đầu, khởi tạo bổ sung, đổi chế độ cách ly. Mỗi tenant tối đa một lần chạy đang hoạt động (PENDING, RUNNING, WAITING, COMPENSATING). Saga điều phối trên PostgreSQL (ADR 200), có khóa ShedLock ở dịch vụ.';
 COMMENT ON COLUMN ph20_tenant.provisioning_run.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.provisioning_run.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
 COMMENT ON COLUMN ph20_tenant.provisioning_run.run_kind IS 'Loại lần chạy: `INITIAL`, `SUPPLEMENT`, `ISOLATION_CHANGE`.';

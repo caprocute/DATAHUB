@@ -41,7 +41,7 @@ Tính năng: TS-20-17 · Danh mục phân hệ, bật phân hệ và trạng th�
     Khi bật PH-17 cho `T91`, `mod-sim` báo `FAILED` kèm `errorCode`
     Và bật lại PH-17, `mod-sim` không báo; đẩy `clock-sim` quá `20.provision.step-timeout-minutes` (15 phút)
     Và bật lại PH-17, `mod-sim` báo `SUCCEEDED`
-    Thì bước 1 `ModuleState = FAILED`, `ERR-20-107` ("Bước S15_MODULES lỗi tại PH-17: ..."). Bước 2 `FAILED` với `ERR-20-106` ("Bước S15_MODULES chưa nhận báo cáo từ PH-17 sau 15 phút"). Bước 3 `ENABLED`. Phân hệ khác không bị ảnh hưởng.
+    Thì bước 1 `ModuleState = FAILED`, `ERR-20-107` ("Bước S15_MODULES lỗi tại PH-17: khởi động phân hệ thất bại."). Bước 2 `FAILED` với `ERR-20-106` ("Bước S15_MODULES chưa nhận báo cáo từ PH-17 sau 15 phút."). Bước 3 `ENABLED`. Phân hệ khác không bị ảnh hưởng.
 
   @TC-20-078 @P1 @Dương
   Kịch bản: TC-20-078 Trạng thái tenant, phân hệ và dải cảnh báo cho menu

@@ -20,7 +20,7 @@ Tính năng: TS-20-25 · Chạy thử, gửi duyệt và duyệt kế hoạch s�
     Và `POST .../:dry-run` khi đang chạy thử
     Và chạy thử khi `ops-sim` báo PH-01 lệch kiểm đếm, và khi báo `FAILED` với `errorCode` ở PH-07
     Và sửa một dòng ánh xạ sau chạy thử `PASSED`, rồi `POST .../:submit`
-    Thì bước 1 `422` `ERR-20-042`. Bước 2 `409` `ERR-20-006`. Bước 3 `dryRun.result = FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119") và `ERR-20-107`. Bước 4 `dryRun.stale = true`, `422` `ERR-20-043`.
+    Thì bước 1 `422` `ERR-20-042`. Bước 2 `409` `ERR-20-006`. Bước 3 `dryRun.result = FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119.") và `ERR-20-107`. Bước 4 `dryRun.stale = true`, `422` `ERR-20-043`.
 
   @TC-20-115 @P1 @Dương
   Kịch bản: TC-20-115 Gửi duyệt và duyệt bốn mắt kế hoạch sáp nhập

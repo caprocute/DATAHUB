@@ -27,10 +27,10 @@ Tính năng: TS-20-36 · Tra nhật ký kiểm toán và tham số 20.*
   @TC-20-183 @P1 @Dương
   Kịch bản: TC-20-183 Xem tham số 20.* với giá trị hiệu lực và nguồn
     # Truy vết: FR-20-069 · UC-20-36 · API-20-131 · BR-20-004 · UI-20-03 · `PERM-20-read`
-    Biết `U-PA1`; `ops-sim` đã đăng ký 28 khóa; `20.release.stable-soak-days` ghi đè 21 ngày.
+    Biết `U-PA1`; `ops-sim` đã đăng ký 29 khóa; `20.release.stable-soak-days` ghi đè 21 ngày.
     Khi `GET P/parameters?page=1&size=50`
     Và `GET P/parameters?q=release`
-    Thì bước 1 đủ 28 khóa, mỗi khóa có miền, mặc định, giá trị hiệu lực, nguồn. Bước 2 các khóa `20.release.*`, `stable-soak-days = 21` nguồn ghi đè, còn lại nguồn mặc định.
+    Thì bước 1 đủ 29 khóa, mỗi khóa có miền, mặc định, giá trị hiệu lực, nguồn. Bước 2 các khóa `20.release.*`, `stable-soak-days = 21` nguồn ghi đè, còn lại nguồn mặc định.
 
   @TC-20-184 @P1 @Dương @Âm
   Kịch bản: TC-20-184 Đổi tham số qua PH-18 áp trong 60 giây; ngoài miền bị từ chối

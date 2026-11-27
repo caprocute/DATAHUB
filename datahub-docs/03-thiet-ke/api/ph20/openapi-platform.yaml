@@ -2,7 +2,7 @@
 openapi: '3.1.0'
 info:
   title: Datahub · PH-20 Quản trị nền tảng
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   summary: Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).
   description: |-
     Nhóm `/api/platform/v1`: tenant, saga, hạn mức, phân hệ, vòng đời, sáp nhập, phát hành, quản trị nền tảng. Chỉ vai trò nền tảng, không mở ra cổng công khai.
@@ -540,7 +540,6 @@ paths:
                   - checkCode: CODE_UNIQUE
                     result: PASS
                     message: Mã T68 chưa dùng.
-                    errorCode: ERR-20-003
                     hint: Chọn mã khác nếu bị trùng.
                 createdAt: '2026-11-27T09:15:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -586,6 +585,7 @@ paths:
       description: Kiểm tra sẵn sàng cho hồ sơ chưa lưu, không ghi dữ liệu. Mục `BLOCKER` chưa đạt thì `ready = false`.
       x-datahub-id: API-20-005
       x-datahub-fr:
+      - FR-20-001
       - FR-20-007
       x-datahub-permission:
         permission: PERM-20-provision
@@ -652,15 +652,22 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       x-datahub-errors:
+      - ERR-20-003
       - ERR-20-004
+      - ERR-20-011
+      - ERR-20-012
       - ERR-20-013
       - ERR-20-014
+      - ERR-20-015
       - ERR-20-017
+      - ERR-20-021
       - ERR-20-062
   /api/platform/v1/tenants/{tenantCode}:check-readiness:
     post:
@@ -694,7 +701,6 @@ paths:
                 - checkCode: CODE_UNIQUE
                   result: PASS
                   message: Mã T68 chưa dùng.
-                  errorCode: ERR-20-003
                   hint: Chọn mã khác nếu bị trùng.
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -3338,7 +3344,6 @@ paths:
                 - checkCode: CODE_UNIQUE
                   result: PASS
                   message: Mã T68 chưa dùng.
-                  errorCode: ERR-20-003
                   hint: Chọn mã khác nếu bị trùng.
                 verifiedAt: '2026-11-27T09:15:00+07:00'
         '400':
@@ -7025,6 +7030,7 @@ paths:
       x-datahub-id: API-20-085
       x-datahub-fr:
       - FR-20-043
+      - FR-20-044
       x-datahub-permission:
         permission: PERM-20-read
       security:
@@ -7101,9 +7107,12 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
       x-datahub-errors:
       - ERR-20-002
       - ERR-20-004
+      - ERR-20-062
   /api/platform/v1/merge-plans:
     post:
       tags:
@@ -11354,7 +11363,7 @@ components:
             status: 400
             code: ERR-20-004
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Dữ liệu sai định dạng.
+            detail: 'tenantCode chưa hợp lệ: cần dạng T và hai chữ số.'
             instance: /api/platform/v1/tenants/T68
     Unauthorized:
       description: Chưa xác thực
@@ -11396,7 +11405,7 @@ components:
             status: 404
             code: ERR-20-002
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Không tìm thấy.
+            detail: Không tìm thấy tenant T68 trong phạm vi được xem.
             instance: /api/platform/v1/tenants/T68
     Conflict:
       description: Xung đột trạng thái hoặc dữ liệu
@@ -11410,7 +11419,7 @@ components:
             status: 409
             code: ERR-20-006
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Trạng thái không cho phép.
+            detail: Không thể khôi phục khi tenant đang ở trạng thái SUSPENDED.
             instance: /api/platform/v1/tenants/T68
     Gone:
       description: Đã không còn
@@ -11424,7 +11433,7 @@ components:
             status: 410
             code: ERR-20-039
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Gói bàn giao hết hạn.
+            detail: Gói bàn giao T68 đã hết hạn lưu. Lập gói mới.
             instance: /api/platform/v1/tenants/T68
     PreconditionFailed:
       description: Phiên bản lệch (`If-Match`)
@@ -11438,7 +11447,7 @@ components:
             status: 412
             code: ERR-20-005
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Phiên bản lệch.
+            detail: Tenant đã được người khác sửa. Tải lại để xem thay đổi.
             instance: /api/platform/v1/tenants/T68
     Unprocessable:
       description: Không xử lý được do quy tắc nghiệp vụ
@@ -11452,7 +11461,7 @@ components:
             status: 422
             code: ERR-20-008
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Thiếu lý do, phiếu.
+            detail: Thao tác trên tenant tỉnh cần lý do tối thiểu 20 ký tự và mã phiếu.
             instance: /api/platform/v1/tenants/T68
     PreconditionRequired:
       description: Thiếu `If-Match`
@@ -11480,7 +11489,7 @@ components:
             status: 502
             code: ERR-20-024
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Ghi GitOps lỗi.
+            detail: Không ghi được cấu hình vào kho GitOps. Thử lại sau, nếu lặp lại báo vận hành nền tảng.
             instance: /api/platform/v1/tenants/T68
     ServiceUnavailable:
       description: Phụ thuộc không khả dụng
@@ -11494,7 +11503,7 @@ components:
             status: 503
             code: ERR-20-062
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Phụ thuộc không khả dụng.
+            detail: Dịch vụ PH-07 tạm thời không khả dụng. Thử lại sau.
             instance: /api/platform/v1/tenants/T68
   schemas:
     AcknowledgeRequest:

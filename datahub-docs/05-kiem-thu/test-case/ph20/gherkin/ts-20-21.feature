@@ -23,7 +23,7 @@ Tính năng: TS-20-21 · Đề nghị, duyệt chấm dứt tenant và xuất g�
     Và `POST P/tenants/T92/lifecycle-requests` `TERMINATE` lần hai khi đã có đề nghị chưa kết thúc
     Và `U-PA1` `:approve` đề nghị do chính mình lập; `U-PA3` (đủ cả hai quyền) lập rồi tự duyệt
     Và `U-PA2` `:approve` khi `DRAFT`; `:submit` khi `APPROVED`
-    Thì bước 1 `422` `ERR-20-037`. Bước 2 `422` `ERR-20-038` ("Chưa hết thời gian chờ 30 ngày kể từ khi tạm ngừng (đến 14/12/2026)"). Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 `403` `ERR-20-007` kể cả người giữ cả hai quyền. Bước 6 `409` `ERR-20-006`.
+    Thì bước 1 `422` `ERR-20-037`. Bước 2 `422` `ERR-20-038` ("Chưa hết thời gian chờ 30 ngày kể từ khi tạm ngừng (đến 14/12/2026)."). Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 `403` `ERR-20-007` kể cả người giữ cả hai quyền. Bước 6 `409` `ERR-20-006`.
 
   @TC-20-097 @P1 @Dương
   Kịch bản: TC-20-097 Xuất gói bàn giao, ký bản kê, cấp liên kết, xác nhận đã bàn giao

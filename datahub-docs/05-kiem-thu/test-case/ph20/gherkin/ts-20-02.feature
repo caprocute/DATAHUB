@@ -63,11 +63,11 @@ Tính năng: TS-20-02 · Khai báo tenant mới và kiểm tra sẵn sàng
   @TC-20-011 @P1 @Âm
   Kịch bản: TC-20-011 Hết sức chứa nền tảng và thiếu tài nguyên cụm
     # Truy vết: FR-20-007 · API-20-005, 006 · BR-20-002 · ERR-20-013, ERR-20-014, ERR-20-017 · NFR-20-005
-    Biết `U-PA1`; `obs-sim` báo `EVT-13-14` cảnh báo sức chứa: nền tảng đã có 34 tenant tỉnh (trần giả định theo NFR-00-060); cụm `HT-A` thiếu 8 vCPU.
+    Biết `U-PA1`; `obs-sim` báo `EVT-13-14` cảnh báo sức chứa: nền tảng đã có 34 tenant tỉnh (trần giả định theo NFR-00-060); cụm `HT-A` thiếu 8 CPU ảo.
     Khi `POST P/tenants:check-readiness` với hồ sơ `T96`
     Và `POST P/tenants:check-readiness` với `deploymentProfile = HT-A`
     Và `POST P/tenants/T93:check-readiness` khi còn hai mục `BLOCKER`
-    Thì bước 1 `422` `ERR-20-013` ở mục `CAPACITY` và `ERR-20-017` tổng. Bước 2 `422` `ERR-20-014` ở `CLUSTER_RESOURCES` (thiếu `8 vCPU`). Bước 3 `422` `ERR-20-017` với `items[]` nêu hai mục cần xử lý. Cảnh báo sức chứa nhận từ `EVT-13-14` hiển thị ở UI-20-20.
+    Thì bước 1 `422` `ERR-20-013` ở mục `CAPACITY` và `ERR-20-017` tổng. Bước 2 `422` `ERR-20-014` ở `CLUSTER_RESOURCES` (thiếu 8 CPU ảo). Bước 3 `422` `ERR-20-017` với `items[]` nêu hai mục cần xử lý. Cảnh báo sức chứa nhận từ `EVT-13-14` hiển thị ở UI-20-20.
 
   @TC-20-012 @P2 @Âm @Chịu @lỗi
   Kịch bản: TC-20-012 Kiểm tra sẵn sàng khi phụ thuộc không khả dụng

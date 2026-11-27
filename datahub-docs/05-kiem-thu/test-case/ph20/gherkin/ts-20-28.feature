@@ -32,7 +32,7 @@ Tính năng: TS-20-28 · Chuyển định danh, cấp song song thông tin xác 
     Và `GET I/tenants/T91/enforcement` bằng `S-PH03`
     Và `mod-sim` gọi địa chỉ cũ của `T91` qua chuyển tiếp
     Và `mod-sim` báo EVT-03-10 xác nhận
-    Thì bước 1 `202`, kế hoạch `TRANSITION`, `transitionEndsAt = hiện tại + 8 tháng` (theo kế hoạch đã sửa), phát EVT-20-11 và EVT-20-04. Bước 3 nguồn `MERGED`, `mergedInto = T90`, bảng chuyển tiếp `API_CONTEXT_PATH`. Bước 4 phản hồi từ `T90` kèm `Deprecation` và `Sunset = transitionEndsAt`. Bước 5 `redirectActiveAt` được ghi. Ghi vào `T91` sau cutover bị chặn (xem TS-20-37).
+    Thì bước 1 `202`, kế hoạch `TRANSITION`, `transitionEndsAt = hiện tại + 8 tháng` (theo kế hoạch đã sửa), phát EVT-20-11 và EVT-20-04. Bước 3 nguồn `MERGED`, `mergedInto = T90`, bảng chuyển tiếp `API_CONTEXT_PATH`. Bước 4 phản hồi từ `T90` kèm `Deprecation` và `Sunset = transitionEndsAt`. Bước 5 xác nhận chuyển tiếp bật được ghi (EVT-03-10). Ghi vào `T91` sau cutover bị chặn (xem TS-20-37).
 
   @TC-20-129 @P1 @Âm
   Kịch bản: TC-20-129 Cutover sai xác nhận, ngoài cửa sổ bảo trì, còn xung đột, lệch kiểm đếm
@@ -60,4 +60,4 @@ Tính năng: TS-20-28 · Chuyển định danh, cấp song song thông tin xác 
     # Truy vết: FR-20-051 · API-20-164 · EVT-03-10 · UC-20-28
     Biết sau cutover; `mod-sim` không gửi EVT-03-10.
     Khi chờ 15 phút (đồng hồ giả lập)
-    Thì cảnh báo PO; `redirectActiveAt` để trống; cutover không bị hoàn tác.
+    Thì cảnh báo PO; chưa ghi xác nhận chuyển tiếp bật; cutover không bị hoàn tác.

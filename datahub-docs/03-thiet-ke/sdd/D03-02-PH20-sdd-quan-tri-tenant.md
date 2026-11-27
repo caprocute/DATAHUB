@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH20
 ten: Thiết kế chi tiết phần mềm phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
@@ -36,7 +36,7 @@ Tập nêu năm ADR đề xuất (200 đến 204, chưa có tệp), mười câu
 | Bước saga | 17 (`S01_RECORD` … `S17_ACTIVATE`), mỗi bước một `StepExecutor` |
 | Mã lỗi | 86 (ERR-20-001…068, ERR-20-101…118), bảng ở mục 8.5 |
 | Sự kiện phát, tiêu thụ | 16 phát (EVT-20-01…16), 6 tiêu thụ |
-| Tham số `20.*` | 28 khóa, bảng ở mục 9.1 |
+| Tham số `20.*` | 29 khóa, bảng ở mục 9.1 |
 | Chỉ tiêu thời gian | Saga ≤ 60 phút p95, registry p99 ≤ 50 ms, tạm ngừng có hiệu lực ≤ 60 giây, ≥ 34 tenant (thiết kế 40) |
 | ADR đề xuất, câu hỏi mở | 5 (200…204); 10 (Q20-20…29) |
 
@@ -93,8 +93,8 @@ Thiết kế dựa trên FRS, thiết kế CSDL, thiết kế đa tenant, kiến
 
 | Tài liệu hoặc ADR | Nội dung dùng ở tập này |
 |---|---|
-| D02-03-PH20 FRS 0.1 | 70 FR, 42 BR, 24 NFR, 28 tham số, 16 sự kiện, 86 mã lỗi, 171 API, Phụ lục A enum |
-| D03-03-PH20 CSDL 0.1 | Schema `ph20_tenant`: 45 bảng, RLS năm chế độ, bốn vai kết nối, phân vùng `usage_snapshot`, DDL chạy thử |
+| D02-03-PH20 FRS 0.2 | 70 FR, 42 BR, 24 NFR, 29 tham số, 16 sự kiện, 86 mã lỗi, 171 API, Phụ lục A enum |
+| D03-03-PH20 CSDL 0.2 | Schema `ph20_tenant`: 45 bảng, RLS năm chế độ, bốn vai kết nối, phân vùng `usage_snapshot`, DDL chạy thử |
 | D03-10 Thiết kế đa tenant | Máy trạng thái tenant (§5.1), saga 10 bước (§5.2, mở rộng thành 17), hạn mức (§5.3), sáp nhập (§5.4) |
 | D03-01 SAD khối `dh-platform` | Vùng Z3, hai hồ sơ triển khai, phụ thuộc hạ tầng |
 | D03-02-PH12, PH13, PH16, PH07, PH10, PH03 | Hợp đồng phía phân hệ được gọi: API-12-080, API-13-072, API-16-030, API-07-073, FR-10-064, FR-03-037 |
@@ -469,7 +469,7 @@ Chi tiết thiết kế:
 
 **Báo tiến độ.** `ProvisioningReportController` xử lý API-20-166: kiểm scope (ERR-20-104), kiểm người gọi khớp bên thực hiện của bước (`S06` là PH-10, `S09` là PH-03, `S10` là PH-04, `S12` là PH-06, `S15` là phân hệ nêu trong thân), kiểm bước đang `WAITING_REPORT` (ERR-20-105), ghi `reported_at`, đặt `SUCCEEDED`, `FAILED` hoặc `SKIPPED`, lũy đẳng theo `reportId`; báo trùng cùng trạng thái trả `200` không đổi gì. Khi bước cuối của điểm hội tụ xong, controller đánh thức worker. Báo `FAILED` có ERR-20-107 mang mã lỗi của phân hệ.
 
-**Đo KPI-12.** Sau `S17`, `KpiLeadTimeReporter` đẩy chỉ tiêu `ph20.tenant.provision-lead-time` qua API-16-030 (`kpi.ingest`); giá trị là số giờ làm việc giữa `declared_at` và `activated_at` theo lịch ngày làm việc do PH-18 quản (Q20-19). Đẩy lỗi không làm hỏng saga; `kpi_reported_at` còn rỗng thì tác vụ hằng giờ thử lại, khóa lũy đẳng theo `tenantCode`.
+**Đo KPI-12.** Sau `S17`, `KpiLeadTimeReporter` đẩy chỉ tiêu `thoi-gian-khoi-tao-tenant` qua API-16-030 (`kpi.ingest`); giá trị là số giờ làm việc giữa `declared_at` và `activated_at` theo lịch ngày làm việc do PH-18 quản (Q20-19). Đẩy lỗi không làm hỏng saga; `kpi_reported_at` còn rỗng thì tác vụ hằng giờ thử lại, khóa lũy đẳng theo `tenantCode`.
 
 ### 4.4. Bộ thực thi bước (`StepExecutor`, 17 bước)
 
@@ -665,7 +665,7 @@ Chi tiết thiết kế:
 
 **Chu kỳ giờ.** `UsageCollector` chạy mỗi `20.usage.snapshot-interval` (PT1H) dưới ShedLock toàn cục `usage:collect`, căn tại đầu giờ. Với mỗi nguồn nó chạy một truy vấn gộp mọi tenant (nhóm theo nhãn `tenant`), nên mỗi giờ chỉ có khoảng 12 truy vấn thay vì 34 nhân 12; kết quả được chèn theo lô bằng `INSERT … ON CONFLICT (tenant_id, resource_code, captured_at) DO NOTHING`, nên chạy lại không nhân bản (`uq_usage_snapshot_point`). Mỗi dòng ghi cả `limit_value` hiệu lực tại giờ đó để lịch sử không phụ thuộc hạn mức hiện hành. Nguồn không trả lời thì không ghi dòng (CSDL không có cờ thiếu), đếm `dh_tenant_usage_missing_total` và giờ sau đọc bù tối đa 24 giờ bằng truy vấn khoảng của Mimir; thiếu quá 3 giờ liên tiếp phát ERR-20-110 cho PO (UI-20-06). Mimir không khả dụng là ERR-20-062 và tuyệt đối không tạo cảnh báo hạn mức giả. Tenant `DEDICATED_CLUSTER` không đẩy số về Mimir trung tâm được thì nhận gói số đo hằng ngày, `is_estimate = true`. Phân vùng do `PartitionMaintenanceJob` của PH-18 tạo trước ba tháng; `captured_at` ngoài biên rơi vào phân vùng mặc định, và chỉ số `dh_tenant_usage_partition_default_rows` > 0 sinh cảnh báo.
 
-**Cảnh báo.** `QuotaAlertEvaluator` chạy cho từng dòng mới: `percent_used` bằng hoặc vượt `20.quota.warn-percent` (80) tạo cảnh báo `WARN_80`, bằng hoặc vượt 100 tạo `LIMIT_100`; chỉ mục `uq_quota_alert_open` bảo đảm mỗi (tenant, tài nguyên, mức) một cảnh báo mở nên số đo lặp lại không gửi lặp (BR-20-016). Tạo mới thì ghi outbox EVT-20-06 và gửi thông báo qua PH-18 tới PO và các đầu mối `TECHNICAL`, `TENANT_ADMIN`; cảnh báo mở được cập nhật `used_value`. Khi mức dùng xuống dưới `20.quota.alert-reset-percent` (75) liên tục 24 giờ thì cảnh báo `RESOLVED` (FRS gọi `CLEARED`, Phụ lục A). PA xác nhận (API-20-059) đặt `ACKNOWLEDGED`, vẫn hiện tới khi giải quyết.
+**Cảnh báo.** `QuotaAlertEvaluator` chạy cho từng dòng mới: `percent_used` bằng hoặc vượt `20.quota.warn-percent` (80) tạo cảnh báo `WARN_80`, bằng hoặc vượt 100 tạo `LIMIT_100`; chỉ mục `uq_quota_alert_open` bảo đảm mỗi (tenant, tài nguyên, mức) một cảnh báo mở nên số đo lặp lại không gửi lặp (BR-20-016). Tạo mới thì ghi outbox EVT-20-06 và gửi thông báo qua PH-18 tới PO và các đầu mối `TECHNICAL`, `TENANT_ADMIN`; cảnh báo mở được cập nhật `used_value`. Khi mức dùng xuống dưới `20.quota.alert-reset-percent` (75) liên tục 24 giờ thì cảnh báo `RESOLVED` (FRS 0.2 đã đổi `CLEARED` thành `RESOLVED`). PA xác nhận (API-20-059) đặt `ACKNOWLEDGED`, vẫn hiện tới khi giải quyết.
 
 **Chu kỳ nhanh.** Cảnh báo ≤ 5 phút sau khi chạm ngưỡng (NFR-20-009) không đạt được nếu chỉ dựa vào chu kỳ giờ. Vì vậy `ThresholdProbe` chạy mỗi 5 phút, chỉ cho nhóm đo bằng Mimir (`API_RPS`, Kafka, runtime), lấy giá trị tức thời một truy vấn gộp, và chỉ gọi `QuotaAlertEvaluator` chứ không ghi ảnh chụp; nhóm còn lại đo bằng API thống kê nên có độ trễ tối đa một giờ cộng năm phút. Chu kỳ 5 phút là tham số `20.usage.probe-interval` đề xuất thêm (Phụ lục A). Ngoài ra EVT-13-14 do PH-13 phát khi công suất chung nguy cấp được đưa vào kiểm tra sẵn sàng và bảng điều khiển, không dùng để tạo cảnh báo hạn mức.
 
@@ -903,7 +903,7 @@ Mỗi tenant đăng ký một kênh cho mỗi môi trường (`tenant_release_su
 
 Chi tiết thiết kế:
 
-**Lập kế hoạch.** `WavePlanner` gợi ý ba sóng: sóng 1 là tenant kênh `PREVIEW` (thí điểm), sóng 2 tối đa 5 tenant nhỏ (hồ sơ `QM-NHO`), sóng 3 phần còn lại. Mỗi tenant phải đủ điều kiện: `ACTIVE`, kênh khớp trạng thái phiên bản (`STABLE` cho kênh `STABLE`), không ghim phiên bản, chưa thuộc kế hoạch mở khác (ERR-20-056), phiên bản không `DEPRECATED` hay `WITHDRAWN` (ERR-20-055). Lên lịch (`schedule`) tính `scheduled_for` của từng tenant là thời điểm mở cửa sổ bảo trì đầu tiên sau khi sóng trước đã qua thời gian theo dõi (`20.release.wave-soak-hours-minor` 48 giờ cho bản phụ, `-patch` 24 giờ cho bản vá), và gửi thông báo tới TA qua `AnnouncementService`. Cửa sổ bảo trì do TA đặt (API-20-160, loại `RECURRING` hoặc `ONE_OFF`), dài 1 đến 8 giờ, không trùng 7:00 đến 17:00 ngày làm việc (ERR-20-059); mặc định thứ Bảy 22:00, 4 giờ (Q20-10). Nâng cấp khẩn bỏ chờ cửa sổ nhưng phải thông báo trước ≥ `20.upgrade.emergency-notice-hours` giờ (BR-20-033).
+**Lập kế hoạch.** `WavePlanner` gợi ý ba sóng: sóng 1 là tenant kênh `PREVIEW` (thí điểm), sóng 2 tối đa 5 tenant nhỏ (hồ sơ `QM-NHO`), sóng 3 phần còn lại. Mỗi tenant phải đủ điều kiện: `ACTIVE`, kênh khớp trạng thái phiên bản (`STABLE` cho kênh `STABLE`), không ghim phiên bản, chưa thuộc kế hoạch mở khác (ERR-20-056), phiên bản không `DEPRECATED` hay `WITHDRAWN` (ERR-20-055). Lên lịch (`schedule`) tính `scheduled_for` của từng tenant là thời điểm mở cửa sổ bảo trì đầu tiên sau khi sóng trước đã qua thời gian theo dõi (`20.release.wave-soak-hours-minor` 48 giờ cho bản phụ, `-patch` 24 giờ cho bản vá), và gửi thông báo tới TA qua `AnnouncementService`. Cửa sổ bảo trì do TA đặt (API-20-160, loại `RECURRING` hoặc `ONE_OFF`), dài 2 đến 6 giờ, ngoài giờ cao điểm 7:00 đến 17:00 ngày làm việc (ERR-20-059); mặc định thứ Bảy 22:00, 4 giờ (Q20-10). Nâng cấp khẩn bỏ chờ cửa sổ nhưng phải thông báo trước ≥ `20.upgrade.emergency-notice-hours` giờ (BR-20-033).
 
 **Vòng nâng cấp.** `UpgradeTicker` chạy mỗi phút dưới ShedLock `upgrade:tick`, duyệt kế hoạch `RUNNING`. Với `tenant_upgrade` `PENDING` đến hạn và sóng `RUNNING` (tối đa 5 tenant cùng lúc để giới hạn tải Argo CD): đặt `IN_WINDOW`, bật dải `MAINTENANCE` ở `EnforcementView` (ghi bị chặn với ERR-20-118) và phát EVT-20-15; chuyển `UPGRADING` rồi gọi `TenantConfigApi.requestReleasePin` để `GitOpsConfigWriter` commit `release.yaml` mới (thẻ phiên bản và digest ảnh trong overlay Kustomize của tenant); `ArgoStatusPoller` theo dõi tới `Synced` và `Healthy`, lỗi đồng bộ thì `FAILED` với ERR-20-109. Sau đó `VERIFYING` trong `20.release.verify-minutes` (30): `UpgradeVerifier` chạy `runLite` (đăng nhập và API mẫu), rồi theo dõi tỷ lệ 5xx của tenant; đạt thì `DONE`, bỏ dải bảo trì, phát EVT-20-15; không đạt thì `FAILED` với ERR-20-112. Thử lại một tenant (API-20-127) chỉ từ `FAILED`.
 
@@ -939,7 +939,7 @@ Chi tiết thiết kế:
 
 **Bốn lớp đệm.** Registry được thiết kế để phục vụ ≥ 500 lượt mỗi giây ở p99 ≤ 50 ms (NFR-20-003) và để sống sót khi PH-20 hỏng. Lớp 1 là bộ nhớ cục bộ của PH-20 (Caffeine, 60 giây, theo mã tenant); lớp 2 là Valkey với khóa `PLATFORM:ph20:registry:{tenant}`; lớp 3 là thư viện khách trong mỗi DU gọi, đệm theo `ETag` và `Cache-Control: max-age = 20.registry.cache-seconds` (60 giây), gửi `If-None-Match` nên đa số lượt trả `304`; lớp 4 là chế độ "dùng bản cũ khi lỗi" (`stale-if-error`) của thư viện khách: PH-20 không trả lời thì giữ bản đã đệm (tối đa 15 phút) và đánh dấu quá hạn bằng chỉ số, vì tenant đã biết thường không đổi trạng thái; tenant lạ (chưa từng thấy) bị từ chối. Bản ghi registry nhỏ (trạng thái, chế độ cách ly, realm, host, tiền tố, cờ bảo trì, danh sách phân hệ kèm trạng thái, `version`), nên phục vụ 40 tenant chỉ cần vài chục KB.
 
-**Vô hiệu bộ đệm.** Mọi thay đổi trạng thái, phân hệ, cấu hình, hạn mức làm tăng `version` của bản ghi trong cùng giao dịch; sau commit, `RegistryInvalidator` xóa khóa Valkey và phát lên kênh Pub/Sub `PLATFORM:ph20:registry:inval` để các bản sao `api` xóa lớp 1. Phân hệ khác nhận EVT-20-04, 07, 08, 09 và xóa lớp 3 của mình. Nếu sự kiện thất lạc, lớp 3 vẫn tự làm mới sau tối đa 60 giây. Để hiệu lực tạm ngừng ≤ 60 giây (NFR-20-004) không phụ thuộc giá trị `20.registry.cache-seconds` (miền cho phép tới 300 giây), PH-03 và thư viện khách đặt giới hạn cứng 60 giây cho trường `status` và thăm dò lại sau 15 giây khi nhận cờ "đang chuyển trạng thái"; ghi nhận ở rủi ro R-06 và Phụ lục A.
+**Vô hiệu bộ đệm.** Mọi thay đổi trạng thái, phân hệ, cấu hình, hạn mức làm tăng `version` của bản ghi trong cùng giao dịch; sau commit, `RegistryInvalidator` xóa khóa Valkey và phát lên kênh Pub/Sub `PLATFORM:ph20:registry:inval` để các bản sao `api` xóa lớp 1. Phân hệ khác nhận EVT-20-04, 07, 08, 09 và xóa lớp 3 của mình. Nếu sự kiện thất lạc, lớp 3 vẫn tự làm mới sau tối đa 60 giây. Để hiệu lực tạm ngừng ≤ 60 giây (NFR-20-004) không phụ thuộc giá trị `20.registry.cache-seconds` (miền 10…60 giây), PH-03 và thư viện khách giữ giới hạn cứng 60 giây cho trường `status` và thăm dò lại sau 15 giây khi nhận cờ "đang chuyển trạng thái"; ghi nhận ở rủi ro R-06 và Phụ lục A.
 
 **Enforcement.** API-20-164 trả `EnforcementView` cho PH-03, 04, 10: hạn mức hiệu lực từng tài nguyên, host và tiền tố API công bố, bảng chuyển tiếp sau sáp nhập (`API_CONTEXT_PATH`), cờ `maintenance`, `readOnly`, `status`. Dữ liệu dựng từ `tenant_quota`, `tenant_platform_config`, `merge_participant_run`, `tenant_upgrade` bằng một truy vấn có chỉ mục, không tính lại hạn mức (đã lưu ở `tenant_quota`).
 
@@ -1804,7 +1804,7 @@ Không có giao dịch phân tán. Ranh giới nhất quán mạnh chỉ là m�
 
 ### 9.1. Tham số `20.*`
 
-Hai mươi tám khóa của FRS 8.2, cộng một khóa đề xuất. Giá trị gốc đăng ký với PH-18; đổi có kiểm toán và có hiệu lực ≤ 60 giây không cần khởi động lại. Cột "Đọc ở" là thành phần chương 4 tiêu thụ khóa; cột "Cách áp" là cách thành phần nhận giá trị mới.
+Hai mươi chín khóa của FRS 8.2. Giá trị gốc đăng ký với PH-18; đổi có kiểm toán và có hiệu lực ≤ 60 giây không cần khởi động lại. Cột "Đọc ở" là thành phần chương 4 tiêu thụ khóa; cột "Cách áp" là cách thành phần nhận giá trị mới.
 
 | Khóa | Mặc định | Miền | Đọc ở | Cách áp |
 |---|---|---|---|---|
@@ -1834,13 +1834,13 @@ Hai mươi tám khóa của FRS 8.2, cộng một khóa đề xuất. Giá trị
 | `20.leak-test.schedule` | 01:00 hằng đêm | Biểu thức lịch | `LeakTestScheduler` | Lịch kế |
 | `20.cross-tenant.max-hours` | 4 | 1…4 (trần BR-12-032) | `CrossTenantPolicyService` | Đề nghị mới |
 | `20.dedicated-cluster.enabled` | false | true, false | `TemplateService`, `ReadinessChecker` | Tức thì |
-| `20.registry.cache-seconds` | 60 | 10…300, giới hạn cứng 60 giây cho `status` | `RegistryCache` | Vô hiệu bộ đệm |
+| `20.registry.cache-seconds` | 60 | 10…60 (trần NFR-20-004) | `RegistryCache` | Vô hiệu bộ đệm |
 | `20.lifecycle.reason-min-length` | 20 | 10…200 | Bộ kiểm lý do | Yêu cầu kế |
-| `20.usage.probe-interval` (đề xuất) | PT5M | PT1M…PT15M | `ThresholdProbe` | Lịch kế |
+| `20.usage.probe-interval` | PT5M | PT1M…PT15M | `ThresholdProbe` | Lịch kế |
 
-: Tham số 20.* và cách áp (khóa cuối là đề xuất, cần đăng ký ở PH-18)
+: Tham số 20.* và cách áp (29 khóa của FRS 8.2, đăng ký ở PH-18)
 
-Các khóa đều là tham số vận hành, không phải bí mật. Khóa `20.registry.cache-seconds` có miền tới 300 giây ở FRS nhưng NFR-20-004 đòi hiệu lực tạm ngừng ≤ 60 giây, nên SDD áp giới hạn cứng 60 giây cho dữ liệu `status` và thăm dò 15 giây cho phần còn lại (ghi ở Phụ lục A).
+Các khóa đều là tham số vận hành, không phải bí mật. Khóa `20.registry.cache-seconds` có miền 10…60 giây (FRS 0.2 đã đưa trần về NFR-20-004, tạm ngừng có hiệu lực ≤ 60 giây); SDD thêm thăm dò 15 giây cho phần còn lại ngoài dữ liệu `status`. Khóa `20.usage.probe-interval` đã vào FRS 8.2 cho `ThresholdProbe` (NFR-20-009).
 
 ### 9.2. Nạp và kiểm tham số
 
@@ -2052,7 +2052,7 @@ Ba quy tắc ArchUnit riêng cho PH-20: (a) lớp ngoài `tenant.profile.TenantT
 | PH-07 | API-07-073 gói danh mục nền | PH-20 khách |
 | PH-10 | Sự kiện EVT-20-01, 05, 07 và báo `S06` qua API-20-166 | Hai phía |
 | PH-03 | API-20-164 đọc hạn mức, EVT-03-10, EVT-03-11 | PH-20 nhà cung cấp và người nhận |
-| PH-16 | API-16-030 `metricCode` `ph20.tenant.provision-lead-time` | PH-20 khách |
+| PH-16 | API-16-030 `metricCode` `thoi-gian-khoi-tao-tenant` | PH-20 khách |
 | PH-18 | `merge-transfers`, API-20-167, thông báo, đăng ký tham số | Hai phía |
 | PH-09 | FR-09-043 xóa mật mã và EVT-09-21 | PH-20 khách và người nhận |
 
@@ -2168,19 +2168,19 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 
 | Mã | Điểm lệch | Phương án của SDD | Cần làm |
 |---|---|---|---|
-| L-01 | Chỉ mục `uq_provisioning_run_active` thiếu trạng thái `PENDING` so với BR-20-006 | Dịch vụ kiểm thêm bằng khóa dòng tenant | CSDL thêm `PENDING` vào chỉ mục |
-| L-02 | Số tham số: FRS 28 khóa, brief và CSDL nêu 19 | Theo FRS, thêm một khóa đề xuất | Đồng bộ ghi chú CSDL |
-| L-03 | Tên ca khói: FRS `LOGIN`, `API_CALL`, `EVENT_ROUNDTRIP`; DDL `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE` | Theo DDL | Sửa FRS |
+| L-01 | Chỉ mục `uq_provisioning_run_active` thiếu trạng thái `PENDING` so với BR-20-006 | Dịch vụ kiểm thêm bằng khóa dòng tenant | Đã xử lý ở 0.2: CSDL thêm `PENDING` vào chỉ mục |
+| L-02 | Số tham số `20.*` lệch giữa FRS, brief và CSDL | Theo FRS, thêm một khóa đề xuất | Đã xử lý ở 0.2: FRS 8.2 thêm `20.usage.probe-interval` (29 khóa), CSDL sửa câu 19 tham số |
+| L-03 | Tên ca khói: FRS `LOGIN`, `API_CALL`, `EVENT_ROUNDTRIP`; DDL, OpenAPI `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE` | Theo DDL và OpenAPI | Đã xử lý ở 0.2: FRS, use case, màn hình, test case dùng tên của OpenAPI |
 | L-04 | `usage_snapshot`: FRS `quality`, `hour_start`; CSDL `is_estimate`, `captured_at`, không lưu dòng thiếu | Theo CSDL | Sửa FRS |
-| L-05 | Trạng thái cảnh báo FRS `CLEARED`, CSDL `RESOLVED` | Theo CSDL | Sửa FRS |
-| L-06 | `metricCode` KPI: FRS `ph20.tenant.provision-lead-time`, brief `thoi-gian-khoi-tao-tenant` | Theo FRS | Sửa brief |
-| L-07 | FRS 12.1 ghi `S03_IDENTITY` | Dùng `S03_REALM` | Sửa FRS |
+| L-05 | Trạng thái cảnh báo FRS `CLEARED`, CSDL `RESOLVED` | Theo CSDL | Đã xử lý ở 0.2: FRS, use case, test case dùng `RESOLVED` |
+| L-06 | `metricCode` KPI-12: FRS 0.1 ghi mã riêng của PH-20, PH-16 ghi `thoi-gian-khoi-tao-tenant` | Theo PH-16 | Đã xử lý ở 0.2: mọi tập PH-20 dùng `thoi-gian-khoi-tao-tenant` |
+| L-07 | FRS 12.1 ghi `S03_IDENTITY` | Dùng `S03_REALM` | Đã xử lý ở 0.2: FRS dùng `S03_REALM` |
 | L-08 | EVT-20-01: FRS 9.3 "khai báo xong", FR-008 "sau S05" | Theo FR-008 | Sửa FRS 9.3 |
 | L-09 | Bù trừ `S01` ghi "xóa bản ghi" nhưng trigger CSDL chặn xóa `tenant` | Giữ dòng, chuyển `DECOMMISSIONED`, chỉ xóa phần mặc định | Sửa FRS |
 | L-10 | Chấm dứt: FRS đặt `DECOMMISSIONED` ở bước 5 sau EVT-09-21 | Đặt ở giai đoạn 1, bước 5 chỉ đóng đề nghị | Sửa FR-042 |
 | L-11 | BR-20-022 một kế hoạch sáp nhập mỗi tenant, FRS cho nhiều nguồn, CSDL một nguồn | Một nguồn mỗi kế hoạch, nhiều kế hoạch cùng đích | Chốt Q20-22 và sửa FRS |
-| L-12 | NFR-20-009 cảnh báo ≤ 5 phút so với thu hằng giờ | Thêm `ThresholdProbe` 5 phút cho nhóm đo bằng Mimir | Đăng ký `20.usage.probe-interval` |
-| L-13 | `20.registry.cache-seconds` miền tới 300 giây so với NFR-20-004 | Giới hạn cứng 60 giây cho `status` | Sửa miền ở FRS |
+| L-12 | NFR-20-009 cảnh báo ≤ 5 phút so với thu hằng giờ | Thêm `ThresholdProbe` 5 phút cho nhóm đo bằng Mimir | Đã xử lý ở 0.2: `20.usage.probe-interval` vào FRS 8.2 và FR-20-029 |
+| L-13 | `20.registry.cache-seconds` miền tới 300 giây so với NFR-20-004 | Giới hạn cứng 60 giây cho `status` | Đã xử lý ở 0.2: FRS 8.2 đặt miền 10…60 |
 | L-14 | Lệnh xuất gói bàn giao tới phân hệ cần sự kiện lệnh, không có trong 16 EVT | Dùng sự kiện lệnh chưa gán mã | Đăng ký EVT mới |
 | L-15 | Chế độ `DEDICATED_DB` cần cấu hình cơ sở dữ liệu | Thêm tệp `database.yaml` | Cập nhật ADR 201 |
 
@@ -2204,7 +2204,7 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | PH-07 | Scope `platform.tenant.provision` cho PH-20 gọi API-07-073 |
 | PH-10 | Đổi tên topic kiểm thử `dh.platform.tenant.created.v1` thành `platform.tenant.created.v1`; xử lý EVT-20-01 qua inbox |
 | PH-19 | Đổi tên topic nghe sang `platform.tenant.module-enabled.v1` |
-| PH-16 | Nhận KPI qua API-16-030, `metricCode` `ph20.tenant.provision-lead-time` |
+| PH-16 | Nhận KPI qua API-16-030, `metricCode` `thoi-gian-khoi-tao-tenant` |
 | PH-18 | Chốt `POST /api/ops/v1/merge-transfers` (Q20-22), thông báo đầu mối, đăng ký 29 khóa `20.*`, việc dọn khi phân hệ không gỡ xong |
 | PH-01 | Q01-10: đổi chủ quản HTTT theo EVT-20-13 qua đề nghị chờ quản trị tỉnh duyệt hàng loạt |
 | PH-09 | Cung cấp FR-09-043 xóa mật mã theo tenant và phát EVT-09-21 |
@@ -2216,5 +2216,6 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | Phiên bản | Ngày | Người thực hiện | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Kiến trúc sư phần mềm | Bản đầu: 19 thành phần, 15 sơ đồ, bảng lỗi, tham số, rủi ro, câu hỏi mở Q20-20…29, Phụ lục A |
+| 0.2 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ với FRS 0.2: 29 khóa `20.*`, miền `20.registry.cache-seconds`, cửa sổ bảo trì 2 đến 6 giờ, mã KPI-12; đánh dấu L-01, 02, 03, 05, 06, 07, 12, 13 đã xử lý |
 
 : Lịch sử phiên bản

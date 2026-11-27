@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH20
 ten: Đặc tả use case phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị nền tảng, vận hành nền tảng, quản trị tỉnh, kỹ sư dh-platform, kiểm thử viên
@@ -46,7 +46,7 @@ Thuật ngữ chung theo D00-01; thuật ngữ đa tenant (tenant, `PLATFORM`, `
 |---|---|
 | Tenant | Một tỉnh hoặc thành phố trực thuộc trung ương trên nền tảng, mã dạng `T68`; hai tenant đặc biệt `PLATFORM` (quản trị nền tảng) và `COMMON` (dữ liệu dùng chung toàn quốc) |
 | Saga khởi tạo | Chuỗi mười bảy bước `S01_RECORD`…`S17_ACTIVATE`, mỗi bước lũy đẳng theo `{runId}:{stepCode}` và có thao tác bù trừ ngược; bước bất đồng bộ `S06`, `S09`, `S10`, `S12`, `S15` chờ phân hệ báo tiến độ |
-| Kiểm tra khói (smoke test) | Bốn ca kiểm tra nhanh sau khởi tạo: `LOGIN`, `API_CALL`, `EVENT_ROUNDTRIP`, `CROSS_TENANT_LEAK` |
+| Kiểm tra khói (smoke test) | Bốn ca kiểm tra nhanh sau khởi tạo: `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE`, `CROSS_TENANT_LEAK` |
 | Mẫu khởi tạo | Gói cấu hình có phiên bản quyết định phân hệ bật sẵn, hạn mức theo hồ sơ quy mô, tổ chức gieo, bộ chỉ tiêu, danh mục nền; phiên bản `PUBLISHED` bất biến |
 | Kho `dh-tenant-config` | Kho Git GitOps giữ cấu hình tenant ở thư mục `tenants/{ma-tenant}/`, là trạng thái mong muốn; Argo CD áp xuống, cơ sở dữ liệu giữ bản chiếu và phiên bản |
 | Lệch cấu hình (drift) | Khác biệt giữa trạng thái mong muốn trong Git và trạng thái thực ở cụm hoặc phân hệ đích |
@@ -787,12 +787,12 @@ Tenant chỉ `ACTIVE` khi chứng minh được dùng được và cách ly đú
 
 **Đảm bảo tối thiểu.** Tenant không `ACTIVE` nếu còn ca khói lỗi; phát hiện rò rỉ thì chặn kích hoạt và mở sự cố mức 1; tài khoản tạm luôn bị xóa.
 
-**Đảm bảo thành công.** Tenant `ACTIVE`, `activated_at` ghi, EVT-20-03 phát, thư bàn giao đã gửi, quan sát `ph20.tenant.provision-lead-time` đã tới PH-16 hoặc nằm ở hàng đợi thử lại.
+**Đảm bảo thành công.** Tenant `ACTIVE`, `activated_at` ghi, EVT-20-03 phát, thư bàn giao đã gửi, quan sát `thoi-gian-khoi-tao-tenant` đã tới PH-16 hoặc nằm ở hàng đợi thử lại.
 
 **Luồng chính.**
 1. Hệ thống tạo tài khoản máy `smoke-{runId}` (hạn 30 phút) và HTTT giả lập ở realm của tenant qua PH-12.
-2. Ca `LOGIN`: lấy token quản trị tỉnh đầu tiên, kiểm claim `tenant = T68`. Ca `API_CALL`: gọi `GET /api/tenant/v1/context` qua APISIX bằng host của tenant, kỳ vọng `200`.
-3. Ca `EVENT_ROUNDTRIP`: phát và đọc lại một sự kiện trong 30 giây. Ca `CROSS_TENANT_LEAK`: token `T68` đọc tài nguyên cài sẵn của `T99`, kỳ vọng `404`.
+2. Ca `LOGIN_ADMIN`: lấy token quản trị tỉnh đầu tiên, kiểm claim `tenant = T68`. Ca `API_SAMPLE`: gọi `GET /api/tenant/v1/context` qua APISIX bằng host của tenant, kỳ vọng `200`.
+3. Ca `EVENT_SAMPLE`: phát và đọc lại một sự kiện trong 30 giây. Ca `CROSS_TENANT_LEAK`: token `T68` đọc tài nguyên cài sẵn của `T99`, kỳ vọng `404`.
 4. Cả bốn ca đạt: hệ thống lưu kết quả (EN-20-12), xóa tài khoản tạm, bước `S16` `SUCCEEDED`.
 5. Bước `S17`: hệ thống chuyển tenant `ACTIVE`, phát EVT-20-03 và EVT-20-04, gửi thư bàn giao mẫu `ph20-handover` tới đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`.
 6. Hệ thống tính `provisionMinutes` và `leadTimeWorkingHours` (từ `declaredAt` tới `activatedAt` theo giờ làm việc), gọi API-16-030 với `idempotencyRef = {runId}`.
@@ -825,10 +825,10 @@ sequenceDiagram
   participant H as PH-18
   participant Q as PH-16
   K->>I: Tạo tài khoản smoke và chạy 4 ca khói
-  I-->>K: LOGIN, API_CALL, EVENT_ROUNDTRIP đạt, leak trả 404
+  I-->>K: LOGIN_ADMIN, API_SAMPLE, EVENT_SAMPLE đạt, leak trả 404
   K->>K: Tenant ACTIVE, phát EVT-20-03
   K->>H: Thư bàn giao tới đầu mối
-  K->>Q: API-16-030 provision-lead-time
+  K->>Q: API-16-030 thoi-gian-khoi-tao-tenant
   Q-->>K: 202 hoặc xếp hàng thử lại
 ```
 
@@ -1252,8 +1252,8 @@ Mỗi giờ hệ thống ghi ảnh chụp sử dụng của mười hai tài ngu
 2. Hệ thống ghi một dòng cho mỗi tài nguyên và giờ; nguồn không trả lời thì `quality = MISSING`, giờ sau đọc bù tối đa 24 giờ.
 3. Hệ thống so `percent` với `20.quota.warn-percent` (80) và 100.
 4. Vượt ngưỡng mà chưa có cảnh báo mở: tạo `OPEN`, phát EVT-20-06, gửi thông báo qua PH-18.
-5. Đã có cảnh báo mở: chỉ cập nhật `lastAt`; xuống dưới 75% liên tục 24 giờ thì `CLEARED`.
-6. Hà xác nhận cảnh báo kèm ý kiến ("đã lập đề nghị tăng"): `ACKNOWLEDGED`, vẫn hiện tới khi `CLEARED`.
+5. Đã có cảnh báo mở: chỉ cập nhật `lastAt`; xuống dưới 75% liên tục 24 giờ thì `RESOLVED`.
+6. Hà xác nhận cảnh báo kèm ý kiến ("đã lập đề nghị tăng"): `ACKNOWLEDGED`, vẫn hiện tới khi `RESOLVED`.
 
 **Luồng thay thế.**
 - **1a. `DEDICATED_CLUSTER` không đẩy được về Mimir.** Bộ thực thi cục bộ gửi gói ngày, `quality = ESTIMATED` khi trễ.
@@ -1262,7 +1262,7 @@ Mỗi giờ hệ thống ghi ảnh chụp sử dụng của mười hai tài ngu
 - **E1. Nguồn thiếu quá 3 giờ liên tiếp (bước 2, chạy nền).** ERR-20-110: "Thiếu số liệu sử dụng {tài nguyên} của {tenant} từ {giờ}." Cảnh báo PO ở UI-20-06.
 - **E2. Mimir không khả dụng (bước 1).** ERR-20-062 (503): "Dịch vụ {tên} tạm thời không khả dụng. Thử lại sau."
 - **E3. Thu bổ sung cho tenant `DECOMMISSIONED`.** ERR-20-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}."
-- **E4. Xác nhận cảnh báo đã `CLEARED` (bước 6).** ERR-20-006 (409), câu như E3.
+- **E4. Xác nhận cảnh báo đã `RESOLVED` (bước 6).** ERR-20-006 (409), câu như E3.
 - **E5. Không có cảnh báo (bước 6).** ERR-20-002 (404): "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem."
 
 **Quy tắc áp dụng.** BR-20-013, BR-20-016.
@@ -1497,7 +1497,7 @@ Tạm ngừng cần nhanh khi có quyết định quản lý hoặc sự cố an
 2. Hệ thống tạo đề nghị `SUSPEND` ở `APPROVED` (không cần duyệt) và thực hiện ngay hoặc theo lịch.
 3. Khi thực hiện: tenant `SUSPENDED`; gọi API-12-084 (realm chỉ cho đăng nhập để xem, chặn token máy); phát EVT-20-04; registry vô hiệu đệm.
 4. PH-03 trả ERR-20-001 cho mọi API của tỉnh (trừ API thiết yếu chỉ đọc nếu tham số cho phép), PH-04 dừng luồng theo lịch, PH-10 chặn sản xuất sự kiện từ HTTT.
-5. Sau khi lý do được xử lý, Hà chọn "Khôi phục"; hệ thống kiểm trạng thái và đề nghị chấm dứt đang chờ, gọi API-12-085, chạy kiểm tra khói rút gọn (`LOGIN`, `API_CALL`).
+5. Sau khi lý do được xử lý, Hà chọn "Khôi phục"; hệ thống kiểm trạng thái và đề nghị chấm dứt đang chờ, gọi API-12-085, chạy kiểm tra khói rút gọn (`LOGIN_ADMIN`, `API_SAMPLE`).
 6. Đạt: tenant `ACTIVE`, phát EVT-20-04, vô hiệu đệm.
 
 **Luồng thay thế.**
@@ -2209,7 +2209,7 @@ Hơn ba mươi tỉnh không nâng cùng lúc: sóng 1 là kênh `PREVIEW`, són
 **Luồng chính.**
 1. Hà chọn phiên bản `1.4.0` ở UI-20-19 và "+ Kế hoạch nâng cấp"; hệ thống gợi ý sóng 1 tenant kênh `PREVIEW`, sóng 2 tối đa 5 tenant nhỏ, sóng 3 phần còn lại.
 2. Hệ thống kiểm tenant đủ điều kiện (mỗi tenant một kế hoạch) và có cửa sổ bảo trì (mặc định thứ Bảy 22:00, 4 giờ, Q20-10).
-3. Mai đặt cửa sổ ưa thích (1 đến 8 giờ, tránh 7:00 đến 17:00 ngày làm việc) ở UI-20-12; hệ thống áp cho kế hoạch lập sau.
+3. Mai đặt cửa sổ ưa thích (dài 2 đến 6 giờ, ngoài giờ cao điểm 7:00 đến 17:00 ngày làm việc) ở UI-20-12; hệ thống áp cho kế hoạch lập sau.
 4. Hà bấm "Lên lịch"; hệ thống tính thời điểm mỗi tenant là cửa sổ đầu tiên sau khi sóng trước hết thời gian theo dõi (`20.release.wave-soak-hours-minor` hoặc `-patch`).
 5. Hệ thống dựng nội dung từ ghi chú phát hành và lịch tenant, gửi qua PH-18 trước 72 giờ và 2 giờ, hiện banner ở `dh-console`.
 
@@ -2360,7 +2360,7 @@ Một màn cho vận hành thấy tình hình mọi tenant; hằng đêm hệ th
 
 ### 6.36. UC-20-36 · Tra nhật ký kiểm toán và tham số 20.*
 
-Mọi thao tác PH-20 tra được theo tenant, người, thời gian kèm lý do, phiếu; hành vi chỉnh được qua 28 tham số `20.*` đăng ký ở PH-18.
+Mọi thao tác PH-20 tra được theo tenant, người, thời gian kèm lý do, phiếu; hành vi chỉnh được qua 29 tham số `20.*` đăng ký ở PH-18.
 
 ::: dac-ta
 **Mục tiêu.** Yến tra các thao tác của Hà trên `T68` trong tháng 11; Bảo (AU tỉnh) tra nhật ký của riêng tỉnh; Hà xem giá trị hiệu lực của tham số `20.provision.step-timeout-minutes`.
@@ -2386,7 +2386,7 @@ Mọi thao tác PH-20 tra được theo tenant, người, thời gian kèm lý d
 **Luồng chính.**
 1. Yến chọn khoảng thời gian; hệ thống kiểm khoảng và phạm vi người xem.
 2. Hệ thống gọi PH-13 lọc `module = PH-20` (và `tenantCode` nếu có) rồi trả `items[]` kèm lý do, mã phiếu.
-3. Khi khởi động, DU đăng ký lược đồ 28 khóa `20.*` (kiểu, miền, mặc định) ở PH-18.
+3. Khi khởi động, DU đăng ký lược đồ 29 khóa `20.*` (kiểu, miền, mặc định) ở PH-18.
 4. Nhận thay đổi tham số từ PH-18, hệ thống kiểm miền và áp trong tối đa 60 giây.
 5. Hà gọi API-20-131 xem giá trị hiệu lực và nguồn từng tham số.
 
@@ -2447,11 +2447,11 @@ Các câu hỏi phát sinh khi viết use case, đánh số Q20-45…49 theo d�
 
 ## Phụ lục A. Đề nghị đồng bộ
 
-Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS hay tài liệu chung, các dòng dưới dồn vào Phụ lục B của FRS và các tài liệu chung ở bản kế tiếp. Dòng A-01, A-03, A-04, A-05 là lệch hoặc thiếu của FRS; A-02, A-06…A-09 là đề nghị cho tài liệu chung và phân hệ khác.
+Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS hay tài liệu chung, các dòng dưới dồn vào Phụ lục B của FRS và các tài liệu chung ở bản kế tiếp. Dòng A-01 (đã xử lý ở 0.2), A-03, A-04, A-05 là lệch hoặc thiếu của FRS; A-02, A-06…A-09 là đề nghị cho tài liệu chung và phân hệ khác.
 
 | Mã | Vị trí | Đề nghị | Nơi nhận |
 |---|---|---|---|
-| A-01 | FRS §10.1, dòng UI-20-20 | Cột FR chỉ có FR-20-067, 070; nhưng FR-20-014 ("tab Thời gian khởi tạo ở UI-20-20") và FR-20-016 ("Khởi tạo bổ sung hàng loạt ở UI-20-20") cũng dùng màn này. Đề nghị thêm 014, 016 | FRS PH-20 |
+| A-01 | FRS §10.1, dòng UI-20-20 | Cột FR chỉ có FR-20-067, 070; nhưng FR-20-014 ("tab Thời gian khởi tạo ở UI-20-20") và FR-20-016 ("Khởi tạo bổ sung hàng loạt ở UI-20-20") cũng dùng màn này. Đã xử lý ở 0.2: FRS §10.1 ghi UI-20-20 gồm FR-20-014, 016, 067, 070 | FRS PH-20 |
 | A-02 | FRS §9.4, API-20-050…053 và API-20-073 | Đề nghị đổi hạn mức (EN-20-14) có API liệt kê theo tenant (API-20-051) nhưng không có hộp duyệt toàn nền tảng; FRS FR-20-027 nêu "hộp duyệt UI-20-08 tab Chờ duyệt". Đề nghị cho API-20-073 trả cả đề nghị `QUOTA_DECREASE` hoặc thêm API (Q20-46) | FRS PH-20 |
 | A-03 | FRS FR-20-045, mục luồng thay thế | Hủy kế hoạch khi đã `TRANSFERRING` chỉ nêu gỡ dữ liệu; chưa nói xử lý người dùng, client đã cấp ở realm đích khi `IDENTITY_TRANSFER` đã chạy (Q20-45) | FRS PH-20 |
 | A-04 | FRS FR-20-012, tiền điều kiện | Ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường; nên ghi tiền điều kiện này và hành xử khi `T99` không có (ca `SKIPPED` kèm cảnh báo hay chặn kích hoạt) | FRS PH-20 |
@@ -2469,5 +2469,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Claude | Bản đầu: 36 use case phủ 70 FR (51 M, 19 S), 12 sơ đồ trình tự, sáu luồng phụ, câu hỏi mở Q20-45…49, 10 đề nghị đồng bộ |
+| 0.2 | 2026-11-27 | Claude | Đồng bộ với FRS 0.2: tên ca kiểm tra khói theo OpenAPI, cửa sổ bảo trì 2 đến 6 giờ, 29 tham số, `RESOLVED`, mã KPI-12 `thoi-gian-khoi-tao-tenant`, cột FR của UI-20-20 (đóng A-01) |
 
 : Lịch sử phiên bản

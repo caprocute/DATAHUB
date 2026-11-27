@@ -31,7 +31,7 @@ Tính năng: TS-20-22 · Thực hiện chấm dứt tenant
     Khi thực hiện chấm dứt `T92`, `crypto-sim` im lặng
     Và đẩy `clock-sim` 24 giờ
     Và kiểm tra trạng thái tenant và đề nghị
-    Thì cảnh báo SO nền tảng với `ERR-20-116` ("Chưa nhận xác nhận xóa mật mã của T92"), tenant giữ `SUSPENDED`, đề nghị giữ `EXECUTING`; khi `EVT-09-21` tới sau đó thì chuyển `DECOMMISSIONED`.
+    Thì cảnh báo SO nền tảng với `ERR-20-116` ("Chưa nhận xác nhận xóa mật mã của T92."), tenant giữ `SUSPENDED`, đề nghị giữ `EXECUTING`; khi `EVT-09-21` tới sau đó thì chuyển `DECOMMISSIONED`.
 
   @TC-20-103 @P2 @Âm @Chịu @lỗi
   Kịch bản: TC-20-103 Phân hệ chưa báo gỡ xong sau 24 giờ, PH-12 lỗi khi xóa realm

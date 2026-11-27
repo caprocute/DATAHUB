@@ -19,7 +19,7 @@ Tính năng: TS-20-07 · Kiểm tra khói, kích hoạt, bàn giao và đo thờ
     Và cài `T99` đọc được từ token `T94` (rò rỉ giả lập) rồi chạy lại khói
     Và đặt `20.smoke.enabled = false` cho `T94` (tenant kiểm thử), chạy lại; thử đặt `false` ở nền tảng có tenant tỉnh thật
     Và `POST P/tenants/T92/smoke-tests` khi `SUSPENDED`; `POST` khi đang có lần chạy khác
-    Thì bước 1 ca `EVENT_SAMPLE` ghi `ERR-20-117` ("Ca kiểm tra khói EVENT_SAMPLE lỗi: ..."), bước `S16_SMOKE` và lần chạy `FAILED`. Bước 2 `ERR-20-111` ("Phát hiện rò rỉ chéo tenant ở ..."), sự cố mức 1 mở ở PH-18, báo PO, kích hoạt bị chặn. Bước 3 tenant kiểm thử: `S16_SMOKE` `SKIPPED` kèm cảnh báo; đặt `false` khi có tenant tỉnh thật bị từ chối (BR-20-004). Bước 4 `409` `ERR-20-006`, rồi `409` `ERR-20-016`.
+    Thì bước 1 ca `EVENT_SAMPLE` ghi `ERR-20-117` ("Ca kiểm tra khói EVENT_SAMPLE lỗi: không nhận lại sự kiện mẫu sau 30 giây."), bước `S16_SMOKE` và lần chạy `FAILED`. Bước 2 `ERR-20-111` ("Phát hiện rò rỉ chéo tenant ở GET /api/tenant/v1/context."), sự cố mức 1 mở ở PH-18, báo PO, kích hoạt bị chặn. Bước 3 tenant kiểm thử: `S16_SMOKE` `SKIPPED` kèm cảnh báo; đặt `false` khi có tenant tỉnh thật bị từ chối (BR-20-004). Bước 4 `409` `ERR-20-006`, rồi `409` `ERR-20-016`.
 
   @TC-20-034 @P1 @Dương
   Kịch bản: TC-20-034 Kích hoạt tenant, bàn giao qua thư, hẹn giờ kích hoạt
@@ -28,7 +28,7 @@ Tính năng: TS-20-07 · Kiểm tra khói, kích hoạt, bàn giao và đo thờ
     Khi `POST P/tenants/T97:activate` kèm `If-Match`, `Idempotency-Key`
     Và `POST P/tenants/T96:activate` với `activateAt` sau 5 ngày; sau đó dùng `clock-sim` đẩy tới giờ hẹn
     Và đọc thư bàn giao ở `ops-sim`, đọc quan sát ở `kpi-sim`
-    Thì bước 1 `200`, tenant `ACTIVE`, `activatedAt` có giá trị, `handoverDelivery = SENT`, cờ `testClient` ở realm bị xóa; EVT: `platform.tenant.activated.v1` đúng một lần; registry vô hiệu đệm. Bước 2 `S17_ACTIVATE` chờ tới giờ hẹn rồi `ACTIVE`; hủy hẹn thì kích hoạt ngay. Bước 3 thư mẫu `ph20-handover` tới ba đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`; PH-16 nhận quan sát `ph20.tenant.provision-lead-time` (KPI-12) với `idempotencyRef = {runId}`. KT kích hoạt.
+    Thì bước 1 `200`, tenant `ACTIVE`, `activatedAt` có giá trị, `handoverDelivery = SENT`, máy khách kiểm thử ở realm bị xóa; EVT: `platform.tenant.activated.v1` đúng một lần; registry vô hiệu đệm. Bước 2 `S17_ACTIVATE` chờ tới giờ hẹn rồi `ACTIVE`; hủy hẹn thì kích hoạt ngay. Bước 3 thư mẫu `ph20-handover` tới ba đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`; PH-16 nhận quan sát `thoi-gian-khoi-tao-tenant` (KPI-12) kèm tham chiếu chống lặp là `runId`. KT kích hoạt.
 
   @TC-20-035 @P1 @Âm
   Kịch bản: TC-20-035 Kích hoạt khi khói chưa đạt, sai trạng thái, thiếu đầu mối, thư và KPI lỗi

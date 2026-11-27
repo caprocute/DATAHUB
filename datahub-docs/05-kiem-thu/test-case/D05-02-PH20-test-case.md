@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH20
 ten: Đặc tả ca kiểm thử phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư dh-platform, quản trị nền tảng, quản trị tỉnh, cán bộ an toàn thông tin, chủ đầu tư (UAT), hội đồng thẩm định
@@ -107,7 +107,7 @@ Ba môi trường phục vụ các mức ở mục 1.2.
 |---|---|---|
 | TEST | UT, IT, DB, API, KT, E2E khói | `dh-platform` 1 bản sao; phân hệ khác, Git, Argo CD, OpenBao, Ceph RGW là bản giả hợp đồng (WireMock, Gitea, MinIO thay RGW); PostgreSQL 16 thật cho mọi ca RLS; Kafka KRaft thử |
 | STAGING | E2E đầy đủ, saga đầu cuối, sáp nhập, phát hành, Chaos, ZAP, UAT dợt | Giống sản xuất về số bản sao và chính sách mạng; Argo CD, Git, Keycloak, OpenBao thật; phân hệ khác bản thật hoặc bản giả theo ca (ghi ở tiền điều kiện) |
-| PERF | k6, đo quy mô 34 tenant | `dh-platform` 2 bản sao 4 vCPU, 8 GB; `pg-core` PostgreSQL 16; 34 tenant tổng hợp nạp bằng công cụ nạp, không qua saga |
+| PERF | k6, đo quy mô 34 tenant | `dh-platform` 2 bản sao 4 CPU ảo, 8 GB; `pg-core` PostgreSQL 16; 34 tenant tổng hợp nạp bằng công cụ nạp, không qua saga |
 
 : Môi trường kiểm thử
 
@@ -209,7 +209,7 @@ Bộ dữ liệu có tên, sinh bằng hạt cố định để chạy lại đ�
 | F-ORG-IMP | Tệp nhập tổ chức: 5.000 dòng hợp lệ (`T98`); tệp 40 dòng có 3 dòng lỗi (mã trùng, cấp trên không tồn tại, ngày hiệu lực ngược) | T90, T98 |
 | F-QUOTA | `T96`: `API_RPS` 500 (dùng 400, tức 80 %), `OBJECT_STORAGE_GB` 500 (dùng 300), `USERS` 2.000 (dùng 1.000), `ACTIVE_FLOWS` 1.000 (dùng 1.000, tức 100 %) | T96 |
 | F-USAGE | Ảnh chụp sử dụng theo giờ 30 ngày của `T96`, 25 tháng của `T98` (giả định theo `20.usage.retention-months`) | T96, T98 |
-| F-MERGE | Kế hoạch sáp nhập `T91` vào `T90`: 12 dòng ánh xạ `ORGANIZATION`, 20 dòng `MEMBER_SYSTEM`, 30 dòng `CATALOG_CODE`, 4 dòng `API_CONTEXT_PATH`, 150 dòng `USER`, 6 dòng `TOPIC`; xung đột cài sẵn 3 mã tổ chức, 2 mã danh mục, 1 `contextPath` | T90, T91 |
+| F-MERGE | Kế hoạch sáp nhập `T91` vào `T90`: 12 dòng ánh xạ `ORGANIZATION`, 20 dòng `MEMBER_SYSTEM`, 30 dòng `CATALOG_CODE`, 4 dòng `API_CONTEXT_PATH`, 150 dòng `USER`, 6 dòng `TOPIC`; xung đột cài sẵn 3 mã tổ chức, 2 mã danh mục, 1 mã `API_CONTEXT_PATH` | T90, T91 |
 | F-REL | Phiên bản sản phẩm: `2.3.1` `STABLE`, `2.4.0-rc.1` `DRAFT`, `2.4.0` `PREVIEW` (đã 15 ngày), `2.2.0` `STABLE`, `2.1.0` `DEPRECATED`; kế hoạch nâng cấp ba sóng (`T90`; `T91`, `T92`; `T93`) | PLATFORM |
 | F-LEAK | Danh mục API của PH-03 dùng để sinh ca rò rỉ; tài nguyên mồi ở `T99` | T90…T99 |
 
@@ -223,7 +223,7 @@ Bảng liệt kê số kỳ vọng mà nhiều ca dùng, tính tay từ F-QUOTA 
 |---|---|
 | Phần trăm sử dụng `API_RPS` của `T96` | 400 / 500 = 80 % → cảnh báo `WARN_80` |
 | Phần trăm sử dụng `ACTIVE_FLOWS` của `T96` | 1.000 / 1.000 = 100 % → cảnh báo `LIMIT_100` |
-| Đặt lại cảnh báo `API_RPS` | Dùng xuống 370 (74 %, dưới `20.quota.alert-reset-percent` = 75) liên tục 24 giờ → `CLEARED` |
+| Đặt lại cảnh báo `API_RPS` | Dùng xuống 370 (74 %, dưới `20.quota.alert-reset-percent` = 75) liên tục 24 giờ → `RESOLVED` |
 | Hạ `OBJECT_STORAGE_GB` của `T96` xuống 250 | Thấp hơn mức đang dùng 300 → ERR-20-030, phải duyệt bốn mắt |
 | Hạn mức hiệu lực `USERS` | Hợp đồng 2.000, ghi đè 2.500 còn hạn 10 ngày → 2.500; hết hạn → 2.000 |
 | Kiểm đếm sáp nhập `USER` | Nguồn 150, bỏ qua `SKIP` 6, đích nhận 144 → khớp |
@@ -630,7 +630,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-007 · API-20-005, 006 · BR-20-002 · ERR-20-013, ERR-20-014, ERR-20-017 · NFR-20-005.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`; `obs-sim` báo `EVT-13-14` cảnh báo sức chứa: nền tảng đã có 34 tenant tỉnh (trần giả định theo NFR-00-060); cụm `HT-A` thiếu 8 vCPU.
+**Tiền điều kiện, dữ liệu.** `U-PA1`; `obs-sim` báo `EVT-13-14` cảnh báo sức chứa: nền tảng đã có 34 tenant tỉnh (trần giả định theo NFR-00-060); cụm `HT-A` thiếu 8 CPU ảo.
 
 **Các bước.**
 
@@ -638,9 +638,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `POST P/tenants:check-readiness` với `deploymentProfile = HT-A`
 3. `POST P/tenants/T93:check-readiness` khi còn hai mục `BLOCKER`
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-013` ở mục `CAPACITY` và `ERR-20-017` tổng. Bước 2 `422` `ERR-20-014` ở `CLUSTER_RESOURCES` (thiếu `8 vCPU`). Bước 3 `422` `ERR-20-017` với `items[]` nêu hai mục cần xử lý. Cảnh báo sức chứa nhận từ `EVT-13-14` hiển thị ở UI-20-20.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-013` ở mục `CAPACITY` và `ERR-20-017` tổng. Bước 2 `422` `ERR-20-014` ở `CLUSTER_RESOURCES` (thiếu 8 CPU ảo). Bước 3 `422` `ERR-20-017` với `items[]` nêu hai mục cần xử lý. Cảnh báo sức chứa nhận từ `EVT-13-14` hiển thị ở UI-20-20.
 
-**Thông báo hiển thị.** ERR-20-013: "Nền tảng đã đạt sức chứa 34 tenant. Liên hệ vận hành hạ tầng để mở rộng."; ERR-20-014: "Cụm chưa đủ tài nguyên cho hồ sơ HT-A: thiếu 8 vCPU."; ERR-20-017: "Kiểm tra sẵn sàng chưa đạt: 2 mục cần xử lý."
+**Thông báo hiển thị.** ERR-20-013: "Nền tảng đã đạt sức chứa 34 tenant. Liên hệ vận hành hạ tầng để mở rộng."; ERR-20-014: "Cụm chưa đủ tài nguyên cho hồ sơ HT-A: thiếu 8 CPU ảo."; ERR-20-017: "Kiểm tra sẵn sàng chưa đạt: 2 mục cần xử lý."
 
 :::
 
@@ -1176,7 +1176,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `POST .../{runId-T94}:cancel` không có `reason`
 5. Bù trừ `T94` khi `iam-sim` lỗi ở `S03_REALM`
 
-**Kết quả mong đợi.** Bước 1 `409` `ERR-20-019`. Bước 2 `400` `ERR-20-004`. Bước 3 `409` `ERR-20-006`. Bước 4 `422` `ERR-20-008`. Bước 5 bước `S03_REALM` giữ `COMPENSATING` với `ERR-20-107` ("Bước S03_REALM lỗi tại PH-12: ..."), lần chạy `FAILED`, PA thử bù lại được; không xóa bản ghi tenant.
+**Kết quả mong đợi.** Bước 1 `409` `ERR-20-019`. Bước 2 `400` `ERR-20-004`. Bước 3 `409` `ERR-20-006`. Bước 4 `422` `ERR-20-008`. Bước 5 bước `S03_REALM` giữ `COMPENSATING` với `ERR-20-107` ("Bước S03_REALM lỗi tại PH-12: không tạo được realm."), lần chạy `FAILED`, PA thử bù lại được; không xóa bản ghi tenant.
 
 **Thông báo hiển thị.** ERR-20-019: "Không thể bù trừ: tenant T90 đã từng hoạt động."
 
@@ -1230,7 +1230,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Đặt `20.smoke.enabled = false` cho `T94` (tenant kiểm thử), chạy lại; thử đặt `false` ở nền tảng có tenant tỉnh thật
 4. `POST P/tenants/T92/smoke-tests` khi `SUSPENDED`; `POST` khi đang có lần chạy khác
 
-**Kết quả mong đợi.** Bước 1 ca `EVENT_SAMPLE` ghi `ERR-20-117` ("Ca kiểm tra khói EVENT_SAMPLE lỗi: ..."), bước `S16_SMOKE` và lần chạy `FAILED`. Bước 2 `ERR-20-111` ("Phát hiện rò rỉ chéo tenant ở ..."), sự cố mức 1 mở ở PH-18, báo PO, kích hoạt bị chặn. Bước 3 tenant kiểm thử: `S16_SMOKE` `SKIPPED` kèm cảnh báo; đặt `false` khi có tenant tỉnh thật bị từ chối (BR-20-004). Bước 4 `409` `ERR-20-006`, rồi `409` `ERR-20-016`.
+**Kết quả mong đợi.** Bước 1 ca `EVENT_SAMPLE` ghi `ERR-20-117` ("Ca kiểm tra khói EVENT_SAMPLE lỗi: không nhận lại sự kiện mẫu sau 30 giây."), bước `S16_SMOKE` và lần chạy `FAILED`. Bước 2 `ERR-20-111` ("Phát hiện rò rỉ chéo tenant ở GET /api/tenant/v1/context."), sự cố mức 1 mở ở PH-18, báo PO, kích hoạt bị chặn. Bước 3 tenant kiểm thử: `S16_SMOKE` `SKIPPED` kèm cảnh báo; đặt `false` khi có tenant tỉnh thật bị từ chối (BR-20-004). Bước 4 `409` `ERR-20-006`, rồi `409` `ERR-20-016`.
 
 **Thông báo hiển thị.** ERR-20-117: "Ca kiểm tra khói EVENT_SAMPLE lỗi: không nhận lại sự kiện mẫu sau 30 giây."
 
@@ -1255,7 +1255,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `POST P/tenants/T96:activate` với `activateAt` sau 5 ngày; sau đó dùng `clock-sim` đẩy tới giờ hẹn
 3. Đọc thư bàn giao ở `ops-sim`, đọc quan sát ở `kpi-sim`
 
-**Kết quả mong đợi.** Bước 1 `200`, tenant `ACTIVE`, `activatedAt` có giá trị, `handoverDelivery = SENT`, cờ `testClient` ở realm bị xóa; EVT: `platform.tenant.activated.v1` đúng một lần; registry vô hiệu đệm. Bước 2 `S17_ACTIVATE` chờ tới giờ hẹn rồi `ACTIVE`; hủy hẹn thì kích hoạt ngay. Bước 3 thư mẫu `ph20-handover` tới ba đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`; PH-16 nhận quan sát `ph20.tenant.provision-lead-time` (KPI-12) với `idempotencyRef = {runId}`. KT kích hoạt.
+**Kết quả mong đợi.** Bước 1 `200`, tenant `ACTIVE`, `activatedAt` có giá trị, `handoverDelivery = SENT`, máy khách kiểm thử ở realm bị xóa; EVT: `platform.tenant.activated.v1` đúng một lần; registry vô hiệu đệm. Bước 2 `S17_ACTIVATE` chờ tới giờ hẹn rồi `ACTIVE`; hủy hẹn thì kích hoạt ngay. Bước 3 thư mẫu `ph20-handover` tới ba đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`; PH-16 nhận quan sát `thoi-gian-khoi-tao-tenant` (KPI-12) kèm tham chiếu chống lặp là `runId`. KT kích hoạt.
 
 :::
 
@@ -1495,7 +1495,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Chèn commit khác vào `tenants/T90/` rồi lưu cấu hình
 4. `argo-sim` trả `Degraded` hơn 10 phút
 
-**Kết quả mong đợi.** Bước 1 `502` `ERR-20-024`; giao dịch nghiệp vụ đã lưu, `syncStatus = PENDING`, UI-20-17 hiện "chờ ghi Git". Bước 2 outbox thử lại và `APPLIED`, sự kiện EVT-20-09 phát một lần. Bước 3 hệ thống kéo lại, sinh lại tệp từ CSDL, thử tối đa 3 lần, kết quả đúng. Bước 4 `syncStatus = SYNC_FAILED`, `ERR-20-109` ("Argo CD không áp được cấu hình ...") ở nhật ký, cảnh báo PO.
+**Kết quả mong đợi.** Bước 1 `502` `ERR-20-024`; giao dịch nghiệp vụ đã lưu, `syncStatus = PENDING`, UI-20-17 hiện "chờ ghi Git". Bước 2 outbox thử lại và `APPLIED`, sự kiện EVT-20-09 phát một lần. Bước 3 hệ thống kéo lại, sinh lại tệp từ CSDL, thử tối đa 3 lần, kết quả đúng. Bước 4 `syncStatus = SYNC_FAILED`, `ERR-20-109` ("Argo CD không áp được cấu hình 8: kho Git từ chối kết nối.") ở nhật ký, cảnh báo PO.
 
 **Thông báo hiển thị.** ERR-20-024: "Không ghi được cấu hình vào kho GitOps. Thử lại sau, nếu lặp lại báo vận hành nền tảng."
 
@@ -1677,12 +1677,12 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `PUT T/settings` với `sessionIdleMinutes = 30`
-2. `PUT` với `passwordMinLength = 8`; `mfaRequiredRoles` thiếu `ROLE-TENANT_ADMIN`; `maintenanceWindowPref` dài 8 giờ
+2. `PUT` với `passwordMinLength = 8`; `mfaRequiredRoles` thiếu `ROLE-TENANT_ADMIN`; `maintenanceWindowPref` dài 7 giờ
 3. `PUT` với `itOwnerOrgCode = SO-CU`
 4. `U-T90-TO` gọi `PUT T/settings`; gọi thiếu `If-Match`; `If-Match` cũ
 5. `U-T92-TA` gọi `PUT T/settings`; `U-T91-TA` gọi `PUT T/settings`
 
-**Kết quả mong đợi.** Bước 1, 2 `422` `ERR-20-023` ("sessionIdleMinutes vượt giới hạn của nền tảng (15)"). Bước 3 `404` `ERR-20-002` (tổ chức không `ACTIVE`). Bước 4 `403` `ERR-00-403`; `428` `ERR-00-428`; `412` `ERR-20-005`. Bước 5 `T92` `403` `ERR-20-001`; `T91` `409` `ERR-20-115`. Không đổi gì.
+**Kết quả mong đợi.** Bước 1, 2 `422` `ERR-20-023` ("Thời gian rảnh phiên vượt giới hạn của nền tảng (15)."). Bước 3 `404` `ERR-20-002` (tổ chức không `ACTIVE`). Bước 4 `403` `ERR-00-403`; `428` `ERR-00-428`; `412` `ERR-20-005`. Bước 5 `T92` `403` `ERR-20-001`; `T91` `409` `ERR-20-115`. Không đổi gì.
 
 **Thông báo hiển thị.** ERR-20-023: "sessionIdleMinutes vượt giới hạn của nền tảng (15 phút)."; ERR-20-115: "Tỉnh đã sáp nhập vào T90. Dữ liệu chỉ còn để tra cứu."
 
@@ -1726,7 +1726,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `PUT T/maintenance-window` với `durationHours = 9`
+1. `PUT T/maintenance-window` với `durationHours = 7` (vượt 6 giờ), rồi `durationHours = 1` (dưới 2 giờ)
 2. `PUT` với `dayOfWeek = MON`, `startTime = 09:00` (giờ cao điểm 7:00 đến 17:00 ngày làm việc)
 3. `PUT` với `timezone = UTC+99`
 4. `U-T92-TA` gọi `PUT T/maintenance-window`
@@ -1896,7 +1896,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `POST P/tenants/T90/isolation-changes` khi đang có lần chạy khác
 5. Chạy đổi cách ly khi bản giả kiểm đếm lệch
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-028`. Bước 2 `422` `ERR-20-059`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 lần chạy `FAILED` với `ERR-20-113` ("Kiểm đếm organization lệch: nguồn 40, đích 39"), định tuyến giữ cụm cũ, dữ liệu không mất.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-028`. Bước 2 `422` `ERR-20-059`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 lần chạy `FAILED` với `ERR-20-113` ("Kiểm đếm organization lệch: nguồn 40, đích 39."), định tuyến giữ cụm cũ, dữ liệu không mất.
 
 **Thông báo hiển thị.** ERR-20-028: "Không chuyển được từ chế độ SHARED sang DEDICATED_CLUSTER: chỉ chuyển từng bậc."
 
@@ -2135,7 +2135,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Giữ ngừng quá 3 giờ liên tiếp (`clock-sim`)
 3. Yêu cầu thu bổ sung cho `T88`
 
-**Kết quả mong đợi.** Bước 1 cả lượt `MISSING` với `ERR-20-062` ở nhật ký, không phát cảnh báo hạn mức giả. Bước 2 `ERR-20-110` ("Thiếu số liệu sử dụng API_RPS của T96 từ 09:00"), cảnh báo `U-PO` ở UI-20-06. Bước 3 `409` `ERR-20-006`.
+**Kết quả mong đợi.** Bước 1 cả lượt `MISSING` với `ERR-20-062` ở nhật ký, không phát cảnh báo hạn mức giả. Bước 2 `ERR-20-110` ("Thiếu số liệu sử dụng API_RPS của T96 từ 09:00."), cảnh báo `U-PO` ở UI-20-06. Bước 3 `409` `ERR-20-006`.
 
 **Thông báo hiển thị.** ERR-20-110: "Thiếu số liệu sử dụng API_RPS của T96 từ 09:00."
 
@@ -2152,7 +2152,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-029 · UC-20-15 · BR-20-016 · NFR-20-009 · EVT-20-06 · UI-20-06 · `PERM-20-quota`.
 
-**Tiền điều kiện, dữ liệu.** `T96` theo F-QUOTA (`API_RPS` 400/500, `ACTIVE_FLOWS` 1.000/1.000); `20.quota.warn-percent` = 80; `20.quota.alert-reset-percent` = 75; `ops-sim`.
+**Tiền điều kiện, dữ liệu.** `T96` theo F-QUOTA (`API_RPS` 400/500, `ACTIVE_FLOWS` 1.000/1.000); `20.quota.warn-percent` = 80; `20.quota.alert-reset-percent` = 75; `20.usage.probe-interval` = PT5M; `ops-sim`.
 
 **Các bước.**
 
@@ -2161,7 +2161,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Đưa `API_RPS` xuống 370 và giữ 24 giờ liên tục
 4. `GET P/quota-alerts?tenantCode=T96`
 
-**Kết quả mong đợi.** Bước 1 `API_RPS` 80 % tạo cảnh báo `WARN_80` `OPEN` và `ACTIVE_FLOWS` 100 % tạo `LIMIT_100`; EVT: `platform.tenant.quota-threshold-reached.v1` mỗi cảnh báo một lần, ≤ 5 phút sau thu số đo; thông báo qua PH-18 tới PO và đầu mối `TECHNICAL`, `TENANT_ADMIN`. Bước 2 cập nhật `lastAt`, không gửi lặp. Bước 3 sau 24 giờ dưới 75 % (370/500 = 74 %) cảnh báo `CLEARED`. Bước 4 liệt kê đúng.
+**Kết quả mong đợi.** Bước 1 `API_RPS` 80 % tạo cảnh báo `WARN_80` `OPEN` và `ACTIVE_FLOWS` 100 % tạo `LIMIT_100`; EVT: `platform.tenant.quota-threshold-reached.v1` mỗi cảnh báo một lần, ≤ 5 phút sau thu số đo; thông báo qua PH-18 tới PO và đầu mối `TECHNICAL`, `TENANT_ADMIN`. Bước 2 cập nhật `used` và `percent` của cảnh báo đang mở, không gửi lặp. Bước 3 sau 24 giờ dưới 75 % (370/500 = 74 %) cảnh báo `RESOLVED`. Bước 4 liệt kê đúng.
 
 :::
 
@@ -2176,13 +2176,13 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-029 · API-20-058, 059 · ERR-20-002, ERR-20-004, ERR-20-006, ERR-20-009 · UI-20-06 · `PERM-20-quota`.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`, `U-PO`; cảnh báo `OPEN` của `T96`; cảnh báo `CLEARED`.
+**Tiền điều kiện, dữ liệu.** `U-PA1`, `U-PO`; cảnh báo `OPEN` của `T96`; cảnh báo `RESOLVED`.
 
 **Các bước.**
 
 1. `POST P/quota-alerts/{alertId}:acknowledge` với `comment`
 2. Xác nhận lại cùng cảnh báo với khóa chống lặp khác
-3. `POST` cảnh báo `CLEARED`
+3. `POST` cảnh báo `RESOLVED`
 4. `POST` mã cảnh báo không có
 5. `U-PO` gọi `POST ...:acknowledge`
 6. `GET P/quota-alerts?alertLevel=KHONG`
@@ -2296,7 +2296,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 5. `POST` lặp cùng khóa chống lặp khác thân
 6. `POST` với `period` dài hơn 24 tháng
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-066` ("không có số liệu"). Bước 2 `400` `ERR-20-004`. Bước 3 `404` `ERR-20-002`. Bước 4 `404` `ERR-20-002`. Bước 5 `409` `ERR-20-009`. Bước 6 `400` `ERR-20-032`.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-066` ("Không lập được báo cáo sử dụng: không có số liệu."). Bước 2 `400` `ERR-20-004`. Bước 3 `404` `ERR-20-002`. Bước 4 `404` `ERR-20-002`. Bước 5 `409` `ERR-20-009`. Bước 6 `400` `ERR-20-032`.
 
 **Thông báo hiển thị.** ERR-20-066: "Không lập được báo cáo sử dụng: kỳ 2026-12 chưa có số liệu."
 
@@ -2402,7 +2402,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Bật lại PH-17, `mod-sim` không báo; đẩy `clock-sim` quá `20.provision.step-timeout-minutes` (15 phút)
 3. Bật lại PH-17, `mod-sim` báo `SUCCEEDED`
 
-**Kết quả mong đợi.** Bước 1 `ModuleState = FAILED`, `ERR-20-107` ("Bước S15_MODULES lỗi tại PH-17: ..."). Bước 2 `FAILED` với `ERR-20-106` ("Bước S15_MODULES chưa nhận báo cáo từ PH-17 sau 15 phút"). Bước 3 `ENABLED`. Phân hệ khác không bị ảnh hưởng.
+**Kết quả mong đợi.** Bước 1 `ModuleState = FAILED`, `ERR-20-107` ("Bước S15_MODULES lỗi tại PH-17: khởi động phân hệ thất bại."). Bước 2 `FAILED` với `ERR-20-106` ("Bước S15_MODULES chưa nhận báo cáo từ PH-17 sau 15 phút."). Bước 3 `ENABLED`. Phân hệ khác không bị ảnh hưởng.
 
 :::
 
@@ -2845,7 +2845,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `POST P/tenants/T92/lifecycle-requests` `RESUME`
 3. `POST P/tenants/T91/lifecycle-requests` `RESUME`
 
-**Kết quả mong đợi.** Bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-037` ("... đang có đề nghị chấm dứt"). Bước 3 `ERR-20-117` ("Ca kiểm tra khói LOGIN_ADMIN lỗi: ..."), tenant giữ `SUSPENDED`.
+**Kết quả mong đợi.** Bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-037` ("Chưa đủ điều kiện chấm dứt hoặc khôi phục tenant T92: đang có đề nghị chấm dứt."). Bước 3 `ERR-20-117` ("Ca kiểm tra khói LOGIN_ADMIN lỗi: không lấy được token quản trị tỉnh."), tenant giữ `SUSPENDED`.
 
 **Thông báo hiển thị.** ERR-20-037: "Chưa đủ điều kiện chấm dứt hoặc khôi phục tenant T92: đang có đề nghị chấm dứt."
 
@@ -2903,7 +2903,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 5. `U-PA1` `:approve` đề nghị do chính mình lập; `U-PA3` (đủ cả hai quyền) lập rồi tự duyệt
 6. `U-PA2` `:approve` khi `DRAFT`; `:submit` khi `APPROVED`
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-037`. Bước 2 `422` `ERR-20-038` ("Chưa hết thời gian chờ 30 ngày kể từ khi tạm ngừng (đến 14/12/2026)"). Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 `403` `ERR-20-007` kể cả người giữ cả hai quyền. Bước 6 `409` `ERR-20-006`.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-037`. Bước 2 `422` `ERR-20-038` ("Chưa hết thời gian chờ 30 ngày kể từ khi tạm ngừng (đến 14/12/2026)."). Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 `403` `ERR-20-007` kể cả người giữ cả hai quyền. Bước 6 `409` `ERR-20-006`.
 
 **Thông báo hiển thị.** ERR-20-038: "Chưa hết thời gian chờ 30 ngày kể từ khi tạm ngừng (đến 14/12/2026)."
 
@@ -3060,7 +3060,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Đẩy `clock-sim` 24 giờ
 3. Kiểm tra trạng thái tenant và đề nghị
 
-**Kết quả mong đợi.** Cảnh báo SO nền tảng với `ERR-20-116` ("Chưa nhận xác nhận xóa mật mã của T92"), tenant giữ `SUSPENDED`, đề nghị giữ `EXECUTING`; khi `EVT-09-21` tới sau đó thì chuyển `DECOMMISSIONED`.
+**Kết quả mong đợi.** Cảnh báo SO nền tảng với `ERR-20-116` ("Chưa nhận xác nhận xóa mật mã của T92."), tenant giữ `SUSPENDED`, đề nghị giữ `EXECUTING`; khi `EVT-09-21` tới sau đó thì chuyển `DECOMMISSIONED`.
 
 **Thông báo hiển thị.** ERR-20-116: "Chưa nhận xác nhận xóa mật mã của T92."
 
@@ -3290,7 +3290,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `PUT` một dòng `action = CREATE` và một dòng `action = SKIP`
 5. `GET P/merge-plans/{id}/mappings?status=CONFLICT`
 
-**Kết quả mong đợi.** Bước 1 `200`, sinh dòng cho 12 `ORGANIZATION`, 20 `MEMBER_SYSTEM`, 30 `CATALOG_CODE`, 4 `API_CONTEXT_PATH`, 150 `USER`, 6 `TOPIC`; mã trùng đánh `CONFLICT`. Bước 3, 4 `200`, dòng `CONFIRMED`. Bước 5 liệt kê dòng xung đột (3 mã tổ chức, 2 mã danh mục, 1 `contextPath`). Ánh xạ thay đổi làm chạy thử trước đó thành cũ.
+**Kết quả mong đợi.** Bước 1 `200`, sinh dòng cho 12 `ORGANIZATION`, 20 `MEMBER_SYSTEM`, 30 `CATALOG_CODE`, 4 `API_CONTEXT_PATH`, 150 `USER`, 6 `TOPIC`; mã trùng đánh `CONFLICT`. Bước 3, 4 `200`, dòng `CONFIRMED`. Bước 5 liệt kê dòng xung đột (3 mã tổ chức, 2 mã danh mục, 1 mã `API_CONTEXT_PATH`). Ánh xạ thay đổi làm chạy thử trước đó thành cũ.
 
 :::
 
@@ -3371,7 +3371,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Chạy thử khi `ops-sim` báo PH-01 lệch kiểm đếm, và khi báo `FAILED` với `errorCode` ở PH-07
 4. Sửa một dòng ánh xạ sau chạy thử `PASSED`, rồi `POST .../:submit`
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-042`. Bước 2 `409` `ERR-20-006`. Bước 3 `dryRun.result = FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119") và `ERR-20-107`. Bước 4 `dryRun.stale = true`, `422` `ERR-20-043`.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-042`. Bước 2 `409` `ERR-20-006`. Bước 3 `dryRun.result = FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119.") và `ERR-20-107`. Bước 4 `dryRun.stale = true`, `422` `ERR-20-043`.
 
 **Thông báo hiển thị.** ERR-20-043: "Chạy thử sáp nhập chưa đạt hoặc đã cũ so với bảng ánh xạ hiện hành."
 
@@ -3503,7 +3503,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. `POST .../:start` thiếu `reason`; thiếu `If-Match`; `If-Match` cũ
 4. Chạy chuyển khi PH-01 nhập thiếu một bản ghi
 
-**Kết quả mong đợi.** Bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-043`. Bước 3 `422` `ERR-20-008`, `428` `ERR-00-428`, `412` `ERR-20-005`. Bước 4 phân hệ `FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119"), kế hoạch `FAILED` hoặc `CONFLICT_REVIEW` theo nguyên nhân; không sang `IDENTITY_TRANSFER`.
+**Kết quả mong đợi.** Bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-043`. Bước 3 `422` `ERR-20-008`, `428` `ERR-00-428`, `412` `ERR-20-005`. Bước 4 phân hệ `FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119."), kế hoạch `FAILED` hoặc `CONFLICT_REVIEW` theo nguyên nhân; không sang `IDENTITY_TRANSFER`.
 
 :::
 
@@ -3570,7 +3570,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-049 · UC-20-27 · API-20-101, 102 · BR-20-023, 024 · UI-20-10 · `PERM-20-merge`.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`; kế hoạch `CONFLICT_REVIEW` T91→T90 với F-MERGE: 3 xung đột mã tổ chức, 2 mã danh mục, 1 `contextPath`.
+**Tiền điều kiện, dữ liệu.** `U-PA1`; kế hoạch `CONFLICT_REVIEW` T91→T90 với F-MERGE: 3 xung đột mã tổ chức, 2 mã danh mục, 1 mã `API_CONTEXT_PATH`.
 
 **Các bước.**
 
@@ -3629,7 +3629,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Gửi lô trộn `CATALOG_CODE` và `USER`
 4. Gửi lô có một mã đã `RESOLVED`
 
-**Kết quả mong đợi.** Bước 1 `200`, `resolved = 500`, `remainingOpen = 105`. Bước 2 `400` `ERR-20-004`. Bước 3 `400` `ERR-20-004` (khác loại). Bước 4 `409` `ERR-20-006`, không dòng nào đổi (tất cả hoặc không).
+**Kết quả mong đợi.** Bước 1 `200`, `resolved = 500`, `openRemaining = 105`. Bước 2 `400` `ERR-20-004`. Bước 3 `400` `ERR-20-004` (khác loại). Bước 4 `409` `ERR-20-006`, không dòng nào đổi (tất cả hoặc không).
 
 :::
 
@@ -3732,7 +3732,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `mod-sim` gọi địa chỉ cũ của `T91` qua chuyển tiếp
 5. `mod-sim` báo EVT-03-10 xác nhận
 
-**Kết quả mong đợi.** Bước 1 `202`, kế hoạch `TRANSITION`, `transitionEndsAt = hiện tại + 8 tháng` (theo kế hoạch đã sửa), phát EVT-20-11 và EVT-20-04. Bước 3 nguồn `MERGED`, `mergedInto = T90`, bảng chuyển tiếp `API_CONTEXT_PATH`. Bước 4 phản hồi từ `T90` kèm `Deprecation` và `Sunset = transitionEndsAt`. Bước 5 `redirectActiveAt` được ghi. Ghi vào `T91` sau cutover bị chặn (xem TS-20-37).
+**Kết quả mong đợi.** Bước 1 `202`, kế hoạch `TRANSITION`, `transitionEndsAt = hiện tại + 8 tháng` (theo kế hoạch đã sửa), phát EVT-20-11 và EVT-20-04. Bước 3 nguồn `MERGED`, `mergedInto = T90`, bảng chuyển tiếp `API_CONTEXT_PATH`. Bước 4 phản hồi từ `T90` kèm `Deprecation` và `Sunset = transitionEndsAt`. Bước 5 xác nhận chuyển tiếp bật được ghi (EVT-03-10). Ghi vào `T91` sau cutover bị chặn (xem TS-20-37).
 
 :::
 
@@ -3804,7 +3804,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Chờ 15 phút (đồng hồ giả lập)
 
-**Kết quả mong đợi.** Cảnh báo PO; `redirectActiveAt` để trống; cutover không bị hoàn tác.
+**Kết quả mong đợi.** Cảnh báo PO; chưa ghi xác nhận chuyển tiếp bật; cutover không bị hoàn tác.
 
 :::
 
@@ -4385,7 +4385,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Tiến đồng hồ 14 ngày; `POST P/releases/2.4.1:promote` kèm `If-Match`
 3. `GET P/releases/2.4.1`
 
-**Kết quả mong đợi.** Bước 1 `200`, `PREVIEW`, EVT-20-14. Bước 2 `200`, `STABLE`, EVT-20-14 thứ hai. Bước 3 trạng thái `STABLE`, mốc `promotedAt`.
+**Kết quả mong đợi.** Bước 1 `200`, `PREVIEW`, EVT-20-14. Bước 2 `200`, `STABLE`, EVT-20-14 thứ hai. Bước 3 trạng thái `STABLE`, mốc `stableAt`.
 
 :::
 
@@ -4809,9 +4809,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `:rollback` dùng lại `Idempotency-Key` cho yêu cầu khác
 5. Thiếu `If-Match`; `If-Match` cũ
 
-**Kết quả mong đợi.** Bước 1 `422` `ERR-20-058` ("Không quay lui được: phiên bản có thay đổi lược đồ CONTRACT."). Bước 2 `409` `ERR-20-006`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-009`. Bước 5 `428` `ERR-00-428`, `412` `ERR-20-005`.
+**Kết quả mong đợi.** Bước 1 `422` `ERR-20-058` ("Không quay lui được phiên bản 2.4.0 vì có thay đổi lược đồ không tương thích ở PH-02."). Bước 2 `409` `ERR-20-006`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-009`. Bước 5 `428` `ERR-00-428`, `412` `ERR-20-005`.
 
-**Thông báo hiển thị.** ERR-20-058: "Không quay lui được: phiên bản có thay đổi lược đồ CONTRACT."
+**Thông báo hiển thị.** ERR-20-058: "Không quay lui được phiên bản 2.4.0 vì có thay đổi lược đồ không tương thích ở PH-02."
 
 :::
 
@@ -5036,7 +5036,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 ### TS-20-36 · Tra nhật ký kiểm toán và tham số 20.*
 
-**Mục tiêu.** Tra nhật ký kiểm toán PH-20 toàn nền tảng và theo tỉnh, giới hạn 366 ngày; xem 28 tham số `20.*`, giá trị hiệu lực và nguồn; đổi giá trị qua PH-18 áp trong 60 giây, ngoài miền bị từ chối.
+**Mục tiêu.** Tra nhật ký kiểm toán PH-20 toàn nền tảng và theo tỉnh, giới hạn 366 ngày; xem 29 tham số `20.*`, giá trị hiệu lực và nguồn; đổi giá trị qua PH-18 áp trong 60 giây, ngoài miền bị từ chối.
 
 **Phủ.** FR-20-068, 069; UC-20-36; UI-20-03; API-20-130, 131, 161.
 
@@ -5102,14 +5102,14 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-20-069 · UC-20-36 · API-20-131 · BR-20-004 · UI-20-03 · `PERM-20-read`.
 
-**Tiền điều kiện, dữ liệu.** `U-PA1`; `ops-sim` đã đăng ký 28 khóa; `20.release.stable-soak-days` ghi đè 21 ngày.
+**Tiền điều kiện, dữ liệu.** `U-PA1`; `ops-sim` đã đăng ký 29 khóa; `20.release.stable-soak-days` ghi đè 21 ngày.
 
 **Các bước.**
 
 1. `GET P/parameters?page=1&size=50`
 2. `GET P/parameters?q=release`
 
-**Kết quả mong đợi.** Bước 1 đủ 28 khóa, mỗi khóa có miền, mặc định, giá trị hiệu lực, nguồn. Bước 2 các khóa `20.release.*`, `stable-soak-days = 21` nguồn ghi đè, còn lại nguồn mặc định.
+**Kết quả mong đợi.** Bước 1 đủ 29 khóa, mỗi khóa có miền, mặc định, giá trị hiệu lực, nguồn. Bước 2 các khóa `20.release.*`, `stable-soak-days = 21` nguồn ghi đè, còn lại nguồn mặc định.
 
 :::
 
@@ -5216,7 +5216,7 @@ Tám kịch bản dưới kiểm các yêu cầu cắt ngang: cô lập tenant, 
 2. `U-T90-TA` `PATCH P/tenants/T91` và `POST P/tenants/T91/lifecycle-requests`
 3. `U-PA1` `GET T/organizations` (không có ngữ cảnh tenant)
 
-**Kết quả mong đợi.** Bước 1, 2 `403` `ERR-00-403` (người dùng tỉnh không có quyền nền tảng; hiện hành trả 403 nhưng bộ thử chéo tenant của brief mong `404`; ghi nhận ở Phụ lục đề nghị ĐN-TC-05). Bước 3 `400` hoặc `403` do thiếu ngữ cảnh tenant, không trả dữ liệu của tenant nào. Không bản ghi nào bị đổi.
+**Kết quả mong đợi.** Bước 1, 2 `403` `ERR-00-403` (người dùng tỉnh không thuộc tenant `PLATFORM`; quyết định 0.2: nhóm `/api/platform/v1` trả `403` vì đường dẫn nền tảng không phải tài nguyên của một tỉnh, không có gì để che; tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả `404`, xem TC-20-186, 188). Bước 3 `403` `ERR-00-403` do token `PLATFORM` không có ngữ cảnh tenant, không trả dữ liệu của tenant nào. Không bản ghi nào bị đổi.
 
 :::
 
@@ -6989,6 +6989,7 @@ Cột "Test case" liệt kê ca có dùng hoặc đổi tham số.
 | `20.suspend.essential-api-allowed` | 087 |
 | `20.terminate.cooling-days` | 101 |
 | `20.upgrade.emergency-notice-hours` | 163 |
+| `20.usage.probe-interval` | 068 |
 | `20.usage.retention-months` | 066 |
 | `20.usage.snapshot-interval` | 066 |
 
@@ -7061,16 +7062,16 @@ Các đề nghị phát sinh khi viết ca; tập này chưa sửa tài liệu n
 
 | Mã | Tài liệu | Đề nghị |
 |---|---|---|
-| ĐN-TC-01 | D02-03-PH20 FR-20-018 và FR-20-061, 064 | Thống nhất độ dài cửa sổ bảo trì: FR-20-018 nêu 2…6 giờ, FR-20-061 và FR-20-064 nêu 1…8 giờ không trùng giờ cao điểm; ca window-neg và window-set-ok dùng 1…8 giờ |
-| ĐN-TC-02 | D02-03-PH20 FR-20-007, FR-20-014, OpenAPI | Thống nhất tên ca kiểm tra khói giữa văn xuôi FRS và OpenAPI; thống nhất mã chỉ tiêu KPI-12 `ph20.tenant.provision-lead-time` với brief của phân hệ PH-16 |
+| ĐN-TC-01 | D02-03-PH20 FR-20-018 và FR-20-061, 064 | Đã đồng bộ ở 0.2: cửa sổ bảo trì dài 2…6 giờ, ngoài giờ cao điểm, ở mọi tập; ca window-neg dùng 7 giờ và 1 giờ, window-set-ok dùng 4 giờ |
+| ĐN-TC-02 | D02-03-PH20 FR-20-007, FR-20-014, OpenAPI | Đã đồng bộ ở 0.2: tên ca kiểm tra khói theo OpenAPI (`LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE`, `CROSS_TENANT_LEAK`) và mã chỉ tiêu KPI-12 `thoi-gian-khoi-tao-tenant` của PH-16 ở mọi tập |
 | ĐN-TC-03 | D03-04-PH20 (OpenAPI) | Nêu mã lỗi khi thiếu `Idempotency-Key` ở `POST` ghi: ca idem-replay giả định `400` `ERR-20-004` |
 | ĐN-TC-04 | D03-04-PH20 API-20-065, D02-03-PH20 FR-20-034 | OpenAPI liệt kê `ERR-20-055` ở API-20-065 nhưng FRS chỉ dùng mã này cho phát hành (FR-20-061); thống nhất một nơi |
-| ĐN-TC-05 | D03-04-PH20, D05-01 | Chọn mã khi người dùng tỉnh gọi API nền tảng chéo tenant: hiện `403` `ERR-00-403`, trong khi bộ thử rò rỉ yêu cầu `404`; ca leak-platform-api ghi cả hai |
+| ĐN-TC-05 | D03-04-PH20, D05-01 | Đã đồng bộ ở 0.2: token không thuộc tenant `PLATFORM` gọi `/api/platform/v1` trả `403` `ERR-00-403`; tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả `404` `ERR-20-002`; bộ thử rò rỉ của D05-01 cần ghi theo quyết định này |
 | ĐN-TC-06 | D03-04-PH20 FR-20-069 | `ERR-20-060` (tham số ngoài miền) không có operation OpenAPI trả về vì tham số đổi qua PH-18; ghi rõ nơi trả và hợp đồng đẩy thay đổi |
 | ĐN-TC-07 | D05-01, D00-04 | PERF cần 34 tenant `T01…T34` (`testTenant = true`) ngoài dải `T90…T99` để đo NFR-20-005; bổ sung quy ước dải tenant hiệu năng |
 | ĐN-TC-08 | D02-03-PH20 FR-20-061 | Nêu mã lỗi khi lên lịch nâng cấp khẩn với thời gian báo trước ít hơn `20.upgrade.emergency-notice-hours`; ca plan-emergency chấp nhận `400` hoặc `422` |
 | ĐN-TC-09 | D02-04-PH20 (A-01, A-05), Q20-46, Q20-49 | Bổ sung hộp duyệt đề nghị đổi hạn mức ở màn và thống nhất ngoại lệ A-01, A-05 của use case |
-| ĐN-TC-10 | D02-03-PH20 mục 3.2 | Mã bước `S03_REALM` và `S03_IDENTITY` cùng xuất hiện; thống nhất `S03_REALM` |
+| ĐN-TC-10 | D02-03-PH20 mục 3.2 | Đã đồng bộ ở 0.2: mã bước saga chỉ còn `S03_REALM` |
 | ĐN-TC-11 | D05-01 | Thêm vào cổng `RG-1` nhóm ca rò rỉ chéo tenant theo nhóm API và vào cổng `RG-3` nhóm saga từng bước, sáp nhập đầu cuối |
 
 : Đề nghị đồng bộ phát sinh từ tập kiểm thử PH-20
@@ -7085,12 +7086,13 @@ Các đề nghị phát sinh khi viết ca; tập này chưa sửa tài liệu n
 
 > **Câu hỏi mở Q20-43:** NFR-20-023 (gói bàn giao 500 GB ≤ 24 giờ) cần dung lượng Ceph và băng thông của hạ tầng thật; hiện chỉ kiểm logic ở STAGING với gói giả, số đo thật để PERF của hạ tầng tỉnh.
 
-> **Câu hỏi mở Q20-44:** Ca rò rỉ chéo tenant ở nhóm API nền tảng mong `403` hay `404` (ĐN-TC-05), và API chỉ nền tảng có tính vào "phủ 100 % API công bố" của NFR-20-019 hay ghi `SKIPPED`.
+> **Câu hỏi đã đóng Q20-44:** Ca rò rỉ chéo tenant ở nhóm API nền tảng mong `403` `ERR-00-403` (đường dẫn nền tảng không phải tài nguyên của một tỉnh), còn tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` mong `404` (ĐN-TC-05, TC-20-187). API chỉ nền tảng không nằm trong phép thử dữ liệu đánh dấu của NFR-20-019 (ghi `SKIPPED` kèm lý do theo FR-20-070) nhưng có ca riêng TC-20-187.
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-27 | Bản đầu: kịch bản TS-20-01…44, test case TC-20, ma trận truy vết, Gherkin, bảng tính |
+| 0.2 | 2026-11-27 | Đồng bộ với FRS 0.2: cửa sổ bảo trì 2…6 giờ, quyết định 403 và 404 đóng Q20-44, tên trường theo OpenAPI, thông báo lỗi nguyên văn FRS 9.2, 29 tham số; sinh lại số ca, ma trận, Gherkin, bảng tính |
 
 : Lịch sử phiên bản

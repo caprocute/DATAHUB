@@ -6,7 +6,7 @@ Tính năng: TS-20-27 · Xử lý xung đột sáp nhập
   @TC-20-122 @P1 @Dương
   Kịch bản: TC-20-122 Xem xung đột và xử lý từng dòng bằng ba cách
     # Truy vết: FR-20-049 · UC-20-27 · API-20-101, 102 · BR-20-023, 024 · UI-20-10 · `PERM-20-merge`
-    Biết `U-PA1`; kế hoạch `CONFLICT_REVIEW` T91→T90 với F-MERGE: 3 xung đột mã tổ chức, 2 mã danh mục, 1 `contextPath`.
+    Biết `U-PA1`; kế hoạch `CONFLICT_REVIEW` T91→T90 với F-MERGE: 3 xung đột mã tổ chức, 2 mã danh mục, 1 mã `API_CONTEXT_PATH`.
     Khi `GET P/merge-plans/{id}/conflicts?status=OPEN`
     Và `POST .../conflicts/{c1}:resolve` với `resolution = KEEP_TARGET`, `comment`, kèm `If-Match`
     Và `POST .../{c2}:resolve` với `resolution = RENAME_SOURCE`, `newCode = DM-T91-01`
@@ -33,7 +33,7 @@ Tính năng: TS-20-27 · Xử lý xung đột sáp nhập
     Và gửi 501 mã
     Và gửi lô trộn `CATALOG_CODE` và `USER`
     Và gửi lô có một mã đã `RESOLVED`
-    Thì bước 1 `200`, `resolved = 500`, `remainingOpen = 105`. Bước 2 `400` `ERR-20-004`. Bước 3 `400` `ERR-20-004` (khác loại). Bước 4 `409` `ERR-20-006`, không dòng nào đổi (tất cả hoặc không).
+    Thì bước 1 `200`, `resolved = 500`, `openRemaining = 105`. Bước 2 `400` `ERR-20-004`. Bước 3 `400` `ERR-20-004` (khác loại). Bước 4 `409` `ERR-20-006`, không dòng nào đổi (tất cả hoặc không).
 
   @TC-20-125 @P2 @Dương
   Kịch bản: TC-20-125 Hết xung đột mở thì kế hoạch về TRANSFERRING và phần dính xung đột tiếp tục

@@ -2,7 +2,7 @@
 openapi: '3.1.0'
 info:
   title: Datahub · PH-20 API nội bộ
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   summary: Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).
   description: |-
     Nhóm `/internal/tenant/v1`: registry, tổ chức, báo tiến độ cho phân hệ khác; chỉ trong mesh, scope dịch vụ.
@@ -181,6 +181,7 @@ paths:
       description: Hạn mức hiệu lực, host, tiền tố, ánh xạ chuyển tiếp cho PH-03, PH-04, PH-10.
       x-datahub-id: API-20-164
       x-datahub-fr:
+      - FR-20-026
       - FR-20-027
       - FR-20-051
       - FR-20-066
@@ -290,6 +291,7 @@ paths:
       x-datahub-id: API-20-166
       x-datahub-fr:
       - FR-20-008
+      - FR-20-034
       x-datahub-permission:
         permission: Scope tenant:provision-report
       security:
@@ -349,6 +351,7 @@ paths:
       description: PH-18 và phân hệ tham gia báo tiến độ chuyển dữ liệu sáp nhập; sai trạng thái kế hoạch trả ERR-20-114.
       x-datahub-id: API-20-167
       x-datahub-fr:
+      - FR-20-047
       - FR-20-048
       x-datahub-permission:
         permission: Scope tenant:provision-report
@@ -768,7 +771,7 @@ components:
             status: 400
             code: ERR-20-004
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Dữ liệu sai định dạng.
+            detail: 'tenantCode chưa hợp lệ: cần dạng T và hai chữ số.'
             instance: /api/platform/v1/tenants/T68
     Unauthorized:
       description: Chưa xác thực
@@ -810,7 +813,7 @@ components:
             status: 404
             code: ERR-20-002
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Không tìm thấy.
+            detail: Không tìm thấy tenant T68 trong phạm vi được xem.
             instance: /api/platform/v1/tenants/T68
     Conflict:
       description: Xung đột trạng thái hoặc dữ liệu
@@ -824,7 +827,7 @@ components:
             status: 409
             code: ERR-20-006
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Trạng thái không cho phép.
+            detail: Không thể khôi phục khi tenant đang ở trạng thái SUSPENDED.
             instance: /api/platform/v1/tenants/T68
   schemas:
     CrossTenantPolicy:

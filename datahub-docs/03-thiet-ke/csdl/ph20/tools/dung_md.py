@@ -201,7 +201,7 @@ def khoi(t):
         elif fn == "tg_transition":
             pv.append("Máy trạng thái `%s` (`tg_%s_%s`)" % (re.match(r"'(\w+)'", args).group(1), t, nm))
         elif fn == "tg_frozen":
-            pv.append("Mẫu ACTIVE, RETIRED không đổi nội dung (`tg_%s_%s`)" % (t, nm))
+            pv.append("Bản đã chốt (%s) không đổi nội dung (`tg_%s_%s`)" % (", ".join("`%s`" % x for x in re.findall(r"'([^']*)'", args)[1].split(",")), t, nm))
         elif fn == "tg_append_only" or nm == "append_only":
             pv.append("Chỉ thêm, chặn UPDATE và DELETE (`tg_%s_%s`)" % (t, nm))
         elif fn == "tg_no_delete":
@@ -353,7 +353,7 @@ def quota_md():
     o = ["| Tài nguyên | Mặc định | Cơ sở |", "|---|---|---|"]
     for k, v in q.items():
         o.append("| `%s` | %s | %s |" % (k, format(v, ",").replace(",", "."), nguon.get(k, "Giả định (brief PH-20 mục 5.1)")))
-    o += ["", ": Mười hai hạn mức mặc định của mẫu `QM-VUA`"]
+    o += ["", ": Mười hai hạn mức mặc định của mẫu `tinh-chuan`"]
     return "\n".join(o)
 
 
@@ -364,7 +364,7 @@ def steps_md():
     o = ["| Thứ tự | Mã bước | Bên thực hiện | Bắt buộc theo mẫu |", "|---|---|---|---|"]
     for i, x in enumerate(st, 1):
         o.append("| %d | `%s` | %s | %s |" % (i, x["stepCode"], x["executor"], "có" if x["required"] else "tùy điều kiện (chế độ cách ly, phân hệ bật)"))
-    o += ["", ": Kế hoạch 17 bước saga trong `step_plan` của mẫu `QM-VUA`"]
+    o += ["", ": Kế hoạch 17 bước saga trong `step_plan` của mẫu `tinh-chuan`"]
     return "\n".join(o)
 
 
@@ -379,7 +379,7 @@ def enum_md():
             if mm:
                 in_lists.append((t, mm.group(1), frozenset(re.findall(r"'([^']*)'", mm.group(2)))))
     keys = list(E)
-    frs = keys[:keys.index("TemplateStatus")]
+    frs = keys[:keys.index("ContractStatus")]
     o = ["| Liệt kê (FRS Phụ lục A) | Số giá trị | Cột dùng trong DDL |", "|---|---|---|"]
     tot_match = 0
     for k in frs:
@@ -389,7 +389,7 @@ def enum_md():
         o.append("| `%s` | %d | %s |" % (k, len(vals), ", ".join(cols) if cols else "không có cột riêng (chỉ ghi ở ràng buộc phức hợp)"))
     o += ["", ": Đối chiếu liệt kê FRS với `CHECK ... IN (...)` của DDL (%d danh sách trùng đúng một liệt kê)" % tot_match]
     o += ["", "| Liệt kê bổ sung của CSDL | Giá trị |", "|---|---|"]
-    for k in keys[keys.index("TemplateStatus"):]:
+    for k in keys[keys.index("ContractStatus"):]:
         o.append("| `%s` | %s |" % (k, ", ".join("`%s`" % v for v in E[k].split())))
     o += ["", ": Liệt kê bổ sung do CSDL đặt thêm, không có ở FRS Phụ lục A (đề nghị đồng bộ 11.2)"]
     return "\n".join(o)

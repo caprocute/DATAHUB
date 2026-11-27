@@ -66,9 +66,9 @@ SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.platform_module), 20, 'nền
 SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.platform_module WHERE wave = 1), 12, 'nền: 12 phân hệ đợt 1 (MVP)');
 SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.platform_module WHERE is_core), 4, 'nền: bốn phân hệ lõi PH-12, 13, 18, 20');
 SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.module_dependency WHERE module_code = depends_on_code), 0, 'nền: không phân hệ nào phụ thuộc chính mình');
-SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.provisioning_template WHERE template_code = 'QM-VUA' AND status = 'ACTIVE'), 1, 'nền: mẫu khởi tạo QM-VUA ACTIVE');
-SELECT pg_temp.eq((SELECT count(*) FROM jsonb_object_keys((SELECT default_quota FROM ph20_tenant.provisioning_template WHERE template_code = 'QM-VUA'))), 12, 'nền: mẫu QM-VUA có 12 hạn mức mặc định');
-SELECT pg_temp.eq((SELECT jsonb_array_length(step_plan) FROM ph20_tenant.provisioning_template WHERE template_code = 'QM-VUA'), 17, 'nền: mẫu QM-VUA có 17 bước saga');
+SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.provisioning_template WHERE template_code = 'tinh-chuan' AND status = 'PUBLISHED'), 1, 'nền: mẫu khởi tạo tinh-chuan PUBLISHED');
+SELECT pg_temp.eq((SELECT count(*) FROM jsonb_object_keys((SELECT default_quota FROM ph20_tenant.provisioning_template WHERE template_code = 'tinh-chuan'))), 12, 'nền: mẫu tinh-chuan có 12 hạn mức mặc định');
+SELECT pg_temp.eq((SELECT jsonb_array_length(step_plan) FROM ph20_tenant.provisioning_template WHERE template_code = 'tinh-chuan'), 17, 'nền: mẫu tinh-chuan có 17 bước saga');
 RESET ROLE;
 CALL ph20_tenant.p_seed_platform();
 SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.platform_module), 20, 'p_seed_platform chạy lại không nhân bản');
@@ -77,7 +77,7 @@ SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.platform_module), 20, 'p_see
 SET ROLE dh_platform_ctl;
 SET app.tenant_id = 'PLATFORM';
 INSERT INTO ph20_tenant.tenant (id, code, kind, name, admin_unit_id, status, realm, scale_profile, template_id, config_path, created_by, updated_by)
-SELECT pg_temp.id(x.k), x.c, 'PROVINCE', x.n, pg_temp.id(x.au), 'PROVISIONING', 'dh-' || lower(x.c), 'QM-VUA', (SELECT id FROM ph20_tenant.provisioning_template WHERE template_code = 'QM-VUA'),
+SELECT pg_temp.id(x.k), x.c, 'PROVINCE', x.n, pg_temp.id(x.au), 'PROVISIONING', 'dh-' || lower(x.c), 'QM-VUA', (SELECT id FROM ph20_tenant.provisioning_template WHERE template_code = 'tinh-chuan'),
        'tenants/' || x.c || '/', 'pa1', 'pa1'
 FROM (VALUES ('t90', 'T90', 'Tỉnh thử nghiệm 90', 'au90'), ('t91', 'T91', 'Tỉnh thử nghiệm 91', 'au91'), ('t92', 'T92', 'Tỉnh thử nghiệm 92', 'au92')) AS x(k, c, n, au);
 SELECT pg_temp.eq((SELECT count(*) FROM ph20_tenant.tenant), 5, 'PLATFORM thấy mọi tenant: 5 dòng');
@@ -186,8 +186,8 @@ SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_settings (id, tenant_id, 
 SELECT pg_temp.expect($$UPDATE ph20_tenant.tenant_settings SET idle_session_minutes = 2 WHERE tenant_id = 'T90'$$, '23514', 'thời gian rảnh phiên ngoài khoảng 5…480 phút');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.cross_tenant_policy (id, tenant_id, max_hours, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 4, 'ta90', 'ta90')$$, '23505', 'mỗi tenant một chính sách liên tenant');
 SELECT pg_temp.expect($$UPDATE ph20_tenant.cross_tenant_policy SET max_hours = 0 WHERE tenant_id = 'T90'$$, '23514', 'thời hạn liên tenant tối thiểu 1 giờ');
-SELECT pg_temp.expect($$INSERT INTO ph20_tenant.maintenance_window (id, tenant_id, name, window_type, duration_minutes, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x', 'RECURRING', 60, 'ta90', 'ta90')$$, '23514', 'cửa sổ định kỳ cần thứ và giờ bắt đầu');
-SELECT pg_temp.expect($$INSERT INTO ph20_tenant.maintenance_window (id, tenant_id, name, window_type, starts_at, ends_at, duration_minutes, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x', 'ONE_OFF', '2026-12-01 20:00+07', '2026-12-01 19:00+07', 60, 'ta90', 'ta90')$$, '23514', 'cửa sổ một lần phải kết thúc sau khi bắt đầu');
+SELECT pg_temp.expect($$INSERT INTO ph20_tenant.maintenance_window (id, tenant_id, name, window_type, duration_minutes, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x', 'RECURRING', 120, 'ta90', 'ta90')$$, '23514', 'cửa sổ định kỳ cần thứ và giờ bắt đầu');
+SELECT pg_temp.expect($$INSERT INTO ph20_tenant.maintenance_window (id, tenant_id, name, window_type, starts_at, ends_at, duration_minutes, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x', 'ONE_OFF', '2026-12-01 20:00+07', '2026-12-01 19:00+07', 120, 'ta90', 'ta90')$$, '23514', 'cửa sổ một lần phải kết thúc sau khi bắt đầu');
 INSERT INTO ph20_tenant.file_object (id, tenant_id, bucket, object_path, file_name, content_type, size_bytes, sha256, scan_status, data_class_id, purpose, created_by, updated_by)
 VALUES (pg_temp.id('fo1'), 'T90', 'dh-t90-import', 'org/2026/to-chuc.xlsx', 'to-chuc.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 20480, repeat('a', 64), 'CLEAN', gen_random_uuid(), 'ORG_IMPORT', 'ta90', 'ta90');
 INSERT INTO ph20_tenant.org_import_job (id, tenant_id, file_id, format, mode, status, total_rows, valid_rows, error_rows, created_by, updated_by) VALUES (pg_temp.id('oij1'), 'T90', pg_temp.id('fo1'), 'XLSX', 'UPSERT', 'PREVIEWED', 3, 2, 1, 'ta90', 'ta90');
@@ -218,11 +218,11 @@ SET app.tenant_id = 'PLATFORM';
 INSERT INTO ph20_tenant.file_object (id, tenant_id, bucket, object_path, file_name, content_type, size_bytes, sha256, scan_status, data_class_id, purpose, created_by, updated_by)
 VALUES (pg_temp.id('fo2'), 'T90', 'dh-t90-contract', 'hop-dong/hd-001.pdf', 'hd-001.pdf', 'application/pdf', 102400, repeat('c', 64), 'CLEAN', gen_random_uuid(), 'CONTRACT', 'pa1', 'pa1'),
        (pg_temp.id('fo3'), 'T91', 'dh-t91-contract', 'hop-dong/hd-002.pdf', 'hd-002.pdf', 'application/pdf', 102400, repeat('d', 64), 'CLEAN', gen_random_uuid(), 'CONTRACT', 'pa1', 'pa1');
-INSERT INTO ph20_tenant.tenant_contact (id, tenant_id, contact_type, full_name, email, is_primary, created_by, updated_by) VALUES (pg_temp.id('c1'), 'T90', 'PRIMARY', 'Nguyễn Văn A', 'a@example.vn', true, 'pa1', 'pa1');
+INSERT INTO ph20_tenant.tenant_contact (id, tenant_id, contact_type, full_name, email, is_primary, created_by, updated_by) VALUES (pg_temp.id('c1'), 'T90', 'LEADER', 'Nguyễn Văn A', 'a@example.vn', true, 'pa1', 'pa1');
 INSERT INTO ph20_tenant.tenant_contract (id, tenant_id, contract_no, title, status, signed_at, valid_from, valid_to, file_id, created_by, updated_by)
 VALUES (pg_temp.id('ct1'), 'T90', 'HD-T90-2026', 'Hợp đồng dịch vụ Datahub năm 2026', 'ACTIVE', '2026-01-05', '2026-01-10', '2026-12-31', pg_temp.id('fo2'), 'pa1', 'pa1');
 INSERT INTO ph20_tenant.tenant_platform_config (id, tenant_id, realm_code, api_host, api_path_prefix, kafka_prefix, bucket_prefix, created_by, updated_by) VALUES (pg_temp.id('pc1'), 'T90', 'dh-t90', 'api.t90.example.vn', '/t90', 't90.', 'dh-t90-', 'pa1', 'pa1');
-SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_contact (id, tenant_id, contact_type, full_name, email, is_primary, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'PRIMARY', 'Người khác', 'b@example.vn', true, 'pa1', 'pa1')$$, '23505', 'mỗi loại đầu mối một đầu mối chính đang hoạt động');
+SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_contact (id, tenant_id, contact_type, full_name, email, is_primary, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'LEADER', 'Người khác', 'b@example.vn', true, 'pa1', 'pa1')$$, '23505', 'mỗi loại đầu mối một đầu mối chính đang hoạt động');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_contact (id, tenant_id, contact_type, full_name, email, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'TECHNICAL', 'x', 'khong-hop-le', 'pa1', 'pa1')$$, '23514', 'thư điện tử đầu mối sai dạng');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_contract (id, tenant_id, contract_no, title, valid_from, valid_to, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'HD-X', 'x', '2026-06-01', '2026-05-01', 'pa1', 'pa1')$$, '23514', 'hợp đồng hết hạn trước khi bắt đầu');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.tenant_contract (id, tenant_id, contract_no, title, valid_from, file_id, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'HD-Y', 'x', '2026-06-01', pg_temp.id('fo3'), 'pa1', 'pa1')$$, '23503', 'hợp đồng không trỏ tệp của tenant khác');
@@ -408,9 +408,9 @@ SET app.tenant_id = 'PLATFORM';
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.platform_module (id, tenant_id, module_code, name, wave, du_code, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'PH-21', 'x', 1, 'x', 'x', 'x')$$, '42501', 'phiên PLATFORM không ghi dòng dữ liệu nền tảng mang tenant_id khác PLATFORM');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.platform_module (id, tenant_id, module_code, name, wave, du_code, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'PH-3', 'x', 1, 'x', 'x', 'x')$$, '23514', 'mã phân hệ sai dạng PH-nn');
 SELECT pg_temp.expect($$INSERT INTO ph20_tenant.platform_module (id, tenant_id, module_code, name, wave, du_code, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'PH-21', 'x', 4, 'x', 'x', 'x')$$, '23514', 'đợt phát triển chỉ 1…3');
-SELECT pg_temp.expect($$INSERT INTO ph20_tenant.provisioning_template (id, tenant_id, template_code, name, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'MAU-X', 'x', 'x', 'x')$$, '23514', 'mã mẫu khởi tạo phải dạng QM-*');
-SELECT pg_temp.expect($$INSERT INTO ph20_tenant.provisioning_template (id, tenant_id, template_code, version_no, name, status, activated_at, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'QM-VUA', 2, 'bản 2', 'ACTIVE', now(), 'x', 'x')$$, '23505', 'mỗi mã mẫu một bản ACTIVE');
-SELECT pg_temp.expect($$UPDATE ph20_tenant.provisioning_template SET default_quota = '{}' WHERE template_code = 'QM-VUA'$$, '55000', 'mẫu ACTIVE bất biến, đổi bằng phiên bản mới');
+SELECT pg_temp.expect($$INSERT INTO ph20_tenant.provisioning_template (id, tenant_id, template_code, name, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'Mau_X', 'x', 'x', 'x')$$, '23514', 'mã mẫu khởi tạo phải dạng chữ thường gạch nối');
+SELECT pg_temp.expect($$INSERT INTO ph20_tenant.provisioning_template (id, tenant_id, template_code, version_no, name, status, activated_at, created_by, updated_by) VALUES (gen_random_uuid(), 'PLATFORM', 'tinh-chuan', 2, 'bản 2', 'PUBLISHED', now(), 'x', 'x')$$, '23505', 'mỗi mã mẫu một bản PUBLISHED');
+SELECT pg_temp.expect($$UPDATE ph20_tenant.provisioning_template SET default_quota = '{}' WHERE template_code = 'tinh-chuan'$$, '55000', 'mẫu PUBLISHED bất biến, đổi bằng phiên bản mới');
 SELECT pg_temp.expect($$UPDATE ph20_tenant.platform_module SET module_code = 'PH-99' WHERE module_code = 'PH-01'$$, '55000', 'mã phân hệ bất biến');
 RESET ROLE;
 

@@ -17,11 +17,11 @@ Tính năng: TS-20-11 · Cài đặt tỉnh, xem phiên bản và lịch bảo t
     # Truy vết: FR-20-018 · API-20-136 · BR-20-011, 026 · ERR-20-001, ERR-20-002, ERR-20-005, ERR-20-023, ERR-20-115, ERR-00-403, ERR-00-428
     Biết `U-T90-TA`, `U-T90-TO`; `T92` `SUSPENDED` (`U-T92-TA`); `T91` `MERGED` (`U-T91-TA`); tổ chức `SO-CU` `DISSOLVED`.
     Khi `PUT T/settings` với `sessionIdleMinutes = 30`
-    Và `PUT` với `passwordMinLength = 8`; `mfaRequiredRoles` thiếu `ROLE-TENANT_ADMIN`; `maintenanceWindowPref` dài 8 giờ
+    Và `PUT` với `passwordMinLength = 8`; `mfaRequiredRoles` thiếu `ROLE-TENANT_ADMIN`; `maintenanceWindowPref` dài 7 giờ
     Và `PUT` với `itOwnerOrgCode = SO-CU`
     Và `U-T90-TO` gọi `PUT T/settings`; gọi thiếu `If-Match`; `If-Match` cũ
     Và `U-T92-TA` gọi `PUT T/settings`; `U-T91-TA` gọi `PUT T/settings`
-    Thì bước 1, 2 `422` `ERR-20-023` ("sessionIdleMinutes vượt giới hạn của nền tảng (15)"). Bước 3 `404` `ERR-20-002` (tổ chức không `ACTIVE`). Bước 4 `403` `ERR-00-403`; `428` `ERR-00-428`; `412` `ERR-20-005`. Bước 5 `T92` `403` `ERR-20-001`; `T91` `409` `ERR-20-115`. Không đổi gì.
+    Thì bước 1, 2 `422` `ERR-20-023` ("Thời gian rảnh phiên vượt giới hạn của nền tảng (15)."). Bước 3 `404` `ERR-20-002` (tổ chức không `ACTIVE`). Bước 4 `403` `ERR-00-403`; `428` `ERR-00-428`; `412` `ERR-20-005`. Bước 5 `T92` `403` `ERR-20-001`; `T91` `409` `ERR-20-115`. Không đổi gì.
 
   @TC-20-051 @P2 @Dương
   Kịch bản: TC-20-051 Xem phiên bản, ghi chú, lịch bảo trì và đặt cửa sổ bảo trì ưa thích
@@ -36,7 +36,7 @@ Tính năng: TS-20-11 · Cài đặt tỉnh, xem phiên bản và lịch bảo t
   Kịch bản: TC-20-052 Cửa sổ bảo trì ngoài giới hạn, trùng giờ cao điểm, tỉnh tạm ngừng
     # Truy vết: FR-20-064, 018 · API-20-160 · BR-20-033 · ERR-20-001, ERR-20-059, ERR-20-005, ERR-00-428
     Biết `U-T90-TA`; `U-T92-TA` (`SUSPENDED`).
-    Khi `PUT T/maintenance-window` với `durationHours = 9`
+    Khi `PUT T/maintenance-window` với `durationHours = 7` (vượt 6 giờ), rồi `durationHours = 1` (dưới 2 giờ)
     Và `PUT` với `dayOfWeek = MON`, `startTime = 09:00` (giờ cao điểm 7:00 đến 17:00 ngày làm việc)
     Và `PUT` với `timezone = UTC+99`
     Và `U-T92-TA` gọi `PUT T/maintenance-window`

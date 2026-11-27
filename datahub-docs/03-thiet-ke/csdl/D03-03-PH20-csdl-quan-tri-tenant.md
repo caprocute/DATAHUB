@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH20
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -231,7 +231,7 @@ Các quy tắc sau do CSDL tự bảo đảm bằng ràng buộc, chỉ mục du
 | `ck_tenant_special`, `tg_tenant_no_delete` | `PLATFORM`, `COMMON` luôn `ACTIVE`, `SHARED`; không xóa dòng tenant nào | 006 |
 | `tg_tenant_transition` | Chuyển trạng thái đúng D03-10 §5.1 (mục 2.6) | 038…042 |
 | `ck_tenant_realm`, `ck_tenant_province` | Tenant tỉnh có ĐVHC và realm `dh-{mã thường}` | 001, 019 |
-| `uq_provisioning_run_active` | Một tenant chỉ một lần chạy saga đang hoạt động (`RUNNING`, `WAITING`, `COMPENSATING`) | 008, 010 |
+| `uq_provisioning_run_active` | Một tenant chỉ một lần chạy saga đang hoạt động (`PENDING`, `RUNNING`, `WAITING`, `COMPENSATING`) | 008, 010 |
 | `ck_provisioning_step_code`, `ck_provisioning_step_idem` | 17 mã bước; khóa lũy đẳng `{runId}:{stepCode}` | 008, 009 |
 | `tg_smoke_test_result_append_only` | Kết quả kiểm tra khói chỉ thêm | 012 |
 | `uq_merge_plan_open_source`, `ck_merge_plan_four_eyes` | Một tenant nguồn chỉ một kế hoạch sáp nhập đang mở; người duyệt khác người lập | 045 |
@@ -244,7 +244,7 @@ Các quy tắc sau do CSDL tự bảo đảm bằng ràng buộc, chỉ mục du
 | `uq_usage_snapshot_point` | Một ảnh chụp cho mỗi (tenant, tài nguyên, thời điểm); nạp lại không nhân bản | 028 |
 | `uq_quota_alert_open` | Mỗi (tenant, tài nguyên, mức) một cảnh báo đang mở | 029 |
 | `uq_tenant_module_module`, khóa ngoại `module` | Mỗi (tenant, phân hệ) một dòng; phân hệ phải có trong danh mục | 034, 035 |
-| `uq_provisioning_template_active`, `tg_provisioning_template_frozen` | Mỗi mã mẫu một bản ACTIVE; bản ACTIVE bất biến | 015 |
+| `uq_provisioning_template_published`, `tg_provisioning_template_frozen` | Mỗi mã mẫu một bản `PUBLISHED`; bản `PUBLISHED` bất biến | 015 |
 | `tg_product_release_transition`, `ck_product_release_stable` | `DRAFT → PREVIEW → STABLE`; `STABLE` có `stable_at` không trước `preview_at` | 059, 060 |
 | `ck_outbox_topic` | Chỉ 16 topic của EVT-20 (kể cả kiểm toán) hoặc `{tenant}.tenant.org.changed.v1` đúng tiền tố tenant | 068 |
 | `uq_tenant_config_version_version`, `tg_tenant_config_version_immutable` | Số phiên bản cấu hình duy nhất; ảnh chụp bất biến | 020, 021 |
@@ -422,32 +422,32 @@ Cột khác: `file_name` v(255); `content_type` v(127); `sha256` char(64); `data
 ### 3.2. `provisioning_template`
 
 ::: dac-ta
-**Mục đích.** EN-20-09 Mẫu khởi tạo có phiên bản (FR-20-015): hạn mức mặc định, phân hệ bật mặc định, kế hoạch bước saga, cài đặt tỉnh mặc định, tổ chức cấp tỉnh nạp ở bước S13. Dữ liệu nền tảng (`tenant_id = PLATFORM`), chỉ PLATFORM đọc, ghi. Mẫu ACTIVE bất biến, đổi bằng phiên bản mới.
+**Mục đích.** EN-20-09 Mẫu khởi tạo có phiên bản (FR-20-015): hạn mức mặc định, phân hệ bật mặc định, kế hoạch bước saga, cài đặt tỉnh mặc định, tổ chức cấp tỉnh nạp ở bước S13. Dữ liệu nền tảng (`tenant_id = PLATFORM`), chỉ PLATFORM đọc, ghi. Mẫu PUBLISHED bất biến, đổi bằng phiên bản mới.
 
 **FR phục vụ.** FR-20-007, FR-20-015.
 
 **Khóa chính.** (id).
 
-**Duy nhất.** `uq_provisioning_template_code_version` (template_code, version_no), `uq_provisioning_template_active` (template_code) khi status = 'ACTIVE'.
+**Duy nhất.** `uq_provisioning_template_code_version` (template_code, version_no), `uq_provisioning_template_published` (template_code) khi status = 'PUBLISHED'.
 
 **Khóa ngoại.** Không.
 
-**Ràng buộc CHECK.** `ck_provisioning_template_` + `tenant`, `code`, `version`, `status`, `isolation`, `profile`, `json`, `active`.
+**Ràng buộc CHECK.** `ck_provisioning_template_` + `tenant`, `code`, `version`, `status`, `isolation`, `profile`, `json`, `published`.
 
 **Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
 
 **Cách ly tenant.** Mẫu PLAT: dữ liệu nền tảng, `tenant_isolation` chỉ khớp phiên `PLATFORM` (`tenant_id = 'PLATFORM'`); tenant không thấy.
 
-**Phân vùng, bất biến.** Bất biến cột `template_code`, `version_no` (`tg_provisioning_template_immutable`); Mẫu ACTIVE, RETIRED không đổi nội dung (`tg_provisioning_template_frozen`).
+**Phân vùng, bất biến.** Bất biến cột `template_code`, `version_no` (`tg_provisioning_template_immutable`); Bản đã chốt (`PUBLISHED`, `RETIRED`) không đổi nội dung (`tg_provisioning_template_frozen`).
 
 **Lưu giữ, ghi chú.** Giữ trọn đời tenant.
 :::
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `template_code` | `varchar(32)` | Mã mẫu, dạng `QM-*` (hồ sơ quy mô), ví dụ `QM-VUA`. |
+| `template_code` | `varchar(63)` | Mã mẫu, chữ thường và gạch nối (`^[a-z][a-z0-9-]{2,62}$`), ví dụ `tinh-chuan`. |
 | `version_no` | `integer`, mặc định `1` | Số phiên bản của mẫu, bắt đầu từ 1. |
-| `status` | `varchar(16)`, mặc định `'DRAFT'` | Trạng thái mẫu: `DRAFT`, `ACTIVE`, `RETIRED` (mỗi mã một bản ACTIVE). |
+| `status` | `varchar(16)`, mặc định `'DRAFT'` | Trạng thái mẫu: `DRAFT`, `PUBLISHED`, `RETIRED` (mỗi mã một bản PUBLISHED). |
 | `default_isolation_mode` | `varchar(24)`, mặc định `'SHARED'` | Chế độ cách ly mặc định: `SHARED`, `DEDICATED_DB`, `DEDICATED_CLUSTER`. |
 | `deployment_profile` | `varchar(4)`, mặc định `'HT-A'` | Hồ sơ triển khai: `HT-A` hoặc `HT-B`. |
 
@@ -530,7 +530,7 @@ Cột khác: `name` v(255); `short_name` v(64); `admin_unit_id` uuid; `is_data_o
 ### 3.5. `tenant_contact`
 
 ::: dac-ta
-**Mục đích.** EN-20-03 Đầu mối của tenant (FR-20-005): người liên hệ chính, kỹ thuật, an ninh, thanh toán; nhận thông báo đổi trạng thái, bảo trì, ngưỡng hạn mức. Có dữ liệu cá nhân (họ tên, thư điện tử, điện thoại), phân loại HC theo DD-09.
+**Mục đích.** EN-20-03 Đầu mối của tenant (FR-20-005): lãnh đạo, quản trị tenant, kỹ thuật, an ninh; nhận thông báo đổi trạng thái, bảo trì, ngưỡng hạn mức. Có dữ liệu cá nhân (họ tên, thư điện tử, điện thoại), phân loại HC theo DD-09.
 
 **FR phục vụ.** FR-20-005.
 
@@ -553,7 +553,7 @@ Cột khác: `name` v(255); `short_name` v(64); `admin_unit_id` uuid; `is_data_o
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `contact_type` | `varchar(12)` | Loại đầu mối: `PRIMARY`, `TECHNICAL`, `SECURITY`, `BILLING`. |
+| `contact_type` | `varchar(12)` | Vai đầu mối: `LEADER`, `TENANT_ADMIN`, `TECHNICAL`, `SECURITY`. |
 | `email` | `varchar(254)` | Thư điện tử nhận thông báo (dữ liệu cá nhân). |
 | `phone` | `varchar(20)`, null | Điện thoại (dữ liệu cá nhân). |
 | `organization_id` | `uuid`, null | Tổ chức công tác của đầu mối. |
@@ -918,13 +918,13 @@ Cột khác: `allow_write` bool; `preapproved_roles` text[]; `require_reason` bo
 ### 3.16. `provisioning_run`
 
 ::: dac-ta
-**Mục đích.** EN-20-10 Lần chạy saga (FR-20-008…011, 016, 017): khởi tạo ban đầu, khởi tạo bổ sung, đổi chế độ cách ly. Mỗi tenant tối đa một lần chạy đang hoạt động (RUNNING, WAITING, COMPENSATING). Saga điều phối trên PostgreSQL (ADR số 200), có khóa ShedLock ở dịch vụ.
+**Mục đích.** EN-20-10 Lần chạy saga (FR-20-008…011, 016, 017): khởi tạo ban đầu, khởi tạo bổ sung, đổi chế độ cách ly. Mỗi tenant tối đa một lần chạy đang hoạt động (PENDING, RUNNING, WAITING, COMPENSATING). Saga điều phối trên PostgreSQL (ADR 200), có khóa ShedLock ở dịch vụ.
 
 **FR phục vụ.** FR-20-008…011, FR-20-014, FR-20-016, 017, FR-20-025.
 
 **Khóa chính.** (id).
 
-**Duy nhất.** `uq_provisioning_run_active` (tenant_id) khi status IN ('RUNNING', 'WAITING', 'COMPENSATING').
+**Duy nhất.** `uq_provisioning_run_active` (tenant_id) khi status IN ('PENDING', 'RUNNING', 'WAITING', 'COMPENSATING').
 
 **Khóa ngoại.** (tenant_id) → `tenant`, (template_id) → `provisioning_template`.
 
@@ -1025,7 +1025,7 @@ Cột khác: `detail` jsonb; `executed_at` ts.
 ### 3.19. `tenant_quota`
 
 ::: dac-ta
-**Mục đích.** EN-20-13 Hạn mức hợp đồng của tenant (FR-20-026, 027): mỗi tenant một dòng cho mỗi tài nguyên (12 loại). PH-20 giữ giá trị và đẩy xuống nơi thực thi (APISIX, Kafka, PH-04…), không tự thực thi (ADR số 204).
+**Mục đích.** EN-20-13 Hạn mức hợp đồng của tenant (FR-20-026, 027): mỗi tenant một dòng cho mỗi tài nguyên (12 loại). PH-20 giữ giá trị và đẩy xuống nơi thực thi (APISIX, Kafka, PH-04…), không tự thực thi (ADR 204).
 
 **FR phục vụ.** FR-20-007, FR-20-026, 027, FR-20-030, FR-20-069.
 
@@ -1455,7 +1455,7 @@ Cột khác: `source_ref` v(255); `note` v(500).
 ### 3.31. `merge_participant_run`
 
 ::: dac-ta
-**Mục đích.** EN-20-27 Lần chuyển theo phân hệ (FR-20-047, 048): mỗi phân hệ có dữ liệu chạy từng pha (chạy thử, chuyển, định danh, chuyển tiếp, kiểm đếm) theo hợp đồng bên tham gia sáp nhập (ADR số 202); PH-18 chạy công cụ chuyển, PH-20 điều phối.
+**Mục đích.** EN-20-27 Lần chuyển theo phân hệ (FR-20-047, 048): mỗi phân hệ có dữ liệu chạy từng pha (chạy thử, chuyển, định danh, chuyển tiếp, kiểm đếm) theo hợp đồng bên tham gia sáp nhập (ADR 202); PH-18 chạy công cụ chuyển, PH-20 điều phối.
 
 **FR phục vụ.** FR-20-047, 048, FR-20-050.
 
@@ -1598,7 +1598,7 @@ Cột khác: `org_code` v(64); `errors` jsonb; `data` jsonb.
 ### 3.35. `product_release`
 
 ::: dac-ta
-**Mục đích.** EN-20-31 Phiên bản sản phẩm (FR-20-059, 060): danh mục phiên bản Datahub với ghi chú phát hành, qua `PREVIEW` rồi `STABLE` (ADR số 203). Dữ liệu nền tảng, mọi tenant đọc được để xem phiên bản và ghi chú (FR-20-064).
+**Mục đích.** EN-20-31 Phiên bản sản phẩm (FR-20-059, 060): danh mục phiên bản Datahub với ghi chú phát hành, qua `PREVIEW` rồi `STABLE` (ADR 203). Dữ liệu nền tảng, mọi tenant đọc được để xem phiên bản và ghi chú (FR-20-064).
 
 **FR phục vụ.** FR-20-059, 060, FR-20-063, 064.
 
@@ -1669,7 +1669,7 @@ Cột khác: `image_ref` v(255); `chart_version` v(32); `migration_required` boo
 ### 3.37. `tenant_release_subscription`
 
 ::: dac-ta
-**Mục đích.** EN-20-32 Đăng ký kênh phát hành của tenant (FR-20-060): tenant theo kênh `STABLE` hoặc `PREVIEW`, có thể ghim phiên bản, đánh dấu tenant thí điểm nhận bản trước (ADR số 203). Một dòng mỗi tenant.
+**Mục đích.** EN-20-32 Đăng ký kênh phát hành của tenant (FR-20-060): tenant theo kênh `STABLE` hoặc `PREVIEW`, có thể ghim phiên bản, đánh dấu tenant thí điểm nhận bản trước (ADR 203). Một dòng mỗi tenant.
 
 **FR phục vụ.** FR-20-060.
 
@@ -1730,7 +1730,7 @@ Cột khác: `subscribed_at` ts.
 | `window_type` | `varchar(10)`, mặc định `'RECURRING'` | Loại: `RECURRING` (hằng tuần) hoặc `ONE_OFF` (một lần). |
 | `day_of_week` | `smallint`, null | Thứ trong tuần theo ISO, 1 là thứ Hai (cửa sổ `RECURRING`). |
 | `start_time` | `time`, null | Giờ bắt đầu theo múi giờ của cửa sổ (cửa sổ `RECURRING`). |
-| `duration_minutes` | `integer`, mặc định `120` | Thời lượng, phút. |
+| `duration_minutes` | `integer`, mặc định `240` | Thời lượng, phút, từ 120 đến 360 (2…6 giờ, FR-20-018). |
 | `starts_at` | `timestamptz`, null | Bắt đầu (cửa sổ `ONE_OFF`). |
 
 : Cột nổi bật của bảng `maintenance_window`
@@ -2108,7 +2108,7 @@ DDL là nguồn duy nhất, sinh từ `ph20/tools/sinh_ddl.py` (danh mục bản
 | `20-0075-orgimport.sql` | `org_import_job`, `org_import_row` |
 | `20-0080-release.sql` | `product_release`, `release_component`, `tenant_release_subscription`, `maintenance_window`, `upgrade_plan`, `upgrade_wave`, `tenant_upgrade`, `leak_test_run` |
 | `20-0085-ops.sql` | `outbox`, `inbox_event`, `idempotency_key` |
-| `20-0090-seed.sql` | `p_seed_platform`, `p_init_tenant_quota`; nạp hai tenant đặc biệt, 20 phân hệ, phụ thuộc, mẫu `QM-VUA` |
+| `20-0090-seed.sql` | `p_seed_platform`, `p_init_tenant_quota`; nạp hai tenant đặc biệt, 20 phân hệ, phụ thuộc, mẫu `tinh-chuan` |
 | `20-0900-grants.sql` | Quyền theo vai trò, `runAlways` |
 
 : Tệp DDL và changelog Liquibase của PH-20
@@ -2154,13 +2154,15 @@ Mọi liệt kê dạng chữ hoa nằm ở từ điển `ENUM` của `sinh_ddl.
 | `TenantUpgradeStatus` | 8 | `tenant_upgrade.status` |
 | `ExportPackageStatus` | 6 | `data_export_package.status` |
 | `DriftStatus` | 4 | `tenant_platform_config.drift_status`, `config_drift.status` |
+| `TemplateState` | 3 | `provisioning_template.status` |
+| `ContactRole` | 4 | `tenant_contact.contact_type` |
+| `SmokeCheck` | 4 | `smoke_test_result.check_code` |
+| `AlertState` | 3 | `quota_alert.state` |
 
-: Đối chiếu liệt kê FRS với `CHECK ... IN (...)` của DDL (35 danh sách trùng đúng một liệt kê)
+: Đối chiếu liệt kê FRS với `CHECK ... IN (...)` của DDL (39 danh sách trùng đúng một liệt kê)
 
 | Liệt kê bổ sung của CSDL | Giá trị |
 |---|---|
-| `TemplateStatus` | `DRAFT`, `ACTIVE`, `RETIRED` |
-| `ContactType` | `PRIMARY`, `TECHNICAL`, `SECURITY`, `BILLING` |
 | `ContractStatus` | `DRAFT`, `ACTIVE`, `EXPIRED`, `TERMINATED` |
 | `ServiceLevel` | `STANDARD`, `PREMIUM` |
 | `ModuleCatalogStatus` | `AVAILABLE`, `PLANNED`, `DEPRECATED` |
@@ -2169,11 +2171,9 @@ Mọi liệt kê dạng chữ hoa nằm ở từ điển `ENUM` của `sinh_ddl.
 | `ChangeSource` | `API`, `SAGA`, `RESTORE`, `DRIFT_FIX` |
 | `ApplyStatus` | `PENDING`, `APPLIED`, `FAILED` |
 | `DriftResolution` | `RECONCILED`, `ACCEPTED`, `IGNORED` |
-| `SmokeCheck` | `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE`, `CROSS_TENANT_LEAK` |
 | `SmokeResult` | `PASS`, `FAIL`, `SKIPPED` |
 | `OverrideStatus` | `ACTIVE`, `EXPIRED`, `REVOKED` |
 | `UsageSource` | `MIMIR`, `APISIX`, `KAFKA`, `OBJECT_STORE`, `DATABASE`, `IAM`, `CATALOG`, `RUNTIME`, `OTHER` |
-| `AlertState` | `OPEN`, `ACKNOWLEDGED`, `RESOLVED` |
 | `PushStatus` | `PENDING`, `PUSHED`, `FAILED` |
 | `QuotaSource` | `TEMPLATE`, `CONTRACT`, `OVERRIDE` |
 | `ReportStatus` | `REQUESTED`, `GENERATING`, `READY`, `FAILED`, `EXPIRED` |
@@ -2265,7 +2265,7 @@ Hai thủ tục khởi tạo, chạy lại không nhân bản. `p_seed_platform(
 : Phụ thuộc chính giữa các phân hệ (37 dòng nạp vào `module_dependency`, giả định chờ FR-20-033)
 <!-- gen:deps:end -->
 
-**Mẫu khởi tạo `QM-VUA`.** Mẫu cho tỉnh quy mô vừa theo GĐ-01 (khoảng 200 HTTT), chế độ cách ly `SHARED`, hồ sơ triển khai `HT-A`, bật mặc định 12 phân hệ MVP, cài đặt tỉnh mặc định (phiên rảnh 30 phút, bắt buộc MFA, `vi-VN`, múi giờ `Asia/Ho_Chi_Minh`) và sáu tổ chức cấp tỉnh mẫu nạp ở bước `S13_ORG_SEED` (UBND tỉnh và năm sở). Hạn mức mặc định gồm bảy giá trị của D03-10 §5.3 và năm giá trị bổ sung theo giả định.
+**Mẫu khởi tạo `tinh-chuan`.** Mẫu cho tỉnh quy mô vừa theo GĐ-01 (khoảng 200 HTTT), chế độ cách ly `SHARED`, hồ sơ triển khai `HT-A`, bật mặc định 12 phân hệ MVP, cài đặt tỉnh mặc định (phiên rảnh 30 phút, bắt buộc MFA, `vi-VN`, múi giờ `Asia/Ho_Chi_Minh`) và sáu tổ chức cấp tỉnh mẫu nạp ở bước `S13_ORG_SEED` (UBND tỉnh và năm sở). Hạn mức mặc định gồm bảy giá trị của D03-10 §5.3 và năm giá trị bổ sung theo giả định.
 
 <!-- gen:quota:start -->
 | Tài nguyên | Mặc định | Cơ sở |
@@ -2283,7 +2283,7 @@ Hai thủ tục khởi tạo, chạy lại không nhân bản. `p_seed_platform(
 | `RUNTIME_CPU` | 16 | Giả định (brief PH-20 mục 5.1) |
 | `RUNTIME_MEMORY_GB` | 64 | Giả định (brief PH-20 mục 5.1) |
 
-: Mười hai hạn mức mặc định của mẫu `QM-VUA`
+: Mười hai hạn mức mặc định của mẫu `tinh-chuan`
 <!-- gen:quota:end -->
 
 Kế hoạch bước của mẫu liệt kê 17 bước saga; bước `S07_DATABASE` chỉ chạy với `DEDICATED_DB`, `S12_SEED_MDM` và `S14_KPI` chỉ chạy khi phân hệ tương ứng được bật.
@@ -2309,7 +2309,7 @@ Kế hoạch bước của mẫu liệt kê 17 bước saga; bước `S07_DATABA
 | 16 | `S16_SMOKE` | PH-20 | có |
 | 17 | `S17_ACTIVATE` | PH-20 | có |
 
-: Kế hoạch 17 bước saga trong `step_plan` của mẫu `QM-VUA`
+: Kế hoạch 17 bước saga trong `step_plan` của mẫu `tinh-chuan`
 <!-- gen:steps:end -->
 
 Dữ liệu nền không chứa giá trị nhạy cảm; mã tenant của dữ liệu kiểm thử (`T90`, `T91`, `T92`) không được dùng ở môi trường thật.
@@ -2320,7 +2320,7 @@ Bài kiểm [`ph20_isolation_test.sql`](ph20/test/ph20_isolation_test.sql) chạ
 
 | Nhóm | Nội dung kiểm | Ca | Bảng chính |
 |---|---|---|---|
-| 0 | Dữ liệu nền sau DDL: hai tenant đặc biệt, 20 phân hệ, mẫu `QM-VUA`, `p_seed_platform` chạy lại | 9 | `tenant`, `platform_module`, `provisioning_template` |
+| 0 | Dữ liệu nền sau DDL: hai tenant đặc biệt, 20 phân hệ, mẫu `tinh-chuan`, `p_seed_platform` chạy lại | 9 | `tenant`, `platform_module`, `provisioning_template` |
 | 1 | Bảng `tenant`: PLATFORM thấy 5 dòng, vai `ph20_app` thấy 1; chỉ PLATFORM ghi; mã sai dạng, kind và mã lệch, thiếu ĐVHC hoặc realm, một ĐVHC hai tenant, máy trạng thái, mã bất biến, không xóa | 28 | `tenant` |
 | 2 | Tổ chức: không thấy chéo, WITH CHECK chặn ghi chéo, khóa ngoại kép chặn cấp trên tenant khác, tự làm cấp trên, chu trình, `effective_to`, giải thể và kế thừa, trùng mã; vai PLATFORM đọc nhưng không ghi, vai `ph20_app` giả PLATFORM không thấy, vai chỉ đọc | 23 | `organization` |
 | 3 | Bảng tenant tự quản: cài đặt, chính sách liên tenant, cửa sổ bảo trì, lô và dòng nhập, tệp; T91 không thấy dữ liệu T90 | 17 | `tenant_settings`, `cross_tenant_policy`, `maintenance_window`, `org_import_*`, `file_object` |
@@ -2328,7 +2328,7 @@ Bài kiểm [`ph20_isolation_test.sql`](ph20/test/ph20_isolation_test.sql) chạ
 | 5 | Saga: một lần chạy đang hoạt động mỗi tenant, mã bước, khóa lũy đẳng, khóa ngoại kép, kiểm tra khói chỉ thêm, trạng thái cuối | 17 | `provisioning_run`, `provisioning_step`, `smoke_test_result` |
 | 6 | Vòng đời: bốn mắt chấm dứt, đề nghị mở duy nhất, lịch sử chỉ thêm, gói bàn giao, phiên bản cấu hình bất biến, lệch cấu hình | 21 | `lifecycle_request`, `tenant_status_history`, `data_export_*`, `tenant_config_version`, `config_drift` |
 | 7 | Sử dụng: ảnh chụp vào đúng phân vùng, phân vùng mặc định, `p_ensure_partitions`, `DETACH` và `DROP`, cảnh báo, báo cáo; tenant chỉ đọc bản ghi của mình | 25 | `usage_snapshot`, `quota_alert`, `usage_report` |
-| 8 | Dữ liệu nền tảng: tenant đọc danh mục phân hệ nhưng không thấy mẫu, kế hoạch; không ghi; mẫu ACTIVE bất biến | 15 | `platform_module`, `provisioning_template` |
+| 8 | Dữ liệu nền tảng: tenant đọc danh mục phân hệ nhưng không thấy mẫu, kế hoạch; không ghi; mẫu `PUBLISHED` bất biến | 15 | `platform_module`, `provisioning_template` |
 | 9 | Sáp nhập: một kế hoạch mở mỗi tenant nguồn, bốn mắt, máy trạng thái, ánh xạ, xung đột; hai bên đọc kế hoạch, bên ngoài không thấy | 18 | `merge_*` |
 | 10 | Phát hành: số phiên bản, máy trạng thái, thành phần, kênh, kế hoạch, sóng, nâng cấp theo tenant, kiểm thử rò rỉ; tenant đọc phiên bản | 23 | `product_release`, `upgrade_*`, `tenant_upgrade`, `leak_test_run` |
 | 11 | Bảng kỹ thuật: tiền tố topic đúng tenant, topic ngoài danh sách, inbox khử trùng, khóa lũy đẳng; PLATFORM ghi outbox | 10 | `outbox`, `inbox_event`, `idempotency_key` |
@@ -2544,13 +2544,13 @@ Bảng dưới liệt kê điều cần đồng bộ giữa tập CSDL PH-20 và
 
 | Số | Tài liệu | Đề nghị |
 |---|---|---|
-| 1 | FRS PH-20 Phụ lục A | Thêm các liệt kê bổ sung của CSDL (mục 6.3): `TemplateStatus`, `ContactType`, `ContractStatus`, `ServiceLevel`, `ModuleCatalogStatus`, `DependencyType`, `ConfigScope`, `ChangeSource`, `ApplyStatus`, `DriftResolution`, `SmokeCheck`, `SmokeResult`, `OverrideStatus`, `UsageSource`, `AlertState`, `PushStatus`, `QuotaSource`, `ReportStatus`, `ReportFormat`, `ExportItemStatus`, `ParticipantPhase`, `ParticipantStatus`, `MappingStatus`, `ConflictKind`, `ConflictState`, `ImportStatus`, `ImportMode`, `ImportAction`, `ImportRowStatus`, `ComponentType`, `WaveStatus`, `WindowType`, `LeakTrigger`, `LeakStatus`, `ScanStatus`, `FilePurpose`, `IdemState`, `ReportScope` |
-| 2 | FRS PH-20 | Ghi hai chuyển trạng thái bổ sung `FAILED → DECOMMISSIONED`, `MERGING → ACTIVE` (Q20-51); `MergeStatus` `FAILED` thử lại được; ràng buộc kế hoạch sáp nhập theo tenant nguồn (Q20-50); trạng thái lần chạy "đang hoạt động" gồm `RUNNING`, `WAITING`, `COMPENSATING` |
+| 1 | FRS PH-20 Phụ lục A | Thêm các liệt kê bổ sung của CSDL (mục 6.3): `ContractStatus`, `ServiceLevel`, `ModuleCatalogStatus`, `DependencyType`, `ConfigScope`, `ChangeSource`, `ApplyStatus`, `DriftResolution`, `SmokeResult`, `OverrideStatus`, `UsageSource`, `PushStatus`, `QuotaSource`, `ReportStatus`, `ReportFormat`, `ExportItemStatus`, `ParticipantPhase`, `ParticipantStatus`, `MappingStatus`, `ConflictKind`, `ConflictState`, `ImportStatus`, `ImportMode`, `ImportAction`, `ImportRowStatus`, `ComponentType`, `WaveStatus`, `WindowType`, `LeakTrigger`, `LeakStatus`, `ScanStatus`, `FilePurpose`, `IdemState`, `ReportScope` |
+| 2 | FRS PH-20 | Ghi hai chuyển trạng thái bổ sung `FAILED → DECOMMISSIONED`, `MERGING → ACTIVE` (Q20-51); `MergeStatus` `FAILED` thử lại được; ràng buộc kế hoạch sáp nhập theo tenant nguồn (Q20-50); trạng thái lần chạy "đang hoạt động" gồm `PENDING`, `RUNNING`, `WAITING`, `COMPENSATING` (đã đồng bộ ở 0.2) |
 | 3 | D02-07 DD-01 | Bỏ `quota` (T-JSON), thay bằng bảng `tenant_quota`; thêm `kind`, `short_name`, `scale_profile`, `deployment_profile`, `template_id`, `config_path`, `declared_at`, các mốc thời gian trạng thái |
 | 4 | D02-07 DD-12 | Đổi tên thuộc tính `object_key` thành `object_path` ở bản vật lý (tránh trùng tên với dạng cột bí mật mà công cụ quét hay báo nhầm) |
 | 5 | D03-10 §4 | Bổ sung bốn chế độ RLS của PH-20 (OWN, CTL, TECH, PLAT/PLATR), chính sách theo vai cho phiên `PLATFORM` và ba bể kết nối; D03-10 §5.1 ghi hai chuyển trạng thái bổ sung |
 | 6 | D03-09 (hạ tầng) | Ghi schema `ph20_tenant` trên `pg-core`, vai `ph20_owner`, `ph20_app`, `ph20_platform_app`, `ph20_ro`; tài khoản dịch vụ `dh-platform` cho nhóm API nền tảng tách tài khoản nhóm API tỉnh |
-| 7 | PH-18 | Thêm `ph20_tenant.usage_snapshot` vào `PartitionMaintenanceJob`; công việc dọn `outbox` (3 ngày), `inbox_event` (14 ngày), `idempotency_key` (24 giờ), `file_object`, `usage_report`, `org_import_*` theo mục 5; đăng ký 19 tham số `20.*`; hợp đồng `POST /api/ops/v1/merge-transfers` |
+| 7 | PH-18 | Thêm `ph20_tenant.usage_snapshot` vào `PartitionMaintenanceJob`; công việc dọn `outbox` (3 ngày), `inbox_event` (14 ngày), `idempotency_key` (24 giờ), `file_object`, `usage_report`, `org_import_*` theo mục 5; đăng ký 29 tham số `20.*` của FRS §8.2; hợp đồng `POST /api/ops/v1/merge-transfers` |
 | 8 | PH-13 | Nhận bản ghi kiểm toán qua topic `platform.obs.audit.recorded.v1` từ `outbox` của PH-20; chuỗi kiểm toán theo tenant đóng khi `DECOMMISSIONED` (API-13-073) |
 | 9 | PH-19, PH-10 | Thống nhất tên topic với EVT-20-07: `platform.tenant.module-enabled.v1` (PH-19 đang dùng `tenant.module-enabled.v1`); kiểm thử PH-10 dùng `dh.platform.tenant.created.v1`, chuẩn là `platform.tenant.created.v1` |
 | 10 | D00-04 | Ghi `ph20_tenant`, bốn vai `ph20_*`, vai kiểm thử `dh_platform_ctl` (mới), `dh_platform_app` và `dh_report_ro` dùng chung với khối `ELSE GRANT` |
@@ -2564,3 +2564,6 @@ Bảng dưới liệt kê điều cần đồng bộ giữa tập CSDL PH-20 và
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Kỹ sư CSDL PH-20 | Bản đầu: 45 bảng, bốn chế độ RLS cùng bộ chính sách riêng cho bảng `tenant`, DDL chạy thử trên PostgreSQL 16.15, 14 tệp Liquibase, bài kiểm cô lập 236 khối PASS, ánh xạ EN-20, FR-20 sang bảng, câu hỏi mở Q20-50…54 |
+| 0.2 | 27/11/2026 | Kỹ sư CSDL PH-20 | Đồng bộ với FRS 0.2: `uq_provisioning_run_active` gồm `PENDING`; `TemplateState` dùng `PUBLISHED`, `ContactRole` theo FRS 4.2; mã mẫu `tinh-chuan`; cửa sổ bảo trì 120 đến 360 phút; sinh lại DDL, Liquibase, đặc tả; 29 tham số `20.*` |
+
+: Lịch sử phiên bản

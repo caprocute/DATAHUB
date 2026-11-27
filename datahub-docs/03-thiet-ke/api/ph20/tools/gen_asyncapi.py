@@ -21,6 +21,7 @@ from gen_openapi import NoAlias
 OUT = os.path.join(ROOT, 'asyncapi-ph20.yaml')
 OPEN = {'additionalProperties': True}
 
+enum('ConfigChangeKind', 'Loại thay đổi cấu hình theo FRS (EVT-20-09).', 'TENANT_PROFILE', 'TENANT_SETTINGS', 'PLATFORM_CONFIG', 'CROSS_TENANT_POLICY', 'ISOLATION_MODE', 'FEATURE_FLAG')
 enum('OrgChange', 'Loại thay đổi tổ chức.', 'CREATED', 'UPDATED', 'DEACTIVATED', 'REACTIVATED', 'DISSOLVED', 'MERGED')
 enum('ModuleMode', 'Cách tắt phân hệ.', 'DISABLE', 'SUSPEND')
 enum('ReleasePublishStatus', 'Trạng thái phiên bản khi công bố.', 'PREVIEW', 'STABLE')
@@ -31,7 +32,7 @@ obj('TenantCreatedData', 'Tenant khai báo xong, saga bắt đầu (FR-20-008).'
     'deploymentProfile:E:DeploymentProfile', 'templateCode:code', ('templateVersion:int', 3), 'runId!:uuid', ('modules!:mod[]', ['PH-03', 'PH-04', 'PH-06', 'PH-10']), ('apiHost:str', 'api.t68.datahub.example.vn'),
     ('apiPrefix:str', '/t68'), ('realm:str', 'dh-t68'), ('kafkaPrefix:str', 't68.'), ('quotas:R:QuotaPair[]', [{'resource': 'API_RPS', 'effectiveValue': 500}]), ex={'isolationMode': 'SHARED'})
 obj('ProvisioningFailedData', 'Saga dừng `FAILED`.', 'tenantCode!:tc', 'runId!:uuid', ('failedStep!:E:StepCode', 'S06_EVENTING'), ('errorCode!:str', 'ERR-20-106', {'pattern': '^ERR-20-[0-9]{3}$'}),
-    ('errorMessage:str', 'Bước quá hạn chờ báo tiến độ.'), ('attempt:int', 3))
+    ('errorMessage:str', 'Bước S06_EVENTING chưa nhận báo cáo từ PH-10 sau 15 phút.'), ('attempt:int', 3))
 obj('TenantActivatedData', 'Tenant `ACTIVE` (FR-20-013).', 'tenantCode!:tc', 'tenantId!:uuid', 'activatedAt!:ts', 'runId:uuid', 'isolationMode:E:IsolationMode', ('provisionMinutes:num', 47.5), ex={'isolationMode': 'SHARED'})
 obj('TenantStatusChangedData', 'Mọi đổi trạng thái tenant (FR-20-038…044, 051, 052).', 'tenantCode!:tc', 'fromStatus!:E:TenantStatus', 'toStatus!:E:TenantStatus', 'requestId:uuid', 'effectiveAt!:ts',
     ('readOnly:bool', False), ('essentialApisAllowed:bool', False), ('mergedInto:tc', 'T90'), ex={'fromStatus': 'ACTIVE', 'toStatus': 'SUSPENDED', 'mergedInto': None})
@@ -42,8 +43,8 @@ obj('QuotaThresholdReachedData', 'Sử dụng chạm 80% hoặc 100% (FR-20-029)
 obj('ModuleEnabledData', 'Bật phân hệ cho tenant (FR-20-034, saga bước `S15_MODULES`); phân hệ báo xong qua API-20-166.', 'tenantCode!:tc', 'moduleCode!:mod', 'runId:uuid',
     ('reportPath!:str', '/internal/tenant/v1/provisioning-runs/0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01/steps/S15_MODULES:report'), ('configVersion:int', 8))
 obj('ModuleDisabledData', 'Tắt hoặc tạm ngừng phân hệ (FR-20-035).', 'tenantCode!:tc', 'moduleCode!:mod', 'mode!:E:ModuleMode', 'effectiveAt!:ts', ex={'mode': 'DISABLE'})
-obj('ConfigChangedData', 'Cấu hình nền tảng hoặc cài đặt tỉnh đổi (FR-20-018…021, 025).', 'tenantCode!:tc', 'scope!:E:ConfigScope', ('configVersionNo!:int', 8), 'commitSha:str',
-    ('changedKeys:str[]', ['publicHost', 'sessionIdleMinutes']), 'effectiveAt!:ts', ex={'scope': 'SETTINGS'})
+obj('ConfigChangedData', 'Cấu hình nền tảng hoặc cài đặt tỉnh đổi (FR-20-018…021, 025).', 'tenantCode!:tc', 'scope!:E:ConfigScope', 'changeKind:E:ConfigChangeKind', ('configVersionNo!:int', 8), 'commitSha:str',
+    ('changedKeys:str[]', ['publicHost', 'sessionIdleMinutes']), 'effectiveAt!:ts', ex={'scope': 'SETTINGS', 'changeKind': 'TENANT_SETTINGS'})
 obj('MergeStartedData', 'Sáp nhập được duyệt, bắt đầu chuyển dữ liệu (FR-20-048).', 'mergePlanId!:str', ('sourceTenants!:tc[]', ['T91']), ('targetTenant!:tc', 'T90'), ('modules!:mod[]', ['PH-01', 'PH-03']),
     'effectiveDate:date', 'mappingHash:sha')
 obj('MergeCutoverData', 'Tenant nguồn `MERGED`, chuyển tiếp bật (FR-20-051).', 'mergePlanId!:str', ('sourceTenants!:tc[]', ['T91']), ('targetTenant!:tc', 'T90'), 'cutoverAt!:ts', 'transitionEndsAt!:ts',
@@ -152,7 +153,7 @@ def build():
         schemas[a] = copy.deepcopy(SCH[a])
     doc = {
         'asyncapi': '3.0.0',
-        'info': {'title': 'Datahub PH-20 Quản trị tenant và phát hành sản phẩm: sự kiện', 'version': '0.1.0-draft',
+        'info': {'title': 'Datahub PH-20 Quản trị tenant và phát hành sản phẩm: sự kiện', 'version': '0.2.0-draft',
                  'description': 'Hợp đồng sự kiện EVT-20-01…16 phát ra và 6 sự kiện tiêu thụ (D03-04-PH20 chương 5, FRS 9.3). Ghi vào `ph20_tenant.outbox` cùng giao dịch nghiệp vụ, Debezium đưa lên Kafka; CloudEvents 1.0 chế độ nhị phân, tiêu đề `ce_*` và thuộc tính mở rộng `dhtenant` (`ce_dhtenant`). Sự kiện vòng đời tenant và phát hành đi trên tiền tố nền tảng `platform.` vì tenant mới chưa có tiền tố Kafka riêng; sự kiện tổ chức đi trên `{tenant}.tenant.org.changed.v1`. Khóa phân vùng là mã đối tượng. Không sự kiện nào mang dữ liệu cá nhân (BR-20-039). Lưu giữ 7 ngày, ít nhất một lần, bên nhận khử trùng theo `ce_id`. Tương thích BACKWARD: chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.',
                  'contact': {'name': 'Nhóm phân hệ PH-20'}, 'tags': [{'name': 'tenant'}, {'name': 'release'}], 'license': {'name': 'Tài liệu nội bộ dự án Datahub (dự thảo)'}},
         'defaultContentType': 'application/json',

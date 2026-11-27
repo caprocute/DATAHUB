@@ -64,4 +64,4 @@ Tính năng: TS-20-06 · Theo dõi saga, thử lại, bù trừ và hủy khởi
     Và `POST .../{runId-T97}:compensate` khi `SUCCEEDED`
     Và `POST .../{runId-T94}:cancel` không có `reason`
     Và bù trừ `T94` khi `iam-sim` lỗi ở `S03_REALM`
-    Thì bước 1 `409` `ERR-20-019`. Bước 2 `400` `ERR-20-004`. Bước 3 `409` `ERR-20-006`. Bước 4 `422` `ERR-20-008`. Bước 5 bước `S03_REALM` giữ `COMPENSATING` với `ERR-20-107` ("Bước S03_REALM lỗi tại PH-12: ..."), lần chạy `FAILED`, PA thử bù lại được; không xóa bản ghi tenant.
+    Thì bước 1 `409` `ERR-20-019`. Bước 2 `400` `ERR-20-004`. Bước 3 `409` `ERR-20-006`. Bước 4 `422` `ERR-20-008`. Bước 5 bước `S03_REALM` giữ `COMPENSATING` với `ERR-20-107` ("Bước S03_REALM lỗi tại PH-12: không tạo được realm."), lần chạy `FAILED`, PA thử bù lại được; không xóa bản ghi tenant.

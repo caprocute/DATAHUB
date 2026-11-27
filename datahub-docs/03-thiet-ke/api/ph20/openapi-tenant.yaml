@@ -2,7 +2,7 @@
 openapi: '3.1.0'
 info:
   title: Datahub · PH-20 Quản trị tỉnh
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   summary: Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).
   description: |-
     Nhóm `/api/tenant/v1`: cài đặt tỉnh, tổ chức, sử dụng, phiên bản của chính tenant gọi (tenant lấy từ token).
@@ -95,7 +95,7 @@ paths:
       operationId: putSettings136
       summary: Sửa cài đặt tỉnh (`If-Match`)
       description: Trong giới hạn nền tảng (`sessionIdleMinutes` 5…15, `passwordMinLength` 14…64, vai trò `ROLE-TENANT_ADMIN` luôn bắt buộc MFA) trả ERR-20-023 khi
-        vượt. Phát EVT-20-09.
+        vượt. Trường `maintenanceWindowPref` nằm trong bộ cài đặt, dài 2…6 giờ (ERR-20-059), cùng giá trị với API-20-160. Phát EVT-20-09.
       x-datahub-id: API-20-136
       x-datahub-fr:
       - FR-20-018
@@ -1624,7 +1624,7 @@ paths:
                   action: ERROR
                   errors:
                   - field: parentCode
-                    message: Tổ chức cấp trên không tồn tại.
+                    message: 'Tổ chức cấp trên SO-XX không hợp lệ: không tồn tại.'
                     code: ERR-20-047
                 summary:
                   CREATE: 100
@@ -1984,7 +1984,9 @@ paths:
       - Phiên bản và kiểm toán của tỉnh
       operationId: putMaintenanceWindow160
       summary: Đặt cửa sổ bảo trì ưa thích của tỉnh
-      description: Cửa sổ dài 2 đến 6 giờ theo múi giờ `Asia/Ho_Chi_Minh` (ERR-20-059); kế hoạch nâng cấp chỉ xếp tenant vào cửa sổ này.
+      description: 'Cửa sổ dài 2 đến 6 giờ theo múi giờ `Asia/Ho_Chi_Minh` (ERR-20-059); kế hoạch nâng cấp chỉ xếp tenant vào cửa sổ này. Phân vai: đây là nơi TA
+        đặt riêng cửa sổ ưa thích của tỉnh; API-20-136 lưu trọn bộ cài đặt nên mang cùng trường `maintenanceWindowPref` và áp cùng kiểm tra; lịch cụ thể của từng
+        kế hoạch nâng cấp do PA đặt ở API-20-121 và không đổi cửa sổ ưa thích.'
       x-datahub-id: API-20-160
       x-datahub-fr:
       - FR-20-018
@@ -2230,7 +2232,7 @@ components:
             status: 400
             code: ERR-20-004
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Dữ liệu sai định dạng.
+            detail: 'tenantCode chưa hợp lệ: cần dạng T và hai chữ số.'
             instance: /api/platform/v1/tenants/T68
     Unauthorized:
       description: Chưa xác thực
@@ -2272,7 +2274,7 @@ components:
             status: 404
             code: ERR-20-002
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Không tìm thấy.
+            detail: Không tìm thấy tenant T68 trong phạm vi được xem.
             instance: /api/platform/v1/tenants/T68
     Conflict:
       description: Xung đột trạng thái hoặc dữ liệu
@@ -2286,7 +2288,7 @@ components:
             status: 409
             code: ERR-20-006
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Trạng thái không cho phép.
+            detail: Không thể khôi phục khi tenant đang ở trạng thái SUSPENDED.
             instance: /api/platform/v1/tenants/T68
     PreconditionFailed:
       description: Phiên bản lệch (`If-Match`)
@@ -2300,7 +2302,7 @@ components:
             status: 412
             code: ERR-20-005
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Phiên bản lệch.
+            detail: Tenant đã được người khác sửa. Tải lại để xem thay đổi.
             instance: /api/platform/v1/tenants/T68
     Unprocessable:
       description: Không xử lý được do quy tắc nghiệp vụ
@@ -2314,7 +2316,7 @@ components:
             status: 422
             code: ERR-20-008
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Thiếu lý do, phiếu.
+            detail: Thao tác trên tenant tỉnh cần lý do tối thiểu 20 ký tự và mã phiếu.
             instance: /api/platform/v1/tenants/T68
     PreconditionRequired:
       description: Thiếu `If-Match`
@@ -2342,7 +2344,7 @@ components:
             status: 503
             code: ERR-20-062
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
-            detail: Phụ thuộc không khả dụng.
+            detail: Dịch vụ PH-07 tạm thời không khả dụng. Thử lại sau.
             instance: /api/platform/v1/tenants/T68
   schemas:
     AccessKind:

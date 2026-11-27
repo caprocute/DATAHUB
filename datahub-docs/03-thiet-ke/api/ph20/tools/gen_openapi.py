@@ -14,7 +14,7 @@ import dsl
 from dsl import SCH, ENUMS, ex_of, parse_type, default_ex, FEX, resolve
 import schemas1, schemas2  # noqa: F401  (đăng ký lược đồ)
 import spec_ops
-from spec_ops import CAT, ERR, FRERR, tag_of, ROOT
+from spec_ops import CAT, ERR, FRERR, tag_of, ROOT, sample_msg
 from ops_def import O, IFM_POST, ERR_ADD, ERR_DROP, NOTES
 from res_ex import RES_EX, REQ_EX
 
@@ -181,7 +181,7 @@ def err_set(row, opts, has_body, method, has_q, ifm, idem):
 
 def problem_example(status, code, title, path):
     return {'type': f'https://datahub.example.vn/errors/{code}', 'title': title, 'status': status, 'code': code, 'traceId': '4bf92f3577b34da6a3ce929d0e0e4736',
-            'detail': title + '.', 'instance': path}
+            'detail': sample_msg(code) or (title + '.'), 'instance': path}
 
 
 def build():
@@ -419,7 +419,7 @@ def make_doc(ops, which):
     first = list(grp_set)[0]
     doc = {
         'openapi': '3.1.0',
-        'info': {'title': title, 'version': '0.1.0-draft', 'summary': 'Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).',
+        'info': {'title': title, 'version': '0.2.0-draft', 'summary': 'Hợp đồng REST của PH-20 Quản trị tenant và phát hành sản phẩm (D03-04-PH20).',
                  'description': desc + '\n\nQuy ước (D03-04-PH20 chương 1, 2): tenant lấy từ token, không từ thân hay đường dẫn (trừ API nền tảng nêu `tenantCode` của tenant bị tác động); `POST` nhận `Idempotency-Key`; `PUT`, `PATCH` và hành động trên đối tượng có phiên bản nhận `If-Match`; hậu tố `:{hành-động}`; lỗi RFC 9457 `application/problem+json` mã `ERR-20-nnn`; phân trang `page`, `size`. Mọi tên miền, mã, dữ liệu là giả lập.\n\nTệp sinh bởi `tools/gen_openapi.py`; không sửa tay.',
                  'contact': {'name': 'Nhóm phân hệ PH-20'}, 'license': {'name': 'Tài liệu nội bộ dự án Datahub (dự thảo)', 'identifier': 'LicenseRef-Datahub-Internal'},
                  'x-datahub-document': 'D03-04-PH20', 'x-datahub-phase': 'PH-20'},

@@ -45,4 +45,4 @@ Tính năng: TS-20-16 · Xem sử dụng tài nguyên và lập báo cáo sử d
     Và `GET P/usage-reports/khong-co/file`
     Và `POST` lặp cùng khóa chống lặp khác thân
     Và `POST` với `period` dài hơn 24 tháng
-    Thì bước 1 `422` `ERR-20-066` ("không có số liệu"). Bước 2 `400` `ERR-20-004`. Bước 3 `404` `ERR-20-002`. Bước 4 `404` `ERR-20-002`. Bước 5 `409` `ERR-20-009`. Bước 6 `400` `ERR-20-032`.
+    Thì bước 1 `422` `ERR-20-066` ("Không lập được báo cáo sử dụng: không có số liệu."). Bước 2 `400` `ERR-20-004`. Bước 3 `404` `ERR-20-002`. Bước 4 `404` `ERR-20-002`. Bước 5 `409` `ERR-20-009`. Bước 6 `400` `ERR-20-032`.

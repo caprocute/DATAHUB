@@ -54,7 +54,7 @@ Tính năng: TS-20-34 · Theo dõi nâng cấp, dừng sóng và quay lui
     Và `:rollback` thiếu `ticketRef`, `tenantCodes` rỗng
     Và `:rollback` dùng lại `Idempotency-Key` cho yêu cầu khác
     Và thiếu `If-Match`; `If-Match` cũ
-    Thì bước 1 `422` `ERR-20-058` ("Không quay lui được: phiên bản có thay đổi lược đồ CONTRACT."). Bước 2 `409` `ERR-20-006`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-009`. Bước 5 `428` `ERR-00-428`, `412` `ERR-20-005`.
+    Thì bước 1 `422` `ERR-20-058` ("Không quay lui được phiên bản 2.4.0 vì có thay đổi lược đồ không tương thích ở PH-02."). Bước 2 `409` `ERR-20-006`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-009`. Bước 5 `428` `ERR-00-428`, `412` `ERR-20-005`.
 
   @TC-20-172 @P2 @Dương @Âm
   Kịch bản: TC-20-172 Hủy kế hoạch chưa chạy và không hủy khi đang chạy

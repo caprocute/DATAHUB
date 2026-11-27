@@ -43,7 +43,7 @@ Tính năng: TS-20-24 · Lập kế hoạch và bảng ánh xạ sáp nhập
     Và `PUT P/merge-plans/{id}/mappings/{mappingId}` với `action = MAP`, `targetCode`, `note`, kèm `If-Match`
     Và `PUT` một dòng `action = CREATE` và một dòng `action = SKIP`
     Và `GET P/merge-plans/{id}/mappings?status=CONFLICT`
-    Thì bước 1 `200`, sinh dòng cho 12 `ORGANIZATION`, 20 `MEMBER_SYSTEM`, 30 `CATALOG_CODE`, 4 `API_CONTEXT_PATH`, 150 `USER`, 6 `TOPIC`; mã trùng đánh `CONFLICT`. Bước 3, 4 `200`, dòng `CONFIRMED`. Bước 5 liệt kê dòng xung đột (3 mã tổ chức, 2 mã danh mục, 1 `contextPath`). Ánh xạ thay đổi làm chạy thử trước đó thành cũ.
+    Thì bước 1 `200`, sinh dòng cho 12 `ORGANIZATION`, 20 `MEMBER_SYSTEM`, 30 `CATALOG_CODE`, 4 `API_CONTEXT_PATH`, 150 `USER`, 6 `TOPIC`; mã trùng đánh `CONFLICT`. Bước 3, 4 `200`, dòng `CONFIRMED`. Bước 5 liệt kê dòng xung đột (3 mã tổ chức, 2 mã danh mục, 1 mã `API_CONTEXT_PATH`). Ánh xạ thay đổi làm chạy thử trước đó thành cũ.
 
   @TC-20-112 @P2 @Âm
   Kịch bản: TC-20-112 Ánh xạ: mã đích trùng, hành động sai, kế hoạch không ở DRAFT, PH-07 lỗi

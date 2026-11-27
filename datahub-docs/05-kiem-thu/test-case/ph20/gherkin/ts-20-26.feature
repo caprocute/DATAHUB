@@ -21,7 +21,7 @@ Tính năng: TS-20-26 · Điều phối chuyển dữ liệu sáp nhập theo ph
     Và `POST .../:start` khi chạy thử cũ
     Và `POST .../:start` thiếu `reason`; thiếu `If-Match`; `If-Match` cũ
     Và chạy chuyển khi PH-01 nhập thiếu một bản ghi
-    Thì bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-043`. Bước 3 `422` `ERR-20-008`, `428` `ERR-00-428`, `412` `ERR-20-005`. Bước 4 phân hệ `FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119"), kế hoạch `FAILED` hoặc `CONFLICT_REVIEW` theo nguyên nhân; không sang `IDENTITY_TRANSFER`.
+    Thì bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-043`. Bước 3 `422` `ERR-20-008`, `428` `ERR-00-428`, `412` `ERR-20-005`. Bước 4 phân hệ `FAILED` với `ERR-20-113` ("Kiểm đếm PH-01 lệch: nguồn 120, đích 119."), kế hoạch `FAILED` hoặc `CONFLICT_REVIEW` theo nguyên nhân; không sang `IDENTITY_TRANSFER`.
 
   @TC-20-120 @P2 @Dương @Âm
   Kịch bản: TC-20-120 Chạy lại chuyển của một phân hệ lỗi

@@ -20,25 +20,25 @@ Tính năng: TS-20-15 · Thu thập sử dụng tài nguyên và cảnh báo ng�
     Khi chạy bộ lập lịch khi Mimir không khả dụng
     Và giữ ngừng quá 3 giờ liên tiếp (`clock-sim`)
     Và yêu cầu thu bổ sung cho `T88`
-    Thì bước 1 cả lượt `MISSING` với `ERR-20-062` ở nhật ký, không phát cảnh báo hạn mức giả. Bước 2 `ERR-20-110` ("Thiếu số liệu sử dụng API_RPS của T96 từ 09:00"), cảnh báo `U-PO` ở UI-20-06. Bước 3 `409` `ERR-20-006`.
+    Thì bước 1 cả lượt `MISSING` với `ERR-20-062` ở nhật ký, không phát cảnh báo hạn mức giả. Bước 2 `ERR-20-110` ("Thiếu số liệu sử dụng API_RPS của T96 từ 09:00."), cảnh báo `U-PO` ở UI-20-06. Bước 3 `409` `ERR-20-006`.
 
   @TC-20-068 @P1 @Dương
   Kịch bản: TC-20-068 Cảnh báo 80 % và 100 %, khử lặp, đặt lại
     # Truy vết: FR-20-029 · UC-20-15 · BR-20-016 · NFR-20-009 · EVT-20-06 · UI-20-06 · `PERM-20-quota`
-    Biết `T96` theo F-QUOTA (`API_RPS` 400/500, `ACTIVE_FLOWS` 1.000/1.000); `20.quota.warn-percent` = 80; `20.quota.alert-reset-percent` = 75; `ops-sim`.
+    Biết `T96` theo F-QUOTA (`API_RPS` 400/500, `ACTIVE_FLOWS` 1.000/1.000); `20.quota.warn-percent` = 80; `20.quota.alert-reset-percent` = 75; `20.usage.probe-interval` = PT5M; `ops-sim`.
     Khi thu số đo giờ đầu
     Và thu số đo `API_RPS` = 410 giờ sau
     Và đưa `API_RPS` xuống 370 và giữ 24 giờ liên tục
     Và `GET P/quota-alerts?tenantCode=T96`
-    Thì bước 1 `API_RPS` 80 % tạo cảnh báo `WARN_80` `OPEN` và `ACTIVE_FLOWS` 100 % tạo `LIMIT_100`; EVT: `platform.tenant.quota-threshold-reached.v1` mỗi cảnh báo một lần, ≤ 5 phút sau thu số đo; thông báo qua PH-18 tới PO và đầu mối `TECHNICAL`, `TENANT_ADMIN`. Bước 2 cập nhật `lastAt`, không gửi lặp. Bước 3 sau 24 giờ dưới 75 % (370/500 = 74 %) cảnh báo `CLEARED`. Bước 4 liệt kê đúng.
+    Thì bước 1 `API_RPS` 80 % tạo cảnh báo `WARN_80` `OPEN` và `ACTIVE_FLOWS` 100 % tạo `LIMIT_100`; EVT: `platform.tenant.quota-threshold-reached.v1` mỗi cảnh báo một lần, ≤ 5 phút sau thu số đo; thông báo qua PH-18 tới PO và đầu mối `TECHNICAL`, `TENANT_ADMIN`. Bước 2 cập nhật `used` và `percent` của cảnh báo đang mở, không gửi lặp. Bước 3 sau 24 giờ dưới 75 % (370/500 = 74 %) cảnh báo `RESOLVED`. Bước 4 liệt kê đúng.
 
   @TC-20-069 @P2 @Dương @Âm
   Kịch bản: TC-20-069 Xác nhận cảnh báo hợp lệ và không hợp lệ
     # Truy vết: FR-20-029 · API-20-058, 059 · ERR-20-002, ERR-20-004, ERR-20-006, ERR-20-009 · UI-20-06 · `PERM-20-quota`
-    Biết `U-PA1`, `U-PO`; cảnh báo `OPEN` của `T96`; cảnh báo `CLEARED`.
+    Biết `U-PA1`, `U-PO`; cảnh báo `OPEN` của `T96`; cảnh báo `RESOLVED`.
     Khi `POST P/quota-alerts/{alertId}:acknowledge` với `comment`
     Và xác nhận lại cùng cảnh báo với khóa chống lặp khác
-    Và `POST` cảnh báo `CLEARED`
+    Và `POST` cảnh báo `RESOLVED`
     Và `POST` mã cảnh báo không có
     Và `U-PO` gọi `POST ...:acknowledge`
     Và `GET P/quota-alerts?alertLevel=KHONG`

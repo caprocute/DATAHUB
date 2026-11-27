@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH20
 ten: Thiết kế giao diện màn hình phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, quản trị nền tảng, vận hành nền tảng, quản trị tỉnh, kiểm thử viên, hội đồng thẩm định
@@ -90,31 +90,31 @@ Bảng dưới là 22 màn theo FRS §10.1 kèm mẫu bố cục, mức chi ti�
 | Mã | Tên | Chương | PTN | Mức chi tiết | FR |
 |---|---|---|---|---|---|
 | UI-20-01 | Danh sách tenant | 4 | PTN-01 | Đầy đủ | 002 |
-| UI-20-02 | Khai báo tenant (wizard 5 bước) | 5 | PTN-05 | **Rất chi tiết** | 001, 007, 017 |
-| UI-20-03 | Chi tiết tenant (7 tab) | 6 | PTN-02 | **Rất chi tiết** | 003, 004, 005, 019, 025, 043, 068 |
-| UI-20-04 | Tiến độ khởi tạo | 7 | PTN-11 | **Rất chi tiết** | 008–014, 016 |
+| UI-20-02 | Khai báo tenant (wizard 5 bước) | 5 | PTN-05 | **Rất chi tiết** | 001, 007, 008, 017 |
+| UI-20-03 | Chi tiết tenant (7 tab) | 6 | PTN-02 | **Rất chi tiết** | 003–005, 008, 017, 019, 020, 025, 043, 060, 068 |
+| UI-20-04 | Tiến độ khởi tạo | 7 | PTN-11 | **Rất chi tiết** | 007–013, 016 |
 | UI-20-05 | Hạn mức tenant | 8 | PTN-03 | Đầy đủ | 026, 027, 032 |
-| UI-20-06 | Sử dụng tài nguyên toàn nền tảng | 9 | PTN-06 | Đầy đủ | 029, 030, 031 |
+| UI-20-06 | Sử dụng tài nguyên toàn nền tảng | 9 | PTN-06 | Đầy đủ | 028–031 |
 | UI-20-07 | Phân hệ và tính năng của tenant | 10 | PTN-12 | Đầy đủ | 033–036 |
-| UI-20-08 | Đổi trạng thái tenant | 11 | PTN-04 | **Rất chi tiết** | 038–043 |
+| UI-20-08 | Đổi trạng thái tenant | 11 | PTN-04 | **Rất chi tiết** | 038–042 |
 | UI-20-09 | Lập kế hoạch sáp nhập (wizard) | 12 | PTN-05 | **Rất chi tiết** | 045, 046, 047 |
 | UI-20-10 | Theo dõi sáp nhập | 13 | PTN-02 | **Rất chi tiết** | 047–052 |
 | UI-20-11 | Danh sách sáp nhập | 14 | PTN-01 | Đầy đủ | 045 |
 | UI-20-12 | Cài đặt tỉnh | 15 | PTN-12 | Đầy đủ | 018, 061, 063, 064 |
-| UI-20-13 | Sử dụng tài nguyên của tỉnh | 16 | PTN-06 | Đầy đủ | 030 |
+| UI-20-13 | Sử dụng tài nguyên của tỉnh | 16 | PTN-06 | Đầy đủ | 028–030 |
 | UI-20-14 | Danh mục tổ chức (cây và bảng) | 17 | PTN-08 | Đầy đủ | 053, 054, 055, 056, 058 |
 | UI-20-15 | Chi tiết, biểu mẫu tổ chức | 18 | PTN-02, PTN-03 | Đầy đủ | 053, 054, 058 |
 | UI-20-16 | Nhập tổ chức | 19 | PTN-09 | Đầy đủ | 055 |
-| UI-20-17 | Phiên bản và lệch cấu hình | 20 | PTN-02 | Đầy đủ | 021, 022 |
+| UI-20-17 | Phiên bản và lệch cấu hình | 20 | PTN-02 | Đầy đủ | 020–022 |
 | UI-20-18 | Phiên bản sản phẩm và kênh | 21 | PTN-01 | Đầy đủ | 059, 060 |
 | UI-20-19 | Kế hoạch nâng cấp theo sóng | 22 | PTN-05, PTN-11 | Đầy đủ | 061, 062, 063 |
-| UI-20-20 | Bảng điều khiển đa tenant | 23 | PTN-06 | Đầy đủ | 067, 070 |
-| UI-20-21 | Mẫu khởi tạo | 24 | PTN-01, PTN-03 | Đầy đủ | 015 |
+| UI-20-20 | Bảng điều khiển đa tenant | 23 | PTN-06 | Đầy đủ | 014, 016, 067, 070 |
+| UI-20-21 | Mẫu khởi tạo | 24 | PTN-01, PTN-03 | Đầy đủ | 015, 017 |
 | UI-20-22 | Truy cập liên tenant vào tỉnh | 25 | PTN-12, PTN-11 | Đầy đủ | 023, 024 |
 
 : Danh sách 22 màn hình PH-20 với mẫu bố cục, mức chi tiết và FR
 
-Số FR trong bảng là phần sau tiền tố `FR-20-`. FRS §10.1 ghi FR-045 cho UI-20-08; tập này đổi thành FR-043 (lịch sử vòng đời) vì FR-045 thuộc sáp nhập (xem chương "Lệch so với FRS" ở Phụ lục B).
+Số FR trong bảng là phần sau tiền tố `FR-20-` và khớp cột FR của FRS §10.1. UI-20-08 gồm FR-038…042; lịch sử vòng đời (FR-043) hiện ở UI-20-03 (xem Phụ lục B, mục B-1).
 
 ### 1.6. Người đọc và cấu trúc tài liệu
 
@@ -545,7 +545,7 @@ Màn khai báo một tỉnh mới: năm bước từ hồ sơ tới rà soát, k
 
 **Vai trò, quyền.** PA (`PERM-20-provision`).
 
-**FR.** FR-20-001, FR-20-007, FR-20-017.
+**FR.** FR-20-001, FR-20-007, FR-20-008, FR-20-017.
 
 **API.** API-20-002 (khai báo), API-20-005 (kiểm tra sẵn sàng hồ sơ chưa lưu), API-20-006 (kiểm tra lại), API-20-013 (chạy saga khi "Lưu và khởi tạo"), API-20-025 và API-20-027 (mẫu), API-20-035 (cụm đích), API-20-063 (danh mục phân hệ).
 
@@ -664,7 +664,7 @@ Màn gốc cho mọi thao tác trên một tenant: bảy tab gom hồ sơ, cấu
 
 **Vai trò, quyền.** PA, PO, PAU (`PERM-20-read`); sửa hồ sơ, đầu mối, hợp đồng, cấu hình `PERM-20-admin`; tạm ngừng, đổi cách ly `PERM-20-lifecycle`; kiểm toán toàn nền tảng PA, PAU.
 
-**FR.** FR-20-003, 004, 005, 019, 025, 043, 068.
+**FR.** FR-20-003, 004, 005, 008, 017, 019, 020, 025, 043, 060, 068.
 
 **API.** API-20-003 (chi tiết, `allowedActions[]`, `ETag`), API-20-004 (sửa hồ sơ), API-20-007 đến 012 (đầu mối, hợp đồng), API-20-039, 040 (cấu hình nền tảng), API-20-047 (đề nghị đổi cách ly), API-20-064 (phân hệ), API-20-048 (hạn mức), API-20-072, 085 (lịch sử), API-20-130 (kiểm toán).
 
@@ -784,7 +784,7 @@ Màn quan trọng nhất của lần khởi tạo: sổ 17 bước cập nhật 
 
 **Vai trò, quyền.** PA, PO xem (`PERM-20-read`); thử lại, bỏ qua, bù trừ, hủy, kích hoạt `PERM-20-provision` (PA).
 
-**FR.** FR-20-008, 009, 010, 011, 012, 013, 014, 016.
+**FR.** FR-20-007, 008, 009, 010, 011, 012, 013, 016.
 
 **API.** API-20-014, 015 (lần chạy, sổ bước), API-20-016 (SSE), API-20-017, 018 (thử lại), API-20-019 (bỏ qua), API-20-020, 021 (bù trừ, hủy), API-20-022 (kiểm tra khói), API-20-023 (kích hoạt), API-20-006 (kiểm tra lại sẵn sàng), API-20-033, 034 (khởi tạo bổ sung).
 
@@ -810,7 +810,7 @@ Hình 4. UI-20-04 Tiến độ khởi tạo T68, bước S06 quá hạn chờ b�
 | 5 | Chi tiết bước | `CMP-Drawer` | Đầu vào, `outputRef`, nhật ký thử lại, khóa lũy đẳng `{runId}:{stepCode}`, thân báo tiến độ | Mở khi bấm dòng bước |
 | 6 | Luồng tiến độ | `CMP-JobProgress` `card` | Chỉ báo SSE ("Đang nhận" hoặc "Đang nối lại…"), thanh tiến độ, kết quả kiểm tra sẵn sàng và kiểm tra khói | Nhận API-20-016 |
 | 7 | Báo cáo nhận được | `CMP-Timeline` | Các lần phân hệ báo qua API-20-166, EVT-20-01 đã phát, theo giờ giảm dần | Cuối trang trên màn hẹp |
-| 8 | Kiểm tra khói | `CMP-DataTable` | Bốn ca `LOGIN`, `API_CALL`, `EVENT_ROUNDTRIP`, `CROSS_TENANT_LEAK` với kết quả | Hiện từ bước `S16` |
+| 8 | Kiểm tra khói | `CMP-DataTable` | Bốn ca `LOGIN_ADMIN`, `API_SAMPLE`, `EVENT_SAMPLE`, `CROSS_TENANT_LEAK` với kết quả | Hiện từ bước `S16` |
 
 : UI-20-04 Tiến độ khởi tạo, bố cục vùng
 
@@ -997,7 +997,7 @@ Màn cho PA và PO nhìn cả 34 tenant theo mức dùng so hạn mức, để t
 
 **Vai trò, quyền.** PA, PO (`PERM-20-read`); xác nhận cảnh báo `PERM-20-quota` (PA).
 
-**FR.** FR-20-029, 030, 031.
+**FR.** FR-20-028, 029, 030, 031.
 
 **API.** API-20-056 (sử dụng toàn nền tảng), API-20-058 (cảnh báo), API-20-059 (xác nhận), API-20-060, 061, 062 (báo cáo kỳ, tải tệp).
 
@@ -1189,7 +1189,7 @@ Màn gom bốn việc nặng nhất của vòng đời tenant: tạm ngừng, kh
 
 **Vai trò, quyền.** PA: đề nghị và thực hiện `PERM-20-lifecycle`; duyệt `PERM-20-approve`.
 
-**FR.** FR-20-038, 039, 040, 041, 042, 043.
+**FR.** FR-20-038, 039, 040, 041, 042.
 
 **API.** API-20-071 (lập đề nghị), API-20-072, 073, 074 (danh sách, hộp duyệt, chi tiết), API-20-075 (gửi duyệt), API-20-076, 077 (duyệt, từ chối), API-20-078 (rút), API-20-079 (thực hiện), API-20-080 đến 084 (gói bàn giao), API-20-085 (lịch sử).
 
@@ -1568,7 +1568,7 @@ Phím tắt: `/` đưa focus vào ô tìm, `N` mở lập kế hoạch (khi có 
 
 ## 15. UI-20-12 Cài đặt tỉnh
 
-Màn của quản trị tỉnh: đặt thông tin hiển thị, chủ quản CNTT, an toàn đăng nhập, cửa sổ bảo trì ưa thích, trong giới hạn nền tảng cho phép (chỉ chặt hơn, không nới).
+Màn của quản trị tỉnh: đặt thông tin hiển thị, chủ quản CNTT, an toàn đăng nhập, cửa sổ bảo trì ưa thích, trong giới hạn nền tảng cho phép (chỉ chặt hơn, không nới). Cửa sổ ưa thích do TA đặt riêng ở tab Phiên bản bằng API-20-160; API-20-136 lưu trọn bộ cài đặt nên mang cùng trường `maintenanceWindowPref` và áp cùng kiểm tra 2…6 giờ; lịch cụ thể của từng kế hoạch nâng cấp do PA đặt ở UI-20-19 (API-20-121) và không đổi cửa sổ ưa thích.
 
 ::: dac-ta
 **Mã, tên.** UI-20-12 · Cài đặt tỉnh.
@@ -1673,7 +1673,7 @@ Màn chỉ đọc cho tỉnh thấy mức dùng so với hạn mức hợp đồ
 
 **Vai trò, quyền.** TA, SO, AU (`PERM-20-usage-read`).
 
-**FR.** FR-20-030.
+**FR.** FR-20-028, 029, 030.
 
 **API.** API-20-140 (sử dụng), API-20-141 (hạn mức hiệu lực và cảnh báo).
 
@@ -1963,7 +1963,7 @@ Phím tắt: `Ctrl+S` lưu, `Esc` hủy, `Ctrl+Enter` lưu và đóng. Trường
 
 Hình 16. UI-20-16 Nhập tổ chức, bước 2 Xem trước tệp to-chuc-xa.xlsx
 
-Ảnh cho thấy thanh ba bước, dải lỗi ERR-20-051 "Còn 2 dòng lỗi", tệp 312 dòng, bốn ô tổng (Tạo mới 296, Cập nhật 9, Không đổi 5, Lỗi 2) và bảng xem trước có cột Dòng, Hành động, Mã, Tên, Cấp trên, Kết quả kiểm; dòng lỗi có biểu tượng, chữ mô tả lỗi và nền đỏ nhạt.
+Ảnh cho thấy thanh ba bước, dải lỗi ERR-20-051 "Còn 2 dòng lỗi. Sửa tệp rồi tải lại.", tệp 312 dòng, bốn ô tổng (Tạo mới 296, Cập nhật 9, Không đổi 5, Lỗi 2) và bảng xem trước có cột Dòng, Hành động, Mã, Tên, Cấp trên, Kết quả kiểm; dòng lỗi có biểu tượng, chữ mô tả lỗi và nền đỏ nhạt.
 
 ### 19.2. Bố cục vùng
 
@@ -2035,7 +2035,7 @@ Phím tắt: `Alt+→`, `Alt+←` chuyển bước, `E` nhảy tới dòng lỗi
 
 **Vai trò, quyền.** Xem `PERM-20-read`; ghi `PERM-20-admin` (PA).
 
-**FR.** FR-20-021, 022.
+**FR.** FR-20-020, 021, 022.
 
 **API.** API-20-041, 042, 043 (phiên bản, nội dung, khôi phục), API-20-044, 045, 046 (lệch, đối chiếu, xử lý).
 
@@ -2304,7 +2304,7 @@ Phím tắt: `P` dừng sóng (có xác nhận), `[` và `]` chuyển sóng. Tha
 
 **Vai trò, quyền.** PA, PO, PAU (`PERM-20-read`); "Chạy kiểm thử rò rỉ" PA (`PERM-20-admin`).
 
-**FR.** FR-20-067, 070.
+**FR.** FR-20-014, 016, 067, 070.
 
 **API.** API-20-129 (bảng điều khiển), API-20-132, 133, 134 (kiểm thử rò rỉ).
 
@@ -2391,7 +2391,7 @@ Phím tắt: `1` đến `6` nhảy tới thẻ KPI, `H` nhảy tới bản đồ
 
 **Vai trò, quyền.** Xem `PERM-20-read`; ghi `PERM-20-admin` (PA).
 
-**FR.** FR-20-015.
+**FR.** FR-20-015, 017.
 
 **API.** API-20-025, 026, 027 (danh sách, tạo, chi tiết), API-20-028, 029, 030 (phiên bản mới, nội dung, sửa nháp), API-20-031, 032 (phát hành, ngừng).
 
@@ -2555,21 +2555,21 @@ Phím tắt: `Ctrl+S` lưu, `Space` bật tắt công tắc khi focus, `[` và `
 
 | UI | FR | API chính |
 |---|---|---|
-| UI-20-01 đến 07 | FR-20-001…014, 016, 017, 019, 020, 025…029, 031…036 | API-20-001…040, 047…070 |
-| UI-20-08 | FR-20-038…043 | API-20-071…085 |
+| UI-20-01 đến 07 | FR-20-001…005, 007…013, 016, 017, 019, 020, 025…036, 043, 060, 068 | API-20-001…040, 047…070 |
+| UI-20-08 | FR-20-038…042 | API-20-071…085 |
 | UI-20-09 | FR-20-045…047 | API-20-086, 089, 090, 093…097 |
 | UI-20-10 | FR-20-047…052 | API-20-088, 098…108, 130 |
 | UI-20-11 | FR-20-045 | API-20-087, 093 |
 | UI-20-12 | FR-20-018, 061, 063, 064 | API-20-135, 136, 159, 160 |
-| UI-20-13 | FR-20-030 | API-20-140, 141 |
+| UI-20-13 | FR-20-028…030 | API-20-140, 141 |
 | UI-20-14 | FR-20-053…056, 058 | API-20-143, 147…152, 156…158 |
 | UI-20-15 | FR-20-053, 054, 058 | API-20-144…146, 151, 152 |
 | UI-20-16 | FR-20-055 | API-20-153…156 |
-| UI-20-17 | FR-20-021, 022 | API-20-041…046 |
+| UI-20-17 | FR-20-020…022 | API-20-041…046 |
 | UI-20-18 | FR-20-059, 060 | API-20-109…117 |
 | UI-20-19 | FR-20-061…063 | API-20-118…128 |
-| UI-20-20 | FR-20-067, 070 | API-20-129, 132…134 |
-| UI-20-21 | FR-20-015 | API-20-025…032 |
+| UI-20-20 | FR-20-014, 016, 067, 070 | API-20-129, 132…134 |
+| UI-20-21 | FR-20-015, 017 | API-20-025…032 |
 | UI-20-22 | FR-20-023, 024 | API-20-137…139 |
 
 : Ma trận UI, FR, API (các mã chi tiết của UI-20-01 đến 07 nằm trong từng chương)
@@ -2627,7 +2627,7 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 | Q20-36 | Lưu nháp wizard khai báo tenant | Lưu phía máy chủ theo `idempotency key`, hết hạn 7 ngày |
 | Q20-37 | Ánh xạ người dùng khi sáp nhập hàng nghìn dòng | Cho gộp theo nhóm và theo tổ chức |
 | Q20-38 | Bản đồ nhiệt 34 tenant nhân 12 tài nguyên | Hiển thị 12 cột, cuộn ngang trên màn hẹp, hoặc chuyển thành danh sách |
-| Q20-39 | Cửa sổ bảo trì ghi bởi cả API-20-136 và API-20-160 | Chỉ dùng API-20-160 trên UI, bỏ trường khỏi API-20-136 |
+| Q20-39 | Cửa sổ bảo trì ghi bởi cả API-20-136 và API-20-160 | Đã đóng ở 0.2: giữ cả hai với phân vai rõ, API-20-160 là nơi TA đặt riêng cửa sổ ưa thích và là API mà tab Phiên bản gọi, API-20-136 lưu trọn bộ cài đặt cùng giá trị; lịch của kế hoạch nâng cấp do PA đặt ở API-20-121 |
 
 : Câu hỏi mở của PH-20, Q20-30 đến Q20-39
 
@@ -2649,12 +2649,12 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 
 | # | Nội dung | Xử lý trong tài liệu này |
 |---|---|---|
-| B-1 | FRS §10.1 gán FR-045 cho UI-20-08 | Dùng FR-043 (lịch sử vòng đời) |
+| B-1 | FRS §10.1 gán FR-045 cho UI-20-08 | Đã đồng bộ ở 0.2: UI-20-08 gồm FR-038…042 ở cả FRS và tập này; FR-043 (lịch sử vòng đời) ở UI-20-03 |
 | B-2 | TA xem UI-20-10 dưới `/nen-tang/*` nhưng API nền tảng chỉ phục vụ PLATFORM | Nêu ở Q20-30, màn chỉ cho PA, PO, PAU cho đến khi có quyết định |
 | B-3 | API-20-161 không có màn | Q20-35 |
 | B-4 | Không có giao diện hộp duyệt tập trung | Q20-34 |
 | B-5 | Không có mã lỗi cho dải MERGING | Đề nghị câu ở mục 3.2 |
-| B-6 | Cửa sổ bảo trì ghi ở hai API | Q20-39 |
+| B-6 | Cửa sổ bảo trì ghi ở hai API | Đã đóng Q20-39 ở 0.2 (phân vai API-20-160 và API-20-136) |
 
 : Sai khác giữa thiết kế màn và FRS
 
@@ -2663,5 +2663,6 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm PH-20 | Bản đầu: 22 màn UI-20-01 đến 22, 22 ảnh hi-fi, ma trận, câu hỏi mở |
+| 0.2 | 27/11/2026 | Nhóm PH-20 | Đồng bộ với FRS 0.2: cột FR khớp FRS §10.1, UI-20-08 gồm FR-038…042, tên ca kiểm tra khói, câu ERR-20-051 nguyên văn, đóng Q20-39 |
 
 : Lịch sử phiên bản

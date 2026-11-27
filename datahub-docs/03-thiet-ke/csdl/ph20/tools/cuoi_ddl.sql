@@ -1,6 +1,6 @@
 -- @file 20-0090-seed.sql
 -- @changeset ph20-0910-fn-seed-platform splitStatements:false
--- Dữ liệu nền: hai tenant đặc biệt, danh mục 20 phân hệ cùng phụ thuộc chính, mẫu khởi tạo QM-VUA. Chạy dưới phiên PLATFORM, chạy lại không nhân bản.
+-- Dữ liệu nền: hai tenant đặc biệt, danh mục 20 phân hệ cùng phụ thuộc chính, mẫu khởi tạo `tinh-chuan`. Chạy dưới phiên PLATFORM, chạy lại không nhân bản.
 CREATE OR REPLACE PROCEDURE ph20_tenant.p_seed_platform()
   LANGUAGE plpgsql AS $p$
 BEGIN
@@ -19,9 +19,9 @@ BEGIN
   ON CONFLICT (module_code, depends_on_code) DO NOTHING;
   INSERT INTO ph20_tenant.provisioning_template (id, tenant_id, template_code, version_no, name, description, status, default_isolation_mode, deployment_profile,
                                                  default_quota, default_modules, step_plan, default_settings, org_seed, activated_at, created_by, updated_by)
-  VALUES (md5('ph20-template:QM-VUA:1')::uuid, 'PLATFORM', 'QM-VUA', 1, 'Tỉnh quy mô vừa (GĐ-01)',
+  VALUES (md5('ph20-template:tinh-chuan:1')::uuid, 'PLATFORM', 'tinh-chuan', 1, 'Tỉnh quy mô vừa (GĐ-01)',
           'Mẫu khởi tạo mặc định cho tỉnh quy mô vừa: khoảng 200 HTTT, chế độ SHARED, hồ sơ triển khai HT-A, mười hai phân hệ MVP, bộ hạn mức theo D03-10 §5.3 cộng năm hạn mức bổ sung (giả định).',
-          'ACTIVE', 'SHARED', 'HT-A',
+          'PUBLISHED', 'SHARED', 'HT-A',
           @@QUOTA@@,
           '{PH-01,PH-02,PH-03,PH-04,PH-05,PH-07,PH-10,PH-12,PH-13,PH-14,PH-18,PH-20}',
           @@STEPS@@,
@@ -31,7 +31,7 @@ BEGIN
   ON CONFLICT (template_code, version_no) DO NOTHING;
 END
 $p$;
-COMMENT ON PROCEDURE ph20_tenant.p_seed_platform() IS 'Nạp dữ liệu nền PH-20: tenant PLATFORM và COMMON, 20 phân hệ cùng phụ thuộc chính, mẫu khởi tạo QM-VUA. Chạy lại không nhân bản.';
+COMMENT ON PROCEDURE ph20_tenant.p_seed_platform() IS 'Nạp dữ liệu nền PH-20: tenant PLATFORM và COMMON, 20 phân hệ cùng phụ thuộc chính, mẫu khởi tạo `tinh-chuan`. Chạy lại không nhân bản.';
 -- @rollback DROP PROCEDURE IF EXISTS ph20_tenant.p_seed_platform();
 
 -- @changeset ph20-0920-fn-init-quota splitStatements:false

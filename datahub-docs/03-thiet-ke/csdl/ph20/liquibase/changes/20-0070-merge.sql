@@ -162,7 +162,7 @@ CREATE TABLE ph20_tenant.merge_participant_run (
 CREATE INDEX ix_merge_participant_run_fk_plan ON ph20_tenant.merge_participant_run (tenant_id, plan_id);
 CREATE TRIGGER tg_merge_participant_run_touch BEFORE UPDATE ON ph20_tenant.merge_participant_run FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CALL ph20_tenant.p_enable_rls('ph20_tenant.merge_participant_run', 'PLAT');
-COMMENT ON TABLE ph20_tenant.merge_participant_run IS 'EN-20-27 Lần chuyển theo phân hệ (FR-20-047, 048): mỗi phân hệ có dữ liệu chạy từng pha (chạy thử, chuyển, định danh, chuyển tiếp, kiểm đếm) theo hợp đồng bên tham gia sáp nhập (ADR-202); PH-18 chạy công cụ chuyển, PH-20 điều phối.';
+COMMENT ON TABLE ph20_tenant.merge_participant_run IS 'EN-20-27 Lần chuyển theo phân hệ (FR-20-047, 048): mỗi phân hệ có dữ liệu chạy từng pha (chạy thử, chuyển, định danh, chuyển tiếp, kiểm đếm) theo hợp đồng bên tham gia sáp nhập (ADR 202); PH-18 chạy công cụ chuyển, PH-20 điều phối.';
 COMMENT ON COLUMN ph20_tenant.merge_participant_run.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.merge_participant_run.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
 COMMENT ON COLUMN ph20_tenant.merge_participant_run.plan_id IS 'Kế hoạch sáp nhập.';

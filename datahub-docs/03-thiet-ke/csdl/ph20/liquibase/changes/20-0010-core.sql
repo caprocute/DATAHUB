@@ -60,7 +60,7 @@ COMMENT ON COLUMN ph20_tenant.file_object.version IS 'Khóa lạc quan, thành p
 CREATE TABLE ph20_tenant.provisioning_template (
   id                     uuid           NOT NULL,
   tenant_id              varchar(16)    NOT NULL,
-  template_code          varchar(32)    NOT NULL,
+  template_code          varchar(63)    NOT NULL,
   version_no             integer        NOT NULL DEFAULT 1,
   name                   varchar(255)   NOT NULL,
   description            text,
@@ -83,27 +83,27 @@ CREATE TABLE ph20_tenant.provisioning_template (
   CONSTRAINT uq_provisioning_template_id_tenant UNIQUE (id, tenant_id),
   CONSTRAINT uq_provisioning_template_code_version UNIQUE (template_code, version_no),
   CONSTRAINT ck_provisioning_template_tenant CHECK (tenant_id = 'PLATFORM'),
-  CONSTRAINT ck_provisioning_template_code CHECK (template_code ~ '^QM-[A-Z0-9]{2,12}$'),
+  CONSTRAINT ck_provisioning_template_code CHECK (template_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_provisioning_template_version CHECK (version_no >= 1),
-  CONSTRAINT ck_provisioning_template_status CHECK (status IN ('DRAFT', 'ACTIVE', 'RETIRED')),
+  CONSTRAINT ck_provisioning_template_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'RETIRED')),
   CONSTRAINT ck_provisioning_template_isolation CHECK (default_isolation_mode IN ('SHARED', 'DEDICATED_DB', 'DEDICATED_CLUSTER')),
   CONSTRAINT ck_provisioning_template_profile CHECK (deployment_profile IN ('HT-A', 'HT-B')),
   CONSTRAINT ck_provisioning_template_json CHECK (jsonb_typeof(default_quota) = 'object' AND jsonb_typeof(step_plan) = 'array' AND jsonb_typeof(default_settings) = 'object' AND jsonb_typeof(org_seed) = 'array'),
-  CONSTRAINT ck_provisioning_template_active CHECK (status <> 'ACTIVE' OR activated_at IS NOT NULL)
+  CONSTRAINT ck_provisioning_template_published CHECK (status <> 'PUBLISHED' OR activated_at IS NOT NULL)
 );
-CREATE UNIQUE INDEX uq_provisioning_template_active ON ph20_tenant.provisioning_template (template_code) WHERE status = 'ACTIVE';
+CREATE UNIQUE INDEX uq_provisioning_template_published ON ph20_tenant.provisioning_template (template_code) WHERE status = 'PUBLISHED';
 CREATE TRIGGER tg_provisioning_template_touch BEFORE UPDATE ON ph20_tenant.provisioning_template FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CREATE TRIGGER tg_provisioning_template_immutable BEFORE UPDATE ON ph20_tenant.provisioning_template FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_immutable('template_code', 'version_no');
-CREATE TRIGGER tg_provisioning_template_frozen BEFORE UPDATE ON ph20_tenant.provisioning_template FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_frozen('status', 'ACTIVE,RETIRED', 'default_quota', 'default_modules', 'step_plan', 'default_settings', 'org_seed', 'default_isolation_mode', 'deployment_profile');
+CREATE TRIGGER tg_provisioning_template_frozen BEFORE UPDATE ON ph20_tenant.provisioning_template FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_frozen('status', 'PUBLISHED,RETIRED', 'default_quota', 'default_modules', 'step_plan', 'default_settings', 'org_seed', 'default_isolation_mode', 'deployment_profile');
 CALL ph20_tenant.p_enable_rls('ph20_tenant.provisioning_template', 'PLAT');
-COMMENT ON TABLE ph20_tenant.provisioning_template IS 'EN-20-09 Mẫu khởi tạo có phiên bản (FR-20-015): hạn mức mặc định, phân hệ bật mặc định, kế hoạch bước saga, cài đặt tỉnh mặc định, tổ chức cấp tỉnh nạp ở bước S13. Dữ liệu nền tảng (`tenant_id = PLATFORM`), chỉ PLATFORM đọc, ghi. Mẫu ACTIVE bất biến, đổi bằng phiên bản mới.';
+COMMENT ON TABLE ph20_tenant.provisioning_template IS 'EN-20-09 Mẫu khởi tạo có phiên bản (FR-20-015): hạn mức mặc định, phân hệ bật mặc định, kế hoạch bước saga, cài đặt tỉnh mặc định, tổ chức cấp tỉnh nạp ở bước S13. Dữ liệu nền tảng (`tenant_id = PLATFORM`), chỉ PLATFORM đọc, ghi. Mẫu PUBLISHED bất biến, đổi bằng phiên bản mới.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
-COMMENT ON COLUMN ph20_tenant.provisioning_template.template_code IS 'Mã mẫu, dạng `QM-*` (hồ sơ quy mô), ví dụ `QM-VUA`.';
+COMMENT ON COLUMN ph20_tenant.provisioning_template.template_code IS 'Mã mẫu, chữ thường và gạch nối (`^[a-z][a-z0-9-]{2,62}$`), ví dụ `tinh-chuan`.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.version_no IS 'Số phiên bản của mẫu, bắt đầu từ 1.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.name IS 'Tên mẫu.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.description IS 'Mô tả, cơ sở giả định quy mô.';
-COMMENT ON COLUMN ph20_tenant.provisioning_template.status IS 'Trạng thái mẫu: `DRAFT`, `ACTIVE`, `RETIRED` (mỗi mã một bản ACTIVE).';
+COMMENT ON COLUMN ph20_tenant.provisioning_template.status IS 'Trạng thái mẫu: `DRAFT`, `PUBLISHED`, `RETIRED` (mỗi mã một bản PUBLISHED).';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.default_isolation_mode IS 'Chế độ cách ly mặc định: `SHARED`, `DEDICATED_DB`, `DEDICATED_CLUSTER`.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.deployment_profile IS 'Hồ sơ triển khai: `HT-A` hoặc `HT-B`.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.default_quota IS 'Hạn mức mặc định, đối tượng {QuotaResource: giá trị số}.';
@@ -111,7 +111,7 @@ COMMENT ON COLUMN ph20_tenant.provisioning_template.default_modules IS 'Mã phâ
 COMMENT ON COLUMN ph20_tenant.provisioning_template.step_plan IS 'Danh sách bước saga và tùy chọn (bước bắt buộc, điều kiện bỏ qua).';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.default_settings IS 'Cài đặt tỉnh mặc định sao chép vào `tenant_settings`.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.org_seed IS 'Danh sách tổ chức cấp tỉnh nạp ở bước S13_ORG_SEED.';
-COMMENT ON COLUMN ph20_tenant.provisioning_template.activated_at IS 'Thời điểm chuyển ACTIVE.';
+COMMENT ON COLUMN ph20_tenant.provisioning_template.activated_at IS 'Thời điểm chuyển PUBLISHED.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.retired_at IS 'Thời điểm chuyển RETIRED.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.created_at IS 'Thời điểm tạo.';
 COMMENT ON COLUMN ph20_tenant.provisioning_template.created_by IS 'Người tạo (mã người dùng hoặc `system:*`).';
@@ -302,7 +302,7 @@ CREATE TABLE ph20_tenant.tenant_contact (
   CONSTRAINT pk_tenant_contact PRIMARY KEY (id),
   CONSTRAINT uq_tenant_contact_id_tenant UNIQUE (id, tenant_id),
   CONSTRAINT ck_tenant_contact_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
-  CONSTRAINT ck_tenant_contact_contact_type CHECK (contact_type IN ('PRIMARY', 'TECHNICAL', 'SECURITY', 'BILLING')),
+  CONSTRAINT ck_tenant_contact_contact_type CHECK (contact_type IN ('LEADER', 'TENANT_ADMIN', 'TECHNICAL', 'SECURITY')),
   CONSTRAINT ck_tenant_contact_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
   CONSTRAINT ck_tenant_contact_email CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+$'),
   CONSTRAINT ck_tenant_contact_phone CHECK (phone IS NULL OR phone ~ '^[0-9+() .-]{6,20}$'),
@@ -314,10 +314,10 @@ CREATE INDEX ix_tenant_contact_tenant_type ON ph20_tenant.tenant_contact (tenant
 CREATE INDEX ix_tenant_contact_fk_organization ON ph20_tenant.tenant_contact (tenant_id, organization_id);
 CREATE TRIGGER tg_tenant_contact_touch BEFORE UPDATE ON ph20_tenant.tenant_contact FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CALL ph20_tenant.p_enable_rls('ph20_tenant.tenant_contact', 'CTL');
-COMMENT ON TABLE ph20_tenant.tenant_contact IS 'EN-20-03 Đầu mối của tenant (FR-20-005): người liên hệ chính, kỹ thuật, an ninh, thanh toán; nhận thông báo đổi trạng thái, bảo trì, ngưỡng hạn mức. Có dữ liệu cá nhân (họ tên, thư điện tử, điện thoại), phân loại HC theo DD-09.';
+COMMENT ON TABLE ph20_tenant.tenant_contact IS 'EN-20-03 Đầu mối của tenant (FR-20-005): lãnh đạo, quản trị tenant, kỹ thuật, an ninh; nhận thông báo đổi trạng thái, bảo trì, ngưỡng hạn mức. Có dữ liệu cá nhân (họ tên, thư điện tử, điện thoại), phân loại HC theo DD-09.';
 COMMENT ON COLUMN ph20_tenant.tenant_contact.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.tenant_contact.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
-COMMENT ON COLUMN ph20_tenant.tenant_contact.contact_type IS 'Loại đầu mối: `PRIMARY`, `TECHNICAL`, `SECURITY`, `BILLING`.';
+COMMENT ON COLUMN ph20_tenant.tenant_contact.contact_type IS 'Vai đầu mối: `LEADER`, `TENANT_ADMIN`, `TECHNICAL`, `SECURITY`.';
 COMMENT ON COLUMN ph20_tenant.tenant_contact.full_name IS 'Họ tên (dữ liệu cá nhân).';
 COMMENT ON COLUMN ph20_tenant.tenant_contact.job_title IS 'Chức danh.';
 COMMENT ON COLUMN ph20_tenant.tenant_contact.email IS 'Thư điện tử nhận thông báo (dữ liệu cá nhân).';

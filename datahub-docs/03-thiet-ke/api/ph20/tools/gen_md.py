@@ -79,7 +79,7 @@ def table(head, rows, caption):
 W('---')
 W('ma_tai_lieu: D03-04-PH20')
 W('ten: Thiết kế giao diện lập trình Quản trị tenant và phát hành sản phẩm')
-W('phien_ban: 0.1')
+W('phien_ban: 0.2')
 W('ngay: 2026-11-27')
 W('trang_thai: Dự thảo')
 W('nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ gọi PH-20, kỹ sư console quản trị, kiểm thử viên, hội đồng thẩm định')
@@ -197,7 +197,7 @@ W('')
 table(['Quy tắc', 'Nội dung', 'Mã lỗi khi vi phạm'], [
     ['Tenant từ token', 'Nhóm `/api/tenant/v1` và tổ chức nội bộ lấy tenant từ claim `tenant` hoặc thông tin xác thực máy; thân yêu cầu có `tenantCode` khác tenant của token bị bỏ qua và ghi cảnh báo', 'Không có (bỏ qua)'],
     ['Đối tượng của tenant khác', 'Đối tượng không thuộc tenant của người gọi trả `404`, không phân biệt với đối tượng không tồn tại', 'ERR-20-002'],
-    ['Vai trò sai nhóm', 'TA, TO… gọi `/api/platform/v1`, hoặc PA gọi `/api/tenant/v1` để ghi dữ liệu của tỉnh, bị chặn ở lớp xác thực', 'ERR-00-403'],
+    ['Vai trò sai nhóm', 'Token không thuộc tenant `PLATFORM` (TA, TO…) gọi `/api/platform/v1` trả `403`, vì đường dẫn nền tảng không phải tài nguyên của một tỉnh nên không có gì để che; PA gọi `/api/tenant/v1` để ghi dữ liệu của tỉnh cũng bị chặn ở lớp xác thực. Tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả `404`', 'ERR-00-403 (nhóm nền tảng), ERR-20-002 (tài nguyên tenant khác)'],
     ['Tenant đặc biệt', '`PLATFORM`, `COMMON` không đổi trạng thái, không chấm dứt, không sáp nhập', 'ERR-20-010'],
     ['Lý do và mã phiếu', 'Mọi thao tác ghi của PA vào tenant tỉnh có `reason` từ `20.lifecycle.reason-min-length` ký tự và `ticketRef`; ghi kiểm toán vào chuỗi của tenant bị tác động (SEC-85)', 'ERR-20-008'],
     ['Bốn mắt', 'Người lập, gửi đề nghị chấm dứt, kế hoạch sáp nhập, đổi chế độ cách ly, hạ hạn mức khác người duyệt; người duyệt chấm dứt khác người xác nhận bàn giao', 'ERR-20-007'],
@@ -231,8 +231,8 @@ W('Content-Type: application/problem+json')
 W('')
 W('{"type": "https://datahub.example.vn/errors/ERR-20-011", "title": "ĐVHC đã có tenant", "status": 409,')
 W(' "code": "ERR-20-011", "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",')
-W(' "detail": "Đơn vị hành chính đã gắn với tenant T68.", "instance": "/api/platform/v1/tenants",')
-W(' "errors": [{"field": "adminUnitId", "message": "Đã có tenant dùng đơn vị hành chính này.", "code": "ERR-20-011"}]}')
+W(' "detail": "Đơn vị hành chính Lâm Viên đã có tenant T68 đang sử dụng.", "instance": "/api/platform/v1/tenants",')
+W(' "errors": [{"field": "adminUnitId", "message": "Đơn vị hành chính Lâm Viên đã có tenant T68 đang sử dụng.", "code": "ERR-20-011"}]}')
 W('```')
 W('')
 W('Ví dụ lỗi khai báo tenant trùng đơn vị hành chính. Ba nhóm lỗi hay gặp: `422` do quy tắc nghiệp vụ (ERR-20-008, 013, 017, 029, 030), `409` do trạng thái hoặc trùng (ERR-20-003, 006, 011, 016, 067), `503` do phụ thuộc không khả dụng (ERR-20-062). Lỗi không có mã HTTP (ERR-20-106…113, 116, 117) chỉ ghi ở bước saga, lần chạy hoặc cảnh báo, không bao giờ nằm ở phản hồi của operation.')
@@ -269,7 +269,7 @@ table(['Phân hệ', 'Lời gọi', 'Scope hoặc kênh', 'Dùng ở'], [
     ['PH-13', 'API-13-072 `POST /api/platform/v1/tenants/{tenantCode}/observability:provision`; API-13-073 đóng chuỗi kiểm toán', '`obs:tenant-provision`', '`S08_OBSERVABILITY`, bù trừ'],
     ['PH-07', 'API-07-073 `/api/platform/rdm/v1/tenants/{tenantId}:seed`', '`platform.tenant.provision`', '`S11_SEED_RDM`'],
     ['PH-10', 'Đăng ký topic `platform.tenant.*.v1`, `platform.release.*.v1`; nghe EVT-20-01', '`event:topic-register`', '`S06_EVENTING`'],
-    ['PH-16', 'API-16-030 đẩy chỉ tiêu `ph20.tenant.provision-lead-time` (KPI-12)', '`kpi.ingest`', '`S17_ACTIVATE`'],
+    ['PH-16', 'API-16-030 đẩy chỉ tiêu `thoi-gian-khoi-tao-tenant` (KPI-12)', '`kpi.ingest`', '`S17_ACTIVATE`'],
     ['PH-09', 'FR-09-043 xóa mật mã tenant (sau bàn giao, hai người duyệt); nhận EVT-09-21', 'mTLS mesh', 'API-20-079 chấm dứt'],
     ['PH-18', '`POST /api/ops/v1/merge-transfers` chuyển dữ liệu một phân hệ (giả định, Phụ lục A); `NotificationApi` gửi thư; đọc API-20-162', 'mTLS mesh', 'API-20-098, 128, `S17_ACTIVATE`'],
     ['OpenBao, Ceph RGW, Git, Argo CD', 'API của hạ tầng (không phải API Datahub)', 'Tài khoản dịch vụ `svc-ph20-gitops`', '`S02`, `S04`, `S05`, `S07`, API-20-040'],
@@ -509,7 +509,7 @@ table(['Ca', 'Yêu cầu', 'Kỳ vọng', 'Lý do'], [
     ['L-01', 'TA của T68 gọi `GET /api/tenant/v1/organizations/{orgCode}` với mã tổ chức chỉ có ở T91', '`404` ERR-20-002', 'Truy vấn theo `tenant_id` của token, RLS lọc dòng của T91'],
     ['L-02', 'TA của T68 gọi `PUT /api/tenant/v1/organizations/{orgCode}/data-owner` với mã của T91', '`404` ERR-20-002', 'Không phân biệt không tồn tại và thuộc tenant khác, thân giống nhau'],
     ['L-03', 'TA của T68 gọi `GET /api/tenant/v1/organization-imports/{importId}` của lô nhập T91', '`404` ERR-20-002', 'Lô nhập có `tenant_id`, RLS chuẩn'],
-    ['L-04', 'TA của T68 gọi `GET /api/platform/v1/tenants/T91`', '`403` ERR-00-403', 'Vai trò sai nhóm, bị chặn ở lớp xác thực trước khi tới dữ liệu; không lộ sự tồn tại của T91'],
+    ['L-04', 'TA của T68 gọi `GET /api/platform/v1/tenants/T91`', '`403` ERR-00-403', 'Token không thuộc `PLATFORM` gọi nhóm nền tảng: `403` ở lớp xác thực trước khi tới dữ liệu; đường dẫn nền tảng không phải tài nguyên tỉnh nên không lộ sự tồn tại của T91'],
     ['L-05', 'TA của T68 gửi `tenantCode = T91` trong thân `PUT /api/tenant/v1/settings`', 'Ghi cài đặt của T68, bỏ qua `tenantCode` lạ', 'Tenant luôn lấy từ token'],
     ['L-06', 'Client mang scope `tenant:org-read` của PH-01 ở ngữ cảnh T68 gọi `GET /internal/tenant/v1/organizations/{orgCode}` mã của T91', '`404` ERR-20-002', 'Tổ chức đọc theo tenant ngữ cảnh của thông tin xác thực máy'],
     ['L-07', 'Client mang scope `tenant:org-read` gọi `POST /internal/tenant/v1/organizations:lookup` có lẫn mã T91', '`200`, mã T91 nằm ở `notFound`', 'Tra hàng loạt không trả lỗi từng dòng, chỉ liệt kê mã không tìm thấy'],
@@ -525,7 +525,7 @@ W('HTTP/1.1 404 Not Found')
 W('Content-Type: application/problem+json')
 W('')
 W('{"type": "https://datahub.example.vn/errors/ERR-20-002", "title": "Không tìm thấy", "status": 404, "code": "ERR-20-002",')
-W(' "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "detail": "Không tìm thấy tổ chức.", "instance": "/api/tenant/v1/organizations/SO-CHI-CO-O-T91"}')
+W(' "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "detail": "Không tìm thấy tổ chức SO-CHI-CO-O-T91 trong phạm vi được xem.", "instance": "/api/tenant/v1/organizations/SO-CHI-CO-O-T91"}')
 W('```')
 W('')
 W('Ví dụ ca L-01: thân lỗi không chứa mã tenant lạ và không khác thân của mã không tồn tại. FR-20-070 điều phối kiểm thử rò rỉ hằng đêm giữa hai tenant kiểm thử T90 và T91, phủ 100% operation của ba nhóm; API-20-132, 133, 134 chạy và đọc kết quả, phát hiện rò rỉ ghi ERR-20-111 và cảnh báo PH-13. Kiểm thử không chạy ở `PROD` (Q20-18) và chỉ giữa tenant kiểm thử (ERR-20-065). Ca L-01…L-10 là ca hợp đồng bắt buộc của D05-02-PH20.')
@@ -574,21 +574,20 @@ table(['Tài liệu', 'Đề nghị'], [
     ['FRS D02-03-PH20, D02-08', 'API-20-137, API-20-139 ghi quyền "SO, AU đọc" và API-20-161 ghi "TA, AU" nhưng không có `PERM-20-*` tương ứng; đề nghị thêm hai quyền đọc mới (một cho SO, AU, TA đọc truy cập liên tenant; một cho TA, AU đọc nhật ký kiểm toán của tỉnh), hoặc xác nhận dùng vai trò trực tiếp'],
     ['FRS D02-03-PH20', 'API-20-162: `?status=ACTIVE` ghi ở FRS; API còn nhận `isolationMode`, `module`, `updatedSince`, `size` tối đa 1.000 (thêm để đồng bộ tăng dần, tương thích ngược)'],
     ['D02-08', 'Thêm mười quyền `PERM-20-provision`, `PERM-20-lifecycle`, `PERM-20-approve`, `PERM-20-quota`, `PERM-20-merge`, `PERM-20-release`, `PERM-20-settings`, `PERM-20-org`, `PERM-20-org-read`, `PERM-20-usage-read`; scope `tenant:registry-read`, `tenant:org-read`, `tenant:provision-report` (các mã PERM-20 mới này chưa có ở D02-08 nên `kiem_tra_ma.py` báo thiếu cho tới khi D02-08 cập nhật)'],
-    ['CSDL D03-03-PH20', '`tenant_contact.contact_type` (`PRIMARY`, `TECHNICAL`, `SECURITY`, `BILLING`) lệch FRS 4.2 và API (`LEADER`, `TENANT_ADMIN`, `TECHNICAL`, `SECURITY`); `provisioning_template.status` dùng `ACTIVE` còn FRS, API dùng `PUBLISHED`; đề nghị đổi DDL theo FRS'],
     ['CSDL D03-03-PH20', 'Chưa có bảng cho: cụm đích `DEDICATED_CLUSTER` (`clusterCode`, `state`, API-20-035…038), đợt khởi tạo bổ sung (`planId`, API-20-033, 034), đề xuất đồng bộ tổ chức (`proposalId`, API-20-157, 158), thông báo phát hành (`announcementId`, API-20-128), lần đối chiếu cấu hình (`reconcileId`, API-20-045); đề nghị thêm `dedicated_cluster`, `supplement_plan`, `org_sync_proposal`, `release_announcement` hoặc ghi rõ lưu ở bảng nào'],
     ['CSDL D03-03-PH20', '`merge_plan.plan_code` là `mergePlanId` ở API (dạng `SN-2026-001`); `usage_report.status` `GENERATING` được API giữ; `tenant_config_version.config_scope` giữ năm giá trị như API `ConfigScope`'],
     ['D03-06-PH20 và D05-02-PH20', 'Màn hình gọi đúng mã API-20 ở chương 3; ca L-01…L-10 ở chương 8 là ca hợp đồng bắt buộc của test case; ca "Idempotency-Key lặp khác thân" và "If-Match thiếu, lệch" cho mọi operation có khóa'],
-    ['PH-18', 'Chốt `POST /api/ops/v1/merge-transfers` (một phân hệ của một kế hoạch, kèm `Idempotency-Key = {mergePlanId}:{module}`) và `NotificationApi`; gọi API-20-167 báo tiến độ, API-20-162 với `?status=ACTIVE` cho tác vụ nền; đăng ký 28 khóa `20.*`; PH-20 chỉ đọc giá trị hiệu lực ở API-20-131'],
+    ['PH-18', 'Chốt `POST /api/ops/v1/merge-transfers` (một phân hệ của một kế hoạch, kèm `Idempotency-Key = {mergePlanId}:{module}`) và `NotificationApi`; gọi API-20-167 báo tiến độ, API-20-162 với `?status=ACTIVE` cho tác vụ nền; đăng ký 29 khóa `20.*`; PH-20 chỉ đọc giá trị hiệu lực ở API-20-131'],
     ['PH-19, PH-10', 'PH-19 đổi tên topic nghe sang `platform.tenant.module-enabled.v1`; PH-10 đổi tên topic trong kiểm thử `dh.platform.tenant.created.v1` sang `platform.tenant.created.v1` và nhận phần báo tiến độ qua API-20-166'],
     ['PH-12', 'Nhận scope `iam:realm-provision` cho PH-20 (API-12-080, 084, 085, 045, 046); đọc API-20-165 khi cấp truy cập liên tenant; nghe EVT-20-04, EVT-20-11'],
-    ['PH-13, PH-03, PH-07, PH-16, PH-09', 'PH-13: scope `obs:tenant-provision`, nhận EVT-20-12, nhãn `tenant` cho `dh_tenant_*`; PH-03: đọc API-20-164, phát EVT-03-10, EVT-03-11, thực thi ERR-20-001 và `Deprecation`, `Sunset`; PH-07: scope `platform.tenant.provision` cho API-07-073; PH-16: nhận API-16-030 với `metricCode` `ph20.tenant.provision-lead-time`; PH-09: FR-09-043 và EVT-09-21'],
+    ['PH-13, PH-03, PH-07, PH-16, PH-09', 'PH-13: scope `obs:tenant-provision`, nhận EVT-20-12, nhãn `tenant` cho `dh_tenant_*`; PH-03: đọc API-20-164, phát EVT-03-10, EVT-03-11, thực thi ERR-20-001 và `Deprecation`, `Sunset`; PH-07: scope `platform.tenant.provision` cho API-07-073; PH-16: nhận API-16-030 với `metricCode` `thoi-gian-khoi-tao-tenant`; PH-09: FR-09-043 và EVT-09-21'],
     ['D00-04', 'Ghi quy ước tiêu đề CloudEvents `ce_dhtenant` cho sự kiện cấp nền tảng (`PLATFORM`) và sự kiện sáp nhập (tenant đích); ghi dải Q20-55…59'],
 ], 'Đề nghị đồng bộ với tài liệu khác')
 W('Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 200 HTTT (GĐ-01…07); (2) giới hạn tốc độ ở mục 2.9; (3) Kafka 3 phân vùng, lưu giữ 7 ngày như PH-05, PH-10; (4) liên kết tải gói bàn giao tối đa 72 giờ theo FR-20-041; (5) API `/internal` không có phân trang nâng cao ngoài `page`, `size`.')
 W('')
 W('## Lịch sử phiên bản')
 W('')
-table(['Phiên bản', 'Ngày', 'Người', 'Nội dung'], [['0.1', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant']], 'Lịch sử phiên bản')
+table(['Phiên bản', 'Ngày', 'Người', 'Nội dung'], [['0.1', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant'], ['0.2', '27/11/2026', 'Nhóm viết tài liệu (Claude)', 'Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167']], 'Lịch sử phiên bản')
 
 open(MD, 'w', encoding='utf-8').write('\n'.join(L).rstrip('\n') + '\n')
 print('Đã ghi', MD, os.path.getsize(MD))

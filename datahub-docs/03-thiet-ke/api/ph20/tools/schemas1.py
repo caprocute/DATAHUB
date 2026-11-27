@@ -108,7 +108,7 @@ obj('AuditAck', 'Phản hồi gọn của thao tác đã nhận.', 'accepted!:bo
 # ---------------------------------------------------------------- tenant
 AUD = ('createdAt:ts', 'createdBy:str', 'updatedAt:ts', 'updatedBy:str')
 obj('ReadinessItem', 'Một mục kiểm tra sẵn sàng (FR-20-007).', 'checkCode!:E:ReadinessCheck', 'result!:E:ReadinessLevel', ('message!:str', 'Mã T68 chưa dùng.'),
-    ('errorCode:str', 'ERR-20-003', {'pattern': '^ERR-20-[0-9]{3}$'}), ('hint:str', 'Chọn mã khác nếu bị trùng.'), ex={'result': 'PASS'})
+    ('errorCode:str', 'ERR-20-003', {'pattern': '^ERR-20-[0-9]{3}$'}), ('hint:str', 'Chọn mã khác nếu bị trùng.'), ex={'result': 'PASS', 'errorCode': None})
 obj('ReadinessResult', 'Kết quả kiểm tra sẵn sàng.', 'ready!:bool', 'checkedAt!:ts', 'items!:R:ReadinessItem[]')
 obj('RunBrief', 'Tóm tắt lần chạy saga gần nhất.', 'runId!:uuid', 'status!:E:ProvisioningRunStatus', ('failedStep:E:StepCode', 'S06_EVENTING'), ex={'status': 'SUCCEEDED'})
 obj('ContactCreate', 'Thêm đầu mối của tenant (FR-20-005).', 'role!:E:ContactRole', 'fullName!:str', 'position:str', 'officialEmail!:email', 'phone:str', ('orgCode:ocode', 'SO-KHCN'),

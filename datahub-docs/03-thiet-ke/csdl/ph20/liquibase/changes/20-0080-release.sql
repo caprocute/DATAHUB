@@ -36,7 +36,7 @@ CREATE TRIGGER tg_product_release_touch BEFORE UPDATE ON ph20_tenant.product_rel
 CREATE TRIGGER tg_product_release_transition BEFORE UPDATE ON ph20_tenant.product_release FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_transition('status', '{"DRAFT": ["PREVIEW", "WITHDRAWN"], "PREVIEW": ["STABLE", "DEPRECATED", "WITHDRAWN"], "STABLE": ["DEPRECATED", "WITHDRAWN"], "DEPRECATED": ["WITHDRAWN"]}');
 CREATE TRIGGER tg_product_release_immutable BEFORE UPDATE ON ph20_tenant.product_release FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_immutable('version_code');
 CALL ph20_tenant.p_enable_rls('ph20_tenant.product_release', 'PLATR');
-COMMENT ON TABLE ph20_tenant.product_release IS 'EN-20-31 Phiên bản sản phẩm (FR-20-059, 060): danh mục phiên bản Datahub với ghi chú phát hành, qua `PREVIEW` rồi `STABLE` (ADR-203). Dữ liệu nền tảng, mọi tenant đọc được để xem phiên bản và ghi chú (FR-20-064).';
+COMMENT ON TABLE ph20_tenant.product_release IS 'EN-20-31 Phiên bản sản phẩm (FR-20-059, 060): danh mục phiên bản Datahub với ghi chú phát hành, qua `PREVIEW` rồi `STABLE` (ADR 203). Dữ liệu nền tảng, mọi tenant đọc được để xem phiên bản và ghi chú (FR-20-064).';
 COMMENT ON COLUMN ph20_tenant.product_release.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.product_release.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
 COMMENT ON COLUMN ph20_tenant.product_release.version_code IS 'Số phiên bản, dạng `1.0.0` hoặc `1.1.0-rc.1`.';
@@ -126,7 +126,7 @@ CREATE TABLE ph20_tenant.tenant_release_subscription (
 );
 CREATE TRIGGER tg_tenant_release_subscription_touch BEFORE UPDATE ON ph20_tenant.tenant_release_subscription FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CALL ph20_tenant.p_enable_rls('ph20_tenant.tenant_release_subscription', 'CTL');
-COMMENT ON TABLE ph20_tenant.tenant_release_subscription IS 'EN-20-32 Đăng ký kênh phát hành của tenant (FR-20-060): tenant theo kênh `STABLE` hoặc `PREVIEW`, có thể ghim phiên bản, đánh dấu tenant thí điểm nhận bản trước (ADR-203). Một dòng mỗi tenant.';
+COMMENT ON TABLE ph20_tenant.tenant_release_subscription IS 'EN-20-32 Đăng ký kênh phát hành của tenant (FR-20-060): tenant theo kênh `STABLE` hoặc `PREVIEW`, có thể ghim phiên bản, đánh dấu tenant thí điểm nhận bản trước (ADR 203). Một dòng mỗi tenant.';
 COMMENT ON COLUMN ph20_tenant.tenant_release_subscription.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.tenant_release_subscription.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
 COMMENT ON COLUMN ph20_tenant.tenant_release_subscription.channel IS 'Kênh: `STABLE` hoặc `PREVIEW`.';
@@ -149,7 +149,7 @@ CREATE TABLE ph20_tenant.maintenance_window (
   window_type            varchar(10)    NOT NULL DEFAULT 'RECURRING',
   day_of_week            smallint,
   start_time             time,
-  duration_minutes       integer        NOT NULL DEFAULT 120,
+  duration_minutes       integer        NOT NULL DEFAULT 240,
   starts_at              timestamptz,
   ends_at                timestamptz,
   timezone               varchar(40)    NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
@@ -164,7 +164,7 @@ CREATE TABLE ph20_tenant.maintenance_window (
   CONSTRAINT uq_maintenance_window_id_tenant UNIQUE (id, tenant_id),
   CONSTRAINT ck_maintenance_window_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_maintenance_window_window_type CHECK (window_type IN ('RECURRING', 'ONE_OFF')),
-  CONSTRAINT ck_maintenance_window_duration CHECK (duration_minutes BETWEEN 15 AND 1440),
+  CONSTRAINT ck_maintenance_window_duration CHECK (duration_minutes BETWEEN 120 AND 360),
   CONSTRAINT ck_maintenance_window_day CHECK (day_of_week IS NULL OR day_of_week BETWEEN 1 AND 7),
   CONSTRAINT ck_maintenance_window_recurring CHECK (window_type <> 'RECURRING' OR (day_of_week IS NOT NULL AND start_time IS NOT NULL)),
   CONSTRAINT ck_maintenance_window_one_off CHECK (window_type <> 'ONE_OFF' OR (starts_at IS NOT NULL AND ends_at IS NOT NULL AND ends_at > starts_at)),
@@ -180,7 +180,7 @@ COMMENT ON COLUMN ph20_tenant.maintenance_window.name IS 'Tên cửa sổ.';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.window_type IS 'Loại: `RECURRING` (hằng tuần) hoặc `ONE_OFF` (một lần).';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.day_of_week IS 'Thứ trong tuần theo ISO, 1 là thứ Hai (cửa sổ `RECURRING`).';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.start_time IS 'Giờ bắt đầu theo múi giờ của cửa sổ (cửa sổ `RECURRING`).';
-COMMENT ON COLUMN ph20_tenant.maintenance_window.duration_minutes IS 'Thời lượng, phút.';
+COMMENT ON COLUMN ph20_tenant.maintenance_window.duration_minutes IS 'Thời lượng, phút, từ 120 đến 360 (2…6 giờ, FR-20-018).';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.starts_at IS 'Bắt đầu (cửa sổ `ONE_OFF`).';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.ends_at IS 'Kết thúc (cửa sổ `ONE_OFF`).';
 COMMENT ON COLUMN ph20_tenant.maintenance_window.timezone IS 'Múi giờ.';

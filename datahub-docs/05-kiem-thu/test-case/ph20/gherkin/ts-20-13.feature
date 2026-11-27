@@ -22,4 +22,4 @@ Tính năng: TS-20-13 · Chuyển chế độ cách ly của tenant
     Và `POST` thiếu `decisionDocNo`
     Và `POST P/tenants/T90/isolation-changes` khi đang có lần chạy khác
     Và chạy đổi cách ly khi bản giả kiểm đếm lệch
-    Thì bước 1 `422` `ERR-20-028`. Bước 2 `422` `ERR-20-059`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 lần chạy `FAILED` với `ERR-20-113` ("Kiểm đếm organization lệch: nguồn 40, đích 39"), định tuyến giữ cụm cũ, dữ liệu không mất.
+    Thì bước 1 `422` `ERR-20-028`. Bước 2 `422` `ERR-20-059`. Bước 3 `400` `ERR-20-004`. Bước 4 `409` `ERR-20-006`. Bước 5 lần chạy `FAILED` với `ERR-20-113` ("Kiểm đếm organization lệch: nguồn 40, đích 39."), định tuyến giữ cụm cũ, dữ liệu không mất.

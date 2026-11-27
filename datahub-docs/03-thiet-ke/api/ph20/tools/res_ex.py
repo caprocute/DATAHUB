@@ -64,7 +64,7 @@ RES_EX = {
     147: {'status': 'INACTIVE', 'effectiveTo': '2026-12-31'}, 148: {'status': 'ACTIVE'},
     149: {'status': 'DISSOLVED', 'effectiveTo': '2026-12-31', 'successorCode': 'SO-TTTT'},
     153: {'status': 'UPLOADED', 'rows': [], 'totalRows': 0, 'validRows': 0, 'errorRows': 0, 'summary': {}},
-    154: {'rows': [{'rowNo': 2, 'orgCode': 'SO-KHCN', 'action': 'CREATE', 'errors': []}, {'rowNo': 3, 'orgCode': 'SO-XX', 'action': 'ERROR', 'errors': [{'field': 'parentCode', 'message': 'Tổ chức cấp trên không tồn tại.', 'code': 'ERR-20-047'}]}]},
+    154: {'rows': [{'rowNo': 2, 'orgCode': 'SO-KHCN', 'action': 'CREATE', 'errors': []}, {'rowNo': 3, 'orgCode': 'SO-XX', 'action': 'ERROR', 'errors': [{'field': 'parentCode', 'message': 'Tổ chức cấp trên SO-XX không hợp lệ: không tồn tại.', 'code': 'ERR-20-047'}]}]},
     155: {'status': 'APPLYING', 'appliedRows': 0},
     158: {'state': 'APPLIED'},
     166: {'stepStatus': 'SUCCEEDED', 'runStatus': 'RUNNING'},

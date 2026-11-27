@@ -32,7 +32,7 @@ CREATE TABLE ph20_tenant.tenant_quota (
 );
 CREATE TRIGGER tg_tenant_quota_touch BEFORE UPDATE ON ph20_tenant.tenant_quota FOR EACH ROW EXECUTE FUNCTION ph20_tenant.tg_touch();
 CALL ph20_tenant.p_enable_rls('ph20_tenant.tenant_quota', 'CTL');
-COMMENT ON TABLE ph20_tenant.tenant_quota IS 'EN-20-13 Hạn mức hợp đồng của tenant (FR-20-026, 027): mỗi tenant một dòng cho mỗi tài nguyên (12 loại). PH-20 giữ giá trị và đẩy xuống nơi thực thi (APISIX, Kafka, PH-04…), không tự thực thi (ADR-204).';
+COMMENT ON TABLE ph20_tenant.tenant_quota IS 'EN-20-13 Hạn mức hợp đồng của tenant (FR-20-026, 027): mỗi tenant một dòng cho mỗi tài nguyên (12 loại). PH-20 giữ giá trị và đẩy xuống nơi thực thi (APISIX, Kafka, PH-04…), không tự thực thi (ADR 204).';
 COMMENT ON COLUMN ph20_tenant.tenant_quota.id IS 'Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5.1).';
 COMMENT ON COLUMN ph20_tenant.tenant_quota.tenant_id IS 'Mã tenant (`Tnn`, `PLATFORM`), khóa RLS và khóa ngoại kép.';
 COMMENT ON COLUMN ph20_tenant.tenant_quota.resource_code IS 'Tài nguyên: 12 giá trị `QuotaResource`.';

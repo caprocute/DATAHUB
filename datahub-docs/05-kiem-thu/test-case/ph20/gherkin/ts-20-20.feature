@@ -49,4 +49,4 @@ Tính năng: TS-20-20 · Tạm ngừng và khôi phục tenant
     Khi `POST P/tenants/T90/lifecycle-requests` `RESUME`
     Và `POST P/tenants/T92/lifecycle-requests` `RESUME`
     Và `POST P/tenants/T91/lifecycle-requests` `RESUME`
-    Thì bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-037` ("... đang có đề nghị chấm dứt"). Bước 3 `ERR-20-117` ("Ca kiểm tra khói LOGIN_ADMIN lỗi: ..."), tenant giữ `SUSPENDED`.
+    Thì bước 1 `409` `ERR-20-006`. Bước 2 `422` `ERR-20-037` ("Chưa đủ điều kiện chấm dứt hoặc khôi phục tenant T92: đang có đề nghị chấm dứt."). Bước 3 `ERR-20-117` ("Ca kiểm tra khói LOGIN_ADMIN lỗi: không lấy được token quản trị tỉnh."), tenant giữ `SUSPENDED`.

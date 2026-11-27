@@ -35,6 +35,25 @@ def load_fr_errors():
     return out
 
 
+def load_messages():
+    """Câu thông báo nguyên văn của FRS §9.2 (còn chỗ giữ `{...}`)."""
+    sec = frs_text.split('### 9.2. Thông báo')[1].split('### 9.3.')[0]
+    return {m.group(1): m.group(2) for m in re.finditer(r'^\| (ERR-20-\d{3}) \| "(.*)" \|$', sec, re.M)}
+
+
+MSG = load_messages()
+FILL = {'đối tượng': 'tenant', 'Đối tượng': 'Tenant', 'mã': 'T68', 'thao tác': 'khôi phục', 'trạng thái': 'SUSPENDED', 'Trường': 'tenantCode', 'yêu cầu': 'cần dạng T và hai chữ số',
+        'lý do': 'chưa đủ điều kiện', 'tên': 'PH-07', 'số': '3', 'phiên bản': '2.4.0', 'tenant': 'T68', 'danh sách thiếu': 'thiếu 8 vCPU', 'giờ': '2026-11-27T22:00:00+07:00'}
+
+
+def sample_msg(code):
+    """Câu thông báo của FRS §9.2 với chỗ giữ được điền giá trị mẫu; không có thì trả None."""
+    m = MSG.get(code)
+    if m is None:
+        return None
+    return re.sub(r'\{([^}]*)\}', lambda g: FILL.get(g.group(1), g.group(1)), m)
+
+
 CAT = load_catalog()
 ERR = load_errors()
 FRERR = load_fr_errors()

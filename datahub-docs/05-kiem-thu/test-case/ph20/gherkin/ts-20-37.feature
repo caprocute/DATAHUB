@@ -20,7 +20,7 @@ Tính năng: TS-20-37 · Cô lập tenant và rò rỉ chéo tenant theo nhóm A
     Khi `U-T90-TA` `GET P/tenants`, `GET P/tenants/T91`, `GET P/merge-plans`, `GET P/releases`, `GET P/dashboard`
     Và `U-T90-TA` `PATCH P/tenants/T91` và `POST P/tenants/T91/lifecycle-requests`
     Và `U-PA1` `GET T/organizations` (không có ngữ cảnh tenant)
-    Thì bước 1, 2 `403` `ERR-00-403` (người dùng tỉnh không có quyền nền tảng; hiện hành trả 403 nhưng bộ thử chéo tenant của brief mong `404`; ghi nhận ở Phụ lục đề nghị ĐN-TC-05). Bước 3 `400` hoặc `403` do thiếu ngữ cảnh tenant, không trả dữ liệu của tenant nào. Không bản ghi nào bị đổi.
+    Thì bước 1, 2 `403` `ERR-00-403` (người dùng tỉnh không thuộc tenant `PLATFORM`; quyết định 0.2: nhóm `/api/platform/v1` trả `403` vì đường dẫn nền tảng không phải tài nguyên của một tỉnh, không có gì để che; tài nguyên của tenant khác ở `/api/tenant/v1` và `/internal/tenant/v1` trả `404`, xem TC-20-186, 188). Bước 3 `403` `ERR-00-403` do token `PLATFORM` không có ngữ cảnh tenant, không trả dữ liệu của tenant nào. Không bản ghi nào bị đổi.
 
   @TC-20-188 @P1 @Âm
   Kịch bản: TC-20-188 Rò rỉ nhóm API nội bộ: sai scope, sai bên báo, tenant không thuộc ngữ cảnh

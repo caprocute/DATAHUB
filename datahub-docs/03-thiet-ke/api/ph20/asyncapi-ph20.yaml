@@ -2,7 +2,7 @@
 asyncapi: '3.0.0'
 info:
   title: 'Datahub PH-20 Quản trị tenant và phát hành sản phẩm: sự kiện'
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   description: 'Hợp đồng sự kiện EVT-20-01…16 phát ra và 6 sự kiện tiêu thụ (D03-04-PH20 chương 5, FRS 9.3). Ghi vào `ph20_tenant.outbox` cùng giao dịch nghiệp vụ,
     Debezium đưa lên Kafka; CloudEvents 1.0 chế độ nhị phân, tiêu đề `ce_*` và thuộc tính mở rộng `dhtenant` (`ce_dhtenant`). Sự kiện vòng đời tenant và phát hành
     đi trên tiền tố nền tảng `platform.` vì tenant mới chưa có tiền tố Kafka riêng; sự kiện tổ chức đi trên `{tenant}.tenant.org.changed.v1`. Khóa phân vùng là mã
@@ -720,7 +720,7 @@ components:
           runId: 0193c2a0-1a2b-7c3d-8e4f-5a6b7c8d9e01
           failedStep: S06_EVENTING
           errorCode: ERR-20-106
-          errorMessage: Bước quá hạn chờ báo tiến độ.
+          errorMessage: Bước S06_EVENTING chưa nhận báo cáo từ PH-10 sau 15 phút.
           attempt: 3
     tenantActivated:
       name: tenantActivated
@@ -1210,6 +1210,7 @@ components:
         payload:
           tenantCode: T68
           scope: SETTINGS
+          changeKind: TENANT_SETTINGS
           configVersionNo: 8
           commitSha: a1b2c3d4e5f60718293a4b5c6d7e8f9012345678
           changedKeys:
@@ -2130,6 +2131,16 @@ components:
       required:
       - resource
       - level
+    ConfigChangeKind:
+      type: string
+      enum:
+      - TENANT_PROFILE
+      - TENANT_SETTINGS
+      - PLATFORM_CONFIG
+      - CROSS_TENANT_POLICY
+      - ISOLATION_MODE
+      - FEATURE_FLAG
+      description: Loại thay đổi cấu hình theo FRS (EVT-20-09).
     ConfigChangedData:
       type: object
       description: Cấu hình nền tảng hoặc cài đặt tỉnh đổi (FR-20-018…021, 025).
@@ -2140,6 +2151,8 @@ components:
           description: Mã tenant dạng `T` và hai chữ số.
         scope:
           $ref: '#/components/schemas/ConfigScope'
+        changeKind:
+          $ref: '#/components/schemas/ConfigChangeKind'
         configVersionNo:
           type: integer
         commitSha:
