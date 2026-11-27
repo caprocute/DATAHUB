@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH01
 ten: Thiết kế giao diện màn hình phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, Quản trị tỉnh, Cán bộ ATTT, hội đồng thẩm định
@@ -239,7 +239,7 @@ Gốc `/ket-noi/he-thong` theo D03-06-00 §2.3.2 (mục 5). Các đường dẫn
 
 : Bảng đường dẫn React Router
 
-Hai route có `{token}` đứng ngoài `CMP-AppShell`: chúng dùng khung tối giản chỉ có logo, tên tenant và tài khoản đang đăng nhập (đề nghị `CMP-AppShell` biến thể `bare` ở Phụ lục A). Nếu chưa đăng nhập, router chuyển sang Keycloak với `acr_values` yêu cầu hai yếu tố và quay lại đúng liên kết; liên kết không bị tiêu hao khi chưa qua bước xác thực (ERR-01-021 và 023 đã nêu ở D03-04-PH01 §6.4).
+Hai route có `{token}` đứng ngoài `CMP-AppShell`: chúng dùng khung tối giản chỉ có logo, tên tenant và tài khoản đang đăng nhập (`CMP-AppShell` biến thể `bare`, D03-05-04 §12.1). Nếu chưa đăng nhập, router chuyển sang Keycloak với `acr_values` yêu cầu hai yếu tố và quay lại đúng liên kết; liên kết không bị tiêu hao khi chưa qua bước xác thực (ERR-01-021 và 023 đã nêu ở D03-04-PH01 §6.4).
 
 ### 4.3. Menu và phân quyền hiển thị
 
@@ -418,7 +418,7 @@ Bảng dưới liệt kê các thành phần giao diện của UI-01-01 theo th�
 | 2 | Thanh bước | `CMP-Wizard`, `CMP-Steps` | 5 bước; bước chưa qua không bấm nhảy tới được nếu bước trước lỗi nghiêm trọng, bước đã qua bấm quay lại tự do | — | `aria-current="step"` |
 | 3 | Dải lỗi | `CMP-Alert` mức lỗi | Số lỗi, liên kết nhảy tới trường | `errors[]`, `issues[]` | Focus chuyển tới đây khi bấm "Tiếp tục" có lỗi |
 | 4 | Biểu mẫu | `CMP-Form`, `CMP-FormField`, `CMP-Input`, `CMP-TextArea`, `CMP-Select`, `CMP-NumberInput`, `CMP-Switch` | Theo §7.3 | API-01-004, 005, 010 | Tối đa `size-form-max` |
-| 5 | Chọn tổ chức | `CMP-ResourceSelect` biến thể tổ chức | Tìm theo tên, mã; chỉ tổ chức `ACTIVE` ở PH-20; OR chỉ thấy tổ chức của mình | PH-20 qua API-01-004 | ERR-01-004, 006 |
+| 5 | Chọn tổ chức | `CMP-OrganizationSelect` (biến thể `organization` của `CMP-ResourceSelect`, D03-05-03 §7.18) | Tìm theo tên, mã; chỉ tổ chức `ACTIVE` ở PH-20; OR chỉ thấy tổ chức của mình | PH-20 qua API-01-004 | ERR-01-004, 006 |
 | 6 | Chọn loại dữ liệu | `CMP-CodeListSelect` | Danh mục loại dữ liệu của tenant, gợi ý mức phân loại mặc định | Danh mục (Q01-16) | Mục bí mật nhà nước hiện nhãn đỏ và không chọn được |
 | 7 | Bảng nhu cầu | `CMP-EditableTable` | Thêm, sửa tại chỗ, xóa; cột theo §7.3; dòng thiếu căn cứ tô `color-error` kèm chữ | API-01-012, 013 | Sửa bằng `Enter`, hộp thoại căn cứ pháp lý khi dòng có chiều `CONSUME` |
 | 8 | Tải tài liệu | `CMP-Upload` biến thể `dropzone` | Loại tài liệu, tiêu đề; PDF, DOCX, XLSX, PNG, JPG ≤ 20 MB (tham số) | API-01-006…009 | Hiện "đã quét sạch" sau quét mã độc |
@@ -438,7 +438,7 @@ Kiểu, ràng buộc lấy từ bảng dữ liệu vào của FR-01-003, 006, 00
 | 1 | Mã HTTT | `CMP-Input` + `CMP-CodeText` | Có | `^[A-Z][A-Z0-9-]{2,63}$`; sau khi tạo không sửa được; kiểm trùng khi rời trường (ERR-01-002) | `code` |
 | 1 | Tên HTTT | `CMP-Input` | Có | 3…255 ký tự | `name` |
 | 1 | Mô tả nghiệp vụ | `CMP-TextArea` | Có | ≤ 2.000 ký tự, đếm ký tự | `description` |
-| 1 | Đơn vị chủ quản | `CMP-ResourceSelect` | Có | Tổ chức `ACTIVE` | `ownerOrgId` |
+| 1 | Đơn vị chủ quản | `CMP-OrganizationSelect` | Có | Tổ chức `ACTIVE` | `ownerOrgId` |
 | 1 | Đơn vị vận hành, nhà thầu | `CMP-Input` | Không | | `operatorName` |
 | 1 | Loại HTTT | `CMP-Select` | Có | Cấp tỉnh, Quốc gia, Bộ ngành, Hệ cũ, Bên ngoài | `systemType` |
 | 1 | Vai trò | `CMP-Checkbox` nhóm | Có | Chọn ≥ 1: CONSUMER, PROVIDER, PUBLISHER, SUBSCRIBER | `roles` |
@@ -447,7 +447,7 @@ Kiểu, ràng buộc lấy từ bảng dữ liệu vào của FR-01-003, 006, 00
 | 1 | Địa chỉ cơ sở | `CMP-Input` (nhiều dòng) | Khi có vai trò PROVIDER | Chỉ `https` (ERR-01-049) | `baseUrls` |
 | 1 | Danh sách IP cho phép | `CMP-Input` (nhiều dòng) | Không | CIDR hợp lệ (ERR-01-049) | `ipAllowlist` |
 | 1 | Mã ở hệ cũ | `CMP-Input` | Không | | `legacyRef` |
-| 2 | Loại đầu mối | `CMP-Segmented` | Có | Nghiệp vụ, Kỹ thuật, ATTT | `contactType` |
+| 2 | Loại đầu mối | `CMP-SegmentedControl` | Có | Nghiệp vụ, Kỹ thuật, ATTT | `contactType` |
 | 2 | Họ tên, chức vụ | `CMP-Input` | Có | | `fullName`, `position` |
 | 2 | Thư điện tử | `CMP-Input` | Có | Miền công vụ theo tham số (ERR-01-011) | `email` |
 | 2 | Điện thoại | `CMP-Input` | Không | E.164, hiển thị `0912 345 678` | `phone` |
@@ -456,7 +456,7 @@ Kiểu, ràng buộc lấy từ bảng dữ liệu vào của FR-01-003, 006, 00
 | 3 | Có API, chuẩn đặc tả, giao thức | `CMP-Switch`, `CMP-Select` | Có | Chuẩn đặc tả bắt buộc khi có API; loại CSDL khi không có API; nhóm HTTT đề xuất tính ngay và hiện bên cạnh tiêu đề | `hasApi`, `apiSpecKind`, `protocols`, `dbType` |
 | 3 | Nhật ký giao dịch (nhóm 3) | `CMP-Select` | Khi nhóm 3 | Có, Không, Chưa rõ | `cdcLogEnabled` |
 | 3 | Bảo trì, kế hoạch thay thế, ngày thay | `CMP-Switch`, `CMP-DatePicker` | Có | Ngày thay khi có kế hoạch | `underMaintenance`, `replacementPlanned`, `replacementDate` |
-| 3 | Mức quan trọng | `CMP-Segmented` | Có | Bình thường, Thiết yếu | `criticality` |
+| 3 | Mức quan trọng | `CMP-SegmentedControl` | Có | Bình thường, Thiết yếu | `criticality` |
 | 3 | Kết nối đồng thời tối đa, lượt gọi dự kiến mỗi ngày | `CMP-NumberInput` | Có | ≥ 1; ≥ 0 | `maxConcurrentConnections`, `expectedDailyCalls` |
 | 3 | Nhu cầu: chiều, loại dữ liệu, phạm vi, mức, mục đích | `CMP-EditableTable` | Có | Phạm vi ≤ 200, mục đích ≤ 500 ký tự | `dataDemands[]` |
 | 3 | Căn cứ pháp lý: số, ngày, cơ quan, hiệu lực đến, tệp | Hộp thoại `CMP-Form` | Khi chiều Khai thác | Ngày không ở tương lai; tệp loại `LEGAL_BASIS` (ERR-01-015) | `legalBasis.*` |
@@ -983,7 +983,7 @@ Biểu mẫu của người thẩm định kỹ thuật (FR-01-013) bên phải 
 
 | Trường | Kiểu | Bắt buộc | Kiểm tra | Ánh xạ API-01-024 |
 |---|---|---|---|---|
-| Kết quả | `CMP-Segmented` Đạt, Không đạt | Có | | `result` |
+| Kết quả | `CMP-SegmentedControl` Đạt, Không đạt | Có | | `result` |
 | Nhóm HTTT xác nhận | `CMP-RadioCard` 1…4, nhóm đề xuất đánh dấu "Đề xuất" | Có | 1…4 | `confirmedGroup` |
 | Loại bộ điều hợp cần xây | `CMP-Select` nhiều lựa chọn | Khi nhóm 2, 3 | REST, SOAP, MQ, FILE, DB, CDC | `adapterTypes` |
 | Phương thức xác thực | `CMP-Select` | Có | Không yếu hơn mức tối thiểu hệ thống tính (hiện dòng "Tối thiểu theo mức dữ liệu cao nhất: Khóa công khai"); lựa chọn yếu hơn bị vô hiệu kèm giải thích (BR-01-019) | `authMethod` |
@@ -1006,7 +1006,7 @@ Mỗi dòng nhu cầu là một hàng của `CMP-DataTable` mật độ gọn, c
 | b | Phạm vi đề nghị | Văn bản, tối đa 2 dòng | Cắt bằng dấu ba chấm, tooltip đầy đủ |
 | c | Mức phân loại | `CMP-StatusTag` | Công khai, Nội bộ, Hạn chế, Nhạy cảm |
 | d | Căn cứ pháp lý | `CMP-Link`, văn bản | "{văn bản} · {ngày}" và "Xem" mở R7; thiếu số, ngày, cơ quan hiện chữ đỏ "Thiếu số, ngày văn bản" kèm biểu tượng cảnh báo (ERR-01-015) |
-| e | Kết luận | `CMP-Segmented` ba lựa chọn Chấp thuận, Thu hẹp, Từ chối | Chưa chọn: không lựa chọn nào sáng; chọn xong mở hàng phụ nếu Thu hẹp hoặc Từ chối |
+| e | Kết luận | `CMP-SegmentedControl` ba lựa chọn Chấp thuận, Thu hẹp, Từ chối | Chưa chọn: không lựa chọn nào sáng; chọn xong mở hàng phụ nếu Thu hẹp hoặc Từ chối |
 | f | Phạm vi được duyệt | `CMP-Input` ở hàng phụ | Bắt buộc khi Thu hẹp, ≤ 200 ký tự, phải hẹp hơn phạm vi đề nghị (máy chủ kiểm) |
 | g | Ý kiến | `CMP-TextArea` ở hàng phụ | Bắt buộc khi Thu hẹp, Từ chối, ≤ 2.000 ký tự (ERR-01-019) |
 | h | Khóa theo bí mật nhà nước | `CMP-Tooltip`, `CMP-Alert` nhỏ | Dòng BMNN: nút Chấp thuận và Thu hẹp vô hiệu, chữ "Chỉ được từ chối. Dữ liệu này thuộc danh mục bí mật nhà nước, không kết nối qua Datahub." (ERR-01-016) |
@@ -1017,7 +1017,7 @@ Quy tắc hiển thị: dòng Từ chối nền `color-diff-removed`, dòng Thu 
 
 ### 12.8. Vùng R4, tab ATTT
 
-Bước ATTT do SO thực hiện (FR-01-014). Bên trái: tóm tắt mức phân loại cao nhất của trần phạm vi dự kiến, cấp độ ATTT khai báo, tài liệu phê duyệt cấp độ (liên kết xem), phương thức xác thực do bước kỹ thuật chọn. Bên phải: biểu mẫu `CMP-Segmented` Đạt, Không đạt; `CMP-Select` cấp độ ATTT được xác nhận L1…L5 (`securityLevelConfirmed`); `CMP-TextArea` ý kiến (bắt buộc khi Không đạt). Khối cảnh báo ERR-01-047 hiện khi cấp độ xác nhận thấp hơn yêu cầu mức dữ liệu ("Dữ liệu mức Hạn chế cần HTTT cấp độ từ L3 và xác thực bằng khóa công khai").
+Bước ATTT do SO thực hiện (FR-01-014). Bên trái: tóm tắt mức phân loại cao nhất của trần phạm vi dự kiến, cấp độ ATTT khai báo, tài liệu phê duyệt cấp độ (liên kết xem), phương thức xác thực do bước kỹ thuật chọn. Bên phải: biểu mẫu `CMP-SegmentedControl` Đạt, Không đạt; `CMP-Select` cấp độ ATTT được xác nhận L1…L5 (`securityLevelConfirmed`); `CMP-TextArea` ý kiến (bắt buộc khi Không đạt). Khối cảnh báo ERR-01-047 hiện khi cấp độ xác nhận thấp hơn yêu cầu mức dữ liệu ("Dữ liệu mức Hạn chế cần HTTT cấp độ từ L3 và xác thực bằng khóa công khai").
 
 ### 12.9. Vùng R5, R6: ý kiến chung và hành động dính chân
 
@@ -1346,7 +1346,7 @@ Bảng dưới liệt kê các thành phần giao diện của UI-01-09 theo th�
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
-| 1 | Khung tối giản | `CMP-AppShell` biến thể `bare` (Phụ lục A) | Logo, tên tenant, tài khoản đang đăng nhập; không menu | — | Tiêu đề tab không có mã HTTT |
+| 1 | Khung tối giản | `CMP-AppShell` biến thể `bare` (D03-05-04 §12.1) | Logo, tên tenant, tài khoản đang đăng nhập; không menu | — | Tiêu đề tab không có mã HTTT |
 | 2 | Tiêu đề | `CMP-Heading`, `CMP-StatusTag` | "{mã HTTT} · môi trường thử (SANDBOX)" hoặc "thật (PRODUCTION)"; hạn liên kết | API-01-040 | `Cache-Control: no-store` |
 | 3 | Thông tin tài khoản | `CMP-Text` | "Đăng nhập là {tên} ({vai trò đầu mối}) · xác thực hai yếu tố lúc {giờ}" | Phiên Keycloak | |
 | 4 | Khối thông tin kết nối | `CMP-DescriptionList`, `CMP-CodeText`, `CMP-CopyButton` | Mã ứng dụng, điểm cuối lấy token, địa chỉ API, phương thức, phạm vi, hạn mức; mỗi giá trị có nút sao chép | Thân phản hồi | |
@@ -1693,7 +1693,7 @@ Bảng dưới liệt kê các thành phần giao diện của UI-01-13 theo th�
 | 1 | Khung tối giản | `CMP-AppShell` biến thể `bare` | Logo, tên tenant, tài khoản | — | Tiêu đề tab không có tên HTTT |
 | 2 | Tiêu đề | `CMP-Heading`, `CMP-StatusTag` | "{tên đơn vị} · Xác nhận phạm vi kỳ {mã kỳ}", hạn liên kết | API-01-070 | |
 | 3 | Hướng dẫn | `CMP-Text`, `CMP-Alert` | Giải thích cách chọn; "Đơn vị không trả lời trước {ngày} sẽ được đề xuất thu hẹp" | `noResponseDays` | |
-| 4 | Bảng phạm vi | `CMP-DataTable`, `CMP-Segmented` | HTTT, phạm vi, dùng thực tế 12 tháng, lần dùng cuối, ba lựa chọn | `items[]` | Lựa chọn là `radiogroup` |
+| 4 | Bảng phạm vi | `CMP-DataTable`, `CMP-SegmentedControl` | HTTT, phạm vi, dùng thực tế 12 tháng, lần dùng cuối, ba lựa chọn | `items[]` | Lựa chọn là `radiogroup` |
 | 5 | Ô phạm vi còn cần | `CMP-Input` | Bắt buộc khi chọn "Thu hẹp", ≤ 200 ký tự | `reducedScope` | |
 | 6 | Chân trang | `CMP-Button` | "Gửi phản hồi" bật khi mọi dòng đã chọn | API-01-071 | `Idempotency-Key`; ERR-01-040 |
 | 7 | Trang kết quả | `CMP-ResultPage` | "Đã ghi nhận phản hồi của anh/chị lúc {giờ}. Cảm ơn." | — | Không cho gửi lại |
@@ -1826,7 +1826,7 @@ Bảng dưới trình bày ba bước.
 | Bước | Nội dung | `CMP-*` | API |
 |---|---|---|---|
 | 1. Tải tệp | Chọn tệp xuất từ hệ cũ (XLSX hoặc CSV, tối đa `legacyImport.maxRows` dòng, mặc định 5.000); nút "Tải mẫu nhập"; kiểm tra kiểu theo nội dung và quét mã độc | `CMP-Wizard`, `CMP-Upload` biến thể `dropzone`, `CMP-JobProgress` | API-01-080 |
-| 2. Xem trước và ghép tổ chức | Năm thẻ số liệu; bảng kết quả từng dòng (đã gộp vai trò); chọn tổ chức cho dòng chưa ghép được; bỏ qua dòng | `CMP-KpiCard`, `CMP-DataTable`, `CMP-ResourceSelect`, `CMP-Alert` | API-01-081 |
+| 2. Xem trước và ghép tổ chức | Năm thẻ số liệu; bảng kết quả từng dòng (đã gộp vai trò); chọn tổ chức cho dòng chưa ghép được; bỏ qua dòng | `CMP-KpiCard`, `CMP-DataTable`, `CMP-OrganizationSelect`, `CMP-Alert` | API-01-081 |
 | 3. Xác nhận và báo cáo | Hộp xác nhận tạo `n` hồ sơ nháp; sau khi xong báo cáo đối chiếu: số đọc, số tạo, số trùng, số cảnh báo, số bí mật bỏ qua; nút tải báo cáo | `CMP-ConfirmDialog`, `CMP-DescriptionList` | API-01-082 |
 
 : UI-01-15 · Ba bước
@@ -1840,7 +1840,7 @@ Bảng dưới trình bày thành phần bước 2.
 | 1 | Thẻ số liệu | `CMP-KpiCard` ×5 | Đã đọc, Sẽ tạo, Trùng bỏ qua, Cần chọn tổ chức, Cột bí mật đã bỏ | Thẻ "Cần chọn tổ chức" bấm để lọc |
 | 2 | Dải lưu ý | `CMP-Alert` thông tin | "Thông tin xác thực của hệ cũ không được nhập. Đơn vị phải hoàn tất hồ sơ để cấp lại định danh. Ghi tất cả hoặc không ghi gì." | |
 | 3 | Bảng xem trước | `CMP-DataTable`, `CMP-StatusTag` | Mã hệ cũ, tên chuẩn hóa, vai trò đã gộp, tổ chức ghép được hoặc ô chọn, kết quả (Tạo mới, Cần chọn tổ chức, Trùng) | Nền dòng `color-diff-added`, `color-diff-changed`, `color-diff-removed` kèm chữ |
-| 4 | Chọn tổ chức | `CMP-ResourceSelect` | Gợi ý tổ chức gần đúng; chọn hoặc "Bỏ qua dòng" | ERR-01-004 nếu tổ chức không hoạt động |
+| 4 | Chọn tổ chức | `CMP-OrganizationSelect` | Gợi ý tổ chức gần đúng; chọn hoặc "Bỏ qua dòng" | ERR-01-004 nếu tổ chức không hoạt động |
 | 5 | Chân | `CMP-Button` | "Hủy"; "Xác nhận tạo {n} hồ sơ nháp" bật khi không còn dòng cần chọn | Qua `CMP-ConfirmDialog` |
 
 : UI-01-15 · Thành phần bước 2
@@ -2210,13 +2210,13 @@ Mọi FR có người dùng thao tác trực tiếp đều có màn; hai FR ch�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Không có thành phần mới bắt buộc; ba biến thể đề nghị ghi vào D03-05-04 ở lần cập nhật kế tiếp.
+Không có thành phần mới bắt buộc. Ba biến thể dưới đây đã được thêm vào design system (D03-05-03 bản 0.4, D03-05-04 bản 0.4); bảng giữ lại để truy vết lý do.
 
 | Đề xuất | Dựa trên | Dùng ở | Lý do |
 |---|---|---|---|
-| `CMP-AppShell` biến thể `bare` | `CMP-AppShell` | UI-01-09, 13 (và các trang mở bằng liên kết của phân hệ khác) | Khung chỉ có logo, tên tenant, tài khoản; không menu, không tìm kiếm toàn cục, không trung tâm thông báo, không `CMP-CommandPalette`; ngoài khung `dh-console` để giảm bề mặt tấn công |
-| `CMP-Segmented` biến thể `verdict` | `CMP-Segmented` | UI-01-06 (ba lựa chọn Chấp thuận, Thu hẹp, Từ chối), UI-01-13 (Còn cần, Thu hẹp, Không cần nữa) | Nhóm radio ba lựa chọn nằm trong ô bảng, mỗi lựa chọn có sắc thái và chữ cố định, hỗ trợ khóa từng lựa chọn kèm lý do, ghi `aria-label` theo dòng |
-| `CMP-ResourceSelect` biến thể `organization` | `CMP-ResourceSelect` | UI-01-01, 15 | Chọn tổ chức từ danh mục PH-20, giới hạn theo tổ chức của OR, gợi ý gần đúng khi ghép từ tệp nhập |
+| `CMP-AppShell` biến thể `bare` (đã thêm vào D03-05-04 §12.1) | `CMP-AppShell` | UI-01-09, 13 (và các trang mở bằng liên kết của phân hệ khác) | Khung chỉ có logo, tên tenant, tài khoản; không menu, không tìm kiếm toàn cục, không trung tâm thông báo, không `CMP-CommandPalette`; ngoài khung `dh-console` để giảm bề mặt tấn công |
+| `CMP-SegmentedControl` biến thể `verdict` (đã thêm vào D03-05-03 §7.10) | `CMP-SegmentedControl` | UI-01-06 (ba lựa chọn Chấp thuận, Thu hẹp, Từ chối), UI-01-13 (Còn cần, Thu hẹp, Không cần nữa) | Nhóm radio ba lựa chọn nằm trong ô bảng, mỗi lựa chọn có sắc thái và chữ cố định, hỗ trợ khóa từng lựa chọn kèm lý do, ghi `aria-label` theo dòng |
+| `CMP-OrganizationSelect` (đã thêm vào D03-05-03 §7.18) | `CMP-ResourceSelect` | UI-01-01, 15 | Chọn tổ chức từ danh mục PH-20, giới hạn theo tổ chức của OR, gợi ý gần đúng khi ghép từ tệp nhập |
 
 : Phụ lục A. Thành phần đề xuất bổ sung cho design system
 
@@ -2227,12 +2227,12 @@ Chênh lệch giữa giao diện và D03-04-PH01 hiện tại; mỗi dòng kèm 
 | # | Đề nghị | Màn | Xử lý tạm thời |
 |---|---|---|---|
 | 1 | Thêm thao tác tự nhận việc thẩm định: mở rộng API-01-028 cho người có đúng vai trò của bước (IE kỹ thuật, SO ATTT, TA pháp lý) khi `assigneeId` là chính họ, hoặc thêm `POST /systems/{systemCode}/reviews:claim`; hiện API-01-028 chỉ cho `PERM-01-approve` (TA) | UI-01-05 | Chỉ TA có nút "Phân công"; IE, SO nhận việc qua TA (Q01-35) |
-| 2 | API-01-069 nhận tùy chọn `organizationIds[]` để gửi nhắc, gửi lại phiếu cho các đơn vị chưa phản hồi | UI-01-12 | Nút "Gửi nhắc đơn vị" chỉ hiện khi API hỗ trợ; ảnh hi-fi minh họa bản đích (Q01-36) |
-| 3 | Phản hồi API-01-002 và API-01-001 có `flags[]`, `waitingFor`, `dueAt`, `allowedActions`, `disabledReasons` thống nhất tên với D03-04-PH01 §1 | UI-01-02, 03, 04 | Dựa vào mô tả §1; xác nhận khi sinh client |
+| 2 | API-01-069 nhận tùy chọn `orgIds[]` (tên chuẩn ở D03-04-PH01; bản đầu của tập này ghi `organizationIds[]`) để gửi nhắc, gửi lại phiếu cho các đơn vị chưa phản hồi. Đã có ở API-01-069, màn dùng `orgIds[]` | UI-01-12 | Nút "Gửi nhắc đơn vị" chỉ hiện khi API hỗ trợ; ảnh hi-fi minh họa bản đích (Q01-36) |
+| 3 | Phản hồi API-01-002 và API-01-001 có `flags[]`, `waitingOn` (bản đầu ghi `waitingFor`), `dueAt`, `allowedActions`, `disabledReasons` thống nhất tên với D03-04-PH01 §1. Đã có ở OpenAPI; màn dùng `waitingOn` | UI-01-02, 03, 04 | Dựa vào mô tả §1; xác nhận khi sinh client |
 | 4 | Xem trước PDF trong khung cô lập: API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` với `Content-Security-Policy: sandbox` | UI-01-06 R7 | Tải cả tệp qua liên kết ký 60 giây rồi hiển thị bằng trình xem PDF của trình duyệt (Q01-31) |
 | 5 | Phản hồi API-01-013 có cờ `stateSecret` cho mục thuộc danh mục bí mật nhà nước | UI-01-01, 06 | Chặn bằng ERR-01-016 sau khi gửi (Q01-32) |
 | 6 | Phản hồi API-01-045 trả `handoverToken` khi người xoay vòng chính là đầu mối kỹ thuật, để mở UI-01-09 ngay | UI-01-08 | Chỉ gửi liên kết qua thư (Q01-34) |
-| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng) và `securityRelated` (cờ tham số an ninh) cho từng khóa | UI-01-16 | Hiển thị lỗi ERR-01-044 sau khi lưu |
+| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng, đã có dưới tên `platformCeiling` ở lược đồ `Setting`; màn dùng tên này) và `securityRelated` (cờ tham số an ninh, chưa có, chờ chốt) cho từng khóa | UI-01-16 | Hiển thị lỗi ERR-01-044 sau khi lưu |
 
 : Phụ lục B. Đề nghị bổ sung API
 
@@ -2247,7 +2247,7 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 | 1 | D03-06-00 §2.3.2 | Bổ sung các đường dẫn của PH-01 ngoài `/ket-noi/he-thong`: `/ket-noi/ra-soat-quyen`, `/ket-noi/danh-ba`, `/ket-noi/thong-ke-ket-nap` (mục menu mới của nhóm Kết nối & API, PTN-10, PTN-01, PTN-06), `/quan-tri/tham-so/ket-nap`; và §2.3.3 hai trang riêng `/ket-noi/ban-giao/{token}`, `/ket-noi/xac-nhan/{token}` (không có khung ứng dụng) |
 | 2 | D03-06-00 §2.4 | Ghi quy tắc đoạn tĩnh (`moi`, `nhap`, `tham-dinh`) được so khớp trước đoạn động `{ma}`; nêu `{ma}` của HTTT bắt đầu bằng chữ hoa; thêm ví dụ tab ở đoạn cuối `/ket-noi/he-thong/{ma}/dinh-danh` |
 | 3 | D03-06-00 §2.3.2 mục 39 | Thống nhất vị trí màn tham số: PH-18 `/van-hanh/tham-so` hay `/quan-tri/tham-so/ket-nap` của PH-01 (Q01-39); đề xuất `/quan-tri/tham-so/{phân-hệ}` cho tham số riêng từng phân hệ |
-| 4 | D03-05-04 | Ghi ba biến thể ở Phụ lục A: `CMP-AppShell` `bare`, `CMP-Segmented` `verdict`, `CMP-ResourceSelect` `organization` |
+| 4 | D03-05-03, D03-05-04 | Đã ghi ba biến thể ở Phụ lục A: `CMP-AppShell` `bare`, `CMP-SegmentedControl` `verdict`, `CMP-OrganizationSelect` |
 | 5 | D03-04-PH01 | Xử lý Phụ lục B (bảy đề nghị), đặc biệt tự nhận việc thẩm định (#1) và nhắc đơn vị rà soát (#2) |
 | 6 | D03-04-PH01 §6.2 | Dẫn bảng thông điệp §5.2 của tập này là nguồn chuẩn cho vị trí hiển thị; thêm câu cho ERR-01-001, 003, 005, 009, 012, 013, 014, 019, 020, 022, 026, 028, 030, 032, 038, 041, 042, 043, 044, 048, 049, 051, 052, 054 đã dùng ở §5.2 |
 | 7 | D02-03-PH01 §10.1 | Bổ sung cột Phát hành (UI-01-17 Đợt 2); sửa đường dẫn UI-01-11 thành hộp thoại, ngăn kéo `/{ma}/vong-doi?hanh-dong=…`; ghi UI-01-06 mức siêu chi tiết |
@@ -2291,3 +2291,4 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-01-01…17 kèm ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm mục 1.6 Cấu trúc tài liệu, đoạn mở cho 65 mục, câu thông báo cho kích hoạt 202, ghi tình trạng Phụ lục B so với API 0.2 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng waitingOn theo API-01 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên chuẩn `CMP-SegmentedControl`, `CMP-OrganizationSelect` và dẫn D03-05 cho biến thể `bare`, `verdict`; Phụ lục A ghi đã thêm vào design system; Phụ lục B ghi `orgIds`, `waitingOn`, `platformCeiling` đã có ở D03-04-PH01 |

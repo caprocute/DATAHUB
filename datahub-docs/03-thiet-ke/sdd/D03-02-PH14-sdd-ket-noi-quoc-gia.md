@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH14
 ten: Thiết kế chi tiết phần mềm phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, cán bộ ATTT, vận hành, hội đồng thẩm định
@@ -1905,7 +1905,7 @@ Bảng dưới cụ thể hóa FRS §12.1 thành hành vi của mã, và nêu th
 | NDXP, NDOP, hệ thống đăng ký | Ngắt mạch, đệm quá hạn có cờ, hàng chờ bất đồng bộ, đồng bộ thử lại 24 giờ | Dữ liệu có thể cũ tới `14.cache.stale-max-seconds` | `national_connectivity_status`, ≤ 3 phút (NFR-14-007) |
 | OPA hoặc PH-09 | Từ chối lượt (ERR-14-132); lượt trúng kết quả PH-09 đã đệm 60 giây vẫn đi | Không có; chọn khả dụng thấp hơn an toàn | `national_purpose_decisions_total{reason="UNAVAILABLE"}` |
 | `dh-integration` hoặc `pg-core` | Cổng chạy tiếp bằng ảnh chụp cấu hình đã nạp (đĩa); giao dịch, hạn mức, sự kiện chờ ở Kafka và `LedgerSpool`; bộ tiêu thụ ghi bù khi trở lại | Không đổi cấu hình, không duyệt, không tra cứu giao dịch trong lúc ngừng; cấu hình có thể cũ | `national_config_age_seconds`, `national_ledger_lag_seconds` |
-| Valkey | Bỏ đệm; đếm hạn mức cục bộ chia đều theo số bản sao; chống phát lại chỉ trong bản sao; gộp lượt trùng chỉ cục bộ; thao tác ghi bị chặn (ERR-14-127, Q14-27); `SECURITY_HOLD` đếm cục bộ | Hạn mức xấp xỉ, nguy cơ phát lại giữa các bản sao, ghi tạm dừng | `national_quota_degraded`, cảnh báo ngay |
+| Valkey | Bỏ đệm; đếm hạn mức cục bộ chia đều theo số bản sao; chống phát lại chỉ trong bản sao; gộp lượt trùng chỉ cục bộ; thao tác ghi bị chặn (ERR-14-133, Q14-27); `SECURITY_HOLD` đếm cục bộ | Hạn mức xấp xỉ, nguy cơ phát lại giữa các bản sao, ghi tạm dừng | `national_quota_degraded`, cảnh báo ngay |
 | Kafka | Cổng ghi `LedgerSpool` rồi phát lại; hàng chờ bất đồng bộ không nhận mới (ERR-14-118); cấu hình đã nạp vẫn chạy, thăm dò 15 giây | Trễ nhật ký khai thác và sự cố chữ ký; spool đầy thì cổng ngừng nhận lượt gọi ra | `national_ledger_spool_bytes` |
 | PH-05 | Không khai báo nền tảng mới (ERR-14-005); cổng dùng tệp kê khai kết nối đã nạp | Không xoay thông tin xác thực trong lúc ngừng | Chỉ số PH-05 |
 | PH-04 | Chiều ra không ảnh hưởng; chiều vào ERR-14-124 | Không nhận được chiều vào | `national_inbound_requests_total{result="flow_error"}` |
@@ -2170,7 +2170,7 @@ Bảng dưới ghi các rủi ro riêng của PH-14 kèm mức và biện pháp 
 
 > **Câu hỏi mở Q14-26:** Hợp đồng nội bộ với PH-02 (tạo API nháp loại dịch vụ quốc gia, sự kiện đã công bố, danh sách dịch vụ chia sẻ), PH-07 (`CatalogLookupApi` cho danh mục mục đích khai thác và danh mục thủ tục), PH-09 (kiểm tra mục đích, kiểm lô, thời hạn 200 ms) chưa có tập API tương ứng; tập này giả định tên và thời hạn ở mục 2.3 và 8.3. Cần ba nhóm phân hệ đó xác nhận.
 
-> **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-127 làm mã tạm). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
+> **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-133, mã đã cấp ở D03-04-PH14, còn chờ chốt phương án). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
 
 ## Đề nghị đồng bộ
 
@@ -2202,5 +2202,6 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập SDD PH-14 theo khuôn K-SDD và chuẩn trình bày K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã hai đơn vị triển khai, mô hình miền và 18 thành phần (khối 10 mục), 10 sơ đồ trình tự, 12 máy trạng thái, nhất quán và suy giảm, bảo mật đối chiếu SEC, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, 10 rủi ro, 8 câu hỏi mở (Q14-20…27) và mục Đề nghị đồng bộ. Căn cứ: FRS và use case PH-14, SAD §4, ADR-057, D03-07, D03-10 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số; `type` lỗi RFC 9457 theo mẫu `https://datahub.gov.vn/errors/` |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14 |
 
 

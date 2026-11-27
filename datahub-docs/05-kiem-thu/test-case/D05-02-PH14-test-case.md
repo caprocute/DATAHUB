@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH14
 ten: Kịch bản và test case phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
@@ -3711,8 +3711,9 @@ Sáu kịch bản dưới đây kiểm các yêu cầu cắt ngang mọi chức 
 1. Đối chiếu `transactionCode`, `traceId` của từng giao dịch với PH-04, PH-13.
 2. Kiểm vòng đời lưu giữ: 12 tháng trực tuyến, phần còn lại ở kho WORM.
 3. Chạy Schemathesis; thêm trường bắt buộc vào sự kiện.
+4. Chạy Pact theo hợp đồng do bên dùng dẫn dắt: PH-04 (luồng gọi cổng quốc gia) và PH-07 (gọi cổng tiếp hợp danh mục dùng chung) viết kỳ vọng, PH-14 xác minh bên cung cấp; NDXP giả lập bằng WireMock sinh từ đặc tả bên cung cấp; sửa trường để làm vỡ kỳ vọng rồi chạy `can-i-deploy`.
 
-**Kết quả mong đợi.** 100 % có đủ ba mã; không xóa siêu dữ liệu trước 5 năm; API chỉ thêm trường tùy chọn; sự kiện đổi không BACKWARD bị Apicurio từ chối.
+**Kết quả mong đợi.** 100 % có đủ ba mã; không xóa siêu dữ liệu trước 5 năm; API chỉ thêm trường tùy chọn; sự kiện đổi không BACKWARD bị Apicurio từ chối; xác minh Pact với PH-04, PH-07 đạt và thay đổi phá kỳ vọng bị `can-i-deploy` chặn.
 :::
 
 ### TS-14-38 · Kiểm toán và bảo vệ bằng chứng
@@ -4168,3 +4169,4 @@ Các việc sau cần làm ở tài liệu khác để khớp với bộ test ca
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 37 kịch bản, test case theo ma trận FR, BR, ERR, NFR; 10 kịch bản nghiệm thu UAT; công cụ sinh ma trận, Gherkin, bảng tính tại `ph14/tools/` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca dương, âm riêng cho mọi FR mức M, phi chức năng (hiệu năng, chịu lỗi, bảo mật, cách ly tenant, kiểm toán): thêm 56 ca, kịch bản TS-14-38; cập nhật ma trận, Gherkin, bảng tính |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm TC-14-157 (157 ca) |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: TC-14-097 thêm bước Pact với PH-04, PH-07 và giả lập NDXP bằng WireMock |

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH13
 ten: Thiết kế giao diện màn hình phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, hội đồng thẩm định, cán bộ vận hành và cán bộ ATTT của tỉnh
@@ -1512,8 +1512,8 @@ Các thành phần dưới đây chưa có trong thư viện D03-05; tập màn 
 | `TraceWaterfall` (đề nghị) (cây chặng cộng thanh thời gian, gộp chặng, tiêu điểm bàn phím) | UI-13-08 | `CMP-Tree` cộng `CMP-Chart` custom series |
 | `ComponentMap` (đề nghị) (lưới ô trạng thái thành phần) | UI-13-01 | `CMP-Card` cộng `CMP-StatusTag` |
 | `IntegrityBadge` (đề nghị) (chỉ báo toàn vẹn chuỗi, có dải đỏ nghi vấn) | UI-13-06, 13, 14, 18 | `CMP-StatusTag` cộng `CMP-Alert` |
-| `OnCallGrid` (đề nghị) (lưới lịch trực theo ca) | UI-13-12 | `CMP-DataTable` lưới |
-| `QueryBar` (đề nghị) (ô truy vấn tô cú pháp, gợi ý trường) | UI-13-07 | `CMP-SearchField` biến thể truy vấn |
+| `OnCallGrid` (đề nghị) (lưới lịch trực theo ca) | UI-13-12 | `CMP-DataTable` lưới. Không thêm vào design system: chỉ PH-13 dùng, giữ cục bộ trong `features/observability` |
+| `QueryBar` (đề nghị) (ô truy vấn tô cú pháp, gợi ý trường) | UI-13-07 | `CMP-SearchField` biến thể truy vấn. Không thêm vào design system: chỉ PH-13 dùng, giữ cục bộ với tên `LogQueryBar` trong `features/observability/logs` |
 
 : Đề nghị bổ sung thành phần cho D03-05-04
 
@@ -1568,3 +1568,4 @@ Các câu hỏi dưới đây chưa có trả lời chốt; tập này dùng gi�
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-13 (Claude) | Bản đầu: 18 màn hình, điều hướng, thông báo ERR-13, ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: bổ sung UC hiện thực của UI-13-01, 12, 13, 17, 18 theo D02-04 mục 5.2; FR của UI-13-06, 09 thêm FR-13-005, 006; thêm đoạn mở cho các mục con |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: allowedActions, dải ghi vết tra cứu, lý do đóng SSE, tên CMP theo D03-05-04 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A.1 ghi `OnCallGrid`, `QueryBar` là thành phần cục bộ của PH-13 |

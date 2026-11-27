@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH10
 ten: Đặc tả API và sự kiện phân hệ PH-10 Sự kiện
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; đơn vị kết nối HTTT; ATTT; hội đồng thẩm định
@@ -1164,7 +1164,7 @@ Không còn trường, enum nào chỉ có ở API: FRS bản 0.3 đã hấp th�
 
 ### 10.2. Đề nghị khác
 
-Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS bản 0.3 (D02-03-PH10 §14); tập này đã sửa theo: ERR-10-053, 054 thay 101, 102 ở control plane; API-10-121 hủy tác vụ nhập; `legalBasis` 10…1.000 ký tự; miền `retryBackoff.multiplier` 1…5; mặc định `failurePolicy` theo `orderingRequired`. Mục 4 (loại bỏ DLQ theo bộ lọc) để Đợt sau, MVP giữ danh sách ≤ 1.000 mục.
+Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS bản 0.3 (D02-03-PH10 §15); tập này đã sửa theo: ERR-10-053, 054 thay 101, 102 ở control plane; API-10-121 hủy tác vụ nhập; `legalBasis` 10…1.000 ký tự; miền `retryBackoff.multiplier` 1…5; mặc định `failurePolicy` theo `orderingRequired`. Mục 4 (loại bỏ DLQ theo bộ lọc) để Đợt sau, MVP giữ danh sách ≤ 1.000 mục.
 
 | Số | Đề nghị | Lý do | Nơi sửa |
 |---|---|---|---|
@@ -4163,3 +4163,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 | 0.2 | 26/11/2026 | Theo FRS 0.3: ERR-10-053, 054 cho 401, 403 control plane (data plane giữ 101, 102); API-10-121 `POST /imports/{jobCode}:cancel`; `legalBasis` 10…1.000 ký tự, `multiplier` 1…5, mặc định `failurePolicy` theo `orderingRequired`, ràng buộc ngưỡng lag; §10.1 trống vì FRS đã hấp thụ 91 trường, 6 enum; sinh lại OpenAPI, AsyncAPI và bảng, kiểm hợp đồng và đối chiếu FRS sạch | Nhóm viết tài liệu (Claude) |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): chương 0 Giới thiệu đủ mục; §1.2 kiến trúc thành phần, §1.3 trình tự luồng chính; §6.4 thông báo hiển thị theo mã lỗi; chương 12 đặc tả 121 endpoint bằng khối 10 mục sinh từ OpenAPI; chú thích bảng và hình. Không đổi OpenAPI, AsyncAPI | Nhóm viết tài liệu (Claude) |
 | 0.4 | 27/11/2026 | Đồng bộ chéo cuối: cột FR của API-10-057…059, 101, 102 thêm FR-10-011…014, 021, 022, 073, 075; hợp đồng với PH-01 (API-01-063, 064), PH-20 (EVT-20-01, 04; API-20-166) và topic miền của PH-06, 08, 11, 13, 15, 16; PH-16 nhận EVT-10-01, 04, 06 | Nhóm viết tài liệu (Claude) |
+| 0.5 | 27/11/2026 | Đồng bộ chéo cuối: cột FR của API-10-057…059, 101, 102 thêm FR-10-011…014, 021, 022, 073, 075; hợp đồng với PH-01 (API-01-063, 064), PH-20 (EVT-20-01, 04; API-20-166) và topic miền của PH-06, 08, 11, 13, 15, 16; PH-16 nhận EVT-10-01, 04, 06 | Đồng bộ chéo cuối: đổi dẫn chiếu nhật ký hấp thụ của FRS PH-10 sang §15 theo số chương mới |

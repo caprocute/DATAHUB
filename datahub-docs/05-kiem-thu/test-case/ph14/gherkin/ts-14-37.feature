@@ -19,4 +19,5 @@ Tính năng: TS-14-37 · Truy cập, giao diện, truy vết, hợp đồng API
     Khi đối chiếu `transactionCode`, `traceId` của từng giao dịch với PH-04, PH-13.
     Và kiểm vòng đời lưu giữ: 12 tháng trực tuyến, phần còn lại ở kho WORM.
     Và chạy Schemathesis; thêm trường bắt buộc vào sự kiện.
-    Thì 100 % có đủ ba mã; không xóa siêu dữ liệu trước 5 năm; API chỉ thêm trường tùy chọn; sự kiện đổi không BACKWARD bị Apicurio từ chối.
+    Và chạy Pact theo hợp đồng do bên dùng dẫn dắt: PH-04 (luồng gọi cổng quốc gia) và PH-07 (gọi cổng tiếp hợp danh mục dùng chung) viết kỳ vọng, PH-14 xác minh bên cung cấp; NDXP giả lập bằng WireMock sinh từ đặc tả bên cung cấp; sửa trường để làm vỡ kỳ vọng rồi chạy `can-i-deploy`.
+    Thì 100 % có đủ ba mã; không xóa siêu dữ liệu trước 5 năm; API chỉ thêm trường tùy chọn; sự kiện đổi không BACKWARD bị Apicurio từ chối; xác minh Pact với PH-04, PH-07 đạt và thay đổi phá kỳ vọng bị `can-i-deploy` chặn.

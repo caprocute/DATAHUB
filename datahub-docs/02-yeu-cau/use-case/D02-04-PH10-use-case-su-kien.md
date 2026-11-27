@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH10
 ten: Đặc tả use case phân hệ PH-10 Sự kiện
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -83,7 +83,7 @@ Bảng dưới liệt kê các tài liệu người đọc cần mở song song 
 |---|---|
 | [D00-01 Thuật ngữ và quy ước](../../00-chung/D00-01-thuat-ngu-quy-uoc.md) | Hệ mã truy vết, kiểu T-*, mức ưu tiên M, S, C |
 | [D02-01 BRD](../D02-01-brd.md) | Quy trình BP-01…09, yêu cầu nghiệp vụ REQ |
-| [D02-03-PH10 FRS](../frs/D02-03-PH10-frs-su-kien.md) | FR-10, BR-10, mã lỗi §8.1, sự kiện §8.2, API §8.3, Phụ lục A enum và trường |
+| [D02-03-PH10 FRS](../frs/D02-03-PH10-frs-su-kien.md) | FR-10, BR-10, mã lỗi §9.1, sự kiện §9.3, API §9.4, Phụ lục A enum và trường |
 | [D02-08 Ma trận phân quyền](../D02-08-ma-tran-phan-quyen.md) | Vai trò, `PERM-10-*`, scope máy |
 | [D03-02-PH10 SDD](../../03-thiet-ke/sdd/D03-02-PH10-sdd-su-kien.md) | Thành phần, bộ đối soát, bộ giao nhận, cầu nối |
 | [D03-03-PH10 CSDL](../../03-thiet-ke/csdl/D03-03-PH10-csdl-su-kien.md) | Bảng `ph10_event`, trường lưu trạng thái |
@@ -2065,7 +2065,7 @@ Tập này không tạo mã FR, BR, API, ERR, EVT, UI, TS mới. Mã của tập
 
 ### 8.2. Đề nghị bổ sung cho FRS
 
-Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
+Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §15); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
 
 Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tên chuẩn; tập này dùng đúng chữ trong thân FR và đề nghị đưa vào Phụ lục A để các tập sau (API, màn hình, ca kiểm thử) dùng thống nhất.
 
@@ -2124,3 +2124,4 @@ Ngoài ra, ERR-10-007 và ERR-10-044 ở §5.3 của tập màn hình chỉ dẫ
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo FRS 0.2: ERR-10-051 (cấp độ ATTT), ERR-10-052 (tạm dừng `INTERNAL`), EVT-10-16, API-10-091; §8.2 đã xử lý |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo chuẩn kết hợp K-UC, K-TRINH-BAY: Giới thiệu đủ sáu mục, mẫu 15 mục và quy ước đọc, tác nhân có viết tắt; sơ đồ use case tổng chia năm hình theo nhóm có chú thích; bảng truy vết thêm kịch bản kiểm thử và mã quy trình BP; cả 28 use case chuyển sang khối đặc tả 15 mục có đoạn bối cảnh, truy vết, màn hình, API; luồng ngoại lệ kèm mã HTTP và câu thông báo theo D03-06-PH10 §5.3, §18.4; giữ nguyên mọi bước, dữ liệu ví dụ và sơ đồ trình tự; thêm §8.3 đề nghị đồng bộ câu thông báo |
 | 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Q10-17 chốt EVT-01-03; topic nền tảng `platform.` và topic miền đăng ký ở UC-10-24 |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đổi dẫn chiếu FRS PH-10 theo số chương mới của bản 0.4 (§9.1, §9.3, §9.4, §15) |

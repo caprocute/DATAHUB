@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D00-01
 ten: Thuật ngữ và quy ước chung
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Tất cả
@@ -15,7 +15,7 @@ tai_lieu_lien_quan: D00-02 Sổ ADR; D00-03 Ma trận truy vết; D00-04 Sổ tr
 
 **Mục tiêu.** Tài liệu là nguồn định nghĩa duy nhất của bộ tài liệu Datahub về thuật ngữ, hệ mã truy vết, kiểu dữ liệu chuẩn, cách viết yêu cầu đo được, quy ước đặt tên và trình bày. Mọi tài liệu khác chỉ dẫn chiếu tới đây, nhờ đó cùng một khái niệm không bị hiểu theo hai nghĩa và mọi đối tượng đều truy vết được.
 
-**Phạm vi.** Tài liệu gồm ba bảng thuật ngữ (nghiệp vụ và pháp lý, kỹ thuật, từ viết tắt), bảng mã truy vết và năm quy tắc truy vết, mức ưu tiên M, S, C, mẫu đặc tả một yêu cầu chức năng 17 mục, 16 kiểu dữ liệu chuẩn, quy ước đặt tên, danh mục căn cứ pháp lý và tiêu chuẩn, quy ước trình bày, cách đặt tên file và tổ chức ADR. Tài liệu không chứa nội dung nghiệp vụ hay thiết kế của phân hệ nào.
+**Phạm vi.** Tài liệu gồm ba bảng thuật ngữ (nghiệp vụ và pháp lý, kỹ thuật, từ viết tắt), bảng mã truy vết và năm quy tắc truy vết, mức ưu tiên M, S, C, mẫu đặc tả một yêu cầu chức năng 17 mục, 18 kiểu dữ liệu chuẩn, quy ước đặt tên, danh mục căn cứ pháp lý và tiêu chuẩn, quy ước trình bày, cách đặt tên file và tổ chức ADR. Tài liệu không chứa nội dung nghiệp vụ hay thiết kế của phân hệ nào.
 
 **Căn cứ.** Mục 7 liệt kê 33 văn bản pháp lý mang mã CMP-LAW (từ CMP-LAW-01 Luật Dữ liệu số 60/2024/QH15 đến CMP-LAW-97) và 5 tiêu chuẩn mang mã STD (STD-01 ISO/IEC/IEEE 29148 đến STD-05 OpenAPI, AsyncAPI, RFC 9457). Các tài liệu khác dẫn lại những mã này thay cho việc viết lại tên văn bản.
 
@@ -328,9 +328,12 @@ Các kiểu dưới đây áp dụng cho mọi đặc tả dữ liệu, API và 
 | `T-EMAIL` | Thư điện tử | `varchar(254)` | `string`, `format: email` | |
 | `T-PHONE` | Số điện thoại | `varchar(15)` | `string`, E.164 | Lưu dạng `+84…`. |
 | `T-URI` | Địa chỉ | `varchar(2048)` | `string`, `format: uri` | |
+| `T-DUE` | Hạn xử lý dạng khoảng thời gian tương đối (hạn việc, hạn phản hồi) | Hai cột `{tên}_value integer` (1…3.650) và `{tên}_unit varchar(16)` + `CHECK`, cùng rỗng hoặc cùng có | `object` `{value, unit}`, `unit` là `T-ENUM` `DueUnit` (`WORKING_DAY`, `WORKING_HOUR`, `CALENDAR_DAY`, `CALENDAR_HOUR`) | Chỉ là khoảng thời gian, không phải thời điểm hạn (thời điểm hạn dùng `T-TS`); đơn vị làm việc tính theo lịch làm việc của tenant (PH-11). Phân hệ khác có hạn tương đối thì dùng lại kiểu này. |
 | `T-SECRET-REF` | Tham chiếu bí mật | `varchar(255)` | `string` | Đường dẫn tới kho bí mật; **không bao giờ lưu giá trị bí mật**. |
 
 : Kiểu dữ liệu chuẩn và ánh xạ sang PostgreSQL, JSON, OpenAPI
+
+**Ngoại lệ có điều kiện cho vectơ nhúng.** Cột vectơ nhúng ngữ nghĩa của PH-17 (`knowledge_chunk.embedding`) dùng `vector(1024)` của pgvector kèm chỉ mục HNSW (ADR-170) ở môi trường có extension; môi trường CI dùng `postgres:16` chưa có extension được dùng `real[]` kèm `CHECK` độ dài 1024, hai dạng do cùng một changeset có điều kiện sinh ra (D03-03-PH17 mục 1.4). Đây là ngoại lệ duy nhất ngoài danh mục trên và chỉ áp dụng cho cột vectơ; phân hệ khác cần lưu vectơ phải ghi lý do trong SDD.
 
 ### 5.1. Trường ngữ cảnh bắt buộc
 
@@ -468,3 +471,4 @@ Nhánh nền chứa khung thư mục và D00-01 là `claude/project-thread-ru93e
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: thuật ngữ, hệ mã truy vết, quy ước viết yêu cầu, kiểu dữ liệu, đặt tên, căn cứ pháp lý, trình bày, tổ chức file |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 Người đọc, 1.2 Tài liệu tham chiếu, 1.3 Cấu trúc tài liệu; thêm đoạn mở cho các mục 2.1, 2.2, 2.3, 3.2, 4.1, 6, 8; viết lại chú thích bảng cho cụ thể. Mẫu đặc tả 17 mục (mục 4.3) giữ nguyên |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mã EP, DS, T01…T34, STD và quy ước story từ 501 ở §3.1; viết tắt nhóm dữ liệu CK, NB, CN1, CN2, TC; thuật ngữ Service-code, nhãn đối chiếu, cung cấp lại và vai trò NDOP; kiểu T-SLUG; nhóm REST, mẫu type RFC 9457 và topic nền tảng ở §6; CMP-LAW-27 và STD-06…12 ở §7 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm kiểu dữ liệu chuẩn `T-DUE` (`{value, unit}`) cho hạn xử lý và đoạn ngoại lệ `vector(1024)` có điều kiện, `real[]` dự phòng ở mục 5; sửa số kiểu thành 18 |

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D04-01
 ten: Quy chuẩn lập trình (Coding convention)
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển backend, frontend, tích hợp; Trưởng nhóm kỹ thuật; Kiểm thử; Đội ATTT; Hội đồng thẩm định
@@ -553,7 +553,7 @@ Mục này quy định định dạng nhật ký vận hành và việc không g
 
 **CC-LOG-06 · Mức log có ý nghĩa [review].** `ERROR`: sự cố cần người can thiệp hoặc lỗi không lường trước; `WARN`: bất thường hệ thống tự xử lý được (thử lại thành công sau lỗi, gần chạm hạn mức); `INFO`: sự kiện nghiệp vụ quan trọng và lỗi nghiệp vụ trả cho client; `DEBUG`: chẩn đoán, tắt ở môi trường sản xuất. Lỗi do client (4xx) không ghi ở mức `ERROR`.
 
-**CC-LOG-07 · Nhật ký kiểm toán khác nhật ký vận hành [review].** Thao tác thuộc diện kiểm toán (FR-00-040) ghi qua `AuditRecorder` của thư viện chung vào kho nhật ký kiểm toán chỉ-thêm có chuỗi băm (ADR-031), không ghi bằng logger thông thường. Nhật ký kiểm toán được ghi trong cùng giao dịch với thao tác (qua outbox) để thao tác thành công thì chắc chắn có bản ghi kiểm toán.
+**CC-LOG-07 · Nhật ký kiểm toán khác nhật ký vận hành [review].** Thao tác thuộc diện kiểm toán (FR-00-040) ghi qua `AuditRecorder` của thư viện chung vào kho nhật ký kiểm toán chỉ-thêm có chuỗi băm (ADR-031), không ghi bằng logger thông thường. Nhật ký kiểm toán được ghi trong cùng giao dịch với thao tác (qua outbox) để thao tác thành công thì chắc chắn có bản ghi kiểm toán. Mọi DU dùng thư viện `dh-audit` (gói `vn.datahub.common.audit`) và xuất bộ đếm `dh_audit_emitted_total{du,tenant}` tăng mỗi lần ghi một bản ghi kiểm toán vào outbox, để PH-13 đối chiếu số bản ghi đã phát với số đã nhận mỗi ngày (FR-13-017); giá trị trước, sau của trường Nhạy cảm được che trước khi vào bản ghi theo SEC-32.
 
 Ví dụ dưới đây so sánh cách ghi log đúng và sai cho cùng một tình huống gọi bộ điều hợp thất bại.
 
@@ -596,7 +596,7 @@ Chiến lược kiểm thử tổng thể ở D05-01 và ADR-038; mục này ch�
 
 **CC-TEST-04 · Kiểm thử phân quyền âm tính [tự động].** Mỗi endpoint có kiểm thử gọi không token (kỳ vọng `401`) và gọi bằng token thiếu quyền (kỳ vọng `403` hoặc `404` theo CC-ERR-04). Mỗi FR mức ưu tiên M có ít nhất một ca dương tính và một ca âm tính (D00-01 §3.2).
 
-**CC-TEST-05 · Kiểm thử ổn định, không phụ thuộc thời gian thực [review].** Dùng `Clock` tiêm vào thay `Instant.now()`; không `Thread.sleep` (dùng Awaitility); dữ liệu kiểm thử tự tạo và tự dọn, không phụ thuộc thứ tự chạy; dữ liệu cá nhân trong kiểm thử là dữ liệu giả sinh bởi bộ sinh có hạt giống cố định, không dùng dữ liệu thật hay dữ liệu lấy từ môi trường sản xuất.
+**CC-TEST-05 · Kiểm thử ổn định, không phụ thuộc thời gian thực [review].** Dùng `Clock` tiêm vào thay `Instant.now()`; không `Thread.sleep` (dùng Awaitility); dữ liệu kiểm thử tự tạo và tự dọn, không phụ thuộc thứ tự chạy; dữ liệu cá nhân trong kiểm thử là dữ liệu giả sinh bởi bộ sinh có hạt giống cố định, không dùng dữ liệu thật hay dữ liệu lấy từ môi trường sản xuất. Môi trường SIT phải có đồng hồ điều khiển được (`clock-skew`: đẩy nhanh hoặc lệch đồng hồ của dịch vụ và của Keycloak, OPA) để chạy các ca phụ thuộc hạn dài như hết hạn token, khóa tài khoản, cửa sổ 24 giờ rút gọn (D05-02-PH12); mã sản xuất vẫn chỉ đọc giờ qua `Clock` tiêm vào.
 
 Đoạn mã sau minh họa một kiểm thử rò rỉ chéo tenant theo đúng quy tắc 6 của D03-10.
 
@@ -1253,3 +1253,4 @@ Các câu hỏi Q353, Q354 và Q357 thuộc quy trình kỹ thuật, được n�
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 16 nhóm quy tắc CC, đa tenant, lập trình an toàn ASVS 5.0, hiện trạng mã, truy vết |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm metadata `mo_ta` và `tai_lieu_lien_quan`; thêm Tóm tắt cho hội đồng thẩm định kèm bảng con số chính; bổ sung chương 1 các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho chương 1, 3, 7, 9 và 25 mục con; viết lại 12 chú thích bảng cho cụ thể; hai khối cây thư mục mã nguồn được giữ dạng chữ vì là đúng quy ước |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng luật ArchUnit đặc thù của `dq`, `kpi`, `arch`, `privacy`, `audit`, `national`, `assist`; DLQ `{tenant}.ops.dlq.v1`; mẫu `type` RFC 9457 theo `datahub.gov.vn`; `If-Match` lệch là 412; chỉ `SET LOCAL`; RE2/J; luật Spectral cho `x-datahub-*`; quy ước Lua, Go; lớp cấm log |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: CC-LOG-07 thêm yêu cầu mọi DU dùng `dh-audit` và xuất bộ đếm `dh_audit_emitted_total`; CC-TEST-05 thêm yêu cầu môi trường SIT có đồng hồ điều khiển được (`clock-skew`) |

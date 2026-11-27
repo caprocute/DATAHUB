@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH10
 ten: Thiết kế chi tiết phần mềm phân hệ PH-10 Sự kiện
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kỹ sư nền tảng Kafka, kiến trúc sư, ATTT, hội đồng thẩm định
@@ -1687,7 +1687,7 @@ Bước 1–4 nằm trong W2–W4 của kế hoạch phát triển (song song PH
 
 ### 13.4. Đề nghị bổ sung cho FRS
 
-Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); thân tập này đã dùng tên chốt.
+Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §15); thân tập này đã dùng tên chốt.
 
 | Mục | Chỗ thiếu ở Phụ lục A | Thiết kế đang dùng | Đề nghị |
 |---|---|---|---|
@@ -1731,3 +1731,4 @@ Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03
 | 0.2 | 2026-11-26 | Theo FRS 0.2: `DELIVERY_BLOCKED`, ERR-10-121, API-10-085…090, `dh_dlq_origin`, khóa cursor, chuyển trạng thái di trú và tác vụ nhập; §13.4 đã xử lý | Nhóm thiết kế Datahub |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): chương 1 đủ mục đích, đối tượng đọc, quy ước, thuật ngữ, cấu trúc, tài liệu liên quan; danh sách 16 thành phần (§3.5); khối đặc tả 10 mục cho từng thành phần ở §4.2…4.17; sơ đồ thành phần chuyển TB; chú thích bảng và hình; giữ nguyên toàn bộ thiết kế kỹ thuật | Nhóm viết tài liệu (Claude) |
 | 0.4 | 2026-11-27 | Đồng bộ chéo cuối: Apicurio lưu ở `pg-infra`; EVT-01-03 thay giả định Q10-17; đệm tham số ≤ 60 giây; nghe EVT-20-01, 04 và báo S06 về PH-20; topic miền của PH-06, 08, 11, 13, 15, 16; tiền tố `platform.` | Nhóm viết tài liệu (Claude) |
+| 0.5 | 27/11/2026 | Đồng bộ chéo cuối: Apicurio lưu ở `pg-infra`; EVT-01-03 thay giả định Q10-17; đệm tham số ≤ 60 giây; nghe EVT-20-01, 04 và báo S06 về PH-20; topic miền của PH-06, 08, 11, 13, 15, 16; tiền tố `platform.` | Đồng bộ chéo cuối: đổi dẫn chiếu nhật ký hấp thụ của FRS PH-10 sang §15 theo số chương mới |

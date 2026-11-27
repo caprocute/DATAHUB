@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH12
 ten: Thiết kế giao diện màn hình phân hệ PH-12 Định danh và phân quyền
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, cán bộ ATTT, hội đồng thẩm định
@@ -1983,7 +1983,7 @@ Bảng sau tổng hợp các đề nghị bổ sung cho D03-05 và D03-06-00 mà
 | D03-05-04 `CMP-CodeEditor` | Xác nhận ngôn ngữ Rego, chế độ trình đọc màn hình, tab nhiều tệp, bảng màu cú pháp đạt tương phản AA | UI-12-12 |
 | D03-05-02 | Mục "xuất token cho theme Keycloak" (biến CSS tối thiểu cho trang xác thực) | UI-12-18 ngoài `dh-console` |
 | D03-06-00 §4 | Ghi nhận biến thể PTN-07 "trình soạn mã" (ba cột, bảng dưới, thanh trạng thái) khác canvas luồng | UI-12-12 |
-| Cài đặt cá nhân `/ca-nhan/cai-dat` | Tùy chọn tắt hoặc đổi phím tắt một ký tự | WCAG 2.1.4 |
+| Cài đặt cá nhân `/ca-nhan/cai-dat` | Tùy chọn tắt hoặc đổi phím tắt một ký tự | WCAG 2.1.4. Đã có: route ở D03-06-00 và công tắc "Bật phím tắt một ký tự" của PTN-12 và `CMP-ShortcutSheet` (D03-05-04 §12.9); không cần thêm |
 
 : Đề nghị bổ sung cho D03-05 và D03-06-00
 
@@ -2040,3 +2040,4 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập màn hình PH-12: 19 màn UI-12-01…19 theo mẫu PH-05 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thông báo ERR-12-002 theo FRS |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi đã có công tắc phím tắt một ký tự (D03-05-04 §12.9, PTN-12) |

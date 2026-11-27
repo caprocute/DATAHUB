@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D00-02
 ten: Sổ quyết định kiến trúc (ADR)
-phien_ban: 0.3
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Đội kỹ thuật, Hội đồng thẩm định
@@ -200,6 +200,11 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-182](adr/ADR-182-phat-lai-qua-loi-vao-nguon.md) | Phát lại bản tin lỗi luôn qua lối vào của nguồn, khóa lũy đẳng theo bản sửa, loạt lớn duyệt bốn mắt | Đề xuất | PH-18 |
 | [ADR-183](adr/ADR-183-khung-di-tru-dh-migrate.md) | Khung di trú hệ cũ: worker dh-migrate đọc JDBC chỉ đọc, ghi vào phân hệ đích qua API nhập, có chạy thử và báo cáo đối chiếu | Đề xuất | PH-18 |
 | [ADR-184](adr/ADR-184-thong-bao-outbox-smtp-sms.md) | Thông báo qua outbox, SMTP/TLS và SMS gateway REST, mẫu Mustache không logic có kiểm tra cấm dữ liệu Hạn chế | Đề xuất | PH-18 |
+| [ADR-200](adr/ADR-200-saga-khoi-tao-tu-xay-tren-postgresql.md) | Saga khởi tạo tenant tự xây trên PostgreSQL | Đề xuất | PH-20 |
+| [ADR-201](adr/ADR-201-git-la-trang-thai-mong-muon-csdl-la-ban-chieu.md) | Git là trạng thái mong muốn của tenant, CSDL là bản chiếu | Đề xuất | PH-20 |
+| [ADR-202](adr/ADR-202-sap-nhap-qua-hop-dong-ben-tham-gia.md) | Sáp nhập tenant qua hợp đồng bên tham gia, PH-18 chạy chuyển dữ liệu | Đề xuất | PH-20 |
+| [ADR-203](adr/ADR-203-kenh-stable-preview-nang-cap-theo-song.md) | Kênh STABLE và PREVIEW, nâng cấp theo sóng, ngưỡng lỗi 2% | Đề xuất | PH-20 |
+| [ADR-204](adr/ADR-204-anh-chup-su-dung-hang-gio-han-muc-hieu-luc.md) | Ảnh chụp sử dụng hằng giờ, hạn mức hiệu lực là min của trần và max của hợp đồng, ghi đè | Đề xuất | PH-20 |
 
 : Danh sách 70 ADR kèm trạng thái và nhóm phụ trách
 
@@ -220,6 +225,7 @@ Bảng dưới gom các quyết định kiến trúc mà tập phân hệ đã n
 | Chưa cấp số | PH-01 | (a) Bàn giao thông tin xác thực một lần bằng response wrapping của OpenBao và đăng nhập đúng đầu mối; (b) mở rộng ADR-058 cho quy trình kết nạp HTTT nhiều bước, giữ đường nâng lên Flowable; (c) trần phạm vi (`ScopeCeiling`) là giới hạn trên của đăng ký sử dụng |
 | Chưa cấp số | PH-03 | (1) Plugin APISIX do Datahub viết bằng Lua và danh mục mười plugin được duyệt, bổ sung ADR-005; (2) bộ đồng bộ `dh-sync` bằng Go, định dạng ảnh chụp và hoàn nguyên có xác nhận; (3) kênh nhanh Valkey cho thu hồi token và tạm ngừng khẩn cấp, mô hình hai chặng `apisix-ext`, `apisix-int`; (4) mô hình mảnh tenant và bản ghép nền tảng của ảnh chụp cấu hình ở `QM-CHUNG`; (5) có điều kiện: phân trang con trỏ cho API đọc từ kho phân tích ClickHouse trên toàn hệ thống, nếu câu hỏi Q03-56 được chấp nhận |
 | Chưa cấp số | PH-12 | (a) Đăng nhập liên tenant qua nhà môi giới `dh-platform` và quyền có thời hạn; (b) chính sách của tenant chỉ thêm luật chặt hơn; (c) dữ liệu vai trò và quyền sinh thành gói ký; (d) thu hồi bằng `notBefore`, API kéo và Kafka; (e) bộ mở rộng Keycloak tối thiểu và ảnh tùy biến; (f) ký gói OPA bằng khóa transit; (g) chạy Rego cô lập trong `policy-runner`; (h) chốt tách nhiệm vụ, bốn mắt và máy trạng thái ở CSDL bằng trigger kèm khóa tư vấn, bổ sung ADR-069; (i) mẫu RLS G cho quyền có thời hạn vào tenant khác |
+| Chưa cấp số (dải 050 … 059 dùng chung PH-07 và khác) | PH-02 | Công bố có xác nhận từ cổng, hạn chế ghi ngay: `:publish` trả `202` khi cổng chưa xác nhận, trạng thái cuối (`PUBLISHED`) chỉ ghi sau API-02-082; không tạo tệp ADR cho tới khi đưa vào duyệt ở cổng G1 |
 
 : Đề xuất ADR chưa có tệp, theo dải hoặc phân hệ
 
@@ -244,3 +250,5 @@ Bảng dưới ghi các quyết định của chủ đầu tư ảnh hưởng t�
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: quan hệ với ADR của repo, dải số, danh sách ADR, nhật ký quyết định của chủ đầu tư |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 đến 1.5 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 3 và 5; viết lại chú thích bảng cho cụ thể |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm vào mục 3 các dải 075 đến 099, 110 đến 114, 160 đến 204 của PH-14, 06, 08, 09, 15, 11, 16, 17, 18, 20; thêm ADR-170 đến 174 và ADR-180 đến 184 vào danh sách (70 ADR); thêm mục 4.1 đề xuất ADR chưa có tệp |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mục 4.1 thêm đề xuất ADR của PH-02 (công bố có xác nhận từ cổng) |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: lập tệp ADR-200 đến ADR-204 của PH-20 (saga khởi tạo, Git và bản chiếu, sáp nhập, nâng cấp theo sóng, ảnh chụp sử dụng) |

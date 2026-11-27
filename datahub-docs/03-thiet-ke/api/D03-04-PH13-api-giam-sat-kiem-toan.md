@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH13
 ten: Đặc tả API và sự kiện phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, giao diện, PH-16, PH-18, PH-20, kiểm thử viên, ATTT, hội đồng thẩm định
@@ -152,6 +152,8 @@ PH-13 có ba loại bên gọi, mỗi loại một cách xác thực. Người d
 | Alertmanager | mTLS, kiểm SPIFFE ID (SEC-15) | API-13-090; không kiểm quyền người dùng |
 
 : Xác thực theo bên gọi
+
+PH-13 không có API xác nhận cảnh báo hàng loạt: giao diện gọi lặp API-13-032 cho từng cảnh báo được chọn, mỗi lần một `If-Match` riêng. Hai API của luồng máy API-13-072, 073 do PH-20 gọi (trong cùng DU qua `TenantObservabilityApi`, khi tách DU qua `client_credentials` và mTLS), API-13-089 do DU nguồn gọi khi Kafka không với tới; ví dụ phản hồi của UC-13-12 (API-13-074, 075) và UC-13-15 (API-13-082, 083) có ở các lược đồ `AuditRecordPage`, `AuditRecordDetail`, `Export` của OpenAPI.
 
 Quyền người dùng theo operation nằm ở cột "Quyền" của chương 3. Bảng sau gom số operation theo từng quyền để đối chiếu với ma trận D02-08 và FRS §3.2.
 
@@ -3021,3 +3023,4 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước chung, xác thực, danh mục 90 endpoint, 14 sự kiện và hai topic vào, hợp đồng với phân hệ khác, bảng mã lỗi, kiểm tra hợp đồng, ánh xạ hệ cũ, 5 câu hỏi mở (Q13-55…59), chương đặc tả từng endpoint sinh từ OpenAPI, đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tiêu đề X-DH-Grant-Id thay claim xt_session, ETag và ánh xạ lỗi CSDL, sessionId, spansTotal, quarantineCount |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ghi rõ không có API xác nhận hàng loạt, bên gọi của API-13-072, 073, 089; thêm ví dụ `AuditRecordPage`, `AuditRecordDetail` vào OpenAPI |

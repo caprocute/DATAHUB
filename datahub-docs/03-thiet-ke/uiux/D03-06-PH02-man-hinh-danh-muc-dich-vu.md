@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH02
 ten: Thiết kế giao diện màn hình phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, chủ dịch vụ, người duyệt dịch vụ, hội đồng thẩm định
@@ -409,7 +409,7 @@ Bảng dưới liệt kê từng vùng của UI-02-01 theo số trên wireframe:
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
 | 1 | Tiêu đề, nút | `CMP-PageHeader`, `CMP-Button`, `CMP-DropdownMenu` | "Đăng ký API" primary; "Nhập từ APIM cũ", "Xuất CSV" mặc định | — | Ẩn khi thiếu quyền |
-| 2 | Thẻ tổng | `CMP-KpiCard` (chọn được) | Tất cả, Đang chạy, Chờ duyệt, Sắp ngừng, Cần chú ý; bấm là bật bộ lọc nhanh | `facets` của API-02-001 | Có `aria-pressed` |
+| 2 | Thẻ tổng | `CMP-KpiCard` biến thể `filter` | Tất cả, Đang chạy, Chờ duyệt, Sắp ngừng, Cần chú ý; bấm là bật bộ lọc nhanh | `facets` của API-02-001 | Có `aria-pressed` |
 | 3 | Thanh lọc | `CMP-FilterBar`, `CMP-SearchInput`, `CMP-Select`, `CMP-TreeSelect` | Tìm ≥ 2 ký tự, trễ 300 ms, toàn văn (API-02-003); nhóm và phân loại chọn theo cây | API-02-001 `q`, `category`, `status`, `visibility` | Ghi URL |
 | 4 | Bảng | `CMP-DataTable` | Cột §7.3; mặc định "cần chú ý" lên đầu rồi theo ngày cập nhật | `items` | Phân trang `page`/`size` |
 | 5 | Dịch vụ sự kiện | `CMP-Tabs` (Đợt 2) | Tab "API" và "Sự kiện (topic)"; tab sự kiện ẩn khi chưa bật PH-10 | API-02-013 | FR-02-009 |
@@ -685,7 +685,7 @@ Bảng dưới liệt kê từng vùng của UI-02-04 theo số trên wireframe:
 |---|---|---|---|---|
 | 1 | Tiêu đề, nút | `CMP-PageHeader`, `CMP-Button` | "Kiểm tra lại" primary; "Chấp nhận cảnh báo" theo dòng chọn | API-02-021 |
 | 2 | Thẻ tổng | `CMP-KpiCard` | Lỗi, Cảnh báo, Bí mật nghi ngờ, Độ giống API gần nhất | `summary` |
-| 3 | Bộ lọc nhanh | `CMP-FilterChips` | Tất cả, theo lớp (1 OpenAPI, 2 Quy ước, 3 Bí mật) | `findings[].layer` |
+| 3 | Bộ lọc nhanh | `CMP-FilterBar` (hàng nhãn bộ lọc, D03-05-04 §3.4) | Tất cả, theo lớp (1 OpenAPI, 2 Quy ước, 3 Bí mật) | `findings[].layer` |
 | 4 | Danh sách phát hiện | `CMP-DataTable` | Cột: Mức, Lớp, Luật và thông điệp, Vị trí, Thao tác | `findings[]` |
 | 5 | Khung đặc tả | `CMP-CodeEditor` chỉ đọc | Tô sáng dòng đang chọn, nhảy tới dòng | API-02-007 |
 | 6 | Ô cách sửa | `CMP-Alert` thông tin | Gợi ý sửa của luật (`remediation`) | `findings[].remediation` |
@@ -903,7 +903,7 @@ Bảng dưới liệt kê từng vùng của UI-02-08 theo số trên wireframe:
 | # | Thành phần | `CMP-*` | Nội dung | Nguồn |
 |---|---|---|---|---|
 | 1 | Chế độ xem | `CMP-Segmented` | "Theo API", "Theo HTTT"; mặc định theo vai trò (OR: theo HTTT) | API-02-059 `groupBy` |
-| 2 | Bộ lọc nhanh | `CMP-FilterChips` | Tất cả, Chờ duyệt, Hiệu lực, Tạm ngừng, Sắp hết hạn | `facets` |
+| 2 | Bộ lọc nhanh | `CMP-FilterBar` (hàng nhãn bộ lọc, D03-05-04 §3.4) | Tất cả, Chờ duyệt, Hiệu lực, Tạm ngừng, Sắp hết hạn | `facets` |
 | 3 | Thanh lọc | `CMP-FilterBar` | Tìm HTTT, API, gói; chọn API; gói; cấp quyền | API-02-059, 060 |
 | 4 | Bảng | `CMP-DataTable` | HTTT khai thác; API · Gói; Trạng thái; Cấp phạm vi; Hiệu lực đến; Lượt gọi 30 ngày; ⋯ | — |
 | 5 | Chọn nhiều | `CMP-SelectionBar` | Tạm ngừng, Thu hồi hàng loạt (tối đa 50) kèm một lý do chung | API-02-061, 063 |
@@ -1517,14 +1517,14 @@ Bản hi-fi minh họa bố cục, thứ bậc thông tin và nội dung tiếng
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Phụ lục này ghi các thành phần giao diện mà tập màn cần nhưng D03-05 chưa có; tập màn không tự đặt thành phần.
+Phụ lục này ghi các thành phần giao diện mà tập màn cần nhưng D03-05 chưa có; tập màn không tự đặt thành phần. Cột "Tạm dùng" ghi cách dựng hiện tại; cột cuối ghi kết quả xử lý ở đợt đồng bộ cuối.
 
-| Mã đề nghị | Thành phần | Lý do | Tạm dùng |
-|---|---|---|---|
-| A-1 | Danh sách phát hiện kiểm tra gắn với khung mã (nhảy tới dòng, biểu tượng mức ở lề) | Dùng ở UI-02-03, 04 và có thể ở PH-05 (Kamelet) | `CMP-DataTable` + `CMP-CodeEditor` ghép tay |
-| A-2 | Dải lộ trình ngừng dùng (hai đoạn thời gian, mốc ngày) | UI-02-13 | `CMP-Timeline` |
-| A-3 | Biến thể `CMP-KpiCard` chọn được (`aria-pressed`) làm bộ lọc nhanh | UI-02-01, 08, 12 | `CMP-FilterChips` bên cạnh thẻ |
-| A-4 | `CMP-CodeEditor` hỗ trợ chú thích lề (marker) theo mức | UI-02-03, 04 | Tô nền dòng |
+| Mã đề nghị | Thành phần | Lý do | Tạm dùng | Kết quả |
+|---|---|---|---|---|
+| A-1 | Danh sách phát hiện kiểm tra gắn với khung mã (nhảy tới dòng, biểu tượng mức ở lề) | Dùng ở UI-02-03, 04 và có thể ở PH-05 (Kamelet) | `CMP-DataTable` + `CMP-CodeEditor` ghép tay | Đã xử lý bằng `markers`, `onMarkerSelect`, `revealRef` của `CMP-CodeEditor` (D03-05-04 §9.1); dựng bằng `CMP-CodeEditor` và `CMP-DataTable` |
+| A-2 | Dải lộ trình ngừng dùng (hai đoạn thời gian, mốc ngày) | UI-02-13 | `CMP-Timeline` | Không thêm: chỉ PH-02 dùng, giữ `CMP-Timeline` hai hàng cục bộ ở UI-02-13 |
+| A-3 | Biến thể `CMP-KpiCard` chọn được (`aria-pressed`) làm bộ lọc nhanh | UI-02-01, 08, 12 | `CMP-FilterBar` (hàng nhãn bộ lọc) bên cạnh thẻ | Đã có: `CMP-KpiCard` biến thể `filter` (D03-05-04 §6.2); không cần hàng nhãn bên cạnh |
+| A-4 | `CMP-CodeEditor` hỗ trợ chú thích lề (marker) theo mức | UI-02-03, 04 | Tô nền dòng | Đã có: `markers` của `CMP-CodeEditor` (D03-05-04 §9.1) |
 
 : Đề nghị bổ sung cho D03-05
 
@@ -1552,7 +1552,7 @@ Các việc cần sửa ở tài liệu dùng chung, không sửa trong tập n�
 |---|---|---|
 | 1 | D03-06-00 §2.3, §2.4 | Thêm route `/ket-noi/tuan-thu-sla`, `/ket-noi/dong-bo-quoc-gia`, nhóm `/ket-noi/quan-tri/{phan-loai, bo-luat, nhap-apim-cu, cai-dat}` và mục menu tương ứng (§4.2, §4.3 tập này) |
 | 2 | D02-08 | Thêm động từ quản trị phân hệ cho `PERM-02` (phân loại, bộ luật, chuyển chủ quản, nhập từ APIM cũ, tham số), đang ghi "đề nghị, động từ admin" ở D03-04-PH02 |
-| 3 | D03-05-04 | Xem Phụ lục A (A-1…A-4) |
+| 3 | D03-05-04 | Đã xử lý Phụ lục A: A-1, A-3, A-4 đã có ở D03-05-04 bản 0.5; A-2 giữ cục bộ |
 | 4 | D03-04-PH02 | Phụ lục B đã được đáp ứng trừ B-2 (xuất CSV), ghi ở Q02-60 của tập API |
 | 5 | D02-03-PH02 §12 | Ghi route cho UI-02-11, 12, 14…17 theo §4.2 |
 | 6 | ADR | Không đề xuất ADR mới |
@@ -1579,3 +1579,4 @@ Các việc cần sửa ở tài liệu dùng chung, không sửa trong tập n�
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Claude (Agent SDK, Actions) | Bản đầu: 17 màn UI-02-01…17 kèm ảnh hi-fi, điều hướng, thông báo ERR-02, truy cập WCAG 2.2 AA, truy vết FR, đề nghị đồng bộ, 6 câu hỏi mở Q02-30…35 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: bảng thông báo ERR-02 đủ 45 mã khớp D02-03-PH02 §9.2; thêm bảng cụm hiển thị cho ERR-02-012; thêm nhãn cấu hình ở cổng; gắn API-02-096, 097, 098 cho UI-02-06, 10, 11; cập nhật Phụ lục B; thêm câu mở cho các mục chỉ có bảng |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi kết quả xử lý A-1…A-4; dùng `CMP-KpiCard` biến thể `filter` và `CMP-FilterBar` thay `CMP-FilterChips` |

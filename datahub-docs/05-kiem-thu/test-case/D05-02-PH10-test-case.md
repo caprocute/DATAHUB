@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH10
 ten: Kịch bản và test case phân hệ PH-10 Sự kiện
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -24,7 +24,7 @@ Phần này viết cho hội đồng thẩm định: tài liệu chứng minh đ
 
 **Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->158 (TC-10-001…158; 110 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M (66 FR) có ít nhất một ca dương và một ca âm; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph10/tools/gen_matrix.py`, kèm bảng `.xlsx` theo mẫu nghiệm thu và tệp Gherkin.
 
-**Căn cứ.** Tài liệu cùng bộ PH-10 bản 0.2 (FRS D02-03-PH10, use case D02-04-PH10, SDD D03-02-PH10, CSDL D03-03-PH10, API D03-04-PH10, màn hình D03-06-PH10); ma trận phân quyền D02-08 (dòng `PERM-10-*` đã tách theo FRS §3.3); kế hoạch kiểm thử D05-01; cổng CI D04-02; ADR-070…073; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP và TCVN 14423:2026.
+**Căn cứ.** Tài liệu cùng bộ PH-10 bản 0.2 (FRS D02-03-PH10, use case D02-04-PH10, SDD D03-02-PH10, CSDL D03-03-PH10, API D03-04-PH10, màn hình D03-06-PH10); ma trận phân quyền D02-08 (dòng `PERM-10-*` đã tách theo FRS §3.4); kế hoạch kiểm thử D05-01; cổng CI D04-02; ADR-070…073; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP và TCVN 14423:2026.
 
 **Điểm cần hội đồng lưu ý.** Sáu nhóm ca bắt buộc đạt 100 % trước khi phát hành:
 
@@ -5408,3 +5408,4 @@ Các câu dưới đây được dùng ở trường "Thông báo hiển thị" 
 | 0.1 | 26/11/2026 | Nhóm tài liệu | Bản đầu theo FRS 0.2 (và mã control plane ERR-10-053, 054, API-10-121 của FRS 0.3): 35 kịch bản, 10 UAT, ma trận sinh tự động, Gherkin, bảng tính; câu hỏi mở Q10-40…44 |
 | 0.2 | 26/11/2026 | Nhóm tài liệu | Theo chuẩn kết hợp K-TC, K-TRINH-BAY: giữ nguyên mọi bước, dữ liệu, kết quả mong đợi của 158 ca; chuyển mỗi ca sang khối đặc tả `::: dac-ta`, thêm Mục đích, Thông báo hiển thị (theo D03-06-PH10 §5.3, §18.4), Hậu điều kiện; tách 13 ca hiệu năng thành khối riêng kèm bảng tóm tắt ngưỡng; Giới thiệu đủ 0.1…0.6, đoạn mở chương, chú thích bảng; mục 10.2 đề nghị đồng bộ câu thông báo cho ERR-10-053, 054, 101…110, 121; vá `tc_parse.py` đọc khối mới, `gen_xlsx.py`, `gen_gherkin.py` thêm trường mới |
 | 0.3 | 27/11/2026 | Nhóm tài liệu | Đồng bộ chéo cuối: topic cấp nền tảng `platform.tenant.created.v1` thay `dh.platform.tenant.created.v1` (QĐ-2) ở TC-10-113; thêm miền dành riêng `mdm`, `dq`, `bpm`, `kpi`, `portal` ở TC-10-007; ERR-10-003 cho `topicKind` khác `BUSINESS` và `content` vượt 256 KiB; SIM-PH01 dùng EVT-01-03 |
+| 0.4 | 27/11/2026 | Nhóm tài liệu | Đồng bộ chéo cuối: đổi dẫn chiếu FRS PH-10 §3.3 sang §3.4 theo số mục mới của bản 0.4 |

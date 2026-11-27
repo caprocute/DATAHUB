@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH15
 ten: Thiết kế chi tiết phần mềm phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect và dh-portal, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
@@ -415,7 +415,7 @@ Mục được hiển thị khi `portalPublished = true` và phiên bản ở `P
 
 **Phụ thuộc ra.** OpenSearch 2.x hoặc `pg-core` FTS, Valkey.
 
-**Dữ liệu.** Chỉ mục `portal-{tenant}-catalog-v{n}`; cột `search_vector`, bảng `search_index_task`.
+**Dữ liệu.** Chỉ mục `portal-{tenant}-catalog-v{n}`; cột `search_vector`; chỉ mục dựng lại từ PostgreSQL, không có bảng hàng đợi riêng.
 
 **Sự kiện.** Không.
 
@@ -441,7 +441,7 @@ Tài liệu chỉ mục gồm: `apiCode`, tên, mô tả, thẻ, lĩnh vực, ch
 
 **Phụ thuộc ra.** `catalog_spec`, Valkey (bộ đệm mô hình), PH-02 API-02-006 (mẫu gọi chuẩn).
 
-**Dữ liệu.** `catalog_spec` (`model_json`, `content_hash`, `size_bytes`), `catalog_change_notice`.
+**Dữ liệu.** `catalog_spec` (`model_json`, `content_hash`, `size_bytes`), `inbox_event`.
 
 **Sự kiện.** Không (đọc).
 
@@ -495,7 +495,7 @@ Nhập Git (`GitImporter`, Đợt 3 theo FRS nhưng thiết kế sẵn): kho ch�
 
 **Phụ thuộc ra.** Keycloak Admin API (client `portal-dev`), dịch vụ gửi thư của nền tảng, `pg-core`.
 
-**Dữ liệu.** `dev_account`, `dev_registration`, `dev_terms`, `dev_terms_acceptance`, `dev_team`, `dev_team_member`, `dev_team_invitation`.
+**Dữ liệu.** `dev_account`, `dev_terms`, `dev_terms_acceptance`, `dev_team`, `dev_team_member`.
 
 **Sự kiện.** EVT-15-06, 07, 13.
 
@@ -609,7 +609,7 @@ Token của `portal-try`: `TokenExchangeClient` đổi token theo QĐ-15-03, đ�
 
 **Phụ thuộc ra.** PH-13 (scope `metrics:portal-read`, nhật ký theo `app_code`), PH-10 và dịch vụ thư của nền tảng, Valkey.
 
-**Dữ liệu.** `notification_subscription`, `inbox_message`, `catalog_change_notice`.
+**Dữ liệu.** `notification_subscription`, `inbox_message`, `inbox_event`.
 
 **Sự kiện.** Không (tiêu thụ EVT-02-12).
 
@@ -635,7 +635,7 @@ Token của `portal-try`: `TokenExchangeClient` đổi token theo QĐ-15-03, đ�
 
 **Phụ thuộc ra.** PH-02 (FR-02-046 và đăng ký API), PH-01 (biểu mẫu F-01), PH-18 (việc).
 
-**Dữ liệu.** `delegation_ref` (loại, `external_id`, người gửi, bộ đệm trạng thái 60 giây).
+**Dữ liệu.** bộ đệm trạng thái 60 giây của yêu cầu ủy thác (`external_id` ở PH-01, PH-02); cổng không có bảng con trỏ riêng.
 
 **Sự kiện.** Không phát; nghe EVT-02-09, EVT-02-10, EVT-02-11 để làm mới bộ đệm.
 
@@ -661,7 +661,7 @@ Mỗi lời gọi mang `Authorization` của chính người dùng (BFF chuyển
 
 **Phụ thuộc ra.** `catalog.api` (đầu mối của dịch vụ), `insight.api` (thông báo), PH-10 (EVT-15-12).
 
-**Dữ liệu.** `support_ticket`, `support_message`, `support_feedback`.
+**Dữ liệu.** `support_ticket` (`kind = FEEDBACK` cho đánh giá), `support_message`, `ticket_counter`.
 
 **Sự kiện.** EVT-15-12.
 
@@ -687,7 +687,7 @@ Nội dung hỏi đáp và phiếu là văn bản thuần (≤ 2.000 và 4.000 k
 
 **Phụ thuộc ra.** PH-18 (tham số `15.*`), PH-13 (nhật ký, báo cáo), PH-02, Garage.
 
-**Dữ liệu.** `portal_setting`, `sync_run`, `reconciliation_report`.
+**Dữ liệu.** `portal_setting`, `sync_run` (cột `report`), `sync_state`.
 
 **Sự kiện.** EVT-15-14.
 
@@ -748,7 +748,7 @@ sequenceDiagram
   P-->>W: items, removed, ETag
   W->>D: ghi đè catalog_api nếu sourceVersion mới hơn
   W->>W: SpecIngestor phân tích đặc tả, hash khác thì ghi catalog_spec
-  W->>D: search_index_task và outbox EVT-15-14 nếu trạng thái đổi
+  W->>D: dựng lại chỉ mục và outbox EVT-15-14 nếu trạng thái đổi
   W->>V: xóa khóa cat:item và cat:spec
   W->>S: SearchIndexer áp tác vụ, đổi tài liệu theo visibility
   Note over W,P: Mất sự kiện thì lượt theo lịch 15.sync.interval-seconds bù tối đa 5 phút
@@ -955,7 +955,7 @@ sequenceDiagram
   P1-->>D: có
   D->>P2: POST đăng ký sử dụng, Idempotency-Key, token người dùng
   P2-->>D: 201 subscriptionId, PENDING_APPROVAL
-  D->>D: lưu delegation_ref, kiểm toán SUBMIT_SUBSCRIPTION
+  D->>D: lưu bộ đệm trạng thái ủy thác, kiểm toán SUBMIT_SUBSCRIPTION
   D-->>O: 201 trạng thái từ PH-02
   P2-->>D: EVT-02-10 sau khi duyệt
   D->>D: làm mới bộ đệm trạng thái, thông báo hộp thư
@@ -1285,26 +1285,22 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 
 | Module | Bảng | EN-15 | Khóa duy nhất, chỉ mục chính | Ghi chú |
 |---|---|---|---|---|
-| catalog | `catalog_api` | 01 | `(tenant_id, api_code)`; `(tenant_id, visibility, state)` | `source_version`, `hidden_at`, `search_vector` |
+| catalog | `catalog_api` | 01 | `(tenant_id, api_code)`; `(tenant_id, visibility, state)` | `kind` (`API`, `EVENT`: dịch vụ sự kiện, FR-15-007), `source_version`, `hidden_at`, `search_vector` |
 | catalog | `catalog_api_version` | 01 | `(api_id, version_no)` | Trạng thái, `spec_hash` |
 | catalog | `catalog_spec` | 02 | `(version_id, spec_kind)` | `model_json` nén, `content_hash` |
-| catalog | `catalog_topic` | 01 | `(tenant_id, topic_code)` | Dịch vụ sự kiện (FR-15-007) |
-| catalog | `catalog_change_notice` | 14 | `(tenant_id, notice_id)` | Từ EVT-02-12 |
-| catalog | `sandbox_profile` | 03 | `(version_id)` | `mode`, `backend_url`, `example_policy`, `try_production`; bí mật tiêu đề ở OpenBao |
-| catalog | `search_index_task` | — | `(status, created_at)` | Hàng đợi chỉ mục |
-| catalog | `sync_run` | 18 | `(tenant_id, started_at)` | Cũng cho đối soát |
-| catalog | `reconciliation_report` | 18 | `(tenant_id, created_at)` | Chi tiết lệch dạng `jsonb` |
+| catalog | `sandbox_profile` | 03 | `(version_id)` | `mode`, `backend_url`, `example_policy`; quyền thử trên production ở `try_prod_grant.status`; bí mật tiêu đề ở OpenBao |
+| catalog | `sync_run` | 18 | `(tenant_id, started_at)` | Cũng cho đối soát; chi tiết lệch ở cột `report` (`jsonb`) |
+| catalog | `sync_state` | 18 | `(tenant_id)` | Trạng thái và độ trễ đồng bộ (thêm theo DDL) |
 | content | `content_page` | 04 | `(tenant_id, page_code)` | `audience`, `type`, `lang`, `api_code` |
 | content | `content_page_version` | 05 | `(page_id, version_no)` | `body_md` ≤ 200 KB, `CHECK` bốn mắt |
 | content | `content_attachment` | 04 | `(tenant_id, object_key)` | Đối tượng ở Garage, băm |
 | content | `content_git_source` | 04 | `(tenant_id, repo_url, path)` | Mã truy cập ở OpenBao |
 | content | `content_migration` | 04 | `(tenant_id, migration_id)` | Báo cáo xem trước |
-| dev | `dev_account` | 06 | `(tenant_id, lower(email))`; `(user_id)` | `source`, `status`; ẩn danh tại chỗ |
-| dev | `dev_registration` | 06 | `(registration_id)` | Băm mã xác minh, hạn 24 giờ |
+| content | `legacy_mapping` | 04 | `(tenant_id, legacy_system, legacy_key)` | Ánh xạ khóa hệ cũ (thêm theo DDL) |
+| dev | `dev_account` | 06 | `(tenant_id, lower(email))`; `(user_id)` | `source`, `status`, `verification_token_hash`, `verification_expires_at` (băm mã xác minh, hạn 24 giờ); ẩn danh tại chỗ |
 | dev | `dev_terms` | 16 | `(tenant_id, terms_version)` | Nội dung và hiệu lực |
 | dev | `dev_terms_acceptance` | 16 | `(user_id, terms_version)` | Thời điểm chấp nhận |
-| dev | `dev_team`, `dev_team_member` | 07 | `(tenant_id, team_code)`; `(team_id, user_id)` | Vai trò nhóm |
-| dev | `dev_team_invitation` | 07 | `(team_id, invitee)` | `PENDING`, hạn |
+| dev | `dev_team`, `dev_team_member` | 07 | `(tenant_id, team_code)`; `(team_id, user_id)` | Vai trò nhóm; `invite_status` (`PENDING`, hạn) thay bảng lời mời |
 | dev | `app` | 08 | `(tenant_id, app_code)` (không dùng lại) | `owner_type`, `quota_override` |
 | dev | `app_member` | 08 | `(app_id, user_id)` | `OWNER`, `DEVELOPER`, `VIEWER` |
 | dev | `app_credential` | 09 | `(client_id)`; `(key_prefix)` | `provisioning_state` (`PENDING`, `PROVISIONED`, `FAILED`, `DEPROVISIONING`), `key_hash` (HMAC-SHA256 có pepper), không có cột bí mật |
@@ -1314,10 +1310,9 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 | try | `try_prod_grant` | 13 | `(tenant_id, api_code)` | `status`, `valid_until`, `allow_write` |
 | insight | `notification_subscription` | 14 | `(user_id, api_code, channel)` | |
 | insight | `inbox_message` | 14 | `(user_id, created_at)` | Giữ 90 ngày |
-| delegate | `delegation_ref` | — | `(kind, external_id)` | Chỉ con trỏ và bộ đệm trạng thái |
-| support | `support_ticket` | 15 | `(tenant_id, ticket_code)` | `HT-{năm}-{số}` |
+| support | `support_ticket` | 15 | `(tenant_id, ticket_code)` | `HT-{năm}-{số}`; `kind` (`FEEDBACK` kèm `rating` cho đánh giá trang) |
+| support | `ticket_counter` | 15 | `(tenant_id, year)` | Bộ đếm sinh số phiếu (thêm theo DDL) |
 | support | `support_message` | 15 | `(ticket_id, seq)` | Văn bản thuần |
-| support | `support_feedback` | 15 | `(tenant_id, page_or_api, user_id)` | Đánh giá trang |
 | admin | `portal_setting` | 17 | `(tenant_id)` | Nhận diện; tham số `15.*` ở PH-18 |
 | shared | `outbox_event` | — | `(status, created_at)` | Sự kiện và kiểm toán |
 | shared | `inbox_event` | — | `(tenant_id, event_id)` | Sự kiện EVT-02 đã xử lý |
@@ -1326,7 +1321,7 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 
 : Bảng CSDL dự kiến của PH-15
 
-**Tên bảng cuối cùng theo DDL.** Danh sách trên là tên dự kiến lúc thiết kế; tên chính thức là DDL `ph15/ddl/ph15_portal.sql` của D03-03-PH15 (35 bảng, mục 10 của tập đó ghi chi tiết). Các bảng đã gộp: `catalog_topic` thành `catalog_api.kind = EVENT`; `catalog_change_notice` thành `inbox_event` cùng `inbox_message`; `search_index_task` bỏ (dựng lại chỉ mục từ PostgreSQL); `reconciliation_report` thành `sync_run.report`; `dev_registration` thành các cột `verification_token_hash`, `verification_expires_at` của `dev_account`; `dev_team_invitation` thành `dev_team_member.invite_status`; `delegation_ref` bỏ (ủy thác lưu ở PH-01 và PH-02); `support_feedback` thành `support_ticket.kind = FEEDBACK`; `sandbox_profile.try_production` thành `try_prod_grant.status`. Bảng DDL thêm so với danh sách: `sync_state`, `legacy_mapping`, `ticket_counter`. Khi hai nơi khác nhau, lấy DDL.
+**Tên bảng cuối cùng theo DDL.** Danh sách trên là tên dự kiến lúc thiết kế; tên chính thức là DDL `ph15/ddl/ph15_portal.sql` của D03-03-PH15 (35 bảng, mục 10 của tập đó ghi chi tiết). Bảng ở trên đã khớp DDL; các bảng đã gộp so với bản thiết kế đầu: `catalog_topic` thành `catalog_api.kind = EVENT`; `catalog_change_notice` thành `inbox_event` cùng `inbox_message`; `search_index_task` bỏ (dựng lại chỉ mục từ PostgreSQL); `reconciliation_report` thành `sync_run.report`; `dev_registration` thành các cột `verification_token_hash`, `verification_expires_at` của `dev_account`; `dev_team_invitation` thành `dev_team_member.invite_status`; `delegation_ref` bỏ (ủy thác lưu ở PH-01 và PH-02); `support_feedback` thành `support_ticket.kind = FEEDBACK`; `sandbox_profile.try_production` thành `try_prod_grant.status`. Bảng DDL thêm so với danh sách: `sync_state`, `legacy_mapping`, `ticket_counter`. Khi hai nơi khác nhau, lấy DDL.
 
 Phân vùng và lưu giữ: `try_run` theo tháng (bỏ phân vùng sau `15.try.history-days`), `inbox_message` theo tháng, `outbox_event` dọn sau 7 ngày đã phát. Trường tiêu đề liên quan DLCN của nhà thầu (`dev_account.email`, `full_name`, `phone`) mã hóa trường theo ADR-032 nếu D03-03 phân loại là nhạy cảm; tìm theo thư dùng HMAC tìm kiếm (SEC-88).
 
@@ -1357,3 +1352,4 @@ Các đề nghị dưới đây không sửa tài liệu ngoài tập PH-15; ch�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD: 14 thành phần, 8 sơ đồ tuần tự, 16 quyết định thiết kế, bảng CSDL dự kiến, câu hỏi mở Q15-20…29 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bộ PH-15: ghi chú tên bảng cuối cùng theo DDL ở Phụ lục A, `try_run` phân vùng tháng, enum `PENDING` thay `PROVISIONING`, mã ERR-15-102 ở hình thu hồi thông tin xác thực |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, API-12-063 và wrappingToken, API-01-063, 064, giá trị provisioning_state |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A khớp DDL D03-03-PH15: bỏ hoặc gộp tám bảng không có ở DDL, thêm `sync_state`, `legacy_mapping`, `ticket_counter`, sửa các chỗ dẫn bảng ở thân tập |

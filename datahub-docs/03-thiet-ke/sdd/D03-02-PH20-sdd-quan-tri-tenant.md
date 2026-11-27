@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH20
 ten: Thiết kế chi tiết phần mềm phân hệ PH-20 Quản trị tenant và phát hành sản phẩm
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
@@ -1844,7 +1844,7 @@ Các khóa đều là tham số vận hành, không phải bí mật. Khóa `20.
 
 ### 9.2. Nạp và kiểm tham số
 
-`ParameterGateway` (một lớp mỏng trong `platform.shared`) nạp bản chụp tham số từ PH-18 lúc khởi động và làm mới theo sự kiện đổi tham số; nếu PH-18 chưa sẵn sàng thì dùng giá trị mặc định đã nhúng trong mã, ghi cảnh báo và tiếp tục chạy (control plane không chặn khởi động vì tham số). Mọi giá trị ngoài miền bị từ chối ở PH-18 (`ERR-20-060`) và bị bỏ qua ở PH-20 (giữ giá trị cũ, ghi log cảnh báo), nên một giá trị hỏng không làm sai hành vi.
+`ParameterGateway` (một lớp mỏng trong `platform.shared`) nạp bản chụp tham số từ PH-18 lúc khởi động và làm mới theo sự kiện đổi tham số; nếu PH-18 chưa sẵn sàng thì dùng giá trị mặc định đã nhúng trong mã, ghi cảnh báo và tiếp tục chạy (control plane không chặn khởi động vì tham số). Mọi giá trị ngoài miền bị từ chối ở PH-18 (PH-18 trả `ERR-18-012` khi sai kiểu, `ERR-18-013` khi ngoài miền; màn tham số của PH-20 hiển thị lại thành `ERR-20-060`, và `ERR-20-060` không có operation OpenAPI riêng của PH-20 vì tham số đổi qua API của PH-18, thay đổi được đẩy xuống bằng EVT-18-01) và bị bỏ qua ở PH-20 (giữ giá trị cũ, ghi log cảnh báo), nên một giá trị hỏng không làm sai hành vi.
 
 ### 9.3. Cấu hình triển khai
 
@@ -2160,7 +2160,7 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | ADR 203 | Kênh STABLE, PREVIEW, nâng cấp theo sóng, ngưỡng lỗi 2% | Nâng cấp đồng loạt | Cần cửa sổ bảo trì, WaveGuard |
 | ADR 204 | Ảnh chụp sử dụng hằng giờ, hạn mức hiệu lực là min của trần và max của hợp đồng, ghi đè | Đo thời gian thực | Cảnh báo có độ trễ, thêm ThresholdProbe 5 phút |
 
-: Quyết định kiến trúc đề xuất (chưa có tệp ADR)
+: Quyết định kiến trúc đề xuất (tệp ADR-200 đến ADR-204 ở 00-chung/adr)
 
 ## Phụ lục A. Đề nghị đồng bộ
 
@@ -2197,7 +2197,7 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | D02-01 | Thêm BP-12 sáp nhập tenant, BP-13 phát hành và nâng cấp |
 | D03-06-00 | Thêm menu `/quan-tri/to-chuc`, `/nen-tang/sap-nhap`, `/nen-tang/phat-hanh`, `/nen-tang/tong-quan`, `/nen-tang/su-dung`, `/nen-tang/mau-khoi-tao` |
 | D00-04 | Đăng ký mã lỗi `ERR-20-001…068`, `ERR-20-101…118` |
-| ADR 200…204 | Lập tệp ADR theo mục 13.6 |
+| ADR 200…204 | Đã xử lý ở 0.4: tệp ADR-200 đến ADR-204 đã lập ở 00-chung/adr theo mục 13.6 |
 | PH-12 | Scope `iam:realm-provision` cho PH-20, API xác thực bước hai (GĐ-05), đọc API-20-165 khi cấp truy cập liên tenant |
 | PH-13 | Nhận EVT-20-12, nhãn `tenant` cho `dh_tenant_*`, thử lại `ERR-13-014` |
 | PH-03 | Đọc API-20-164, phát EVT-03-10 và EVT-03-11, thăm dò `enforcement` (Q20-26) |
@@ -2218,5 +2218,6 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | 0.1 | 2026-11-27 | Kiến trúc sư phần mềm | Bản đầu: 19 thành phần, 15 sơ đồ, bảng lỗi, tham số, rủi ro, câu hỏi mở Q20-20…29, Phụ lục A |
 | 0.2 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ với FRS 0.2: 29 khóa `20.*`, miền `20.registry.cache-seconds`, cửa sổ bảo trì 2 đến 6 giờ, mã KPI-12; đánh dấu L-01, 02, 03, 05, 06, 07, 12, 13 đã xử lý |
 | 0.3 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, chờ API-12-080 tối đa 4 phút, `database` trong `tenant.yaml` |
+| 0.4 | 27/11/2026 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: mục 13.6 và Phụ lục A.2: tệp ADR-200 đến ADR-204 đã lập ở 00-chung/adr; mục ParameterGateway ghi nơi trả ERR-20-060 và hợp đồng đẩy thay đổi |
 
 : Lịch sử phiên bản

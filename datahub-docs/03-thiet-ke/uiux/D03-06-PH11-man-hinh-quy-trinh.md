@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH11
 ten: Thiết kế giao diện màn hình phân hệ PH-11 Quy trình liên thông (BPM)
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, kỹ sư tích hợp thiết kế mô hình, cán bộ xử lý việc, kiểm thử viên, hội đồng thẩm định
@@ -1489,12 +1489,12 @@ Cho quản trị tỉnh khai báo lịch làm việc từng năm làm cơ sở t
 |------------------------------------------------------------------------------|
 ```
 
-**Thành phần và trường.** Lịch năm là thành phần mới `CalendarYear` (Phụ lục A); trong khi chờ, dùng 12 `CMP-DatePicker` ở chế độ nhúng.
+**Thành phần và trường.** Lịch năm là `CMP-Calendar` biến thể `year` (D03-05-04 §13.24), dùng chung với lịch tháng của PH-18 và PH-19.
 
 | Thành phần, trường | `CMP-*` | Kiểm tra | Ánh xạ API |
 |---|---|---|---|
 | Giờ làm việc | `CMP-EditableTable` các khoảng giờ | Không chồng nhau, trong ngày; ví dụ 07:30 đến 11:30, 13:30 đến 17:00 | `workHours` |
-| Lịch năm | `CalendarYear` | Bấm ngày để thêm, sửa, xóa ngày đặc biệt; mỗi ô có nhãn chữ | `days[]` |
+| Lịch năm | `CMP-Calendar` biến thể `year` | Bấm ngày để thêm, sửa, xóa ngày đặc biệt; mỗi ô có nhãn chữ | `days[]` |
 | Tính thử hạn | `CMP-DatePicker` (có giờ), `CMP-NumberInput`, `CMP-Select` (`DueUnit`), nút "Tính thử" | Hiện hạn kết quả, ngày bị bỏ qua và lý do; không lưu gì | API-11-093 |
 
 : Thành phần và trường của UI-11-18
@@ -1770,21 +1770,21 @@ Kiểm thử viên đối chiếu từng màn với bảng trạng thái, hành 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
-Mục thiếu trong design system (mã `A-n`, tên không kèm `CMP`); trong khi chờ, màn dùng thành phần ở cột cuối.
+Mục thiếu trong design system (mã `A-n`, tên không kèm `CMP`). Cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối; màn dùng tên chuẩn ở cột đó.
 
-| Mã | Đề nghị | Lý do | Tạm dùng |
-|---|---|---|---|
-| A-1 | `BpmnCanvas`: khung bọc bpmn-js, bốn chế độ (sửa, chỉ xem, phủ tiến độ phiên, so sánh), phát `onStructureChange` | BPMN 2.0 và XML BPMNDI cần bpmn-js; XYFlow không nhập xuất đúng BPMN | `CMP-FlowCanvas` |
-| A-2 | Ngoại lệ cho D03-05-04 §11.0 ("không dùng thư viện vẽ sơ đồ thứ hai"): chấp nhận bpmn-js chỉ cho PH-11 | Một khung PTN-07, CV 631, ADR 111 | |
-| A-3 | `BpmnLogo`: logo bpmn.io cố định góc phải dưới khung vẽ, kích thước tối thiểu, không bị che | Giấy phép bpmn.io | Hình tĩnh trong `BpmnCanvas` |
-| A-4 | `CalendarYear`: lịch năm 12 tháng, gắn loại ngày (nghỉ, làm bù) bằng nền, ký hiệu và chữ | UI-11-18 | 12 `CMP-DatePicker` nhúng |
-| A-5 | `DueTag`: nhãn hạn gộp `CMP-StatusTag` và `CMP-Duration`, đơn vị ngày làm việc, bốn `DueStatus` | UI-11-11, 12, 15, 16, 19 | `CMP-StatusTag` kèm `CMP-Duration` |
-| A-6 | Token `color-diagram-done`, `-active`, `-pending`, `-error` ánh xạ `color-success`, `color-info`, `color-text-disabled`, `color-error`; token lưới chấm canvas | UI-11-04, 12 | Token nguồn |
-| A-7 | `CMP-QuickInsert`: thêm chế độ "Nối tới…" liệt kê phần tử đích | Nối bằng bàn phím (WCAG 2.5.7) | `CMP-Select` trong hộp thoại |
-| A-8 | `CMP-DynamicForm`: xác nhận widget cho JSON Schema 2020-12 (bảng lặp, tải tệp, ngày giờ, mã danh mục, chữ ký số, phụ thuộc trường) | UI-11-08, 15 (Q11-35) | Bộ widget hiện có |
-| A-9 | D03-06-00 §2.3.2: thêm mục menu 31a "Giám sát quy trình" `/quy-trinh/giam-sat`; §2.3.3: nút "Ủy quyền vắng mặt" dẫn `/viec-cua-toi/uy-quyen`; §2.4: route con ở mục 4.2 | Điều hướng PH-11 | |
-| A-10 | D03-06-00 §4.10 (PTN-07): thêm "Xem dạng danh sách" (`Alt+L`) cho mọi canvas | Truy cập | |
-| A-11 | D03-06-00 §4.13 (PTN-10): nút "Mở toàn trang" và `taskKind` chọn UI-11-07 hay UI-11-15 | UI-11-07, 15 (Q11-31) | |
+| Mã | Đề nghị | Lý do | Tạm dùng | Kết quả |
+|---|---|---|---|---|
+| A-1 | `BpmnCanvas`: khung bọc bpmn-js, bốn chế độ (sửa, chỉ xem, phủ tiến độ phiên, so sánh), phát `onStructureChange` | BPMN 2.0 và XML BPMNDI cần bpmn-js; XYFlow không nhập xuất đúng BPMN | `CMP-FlowCanvas` | Không thêm vào design system: chỉ PH-11 dùng, giữ `BpmnCanvas` là thành phần cục bộ của PH-11 (`features/bpm/designer`), bọc theo quy tắc của D03-05-04 §11.0 |
+| A-2 | Ngoại lệ cho D03-05-04 §11.0 ("không dùng thư viện vẽ sơ đồ thứ hai"): chấp nhận bpmn-js chỉ cho PH-11 | Một khung PTN-07, CV 631, ADR 111 | | Đã ghi: ngoại lệ `bpmn-js` cho PH-11 ở D03-05-04 §11.0 |
+| A-3 | `BpmnLogo`: logo bpmn.io cố định góc phải dưới khung vẽ, kích thước tối thiểu, không bị che | Giấy phép bpmn.io | Hình tĩnh trong `BpmnCanvas` | Đã có: yêu cầu logo bpmn.io ở góc phải dưới, không bị che, ở D03-05-04 §11.0; `BpmnLogo` là phần của `BpmnCanvas` cục bộ |
+| A-4 | `CalendarYear`: lịch năm 12 tháng, gắn loại ngày (nghỉ, làm bù) bằng nền, ký hiệu và chữ | UI-11-18 | 12 `CMP-DatePicker` nhúng | Đã thêm: `CMP-Calendar` biến thể `year` (D03-05-04 §13.24) |
+| A-5 | `DueTag`: nhãn hạn gộp `CMP-StatusTag` và `CMP-Duration`, đơn vị ngày làm việc, bốn `DueStatus` | UI-11-11, 12, 15, 16, 19 | `CMP-StatusTag` kèm `CMP-Duration` | Đã thêm: `CMP-StatusTag` biến thể `countdown` có `unit: 'businessDay'` và mã `ON_TIME`, `DUE_SOON`, `OVERDUE`, `PAUSED` (D03-05-03 §5.1); không có thành phần `DueTag` riêng |
+| A-6 | Token `color-diagram-done`, `-active`, `-pending`, `-error` ánh xạ `color-success`, `color-info`, `color-text-disabled`, `color-error`; token lưới chấm canvas | UI-11-04, 12 | Token nguồn | Không thêm token: chỉ PH-11 dùng và ánh xạ trực tiếp vào token nguồn `color-success`, `color-info`, `color-text-disabled`, `color-error`; lưới chấm đã có ở D03-05-04 §11.1 |
+| A-7 | `CMP-QuickInsert`: thêm chế độ "Nối tới…" liệt kê phần tử đích | Nối bằng bàn phím (WCAG 2.5.7) | `CMP-Select` trong hộp thoại | Đã thêm: chế độ "Nối tới…" của `CMP-QuickInsert` (D03-05-04 §11.9) |
+| A-8 | `CMP-DynamicForm`: xác nhận widget cho JSON Schema 2020-12 (bảng lặp, tải tệp, ngày giờ, mã danh mục, chữ ký số, phụ thuộc trường) | UI-11-08, 15 (Q11-35) | Bộ widget hiện có | Đã thêm: widget bảng lặp, tải tệp, phụ thuộc trường ở `CMP-DynamicForm` (D03-05-04 §13.3); chữ ký số chờ Q11-35 |
+| A-9 | D03-06-00 §2.3.2: thêm mục menu 31a "Giám sát quy trình" `/quy-trinh/giam-sat`; §2.3.3: nút "Ủy quyền vắng mặt" dẫn `/viec-cua-toi/uy-quyen`; §2.4: route con ở mục 4.2 | Điều hướng PH-11 | | |
+| A-10 | D03-06-00 §4.10 (PTN-07): thêm "Xem dạng danh sách" (`Alt+L`) cho mọi canvas | Truy cập | | |
+| A-11 | D03-06-00 §4.13 (PTN-10): nút "Mở toàn trang" và `taskKind` chọn UI-11-07 hay UI-11-15 | UI-11-07, 15 (Q11-31) | | |
 
 : Đề nghị bổ sung cho D03-05 và D03-06-00
 
@@ -1849,3 +1849,4 @@ Câu cần chủ đầu tư, phân hệ khác hoặc luồng chính trả lời 
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm phân hệ PH-11 | Bản đầu: 23 màn UI-11-01 đến UI-11-23, trình thiết kế BPMN và xử lý việc ở mức siêu chi tiết, tám ảnh hi-fi, phụ lục đề nghị bổ sung D03-05, API, FRS, câu hỏi mở Q11-30 đến Q11-39 |
 | 0.2 | 2026-11-26 | Nhóm phân hệ PH-11 | Đồng bộ FRS 0.2: câu thông báo §9.2 cho 12 mã ERR nền, ERR-11-051, 125, ERR-11-039 thống nhất 366 ngày; nút cho API-11-128…137 (xuất CSV, khôi phục, duyệt, từ chối bỏ qua, giữ pháp lý, yêu cầu quyền sửa, lần chạy mẫu); miễn bù trừ qua `waiverDecisions[]`; đánh dấu Phụ lục B, C đã hấp thụ |
+| 0.3 | 27/11/2026 | Nhóm phân hệ PH-11 | Đồng bộ chéo cuối: dùng `CMP-Calendar` biến thể `year` cho lịch làm việc; Phụ lục A ghi kết quả A-1…A-8 (DueTag, QuickInsert, DynamicForm đã vào D03-05) |

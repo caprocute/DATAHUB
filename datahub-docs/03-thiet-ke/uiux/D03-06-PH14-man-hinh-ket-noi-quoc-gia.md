@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH14
 ten: Thiết kế giao diện màn hình phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, kỹ sư tích hợp, cán bộ ATTT, hội đồng thẩm định
@@ -1795,12 +1795,12 @@ Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp v�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
-Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằng thành phần và token hiện có. Các biến thể và mục menu đề nghị ghi vào D03-05-04 và D03-06-00 ở lần cập nhật kế.
+Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằng thành phần và token hiện có. Các biến thể dưới đây đã có ở D03-05-03 bản 0.4 trở lên (ghi cuối từng dòng); mục menu đề nghị ghi vào D03-06-00.
 
 | Đề nghị | Dựa trên | Dùng ở | Lý do |
 |---|---|---|---|
-| `CMP-ProgressBar` biến thể "có mốc" | `CMP-ProgressBar` | UI-14-01, 09, 15 | Vạch mốc 70%, 85%, 95% kèm nhãn chữ và `aria-valuetext` thay vì chỉ vạch; đổi sắc thái theo mốc |
-| `CMP-StatusTag` biến thể "đếm ngược theo ngưỡng" | `CMP-StatusTag`, `CMP-Duration` | UI-14-08, 01 | "còn 24 ngày" đổi sắc thái ở 60, 30, 7 ngày; luôn có chữ |
+| `CMP-ProgressBar` biến thể "có mốc" | `CMP-ProgressBar` | UI-14-01, 09, 15 | Vạch mốc 70%, 85%, 95% kèm nhãn chữ và `aria-valuetext` thay vì chỉ vạch; đổi sắc thái theo mốc. Đã có: biến thể `milestone` (D03-05-03 §6.3) |
+| `CMP-StatusTag` biến thể "đếm ngược theo ngưỡng" | `CMP-StatusTag`, `CMP-Duration` | UI-14-08, 01 | "còn 24 ngày" đổi sắc thái ở 60, 30, 7 ngày; luôn có chữ. Đã có: biến thể `countdown` (D03-05-03 §5.1) |
 | `CMP-SecretField` biến thể "chỉ ghi có siêu dữ liệu" | `CMP-SecretField` | UI-14-03 | Đã đề xuất ở D03-06-PH05 Phụ lục A; dùng chung, không tạo lại |
 | `CMP-MaskedValue` biến thể "bỏ che có hẹn giờ" | `CMP-MaskedValue` | UI-14-12 | Đã dùng ở D03-06-PH19; tự che sau thời gian đặt, đếm ngược bằng chữ |
 | Mục menu nhóm "Kết nối quốc gia" (D03-06-00 §2.3.2) | Mục 18 hiện có | Mục 4.2, 4.3 của tập này | Thêm 12 mục con với đường dẫn `/tich-hop/quoc-gia/*`; giữ mục 18 `/tich-hop/dich-vu-quoc-gia` |
@@ -1845,3 +1845,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây cần
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-14-01…17 với bảng đặc tả, wireframe, thành phần, trạng thái, thông báo, phím tắt, truy cập; ảnh hi-fi từng màn; ma trận vai trò, truy vết FR, kiểm thử giao diện, phụ lục đề nghị bổ sung |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Bổ sung dòng lỗi ERR-14-003, 117, 133 ở mục 5.2 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi `milestone` của `CMP-ProgressBar` và `countdown` của `CMP-StatusTag` đã có ở D03-05-03 |

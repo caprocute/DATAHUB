@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH15
 ten: Thiết kế giao diện màn hình phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-portal, thiết kế UX/UI, kiểm thử viên, chủ dịch vụ và quản trị cổng, hội đồng thẩm định
@@ -1990,17 +1990,17 @@ Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp v�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Tập màn không tự đặt thành phần hay token. Sáu mục dưới đây là chỗ thiếu khi thiết kế cổng; đến khi D03-05 duyệt, đội giao diện dựng tạm trong `@datahub/ui` theo mô tả và đổi tên theo quyết định.
+Tập màn không tự đặt thành phần hay token. Bảy mục dưới đây là chỗ thiếu khi thiết kế cổng; cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Thành phần dùng riêng ở PH-15 (A2, A4, A5) được dựng cục bộ trong `apps/portal`, không đưa vào `@datahub/ui`.
 
-| # | Đề nghị | Loại | Mô tả | Dùng ở |
-|---|---|---|---|---|
-| A1 | `CMP‑MarkdownViewer` | Thành phần phức hợp | Dựng Markdown qua bộ lọc an toàn (không HTML thô, ảnh chỉ từ kho cổng), tiêu đề có neo, khối mã có nút sao chép, bảng cuộn ngang trong vùng có nhãn | UI-15-07, 09, 21 |
-| A2 | `CMP‑MarkdownEditor` | Thành phần phức hợp | Vùng soạn Markdown có thanh công cụ, xem trước đồng bộ cuộn, đếm KB, tự lưu, thoát bẫy Tab | UI-15-21 |
-| A3 | `CMP‑TocNav` | Thành phần phức hợp | Mục lục dính theo dõi vị trí đọc (`IntersectionObserver`, `aria-current`), thu thành Drawer dưới `bp-lg` | UI-15-05, 06, 07 |
-| A4 | `CMP‑ServiceCard` | Thành phần phức hợp | Thẻ dịch vụ: tên, mã, phiên bản, mô tả 2 dòng, nhãn trạng thái, xác thực, cơ quan, đánh dấu sắp ngừng | UI-15-01, 02, 03 |
-| A5 | `CMP‑OperationPanel` | Thành phần phức hợp | Khối một thao tác OpenAPI: phương thức, đường dẫn, bảo mật, bảng tham số, thân, phản hồi; dùng chung đọc và thử | UI-15-05, 06 |
-| A6 | `CMP-DataTable` biến thể `card-list` | Biến thể | Dưới `bp-sm` mỗi dòng thành một thẻ có nhãn cột; hiện chỉ mô tả ở D03-06-00 §3.4 là "cuộn ngang" | Mọi bảng PH-15 ở 360 px |
-| A7 | Token `size-toc` (240 px) và `size-reading-max` (760 px) | Token | Bề rộng mục lục và cột đọc; hiện PTN-14 ghi số trực tiếp | UI-15-05, 06, 07 |
+| # | Đề nghị | Loại | Mô tả | Dùng ở | Kết quả |
+|---|---|---|---|---|---|
+| A1 | `CMP-MarkdownViewer` | Thành phần phức hợp | Dựng Markdown qua bộ lọc an toàn (không HTML thô, ảnh chỉ từ kho cổng), tiêu đề có neo, khối mã có nút sao chép, bảng cuộn ngang trong vùng có nhãn | UI-15-07, 09, 21 | Đã có: `CMP-MarkdownViewer` (D03-05-04 §13.20) |
+| A2 | `MarkdownEditor` | Thành phần cục bộ | Vùng soạn Markdown có thanh công cụ, xem trước đồng bộ cuộn, đếm KB, tự lưu, thoát bẫy Tab | UI-15-21 | Không thêm: chỉ PH-15 dùng (UI-15-21), giữ thành phần cục bộ `MarkdownEditor` |
+| A3 | `CMP-TocNav` | Thành phần phức hợp | Mục lục dính theo dõi vị trí đọc (`IntersectionObserver`, `aria-current`), thu thành Drawer dưới `bp-lg` | UI-15-05, 06, 07 | Đã có: `CMP-TocNav` (D03-05-04 §13.21) |
+| A4 | `ServiceCard` | Thành phần cục bộ | Thẻ dịch vụ: tên, mã, phiên bản, mô tả 2 dòng, nhãn trạng thái, xác thực, cơ quan, đánh dấu sắp ngừng | UI-15-01, 02, 03 | Không thêm: chỉ PH-15 dùng, giữ thành phần cục bộ `ServiceCard` |
+| A5 | `OperationPanel` | Thành phần cục bộ | Khối một thao tác OpenAPI: phương thức, đường dẫn, bảo mật, bảng tham số, thân, phản hồi; dùng chung đọc và thử | UI-15-05, 06 | Không thêm: chỉ PH-15 dùng, giữ thành phần cục bộ `OperationPanel` |
+| A6 | `CMP-DataTable` biến thể `card-list` | Biến thể | Dưới `bp-sm` mỗi dòng thành một thẻ có nhãn cột; hiện chỉ mô tả ở D03-06-00 §3.4 là "cuộn ngang" | Mọi bảng PH-15 ở 360 px | Đã có: biến thể `card-list` của `CMP-DataTable` (D03-05-04 §8.1.11) |
+| A7 | Token `size-toc` (240 px) và `size-reading-max` (760 px) | Token | Bề rộng mục lục và cột đọc; hiện PTN-14 ghi số trực tiếp | UI-15-05, 06, 07 | Đã có: `size-toc`, `size-reading-max` ở D03-05-02 |
 
 : Đề nghị bổ sung cho D03-05
 
@@ -2056,3 +2056,4 @@ Các việc dưới đây thuộc tài liệu chung hoặc tập khác của PH-
 | Phiên bản | Ngày | Nội dung | Người lập |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 28 màn UI-15-01…28 theo FRS §10, route theo Phụ lục A.4, nhãn trạng thái, câu hiển thị 63 mã ERR-15, mục màn hệ cũ (portal Gravitee), truy cập WCAG 2.2 AA và bố cục 360 px, ảnh hi-fi 28 màn và 6 ảnh 360 px, câu hỏi mở Q15-30…39 | Nhóm phân hệ PH-15 |
+| 0.2 | 27/11/2026 | Bản đầu: 28 màn UI-15-01…28 theo FRS §10, route theo Phụ lục A.4, nhãn trạng thái, câu hiển thị 63 mã ERR-15, mục màn hệ cũ (portal Gravitee), truy cập WCAG 2.2 AA và bố cục 360 px, ảnh hi-fi 28 màn và 6 ảnh 360 px, câu hỏi mở Q15-30…39 | Đồng bộ chéo cuối: Phụ lục A ghi kết quả A1…A7 (MarkdownViewer, TocNav, card-list, token đã có; MarkdownEditor, ServiceCard, OperationPanel là thành phần cục bộ) |

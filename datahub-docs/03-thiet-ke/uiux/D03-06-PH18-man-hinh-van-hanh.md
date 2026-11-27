@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH18
 ten: Thiết kế giao diện màn hình phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, người vận hành tỉnh và nền tảng, cán bộ ATTT, kiểm thử viên, hội đồng thẩm định
@@ -684,7 +684,7 @@ Bảng dưới mô tả từng vùng của màn chi tiết theo số trên wiref
 
 Bấm "Xem nội dung…" mở `CMP-ReasonDialog` (ảnh `ui-18-03b.png`) gồm: mục đích (`CMP-SegmentedControl`: Chẩn đoán `DIAGNOSE`, Sửa nội dung `EDIT`, Hỗ trợ `SUPPORT`), lý do ≥ 10 ký tự có bộ đếm, dòng nhắc "Phiếu xem có hạn 15 phút (18.dlq.reveal.ttl-minutes)." Nút "Xem nội dung" vô hiệu khi lý do chưa đủ. Gửi thì gọi API-18-047; hệ thống ghi kiểm toán trước khi trả nội dung.
 
-Khi có phiếu, khung ④ chuyển chế độ giá trị: `CMP-JsonViewer` có số dòng, trường mã hóa ở nguồn hiện "•••• đã mã hóa ở nguồn", trường định danh che theo PH-09; đầu khung có đồng hồ đếm ngược "Còn 14:32" (dùng tạm CountdownTimer, Phụ lục A) và nút "Che lại ngay". Còn 1 phút thì đồng hồ đổi sắc thái cảnh báo và thông báo một lần qua `aria-live="polite"`; hết phiếu, giá trị tự che và khung trở về chế độ khung. Rời trang hoặc đổi tab trình duyệt quá 5 phút cũng che lại. Nội dung hiện trên nền đặc, có thủy vân chìm "T68 · {tên người xem} · {thời điểm}" để hạn chế chụp màn hình phát tán.
+Khi có phiếu, khung ④ chuyển chế độ giá trị: `CMP-JsonViewer` có số dòng, trường mã hóa ở nguồn hiện "•••• đã mã hóa ở nguồn", trường định danh che theo PH-09; đầu khung có đồng hồ đếm ngược "Còn 14 phút 32 giây" (`CMP-StatusTag` biến thể `countdown`, `unit: 'minute'`, `live`, D03-05-03 §5.1) và nút "Che lại ngay". Còn 1 phút thì đồng hồ đổi sắc thái cảnh báo và thông báo một lần qua `aria-live="polite"`; hết phiếu, giá trị tự che và khung trở về chế độ khung. Rời trang hoặc đổi tab trình duyệt quá 5 phút cũng che lại. Nội dung hiện trên nền đặc, có thủy vân chìm "T68 · {tên người xem} · {thời điểm}" để hạn chế chụp màn hình phát tán.
 
 ### 9.4. Hành động theo quyền và trạng thái
 
@@ -1385,7 +1385,7 @@ Hành động: tạo mẫu (mở UI-18-12 trống), ngừng mẫu (`CMP-ConfirmD
 
 ### 18.1. Bố cục, trường
 
-Trái 6/12: tiêu đề thư (với kênh Thư), thân mẫu (`CMP-CodeEditor` chế độ Mustache có tô cú pháp), bảng biến. Phải 6/12: khung xem thử (dùng tạm ChannelPreview, Phụ lục A), danh sách kiểm, chân biểu mẫu. Phiên bản cũ mở chế độ chỉ đọc kèm `CMP-VersionTimeline` ở đầu.
+Trái 6/12: tiêu đề thư (với kênh Thư), thân mẫu (`CMP-CodeEditor` chế độ Mustache có tô cú pháp), bảng biến. Phải 6/12: khung xem thử (`ChannelPreview`, thành phần cục bộ của PH-18, Phụ lục A), danh sách kiểm, chân biểu mẫu. Phiên bản cũ mở chế độ chỉ đọc kèm `CMP-VersionTimeline` ở đầu.
 
 ```text
 ┌ ph01.review-decided  Nháp v4 ─────────────────────────────────────────────────────────────────────┐
@@ -1578,7 +1578,7 @@ Trạng thái: rỗng "Bạn không có việc nào đang chờ." kèm liên k�
 ::: dac-ta
 **Mục đích.** Cho quản trị đặt lịch ngày làm việc và ngày lễ của tỉnh (để các phân hệ tính hạn), tạo cửa sổ bảo trì có báo trước và cửa sổ đóng băng thay đổi theo môi trường.
 
-**Đường dẫn, mẫu.** `/van-hanh/lich`, `?nam=`, `?thang=`, `?tab=cua-so`; PTN-01 với lịch tháng (dùng tạm CalendarMonth, Phụ lục A) và bảng cửa sổ.
+**Đường dẫn, mẫu.** `/van-hanh/lich`, `?nam=`, `?thang=`, `?tab=cua-so`; PTN-01 với lịch tháng `CMP-Calendar` biến thể `month` (D03-05-04 §13.24) và bảng cửa sổ.
 
 **Vai trò, quyền.** TA ● lịch tỉnh, cửa sổ phạm vi tỉnh (`PERM-18-calendar`); PA, PO ● lịch dùng chung và cửa sổ phạm vi nền tảng; người có `PERM-18-read` xem.
 
@@ -2049,7 +2049,7 @@ Trạng thái: rỗng bản ghi lỗi "Lần chạy không có bản ghi lỗi."
 
 ### 29.1. Bố cục
 
-Trên: bảng nhóm dịch vụ. Dưới, khi chọn một nhóm: trái 7/12 danh sách kiểm tra cắt chuyển kèm nút đề nghị; phải 5/12 sổ cắt chuyển với đồng hồ đếm ngược quay lui (dùng tạm CountdownTimer, Phụ lục A) khi nhóm vừa `CUT_OVER`.
+Trên: bảng nhóm dịch vụ. Dưới, khi chọn một nhóm: trái 7/12 danh sách kiểm tra cắt chuyển kèm nút đề nghị; phải 5/12 sổ cắt chuyển với đồng hồ đếm ngược quay lui (`CMP-StatusTag` biến thể `countdown`, `unit: 'hour'`, `live`, D03-05-03 §5.1) khi nhóm vừa `CUT_OVER`.
 
 ```text
 ┌ Chạy song song và cắt chuyển ─────────────────────────────────────────────────────────────────────┐
@@ -2396,13 +2396,13 @@ Hai mươi sáu ảnh ở `ph18/hifi/`: một ảnh cho mỗi màn và hai ảnh
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
-Mục này liệt kê thành phần chưa có trong D03-05-03, D03-05-04; tập màn dùng tạm tên dưới đây (không có tiền tố `CMP-`) cho đến khi D03-05 chấp nhận. Không có token mới; mọi màu, khoảng cách, bán kính dùng token sẵn có.
+Mục này liệt kê thành phần mà bản đầu của tập màn thấy thiếu ở D03-05-03, D03-05-04; cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Không có token mới; mọi màu, khoảng cách, bán kính dùng token sẵn có.
 
-| Mã | Tên dùng tạm | Mô tả | Dùng ở |
-|---|---|---|---|
-| A1 | CalendarMonth | Lịch tháng dạng lưới 7 cột, mỗi ô có nhãn chữ cho ngày lễ, ngày làm bù, bảo trì, đóng băng; vai trò `grid`, phím mũi tên, `PageUp`, `PageDown`; ô nhiều sự kiện gộp "+n" mở Popover | UI-18-16 |
-| A2 | CountdownTimer | Đồng hồ đếm ngược có nhãn văn bản đầy đủ, cập nhật trình đọc màn hình mỗi phút, đổi sang trạng thái hết hạn có chữ; không là cách duy nhất báo hết hạn | UI-18-03 (phiếu xem), UI-18-23 (quay lui) |
-| A3 | ChannelPreview | Khung xem thử thông báo theo kênh (thư có tiêu đề, người gửi, thân; SMS có số ký tự; trong ứng dụng có thẻ), hiện "[đã chặn: {biến}]" thay giá trị bị chặn | UI-18-12 |
+| Mã | Tên dùng tạm | Mô tả | Dùng ở | Kết quả |
+|---|---|---|---|---|
+| A1 | CalendarMonth | Lịch tháng dạng lưới 7 cột, mỗi ô có nhãn chữ cho ngày lễ, ngày làm bù, bảo trì, đóng băng; vai trò `grid`, phím mũi tên, `PageUp`, `PageDown`; ô nhiều sự kiện gộp "+n" mở Popover | UI-18-16 | Đã thêm: `CMP-Calendar` biến thể `month` (D03-05-04 §13.24), dùng chung với PH-11 và PH-19 |
+| A2 | CountdownTimer | Đồng hồ đếm ngược có nhãn văn bản đầy đủ, cập nhật trình đọc màn hình mỗi phút, đổi sang trạng thái hết hạn có chữ; không là cách duy nhất báo hết hạn | UI-18-03 (phiếu xem), UI-18-23 (quay lui) | Đã thêm: `CMP-StatusTag` biến thể `countdown` với `unit` và `live` (D03-05-03 §5.1) |
+| A3 | ChannelPreview | Khung xem thử thông báo theo kênh (thư có tiêu đề, người gửi, thân; SMS có số ký tự; trong ứng dụng có thẻ), hiện "[đã chặn: {biến}]" thay giá trị bị chặn | UI-18-12 | Không thêm: chỉ PH-18 dùng, giữ `ChannelPreview` là thành phần cục bộ của PH-18 |
 
 : Thành phần đề nghị bổ sung cho D03-05
 
@@ -2491,6 +2491,7 @@ Các câu dưới đây cần người có thẩm quyền chốt trước khi k�
 | 0.1 | 27/11/2026 | Bản đầu: 24 màn UI-18-01 đến 24, điều hướng, trạng thái riêng, luồng chính, ma trận vai trò, FR và API, 26 ảnh hi-fi, đề nghị bổ sung D03-05 và API, điểm lệch và đề nghị đồng bộ, câu hỏi mở Q18-30 đến 39 | Nhóm phân hệ PH-18 |
 | 0.2 | 27/11/2026 | Đồng bộ nội bộ theo FRS 0.2 và D03-04-PH18 0.2: gắn API-18-181…187 vào UI-18-15, 22, 23, 24 và ma trận chương 33; câu thông báo theo câu chung của FRS §9.1; vai trò SO, PA, TA thay MO, DPO; AU, VW xem siêu dữ liệu DLQ; chốt Q18-30, Q18-37; Phụ lục B, C.1 thêm cột trạng thái, giữ LC-01, 02, 06 và ĐB-01…05 cho D03-06-00 | Nhóm phân hệ PH-18 |
 | 0.3 | 27/11/2026 | Đồng bộ chéo cuối: Việc của tôi dùng route chung `/viec-cua-toi`, thêm chuyển hướng 301 từ `/ca-nhan/viec` | Nhóm viết tài liệu (Claude) |
+| 0.4 | 27/11/2026 | Đồng bộ chéo cuối: Việc của tôi dùng route chung `/viec-cua-toi`, thêm chuyển hướng 301 từ `/ca-nhan/viec` | Đồng bộ chéo cuối: dùng `CMP-Calendar` và `CMP-StatusTag` `countdown` thay tên tạm `CalendarMonth`, `CountdownTimer`; Phụ lục A ghi kết quả |
 
 : Lịch sử phiên bản D03-06-PH18
 

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-05-03
 ten: Thành phần nguyên tử
-phien_ban: 0.4
+phien_ban: 0.5
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã, Hội đồng thẩm định
@@ -848,13 +848,22 @@ export interface DhDividerProps { orientation?: 'horizontal' | 'vertical'; spaci
 | `INTERNAL` | Nội bộ | `info` | Mức phân loại dữ liệu (`DataClass`) | |
 | `RESTRICTED` | Hạn chế | `warning` | Mức phân loại dữ liệu (`DataClass`) | Dữ liệu cá nhân thông thường |
 | `SENSITIVE` | Nhạy cảm | `error` | Mức phân loại dữ liệu (`DataClass`) | Dữ liệu cá nhân nhạy cảm, luôn kèm `CMP-MaskedValue` khi hiện giá trị |
+| `SKIPPED` | Bỏ qua | `neutral` | Bước kiểm tra, bước saga | Không chạy vì bước trước đã lỗi hoặc không áp dụng |
+| `ON_TIME` | Đúng hạn | `success` | Hạn xử lý | `DueStatus` của PH-11; còn nhiều hơn ngưỡng sắp đến hạn |
+| `DUE_SOON` | Sắp đến hạn | `warning` | Hạn xử lý | Còn không quá ngưỡng do phân hệ cấu hình |
+| `OVERDUE` | Quá hạn | `error` | Hạn xử lý | Đã qua hạn |
+| `PAUSED` | Tạm dừng hạn | `neutral` | Hạn xử lý | Hạn tạm dừng (chờ bên ngoài, đang ủy quyền) |
+| `ON_TRACK` | Đạt mục tiêu | `success` | Chỉ tiêu báo cáo | PH-16, chỉ báo ● |
+| `AT_RISK` | Có nguy cơ | `warning` | Chỉ tiêu báo cáo | PH-16, chỉ báo ▲ |
+| `OFF_TRACK` | Chệch mục tiêu | `error` | Chỉ tiêu báo cáo | PH-16, chỉ báo ✕ |
+| `NO_DATA` | Chưa có số | `neutral` | Chỉ tiêu báo cáo | PH-16, chỉ báo – |
 | `UNKNOWN` | Không xác định | `neutral` | Mọi nhóm | Dự phòng khi nhận mã chưa có trong bảng |
 
 : Mã trạng thái, nhãn hiển thị, sắc thái và nhóm của CMP-StatusTag
 
 Bốn quy tắc đi kèm bảng. Thứ nhất, sắc thái thể hiện **mức cần chú ý**, không thể hiện "tốt hay xấu" về đạo đức: "Hoàn tiền" là `neutral` vì giao dịch đã kết thúc đúng quy trình; "Ngừng cung cấp" là `warning` vì bên dùng phải hành động trước ngày gỡ. Thứ hai, nhãn hiển thị trong bảng là nhãn chuẩn; nếu một phân hệ cần nhãn khác cho cùng mã (ví dụ PH thanh toán muốn "Đã hoàn tiền"), phải sửa nhãn ở đây cho mọi phân hệ, không ghi đè cục bộ. Thứ ba, mã chưa có trong bảng hiển thị là `UNKNOWN` kèm mã gốc trong tooltip, và thành phần ghi cảnh báo `console.warn` ở môi trường phát triển để phát hiện sớm. Thứ tư, khi phân hệ có máy trạng thái riêng chưa chuẩn hóa, có thể truyền `customStatus={{ label, tone }}` nhưng lint báo cảnh báo và PR phải giải thích.
 
-**Biến thể đếm ngược theo ngưỡng (`countdown`).** Với hạn hoặc hiệu lực có ngày kết thúc (chứng thư số, khóa, phiên bản sắp ngừng), thành phần nhận `countdown={{ deadline, thresholdsDays: [60, 30, 7] }}` và hiển thị "còn 24 ngày" bằng `CMP-Duration`; sắc thái đổi theo ngưỡng (trên mốc đầu `success`, từ 60 ngày `info`, từ 30 ngày `warning`, từ 7 ngày `error`) và luôn có chữ, không chỉ đổi màu. Quá hạn chuyển `EXPIRED` (`neutral`) kèm chữ "Hết hạn". Ngưỡng mặc định do phân hệ cấu hình, giá trị trên là mặc định của chứng thư (PH-14 UI-14-08).
+**Biến thể đếm ngược theo ngưỡng (`countdown`).** Với hạn hoặc hiệu lực có ngày kết thúc (chứng thư số, khóa, phiên bản sắp ngừng), thành phần nhận `countdown={{ deadline, thresholdsDays: [60, 30, 7] }}` và hiển thị "còn 24 ngày" bằng `CMP-Duration`; sắc thái đổi theo ngưỡng (trên mốc đầu `success`, từ 60 ngày `info`, từ 30 ngày `warning`, từ 7 ngày `error`) và luôn có chữ, không chỉ đổi màu. Quá hạn chuyển `EXPIRED` (`neutral`) kèm chữ "Hết hạn". Ngưỡng mặc định do phân hệ cấu hình, giá trị trên là mặc định của chứng thư (PH-14 UI-14-08). Thuộc tính `unit` chọn đơn vị: `day` (mặc định, ngày dương lịch), `businessDay` (ngày làm việc theo lịch của phân hệ, PH-11 `DueStatus`), `hour`, `minute` (đồng hồ ngắn hạn như phiếu xem và giữ quay lui của PH-18); `thresholds` là ngưỡng theo đơn vị đã chọn và thay `thresholdsDays` khi `unit` khác `day`. Với `unit` là `businessDay`, nhãn dùng mã `ON_TIME`, `DUE_SOON`, `OVERDUE`; `paused` chuyển sang `PAUSED`. `live` bật cập nhật chữ mỗi phút và thông báo cho trình đọc màn hình bằng `aria-live="polite"` mỗi phút (không thông báo từng giây); khi hết hạn đổi sang chữ "Hết hạn" hoặc "Quá hạn" có sẵn, và đồng hồ không là cách duy nhất báo hết hạn (màn vẫn phải có thông báo hoặc trạng thái bằng chữ ở nơi khác).
 
 **Kích thước.** `sm` cao 20px, chữ `font-caption` độ đậm 500, đệm ngang `space-2`, dùng trong bảng chế độ gọn và `CMP-StatusDot` có nhãn. `md` (mặc định) cao `size-control-sm` (24px), chữ `font-footnote` độ đậm 500, đệm ngang `space-2`. Bo góc `radius-pill`. Khoảng giữa chỉ báo và chữ là `space-1`; chỉ báo dạng chấm có đường kính 6px (`sm`) hoặc 8px (`md`).
 
@@ -881,7 +890,7 @@ export interface DhStatusTagProps {
   announcePrefix?: boolean;
   /** Chỉ dùng khi chưa chuẩn hóa; lint cảnh báo. */
   customStatus?: { label: string; tone: DhTone };
-  countdown?: { deadline: string; thresholdsDays?: number[] }; // biến thể đếm ngược theo ngưỡng
+  countdown?: { deadline: string; thresholdsDays?: number[]; unit?: 'day' | 'businessDay' | 'hour' | 'minute'; thresholds?: number[]; paused?: boolean; live?: boolean }; // biến thể đếm ngược theo ngưỡng
   testId?: string;
 }
 
@@ -1721,7 +1730,7 @@ export interface DhSwitchProps {
 
 **Token.** `TKN-color-fill-control`, `TKN-color-surface-solid`, `TKN-color-fill-hover`, `TKN-color-text-secondary`, `TKN-color-text-primary`, `TKN-shadow-1`, `TKN-radius-md`, `TKN-radius-sm`, `TKN-size-control-sm`, `TKN-size-control-md`, `TKN-size-control-lg`, `TKN-motion-duration-base`, `TKN-motion-ease-emphasized`.
 
-**Biến thể `verdict`.** Nhóm ba lựa chọn quyết định đặt trong ô bảng (PH-01 UI-01-06: Chấp thuận, Thu hẹp, Từ chối; UI-01-13: Còn cần, Thu hẹp, Không cần nữa; rà soát quyền PH-12 UI-12-09). Mỗi lựa chọn có sắc thái và chữ cố định (`success`, `warning`, `error`), cho khóa từng lựa chọn kèm lý do bằng chữ (không chỉ tooltip), và `aria-label` ghép theo dòng ("Quyết định cho {đối tượng}"). Không đổi dữ liệu ngay khi chọn: quyết định ghi vào nháp của bảng và chỉ gửi khi người dùng xác nhận cả bảng. Vẫn không quá 5 mục.
+**Biến thể `verdict`.** Nhóm ba lựa chọn quyết định đặt trong ô bảng (PH-01 UI-01-06: Chấp thuận, Thu hẹp, Từ chối; UI-01-13: Còn cần, Thu hẹp, Không cần nữa; rà soát quyền PH-12 UI-12-09). Mỗi lựa chọn có sắc thái và chữ cố định (`success`, `warning`, `error`, và `neutral` cho lựa chọn "Không áp dụng" như PH-16 UI-16-16), cho khóa từng lựa chọn kèm lý do bằng chữ (không chỉ tooltip), và `aria-label` ghép theo dòng ("Quyết định cho {đối tượng}"). Không đổi dữ liệu ngay khi chọn: quyết định ghi vào nháp của bảng và chỉ gửi khi người dùng xác nhận cả bảng. Vẫn không quá 5 mục.
 
 **Nền đặt.** Nền đặc và mọi vật liệu glass (thường xuất hiện trên thanh công cụ trong `CMP-PageHeader`).
 
@@ -1733,7 +1742,7 @@ export interface DhSwitchProps {
 
 ```tsx
 export interface DhSegmentedControlProps<V extends string = string> {
-  options: Array<{ value: V; label?: string; icon?: React.ReactNode; ariaLabel?: string; disabled?: boolean; tone?: 'success' | 'warning' | 'error'; lockedReason?: string }>;
+  options: Array<{ value: V; label?: string; icon?: React.ReactNode; ariaLabel?: string; disabled?: boolean; tone?: 'success' | 'warning' | 'error' | 'neutral'; lockedReason?: string }>;
   value?: V; onChange?: (value: V) => void;
   size?: 'sm' | 'md' | 'lg';
   block?: boolean;
@@ -2513,3 +2522,4 @@ Các đề xuất dưới đây cần chủ sở hữu tài liệu hoặc công 
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản trước: 44 thành phần nguyên tử, quy tắc trạng thái, bảng tổng hợp, checklist, truy vết, đề xuất (gồm bổ sung khóa biểu tượng ở mục 4.1) |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.5 đến 1.9 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho chương 11, 12; viết lại 15 chú thích bảng cho cụ thể, không trùng; thêm metadata `mo_ta`, `tai_lieu_lien_quan` |
 | 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm `CMP-RangeSlider` (7.19), `CMP-TimeRangePicker` (7.20); biến thể `verdict` của `CMP-SegmentedControl`, `milestone` của `CMP-ProgressBar`, `countdown` của `CMP-StatusTag`, `CMP-OrganizationSelect`; mã `PASS`, `WARN`, `FAIL` và `DataClass` trong bảng trạng thái; `expiresAt`, `fallbackText`, thủy vân của `CMP-MaskedValue`; 46 thành phần, 52 mã |
+| 0.5 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: `CMP-StatusTag` thêm mã `SKIPPED`, `ON_TIME`, `DUE_SOON`, `OVERDUE`, `PAUSED`, `ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `NO_DATA` và `unit`, `live` cho `countdown`; `CMP-SegmentedControl` `verdict` thêm sắc thái `neutral` |
