@@ -2,3 +2,7 @@
 # henry duyệt bằng thẻ chọn 26/11/2026; dòng đã viết lại ở commit cc29ade.
 7ef6effd58bc88ab71fc2c4d0c10bd9b8a5a4d38:datahub-docs/05-kiem-thu/test-case/ph16/gherkin/ts-16-30.feature:generic-api-key:11
 7ef6effd58bc88ab71fc2c4d0c10bd9b8a5a4d38:datahub-docs/05-kiem-thu/test-case/D05-02-PH16-test-case.md:generic-api-key:3096
+# Dương tính giả generic-api-key ở test case PH-18: chuỗi là đường dẫn kho bí mật OpenBao kv/dh/t96/legacy/aita, không phải bí mật.
+# henry duyệt bằng thẻ chọn 27/11/2026; dòng đã viết lại ở commit đồng bộ 0.2.
+8fa490739cab1192b3a4c33e144f44160d25dc05:datahub-docs/05-kiem-thu/test-case/ph18/gherkin/ts-18-34.feature:generic-api-key:11
+8fa490739cab1192b3a4c33e144f44160d25dc05:datahub-docs/05-kiem-thu/test-case/D05-02-PH18-test-case.md:generic-api-key:3347
