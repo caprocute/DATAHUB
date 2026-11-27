@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH10
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-10 Sự kiện
-phien_ban: 0.4
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
 phan_he: PH-10
@@ -19,7 +19,7 @@ Schema `ph10_event` trên cụm `pg-core` có 28 bảng cho 20 thực thể củ
 1. **Enum và tên cột lấy đúng phụ lục A của FRS.** Mọi trạng thái, loại, chế độ là `varchar` có `CHECK` liệt kê đúng giá trị A.2; cột là `snake_case` của trường A.3. Công cụ [`ph10/tools/check_frs.py`](ph10/tools/check_frs.py) đối chiếu tự động 44 cột enum, 5 enum trong JSON và toàn bộ trường A.3: kết quả sạch (§4.3). Bốn ngoại lệ có lý do ghi ở §1.3, chín điểm FRS còn thiếu ghi ở §9.2.
 2. **Không có bí mật trong CSDL.** Khóa ký HMAC `whsec_` chỉ ở OpenBao; bảng `signing_key` lưu `secret_ref` bị `CHECK` buộc đúng mẫu đường dẫn A.8 nên không chứa được giá trị khóa. Cấu hình đẩy và outbox bị chặn khóa `secret`, `signingSecret`, chuỗi `whsec_`. Nội dung mục DLQ của topic `RESTRICTED`, `SENSITIVE` là bản mã OpenBao transit.
 3. **Quy tắc nghiệp vụ khóa ở CSDL**, không chỉ ở dịch vụ: tiền tố topic trùng tenant, tên topic ghép đúng miền, thực thể, sự kiện, phiên bản (BR-10-002); hệ số nhân bản cố định 3 (BR-10-004); tổ hợp `partyType`, `commType`, `deliveryMode` (BR-10-017); bốn mắt (BR-10-010); phiên bản lược đồ đã bật bất biến (BR-10-013); một cầu nối còn hiệu lực mỗi cặp topic (BR-10-033); DLQ ghi lặp không nhân đôi (BR-10-024).
-4. **Cô lập tenant bằng `FORCE ROW LEVEL SECURITY`** trên 27 bảng; danh mục kiểu giao tiếp và chế độ định tuyến là dữ liệu dùng chung tenant `COMMON`, tỉnh đọc được nhưng không ghi được; topic nền tảng `dh.*` thuộc `COMMON`, chỉ phiên `PLATFORM` thấy.
+4. **Cô lập tenant bằng `FORCE ROW LEVEL SECURITY`** trên 27 bảng; danh mục kiểu giao tiếp và chế độ định tuyến là dữ liệu dùng chung tenant `COMMON`, tỉnh đọc được nhưng không ghi được; topic nền tảng `dh.*`, `platform.*` thuộc `COMMON`, chỉ phiên `PLATFORM` thấy.
 
 DDL [`ph10/ddl/ph10_event.sql`](ph10/ddl/ph10_event.sql) đã chạy thử trên PostgreSQL 16.15 sạch; changelog Liquibase sinh từ DDL chạy được theo thứ tự; bài kiểm [`ph10/test/ph10_isolation_test.sql`](ph10/test/ph10_isolation_test.sql) đạt 47/47 khối (§4.2). Bảng ánh xạ CSDL Hub Pulsar cũ sang bảng mới ở §8 là đầu vào cho kế hoạch chuyển đổi D06-01.
 
@@ -100,7 +100,7 @@ Mọi bảng nghiệp vụ có `tenant_id varchar(16)` và bật `FORCE ROW LEVE
 
 Biến phiên `app.tenant_id` đặt đầu mỗi giao dịch bằng `TenantAwareTransactionManager` từ ngữ cảnh xác thực (BR-10-001), không từ tham số do bên gọi gửi. Tác vụ nền liên tenant (thu lag, hết hạn duyệt, dọn DLQ) lặp từng tenant. `shedlock` là bảng kỹ thuật duy nhất không có `tenant_id`.
 
-Ngoài RLS, bốn lớp chặn chéo tenant khác có ở CSDL: (a) `CHECK` tiền tố `split_part(topic_name, '.', 1) = f_topic_prefix(tenant_id)` trên `topic`, `outbox_event`, `inbox_event`; (b) khóa ngoại luôn kèm `tenant_id` (`FOREIGN KEY (tenant_id, topic_name)`), không trỏ chéo được; (c) tên nhóm tiêu thụ chứa mã tenant (`ck_subscription_group_name`); (d) `apicurio_group_id` bằng tiền tố tenant (`ck_event_schema_artifact`). Topic nền tảng `dh.*` (FR-10-067) có `tenant_id = 'COMMON'`, tiền tố `dh`.
+Ngoài RLS, bốn lớp chặn chéo tenant khác có ở CSDL: (a) `CHECK` tiền tố `split_part(topic_name, '.', 1) = f_topic_prefix(tenant_id)` trên `topic`, `outbox_event`, `inbox_event` (với `COMMON`, `topic` và `inbox_event` còn nhận tiền tố `platform`); (b) khóa ngoại luôn kèm `tenant_id` (`FOREIGN KEY (tenant_id, topic_name)`), không trỏ chéo được; (c) tên nhóm tiêu thụ chứa mã tenant (`ck_subscription_group_name`); (d) `apicurio_group_id` bằng tiền tố của `topic_name` (`ck_event_schema_artifact`). Topic nền tảng (FR-10-067) có `tenant_id = 'COMMON'`, tiền tố `dh` (hàng đợi nội bộ) hoặc `platform` (sự kiện cấp nền tảng như `platform.tenant.created.v1`, D00-04 §4).
 
 ### 1.3. Quy ước bảng và ngoại lệ
 
@@ -125,7 +125,7 @@ Trạng thái dùng `varchar` + `CHECK`; thêm giá trị là một changeset m�
 | Ràng buộc | Quy tắc | BR, FR |
 |---|---|---|
 | `ck_topic_prefix`, `ck_topic_name_business`, `ck_topic_name_machine`, `ck_topic_name_dlq` | Tiền tố tenant; BUSINESS ghép đúng `{tenant}.{domain}.{entity}.{eventName}.v{majorVersion}`; CDC, SYSTEM 2…4 đoạn giữa; `.dlq` chỉ cho topic DLQ | BR-10-001, 002, 023 |
-| `ck_topic_reserved_domain` | Miền `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform` không cho BUSINESS | BR-10-030 |
+| `ck_topic_reserved_domain` | Miền `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`, `mdm`, `dq`, `bpm`, `kpi`, `portal` không cho BUSINESS | BR-10-030 |
 | `ck_topic_replication` | `replication_factor = 3`, `min_insync_replicas = 2` | BR-10-004 |
 | `ck_topic_ordering`, `ck_topic_key_field`, `ck_topic_compact_key` | Topic cần thứ tự dùng `KEY_HASH` hoặc `SINGLE_PARTITION`; `KEY_HASH` phải có `partition_key_field`; nén cần khóa | BR-10-006 |
 | `tg_event_schema_none` | `NONE` chỉ khi topic chưa từng `ACTIVE` (ERR-10-019) | BR-10-012 |
@@ -1302,7 +1302,7 @@ Không có giá trị nào ở trên đi vào PostgreSQL, log, kiểm toán hay 
 
 : Topic Kafka do PH-10 quản lý
 
-PH-10 tiêu thụ: `{tenant}.connect.system.state-changed.v1` của PH-01 (giả định Q10-17), `{tenant}.integration.flow.retired.v1` của PH-04, `{tenant}.adapter.cdc.schema-changed.v1` của PH-05 (EVT-05-11), sự kiện khởi tạo tenant của PH-20; mỗi sự kiện chống xử lý trùng qua `inbox_event`. Nhóm tiêu thụ theo A.8: subscription đẩy, kéo `dh-sub-{tenant}-{code}`, Kafka ngoài `dh-ext-…`, luồng `dh-flow-…`, DU `dh-svc-{service}-{tenant}`, giám sát tuân thủ `dh-compliance-{tenant}`, phát lại `dh-replay-{tenant}-{replayCode}`, cầu nối `dh-bridge-{tenant}-{bridgeCode}`.
+PH-10 tiêu thụ: EVT-01-03 `{tenant}.connect.system.state-changed.v1` của PH-01, `{tenant}.integration.flow.retired.v1` của PH-04, `{tenant}.adapter.cdc.schema-changed.v1` của PH-05 (EVT-05-11), EVT-20-01 `platform.tenant.created.v1` và EVT-20-04 `platform.tenant.status-changed.v1` của PH-20 (`inbox_event.tenant_id = 'COMMON'`, tiền tố `platform`); mỗi sự kiện chống xử lý trùng qua `inbox_event`. Nhóm tiêu thụ theo A.8: subscription đẩy, kéo `dh-sub-{tenant}-{code}`, Kafka ngoài `dh-ext-…`, luồng `dh-flow-…`, DU `dh-svc-{service}-{tenant}`, giám sát tuân thủ `dh-compliance-{tenant}`, phát lại `dh-replay-{tenant}-{replayCode}`, cầu nối `dh-bridge-{tenant}-{bridgeCode}`.
 
 Cấu hình cụm (KafkaTopic, KafkaUser với ACL và hạn mức) không lưu ở PostgreSQL mà sinh vào kho Git `dh-config-{tenant}` (`kafka/topics/{topicName}.yaml`, `kafka/users/{principal}.yaml`), Argo CD và Strimzi áp dụng (ADR-072). CSDL chỉ giữ `topic.provisioning_commit` và `publication.acl_ref` để đối chiếu lệch (BR-10-036).
 
@@ -1310,7 +1310,7 @@ Cấu hình cụm (KafkaTopic, KafkaUser với ACL và hạn mức) không lưu 
 
 | Đối tượng | Quy ước | Ghi chú |
 |---|---|---|
-| Nhóm | `groupId = {tenant}` chữ thường (`t68`); topic nền tảng `groupId = dh` | Bằng `event_schema.apicurio_group_id` (CHECK) |
+| Nhóm | `groupId = {tenant}` chữ thường (`t68`); topic nền tảng `groupId = dh` hoặc `platform` theo tiền tố topic | Bằng `event_schema.apicurio_group_id` (CHECK) |
 | Artifact | `artifactId = {topicName}`, loại `AVRO` hoặc `JSON` (ánh xạ `schemaFormat` `AVRO`, `JSON_SCHEMA`) | Một artifact giá trị mỗi topic (ADR-070); topic DLQ không có artifact riêng, dùng lược đồ của topic gốc |
 | Quy tắc | `COMPATIBILITY` = `event_schema.compatibility`; `VALIDITY = FULL` | Đặt khi tạo artifact, đổi qua yêu cầu `TOPIC_CHANGE` |
 | Phiên bản | `globalId`, `contentId` ghi về `schema_version.apicurio_global_id`, `apicurio_content_id` khi duyệt | Bật, ngừng khuyến nghị, vô hiệu theo `schema_version.status` (`ENABLED`, `DEPRECATED`, `DISABLED`) |
@@ -1356,7 +1356,7 @@ Bucket `dh-event-import` trên Ceph RGW (bật phiên bản, không WORM): tệp
 | `migration_bridge` | 5 năm | Cùng tác vụ |
 | `outbox_event`, `inbox_event` | 3 ngày; 7 ngày | `OutboxCleanupJob`, `InboxCleanupJob` mỗi giờ |
 | Kafka | Bản sao 3, `min.insync.replicas` 2; MirrorMaker 2 qua listener `replication` sang site DR (D03-09) | Theo lưu giữ topic |
-| Apicurio | Kho SQL của Apicurio sao lưu cùng chu kỳ `pg-core` (giả định: CSDL riêng trên cùng cụm, D03-09) | Phiên bản lược đồ vĩnh viễn |
+| Apicurio | Kho SQL của Apicurio nằm trong cụm `pg-infra` (D03-09), sao lưu và phục hồi theo chu kỳ của cụm đó, không thuộc `pg-core` | Phiên bản lược đồ vĩnh viễn |
 | OpenBao | Snapshot Raft hằng giờ, mã hóa, sang site DR | Khóa ký `REVOKED` xóa phiên bản KV sau 30 ngày |
 | Kho Git `dh-config-{tenant}` | Sao lưu kho Git cấu hình (D03-09) | Vĩnh viễn |
 
@@ -1494,3 +1494,4 @@ Trạng thái: chín điểm dưới đây đã xử lý ở FRS bản 0.2 (D02-
 | 0.2 | 26/11/2026 | Theo FRS 0.2: `CHECK` mới cho `routing_mode.ordering`, `legacy_mapping.target_type`; thêm `DELIVERY_BLOCKED` (`suspend_source`, chỉ subscription), `REJECTED` (`migration_bridge`), cột `dlq_entry.bridge_code`, `subscription.alert_acknowledged_by`, `alert_acknowledged_at`, `alert_ack_note`; outbox nhận EVT-10-16; sửa tại chỗ changeset vì chưa triển khai; chạy lại DDL và kiểm cô lập trên PostgreSQL 16 | Nhóm viết tài liệu (Claude) |
 | 0.3 | 26/11/2026 | Theo FRS 0.3: khóa JSON kết quả xác minh endpoint trong `subscription.push` chốt tên `lastVerification` (trước ghi `endpointVerification`), sửa `ck_subscription_push`, ghi chú cột và changelog sinh lại; không đổi bảng, cột | Nhóm viết tài liệu (Claude) |
 | 0.4 | 26/11/2026 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): thêm chương Giới thiệu (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc), danh mục 28 bảng (§1.6), khối đặc tả 10 mục cho từng bảng trích từ DDL bằng `ph10/tools/them_dac_ta_bang.py`, chú thích bảng và hình; không đổi DDL | Nhóm viết tài liệu (Claude) |
+| 0.5 | 27/11/2026 | Đồng bộ chéo cuối: Apicurio ở `pg-infra`; miền dành riêng thêm `mdm`, `dq`, `bpm`, `kpi`, `portal`; `ck_topic_prefix`, `ck_inbox_event_prefix`, `ck_event_schema_artifact` nhận tiền tố `platform` của topic cấp nền tảng; EVT-01-03 thay giả định Q10-17 |

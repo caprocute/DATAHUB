@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH10
 ten: Đặc tả use case phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-10
@@ -890,7 +890,7 @@ Use case phục vụ ứng phó sự cố ATTT và đồng bộ trạng thái HT
 
 **Luồng thay thế.**
 
-- **1a. PH-01 tạm ngừng HTTT.** PH-10 nhận sự kiện đổi trạng thái HTTT (giả định `t68.connect.system.state-changed.v1`, Q10-17), trong ≤ 60 giây đưa mọi bên phát, bên nhận gắn `HT-DKKD` sang `SUSPENDED` với `suspendSource` `PH01`, lý do "Theo PH-01"; tiếp bước 2. Khi HTTT `ACTIVE` lại, hệ thống chỉ tiếp tục các bên do PH-01 tạm ngừng, không tiếp tục bên do SO tạm ngừng.
+- **1a. PH-01 tạm ngừng HTTT.** PH-10 nhận sự kiện đổi trạng thái HTTT (EVT-01-03 `t68.connect.system.state-changed.v1` của PH-01), trong ≤ 60 giây đưa mọi bên phát, bên nhận gắn `HT-DKKD` sang `SUSPENDED` với `suspendSource` `PH01`, lý do "Theo PH-01"; tiếp bước 2. Khi HTTT `ACTIVE` lại, hệ thống chỉ tiếp tục các bên do PH-01 tạm ngừng, không tiếp tục bên do SO tạm ngừng.
 - **1b. PH-01 thu hồi kết nạp.** Hệ thống ngừng dùng các bên gắn HTTT như nhánh 4b.
 - **1c. Luồng ngừng ở PH-04.** Nhận EVT-04-09 `t68.integration.flow.retired.v1`: thu hồi publication, subscription của bên `FLOW` tương ứng, xóa nhóm tiêu thụ sau khi luồng dừng hẳn.
 - **1d. Bên nhận.** Tạm ngừng `ht-thue` (API-10-041) đưa subscription sang `SUSPENDED`, bộ giao nhận dừng, phát EVT-10-09.
@@ -1809,8 +1809,8 @@ Mỗi DU nội bộ tự đăng ký topic sự kiện miền của mình theo c�
 **Luồng thay thế.**
 
 - **2a. Triển khai lại.** Bộ khai báo gọi lặp; PH-10 trả `200` cho topic đã có cùng cấu hình.
-- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…16) theo cùng cách.
-- **2c. Topic nền tảng.** Hà hoặc tài khoản dịch vụ nền tảng đăng ký `dh.integration.runtime.command.v1` thuộc tenant `COMMON`, artifact Apicurio `groupId = dh`.
+- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…16) theo cùng cách; DU của phân hệ miền đăng ký trọn bộ topic của mình (`t68.mdm.*`, `t68.dq.*`, `t68.bpm.*`, `t68.kpi.*`, `t68.obs.*`, `t68.portal.*`) ở lần triển khai đầu.
+- **2c. Topic nền tảng.** Hà hoặc tài khoản dịch vụ nền tảng đăng ký `dh.integration.runtime.command.v1` thuộc tenant `COMMON`, artifact Apicurio `groupId = dh`; sự kiện cấp nền tảng như `platform.tenant.created.v1` (EVT-20-01 của PH-20) đăng ký cùng cách, tiền tố `platform.`, `groupId = platform`.
 - **4a. PH-20 tạm ngừng tenant.** PH-10 chặn mọi lệnh ghi của tenant (ERR-10-039) và tạm ngừng publication, subscription theo quy trình PH-20.
 
 **Luồng ngoại lệ.**
@@ -1818,7 +1818,7 @@ Mỗi DU nội bộ tự đăng ký topic sự kiện miền của mình theo c�
 - **E1. DU không có trong danh sách Phụ lục A.2.12 (bước 2).** ERR-10-023 (422). Thông báo: "Dịch vụ nội bộ {mã} không có trong danh sách."
 - **E2. Tiền tố không khớp tenant (bước 2).** ERR-10-005 (422). Thông báo: "Tiền tố tenant của topic không khớp tenant đang làm việc."
 - **E3. Người dùng sửa cấu hình topic `SYSTEM` ngoài mô tả.** ERR-10-045 (422). Thông báo: "Topic CDC, hệ thống chỉ do dịch vụ chủ quản ({dịch vụ}) sửa."
-- **E4. Người dùng đăng ký topic có tiền tố `dh.` (bước 2c).** ERR-10-004 (422). Thông báo: "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
+- **E4. Người dùng đăng ký topic có tiền tố `dh.` hoặc `platform.` (bước 2c).** ERR-10-004 (422). Thông báo: "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
 
 **Quy tắc áp dụng.** BR-10-001, 002, 018, 030, 031.
 
@@ -2123,3 +2123,4 @@ Ngoài ra, ERR-10-007 và ERR-10-044 ở §5.3 của tập màn hình chỉ dẫ
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC, căn cứ FRS D02-03-PH10 0.1 và Phụ lục A |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo FRS 0.2: ERR-10-051 (cấp độ ATTT), ERR-10-052 (tạm dừng `INTERNAL`), EVT-10-16, API-10-091; §8.2 đã xử lý |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo chuẩn kết hợp K-UC, K-TRINH-BAY: Giới thiệu đủ sáu mục, mẫu 15 mục và quy ước đọc, tác nhân có viết tắt; sơ đồ use case tổng chia năm hình theo nhóm có chú thích; bảng truy vết thêm kịch bản kiểm thử và mã quy trình BP; cả 28 use case chuyển sang khối đặc tả 15 mục có đoạn bối cảnh, truy vết, màn hình, API; luồng ngoại lệ kèm mã HTTP và câu thông báo theo D03-06-PH10 §5.3, §18.4; giữ nguyên mọi bước, dữ liệu ví dụ và sơ đồ trình tự; thêm §8.3 đề nghị đồng bộ câu thông báo |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Q10-17 chốt EVT-01-03; topic nền tảng `platform.` và topic miền đăng ký ở UC-10-24 |

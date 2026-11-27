@@ -4379,10 +4379,18 @@ paths:
       x-datahub-id: API-10-057
       x-datahub-fr:
       - FR-10-009
+      - FR-10-011
+      - FR-10-012
+      - FR-10-013
+      - FR-10-014
       - FR-10-019
+      - FR-10-021
+      - FR-10-022
       - FR-10-031
       - FR-10-037
       - FR-10-051
+      - FR-10-073
+      - FR-10-075
       x-datahub-permission:
         permission: PERM-10-read
       security:
@@ -4462,10 +4470,18 @@ paths:
       x-datahub-id: API-10-058
       x-datahub-fr:
       - FR-10-009
+      - FR-10-011
+      - FR-10-012
+      - FR-10-013
+      - FR-10-014
       - FR-10-019
+      - FR-10-021
+      - FR-10-022
       - FR-10-031
       - FR-10-037
       - FR-10-051
+      - FR-10-073
+      - FR-10-075
       x-datahub-permission:
         permission: PERM-10-read
       security:
@@ -4509,10 +4525,18 @@ paths:
       x-datahub-id: API-10-059
       x-datahub-fr:
       - FR-10-009
+      - FR-10-011
+      - FR-10-012
+      - FR-10-013
+      - FR-10-014
       - FR-10-019
+      - FR-10-021
+      - FR-10-022
       - FR-10-031
       - FR-10-037
       - FR-10-051
+      - FR-10-073
+      - FR-10-075
       x-datahub-permission:
         permission: PERM-10-approve
       security:
@@ -4590,10 +4614,18 @@ paths:
       x-datahub-id: API-10-101
       x-datahub-fr:
       - FR-10-009
+      - FR-10-011
+      - FR-10-012
+      - FR-10-013
+      - FR-10-014
       - FR-10-019
+      - FR-10-021
+      - FR-10-022
       - FR-10-031
       - FR-10-037
       - FR-10-051
+      - FR-10-073
+      - FR-10-075
       x-datahub-permission:
         permission: PERM-10-approve
       security:
@@ -4661,10 +4693,18 @@ paths:
       x-datahub-id: API-10-102
       x-datahub-fr:
       - FR-10-009
+      - FR-10-011
+      - FR-10-012
+      - FR-10-013
+      - FR-10-014
       - FR-10-019
+      - FR-10-021
+      - FR-10-022
       - FR-10-031
       - FR-10-037
       - FR-10-051
+      - FR-10-073
+      - FR-10-075
       x-datahub-permission:
         anyOf:
         - PERM-10-create

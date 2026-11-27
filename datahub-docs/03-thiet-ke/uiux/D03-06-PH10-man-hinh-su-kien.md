@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH10
 ten: Thiết kế giao diện màn hình phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, kỹ sư tích hợp, vận hành, ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-10
@@ -1167,7 +1167,7 @@ Tab Tổng quan của topic đang hoạt động: bốn thẻ số 24 giờ, lư
 | Bước | Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi máy chủ |
 |---|---|---|---|---|---|---|
 | 1 | Dự án | `projectCode` | `CMP-ResourceSelect` dự án `ACTIVE` | Có | | ERR-10-001, ERR-10-006 |
-| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
+| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`, `mdm`, `dq`, `bpm`, `kpi`, `portal` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
 | 1 | Thực thể | `entity` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$` | ERR-10-004 |
 | 1 | Sự kiện | `eventName` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$`; gợi ý mềm khi không bắt đầu bằng `da-` ("Nên dùng động từ quá khứ") | ERR-10-004 |
 | 1 | Tên topic | (ghép) | `CMP-Identifier` chỉ đọc | | `{tenant}.{domain}.{entity}.{eventName}.v1` chữ thường, ≤ 200 ký tự; kiểm tra còn trống bằng API-10-010 sau 400 ms ngừng gõ | ERR-10-002, ERR-10-005 |
@@ -2153,7 +2153,7 @@ Kéo nút có phương án không kéo (WCAG 2.5.7): chọn nút rồi dùng ph�
 
 ### 20.11. Làm nổi đường đi
 
-Chọn một nút làm nổi mọi nút, cạnh nằm trên đường đi qua nút đó: với bên phát là các topic nó phát và các bên nhận của những topic đó; với topic là bên phát và bên nhận của nó; với bên nhận là các topic nó nhận và bên phát của chúng. Nút, cạnh còn lại mờ đi (đề nghị token độ mờ ở Phụ lục A; tạm dùng `opacity-disabled` cho nút và `color-text-disabled` cho nhãn). Nút đang chọn có vòng focus kép `color-focus-ring`, `color-focus-ring-inner`. `Esc` bỏ làm nổi.
+Chọn một nút làm nổi mọi nút, cạnh nằm trên đường đi qua nút đó: với bên phát là các topic nó phát và các bên nhận của những topic đó; với topic là bên phát và bên nhận của nó; với bên nhận là các topic nó nhận và bên phát của chúng. Nút, cạnh còn lại mờ đi bằng token `opacity-dimmed` (D03-05-02), không dùng `opacity-disabled` vì không mang nghĩa vô hiệu; nhãn vẫn đọc được, không đổi sang `color-text-disabled`. Nút đang chọn có vòng focus kép `color-focus-ring`, `color-focus-ring-inner`. `Esc` bỏ làm nổi.
 
 ### 20.12. Drawer chi tiết (R8)
 
@@ -2768,7 +2768,7 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 > **Câu hỏi mở Q10-34:** Người đề nghị subscription không còn ở đơn vị (nghỉ, chuyển công tác) trước khi xem khóa ký đầu: ai được xem? Đề xuất: người có `PERM-10-subscribe` trên bên nhận đó xoay khóa để lấy khóa mới.
 
-> **Câu hỏi mở Q10-35:** Màn DLQ của PH-10 (UI-10-15) và màn xử lý lỗi chung của PH-18 có trùng chức năng; khi PH-18 sẵn sàng, UI-10-15 có giữ thao tác loại bỏ, phát lại hay chỉ còn xem và liên kết sang PH-18?
+> **Câu hỏi mở Q10-35:** Màn DLQ của PH-10 (UI-10-15) và màn xử lý lỗi chung của PH-18 có trùng chức năng; khi PH-18 sẵn sàng, UI-10-15 có giữ thao tác loại bỏ, phát lại hay chỉ còn xem và liên kết sang PH-18? **Đã chốt ở bản 0.4:** PH-10 giữ thao tác loại bỏ (API-10-062) và phát lại (API-10-064) của DLQ tầng sự kiện ở UI-10-15; PH-18 hiển thị DLQ chung và mở liên kết sang UI-10-15 hoặc đề nghị phát lại qua API-10-064 (khớp D02-03-PH18, Q18-03).
 
 > **Câu hỏi mở Q10-36:** Ước lượng "Từ dữ liệu cũ nhất" ở UI-10-11 bước 4 tính phía giao diện từ số liệu 24 giờ; có cần API trả ước lượng chính xác theo offset đầu, cuối từng phân vùng?
 
@@ -2785,3 +2785,4 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 | 0.1 | 2026-11-26 | Bản đầu: 20 màn UI-10-01…20, sơ đồ kết nối siêu chi tiết, đăng ký nhận và chi tiết subscription rất chi tiết, ánh xạ màn Hub cũ, đề nghị bổ sung D03-05, API, FRS, câu hỏi mở Q10-30…39 |
 | 0.2 | 2026-11-26 | Theo FRS 0.3 và D03-04-PH10 0.2: Phụ lục B, C đã xử lý; `legalBasis` 10…1.000 ký tự; `signingKeyPending`, `metricsCollectedAt` theo tên API; Q10-31 đã trả lời (miễn xác minh sau khi tạo) |
 | 0.3 | 2026-11-26 | Chuẩn kết hợp theo K-MH và K-TRINH-BAY: giới thiệu đủ mục (phạm vi, người đọc, thuật ngữ, cấu trúc) và danh sách màn có cột UC; khối đặc tả 12 mục đầu cả 20 màn; bảng thông báo đủ ERR-10-053, 054 và nơi hiển thị lỗi data plane 101…121; đồng bộ số API tách theo FRS 0.3; ảnh hi-fi 20 màn ở `ph10/hifi/`; Phụ lục D đề nghị đồng bộ. Giữ nguyên wireframe, bảng thành phần, trạng thái, bàn phím của bản 0.2 |
+| 0.4 | 2026-11-27 | Đồng bộ chéo cuối: làm mờ nút ngoài đường đi bằng `opacity-dimmed` của D03-05-02; miền dành riêng thêm `mdm`, `dq`, `bpm`, `kpi`, `portal` ở trường Miền của biểu mẫu tạo topic; chốt Q10-35 (UI-10-15 giữ loại bỏ, phát lại) |

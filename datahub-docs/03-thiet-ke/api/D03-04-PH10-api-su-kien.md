@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH10
 ten: Đặc tả API và sự kiện phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; đơn vị kết nối HTTT; ATTT; hội đồng thẩm định
 phan_he: PH-10
@@ -342,11 +342,11 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
 |---|---|---|---|---|---|---|---|
-| API-10-057 | `GET /approval-requests` | Danh sách yêu cầu duyệt | 009, 019, 031, 037, 051 | `PERM-10-read` |  | 200 | 049 |
-| API-10-058 | `GET /approval-requests/{requestCode}` | Chi tiết yêu cầu duyệt | 009, 019, 031, 037, 051 | `PERM-10-read` |  | 200 |  |
-| API-10-059 | `POST /approval-requests/{requestCode}:approve` | Duyệt yêu cầu | 009, 019, 031, 037, 051 | `PERM-10-approve` |  | 200 | 006, 008, 009, 011, 016, 029, 038, 051 |
-| API-10-101 | `POST /approval-requests/{requestCode}:reject` | Từ chối yêu cầu | 009, 019, 031, 037, 051 | `PERM-10-approve` |  | 200 | 006, 008, 009 |
-| API-10-102 | `POST /approval-requests/{requestCode}:withdraw` | Rút yêu cầu đã gửi | 009, 019, 031, 037, 051 | `PERM-10-create` hoặc `PERM-10-update` hoặc `PERM-10-subscribe` hoặc `PERM-10-operate` |  | 200 | 006, 009 |
+| API-10-057 | `GET /approval-requests` | Danh sách yêu cầu duyệt | 009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075 | `PERM-10-read` |  | 200 | 049 |
+| API-10-058 | `GET /approval-requests/{requestCode}` | Chi tiết yêu cầu duyệt | 009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075 | `PERM-10-read` |  | 200 |  |
+| API-10-059 | `POST /approval-requests/{requestCode}:approve` | Duyệt yêu cầu | 009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075 | `PERM-10-approve` |  | 200 | 006, 008, 009, 011, 016, 029, 038, 051 |
+| API-10-101 | `POST /approval-requests/{requestCode}:reject` | Từ chối yêu cầu | 009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075 | `PERM-10-approve` |  | 200 | 006, 008, 009 |
+| API-10-102 | `POST /approval-requests/{requestCode}:withdraw` | Rút yêu cầu đã gửi | 009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075 | `PERM-10-create` hoặc `PERM-10-update` hoặc `PERM-10-subscribe` hoặc `PERM-10-operate` |  | 200 | 006, 009 |
 
 : Danh mục endpoint · Yêu cầu duyệt
 
@@ -698,12 +698,12 @@ Sự kiện ghi vào `ph10_event.outbox_event` cùng giao dịch nghiệp vụ, 
 <!-- gen:events:start -->
 | Mã | Topic | Khi nào | Khóa | Payload | Bên nhận | FR |
 |---|---|---|---|---|---|---|
-| EVT-10-01 | `{tenant}.event.topic.activated.v1` | Topic sang `ACTIVE`. | `topicName` | `TopicActivated` | PH-04, PH-05, PH-02, PH-13 | 009, 066 |
+| EVT-10-01 | `{tenant}.event.topic.activated.v1` | Topic sang `ACTIVE`. | `topicName` | `TopicActivated` | PH-04, PH-05, PH-02, PH-13, PH-16 | 009, 066 |
 | EVT-10-02 | `{tenant}.event.topic.changed.v1` | Cấu hình topic, mức tương thích, trạng thái phiên bản lược đồ đổi. | `topicName` | `TopicChanged` | dh-runtime, PH-04, PH-13 | 011, 012, 021, 022 |
 | EVT-10-03 | `{tenant}.event.topic.deprecated.v1` | Topic sang `DEPRECATED` (kèm kế nhiệm, `sunsetAt`). | `topicName` | `TopicDeprecated` | PH-04, PH-02, PH-18 | 014, 015, 068 |
-| EVT-10-04 | `{tenant}.event.topic.retired.v1` | Topic sang `RETIRED`. | `topicName` | `TopicRetired` | PH-04, PH-05, PH-02, PH-13 | 014 |
+| EVT-10-04 | `{tenant}.event.topic.retired.v1` | Topic sang `RETIRED`. | `topicName` | `TopicRetired` | PH-04, PH-05, PH-02, PH-13, PH-16 | 014 |
 | EVT-10-05 | `{tenant}.event.schema.version-enabled.v1` | Phiên bản lược đồ `ENABLED`. | `topicName` | `SchemaVersionEnabled` | dh-runtime, PH-04, PH-05, PH-15 | 009, 019, 068 |
-| EVT-10-06 | `{tenant}.event.publication.activated.v1` | Publication `ACTIVE`. | `publicationCode` | `PublicationActivated` | PH-04, PH-13 | 031 |
+| EVT-10-06 | `{tenant}.event.publication.activated.v1` | Publication `ACTIVE`. | `publicationCode` | `PublicationActivated` | PH-04, PH-13, PH-16 | 031 |
 | EVT-10-07 | `{tenant}.event.publication.state-changed.v1` | Tạm ngừng, tiếp tục, thu hồi publication. | `publicationCode` | `PublicationStateChanged` | PH-04, PH-13, PH-18 | 028, 029, 032 |
 | EVT-10-08 | `{tenant}.event.subscription.activated.v1` | Subscription `ACTIVE`. | `subscriptionCode` | `SubscriptionActivated` | dh-runtime, PH-04, PH-13 | 037 |
 | EVT-10-09 | `{tenant}.event.subscription.state-changed.v1` | Tạm dừng, tiếp tục, tạm ngừng, thu hồi, đổi tham số có hiệu lực. | `subscriptionCode` | `SubscriptionStateChanged` | dh-runtime, PH-04, PH-13, PH-18 | 039, 041, 046, 047 |
@@ -729,7 +729,7 @@ value: {"tenantId": "T68", "subscriptionCode": "ht-thue-dn-cap-phep", "topicName
         "suspendReason": "Tỷ lệ lỗi ≥ 50% liên tục 30 phút.", "changedFields": [], "configVersion": 4183}
 ```
 
-Sự kiện PH-10 tiêu thụ (FRS §9.3): EVT-05-11 `{tenant}.adapter.cdc.schema-changed.v1` (FR-10-068); EVT-04-09 `{tenant}.integration.flow.retired.v1` (FR-10-029); sự kiện đổi trạng thái HTTT của PH-01, giả định `{tenant}.connect.system.state-changed.v1` (Q10-17); sự kiện khởi tạo, tạm ngừng tenant của PH-20 (FR-10-064). Nhóm tiêu thụ theo A.8: `dh-svc-dh-integration-{tenant}-{consumer}` cho từng bộ tiêu thụ inbox.
+Sự kiện PH-10 tiêu thụ (FRS §9.3): EVT-05-11 `{tenant}.adapter.cdc.schema-changed.v1` (FR-10-068); EVT-04-09 `{tenant}.integration.flow.retired.v1` (FR-10-029); EVT-01-03 `{tenant}.connect.system.state-changed.v1` và EVT-01-04 `{tenant}.connect.system.updated.v1` của PH-01 (FR-10-029); EVT-20-01 `platform.tenant.created.v1` và EVT-20-04 `platform.tenant.status-changed.v1` của PH-20 (FR-10-064). Nhóm tiêu thụ theo A.8: `dh-svc-dh-integration-{tenant}-{consumer}` cho từng bộ tiêu thụ inbox.
 
 ### 4.2. Kênh giao ĐẨY webhook (PUSH)
 
@@ -797,13 +797,14 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 | PH-05 | PH-05 → PH-10 | API-10-009 (`topicKind = CDC`), 023 (phiên bản lược đồ), 018 (phiên bản chính mới), scope `event:topic-register`; EVT-05-11 | Một topic mỗi bảng `{topicPrefix}.{schema}.{table}.v1`, Avro; tự duyệt, trả 202 ≤ 2 giây. Kết nối `kafka-external` của PH-05 là Kafka ngoài, không qua PH-10 |
 | PH-05 | PH-10 → PH-05 | EVT-10-01, 04, 05 | PH-05 theo dõi cấp phát và phiên bản lược đồ |
 | PH-07 | HTTT ↔ PH-10 | Topic `{tenant}.rdm.*` đăng ký máy (`SYSTEM`); HTTT đề nghị subscription qua API-10-047, nhận scope `topic:{tên}:subscribe` | Miền `rdm` dành riêng |
-| PH-01 | PH-10 đọc | HTTT tồn tại, `ACTIVE`, cấp độ ATTT (ERR-10-021, 051); sự kiện đổi trạng thái HTTT (Q10-17) | Tạm ngừng theo PH-01 đặt `suspendSource = PH01` |
+| PH-01 | PH-10 gọi và nghe | API-01-063, 064 (`/internal/systems`) bằng token dịch vụ `onboarding:internal-read` khi khởi tạo và đối chiếu mỗi giờ: HTTT tồn tại, `ACTIVE`, cấp độ ATTT (ERR-10-021, 051); nghe EVT-01-03, EVT-01-04 | Tạm ngừng theo PH-01 đặt `suspendSource = PH01` |
 | PH-12 | PH-10 → Keycloak, OPA | Cấp, gỡ scope `topic:*` ở client HTTT; dữ liệu quyền OPA cho APISIX; chứng thư khách mTLS do CA nội bộ cấp | Gỡ OPA trước, hiệu lực ≤ 60 giây (NFR-10-009) |
 | PH-13 | PH-10 → PH-13 | Kiểm toán qua outbox; EVT-10-07, 09…16; chỉ số `dh_event_*` OTLP; API-10-055, 066 cho bảng điều khiển | Biểu đồ CPU, bộ nhớ cụm Kafka thuộc PH-13 (LGC-HUB-005, 006) |
 | PH-18 | PH-18 ↔ PH-10 | API-10-060, 061 (`event:dlq-read`), 063, 064, 104 (`event:replay`); EVT-10-07, 09, 10, 11, 12, 14, 15, 16 | Màn xử lý lỗi chung ở PH-18 dùng cùng API; PH-10 chỉ giữ DLQ tầng sự kiện theo topic |
-| PH-20 | PH-20 → PH-10 | Sự kiện khởi tạo, tạm ngừng tenant | Tạm ngừng tenant: lệnh ghi trả ERR-10-039 |
+| PH-20 | PH-20 → PH-10; PH-10 → PH-20 | EVT-20-01 `platform.tenant.created.v1`, EVT-20-04 `platform.tenant.status-changed.v1`; PH-10 báo bước `S06_EVENTING` bằng API-20-166 (scope `tenant:provision-report`) | Tạm ngừng tenant: lệnh ghi trả ERR-10-039; khởi tạo chạy lại lũy đẳng nhờ `inbox_event` |
+| PH-06, PH-08, PH-11, PH-13, PH-15, PH-16 | DU nội bộ → PH-10 | API-10-009 với scope `event:topic-register`: topic `{tenant}.mdm.*` (15), `dq.*` (14), `bpm.*` (21), `obs.*`, `portal.*` (gồm `{tenant}.portal.support.ticket-opened.v1`), `kpi.*` (14, gồm EVT-16-14 `{tenant}.kpi.period.state-changed.v1`) theo FR-10-067 | Các miền này dành riêng, chỉ nhận đăng ký máy; PH-13 giữ `audit.recorded` 7 ngày 6 phân vùng khóa `id`, `access.logged` 3 ngày 6 phân vùng khóa `route`, các sự kiện còn lại 30 ngày (ADR-072); tên, khóa phân vùng do phân hệ phát sự kiện đặt |
 | PH-02, PH-15 | PH-10 → PH-02, PH-15 | EVT-10-01, 03, 04, 05 | Danh mục dịch vụ sự kiện; tài liệu cổng nhà phát triển, mã mẫu xác minh chữ ký |
-| Apicurio Registry 3 | PH-10 ghi; HTTT đọc | Artifact `groupId = {tenant}`, `artifactId = {topicName}`, quy tắc tương thích theo topic (ADR-070); đường chỉ đọc API-10-084 | HTTT, luồng không có quyền ghi registry (`auto.register=false`) |
+| Apicurio Registry 3 | PH-10 ghi; HTTT đọc | Artifact `groupId = {tenant}` (topic nền tảng: `dh` hoặc `platform`), `artifactId = {topicName}`, quy tắc tương thích theo topic (ADR-070); đường chỉ đọc API-10-084 | HTTT, luồng không có quyền ghi registry (`auto.register=false`) |
 | Strimzi, Argo CD | PH-10 → Git | `KafkaTopic`, `KafkaUser` trong `dh-config-{tenant}` (`kafka/topics/`, `kafka/users/`), ACL theo tiền tố tenant (ADR-072) | Không qua API này; trạng thái thấy qua `provisioningCommit`, `provisioningError` |
 | OpenBao | `dh-integration` ghi; `dh-runtime` đọc | `kv/dh/{tenant}/event/subscriptions/{subscriptionCode}/signing`, `transit/dh-{tenant}-event-dlq`, `kv/dh/{tenant}/event/runtime/cursor` | Không qua API này |
 | Hub Pulsar cũ | Cầu nối ↔ Pulsar | API-10-075 (kiểm kê), 113…116, 078, 117, 118 | Kết nối nguồn tới Pulsar khai ở PH-05 (ADR-073) |
@@ -1081,18 +1082,18 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 | FR-10-008 | Tạo topic và gửi duyệt | 009, 011, 012 |
 | FR-10-009 | Duyệt tạo topic và cấp phát trên cụm | 057, 058, 059, 101, 102 |
 | FR-10-010 | Theo dõi cấp phát và xử lý cấp phát thất bại | 013, 014 |
-| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | 015 |
-| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | 015 |
-| FR-10-013 | Chế độ định tuyến và khóa phân vùng | 015 |
-| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | 011, 016, 017 |
+| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | 015, 057, 058, 059, 101, 102 |
+| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | 015, 057, 058, 059, 101, 102 |
+| FR-10-013 | Chế độ định tuyến và khóa phân vùng | 015, 057, 058, 059, 101, 102 |
+| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | 011, 016, 017, 057, 058, 059, 101, 102 |
 | FR-10-015 | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | 018 |
 | FR-10-016 | Theo dõi chuyển đổi bên nhận sang phiên bản topic mới | 019 |
 | FR-10-017 | Soạn và kiểm tra lược đồ | 023, 025, 026 |
 | FR-10-018 | Kiểm tra tương thích với các phiên bản đã có | 026 |
 | FR-10-019 | Gửi duyệt và duyệt phiên bản lược đồ | 027, 057, 058, 059, 101, 102 |
 | FR-10-020 | Xem lịch sử phiên bản, so sánh và tải lược đồ | 021, 022, 024, 030 |
-| FR-10-021 | Đặt mức tương thích của lược đồ | 015 |
-| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | 028, 029 |
+| FR-10-021 | Đặt mức tương thích của lược đồ | 015, 057, 058, 059, 101, 102 |
+| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | 028, 029, 057, 058, 059, 101, 102 |
 | FR-10-023 | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | 031 |
 | FR-10-024 | Cung cấp tra cứu lược đồ cho bên ngoài | 020, 084 |
 | FR-10-025 | Liệt kê bên phát và bên nhận | 032, 034, 037, 039 |
@@ -1143,9 +1144,9 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 | FR-10-070 | Xuất khai báo | 074 |
 | FR-10-071 | Nhập khai báo có xem trước | 075, 110, 111, 121 |
 | FR-10-072 | Nhập kiểm kê Pulsar và lập ánh xạ | 075, 076, 110, 111, 112 |
-| FR-10-073 | Cầu nối Pulsar sang Kafka tạm thời | 077, 090, 113, 114, 115 |
+| FR-10-073 | Cầu nối Pulsar sang Kafka tạm thời | 057, 058, 059, 077, 090, 101, 102, 113, 114, 115 |
 | FR-10-074 | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | 077, 090, 113, 114, 115 |
-| FR-10-075 | Đối chiếu, chuyển hẳn và quay lui | 078, 116, 117 |
+| FR-10-075 | Đối chiếu, chuyển hẳn và quay lui | 057, 058, 059, 078, 101, 102, 116, 117 |
 | FR-10-076 | Báo cáo tiến độ di trú | 118 |
 
 : Truy vết FR → API
@@ -4161,3 +4162,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API trên FRS 0.2: 120 operation (API-10-001…091 theo FRS, 092…119 tách dòng gộp, 120 theo đề nghị của tập màn hình), EVT-10-01…16, kênh webhook PUSH ký HMAC, kênh mẫu topic nghiệp vụ và DLQ; OpenAPI 3.1, AsyncAPI 3.0 sinh từ bảng mã, đã kiểm hợp đồng và đối chiếu FRS | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Theo FRS 0.3: ERR-10-053, 054 cho 401, 403 control plane (data plane giữ 101, 102); API-10-121 `POST /imports/{jobCode}:cancel`; `legalBasis` 10…1.000 ký tự, `multiplier` 1…5, mặc định `failurePolicy` theo `orderingRequired`, ràng buộc ngưỡng lag; §10.1 trống vì FRS đã hấp thụ 91 trường, 6 enum; sinh lại OpenAPI, AsyncAPI và bảng, kiểm hợp đồng và đối chiếu FRS sạch | Nhóm viết tài liệu (Claude) |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): chương 0 Giới thiệu đủ mục; §1.2 kiến trúc thành phần, §1.3 trình tự luồng chính; §6.4 thông báo hiển thị theo mã lỗi; chương 12 đặc tả 121 endpoint bằng khối 10 mục sinh từ OpenAPI; chú thích bảng và hình. Không đổi OpenAPI, AsyncAPI | Nhóm viết tài liệu (Claude) |
+| 0.4 | 27/11/2026 | Đồng bộ chéo cuối: cột FR của API-10-057…059, 101, 102 thêm FR-10-011…014, 021, 022, 073, 075; hợp đồng với PH-01 (API-01-063, 064), PH-20 (EVT-20-01, 04; API-20-166) và topic miền của PH-06, 08, 11, 13, 15, 16; PH-16 nhận EVT-10-01, 04, 06 | Nhóm viết tài liệu (Claude) |

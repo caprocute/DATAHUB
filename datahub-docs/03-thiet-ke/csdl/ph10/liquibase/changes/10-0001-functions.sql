@@ -86,5 +86,5 @@ CREATE OR REPLACE FUNCTION ph10_event.f_topic_prefix(p_tenant text) RETURNS text
   LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $f$
   SELECT CASE WHEN p_tenant = 'COMMON' THEN 'dh' ELSE lower(p_tenant) END
 $f$;
-COMMENT ON FUNCTION ph10_event.f_topic_prefix(text) IS 'Tiền tố topic của tenant: t68 cho T68, dh cho COMMON (topic nền tảng, FR-10-067).';
+COMMENT ON FUNCTION ph10_event.f_topic_prefix(text) IS 'Tiền tố topic của tenant: t68 cho T68, dh cho COMMON (topic nền tảng, FR-10-067); topic cấp nền tảng của COMMON còn được dùng tiền tố platform theo D00-04 §4, kiểm ở ck_topic_prefix.';
 --rollback DROP FUNCTION IF EXISTS ph10_event.f_topic_prefix(text);

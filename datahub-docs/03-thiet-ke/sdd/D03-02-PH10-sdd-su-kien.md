@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH10
 ten: Thiết kế chi tiết phần mềm phân hệ PH-10 Sự kiện
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kỹ sư nền tảng Kafka, kiến trúc sư, ATTT, hội đồng thẩm định
 phan_he: PH-10
@@ -104,7 +104,7 @@ Tài liệu dùng FRS D02-03-PH10 (FR, BR, NFR, Phụ lục A), CSDL D03-03-PH10
 | Bộ giao nhận webhook (kèm bộ phát lại, bộ giám sát tuân thủ, bộ xác minh endpoint) | `dh-runtime`, StatefulSet `dh-runtime-event-dispatcher` trong `dh-rt-{tenant}` | Z4 | Tối thiểu 2 bản sao, KEDA theo tổng lag của nhóm `dh-sub-{tenant}-*` |
 | Cầu nối Pulsar | Luồng Camel trên `dh-runtime` hồ sơ `legacy-jvm` (thành phần `pulsar`) | Z4 | Chỉ trong giai đoạn di trú |
 | Kafka KRaft, Topic Operator, User Operator | Strimzi, namespace `dh-kafka` | Z4 (broker), listener `external` mở ra Z2 khi tenant bật | Ba broker, `replicas: 3`, `min.insync.replicas: 2` |
-| Apicurio Registry 3 | Nền tảng, lưu trữ trên `pg-core` (schema riêng của Apicurio) | Z4 | Ghi chỉ bởi `dh-integration`; HTTT đọc qua `/event/v1/registry/**` |
+| Apicurio Registry 3 | Nền tảng, lưu trữ trên `pg-infra` (schema riêng của Apicurio, D03-09) | Z4 | Ghi chỉ bởi `dh-integration`; HTTT đọc qua `/event/v1/registry/**` |
 | `pg-core` schema `ph10_event` | Nền tảng (CNPG) | Z5 | RLS theo `tenant_id` |
 | OpenBao | Nền tảng | Z5 | `kv/dh/{tenant}/event/subscriptions/{subscriptionCode}/signing`, `transit/dh-{tenant}-event-dlq` |
 | Valkey | Nền tảng | Z5 | Lease kéo, chống trùng cổng, ảnh chụp cấu hình runtime (§4.12) |
@@ -172,14 +172,14 @@ Sơ đồ cho thấy ba đường. Đường khai báo đi từ giao diện qua 
 
 | Bên | Hướng | Cơ chế | Dùng cho | Khi bên kia không khả dụng |
 |---|---|---|---|---|
-| PH-01 Kết nạp HTTT | PH-10 gọi và tiêu thụ | `SystemRegistryApi` (bản sao đọc), sự kiện giả định `{tenant}.connect.system.state-changed.v1` (Q10-17) | Kiểm `systemCode` `ACTIVE`, `clientId`, cấp độ ATTT; tạm ngừng theo PH-01 (FR-10-029) | Khai báo bên phát, bên nhận mới trả ERR-10-029; bên đang có giữ nguyên; đối chiếu mỗi giờ bù sự kiện lỡ |
+| PH-01 Kết nạp HTTT | PH-10 gọi và tiêu thụ | `SystemRegistryApi` (bản sao đọc, nạp bằng API-01-063, 064 với token `onboarding:internal-read` khi khởi tạo và đối chiếu mỗi giờ), EVT-01-03 và EVT-01-04 `{tenant}.connect.system.state-changed.v1` (đổi trạng thái HTTT, kèm ảnh chụp đối chiếu hằng giờ) | Kiểm `systemCode` `ACTIVE`, `clientId`, cấp độ ATTT; tạm ngừng theo PH-01 (FR-10-029) | Khai báo bên phát, bên nhận mới trả ERR-10-029; bên đang có giữ nguyên; đối chiếu mỗi giờ bù sự kiện lỡ |
 | PH-04 Lõi tích hợp | Hai chiều trong tiến trình | `flow.api.FlowQueryApi` (PH-10 gọi); `event.api.EventPermissionApi`, `EventCatalogApi` (PH-04 gọi, cùng DU); qua HTTP cho môi trường tách DU: API-10-071, 072 với scope `event:permission-check` | VR-10, bảng chọn topic của trình thiết kế, phụ thuộc luồng (API-04-016), EVT-04-09 | PH-04 chặn gửi duyệt luồng khi không kiểm được (FR-10-069) |
 | PH-05 Bộ điều hợp | PH-05 gọi | `event.api.TopicRegistrationApi` trong tiến trình hoặc API-10-009, API-10-023 với scope `event:topic-register`; tiêu thụ EVT-05-11 | Topic CDC tự duyệt (FR-10-066, 068) | PH-05 trả ERR-05-029, CDC đang chạy không ảnh hưởng |
 | PH-12 Định danh | PH-10 gọi | Keycloak Admin API (gắn, gỡ client scope), bundle dữ liệu OPA | Scope `topic:{topicName}:publish`, `:subscribe` (BR-10-020) | Lệnh duyệt trả ERR-10-029, yêu cầu giữ `PENDING` |
 | PH-13 Giám sát, kiểm toán | PH-10 phát | OTLP (chỉ số, vết, log), outbox kiểm toán | Lag, giao nhận, kiểm toán (FR-10-059, 065) | Đệm của bộ thu OTel; kiểm toán nằm trong outbox chờ |
 | PH-18 Vận hành | PH-18 gọi, PH-10 phát | API-10-060…065 với scope `event:dlq-read`, `event:replay`; EVT-10-07, 09, 10, 11, 12, 14, 15 | Màn DLQ chung, sự cố | Không ảnh hưởng PH-10 |
-| PH-18 kho tham số | PH-10 đọc | `ParameterApi` với tiền tố `10.` | Tham số tenant (FR-10-063) | Đệm 5 phút, giá trị mặc định Phụ lục A.5 |
-| PH-20 Quản trị tenant | PH-10 tiêu thụ | Sự kiện khởi tạo, tạm ngừng tenant | Khai báo nền: hạn mức, principal nội bộ, ACL tiền tố, topic hệ thống (FR-10-064) | Khởi tạo chạy lại idempotent |
+| PH-18 kho tham số | PH-10 đọc | `ParameterApi` với tiền tố `10.` | Tham số tenant (FR-10-063) | Đệm tối đa 60 giây qua `dh-ops-client`, làm mới ngay khi PH-18 phát EVT-18-01 (BR-18-006, ADR-180); giá trị mặc định Phụ lục A.5 |
+| PH-20 Quản trị tenant | PH-10 tiêu thụ, báo tiến độ | EVT-20-01 `platform.tenant.created.v1`, EVT-20-04 `platform.tenant.status-changed.v1` qua `inbox_event`; báo bước `S06_EVENTING` bằng API-20-166 với scope `tenant:provision-report` | Khai báo nền: hạn mức, principal nội bộ, ACL tiền tố, topic hệ thống (FR-10-064) | Khởi tạo chạy lại idempotent |
 | PH-02 Danh mục dịch vụ | PH-02 tiêu thụ | EVT-10-01, 03, 04 | Công bố topic như dịch vụ sự kiện | Không ảnh hưởng |
 | Apicurio, Git, Argo CD, Strimzi, OpenBao | PH-10 gọi | Client có ngắt mạch (§8.4) | Lược đồ, cấp phát, khóa ký | ERR-10-029, không để lại trạng thái dở dang |
 
@@ -532,7 +532,7 @@ Chi tiết thiết kế:
 |---|---|---|---|
 | `BUSINESS` | `^{tenant}\.[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2}\.v[1-9][0-9]*$` | Miền không thuộc danh sách dành riêng của FR-10-008; tổng ≤ 200 ký tự | ERR-10-004 |
 | `CDC` | Tiền tố `{tenant}.cdc.`, 2…4 đoạn giữa, hậu tố `.v{n}` | Chỉ tài khoản dịch vụ có `event:topic-register` | ERR-10-004, 005 |
-| `SYSTEM` | `{tenant}.{miền dành riêng}.…v{n}` hoặc tiền tố `dh.` (tenant `COMMON`) | Chỉ tài khoản dịch vụ; `dh.` chỉ PA hoặc dịch vụ nền tảng | ERR-10-004, 045 |
+| `SYSTEM` | `{tenant}.{miền dành riêng}.…v{n}` hoặc tiền tố `dh.`, `platform.` (tenant `COMMON`) | Chỉ tài khoản dịch vụ; `dh.`, `platform.` chỉ PA hoặc dịch vụ nền tảng | ERR-10-004, 045 |
 | `DLQ` | `{topicName}.dlq` | Chỉ hệ thống tạo cùng topic cha | Không nhận từ API |
 
 : Chính sách tên topic
@@ -998,7 +998,9 @@ Chi tiết thiết kế:
 
 `CdcSchemaChangeConsumer` tiêu thụ EVT-05-11 qua inbox (§8.3). Thay đổi tương thích: chờ PH-05 gửi phiên bản qua `registerSchemaVersion`, tự duyệt khi đạt mức tương thích của topic, ngược lại trả ERR-10-016. Thay đổi phá vỡ được chấp nhận ở PH-05: `newMajorVersion` tạo topic `.v{n+1}` tự duyệt, đặt topic cũ `DEPRECATED` với `successorTopic`, `sunsetAt` theo `10.topic.deprecation-days`, phát EVT-10-03 và thông báo đầu mối các subscription (FR-10-068).
 
-`PartySyncConsumer` tiêu thụ sự kiện PH-01 (giả định Q10-17) và EVT-04-09. Sự kiện HTTT tạm ngừng: mọi publisher, subscriber gắn `systemCode` sang `SUSPENDED` với `suspendSource = PH01`, kéo theo publication, subscription của chúng sang `SUSPENDED` cùng nguồn, gỡ dữ liệu OPA trước (hiệu lực ≤ 60 giây, NFR-10-009) rồi mới ghi Git gỡ ACL. HTTT `ACTIVE` lại: chỉ tiếp tục đối tượng có `suspendSource = PH01`. `PartyReconciler` mỗi giờ so toàn bộ với bản sao đọc của PH-01 và danh sách luồng PH-04 để bù sự kiện lỡ.
+`PartySyncConsumer` tiêu thụ EVT-01-03 của PH-01 và EVT-04-09. Sự kiện HTTT tạm ngừng: mọi publisher, subscriber gắn `systemCode` sang `SUSPENDED` với `suspendSource = PH01`, kéo theo publication, subscription của chúng sang `SUSPENDED` cùng nguồn, gỡ dữ liệu OPA trước (hiệu lực ≤ 60 giây, NFR-10-009) rồi mới ghi Git gỡ ACL. HTTT `ACTIVE` lại: chỉ tiếp tục đối tượng có `suspendSource = PH01`. `PartyReconciler` mỗi giờ so toàn bộ với bản sao đọc của PH-01 và danh sách luồng PH-04 để bù sự kiện lỡ.
+
+`TenantBootstrapper` tiêu thụ EVT-20-01 `platform.tenant.created.v1` và EVT-20-04 `platform.tenant.status-changed.v1` của PH-20 qua inbox (§8.3): khử trùng theo `ce_id`, tạo hạn mức mặc định, principal nội bộ, ACL tiền tố và topic hệ thống của tenant mới (FR-10-064, 067), rồi gọi API-20-166 báo bước `S06_EVENTING` (thử lại có lũy đẳng nếu PH-20 chưa nhận). Cùng cơ chế đăng ký, DU của PH-06 (`{tenant}.mdm.*`, 15 topic), PH-08 (`dq`, 14), PH-11 (`bpm`, 21), PH-16 (`kpi`, 14), PH-13 (`obs`) và PH-15 (`portal`) khai báo topic miền trong gói triển khai; PH-06 phát qua Debezium Outbox Event Router trên `ph06_mdm.outbox_event`, cùng mẫu với PH-04, PH-05. Các topic miền này thuộc miền dành riêng nên chỉ nhận đăng ký máy.
 
 ### 4.15. Sơ đồ kết nối và dashboard
 
@@ -1551,7 +1553,7 @@ Data plane phân loại kết quả giao bằng `DeliveryOutcomeClassifier`; `fa
 
 ## 9. Cấu hình và cờ tính năng theo tenant
 
-Tham số `10.*` đầy đủ ở Phụ lục A.5 FRS; module `settings` đọc qua `ParameterApi` của PH-18 với đệm 5 phút và làm mới khi PH-18 báo đổi. Nơi dùng:
+Tham số `10.*` đầy đủ ở Phụ lục A.5 FRS; module `settings` đọc qua `ParameterApi` của PH-18 (thư viện `dh-ops-client`) với đệm tối đa 60 giây (BR-18-006, `18.param.cache-ttl-seconds`) và làm mới ngay khi PH-18 báo đổi. Nơi dùng:
 
 | Nhóm tham số | Đọc ở | Áp dụng |
 |---|---|---|
@@ -1728,3 +1730,4 @@ Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03
 | 0.1 | 2026-11-26 | Bản đầu: kiến trúc, cấu trúc mã, thành phần, chín sequence, máy trạng thái, lỗi, quan sát, định cỡ, câu hỏi mở Q10-20…29 | Nhóm thiết kế Datahub |
 | 0.2 | 2026-11-26 | Theo FRS 0.2: `DELIVERY_BLOCKED`, ERR-10-121, API-10-085…090, `dh_dlq_origin`, khóa cursor, chuyển trạng thái di trú và tác vụ nhập; §13.4 đã xử lý | Nhóm thiết kế Datahub |
 | 0.3 | 2026-11-26 | Nâng theo chuẩn kết hợp (K-TRINH-BAY §5): chương 1 đủ mục đích, đối tượng đọc, quy ước, thuật ngữ, cấu trúc, tài liệu liên quan; danh sách 16 thành phần (§3.5); khối đặc tả 10 mục cho từng thành phần ở §4.2…4.17; sơ đồ thành phần chuyển TB; chú thích bảng và hình; giữ nguyên toàn bộ thiết kế kỹ thuật | Nhóm viết tài liệu (Claude) |
+| 0.4 | 2026-11-27 | Đồng bộ chéo cuối: Apicurio lưu ở `pg-infra`; EVT-01-03 thay giả định Q10-17; đệm tham số ≤ 60 giây; nghe EVT-20-01, 04 và báo S06 về PH-20; topic miền của PH-06, 08, 11, 13, 15, 16; tiền tố `platform.` | Nhóm viết tài liệu (Claude) |

@@ -92,7 +92,7 @@ CREATE TABLE ph10_event.topic (
   CONSTRAINT ck_topic_routing_mode CHECK (routing_mode IN ('KEY_HASH', 'ROUND_ROBIN', 'SINGLE_PARTITION')),
   CONSTRAINT ck_topic_service CHECK (owner_service_code IS NULL OR owner_service_code IN ('dh-connect', 'dh-integration', 'dh-runtime', 'dh-data', 'dh-platform', 'dh-payment', 'dh-assist', 'dh-portal', 'dh-cdc')),
   -- BR-10-002: tiền tố tenant, chữ thường; hậu tố .dlq chỉ cho topic DLQ
-  CONSTRAINT ck_topic_prefix CHECK (split_part(topic_name, '.', 1) = ph10_event.f_topic_prefix(tenant_id)),
+  CONSTRAINT ck_topic_prefix CHECK (split_part(topic_name, '.', 1) = ph10_event.f_topic_prefix(tenant_id) OR (tenant_id = 'COMMON' AND split_part(topic_name, '.', 1) = 'platform')),
   CONSTRAINT ck_topic_name_business CHECK (topic_kind <> 'BUSINESS' OR (
         char_length(topic_name) <= 200
     AND topic_name ~ '^[a-z0-9]+\.[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2}\.v[1-9][0-9]*$'
@@ -102,7 +102,7 @@ CREATE TABLE ph10_event.topic (
     AND topic_name ~ '^[a-z0-9]+(\.[a-z][a-z0-9-]*){2,4}\.v[1-9][0-9]*$'
     AND topic_name LIKE '%.v' || major_version)),
   CONSTRAINT ck_topic_name_dlq CHECK ((topic_kind = 'DLQ') = (topic_name LIKE '%.dlq')),
-  CONSTRAINT ck_topic_reserved_domain CHECK (topic_kind <> 'BUSINESS' OR domain NOT IN ('event', 'cdc', 'audit', 'obs', 'integration', 'adapter', 'rdm', 'connect', 'payment', 'platform')),
+  CONSTRAINT ck_topic_reserved_domain CHECK (topic_kind <> 'BUSINESS' OR domain NOT IN ('event', 'cdc', 'audit', 'obs', 'integration', 'adapter', 'rdm', 'connect', 'payment', 'platform', 'mdm', 'dq', 'bpm', 'kpi', 'portal')),
   CONSTRAINT ck_topic_segments CHECK (domain ~ '^[a-z][a-z0-9-]*$' AND entity ~ '^[a-z][a-z0-9-]*$' AND event_name ~ '^[a-z][a-z0-9-]*$' AND major_version >= 1),
   -- BR-10-004, BR-10-006
   CONSTRAINT ck_topic_replication CHECK (replication_factor = 3 AND min_insync_replicas = 2),
@@ -163,8 +163,8 @@ CREATE TABLE ph10_event.event_schema (
   CONSTRAINT ck_event_schema_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_event_schema_format CHECK (schema_format IN ('AVRO', 'JSON_SCHEMA')),
   CONSTRAINT ck_event_schema_compatibility CHECK (compatibility IN ('BACKWARD', 'BACKWARD_TRANSITIVE', 'FORWARD', 'FORWARD_TRANSITIVE', 'FULL', 'FULL_TRANSITIVE', 'NONE')),
-  -- ADR-070, A.8: groupId = tenant chữ thường (dh cho nền tảng), artifactId = topicName
-  CONSTRAINT ck_event_schema_artifact CHECK (apicurio_group_id = ph10_event.f_topic_prefix(tenant_id) AND apicurio_artifact_id = topic_name),
+  -- ADR-070, A.8: groupId = tiền tố tenant chữ thường (dh hoặc platform cho nền tảng), artifactId = topicName
+  CONSTRAINT ck_event_schema_artifact CHECK (apicurio_group_id = split_part(topic_name, '.', 1) AND apicurio_artifact_id = topic_name),
   CONSTRAINT ck_event_schema_latest CHECK (latest_version_no >= 0)
 );
 CREATE TRIGGER tg_event_schema_touch BEFORE UPDATE ON ph10_event.event_schema FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_touch();

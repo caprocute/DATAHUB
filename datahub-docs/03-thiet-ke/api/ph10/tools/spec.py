@@ -95,12 +95,12 @@ OPS = [
     ("055", "GET", "/subscriptions/{subscriptionCode}/lag", "Độ trễ tiêu thụ theo phân vùng", "054", "read", "", "200", "subscription", "049"),
     ("056", "POST", "/subscriptions/{subscriptionCode}/lag-alerts:acknowledge", "Xác nhận cảnh báo lag", "055", "operate", "", "200", "subscription", "006"),
     # Yêu cầu duyệt
-    ("057", "GET", "/approval-requests", "Danh sách yêu cầu duyệt", "009, 019, 031, 037, 051", "read", "", "200", "approval", "049"),
-    ("058", "GET", "/approval-requests/{requestCode}", "Chi tiết yêu cầu duyệt", "009, 019, 031, 037, 051", "read", "", "200", "approval", ""),
-    ("059", "POST", "/approval-requests/{requestCode}:approve", "Duyệt yêu cầu", "009, 019, 031, 037, 051", "approve", "", "200", "approval",
+    ("057", "GET", "/approval-requests", "Danh sách yêu cầu duyệt", "009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075", "read", "", "200", "approval", "049"),
+    ("058", "GET", "/approval-requests/{requestCode}", "Chi tiết yêu cầu duyệt", "009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075", "read", "", "200", "approval", ""),
+    ("059", "POST", "/approval-requests/{requestCode}:approve", "Duyệt yêu cầu", "009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075", "approve", "", "200", "approval",
      "006 008 009 011 016 029 038 051"),
-    ("101", "POST", "/approval-requests/{requestCode}:reject", "Từ chối yêu cầu", "009, 019, 031, 037, 051", "approve", "", "200", "approval", "006 008 009"),
-    ("102", "POST", "/approval-requests/{requestCode}:withdraw", "Rút yêu cầu đã gửi", "009, 019, 031, 037, 051", "requester", "", "200", "approval", "006 009"),
+    ("101", "POST", "/approval-requests/{requestCode}:reject", "Từ chối yêu cầu", "009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075", "approve", "", "200", "approval", "006 008 009"),
+    ("102", "POST", "/approval-requests/{requestCode}:withdraw", "Rút yêu cầu đã gửi", "009, 011, 012, 013, 014, 019, 021, 022, 031, 037, 051, 073, 075", "requester", "", "200", "approval", "006 009"),
     # G. DLQ, phát lại
     ("060", "GET", "/dlq-entries", "Danh sách mục DLQ (siêu dữ liệu)", "050", "read", "", "200", "dlq", "049"),
     ("061", "GET", "/dlq-entries/{dlqEntryId}", "Siêu dữ liệu một mục DLQ", "050", "read", "", "200", "dlq", ""),

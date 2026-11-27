@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH10
 ten: Kịch bản và test case phân hệ PH-10 Sự kiện
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
 phan_he: PH-10
@@ -360,7 +360,7 @@ Tài khoản dịch vụ (`client_credentials` + `private_key_jwt`):
 |---|---|---|
 | SIM-WH | WireMock HTTPS `thue.sim.test`, `hooks.sim.test` (trong danh sách egress) | Trả 200, 204, 400, 410, 429 có `Retry-After`, 5xx, chậm n ms; ghi lại tiêu đề, thân; tự xác minh chữ ký với khóa nạp vào; trả `WebHook-Allowed-Origin` đúng, sai hoặc thiếu |
 | SIM-WH-BAD | Các đích xấu | `http://plain.sim.test`, `https://selfsigned.sim.test` (chứng thư tự ký), `https://redirect.sim.test` (302 sang `10.0.0.5`), `https://rebind.sim.test` (DNS trả IP công cộng lần đầu, `10.96.0.10` lần sau), `https://ngoai-egress.example` |
-| SIM-PH01 | Giả lập PH-01 | Danh sách HTTT `HT-DKKD`, `HT-THUE`, `HT-BHXH`, `HT-KBNN`, `HT-QLTC` `ACTIVE`, `HT-DUNG` `SUSPENDED`; phát sự kiện đổi trạng thái HTTT theo giả định Q10-17 |
+| SIM-PH01 | Giả lập PH-01 | Danh sách HTTT `HT-DKKD`, `HT-THUE`, `HT-BHXH`, `HT-KBNN`, `HT-QLTC` `ACTIVE`, `HT-DUNG` `SUSPENDED`; phát EVT-01-03 `{tenant}.connect.system.state-changed.v1` khi đổi trạng thái HTTT |
 | SIM-PH04 | Giả lập PH-04 | Luồng `dkkd-dong-bo-thue`, `dkkd-tong-hop` hợp lệ, `luong-cu` `RETIRED`; phát EVT-04-09 |
 | SIM-PH05 | Giả lập PH-05 phía gọi | Gọi API-10-009, 023, 018 với S-PH05; phát EVT-05-11 |
 | SIM-PULSAR | Apache Pulsar 3 độc lập | Tenant `lgsp`, namespace `dkkd`, topic `persistent://lgsp/dkkd/doanh-nghiep-cap-phep` có producer và subscriber cũ (`Shared`, 2 consumer) |
@@ -659,12 +659,12 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 **Các bước.**
 
 1. `POST /topics` với `domain = "DKKD"`, rồi `entity = "doanh_nghiep"`.
-2. Lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`.
+2. Lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`, `mdm`, `dq`, `bpm`, `kpi`, `portal`.
 3. Ghép tên dài 201 ký tự.
 4. Tạo lại `t68.tc.cu.da-xoa.v1`.
 5. `POST /topics` có `topicKind = CDC` bằng U-T68-IE1.
 
-**Kết quả mong đợi.** Bước 1, 2, 3 `422` ERR-10-004 với `errors[].field` đúng trường. Bước 4 `409` ERR-10-002. Bước 5 `422` ERR-10-004 hoặc ERR-10-003 theo API §3.3 (người dùng không đăng ký `CDC`); không có bản ghi topic nào được tạo.
+**Kết quả mong đợi.** Bước 1, 2, 3 `422` ERR-10-004 với `errors[].field` đúng trường. Bước 4 `409` ERR-10-002. Bước 5 `400` ERR-10-003 theo FR-10-008 và API §3.3 (người dùng không gửi `topicKind` khác `BUSINESS`); không có bản ghi topic nào được tạo.
 
 **Thông báo hiển thị.** ERR-10-002 "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác."; ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-004 "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."
 
@@ -1278,7 +1278,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 3. Tạo phiên bản không có `changeNote`.
 4. Tạo phiên bản thứ hai khi v4 đang `PENDING_APPROVAL`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-10-020 (khác định dạng đã có). Bước 2 `422` ERR-10-015 hoặc ERR-10-003 theo giới hạn 256 KiB (API §3.3). Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006.
+**Kết quả mong đợi.** Bước 1 `422` ERR-10-020 (khác định dạng đã có). Bước 2 `400` ERR-10-003 với `errors[].field = content` (vượt 256 KiB, FR-10-017). Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006.
 
 **Thông báo hiển thị.** ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-015 "Lược đồ sai cú pháp ở dòng {d}, cột {c}: {thông điệp}."; ERR-10-020 "Định dạng {định dạng} không được phép hoặc khác định dạng đã có của topic."
 
@@ -3703,7 +3703,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 **Hậu điều kiện.** Đối tượng ở trạng thái nêu ở kết quả mong đợi.
 :::
 
-#### TC-10-113 · Người dùng đăng ký miền dành riêng; DU đăng ký topic dh. hoặc tenant khác <!--k:du-register-neg-->
+#### TC-10-113 · Người dùng đăng ký miền dành riêng; DU đăng ký topic nền tảng hoặc tenant khác <!--k:du-register-neg-->
 
 ::: dac-ta
 **Mục đích.** Chứng minh mỗi tình huống nêu ở tên ca bị từ chối đúng mã lỗi, theo FR-10-067 (Đăng ký topic cho DU nội bộ và topic nền tảng).
@@ -3721,11 +3721,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 **Các bước.**
 
 1. IE1 tạo topic `BUSINESS` miền `rdm`.
-2. S-DU-DATA đăng ký `dh.platform.tenant.created.v1`.
+2. S-DU-DATA đăng ký `platform.tenant.created.v1`.
 3. S-DU-DATA với token T68 đăng ký `t01.rdm.catalog.published.v1`.
-4. U-PA đăng ký `dh.platform.tenant.created.v1`.
+4. U-PA đăng ký `platform.tenant.created.v1`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-10-004. Bước 2 403-PQ (tiền tố `dh.` chỉ PA và tài khoản nền tảng). Bước 3 `422` ERR-10-005. Bước 4 thành công, artifact `groupId = dh`.
+**Kết quả mong đợi.** Bước 1 `422` ERR-10-004. Bước 2 403-PQ (tiền tố `platform.` của topic cấp nền tảng chỉ PA và tài khoản dịch vụ nền tảng). Bước 3 `422` ERR-10-005. Bước 4 thành công, topic thuộc tenant `COMMON`, artifact `groupId = platform`.
 
 **Thông báo hiển thị.** ERR-10-004 "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."; ERR-10-005 "Tiền tố tenant của topic không khớp tenant đang làm việc."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
@@ -5407,3 +5407,4 @@ Các câu dưới đây được dùng ở trường "Thông báo hiển thị" 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm tài liệu | Bản đầu theo FRS 0.2 (và mã control plane ERR-10-053, 054, API-10-121 của FRS 0.3): 35 kịch bản, 10 UAT, ma trận sinh tự động, Gherkin, bảng tính; câu hỏi mở Q10-40…44 |
 | 0.2 | 26/11/2026 | Nhóm tài liệu | Theo chuẩn kết hợp K-TC, K-TRINH-BAY: giữ nguyên mọi bước, dữ liệu, kết quả mong đợi của 158 ca; chuyển mỗi ca sang khối đặc tả `::: dac-ta`, thêm Mục đích, Thông báo hiển thị (theo D03-06-PH10 §5.3, §18.4), Hậu điều kiện; tách 13 ca hiệu năng thành khối riêng kèm bảng tóm tắt ngưỡng; Giới thiệu đủ 0.1…0.6, đoạn mở chương, chú thích bảng; mục 10.2 đề nghị đồng bộ câu thông báo cho ERR-10-053, 054, 101…110, 121; vá `tc_parse.py` đọc khối mới, `gen_xlsx.py`, `gen_gherkin.py` thêm trường mới |
+| 0.3 | 27/11/2026 | Nhóm tài liệu | Đồng bộ chéo cuối: topic cấp nền tảng `platform.tenant.created.v1` thay `dh.platform.tenant.created.v1` (QĐ-2) ở TC-10-113; thêm miền dành riêng `mdm`, `dq`, `bpm`, `kpi`, `portal` ở TC-10-007; ERR-10-003 cho `topicKind` khác `BUSINESS` và `content` vượt 256 KiB; SIM-PH01 dùng EVT-01-03 |
