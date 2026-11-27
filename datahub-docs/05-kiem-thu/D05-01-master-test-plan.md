@@ -69,7 +69,7 @@ Kế hoạch được lập dựa trên các tài liệu và tiêu chuẩn dư�
 | D03-07 Thiết kế ATTT | Danh mục biện pháp `SEC-nn` theo cấp độ 3 | 5.5 |
 | D03-09 Hạ tầng, triển khai, DR | Hồ sơ quy mô, quy trình diễn tập DR hằng quý, kiến trúc hai site | 5.3, 5.4, 7 |
 | D00-01 Thuật ngữ và quy ước | Mã `TS-{PH}-{nn}`, `TC-{PH}-{nnn}`, quy tắc truy vết §3.2 (quy tắc 4: FR mức M có ít nhất hai TC dương và âm) | 12 |
-| D00-03 Ma trận truy vết | 183 mục `LGC` của hệ cũ và kết luận Giữ nguyên / Nâng cấp / Thay thế / Loại bỏ | 5.1, 5.9 |
+| D00-03 Ma trận truy vết | 186 mục `LGC` của hệ cũ và kết luận Giữ nguyên / Nâng cấp / Thay thế / Loại bỏ | 5.1, 5.9 |
 | ISO/IEC/IEEE 29119-3 (STD-02) | Cấu trúc tài liệu kế hoạch kiểm thử | Toàn tài liệu |
 | OWASP ASVS 5.0 mức 2, OWASP API Security Top 10 2023 | Tiêu chí kiểm thử bảo mật ứng dụng và API (NFR-00-024) | 5.5 |
 | WCAG 2.2 mức AA (STD-04) | Tiêu chí kiểm thử khả năng truy cập (NFR-00-040…045) | 5.7 |
@@ -1232,4 +1232,4 @@ Tài liệu đề xuất bổ sung vào D00-01 các mã và thuật ngữ sau; l
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: bối cảnh, chiến lược theo rủi ro, mức và loại kiểm thử, cổng phát hành RG-1 đến RG-5, môi trường, dữ liệu, tự động hóa, quản lý lỗi, chỉ số, tổ chức, lịch, công cụ, ma trận truy vết NFR |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung metadata `mo_ta` và `tai_lieu_lien_quan`; gộp mục 1.3 thành Căn cứ và tài liệu tham chiếu; thêm mục 1.6 Người đọc và phần cần đọc, mục 1.7 Cấu trúc tài liệu, đoạn chữ viết tắt ở mục 1.5; thêm đoạn mở cho mục 10.2; chuyển hai sơ đồ Mermaid (cổng phát hành, strangler) sang `flowchart TB`; viết lại 31 chú thích bảng và ba chú thích hình để cụ thể và không trùng |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nhóm ca bắt buộc theo phân hệ vào RG-1, RG-2, RG-3; ca hỗn loạn riêng của PH-02; PERF cho PH-02, PH-13, PH-14; giả lập dùng chung (`sim-ndxp`, M-TOPIC, M-MAIL, đồng hồ giả); quy ước dải tenant `T90…T99` và `T01…T34` |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nhóm ca bắt buộc theo phân hệ vào RG-1, RG-2, RG-3; ca hỗn loạn riêng của PH-02; PERF cho PH-02, PH-13, PH-14; giả lập dùng chung (`sim-ndxp`, M-TOPIC, M-MAIL, đồng hồ giả); quy ước dải tenant `T90…T99` và `T01…T34`; số mục `LGC` theo D00-03 (186) |
