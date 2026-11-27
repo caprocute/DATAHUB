@@ -9,6 +9,15 @@ class NoAlias(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
+def _str_rep(dumper, s):
+    # Chuỗi chỉ gồm chữ số (CCCD, số điện thoại) luôn đặt nháy để trình đọc YAML 1.2 không hiểu thành số.
+    style = "'" if s.isdigit() else None
+    return dumper.represent_scalar("tag:yaml.org,2002:str", s, style=style)
+
+
+NoAlias.add_representer(str, _str_rep)
+
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import spec
 
