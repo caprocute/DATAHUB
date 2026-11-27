@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH18
 ten: Đặc tả yêu cầu chức năng phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị nền tảng, quản trị tỉnh, vận hành, kỹ sư dh-platform, kiểm thử viên
@@ -36,7 +36,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH18 Use case; D03-02-PH18 Thiết kế c
 | Quy tắc nghiệp vụ | 50 (BR-18-001…050) |
 | Yêu cầu phi chức năng | 22 (NFR-18-001…022) |
 | Màn hình | 24 (UI-18-01…24) |
-| API | 180 operation dự kiến (154 người dùng ở `/api/ops/v1`, 26 nội bộ ở `/ops/internal/v1`), 29 sự kiện phát (EVT-18-01…29) |
+| API | 188 operation (161 người dùng ở `/api/ops/v1`, 27 nội bộ ở `/ops/internal/v1`), 29 sự kiện phát (EVT-18-01…29) |
 | Mã lỗi | 72 control plane (ERR-18-001…072), 24 worker, tiếp nhận DLQ, gửi thông báo (ERR-18-101…124); `401`, `403`, `428` dùng ERR-00-401, 403, 428 |
 | Thực thể mức logic | 55 (EN-18-01…55) |
 | Tham số theo tenant | 61 khóa `18.*` (mục 8.2) |
@@ -590,7 +590,29 @@ stateDiagram-v2
   }
 ```
 
-`SUPPRESSED` không phải lỗi: thông báo bị giữ hoặc bỏ do người nhận tắt loại đó, đang trong giờ yên lặng (không khẩn) hoặc địa chỉ nằm trong danh sách chặn. Việc luôn do phân hệ nguồn đóng; người dùng chỉ "nhận việc" để báo người khác.
+`SUPPRESSED` không phải lỗi: thông báo bị giữ hoặc bỏ do người nhận tắt loại đó, đang trong giờ yên lặng (không khẩn) hoặc địa chỉ nằm trong danh sách chặn. Việc luôn do phân hệ nguồn đóng; người dùng chỉ "nhận việc" (API-18-181) để báo người khác. Việc `CANCELLED` là việc phân hệ nguồn hủy vì đối tượng không còn cần xử lý (API-18-110 với `outcome = CANCELLED`); `EXPIRED` là việc mở quá `18.task.retention-days` mà nguồn không đóng, hệ thống tự đóng và ghi cảnh báo cho phân hệ nguồn.
+
+Các đối tượng phụ dưới đây có vòng đời ngắn, không vẽ sơ đồ riêng; bảng định nghĩa từng trạng thái mà API (D03-04-PH18), CSDL (D03-03-PH18) và test case (D05-02-PH18) dùng chung.
+
+| Đối tượng | Trạng thái | Ý nghĩa |
+|---|---|---|
+| Đề nghị đổi tham số ★ (`param_change_request`) | `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `EXPIRED` | `CANCELLED`: người đề nghị rút trước khi duyệt (API-18-012); `EXPIRED`: quá `18.param.change-request-ttl-hours` chưa duyệt, tự hết hiệu lực; cả hai không đổi giá trị hiệu lực |
+| Bản sửa payload (`dlq_revision`) | `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED` | `CANCELLED`: người tạo hủy bản nháp hoặc bản chờ duyệt |
+| Mục trong lượt phát lại (`replay_item`) | `PENDING`, `SENT`, `SUCCEEDED`, `FAILED`, `SKIPPED`, `SKIPPED_DUPLICATE`, `CANCELLED` | `SKIPPED`: mục bị loại khi duyệt hoặc trước khi gửi vì đã đổi trạng thái (đã đóng, đã vào lượt khác), `total` của lượt giảm tương ứng; `SKIPPED_DUPLICATE`: nguồn báo đã xử lý cùng khóa lũy đẳng; `CANCELLED`: lượt bị hủy khi mục chưa gửi |
+| Gói tham số (`param_bundle`) | `DRAFT`, `VALIDATED`, `PENDING_APPROVAL`, `APPLIED`, `FAILED`, `REJECTED` | Gói có khóa ★ phải qua `PENDING_APPROVAL` trước `APPLIED` |
+| Cửa sổ bảo trì, đóng băng (`maintenance_window`) | `PLANNED`, `ACTIVE`, `COMPLETED`, `CANCELLED` | Lần lượt ứng `SCHEDULED`, `ACTIVE`, `ENDED`, `CANCELLED` dùng ở FR-18-046; API và CSDL dùng bộ tên bên trái |
+| Bước khôi phục tenant (`tenant_restore_step`) | `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`, `ROLLED_BACK` | `SKIPPED`: bước không áp dụng cho phạm vi đã chọn (ví dụ kho khác khi chỉ khôi phục một schema) |
+| Sổ tay mã lỗi (`error_guide`) | `DRAFT`, `PUBLISHED`, `RETIRED` | Chỉ bản `PUBLISHED` cấp cho PH-17 (API-18-062) |
+| Bản sao lưu (`backup_run`) | `RUNNING`, `SUCCEEDED`, `PARTIAL`, `FAILED`, `EXPIRED` | `EXPIRED`: bản đã quá hạn giữ ở kho nguồn |
+| Nguồn hệ cũ (`legacy_source`) | `DRAFT`, `VERIFIED`, `DISABLED` | `VERIFIED` sau khi kiểm kết nối chỉ đọc (API-18-158) |
+| Mục danh sách cắt chuyển (`cutover_checklist`) | `PENDING`, `PASSED`, `FAILED`, `WAIVED` | Mục tay chuyển `PASSED` khi người dùng xác nhận (API-18-185) |
+| Dấu cấp lại xác thực (`credential_reissue_marker`) | `PENDING`, `NOTIFIED`, `REISSUED`, `WAIVED` | `WAIVED`: HTTT không còn dùng, TA đánh dấu kèm lý do (API-18-183) |
+| Bản ghi lỗi di trú (`migration_error_record`) | `OPEN`, `FIXED_AT_SOURCE`, `RULE_ADDED`, `WONT_MIGRATE` | `WONT_MIGRATE` cần lý do ≥ 10 ký tự (API-18-182) |
+| Xuất tenant, kết quả mục di trú, chuyển sáp nhập, báo cáo vận hành | `QUEUED`, `RUNNING`, `SUCCEEDED`, `SUCCEEDED_WITH_ERRORS`, `FAILED`, `CANCELLED` | Dùng chung bộ trạng thái tác vụ nền |
+| Thông báo logic (`notification_message`) | Như lần gửi ở sơ đồ trên | Trạng thái tổng hợp của các lần gửi theo kênh |
+| Lần chạy di trú thật bị từ chối (`migration_run`) | `CANCELLED` | Bộ trạng thái lần chạy (mục 4.6) không có `REJECTED`; người duyệt từ chối (API-18-168) đưa lần chạy về `CANCELLED` kèm `rejectReason`, phân biệt với hủy bằng người thao tác |
+
+: Trạng thái của các đối tượng phụ trong PH-18
 
 ### 4.6. Máy trạng thái sự cố, khôi phục tenant, di trú và cắt chuyển
 
@@ -995,7 +1017,7 @@ Hình cho thấy hai đường làm mới: hết thời hạn đệm (tối đa 
 3. Hệ thống kiểm lại miền, trần theo lược đồ hiện hành (lược đồ đã đổi làm giá trị không hợp lệ: ERR-18-013) và ghi kiểm toán trước khi đổi (ERR-18-008).
 4. Duyệt: phiên bản thành `ACTIVE`, phiên bản cũ `SUPERSEDED`, phát EVT-18-01, đóng việc. Từ chối: phiên bản `REJECTED`, giá trị cũ giữ nguyên, báo người đề nghị.
 
-**Luồng thay thế.** Khóa có `approvalOwner` là phân hệ khác (PH-14, PH-17): PH-18 trả ERR-18-019 cho người dùng và chỉ nhận giá trị đã duyệt từ phân hệ đó qua `PUT /params/{key}` với danh tính dịch vụ của phân hệ chủ kèm `approvalRef`. Người đề nghị rút đề nghị trước khi duyệt: phiên bản `REJECTED` với lý do "rút".
+**Luồng thay thế.** Khóa có `approvalOwner` là phân hệ khác (PH-14, PH-17): PH-18 trả ERR-18-019 cho người dùng và chỉ nhận giá trị đã duyệt từ phân hệ đó qua `PUT /params/{key}` với danh tính dịch vụ của phân hệ chủ kèm `approvalRef`. Người đề nghị rút đề nghị trước khi duyệt (API-18-012): đề nghị `CANCELLED`, phiên bản chờ `REJECTED` với lý do "rút". Đề nghị quá `18.param.change-request-ttl-hours` chưa duyệt: đề nghị `EXPIRED`, giá trị hiệu lực không đổi (mục 4.5).
 
 **Luồng ngoại lệ.**
 
@@ -1571,7 +1593,7 @@ Hình cho thấy thứ tự bắt buộc: Garage trước, CSDL sau, offset cu�
 **Luồng xử lý chính.**
 
 1. Nguồn gửi một mục hoặc lô tới 500 mục. Hệ thống kiểm scope và nguồn (chưa đăng ký hoặc `SUSPENDED`: ERR-18-026).
-2. Hệ thống kiểm trường bắt buộc của hợp đồng ngữ cảnh (thiếu: ERR-18-024, mục không được ghi để nguồn sửa ngay) và kích thước payload ≤ `18.dlq.payload.max-mb` (vượt: ERR-18-025).
+2. Hệ thống kiểm trường bắt buộc của hợp đồng ngữ cảnh (thiếu: ERR-18-024, mục không được ghi để nguồn sửa ngay; khác đường topic ở FR-18-013, nơi mục thiếu trường được ghi thành `POISON`, BR-18-013) và kích thước payload ≤ `18.dlq.payload.max-mb` (vượt: ERR-18-025).
 3. Hệ thống chạy FR-18-016 (payload lớn, khử trùng) và ghi mục `NEW` cùng outbox.
 4. Hệ thống trả `dlqId` cho từng mục; mục trùng trả `dlqId` cũ với `duplicate = true`.
 
@@ -1775,7 +1797,7 @@ Hình cho thấy PH-18 chỉ là khách của PH-10: dữ liệu và duyệt v�
 
 **Truy vết.** REQ-18; FR-18-004 cũ (repo).
 
-**Tiền điều kiện.** Topic DLQ giữ dữ liệu ≥ 7 ngày (cấu hình topic của PH-10).
+**Tiền điều kiện.** Topic DLQ giữ dữ liệu 14 ngày (ADR-181, NFR-18-016; cấu hình topic của PH-10).
 
 **Kích hoạt.** Lịch hằng ngày 02:30; hoặc TO bấm "Đối soát ngay" ở UI-18-06.
 
@@ -2284,7 +2306,7 @@ Hình cho thấy mọi đường phát lại hội tụ ở FR-18-030, nơi duy 
 
 1. Người dùng bấm "Phát lại", hộp xác nhận nêu nguồn, luồng, bản dùng (gốc hay bản sửa số mấy). Hệ thống kiểm mục không `POISON` (ERR-18-028), không trong lượt khác (ERR-18-031) và nguồn có cổng (ERR-18-033).
 2. Hệ thống kiểm trạng thái đóng băng của môi trường (FR-18-046): phát lại không bị chặn bởi đóng băng thay đổi vì không đổi cấu hình, chỉ hiển thị cảnh báo.
-3. Hệ thống chuyển mục sang `REPLAY_PENDING` rồi `REPLAYING`, gửi tới cổng: `KAFKA_TOPIC` phát EVT-18-09 với khóa lũy đẳng; `HTTP_PORT` gọi cổng nội bộ của nguồn (timeout 10 giây, lỗi: ERR-18-107, 108).
+3. Hệ thống chuyển mục sang `REPLAY_PENDING` rồi `REPLAYING`, gửi tới cổng: `KAFKA_TOPIC` phát EVT-18-09 với khóa lũy đẳng và `payloadRef`, nguồn lấy nội dung cần phát lại qua API-18-188; `HTTP_PORT` gọi cổng nội bộ của nguồn (timeout 10 giây, lỗi: ERR-18-107, 108).
 4. Hệ thống ghi `dlq_audit`, tăng `replayCount` và chờ kết quả (FR-18-030) trong `18.dlq.replay.result-timeout-minutes`.
 
 **Luồng thay thế.** Nguồn `EVENT_LAYER`: chuyển sang FR-18-017 bước 3. Cổng `HTTP_PORT` trả kết quả đồng bộ: chạy ngay FR-18-030.
@@ -2308,7 +2330,7 @@ Hình cho thấy mọi đường phát lại hội tụ ở FR-18-030, nơi duy 
 
 **Quy tắc nghiệp vụ.** BR-18-019; BR-18-020; BR-18-023.
 
-**Màn hình, API.** UI-18-03; API-18-064.
+**Màn hình, API.** UI-18-03; API-18-064, API-18-188.
 :::
 
 ```{.mermaid caption="Trình tự phát lại một mục qua cổng của nguồn"}
@@ -2350,13 +2372,13 @@ Hình cho thấy PH-18 không bao giờ gọi hệ đích; runtime kiểm khóa 
 1. Người dùng tạo lượt. Hệ thống đánh giá bộ lọc tại thời điểm tạo và chốt danh sách mục (`replay_item`); 0 mục: ERR-18-036; vượt `18.dlq.replay.batch-max` (mặc định 10.000): ERR-18-032.
 2. Hệ thống bỏ khỏi danh sách mục `POISON`, mục đang trong lượt khác, mục của nguồn không có cổng, và báo số mục bị bỏ theo lý do; lượt ở `DRAFT`.
 3. Người dùng bấm "Gửi". Số mục ≤ `18.dlq.replay.approval-threshold` (mặc định 500): lượt `APPROVED` và chạy; lớn hơn: `PENDING_APPROVAL`, tạo việc duyệt.
-4. Người duyệt duyệt (khác người tạo: ERR-18-005); hệ thống kiểm lại danh sách (mục đã đóng trong lúc chờ thì bỏ), chuyển `APPROVED` rồi `RUNNING` theo FR-18-029.
+4. Người duyệt duyệt (khác người tạo: ERR-18-005); hệ thống kiểm lại danh sách (mục đã đóng hoặc đã vào lượt khác trong lúc chờ thì ghi `replay_item` `SKIPPED` và giảm `total`, mục 4.5), chuyển `APPROVED` rồi `RUNNING` theo FR-18-029.
 
 **Luồng thay thế.** Người duyệt từ chối: lượt `REJECTED`, mục giữ nguyên trạng thái. Danh sách thay vì bộ lọc: tối đa 1.000 `dlqId`.
 
 **Luồng ngoại lệ.**
 
-- Bộ lọc không có mục: ERR-18-036 (422); "Bộ lọc không có mục nào phát lại được."
+- Bộ lọc không có mục: ERR-18-036 (422); "Không có mục nào phù hợp để phát lại."
 - Vượt số mục tối đa: ERR-18-032 (422); "Lượt có {n} mục, vượt giới hạn {tối đa}. Thu hẹp bộ lọc hoặc chia thành nhiều lượt."
 - Người duyệt trùng người tạo: ERR-18-005 (403); "Bạn là người tạo lượt nên không được duyệt lượt này."
 
@@ -3228,7 +3250,7 @@ Hình cho thấy người dùng duyệt ở màn của phân hệ nguồn; PH-18
 
 1. Người dùng mở danh sách. Hệ thống trả việc `OPEN`, `IN_PROGRESS` của người dùng, kiểm lại quyền xem tại thời điểm đọc (mất quyền thì ẩn).
 2. Hệ thống hiển thị tên loại, tóm tắt, phân hệ, hạn (đỏ khi quá hạn), người cùng nhận, liên kết.
-3. Người dùng bấm "Nhận việc" để báo người cùng nhận (`IN_PROGRESS`), hoặc bấm liên kết sang màn của phân hệ nguồn.
+3. Người dùng bấm "Nhận việc" (API-18-181, `If-Match`) để báo người cùng nhận: việc `IN_PROGRESS`, ghi người nhận, phát EVT-18-14; hoặc bấm liên kết sang màn của phân hệ nguồn.
 4. Tác vụ nhắc mỗi 15 phút: gửi nhắc trước hạn `18.task.reminder.before-hours` (24 giờ), quá hạn; quá hạn `18.task.overdue.escalate-hours` (48 giờ) thì gửi cho người quản lý theo `recipientRef` leo thang của loại.
 
 **Luồng thay thế.** Thẻ trang chủ: số việc theo hạn và năm việc gần hạn nhất. Việc `DONE` quá `18.task.retention-days` thì xóa.
@@ -3250,7 +3272,7 @@ Hình cho thấy người dùng duyệt ở màn của phân hệ nguồn; PH-18
 
 **Quy tắc nghiệp vụ.** BR-18-032.
 
-**Màn hình, API.** UI-18-15; API-18-111, API-18-112.
+**Màn hình, API.** UI-18-15; API-18-111, API-18-112, API-18-181.
 :::
 
 #### FR-18-045 · Quản lý lịch ngày làm việc và tính hạn cho phân hệ khác
@@ -4223,15 +4245,16 @@ Hình cho thấy cắt chuyển (068) chỉ mở khi có cả đối chiếu d�
 
 **Luồng xử lý chính.**
 
-1. Người dùng tạo lần chạy thật. Hệ thống kiểm lần chạy thử hợp lệ (ERR-18-064), không đóng băng (ERR-18-051), không tác vụ nặng khác (ERR-18-057); lần chạy `PENDING_APPROVAL`.
+1. Người dùng tạo lần chạy thật. Hệ thống kiểm kế hoạch `READY` (ERR-18-065), lần chạy thử hợp lệ (ERR-18-064), không đóng băng (ERR-18-051), không tác vụ nặng khác (ERR-18-057); lần chạy `PENDING_APPROVAL`.
 2. Người duyệt xem báo cáo chạy thử và duyệt (khác người tạo: ERR-18-005); lần chạy `QUEUED`, Job `dh-migrate` bắt đầu.
-3. Job đọc, chuyển đổi, gọi API nhập của phân hệ đích với khóa lũy đẳng `legacySystem:objectType:legacyKey` và cờ `migration = true` (phân hệ đích không phát sự kiện nghiệp vụ, BR-18-043); bản ghi đã có với cùng khóa được bỏ qua hoặc cập nhật theo chính sách của bộ chuyển.
+3. Job đọc, chuyển đổi, gọi API nhập của phân hệ đích với khóa lũy đẳng `legacySystem:objectType:legacyKey`, tiêu đề `X-Datahub-Migration: true` (cờ `migration = true`) (phân hệ đích không phát sự kiện nghiệp vụ, BR-18-043); bản ghi đã có với cùng khóa được bỏ qua hoặc cập nhật theo chính sách của bộ chuyển.
 4. Job ghi kết quả, bản ghi lỗi, báo cáo đối chiếu, đánh dấu cấp lại xác thực (FR-18-065); kết thúc và phát EVT-18-25.
 
 **Luồng thay thế.** Hủy giữa chừng: Job dừng sau lô hiện hành, bản ghi đã ghi giữ nguyên (chạy lại tiếp được nhờ lũy đẳng). Chạy lại chỉ bản ghi lỗi sau khi sửa: `POST /migration-runs` với `retryOf` (FR-18-063).
 
 **Luồng ngoại lệ.**
 
+- Kế hoạch chưa sẵn sàng: ERR-18-065 (409); "Kế hoạch {mã} chưa ở trạng thái sẵn sàng."
 - Chưa có chạy thử hợp lệ: ERR-18-064 (409); "Cần một lần chạy thử thành công trong {ngày} ngày gần nhất trước khi chạy thật."
 - Đang đóng băng: ERR-18-051 (409); "Đang trong thời gian đóng băng thay đổi {cửa sổ} nên chưa chạy thật được."
 - Phân hệ đích không nhận lô: ERR-18-069 (503); UI-18-22 hiện "Phân hệ {ph} không nhận dữ liệu. Lần chạy tạm dừng và tự thử lại sau {phút} phút."
@@ -4292,7 +4315,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 **Luồng xử lý chính.**
 
 1. Người dùng xem danh sách lỗi với khóa nguồn, loại, lý do (mã ERR của phân hệ đích hoặc của bộ chuyển), bước lỗi; xuất CSV.
-2. Người dùng đánh dấu cách xử lý từng bản ghi hoặc nhóm (sửa ở nguồn, thêm quy tắc, không di trú kèm lý do).
+2. Người dùng đánh dấu cách xử lý từng bản ghi hoặc nhóm qua API-18-182 (`FIXED_AT_SOURCE` sửa ở nguồn, `RULE_ADDED` thêm quy tắc, `WONT_MIGRATE` không di trú kèm lý do ≥ 10 ký tự: ERR-18-007).
 3. Người dùng bấm "Chạy lại bản ghi lỗi": hệ thống tạo lần chạy mới chỉ gồm bản ghi chọn, cùng chế độ với lần gốc (chạy thật vẫn cần duyệt theo FR-18-062).
 4. Bản ghi chuyển được ở lần sau thì đóng; còn lỗi thì cập nhật lý do mới.
 
@@ -4300,7 +4323,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 
 **Luồng ngoại lệ.**
 
-- Lần chạy gốc không có bản ghi lỗi: ERR-18-036 (422); "Không có bản ghi lỗi nào để chạy lại."
+- Lần chạy gốc không có bản ghi lỗi: ERR-18-036 (422); "Không có mục nào phù hợp để chạy lại."
 
 **Đầu ra.** `200` danh sách lỗi; chạy lại `202` với `runId` mới.
 
@@ -4314,7 +4337,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 
 **Quy tắc nghiệp vụ.** BR-18-041.
 
-**Màn hình, API.** UI-18-22; API-18-164, API-18-170.
+**Màn hình, API.** UI-18-22; API-18-164, API-18-170, API-18-182.
 :::
 
 #### FR-18-064 · Lập báo cáo đối chiếu số lượng và tổng kiểm tra
@@ -4337,7 +4360,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 **Luồng xử lý chính.**
 
 1. Job tính cho từng loại đối tượng: số bản ghi nguồn theo bộ lọc, số bản ghi chuyển đổi, số ghi thành công, số lỗi, số bỏ qua.
-2. Job tính tổng kiểm tra SHA-256 trên danh sách khóa và các trường nghiệp vụ chính đã chuẩn hóa ở nguồn, và cùng phép tính trên dữ liệu đọc lại từ phân hệ đích qua API đọc (lệch: ERR-18-120).
+2. Job tính tổng kiểm tra SHA-256 trên danh sách khóa và các trường nghiệp vụ chính đã chuẩn hóa ở nguồn, và cùng phép tính trên băm chuẩn tắc từng bản ghi mà API nhập của phân hệ đích trả về hoặc trên dữ liệu đọc lại qua API đọc (lệch: ERR-18-120).
 3. Hệ thống lưu `migration_reconciliation`, đánh dấu chênh lệch chưa giải trình.
 4. Người dùng tải báo cáo PDF, CSV (lưu Garage, liên kết có hạn).
 
@@ -4367,7 +4390,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 ::: dac-ta
 **Mục đích.** Thực hiện FR-00-093: không di trú mật khẩu, khóa truy cập, chứng thư của hệ cũ, mà đánh dấu từng HTTT, application cần cấp lại ở PH-01, PH-03, để cắt chuyển không bị chặn vì thiếu xác thực.
 
-**Tác nhân, quyền.** Hệ thống (Job di trú); PA, TA xem (`PERM-18-migration`).
+**Tác nhân, quyền.** Hệ thống (Job di trú); PA, TA xem và đánh dấu miễn (`PERM-18-migration`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -4384,9 +4407,9 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 1. Bộ chuyển bỏ trường xác thực khỏi bản ghi trước khi gửi phân hệ đích và đếm số trường đã bỏ.
 2. Job ghi `credential_reissue_marker` cho từng HTTT và loại xác thực, trạng thái `PENDING`.
 3. Hệ thống phát EVT-18-26 để PH-01, PH-03 tạo việc cấp lại cho đầu mối HTTT.
-4. Hệ thống cập nhật dấu sang `DONE` khi nhận sự kiện cấp thông tin xác thực của PH-01 (EVT-01-05) cho đúng HTTT.
+4. Hệ thống cập nhật dấu sang `REISSUED` khi nhận sự kiện cấp thông tin xác thực của PH-01 (EVT-01-05) cho đúng HTTT.
 
-**Luồng thay thế.** HTTT không còn dùng: TA đánh dấu `NOT_NEEDED` kèm lý do.
+**Luồng thay thế.** HTTT không còn dùng: TA đánh dấu `WAIVED` kèm lý do ≥ 10 ký tự qua API-18-183 (`PERM-18-migration`; dấu đã `REISSUED`: ERR-18-006). Dấu đã báo phân hệ kết nạp nhưng chưa cấp lại ở trạng thái `NOTIFIED`.
 
 **Luồng ngoại lệ.**
 
@@ -4404,7 +4427,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 
 **Quy tắc nghiệp vụ.** BR-18-042.
 
-**Màn hình, API.** UI-18-22, UI-18-23; API-18-172.
+**Màn hình, API.** UI-18-22, UI-18-23; API-18-172, API-18-183.
 :::
 
 #### FR-18-066 · Theo dõi chạy song song và cầu nối PH-10
@@ -4476,7 +4499,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 3. Hệ thống tính tỷ lệ khớp trượt 24 giờ và 7 ngày của nhóm; đạt `18.migration.parallel.match-threshold-percent` (99,5%) trong 7 ngày liên tục với ≥ 1.000 mẫu thì nhóm sang `SHADOW_OK`.
 4. Tỷ lệ tụt dưới ngưỡng: nhóm về `PARALLEL`, gửi thông báo cho đội chuyển đổi (ERR-18-121 cho từng mẫu lệch chỉ ghi chỉ số).
 
-**Luồng thay thế.** Lệch đã biết và chấp nhận (ví dụ định dạng ngày): người dùng thêm quy tắc chuẩn hóa cho nhóm; mẫu cũ được tính lại.
+**Luồng thay thế.** Lệch đã biết và chấp nhận (ví dụ định dạng ngày): người dùng thay bộ quy tắc chuẩn hóa của nhóm qua API-18-184 (`If-Match`, lý do); bộ so sánh nhận quy tắc mới, các mẫu trong cửa sổ 7 ngày được tính lại.
 
 **Luồng ngoại lệ.**
 
@@ -4494,7 +4517,7 @@ Hình cho thấy công cụ không có đường ghi trực tiếp vào schema c
 
 **Quy tắc nghiệp vụ.** BR-18-044.
 
-**Màn hình, API.** UI-18-23; API-18-173, API-18-174, API-18-176.
+**Màn hình, API.** UI-18-23; API-18-173, API-18-174, API-18-176, API-18-184.
 :::
 
 ```{.mermaid caption="Trình tự đối soát bóng bằng lưu lượng nhân bản"}
@@ -4530,11 +4553,11 @@ Hình cho thấy HTTT chỉ nhận phản hồi của hệ cũ trong giai đoạ
 
 **Kích hoạt.** Người dùng bấm "Cắt chuyển" hoặc "Quay lui" ở UI-18-23.
 
-**Đầu vào.** `groupCode`; `target` (`PARTIAL_CUTOVER`, `CUT_OVER`, `ROLLED_BACK`); `trafficPercent` (khi một phần); `reason`; `If-Match`.
+**Đầu vào.** `groupCode`; `action` (`REQUEST` đề nghị, `APPROVE` duyệt, `REJECT` từ chối, `ROLLBACK` quay lui); `target` (`PARTIAL_CUTOVER`, `CUT_OVER`, bắt buộc khi `REQUEST`); `trafficPercent` (khi một phần); `reason`; `If-Match`. API-18-175 kiểm quyền theo `action`: `REQUEST`, `ROLLBACK` cần `PERM-18-migration`; `APPROVE`, `REJECT` cần `PERM-18-approve` và người khác người đề nghị (ERR-18-005).
 
 **Luồng xử lý chính.**
 
-1. Người dùng mở danh sách kiểm tra. Hệ thống tự đánh giá: DLQ của nhóm không còn mục `NEW`, `TRIAGED`, `REPLAY_FAILED`; tỷ lệ khớp ≥ ngưỡng (ERR-18-066); 100% HTTT của nhóm đã cấp lại xác thực; báo cáo đối chiếu không còn chênh lệch chưa giải trình; không trong đóng băng (ERR-18-051). Mục tay (thông báo HTTT, người trực) do người dùng xác nhận.
+1. Người dùng mở danh sách kiểm tra. Hệ thống tự đánh giá: DLQ của nhóm không còn mục `NEW`, `TRIAGED`, `REPLAY_FAILED`; tỷ lệ khớp ≥ ngưỡng (ERR-18-066); 100% HTTT của nhóm đã cấp lại xác thực; báo cáo đối chiếu không còn chênh lệch chưa giải trình; không trong đóng băng (ERR-18-051). Mục tay (thông báo HTTT, người trực) do người dùng xác nhận qua API-18-185 kèm bằng chứng.
 2. Thiếu mục nào: ERR-18-067. Đủ: người dùng gửi đề nghị, chuyển duyệt bốn mắt.
 3. Người duyệt duyệt (khác người đề nghị: ERR-18-005). Hệ thống ghi `cutover_log`, gửi yêu cầu đổi tuyến cho PH-03 (tỷ lệ lưu lượng sang Datahub) và PH-10 (cắt chuyển cầu nối nếu có), chuyển trạng thái nhóm, phát EVT-18-27.
 4. Quay lui: người dùng bấm "Quay lui" trong `18.migration.rollback-window-minutes` (15 phút) kể từ `CUT_OVER`, hoặc bất cứ lúc nào khi `PARTIAL_CUTOVER`; hệ thống ghi sổ, yêu cầu PH-03 trả tuyến về hệ cũ, nhóm `ROLLED_BACK` rồi `PARALLEL`.
@@ -4559,7 +4582,7 @@ Hình cho thấy HTTT chỉ nhận phản hồi của hệ cũ trong giai đoạ
 
 **Quy tắc nghiệp vụ.** BR-18-044.
 
-**Màn hình, API.** UI-18-23, UI-18-15; API-18-174, API-18-175.
+**Màn hình, API.** UI-18-23, UI-18-15; API-18-174, API-18-175, API-18-185.
 :::
 
 ```{.mermaid caption="Trình tự cắt chuyển một nhóm dịch vụ có bốn mắt và quay lui"}
@@ -4733,7 +4756,7 @@ Hình cho thấy tham số của PH-18 dùng chính kho tham số của nhóm A,
 ::: dac-ta
 **Mục đích.** Bảo đảm PH-18 vắng hoặc chậm không chặn đường chính của Datahub, và người vận hành biết ngay khi PH-18 đang suy giảm.
 
-**Tác nhân, quyền.** Hệ thống; PA, PO xem và bật chế độ chỉ đọc (`PERM-18-admin`); PH-13 thu chỉ số.
+**Tác nhân, quyền.** Hệ thống; người có `PERM-18-read` xem (UI-18-24, API-18-180, API-18-186); PA bật, tắt chế độ chỉ đọc (`PERM-18-admin`, API-18-187); PH-13 thu chỉ số.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -4741,16 +4764,16 @@ Hình cho thấy tham số của PH-18 dùng chính kho tham số của nhóm A,
 
 **Tiền điều kiện.** Không.
 
-**Kích hoạt.** Kiểm tra sức khỏe mỗi 15 giây; PA bật `18.degraded.read-only`; người dùng mở UI-18-24.
+**Kích hoạt.** Kiểm tra sức khỏe mỗi 15 giây; PA bật hoặc tắt chế độ chỉ đọc; người dùng mở UI-18-24.
 
-**Đầu vào.** Không (chỉ số nội bộ); bật chỉ đọc: `reason`.
+**Đầu vào.** Không (chỉ số nội bộ); bật, tắt chỉ đọc: `readOnly` (T-BOOL), `reason` (≥ 10 ký tự).
 
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm từng mô-đun: CSDL, Kafka (độ trễ tiêu thụ DLQ, inbox), Garage, máy chủ thư, SMS gateway, PH-13, PH-10, registry PH-20, Kubernetes API (tạo Job); phát chỉ số `dh_ops_component_up{component}`.
 2. Hệ thống xác định trạng thái `UP`, `DEGRADED`, `DOWN` của PH-18 và phát EVT-18-29 khi đổi.
-3. Chế độ chỉ đọc (PA bật khi bảo trì CSDL): API ghi của người dùng trả ERR-18-071; tiêu thụ DLQ tạm dừng (bản tin dồn ở Kafka); thông báo vẫn gửi từ outbox đã có.
-4. Người dùng mở UI-18-24: thấy trạng thái từng thành phần, độ trễ tiêu thụ, outbox tồn, inbox `FAILED`, Job đang chạy.
+3. Chế độ chỉ đọc (PA bật khi bảo trì CSDL qua API-18-187, hệ thống ghi khóa `18.degraded.read-only`): mọi API ghi của người dùng trả ERR-18-071, trừ chính API-18-187 để PA tắt được chế độ này; API-18-006 không nhận khóa `18.degraded.read-only` (ERR-18-003, chỉ đổi qua API-18-187); tiêu thụ DLQ tạm dừng (bản tin dồn ở Kafka); thông báo vẫn gửi từ outbox đã có.
+4. Người dùng mở UI-18-24: thấy trạng thái từng thành phần, độ trễ tiêu thụ, outbox tồn, Job đang chạy và danh sách sự kiện inbox `FAILED` theo mô-đun (API-18-186).
 
 **Luồng thay thế.** Thành phần phụ lỗi (ví dụ SMS gateway): chỉ chức năng liên quan suy giảm, phần khác chạy bình thường.
 
@@ -4770,7 +4793,7 @@ Hình cho thấy tham số của PH-18 dùng chính kho tham số của nhóm A,
 
 **Quy tắc nghiệp vụ.** BR-18-007; BR-18-011.
 
-**Màn hình, API.** UI-18-24; API-18-180.
+**Màn hình, API.** UI-18-24; API-18-180, API-18-186, API-18-187.
 :::
 
 ## 7. Quy tắc nghiệp vụ
@@ -4791,7 +4814,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-18. Mỗi quy tắc đ
 | BR-18-010 | Ghi mặc định khi khởi tạo tenant chỉ thêm khóa chưa có, không ghi đè giá trị đã có; chạy lại không đổi gì | 011 |
 | BR-18-011 | Bản tin lỗi đi qua Kafka hoặc hàng lỗi của nguồn trước; PH-18 commit offset chỉ sau khi chỉ mục bền. PH-18 vắng không chặn đường chính | 013, 014, 018, 072 |
 | BR-18-012 | Payload gốc của mục DLQ không bao giờ bị sửa; mọi sửa đổi tạo bản sửa riêng có số thứ tự và khác biệt | 024 |
-| BR-18-013 | Mục thiếu trường bắt buộc của hợp đồng ngữ cảnh (bảng 4.1b) là `POISON` | 013, 014, 015 |
+| BR-18-013 | Mục thiếu trường bắt buộc của hợp đồng ngữ cảnh (bảng 4.1b) xử lý theo đường vào: qua topic `{tenant}.ops.dlq.v1` (FR-18-013) được ghi thành `POISON` kèm danh sách trường thiếu, vì nguồn không chờ phản hồi; qua API ghi DLQ (FR-18-014) bị từ chối `422` với ERR-18-024 và không ghi mục, để nguồn sửa và gửi lại ngay | 013, 014, 015 |
 | BR-18-014 | Payload lớn hơn `18.dlq.payload.inline-max-kb` (256 KB) lưu ở Garage bucket `dh-{tenant}-ops`, chỉ mục giữ đường dẫn, kích thước và SHA-256; vượt `18.dlq.payload.max-mb` bị từ chối | 014, 016 |
 | BR-18-015 | Khử trùng theo `dlqKey = sourceCode:flow:messageId:stage`; mục chưa đóng cùng khóa chỉ tăng bộ đếm lần gặp | 013, 014, 016, 018 |
 | BR-18-016 | DLQ tầng sự kiện của PH-10 không sao chép nội dung vào PH-18; PH-18 chỉ hiển thị siêu dữ liệu và đề nghị phát lại qua API-10. Scope `ops:dlq-read` không có thao tác ghi | 017, 026 |
@@ -4836,7 +4859,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-18. Mỗi quy tắc đ
 
 ### 8.1. Yêu cầu phi chức năng
 
-Điều kiện đo chung: hồ sơ "tỉnh vừa" (GĐ-07, tỉnh T01, 200 HTTT theo GĐ-06), giả định 1 triệu mục DLQ tồn trong chỉ mục mỗi tenant, 200 người dùng vận hành đồng thời, `dh-platform` 3 bản sao, Kafka 3 broker. Đo bằng k6 tại APISIX và chỉ số Prometheus của `dh-platform`, `dh-ops-worker`.
+Điều kiện đo chung: hồ sơ "tỉnh vừa" (GĐ-07, tỉnh T01, 200 HTTT theo GĐ-06), giả định 1 triệu mục DLQ tồn trong chỉ mục mỗi tenant, 200 người dùng vận hành đồng thời, `dh-platform` 2 bản sao theo hồ sơ `QM-VUA` của SAD §4.3 (HPA tới 4 bản sao khi tải), Kafka 3 broker. Đo bằng k6 tại APISIX và chỉ số Prometheus của `dh-platform`, `dh-ops-worker`.
 
 | Mã | Yêu cầu | Chỉ tiêu | Điều kiện đo |
 |---|---|---|---|
@@ -4855,7 +4878,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-18. Mỗi quy tắc đ
 | NFR-18-013 | Thông lượng di trú | ≥ 300 bản ghi mỗi giây qua API nhập của phân hệ đích | Danh mục Aita, lô 500 |
 | NFR-18-014 | Di trú lũy đẳng | 0 bản ghi trùng khi chạy lại toàn bộ lần chạy thật | Chạy lại ba lần liên tiếp |
 | NFR-18-015 | Quay lui cắt chuyển | ≤ 15 phút từ khi bấm đến khi 100% lưu lượng của nhóm về hệ cũ | Nhóm 20 tuyến |
-| NFR-18-016 | Sẵn sàng | 99,5% mỗi tháng cho API người dùng; tiếp nhận DLQ không mất bản tin khi PH-18 gián đoạn ≤ 7 ngày (thời hạn giữ topic) | Theo LGC-NFR-001 |
+| NFR-18-016 | Sẵn sàng | 99,5% mỗi tháng cho API người dùng; tiếp nhận DLQ không mất bản tin khi PH-18 gián đoạn ≤ 14 ngày (thời hạn giữ topic `{tenant}.ops.dlq.v1`, ADR-181) | Theo LGC-NFR-001 |
 | NFR-18-017 | Cô lập tenant | 0 bản ghi của tenant khác trong kết quả API; khôi phục, chuyển sáp nhập không chạm dòng của tenant khác | Bộ kiểm thử rò rỉ chéo tenant chạy trong CI (SEC-87) |
 | NFR-18-018 | Suy giảm không chặn đường chính | 0 lỗi data plane do PH-18 vắng; p95 độ trễ giao dịch HTTT không tăng quá 5% | Tắt `dh-platform` 30 phút trong kiểm thử tải data plane |
 | NFR-18-019 | Kiểm toán | 100% thao tác ghi có bản ghi kiểm toán ở PH-13 | Đối chiếu nhật ký thao tác với kiểm toán hằng ngày |
@@ -4935,6 +4958,8 @@ Các tham số dưới đây thuộc không gian tên `18.` và được chỉnh
 
 : Tham số `18.*` của PH-18
 
+PH-18 dùng thêm ba cờ tính năng của chính mình theo chuẩn `ff.{module}.{tính-năng}` (FR-18-009), có chủ sở hữu PH-18 và ngày gỡ: `ff.ops.shadow-compare` (bật đối soát bóng FR-18-067 khi PH-03 sẵn sàng bộ chạm), `ff.ops.sms-channel` (bật kênh SMS mức nền tảng trước khi tỉnh bật `18.notify.sms.enabled`), `ff.ops.merge-transfer` (bật chuyển sáp nhập FR-18-057 khi PH-20 lên đợt 2). Cờ tắt thì API tương ứng trả ERR-18-006.
+
 Ngoài các khóa `18.*`, PH-18 lưu tham số của mọi không gian tên đã đăng ký (khoảng 340 khóa theo danh sách của các phân hệ: `onboarding.*` 30, `02.*` 28, `04.*` 23, `05.*` 17, `07.rdm.*` 23, `10.*` 59, `12.*` 38, `14.*` 51, `15.*` 27, `17.*` 49); định nghĩa của các khóa đó nằm ở mục 8.2 của FRS từng phân hệ.
 
 ## 9. Mã lỗi, thông báo, sự kiện và API
@@ -4943,27 +4968,27 @@ Chương này là nguồn của D03-04-PH18 (OpenAPI, AsyncAPI). Mã lỗi theo 
 
 ### 9.1. Mã lỗi
 
-Mã 001 đến 072 là lỗi control plane trả cho người dùng hoặc phân hệ gọi. Mã 101 đến 124 là lỗi của luồng tiếp nhận DLQ, worker và gửi thông báo: không trả qua HTTP mà ghi vào trạng thái của đối tượng (mục DLQ, lần gửi, bước Job), vào log có `trace_id` và chỉ số `dh_ops_errors_total{code}`. Cột FR được lập từ mục "Luồng xử lý chính" và "Luồng ngoại lệ" của chương 6.
+Mã 001 đến 072 là lỗi control plane trả cho người dùng hoặc phân hệ gọi. Mã 101 đến 124 là lỗi của luồng tiếp nhận DLQ, worker và gửi thông báo: không trả qua HTTP mà ghi vào trạng thái của đối tượng (mục DLQ, lần gửi, bước Job), vào log có `trace_id` và chỉ số `dh_ops_errors_total{code}`. Cột FR được lập từ mục "Luồng xử lý chính" và "Luồng ngoại lệ" của chương 6. Mã dùng ở nhiều ngữ cảnh (ERR-18-001, 005, 006, 007, 013, 017, 036) có câu chung với chỗ trống trong ngoặc nhọn; khối FR ở chương 6 điền chỗ trống theo ngữ cảnh (ví dụ ERR-18-007 của FR-18-054 đòi lý do ít nhất 30 ký tự), giao diện và test case dùng câu đã điền.
 
 | Mã | HTTP | Ý nghĩa | Thông báo | FR |
 |---|---|---|---|---|
-| ERR-18-001 | 404 | Không tìm thấy đối tượng | "Không tìm thấy phiên bản {số} của {khóa}." | 002, 005, 011, 021, 044, 049, 053 |
+| ERR-18-001 | 404 | Không tìm thấy đối tượng | "Không tìm thấy {đối tượng} {mã}." | 002, 005, 011, 021, 044, 049, 053 |
 | ERR-18-002 | 409 | Mã đã tồn tại | "Mã {mã} đã được dùng. Chọn mã khác." | 009, 010 |
 | ERR-18-003 | 400 | Dữ liệu vào không hợp lệ | "Dữ liệu không hợp lệ: {chi tiết}." | 001, 012, 019, 023, 025, 034, 038, 039, 041, 042, 048, 058, 060 |
 | ERR-18-004 | 412 | ETag lệch, dữ liệu đã đổi | "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu." | 003, 023, 025 |
-| ERR-18-005 | 403 | Người duyệt trùng người đề nghị | "Bạn là người đề nghị nên không được duyệt đề nghị này." | 004, 024, 028, 035, 055, 062, 068 |
-| ERR-18-006 | 409 | Trạng thái không cho phép thao tác | "Đối soát đang chạy. Chờ lần hiện tại xong." | 018, 020, 023, 029, 031, 032, 040, 048, 049, 051 |
-| ERR-18-007 | 422 | Thiếu lý do hoặc lý do quá ngắn | "Nhập lý do xem nội dung (ít nhất 10 ký tự)." | 003, 005, 022, 024, 031 |
+| ERR-18-005 | 403 | Người duyệt trùng người đề nghị | "Bạn là người tạo {đối tượng} này nên không được duyệt." | 004, 024, 028, 035, 055, 062, 068 |
+| ERR-18-006 | 409 | Trạng thái không cho phép thao tác | "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}." | 018, 020, 023, 029, 031, 032, 040, 048, 049, 051, 065 |
+| ERR-18-007 | 422 | Thiếu lý do hoặc lý do quá ngắn | "Nhập lý do {thao tác} (ít nhất {n} ký tự)." | 003, 005, 022, 024, 031, 063, 065, 072 |
 | ERR-18-008 | 503 | Không ghi được kiểm toán PH-13 | "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau." | 004, 022, 070 |
 | ERR-18-009 | 409 | Idempotency-Key dùng lại với thân khác | "Yêu cầu trùng khóa với một yêu cầu khác nội dung." | 036 |
 | ERR-18-010 | 429 | Vượt giới hạn tần suất | "Quá nhiều yêu cầu. Thử lại sau {giây} giây." | 002, 026 |
 | ERR-18-011 | 404 | Khóa tham số chưa đăng ký | "Khóa {khóa} chưa được đăng ký." | 003 |
 | ERR-18-012 | 422 | Sai kiểu giá trị | "Giá trị của {khóa} phải có kiểu {kiểu}." | 003, 007, 069 |
-| ERR-18-013 | 422 | Giá trị ngoài miền | "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}." | 003, 004, 008, 010 |
+| ERR-18-013 | 422 | Giá trị ngoài miền | "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}." | 003, 004, 008, 010 |
 | ERR-18-014 | 422 | Giá trị vượt trần nền tảng | "Giá trị vượt giới hạn nền tảng của {khóa} ({trần}). Liên hệ quản trị nền tảng nếu cần nâng." | 003, 069 |
 | ERR-18-015 | 403 | Khóa mức PLATFORM | "Tham số {khóa} do quản trị nền tảng đặt, tỉnh chỉ xem được." | 003 |
 | ERR-18-016 | 409 | Lược đồ khóa xung đột | "Lược đồ mới của {ns} xung đột với giá trị đang dùng ở {số} tenant. Xem danh sách trong chi tiết." | 001 |
-| ERR-18-017 | 403 | Không gian tên không thuộc phân hệ gọi | "Phân hệ không sở hữu không gian tên {ns}." | 001, 042 |
+| ERR-18-017 | 403 | Đối tượng đăng ký không thuộc phân hệ gọi | "Phân hệ không sở hữu {đối tượng} {mã}." | 001, 042 |
 | ERR-18-018 | 409 | Đã có đề nghị chờ duyệt | "Tham số {khóa} đang có đề nghị chờ duyệt của {người}. Chờ duyệt xong hoặc rút đề nghị." | 004 |
 | ERR-18-019 | 409 | Khóa do phân hệ khác giữ duyệt | "Tham số {khóa} được duyệt tại {phân hệ}. Mở màn {phân hệ} để đề nghị thay đổi." | 004 |
 | ERR-18-020 | 422 | Gói tham số không hợp lệ | "Gói tham số không hợp lệ hoặc đã bị sửa: {chi tiết}." | 008 |
@@ -4982,7 +5007,7 @@ Mã 001 đến 072 là lỗi control plane trả cho người dùng hoặc phân
 | ERR-18-033 | 409 | Nguồn không có cổng phát lại | "Nguồn {mã} chưa có cổng phát lại hoặc đang tạm ngừng." | 012, 027 |
 | ERR-18-034 | 409 | Mục hết hạn, không mở lại được | "Mục đã hết hạn lưu giữ nên không thể mở lại." | 032 |
 | ERR-18-035 | 503 | PH-10 không phản hồi | "Chưa lấy được dữ liệu từ phân hệ sự kiện. Thử lại sau." | 017 |
-| ERR-18-036 | 422 | Bộ lọc rỗng | "Bộ lọc không có mục nào phát lại được." | 028, 063 |
+| ERR-18-036 | 422 | Không có mục phù hợp | "Không có mục nào phù hợp để {thao tác}." | 028, 063 |
 | ERR-18-037 | 422 | Tốc độ vượt trần | "Tốc độ {n} mục mỗi giây vượt giới hạn {trần} của nguồn {mã}." | 029 |
 | ERR-18-038 | 403 | Callback không khớp nguồn | "Danh tính gọi không khớp nguồn của mục." | 030 |
 | ERR-18-039 | 422 | Mẫu chứa trường cấm | "Mẫu dùng trường {biến} mức {mức}. Thư chỉ được chứa liên kết, không chứa dữ liệu mức Hạn chế hoặc Nhạy cảm." | 035, 036, 043 |
@@ -5011,13 +5036,13 @@ Mã 001 đến 072 là lỗi control plane trả cho người dùng hoặc phân
 | ERR-18-062 | 422 | Nguồn di trú không kết nối được hoặc không chỉ đọc | "Nguồn {mã} không kết nối được hoặc tài khoản không phải chỉ đọc: {chi tiết}." | 059 |
 | ERR-18-063 | 422 | Phụ thuộc vòng trong kế hoạch | "Kế hoạch có phụ thuộc vòng hoặc thiếu đối tượng tiền đề: {danh sách}." | 060 |
 | ERR-18-064 | 409 | Cần chạy thử gần đây | "Cần một lần chạy thử thành công trong {ngày} ngày gần nhất trước khi chạy thật." | 062 |
-| ERR-18-065 | 409 | Kế hoạch chưa READY | "Kế hoạch {mã} chưa ở trạng thái sẵn sàng." | 061 |
+| ERR-18-065 | 409 | Kế hoạch chưa READY | "Kế hoạch {mã} chưa ở trạng thái sẵn sàng." | 061, 062 |
 | ERR-18-066 | 422 | Tỷ lệ khớp chưa đạt | "Tỷ lệ khớp {tỷ lệ} thấp hơn ngưỡng {ngưỡng}." | 068 |
 | ERR-18-067 | 409 | Danh sách kiểm tra chưa đạt | "Chưa cắt chuyển được nhóm {nhóm}: còn {n} mục kiểm tra chưa đạt." | 068 |
 | ERR-18-068 | 409 | Quá cửa sổ quay lui | "Đã quá {phút} phút kể từ khi cắt chuyển nên không quay lui tự động được." | 068 |
-| ERR-18-069 | 503 | Phân hệ đích không nhận lô | "Phân hệ {ph} chưa nhận lô. Lần chạy tạm dừng." | 062 |
+| ERR-18-069 | 503 | Phân hệ đích không nhận lô | "Phân hệ {ph} không nhận dữ liệu. Lần chạy tạm dừng và tự thử lại sau {phút} phút." | 062 |
 | ERR-18-070 | 422 | Thông tin kết nối không phải tham chiếu kho bí mật | "Thông tin kết nối phải là tham chiếu kho bí mật, không nhập mật khẩu trực tiếp." | 059 |
-| ERR-18-071 | 503 | Chế độ chỉ đọc | "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được." | 007, 011, 072 |
+| ERR-18-071 | 503 | Chế độ chỉ đọc | "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được." | 007, 011, 072 |
 | ERR-18-072 | 422 | Kỳ báo cáo không hợp lệ | "Kỳ báo cáo {kỳ} không hợp lệ hoặc chưa kết thúc." | 071 |
 | ERR-18-101 | Không (worker) | Không giải mã được bản tin | "Không đọc được nội dung bản tin; lưu dạng nhị phân." | 013 |
 | ERR-18-102 | Không (worker) | Thiếu header ngữ cảnh | "Thiếu thông tin ngữ cảnh: {trường}." | 015 |
@@ -5162,11 +5187,11 @@ API người dùng ở `/api/ops/v1` qua APISIX, xác thực JWT của PH-12; m�
 | API-18-038 | `POST /dlq/reconciliation:run` | 018 | dlq | Chạy đối soát ngay ngoài lịch |
 | API-18-039 | `GET /dlq/event-dead-letters` | 017 | dlq | Siêu dữ liệu DLQ tầng sự kiện của PH-10 hiển thị chung (gọi API-10-060) |
 | API-18-040 | `POST /dlq/event-dead-letters/{entryRef}:request-replay` | 017 | dlq | Đề nghị PH-10 phát lại mục DLQ tầng sự kiện (gọi API-10-064) |
-| API-18-041 | `GET /dlq/messages` | 019, 023 | dlq | Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` |
+| API-18-041 | `GET /dlq/messages` | 019, 023 | read | Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` (siêu dữ liệu, thao tác cần `PERM-18-dlq`) |
 | API-18-042 | `GET /dlq/messages:export` | 019 | dlq | Xuất danh sách đang lọc ra CSV (chỉ siêu dữ liệu, tối đa 50.000 dòng) |
-| API-18-043 | `GET /dlq/groups` | 020 | dlq | Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn |
+| API-18-043 | `GET /dlq/groups` | 020 | read | Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn |
 | API-18-044 | `POST /dlq/groups/{groupId}:assign` | 020, 023 | dlq | Gán người xử lý, ưu tiên cho cả nhóm |
-| API-18-045 | `GET /dlq/messages/{dlqId}` | 021 | dlq | Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại |
+| API-18-045 | `GET /dlq/messages/{dlqId}` | 021 | read | Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại (không payload) |
 | API-18-046 | `GET /dlq/messages/{dlqId}/diagnostics` | 021 | dlq | Ngữ cảnh chẩn đoán từ PH-13 (API-13-069), trả một phần khi PH-13 vắng |
 | API-18-047 | `POST /dlq/messages/{dlqId}/payload:reveal` | 022 | dlq-payload | Mở xem payload có lý do, trả phiếu xem 15 phút và nội dung đã che trường mã hóa |
 | API-18-048 | `GET /dlq/messages/{dlqId}/payload/skeleton` | 022, 026 | dlq | Khung cấu trúc payload không có giá trị (tên trường, kiểu) |
@@ -5296,12 +5321,20 @@ API người dùng ở `/api/ops/v1` qua APISIX, xác thực JWT của PH-12; m�
 | API-18-172 | `GET /credential-reissues` | 065 | migration | Danh sách thông tin xác thực cần cấp lại theo HTTT, trạng thái |
 | API-18-173 | `GET /parallel-groups` | 066, 067 | migration | Nhóm dịch vụ chạy song song, trạng thái cầu nối, tỷ lệ khớp |
 | API-18-174 | `GET /parallel-groups/{groupCode}` | 066, 067, 068 | migration | Chi tiết nhóm, mẫu so sánh lệch, danh sách kiểm tra cắt chuyển, sổ cắt chuyển |
-| API-18-175 | `POST /parallel-groups/{groupCode}:transition` | 068 | migration, approve | Cắt chuyển một phần, toàn phần hoặc quay lui (bốn mắt khi cắt chuyển) |
+| API-18-175 | `POST /parallel-groups/{groupCode}:transition` | 068 | migration, approve | Cắt chuyển theo `action`: `REQUEST` đề nghị cắt chuyển một phần hoặc toàn phần, `APPROVE`, `REJECT` (bốn mắt, `PERM-18-approve`), `ROLLBACK` quay lui (`PERM-18-migration`) |
 | API-18-176 | `POST /ops/internal/v1/shadow-samples` | 067 | `ops:shadow-ingest` | Bộ so sánh nhận cặp phản hồi cũ và mới đã băm |
 | API-18-177 | `GET /audit-log` | 070 | read | Nhật ký thao tác vận hành của PH-18 (chỉ đọc, từ PH-13) |
 | API-18-178 | `GET /reports` | 071 | read | Danh sách báo cáo vận hành định kỳ |
 | API-18-179 | `POST /reports:generate` | 071 | admin | Dựng báo cáo vận hành cho kỳ chọn |
 | API-18-180 | `GET /health` | 072 | read | Sức khỏe các mô-đun PH-18, chế độ suy giảm, độ trễ tiêu thụ |
+| API-18-181 | `POST /me/tasks/{taskId}:claim` | 044 | đăng nhập | Nhận việc: chuyển `IN_PROGRESS`, ghi người nhận, báo người cùng nhận (EVT-18-14) |
+| API-18-182 | `PATCH /migration-runs/{runId}/errors` | 063 | migration | Đánh dấu cách xử lý một hoặc nhiều bản ghi lỗi (`FIXED_AT_SOURCE`, `RULE_ADDED`, `WONT_MIGRATE` kèm lý do) |
+| API-18-183 | `POST /credential-reissues/{markerId}:waive` | 065 | migration | Đánh dấu thông tin xác thực không cần cấp lại (`WAIVED`) kèm lý do |
+| API-18-184 | `PUT /parallel-groups/{groupCode}/normalization-rules` | 067 | migration | Thay bộ quy tắc chuẩn hóa so sánh của nhóm; mẫu trong cửa sổ được tính lại |
+| API-18-185 | `POST /parallel-groups/{groupCode}/checklist/{itemCode}:confirm` | 068 | migration | Xác nhận một mục kiểm tay của danh sách cắt chuyển kèm bằng chứng |
+| API-18-186 | `GET /inbox-failures` | 072 | read | Danh sách sự kiện inbox `FAILED` theo mô-đun, lỗi cuối, số lần thử |
+| API-18-187 | `POST /degraded-mode` | 072 | admin | Bật, tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc |
+| API-18-188 | `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}` | 027, 028 | `ops:replay-callback` | Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09 (bản gốc khi `revision = 0`) |
 
 : Bảng 9.4. Danh mục API của PH-18
 
@@ -5309,7 +5342,7 @@ API người dùng ở `/api/ops/v1` qua APISIX, xác thực JWT của PH-12; m�
 
 ### 10.1. Danh sách màn hình
 
-PH-18 có 24 màn hình. Hai mươi hai màn nằm trong khu `/van-hanh` của `dh-console` (menu "Vận hành"), hai màn cá nhân nằm ở `/ca-nhan` (Tùy chọn nhận thông báo UI-18-14, Việc của tôi UI-18-15). Các route `/van-hanh`, `/van-hanh/thong-bao`, `/van-hanh/su-co`, `/van-hanh/lich`, `/ca-nhan/thong-bao` là đề nghị bổ sung vào D03-06-00 (mục 12.4). Cột "PTN" là mẫu giao diện chuẩn của D03-05; chi tiết bố cục, trạng thái rỗng, lỗi, đáp ứng nằm ở D03-06-PH18. Cột FR được lập từ mục "Màn hình, API" của chương 6.
+PH-18 có 24 màn hình. Hai mươi hai màn nằm trong khu `/van-hanh` của `dh-console` (menu "Vận hành"), hai màn cá nhân nằm ở `/ca-nhan` (Tùy chọn nhận thông báo UI-18-14, Việc của tôi UI-18-15). Các route `/van-hanh`, `/van-hanh/thong-bao`, `/van-hanh/su-co`, `/van-hanh/lich`, `/ca-nhan/thong-bao` là đề nghị bổ sung vào D03-06-00 (mục 12.4). Cột "PTN" là mẫu trang chuẩn định nghĩa ở D03-06-00; chi tiết bố cục, trạng thái rỗng, lỗi, đáp ứng nằm ở D03-06-PH18. Cột FR được lập từ mục "Màn hình, API" của chương 6. Cột "Vai trò" chỉ dùng viết tắt của bảng 3.1: người giữ `PERM-18-migration` là PA, TA (DS hạn chế ở bản ghi lỗi); người xử lý dữ liệu cá nhân trong sự cố là SO; nội dung sổ tay của phân hệ khác do PA nhập theo đề xuất của phân hệ chủ mã lỗi.
 
 | Mã | Tên | Route | PTN | Vai trò | FR |
 |---|---|---|---|---|---|
@@ -5319,7 +5352,7 @@ PH-18 có 24 màn hình. Hai mươi hai màn nằm trong khu `/van-hanh` của `
 | UI-18-04 | Sửa payload | `/van-hanh/dlq/{dlqId}/sua` | PTN-03 | TO, IE | 024 |
 | UI-18-05 | Lượt phát lại | `/van-hanh/dlq/phat-lai`, `/van-hanh/dlq/phat-lai/{jobId}` | PTN-11 | TO, TA | 028, 029, 030 |
 | UI-18-06 | Thống kê và nguồn DLQ | `/van-hanh/dlq/thong-ke` | PTN-06 | TO, TA, PO | 012, 018, 033, 034 |
-| UI-18-07 | Sổ tay xử lý lỗi | `/van-hanh/dlq/so-tay` | PTN-01 | TO, IE, PH chủ | 025 |
+| UI-18-07 | Sổ tay xử lý lỗi | `/van-hanh/dlq/so-tay` | PTN-01 | TO, IE, PA | 025 |
 | UI-18-08 | Tham số | `/van-hanh/tham-so` | PTN-12 | TA, PA | 001, 002, 003, 004, 006, 007, 008, 011, 069 |
 | UI-18-09 | Lịch sử và đề nghị đổi tham số | `/van-hanh/tham-so/{khoa}/lich-su` | PTN-02 | TA, SO, PA | 004, 005 |
 | UI-18-10 | Cờ tính năng và egress | `/van-hanh/tham-so?tab=co-tinh-nang`, `?tab=egress` | PTN-01 | TA, PA | 009, 010 |
@@ -5330,12 +5363,12 @@ PH-18 có 24 màn hình. Hai mươi hai màn nằm trong khu `/van-hanh` của `
 | UI-18-15 | Việc của tôi | `/ca-nhan/viec` | PTN-10 | Mọi người dùng | 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068 |
 | UI-18-16 | Lịch, bảo trì và đóng băng | `/van-hanh/lich` | PTN-01 | TA, PA, PO | 045, 046 |
 | UI-18-17 | Danh sách sự cố | `/van-hanh/su-co` | PTN-01 | TO, SO, TA | 047, 048 |
-| UI-18-18 | Chi tiết sự cố | `/van-hanh/su-co/{ma}` | PTN-02 | TO, SO, DPO | 048, 049, 050, 051 |
+| UI-18-18 | Chi tiết sự cố | `/van-hanh/su-co/{ma}` | PTN-02 | TO, SO | 048, 049, 050, 051 |
 | UI-18-19 | Bảng điều khiển sao lưu | `/van-hanh/sao-luu` | PTN-06 | PO, PA, TA | 052, 053, 058 |
 | UI-18-20 | Khôi phục, xuất và sáp nhập | `/van-hanh/sao-luu/khoi-phuc` | PTN-11 | TA, PA | 054, 055, 056, 057 |
-| UI-18-21 | Nguồn và kế hoạch di trú | `/van-hanh/di-tru` | PTN-05 | MO, TA | 059, 060, 061, 062 |
-| UI-18-22 | Lần chạy di trú | `/van-hanh/di-tru/lan-chay/{ma}` | PTN-11 | MO, TA | 061, 062, 063, 064, 065 |
-| UI-18-23 | Chạy song song và cắt chuyển | `/van-hanh/di-tru/song-song` | PTN-06 | MO, TA, PA | 065, 066, 067, 068 |
+| UI-18-21 | Nguồn và kế hoạch di trú | `/van-hanh/di-tru` | PTN-05 | PA, TA | 059, 060, 061, 062 |
+| UI-18-22 | Lần chạy di trú | `/van-hanh/di-tru/lan-chay/{ma}` | PTN-11 | PA, TA, DS | 061, 062, 063, 064, 065 |
+| UI-18-23 | Chạy song song và cắt chuyển | `/van-hanh/di-tru/song-song` | PTN-06 | PA, TA | 065, 066, 067, 068 |
 | UI-18-24 | Tổng quan vận hành và sức khỏe | `/van-hanh` | PTN-06 | TO, TA, PA, PO, AU | 006, 013, 034, 070, 071, 072 |
 
 : Danh sách màn hình của PH-18
@@ -5524,6 +5557,8 @@ PH-18 chạy trong DU `dh-platform`, không có DU riêng; tác vụ nặng ch�
 
 ### 12.4. Đề nghị đồng bộ
 
+Bảng dưới ghi việc cần tài liệu chung và phân hệ khác làm; dòng nội bộ PH-18 đã hấp thụ ở 0.2 được đánh dấu. Bảng 12.5 ghi các đề nghị nội bộ mà tập khác của PH-18 gửi FRS và cách bản 0.2 đã hấp thụ.
+
 | Tài liệu, phân hệ | Đề nghị | Lý do |
 |---|---|---|
 | D02-08 | Tám quyền `PERM-18-read`, `PERM-18-dlq-payload`, `PERM-18-approve`, `PERM-18-template`, `PERM-18-incident`, `PERM-18-backup`, `PERM-18-calendar`, `PERM-18-admin` đã có; đối chiếu gán vai trò theo bảng 3.2 và thêm scope `ops:backup-report`, `ops:merge-transfer`, `ops:shadow-ingest` | Bảng 3.2, 3.3 |
@@ -5540,10 +5575,42 @@ PH-18 chạy trong DU `dh-platform`, không có DU riêng; tác vụ nặng ch�
 | PH-09 | Mở API nhận sự cố `source = INCIDENT_PH18` | FR-18-050 |
 | PH-20 | Ghi nhận hợp đồng: `POST /merge-transfers`, báo tiến độ về `:report`, sáu topic `platform.*`, registry `tenant:registry-read` | Mục 9.3 |
 | D00-02 | Đưa ADR-180 đến ADR-184 vào danh mục ADR | Mục 12.3 |
-| D03-03-PH18 | Đổi tên khóa `18.*` ở §8.2 của tập CSDL theo bảng 8.2 của FRS (FRS là nguồn chuẩn): `18.param.cache-seconds` thành `18.param.cache-ttl-seconds`, `18.param.history-retention-years` thành `18.param.history-retention-days`, `18.dlq.replay.rate-per-minute` thành `18.dlq.replay.rate-per-second`, `18.dlq.threshold.open-count` thành `18.dlq.threshold.depth`, `18.dlq.discard.reason-min-chars` bỏ (BR-18-023 cố định 10 ký tự), `18.calendar.working-days` thành `18.calendar.weekend-days`, `18.export.download-ttl-days` thành `18.export.link-ttl-hours`, `18.notify.delivery-retention-days` thành `18.notify.log-retention-days`, `18.restore.target-hours` thành `18.restore.max-duration-hours`, `18.task.reminder-before-hours` thành `18.task.reminder.before-hours`, `18.migration.cutover.rollback-minutes` thành `18.migration.rollback-window-minutes`, `18.migration.shadow.match-threshold-percent` thành `18.migration.parallel.match-threshold-percent` | Mục 8.2 |
+| D03-03-PH18 | Đổi tên khóa `18.*` ở §8.2 của tập CSDL theo bảng 8.2 của FRS (FRS là nguồn chuẩn): `18.param.cache-seconds` thành `18.param.cache-ttl-seconds`, `18.param.history-retention-years` thành `18.param.history-retention-days`, `18.dlq.replay.rate-per-minute` thành `18.dlq.replay.rate-per-second`, `18.dlq.threshold.open-count` thành `18.dlq.threshold.depth`, `18.dlq.discard.reason-min-chars` bỏ (BR-18-023 cố định 10 ký tự), `18.calendar.working-days` thành `18.calendar.weekend-days`, `18.export.download-ttl-days` thành `18.export.link-ttl-hours`, `18.notify.delivery-retention-days` thành `18.notify.log-retention-days`, `18.restore.target-hours` thành `18.restore.max-duration-hours`, `18.task.reminder-before-hours` thành `18.task.reminder.before-hours`, `18.migration.cutover.rollback-minutes` thành `18.migration.rollback-window-minutes`, `18.migration.shadow.match-threshold-percent` thành `18.migration.parallel.match-threshold-percent` | Mục 8.2. Đã hấp thụ ở 0.2: CSDL 0.2 sinh 61 khóa từ bảng 8.2 |
 | D00-04 | Thêm tiền tố `/api/ops/v1`, `/ops/internal/v1` và họ topic `{tenant}.ops.*.v1` | Mục 9 |
 
 : Đề nghị đồng bộ của PH-18
+
+### 12.5. Đề nghị nội bộ PH-18 đã hấp thụ ở 0.2
+
+Bảng dưới là các đề nghị của sáu tập còn lại của PH-18 gửi FRS 0.1; tất cả đã hấp thụ ở bản 0.2 này.
+
+| Nguồn | Đề nghị | Hấp thụ ở 0.2 |
+|---|---|---|
+| UC ĐN-UC-01, MH LC-07, TC ĐN-TC-01 | Câu thông báo của ERR-18-001, 005, 006, 007, 013, 017 viết cho một ngữ cảnh | Mục 9.1: câu chung có chỗ trống |
+| UC ĐN-UC-02, TC ĐN-TC-02 | ERR-18-071 hẹp hơn FR-18-072 | Mục 9.1 dùng câu của FR-18-072; mọi API ghi trả ERR-18-071 |
+| UC ĐN-UC-03, MH B5 | Chưa có API nhận việc | API-18-181, FR-18-044 |
+| UC ĐN-UC-04, MH B1 | Chưa có API đánh dấu bản ghi lỗi di trú | API-18-182, FR-18-063 |
+| UC ĐN-UC-05, MH B2 | Chưa có API miễn cấp lại xác thực | API-18-183, FR-18-065 (trạng thái `WAIVED`, `REISSUED` thay `NOT_NEEDED`, `DONE`) |
+| UC ĐN-UC-06, MH B3 | Chưa có API quy tắc chuẩn hóa | API-18-184, FR-18-067 |
+| MH B4 | Chưa có API xác nhận mục kiểm tay | API-18-185, FR-18-068 |
+| MH B6 | Chưa có danh sách inbox `FAILED` | API-18-186, FR-18-072 |
+| UC ĐN-UC-11, MH B7 | Không tắt được chế độ chỉ đọc bằng API-18-006 | API-18-187 miễn chặn chỉ đọc, FR-18-072 |
+| SDD §13.5 điểm 8 | Nguồn `KAFKA_TOPIC` chưa có API lấy nội dung | API-18-188, FR-18-027 |
+| UC ĐN-UC-07 | ERR-18-036 có hai câu | Mục 9.1 câu chung, FR-18-028, 063 dùng câu đó |
+| UC ĐN-UC-08, TC ĐN-TC-06 | Cắt chuyển một API cho nhiều thao tác | FR-18-068, API-18-175: thân `action` và quyền theo từng giá trị |
+| UC ĐN-UC-09, MH LC-03, LC-04, LC-08 | Vai MO, DPO, "PH chủ" không có ở mục 3; PTN tham chiếu sai tài liệu | Mục 10.1 dùng vai của bảng 3.1, PTN của D03-06-00 |
+| UC ĐN-UC-11 | Quyền bật chỉ đọc lệch giữa FR-18-072 và API-18-006 | FR-18-072, API-18-187 (`PERM-18-admin`) |
+| UC ĐN-UC-13 | FR-18-062 không kiểm `READY` | FR-18-062 bước 1 kiểm ERR-18-065 |
+| MH LC-05, Q18-30 | `PERM-18-read` xem siêu dữ liệu DLQ nhưng API đòi `PERM-18-dlq` | API-18-041, 043, 045 nhận `PERM-18-read` |
+| MH LC-09 | Hai tên cho cùng tham số | Mục 8.2 là tên duy nhất; khối FR đã dùng đúng tên |
+| MH LC-10 | Câu ERR-18-069 lệch FR-18-062 | Mục 9.1 dùng câu của FR-18-062 |
+| SDD §13.5 điểm 6, Q18-21 | Thời hạn giữ topic DLQ 7 ngày lệch ADR-181 14 ngày | NFR-18-016, FR-18-018: 14 ngày |
+| SDD §13.5 điểm 7 | Số bản sao `dh-platform` lệch SAD | Mục 8.1: 2 bản sao theo SAD, HPA tới 4 |
+| SDD §13.6 FRS (2), (4) | Tiêu đề `X-Datahub-Migration`, băm chuẩn tắc, ba cờ `ff.ops.*` | FR-18-062, 064; mục 8.2 |
+| TC ĐN-TC-03 | BR-18-013 mâu thuẫn FR-18-014 | BR-18-013 nêu rõ hai đường vào |
+| TC ĐN-TC-04, ĐN-TC-08, CSDL ĐN-CSDL18-02, 03, 04 | Trạng thái `CANCELLED`, `EXPIRED`, `SKIPPED` và trạng thái đối tượng phụ chưa định nghĩa | Mục 4.5 bảng trạng thái đối tượng phụ; FR-18-004, 028 |
+
+: Đề nghị nội bộ PH-18 đã hấp thụ ở FRS 0.2
 
 ## 13. Câu hỏi mở
 
@@ -5597,6 +5664,7 @@ Mỗi tiêu chí kiểm ở mức phân hệ trên hồ sơ "tỉnh vừa" (GĐ-
 
 | Phiên bản | Ngày | Người thực hiện | Thay đổi |
 |---|---|---|---|
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18: thêm API-18-181…188 (nhận việc, bản ghi lỗi di trú, miễn cấp lại xác thực, quy tắc chuẩn hóa, xác nhận mục kiểm tay, inbox lỗi, chế độ chỉ đọc, lấy nội dung phát lại); câu thông báo chung có chỗ trống cho ERR-18-001, 005, 006, 007, 013, 017, 036, thống nhất ERR-18-069, 071; FR-18-062 kiểm `READY`; vai mục 10.1 theo bảng 3.1; API-18-041, 043, 045 dùng `PERM-18-read`; FR-18-068 thân `action`; NFR-18-016 giữ topic 14 ngày; 2 bản sao theo SAD; bảng trạng thái đối tượng phụ (mục 4.5); BR-18-013 hai đường vào; mục 12.5 ghi đề nghị nội bộ đã hấp thụ |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của FRS PH-18: 72 FR, 50 BR, 22 NFR, 24 màn hình, 180 API, 29 sự kiện phát, 96 mã lỗi, 55 thực thể, 61 tham số `18.*`, 19 câu hỏi mở; gồm hợp đồng với PH-20 (chuyển sáp nhập, sự kiện `platform.*`) |
 
 : Lịch sử phiên bản

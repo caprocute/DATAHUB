@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH18
 ten: Thiết kế giao diện màn hình phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, người vận hành tỉnh và nền tảng, cán bộ ATTT, kiểm thử viên, hội đồng thẩm định
@@ -363,7 +363,7 @@ Mọi màn có tải dữ liệu xử lý đủ bộ trạng thái chuẩn `ST-0
 
 | Mã | Trạng thái riêng PH-18 | Điều kiện | Hiển thị |
 |---|---|---|---|
-| ST-18-A | Phân hệ vận hành chỉ đọc | `18.degraded.read-only = true` hoặc API trả ERR-18-071; EVT-18-29 báo `readOnly` | `CMP-Banner` cảnh báo cố định dưới thanh trên của mọi màn `/van-hanh`: "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được." kèm thời điểm bắt đầu; nút ghi vô hiệu kèm tooltip; dữ liệu đã tải vẫn xem được |
+| ST-18-A | Phân hệ vận hành chỉ đọc | `18.degraded.read-only = true` hoặc API trả ERR-18-071; EVT-18-29 báo `readOnly` | `CMP-Banner` cảnh báo cố định dưới thanh trên của mọi màn `/van-hanh`: "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được." kèm thời điểm bắt đầu; nút ghi vô hiệu kèm tooltip; dữ liệu đã tải vẫn xem được |
 | ST-18-B | Thành phần phụ trợ vắng (fail-soft) | PH-13 không trả chẩn đoán (ERR-18-106), PH-10 không trả DLQ tầng sự kiện (ERR-18-035), không thu được trạng thái sao lưu (ERR-18-055, 122) | Chỉ khối liên quan hiện `CMP-Alert` thông tin kèm thời điểm lấy gần nhất và nút "Thử lại"; phần còn lại của màn đầy đủ |
 | ST-18-C | Đang trong cửa sổ đóng băng | `freeze-status` trả cửa sổ `FREEZE` đang hiệu lực cho môi trường | `CMP-Banner` thông tin "Đang trong thời gian đóng băng thay đổi {cửa sổ} đến {kết thúc}." ở UI-18-21, 22, 23, 08; nút chạy thật, cắt chuyển vô hiệu (ERR-18-051); phát lại DLQ không bị chặn, chỉ hiện cảnh báo (FR-18-027 bước 2) |
 
@@ -378,7 +378,7 @@ Mọi màn có tải dữ liệu xử lý đủ bộ trạng thái chuẩn `ST-0
 
 **Đường dẫn, mẫu.** `/van-hanh/dlq`; PTN-01 Danh sách, tab đầu của dải tab con khu DLQ.
 
-**Vai trò, quyền.** TO, TA, SO, PO ● (`PERM-18-dlq`); IE, DS ○ chỉ mục của luồng hoặc tài sản được giao (lọc ABAC do PH-12 cấp); PA ○ ở chế độ nền tảng liên tenant có lý do; AU, VW không thấy (xem Phụ lục C, LC-05).
+**Vai trò, quyền.** TO, TA, SO, PO ● (`PERM-18-dlq`); IE, DS ○ chỉ mục của luồng hoặc tài sản được giao (lọc ABAC do PH-12 cấp); PA ○ ở chế độ nền tảng liên tenant có lý do; AU, VW ○ xem siêu dữ liệu (`PERM-18-read`, API-18-041 từ FRS 0.2), ẩn mọi nút thao tác.
 
 **FR.** 013, 014, 015, 016, 017, 019, 023, 028, 031.
 
@@ -500,10 +500,10 @@ Bảng ghi trạng thái màn và câu hiển thị; ảnh `ui-18-01b.png` vẽ 
 | Mã lỗi | Khi nào | Câu hiển thị |
 |---|---|---|
 | ERR-18-003 | Bộ lọc sai; xuất vượt 50.000 dòng | "Dữ liệu không hợp lệ: bộ lọc {tên}." · "Kết quả lọc có {n} dòng, vượt giới hạn xuất 50.000. Thu hẹp bộ lọc." |
-| ERR-18-036 | Phát lại loạt không còn mục nào hợp lệ | "Bộ lọc không có mục nào phát lại được." |
+| ERR-18-036 | Phát lại loạt không còn mục nào hợp lệ | "Không có mục nào phù hợp để phát lại." |
 | ERR-18-032 | Lượt vượt `18.dlq.replay.batch-max` | "Lượt có {n} mục, vượt giới hạn {tối đa}. Thu hẹp bộ lọc hoặc chia thành nhiều lượt." |
-| ERR-18-007 | Lý do bỏ qua dưới 10 ký tự | "Nhập lý do (ít nhất 10 ký tự)." (Phụ lục C, LC-07) |
-| ERR-18-006 | Mục đổi trạng thái trong lúc thao tác | "Mục {mã} đang ở trạng thái {trạng thái} nên không thể {thao tác}." (theo từng mục trong kết quả) |
+| ERR-18-007 | Lý do bỏ qua dưới 10 ký tự | "Nhập lý do bỏ qua (ít nhất 10 ký tự)." |
+| ERR-18-006 | Mục đổi trạng thái trong lúc thao tác | "Mục DLQ {mã} đang ở trạng thái {trạng thái} nên không thể {thao tác}." (theo từng mục trong kết quả) |
 | ERR-18-035 | PH-10 không phản hồi | "Chưa lấy được dữ liệu từ phân hệ sự kiện. Thử lại sau." |
 
 : UI-18-01, thông báo theo mã lỗi
@@ -629,7 +629,7 @@ Thông báo dùng: ERR-18-006 "Nhóm đang có lượt phát lại {mã}. Chờ 
 
 **Đường dẫn, mẫu.** `/van-hanh/dlq/{dlqId}`; PTN-02 Chi tiết, ba cột ở `bp-xl`, thành ba tab "Ngữ cảnh", "Nội dung", "Dòng thời gian" ở màn hẹp.
 
-**Vai trò, quyền.** TO, TA, SO, PO ● (`PERM-18-dlq`); xem nội dung và sửa: TO, TA, SO, IE ● (`PERM-18-dlq-payload`), PO ○ khi tenant cấp phiên hỗ trợ; IE, DS ○ chỉ mục được giao; AU không vào (Phụ lục C, LC-05).
+**Vai trò, quyền.** TO, TA, SO, PO ● (`PERM-18-dlq`); xem nội dung và sửa: TO, TA, SO, IE ● (`PERM-18-dlq-payload`), PO ○ khi tenant cấp phiên hỗ trợ; IE, DS ○ chỉ mục được giao; AU, VW ○ xem siêu dữ liệu (`PERM-18-read`, API-18-045 từ FRS 0.2), không xem nội dung.
 
 **FR.** 015, 016, 021, 022, 023, 024, 025, 027, 030, 031, 032, 070.
 
@@ -722,7 +722,7 @@ Mục này liệt kê trạng thái màn và câu thông báo theo mã lỗi mà
 
 | Mã lỗi | Khi nào | Câu hiển thị |
 |---|---|---|
-| ERR-18-001 | Mục không có trong tenant | "Không tìm thấy mục DLQ {mã}." (Phụ lục C, LC-07) |
+| ERR-18-001 | Mục không có trong tenant | "Không tìm thấy mục DLQ {mã}." |
 | ERR-18-007 | Lý do xem nội dung dưới 10 ký tự | "Nhập lý do xem nội dung (ít nhất 10 ký tự)." |
 | ERR-18-008 | PH-13 không ghi được kiểm toán khi xem | "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau." |
 | ERR-18-027 | Nội dung đã xóa do hết hạn | "Nội dung bản tin đã bị xóa do hết hạn lưu giữ. Chỉ còn thông tin mô tả." |
@@ -1034,7 +1034,7 @@ Truy cập: mỗi biểu đồ có tiêu đề, mô tả ngắn (`aria-described
 
 **Đường dẫn, mẫu.** `/van-hanh/dlq/so-tay`, `?ma={errCode}` mở Drawer; PTN-01 kèm Drawer soạn (PTN-04).
 
-**Vai trò, quyền.** Mọi người có `PERM-18-read` xem; PA ● soạn phần dùng chung (`PERM-18-admin`); TA ○ thêm ghi chú riêng của tỉnh; kỹ sư phân hệ chủ mã lỗi đề nghị nội dung qua PA (FRS ghi vai trò "PH chủ", Phụ lục C, LC-04).
+**Vai trò, quyền.** Mọi người có `PERM-18-read` xem; PA ● soạn phần dùng chung (`PERM-18-admin`); TA ○ thêm ghi chú riêng của tỉnh; kỹ sư phân hệ chủ mã lỗi đề nghị nội dung qua PA (FRS §10.1 bản 0.2 ghi TO, IE, PA).
 
 **FR.** 025.
 
@@ -1150,7 +1150,7 @@ Mục này nêu cột của bảng tham số, trường của Drawer sửa và q
 | Lỗi | Câu hiển thị |
 |---|---|
 | ERR-18-012 | "Giá trị của {khóa} phải có kiểu {kiểu}." |
-| ERR-18-013 | "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}." |
+| ERR-18-013 | "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}." ({trường} là khóa tham số) |
 | ERR-18-014 | "Giá trị vượt giới hạn nền tảng của {khóa} ({trần}). Liên hệ quản trị nền tảng nếu cần nâng." |
 | ERR-18-015 | "Tham số {khóa} do quản trị nền tảng đặt, tỉnh chỉ xem được." |
 | ERR-18-011 | "Khóa {khóa} chưa được đăng ký." |
@@ -1530,7 +1530,7 @@ Hành động: "Lưu tùy chọn" (`If-Match`, lệch: ST-13), "Đưa về mặc
 
 **FR.** 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068.
 
-**API.** API-18-111, 112 (việc của tôi, chi tiết), API-18-108 (loại việc), các API duyệt của đối tượng nguồn: API-18-010, 011 (tham số), API-18-055, 056 (bản sửa), API-18-070, 071 (lượt phát lại), API-18-088, 089 (mẫu), API-18-142, 143 (khôi phục), API-18-167, 168 (di trú thật), API-18-175 (cắt chuyển).
+**API.** API-18-111, 112 (việc của tôi, chi tiết), API-18-181 (nhận việc), API-18-108 (loại việc), các API duyệt của đối tượng nguồn: API-18-010, 011 (tham số), API-18-055, 056 (bản sửa), API-18-070, 071 (lượt phát lại), API-18-088, 089 (mẫu), API-18-142, 143 (khôi phục), API-18-167, 168 (di trú thật), API-18-175 (cắt chuyển).
 
 **Dữ liệu nhạy cảm.** Tóm tắt việc chỉ có mã đối tượng và số lượng.
 
@@ -1564,7 +1564,7 @@ PTN-10: dải chip lọc nhanh (Tất cả, Quá hạn, Hôm nay, Tuần này, P
 
 : UI-18-15, trường thẻ việc
 
-Hành động: "Nhận việc" (`IN_PROGRESS`, báo người cùng nhận), "Mở màn {đối tượng} ↗" (liên kết của loại việc), và với việc duyệt của PH-18: `CMP-ApprovalPanel` nhúng (ý kiến, "Duyệt", "Từ chối…"). Người đề nghị không thấy việc duyệt của chính mình; nếu mở bằng URL thì nút vô hiệu kèm câu ERR-18-005. Việc đã đóng ở nơi khác: ERR-18-048 "Việc {mã} đã đóng." và thẻ tự rời danh sách. Việc duyệt khôi phục tenant, chạy di trú thật, cắt chuyển không duyệt tại chỗ mà buộc mở màn nguồn (UI-18-20, 22, 23) để thấy đủ phạm vi và cảnh báo.
+Hành động: "Nhận việc" (API-18-181, `If-Match`; `IN_PROGRESS`, báo người cùng nhận), "Mở màn {đối tượng} ↗" (liên kết của loại việc), và với việc duyệt của PH-18: `CMP-ApprovalPanel` nhúng (ý kiến, "Duyệt", "Từ chối…"). Người đề nghị không thấy việc duyệt của chính mình; nếu mở bằng URL thì nút vô hiệu kèm câu ERR-18-005. Việc đã đóng ở nơi khác: ERR-18-048 "Việc {mã} đã đóng." và thẻ tự rời danh sách. Việc duyệt khôi phục tenant, chạy di trú thật, cắt chuyển không duyệt tại chỗ mà buộc mở màn nguồn (UI-18-20, 22, 23) để thấy đủ phạm vi và cảnh báo.
 
 Trạng thái: rỗng "Bạn không có việc nào đang chờ." kèm liên kết "Yêu cầu tôi đã gửi"; số việc trên menu và tiêu đề tab cập nhật qua SSE hoặc thăm dò 60 giây (D03-06-00 §2.8), không dùng `aria-live` mức `assertive`. Phím tắt: `J`, `K` việc kế tiếp, trước đó; `A` duyệt (khi được phép, có xác nhận); `Enter` mở màn nguồn. Truy cập: danh sách là `listbox` với mục chọn được; chi tiết là `region` cập nhật khi chọn, focus không nhảy.
 
@@ -1700,7 +1700,7 @@ Thiếu trường: ERR-18-003. Trạng thái rỗng: "Không có sự cố nào 
 
 **Đường dẫn, mẫu.** `/van-hanh/su-co/{ma}`; PTN-02 Chi tiết.
 
-**Vai trò, quyền.** TO, SO, TA, PO, PA ● (`PERM-18-incident`); chuyển PH-09: SO ● (FRS §10.1 ghi DPO, Phụ lục C, LC-03); người có `PERM-18-read` xem.
+**Vai trò, quyền.** TO, SO, TA, PO, PA ● (`PERM-18-incident`); chuyển PH-09: SO ● (FRS §10.1 bản 0.2); người có `PERM-18-read` xem.
 
 **FR.** 048, 049, 050, 051.
 
@@ -1851,7 +1851,7 @@ Wizard "Yêu cầu khôi phục" có bốn bước: Thời điểm đích; Phạ
 | Phạm vi | `CMP-RadioCard` | Có | Toàn tenant (`FULL_TENANT`), Theo phân hệ (`MODULES`) |
 | Phân hệ | `CMP-Select` nhiều | Có khi theo phân hệ | Schema có `tenant_id`; sai: ERR-18-058 "Phạm vi khôi phục không hợp lệ: {chi tiết}." |
 | Khôi phục tệp, danh tính, bí mật | `CMP-Checkbox` ×3 | Không | Tệp `dh-{tenant}-*`; realm người dùng và vai trò; bí mật `kv/dh/{tenant}/` về phiên bản cũ; mỗi ô có câu tác động |
-| Lý do | `CMP-TextArea` có bộ đếm | Có | ≥ 30 ký tự, có số văn bản nếu có; ngắn: câu riêng của khối FR "Lý do khôi phục cần ít nhất 30 ký tự." (LC-07) |
+| Lý do | `CMP-TextArea` có bộ đếm | Có | ≥ 30 ký tự, có số văn bản nếu có; ngắn: ERR-18-007 "Nhập lý do khôi phục (ít nhất 30 ký tự)." |
 | Xác nhận đã đọc cảnh báo | `CMP-Checkbox` | Có | Nút "Gửi duyệt" chỉ bật khi đã chọn |
 
 : UI-18-20, trường yêu cầu khôi phục
@@ -1896,7 +1896,7 @@ Truy cập: tám bước là danh sách có thứ tự, bước đang chạy có
 
 **Đường dẫn, mẫu.** `/van-hanh/di-tru`, `?nguon={sourceCode}`, `?ke-hoach={planCode}`, `?buoc=`; PTN-05 Wizard theo năm chặng di trú; trong chặng 1 và 2 là bố cục chủ, chi tiết.
 
-**Vai trò, quyền.** Người giữ `PERM-18-migration` (FRS ghi MO; Phụ lục C, LC-03), thường là PA, TA ●; DS ○ xem.
+**Vai trò, quyền.** Người giữ `PERM-18-migration`, thường là PA, TA ● (FRS §10.1 bản 0.2); DS ○ xem.
 
 **FR.** 059, 060, 061, 062.
 
@@ -1965,7 +1965,7 @@ Trạng thái: chưa có nguồn: "Chưa khai báo nguồn hệ cũ nào." kèm 
 
 **FR.** 061, 062, 063, 064, 065.
 
-**API.** API-18-166 (tiến độ), API-18-167, 168 (duyệt, từ chối chạy thật), API-18-169 (hủy), API-18-170 (bản ghi lỗi), API-18-171 (đối chiếu), API-18-172 (cấp lại xác thực), API-18-164 với `retryOf` (chạy lại bản ghi lỗi).
+**API.** API-18-166 (tiến độ), API-18-167, 168 (duyệt, từ chối chạy thật), API-18-169 (hủy), API-18-170 (bản ghi lỗi), API-18-171 (đối chiếu), API-18-172 (cấp lại xác thực), API-18-182 (đánh dấu cách xử lý bản ghi lỗi, một hoặc nhiều), API-18-183 (đánh dấu `WAIVED` kèm lý do), API-18-164 với `retryOf` (chạy lại bản ghi lỗi).
 
 **Dữ liệu nhạy cảm.** Bản ghi lỗi chỉ hiện khóa nguồn, loại, mã lỗi, lý do; không hiện nội dung bản ghi. Danh sách cấp lại chỉ có mã HTTT và loại xác thực.
 
@@ -2002,7 +2002,7 @@ Trạng thái: chưa có nguồn: "Chưa khai báo nguồn hệ cũ nào." kèm 
 | Loại | `objectType` | |
 | Mã lỗi | `reasonCode` | Mã ERR của phân hệ đích (ERR-18-119) hoặc của bộ chuyển (ERR-18-118) |
 | Lý do | `reason` | |
-| Cách xử lý | `resolution` | `CMP-Select` ngay trên dòng: Mở, Sửa ở nguồn, Thêm quy tắc, Không di trú (bắt buộc lý do) |
+| Cách xử lý | `resolution` | `CMP-Select` ngay trên dòng: Mở, Sửa ở nguồn, Thêm quy tắc, Không di trú (bắt buộc lý do ≥ 10 ký tự, ERR-18-007); lưu qua API-18-182 |
 
 : UI-18-22, cột bản ghi lỗi
 
@@ -2039,7 +2039,7 @@ Trạng thái: rỗng bản ghi lỗi "Lần chạy không có bản ghi lỗi."
 
 **FR.** 065, 066, 067, 068.
 
-**API.** API-18-173 (nhóm), API-18-174 (chi tiết, mẫu lệch, danh sách kiểm, sổ cắt chuyển), API-18-175 (chuyển trạng thái), API-18-172 (cấp lại xác thực).
+**API.** API-18-173 (nhóm), API-18-174 (chi tiết, mẫu lệch, danh sách kiểm, sổ cắt chuyển), API-18-175 (chuyển trạng thái theo `action`: `REQUEST`, `APPROVE`, `REJECT`, `ROLLBACK`), API-18-184 (quy tắc chuẩn hóa), API-18-185 (xác nhận mục tay), API-18-172 (cấp lại xác thực).
 
 **Dữ liệu nhạy cảm.** Mẫu lệch chỉ có đường dẫn trường, không có giá trị.
 
@@ -2098,11 +2098,11 @@ Trạng thái: chưa có nhóm "Chưa có nhóm dịch vụ nào đang chạy so
 
 **Đường dẫn, mẫu.** `/van-hanh`, `?tab=bao-cao`, `?tab=nhat-ky`; PTN-06 Bảng điều khiển.
 
-**Vai trò, quyền.** TO, TA, PA, PO, AU ● xem (`PERM-18-read`); PA, PO ● bật, tắt chế độ chỉ đọc, dựng báo cáo (`PERM-18-admin`; TA dựng báo cáo tỉnh).
+**Vai trò, quyền.** TO, TA, PA, PO, AU ● xem (`PERM-18-read`); PA ● bật, tắt chế độ chỉ đọc qua API-18-187 (`PERM-18-admin`, FR-18-072); PA, PO ● dựng báo cáo (`PERM-18-admin`; TA dựng báo cáo tỉnh).
 
 **FR.** 006, 013, 034, 070, 071, 072.
 
-**API.** API-18-180 (sức khỏe), API-18-177 (nhật ký thao tác), API-18-178, 179 (báo cáo), API-18-081 (thẻ số DLQ), API-18-123 (sự cố), API-18-111 với `?summary=true` (việc), API-18-133 (sao lưu), API-18-165 (lần chạy), API-18-118 (cửa sổ), API-18-006 (ghi `18.degraded.read-only`).
+**API.** API-18-180 (sức khỏe), API-18-177 (nhật ký thao tác), API-18-178, 179 (báo cáo), API-18-081 (thẻ số DLQ), API-18-123 (sự cố), API-18-111 với `?summary=true` (việc), API-18-133 (sao lưu), API-18-165 (lần chạy), API-18-118 (cửa sổ), API-18-186 (sự kiện inbox `FAILED`), API-18-187 (bật, tắt chế độ chỉ đọc; không bị chặn khi đang chỉ đọc).
 
 **Dữ liệu nhạy cảm.** Không; nhật ký thao tác chỉ có tên người, thao tác, mã đối tượng.
 
@@ -2131,13 +2131,13 @@ Sáu thẻ số là liên kết sang khu tương ứng; bảng sức khỏe bả
 | Mô-đun | `module` | param, dlq, notify, task, incident, backup, migration |
 | Trạng thái | `status` | Bình thường (`UP`), Suy giảm (`DEGRADED`), Ngừng (`DOWN`); chữ kèm biểu tượng |
 | Ghi chú | `detail` | Ví dụ độ trễ tiêu thụ DLQ, outbox tồn, thành phần phụ lỗi |
-| Sự kiện inbox lỗi | `inboxFailed` | Liên kết danh sách sự kiện lỗi; nguồn ERR-18-124 |
+| Sự kiện inbox lỗi | `inboxFailed` | Liên kết danh sách sự kiện lỗi (API-18-186); nguồn ERR-18-124 |
 
 : UI-18-24, cột sức khỏe mô-đun
 
 Thông báo hệ thống hiện ở màn này theo khối FR: ERR-18-103 cho PO "Có bản tin lỗi mang tenant {mã} trên topic của tenant khác."; ERR-18-104 "Kho đối tượng của DLQ không ghi được. Bản tin lỗi đang được giữ trong hàng đợi."; ERR-18-124 "Sự kiện đổi tham số đang chậm {phút} phút." và "Có {n} sự kiện mở sự cố chưa xử lý được." Mỗi câu là một dòng `CMP-Alert` trên bảng sức khỏe, có liên kết sang mô-đun.
 
-Hành động: bật chế độ chỉ đọc (PA, PO; `CMP-ConfirmDialog` có lý do; bật xong toàn khu hiện ST-18-A); "Dựng báo cáo…" (`CMP-Modal` chọn kỳ; kỳ chưa kết thúc: ERR-18-072 "Kỳ báo cáo {kỳ} không hợp lệ hoặc chưa kết thúc."); tải báo cáo đã có. Tab "Nhật ký" là PTN-11 Tra log trên API-18-177 với lọc người, khu, thao tác, thời gian; ghi rõ "Bản chính thức ở kiểm toán PH-13".
+Hành động: bật, tắt chế độ chỉ đọc (PA; `CMP-ConfirmDialog` có lý do, API-18-187; bật xong toàn khu hiện ST-18-A, nút tắt vẫn dùng được); "Dựng báo cáo…" (`CMP-Modal` chọn kỳ; kỳ chưa kết thúc: ERR-18-072 "Kỳ báo cáo {kỳ} không hợp lệ hoặc chưa kết thúc."); tải báo cáo đã có. Tab "Nhật ký" là PTN-11 Tra log trên API-18-177 với lọc người, khu, thao tác, thời gian; ghi rõ "Bản chính thức ở kiểm toán PH-13".
 
 Trạng thái: PH-18 `DOWN` thì trang hiện ST-09 kèm câu "Phân hệ vận hành đang gián đoạn. Giao dịch của HTTT không bị ảnh hưởng."; thẻ không tải được hiện "Chưa tải được" và nút "Thử lại" trong thẻ. Truy cập: thẻ số là liên kết có nhãn đầy đủ ("DLQ chưa xử lý 1.284, vượt ngưỡng 1.000, mở hàng đợi lỗi"); không tự làm mới nhanh hơn 60 giây.
 
@@ -2251,9 +2251,9 @@ Bảng dưới tóm quyền của chín vai trò của FRS §3.2 trên 24 màn. 
 
 | Màn | PA | PO | TA | TO | SO | IE | DS | AU | VW |
 |---|---|---|---|---|---|---|---|---|---|
-| UI-18-01 Danh sách DLQ | ○ | ● | ● | ● | ● | ○ | ○ | — | — |
-| UI-18-02 DLQ theo nhóm lỗi | ○ | ● | ● | ● | ● | ○ | ○ | — | — |
-| UI-18-03 Chi tiết mục DLQ | ○ | ● | ● | ● | ● | ● | ○ | — | — |
+| UI-18-01 Danh sách DLQ | ○ | ● | ● | ● | ● | ○ | ○ | ○ | ○ |
+| UI-18-02 DLQ theo nhóm lỗi | ○ | ● | ● | ● | ● | ○ | ○ | ○ | ○ |
+| UI-18-03 Chi tiết mục DLQ | ○ | ● | ● | ● | ● | ● | ○ | ○ | ○ |
 | UI-18-04 Sửa payload | ○ duyệt | — | ● | ● | ● | ● | — | — | — |
 | UI-18-05 Lượt phát lại | ● duyệt | ● | ● | ● | ● | ○ | ○ | — | — |
 | UI-18-06 Thống kê và nguồn DLQ | ● | ○ | ○ | ○ | ○ | ○ | ○ | ○ | ○ |
@@ -2278,7 +2278,7 @@ Bảng dưới tóm quyền của chín vai trò của FRS §3.2 trên 24 màn. 
 
 : Ma trận vai trò và màn PH-18
 
-Hai điểm cần đọc kèm bảng. Thứ nhất, cột AU và VW của ba màn DLQ đầu là "—" vì API-18-041 đòi `PERM-18-dlq`, trong khi FRS §3.2 cho `PERM-18-read` xem siêu dữ liệu DLQ (LC-05, Q18-30). Thứ hai, quyền duyệt của SO ở UI-18-22, UI-18-23 suy từ `PERM-18-approve` của §3.2; thực tế tỉnh có thể chỉ giao duyệt di trú cho TA và PA bằng chính sách của PH-12.
+Hai điểm cần đọc kèm bảng. Thứ nhất, từ FRS 0.2, API-18-041, 043, 045 nhận `PERM-18-read` (Q18-30 đã chốt) nên AU, VW được xem siêu dữ liệu DLQ ở ba màn DLQ đầu, chỉ đọc, ẩn mọi nút thao tác và nút xem nội dung; ba dòng đầu ghi ○ cho AU, VW. Thứ hai, quyền duyệt của SO ở UI-18-22, UI-18-23 suy từ `PERM-18-approve` của §3.2; thực tế tỉnh có thể chỉ giao duyệt di trú cho TA và PA bằng chính sách của PH-12.
 
 ## 33. Ma trận màn, FR và API
 
@@ -2300,16 +2300,16 @@ Chương này giúp kiểm thử viên và người viết D03-04-PH18 đối ch
 | UI-18-12 | 035 | API-18-084 đến 089 |
 | UI-18-13 | 036, 037, 040, 041 | API-18-102 đến 105 |
 | UI-18-14 | 036, 038 | API-18-095 đến 098 |
-| UI-18-15 | 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068 | API-18-111, 112, 108 và API duyệt của đối tượng nguồn |
+| UI-18-15 | 004, 009, 024, 028, 035, 042, 043, 044, 055, 062, 068 | API-18-111, 112, 181, 108 và API duyệt của đối tượng nguồn |
 | UI-18-16 | 045, 046 | API-18-113 đến 115, 118 đến 121 |
 | UI-18-17 | 047, 048 | API-18-123, 124 |
 | UI-18-18 | 048 đến 051 | API-18-125 đến 131 |
 | UI-18-19 | 052, 053, 058 | API-18-133, 134, 136, 154, 155 |
 | UI-18-20 | 054 đến 057 | API-18-138 đến 149, 151, 152 |
 | UI-18-21 | 059 đến 062 | API-18-156 đến 165 |
-| UI-18-22 | 061 đến 065 | API-18-164, 166 đến 172 |
-| UI-18-23 | 065 đến 068 | API-18-172 đến 175 |
-| UI-18-24 | 006, 013, 034, 070, 071, 072 | API-18-180, 177 đến 179, 081, 123, 111, 133, 165, 118, 006 |
+| UI-18-22 | 061 đến 065 | API-18-164, 166 đến 172, 182, 183 |
+| UI-18-23 | 065 đến 068 | API-18-172 đến 175, 184, 185 |
+| UI-18-24 | 006, 013, 034, 070, 071, 072 | API-18-180, 177 đến 179, 081, 123, 111, 133, 165, 118, 186, 187 |
 
 : Ma trận màn, FR và API của PH-18
 
@@ -2352,7 +2352,7 @@ Bảng dưới là đầu vào cho D05-02-PH18, gom theo nhóm điểm kiểm v�
 | Tiến trình | Tám bước khôi phục, tiến độ di trú, đồng hồ quay lui đọc được bằng trình đọc màn hình mà không đọc liên tục | UI-18-20, 22, 23 |
 | Chế độ chỉ đọc | Dải ST-18-A cố định, nút ghi vô hiệu kèm lý do, nút đọc vẫn dùng được | Mọi màn `/van-hanh` |
 | Fail-soft | PH-13, PH-10, Velero vắng thì chỉ khối liên quan báo, phần khác dùng được | UI-18-03, 19, 23, 24 |
-| Thông báo | Câu hiển thị đúng từng chữ với FRS §9.1 hoặc câu riêng của khối FR (LC-07) | Mọi màn |
+| Thông báo | Câu hiển thị đúng từng chữ với câu FRS §9.1 sau khi điền tham số theo ngữ cảnh | Mọi màn |
 | Truy cập | Bàn phím toàn bộ; tương phản 4,5:1 chữ và 3:1 thành phần; `prefers-reduced-motion`; trạng thái không chỉ bằng màu | Mọi màn |
 | Vật liệu | Glass chỉ ở khung, Drawer, hộp thoại, thanh nổi; bảng và biểu mẫu dày trên nền đặc | Mọi màn |
 
@@ -2407,41 +2407,41 @@ Mục này liệt kê thành phần chưa có trong D03-05-03, D03-05-04; tập 
 
 ## Phụ lục B. Đề nghị bổ sung API cho D03-04-PH18
 
-FRS §8.2 có đủ API cho hầu hết thao tác, nhưng một số thao tác giao diện mà khối FR mô tả chưa có API ghi tương ứng. Danh sách dưới đây ghi bằng phương thức và đường dẫn đề nghị; số `API-18-nnn` do D03-04-PH18 cấp.
+Bản 0.1 ghi bảy thao tác giao diện mà khối FR mô tả nhưng chưa có API tương ứng. FRS 0.2 và D03-04-PH18 0.2 đã cấp mã cho cả bảy (cột "Trạng thái"); thao tác cắt chuyển dùng thân `action` của API-18-175.
 
-| Mã | Đề nghị | Lý do, FR | Màn |
-|---|---|---|---|
-| B1 | `PATCH /migration-runs/{runId}/errors` cập nhật cách xử lý bản ghi lỗi (một hoặc nhóm) | FR-18-063 bước 2; API-18-170 chỉ đọc | UI-18-22 |
-| B2 | `PATCH /credential-reissues/{markerId}` đánh dấu Không cần kèm lý do | FR-18-065 luồng thay thế; API-18-172 chỉ đọc | UI-18-22 |
-| B3 | `PUT /parallel-groups/{groupCode}/normalization-rules` thêm quy tắc chuẩn hóa | FR-18-067 luồng thay thế | UI-18-23 |
-| B4 | `POST /parallel-groups/{groupCode}/checklist/{itemCode}:confirm` xác nhận mục kiểm tay | FR-18-068 bước 1 (mục tay) | UI-18-23 |
-| B5 | `POST /me/tasks/{taskId}:claim` nhận việc, báo người cùng nhận | FR-18-044, chưa có API đổi sang `IN_PROGRESS` | UI-18-15 |
-| B6 | `GET /inbox-failures` danh sách sự kiện inbox `FAILED` theo mô-đun | FR-18-072 bước 4; API-18-180 chỉ có số đếm | UI-18-24 |
-| B7 | `POST /degraded-mode` bật, tắt chế độ chỉ đọc có lý do | FR-18-072 bước 3; hiện phải ghi tham số `18.degraded.read-only` qua API-18-006, khó tách quyền `PERM-18-admin` | UI-18-24 |
+| Mã | Đề nghị | Lý do, FR | Màn | Trạng thái |
+|---|---|---|---|---|
+| B1 | `PATCH /migration-runs/{runId}/errors` cập nhật cách xử lý bản ghi lỗi (một hoặc nhóm) | FR-18-063 bước 2; API-18-170 chỉ đọc | UI-18-22 | Đã hấp thụ ở 0.2: API-18-182 |
+| B2 | `PATCH /credential-reissues/{markerId}` đánh dấu Không cần kèm lý do | FR-18-065 luồng thay thế; API-18-172 chỉ đọc | UI-18-22 | Đã hấp thụ ở 0.2: API-18-183 `POST /credential-reissues/{markerId}:waive`, trạng thái `WAIVED` |
+| B3 | `PUT /parallel-groups/{groupCode}/normalization-rules` thêm quy tắc chuẩn hóa | FR-18-067 luồng thay thế | UI-18-23 | Đã hấp thụ ở 0.2: API-18-184 |
+| B4 | `POST /parallel-groups/{groupCode}/checklist/{itemCode}:confirm` xác nhận mục kiểm tay | FR-18-068 bước 1 (mục tay) | UI-18-23 | Đã hấp thụ ở 0.2: API-18-185 |
+| B5 | `POST /me/tasks/{taskId}:claim` nhận việc, báo người cùng nhận | FR-18-044, chưa có API đổi sang `IN_PROGRESS` | UI-18-15 | Đã hấp thụ ở 0.2: API-18-181 |
+| B6 | `GET /inbox-failures` danh sách sự kiện inbox `FAILED` theo mô-đun | FR-18-072 bước 4; API-18-180 chỉ có số đếm | UI-18-24 | Đã hấp thụ ở 0.2: API-18-186 |
+| B7 | `POST /degraded-mode` bật, tắt chế độ chỉ đọc có lý do | FR-18-072 bước 3; hiện phải ghi tham số `18.degraded.read-only` qua API-18-006, khó tách quyền `PERM-18-admin` | UI-18-24 | Đã hấp thụ ở 0.2: API-18-187, miễn chặn chỉ đọc |
 
 : Đề nghị bổ sung API cho PH-18
 
 ## Phụ lục C. Điểm lệch và đề nghị đồng bộ
 
-Mục này ghi chỗ FRS, D03-06-00 và tập màn chưa khớp nhau. Tập màn theo FRS khi FRS rõ; khi FRS tự mâu thuẫn, tập màn chọn cách an toàn hơn và ghi lại để BA PH-18 sửa ở bản FRS sau.
+Mục này ghi chỗ FRS, D03-06-00 và tập màn chưa khớp nhau. Tập màn theo FRS khi FRS rõ; khi FRS tự mâu thuẫn, tập màn chọn cách an toàn hơn và ghi lại để BA PH-18 sửa ở bản FRS sau. Ở bản 0.2, tám điểm lệch với FRS đã được hấp thụ; LC-01, LC-02, LC-06 và năm đề nghị ĐB-01…05 thuộc D03-06-00 nên giữ cho đợt đồng bộ liên phân hệ.
 
 ### C.1. Điểm lệch với FRS
 
 Bảng dưới liệt kê từng điểm lệch, cách tập màn đang xử lý và đề nghị sửa.
 
-| Mã | Điểm lệch | Cách tập màn xử lý | Đề nghị |
-|---|---|---|---|
-| LC-01 | FRS §10.1 đặt Việc của tôi ở `/ca-nhan/viec`; D03-06-00 mục 2 đã có `/viec-cua-toi` | Theo FRS, ghi đề nghị ĐB-02 | Thống nhất một đường dẫn (Q18-31) |
-| LC-02 | FRS dùng `/ca-nhan/thong-bao` cho tùy chọn nhận (PTN-12); D03-06-00 dùng cho lịch sử thông báo (PTN-01) | Một trang hai tab, tùy chọn ở `?tab=tuy-chon` | ĐB-03, Q18-32 |
-| LC-03 | FRS §10.1 ghi vai trò MO (UI-18-21 đến 23) và DPO (UI-18-18) không có trong §3 | MO là người giữ `PERM-18-migration`; DPO là SO | Bổ sung vào §3 hoặc sửa §10.1 (Q18-37) |
-| LC-04 | UI-18-07 ghi vai trò "PH chủ" (kỹ sư phân hệ chủ mã lỗi) không có trong §3.2 | Đề nghị nội dung qua PA, PA soạn | Làm rõ ở FR-18-025 |
-| LC-05 | §3.2 cho `PERM-18-read` xem siêu dữ liệu DLQ, nhưng API-18-041, 043, 045 đòi `PERM-18-dlq` | AU, VW không vào UI-18-01 đến 03 | Sửa một trong hai (Q18-30) |
-| LC-06 | D03-06-00 mục 40 ghi PTN-01 cho sao lưu; FRS §10.1 ghi PTN-06 | Theo FRS (PTN-06) | ĐB-04 |
-| LC-07 | Câu ở §9.1 của ERR-18-001, 005, 006, 007 là câu cụ thể của một trường hợp (ví dụ ERR-18-007 nói 10 ký tự, nhưng lý do khôi phục cần 30) | Dùng câu riêng của khối FR khi có; câu §9.1 chỉ dùng cho đúng trường hợp đó | Đổi §9.1 thành câu có biến |
-| LC-08 | FRS §10.1 nói "PTN chuẩn của D03-05", trong khi PTN định nghĩa ở D03-06-00 | Tham chiếu D03-06-00 | Sửa câu ở §10.1 |
-| LC-09 | Tên tham số không thống nhất: `18.migration.rollback-window-minutes` và `18.migration.cutover.rollback-minutes`; `18.migration.parallel.match-threshold-percent` và `18.migration.shadow.match-threshold-percent`; `18.export.link-ttl-hours` và `18.export.download-ttl-days`; `18.task.reminder.before-hours` và `18.task.reminder-before-hours` | Dùng tên xuất hiện trong khối FR (vế đầu mỗi cặp) | Chốt một tên ở §8.4 |
-| LC-10 | Câu ERR-18-069 ở §9.1 ("chưa nhận lô. Lần chạy tạm dừng.") khác câu ở FR-18-062 (có "tự thử lại sau {phút} phút") | Dùng câu của khối FR vì cho người dùng biết bước tiếp | Đồng bộ §9.1 |
-| LC-11 | Một số thao tác giao diện chưa có API ghi (Phụ lục B) | Thiết kế nút, ghi đề nghị | D03-04-PH18 cấp mã |
+| Mã | Điểm lệch | Cách tập màn xử lý | Đề nghị | Trạng thái |
+|---|---|---|---|---|
+| LC-01 | FRS §10.1 đặt Việc của tôi ở `/ca-nhan/viec`; D03-06-00 mục 2 đã có `/viec-cua-toi` | Theo FRS, ghi đề nghị ĐB-02 | Thống nhất một đường dẫn (Q18-31) | Giữ: chờ D03-06-00 (ĐB-02, Q18-31) |
+| LC-02 | FRS dùng `/ca-nhan/thong-bao` cho tùy chọn nhận (PTN-12); D03-06-00 dùng cho lịch sử thông báo (PTN-01) | Một trang hai tab, tùy chọn ở `?tab=tuy-chon` | ĐB-03, Q18-32 | Giữ: chờ D03-06-00 (ĐB-03, Q18-32) |
+| LC-03 | FRS §10.1 ghi vai trò MO (UI-18-21 đến 23) và DPO (UI-18-18) không có trong §3 | MO là người giữ `PERM-18-migration`; DPO là SO | Bổ sung vào §3 hoặc sửa §10.1 (Q18-37) | Đã hấp thụ ở 0.2: FRS §10.1 dùng SO, PA, TA |
+| LC-04 | UI-18-07 ghi vai trò "PH chủ" (kỹ sư phân hệ chủ mã lỗi) không có trong §3.2 | Đề nghị nội dung qua PA, PA soạn | Làm rõ ở FR-18-025 | Đã hấp thụ ở 0.2: FRS §10.1 ghi UI-18-07 cho TO, IE, PA |
+| LC-05 | §3.2 cho `PERM-18-read` xem siêu dữ liệu DLQ, nhưng API-18-041, 043, 045 đòi `PERM-18-dlq` | AU, VW không vào UI-18-01 đến 03 | Sửa một trong hai (Q18-30) | Đã hấp thụ ở 0.2: API-18-041, 043, 045 nhận `PERM-18-read` |
+| LC-06 | D03-06-00 mục 40 ghi PTN-01 cho sao lưu; FRS §10.1 ghi PTN-06 | Theo FRS (PTN-06) | ĐB-04 | Giữ: chờ D03-06-00 (ĐB-04) |
+| LC-07 | Câu ở §9.1 của ERR-18-001, 005, 006, 007 là câu cụ thể của một trường hợp (ví dụ ERR-18-007 nói 10 ký tự, nhưng lý do khôi phục cần 30) | Dùng câu riêng của khối FR khi có; câu §9.1 chỉ dùng cho đúng trường hợp đó | Đổi §9.1 thành câu có biến | Đã hấp thụ ở 0.2: §9.1 dùng câu chung có tham số |
+| LC-08 | FRS §10.1 nói "PTN chuẩn của D03-05", trong khi PTN định nghĩa ở D03-06-00 | Tham chiếu D03-06-00 | Sửa câu ở §10.1 | Đã hấp thụ ở 0.2: §10.1 tham chiếu D03-06-00 |
+| LC-09 | Tên tham số không thống nhất: `18.migration.rollback-window-minutes` và `18.migration.cutover.rollback-minutes`; `18.migration.parallel.match-threshold-percent` và `18.migration.shadow.match-threshold-percent`; `18.export.link-ttl-hours` và `18.export.download-ttl-days`; `18.task.reminder.before-hours` và `18.task.reminder-before-hours` | Dùng tên xuất hiện trong khối FR (vế đầu mỗi cặp) | Chốt một tên ở §8.4 | Đã hấp thụ ở 0.2: §8.2 là tên duy nhất, khối FR dùng đúng tên |
+| LC-10 | Câu ERR-18-069 ở §9.1 ("chưa nhận lô. Lần chạy tạm dừng.") khác câu ở FR-18-062 (có "tự thử lại sau {phút} phút") | Dùng câu của khối FR vì cho người dùng biết bước tiếp | Đồng bộ §9.1 | Đã hấp thụ ở 0.2: §9.1 dùng câu của FR-18-062 |
+| LC-11 | Một số thao tác giao diện chưa có API ghi (Phụ lục B) | Thiết kế nút, ghi đề nghị | D03-04-PH18 cấp mã | Đã hấp thụ ở 0.2: API-18-181…187 (Phụ lục B) |
 
 : Điểm lệch giữa tập màn và FRS PH-18
 
@@ -2463,7 +2463,7 @@ Các đề nghị dưới đây cần nhóm IA cập nhật vào D03-06-00 để
 
 Các câu dưới đây cần người có thẩm quyền chốt trước khi kỹ sư giao diện làm phần liên quan; đề xuất của nhóm đã được dùng trong bản thiết kế này.
 
-> **Câu hỏi mở Q18-30:** Kiểm toán viên và người xem có được vào danh sách DLQ ở mức siêu dữ liệu không (LC-05)? Đề xuất: có, chỉ đọc, ẩn mọi nút thao tác và nút xem nội dung; sửa API-18-041 nhận `PERM-18-read`. Người quyết: SO, PO.
+> **Câu hỏi mở Q18-30 (đã chốt ở 0.2):** Kiểm toán viên và người xem có được vào danh sách DLQ ở mức siêu dữ liệu không (LC-05)? Đề xuất: có, chỉ đọc, ẩn mọi nút thao tác và nút xem nội dung; sửa API-18-041 nhận `PERM-18-read`. Người quyết: SO, PO. Kết quả: FRS 0.2 cho API-18-041, 043, 045 nhận `PERM-18-read`.
 
 > **Câu hỏi mở Q18-31:** Việc của tôi dùng `/ca-nhan/viec` của FRS hay `/viec-cua-toi` của D03-06-00 (LC-01)? Đề xuất: dùng `/viec-cua-toi` vì menu dùng chung và các phân hệ khác đã liên kết tới đó; `/ca-nhan/viec` chuyển hướng 301. Người quyết: UX, PO.
 
@@ -2477,7 +2477,7 @@ Các câu dưới đây cần người có thẩm quyền chốt trước khi k�
 
 > **Câu hỏi mở Q18-36:** Người dùng bấm "Quay lui" khi đồng hồ còn vài giây và yêu cầu đến máy chủ sau hạn thì xử lý thế nào? Đề xuất: máy chủ quyết theo thời điểm nhận, sau hạn trả ERR-18-068; giao diện hiện câu đó và ẩn nút. Người quyết: PA.
 
-> **Câu hỏi mở Q18-37:** Vai trò MO và DPO ở FRS §10.1 có phải vai trò riêng của PH-12 không (LC-03)? Đề xuất: không tạo vai trò mới; MO là người giữ `PERM-18-migration`, DPO là SO. Người quyết: BA PH-18, SO.
+> **Câu hỏi mở Q18-37 (đã chốt ở 0.2):** Vai trò MO và DPO ở FRS §10.1 có phải vai trò riêng của PH-12 không (LC-03)? Đề xuất: không tạo vai trò mới; MO là người giữ `PERM-18-migration`, DPO là SO. Người quyết: BA PH-18, SO. Kết quả: FRS 0.2 bỏ MO, DPO ở §10.1, dùng SO cho UI-18-18 và PA, TA cho UI-18-21 đến 23.
 
 > **Câu hỏi mở Q18-38:** Cột SMS ở tùy chọn nhận khi tỉnh chưa bật SMS nên ẩn hay hiện vô hiệu? Đề xuất: ẩn, để người dùng không nghĩ mình tắt được thứ không tồn tại. Người quyết: UX.
 
@@ -2488,6 +2488,7 @@ Các câu dưới đây cần người có thẩm quyền chốt trước khi k�
 | Phiên bản | Ngày | Nội dung | Người lập |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Bản đầu: 24 màn UI-18-01 đến 24, điều hướng, trạng thái riêng, luồng chính, ma trận vai trò, FR và API, 26 ảnh hi-fi, đề nghị bổ sung D03-05 và API, điểm lệch và đề nghị đồng bộ, câu hỏi mở Q18-30 đến 39 | Nhóm phân hệ PH-18 |
+| 0.2 | 27/11/2026 | Đồng bộ nội bộ theo FRS 0.2 và D03-04-PH18 0.2: gắn API-18-181…187 vào UI-18-15, 22, 23, 24 và ma trận chương 33; câu thông báo theo câu chung của FRS §9.1; vai trò SO, PA, TA thay MO, DPO; AU, VW xem siêu dữ liệu DLQ; chốt Q18-30, Q18-37; Phụ lục B, C.1 thêm cột trạng thái, giữ LC-01, 02, 06 và ĐB-01…05 cho D03-06-00 | Nhóm phân hệ PH-18 |
 
 : Lịch sử phiên bản D03-06-PH18
 

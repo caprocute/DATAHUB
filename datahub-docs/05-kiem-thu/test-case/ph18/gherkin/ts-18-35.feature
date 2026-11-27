@@ -40,3 +40,15 @@ Tính năng: TS-18-35 · Chạy thử di trú, đối chiếu và xử lý bản
     Khi chạy thử `PLAN-AITA`.
     Và tải báo cáo đối chiếu PDF và CSV.
     Thì lần chạy ghi ERR-18-120 cho `CATALOG`; báo cáo đánh dấu dòng lệch, trường "giải trình" bắt buộc trước khi chạy thật.
+
+  @TC-18-167 @P2 @Dương @Âm
+  Kịch bản: TC-18-167 Đánh dấu cách xử lý bản ghi lỗi di trú, WONT_MIGRATE cần lý do
+    # Truy vết: FR-18-063 · API-18-182, 170, 171 · BR-18-041 · ERR-18-007, 036 · UI-18-22
+    # Mục đích: Chứng minh FR-18-063 bước 2 qua API-18-182: đánh dấu một hoặc nhiều bản ghi lỗi, `WONT_MIGRATE` có lý do và vào báo cáo đối chiếu như chênh lệch đã giải trình.
+    Biết T96; lần chạy `RUN-DRY-02` có 29 bản ghi lỗi `OPEN`; U-T96-DS có `PERM-18-migration`.
+    Khi DS `PATCH /migration-runs/RUN-DRY-02/errors` đặt 25 bản ghi `FIXED_AT_SOURCE`.
+    Và DS đặt 4 bản ghi `WONT_MIGRATE` kèm `reason` "HTTT đã ngừng từ 2024".
+    Và DS đặt 1 bản ghi `WONT_MIGRATE` với `reason` 5 ký tự.
+    Và DS gửi bộ lọc không khớp bản ghi nào.
+    Và tải báo cáo đối chiếu (API-18-171).
+    Thì bước 1, 2 `200` kết quả theo từng bản ghi, không bản ghi nào còn `OPEN`. Bước 3 `422` ERR-18-007, bản ghi giữ trạng thái cũ. Bước 4 `422` ERR-18-036. Bước 5 bốn bản ghi `WONT_MIGRATE` hiện ở dòng chênh lệch đã giải trình kèm lý do; kiểm toán ghi người, số bản ghi, cách xử lý.

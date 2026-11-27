@@ -52,3 +52,15 @@ Tính năng: TS-18-16 · Phát lại một mục DLQ và nhận kết quả lũy
     Khi TO phát lại chọn `useRevision = 1`.
     Và S-PH04 callback `DLQ-A-05:1` `SUCCEEDED`.
     Thì bước 1 EVT-18-09 có `revision = 1`, `idempotencyKey = DLQ-A-05:1`. Bước 2 mục `RESOLVED`.
+
+  @TC-18-165 @P1 @Dương @Bảo_mật
+  Kịch bản: TC-18-165 Nguồn cổng KAFKA_TOPIC lấy nội dung phát lại theo payloadRef, danh tính sai bị từ chối
+    # Truy vết: FR-18-027, 028 · API-18-188 · BR-18-020 · ERR-18-038, 001 · EVT-18-09 · ERR-00-403
+    # Mục đích: Chứng minh FR-18-027 bước 3: nguồn `KAFKA_TOPIC` lấy đúng bản cần phát lại qua API-18-188, bản gốc khi `revision = 0`, chỉ nguồn của mục được đọc.
+    Biết T90; `DLQ-A-02` `REPLAYING` nguồn `SRC-PH04` có bản sửa số 1 đã duyệt; S-PH04 (`ops:replay-callback`); S-PH06 (`ops:replay-callback`, nguồn khác); S-NOSCOPE.
+    Khi S-PH04 đọc `payloadRef` trong EVT-18-09 rồi `GET /ops/internal/v1/replay-payloads/DLQ-A-02/1`.
+    Và S-PH04 `GET .../DLQ-A-02/0`.
+    Và S-PH06 `GET .../DLQ-A-02/1`.
+    Và S-NOSCOPE `GET .../DLQ-A-02/1`.
+    Và S-PH04 `GET .../DLQ-A-02/9`.
+    Thì bước 1 `200` nội dung bản sửa số 1, băm khớp `payload_hash` của bản sửa; payload lớn trả `downloadUrl` có hạn thay cho `payload`. Bước 2 `200` bản gốc. Bước 3 `403` ERR-18-038. Bước 4 `403` ERR-00-403. Bước 5 `404` ERR-18-001. Không bước nào ghi nội dung vào nhật ký ứng dụng.

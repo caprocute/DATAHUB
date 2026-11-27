@@ -15,9 +15,9 @@ Tính năng: TS-18-40 · Theo dõi sức khỏe và chạy ở chế độ suy g
 
   @TC-18-134 @P1 @Âm @Biên
   Kịch bản: TC-18-134 Chế độ chỉ đọc chặn mọi API ghi, vẫn đọc được và có dải cảnh báo
-    # Truy vết: FR-18-072, 007, 003 · API-18-006, 049, 091, 180 · BR-18-007 · ERR-18-071 · EVT-18-29 · LGC-NFR-006 · UI-18-08, 24
-    # Mục đích: Chứng minh ERR-18-071 áp dụng cho mọi API ghi (theo FR-18-072, ĐN-UC-02) và việc bật, tắt chế độ đi qua đường quản trị riêng.
-    Biết T90; U-PA1 bật `18.degraded.read-only = true` (giả định qua đường quản trị nêu ở ĐN-UC-11).
+    # Truy vết: FR-18-072, 007, 003 · API-18-006, 049, 091, 180, 187 · BR-18-007 · ERR-18-071 · EVT-18-29 · LGC-NFR-006 · UI-18-08, 24
+    # Mục đích: Chứng minh ERR-18-071 áp dụng cho mọi API ghi (FR-18-072) và việc bật, tắt chế độ đi qua API-18-187 (ca TC-18-171).
+    Biết T90; U-PA1 bật chế độ chỉ đọc qua API-18-187.
     Khi TA1 `PUT /params/04.retry.max-attempts`.
     Và TO `:triage` một mục DLQ.
     Và TA1 `GET /params`, TO `GET /dlq/messages`.
@@ -32,3 +32,16 @@ Tính năng: TS-18-40 · Theo dõi sức khỏe và chạy ở chế độ suy g
     Khi tắt `dh-platform` 30 phút trong khi chạy tải.
     Và bật lại, chờ tiêu thụ hết.
     Thì trong lúc tắt: 0 lỗi data plane do PH-18, p95 độ trễ giao dịch tăng không quá 5 %, PH-04 đọc tham số từ đệm. Sau khi bật: 5.000 mục, 0 mất, 0 trùng; độ trễ tiêu thụ về 0.
+
+  @TC-18-171 @P1 @Dương @Âm @Bảo_mật
+  Kịch bản: TC-18-171 Bật, tắt chế độ chỉ đọc qua API riêng và xem sự kiện inbox lỗi
+    # Truy vết: FR-18-072 · API-18-187, 186, 006, 180 · BR-18-007 · ERR-18-071, 003, 007 · ERR-00-403 · EVT-18-29 · UI-18-24
+    # Mục đích: Chứng minh FR-18-072 qua API-18-187 và API-18-186: chỉ PA bật, tắt được; API-18-187 không bị chặn khi đang chỉ đọc; khóa `18.degraded.read-only` không đổi được qua API-18-006; danh sách inbox `FAILED` chỉ có siêu dữ liệu.
+    Biết T90; U-PA1 có `PERM-18-admin`; U-T90-TA1 có `PERM-18-config`; inbox mô-đun `notify` có 3 sự kiện `FAILED`.
+    Khi TA1 `POST /degraded-mode` `readOnly = true`.
+    Và PA1 `POST /degraded-mode` `readOnly = true` kèm lý do "Bảo trì CSDL theo lịch".
+    Và TA1 `PUT /params/18.degraded.read-only` giá trị `false`.
+    Và PA1 `POST /degraded-mode` `readOnly = false` kèm lý do khi đang chỉ đọc.
+    Và PA1 `GET /inbox-failures?module=notify`.
+    Và PA1 `POST /degraded-mode` với lý do 3 ký tự.
+    Thì bước 1 `403` ERR-00-403. Bước 2 `200`, `readOnly = true`, EVT-18-29 phát, kiểm toán có. Bước 3 `503` ERR-18-071 (chế độ đang bật); khi chế độ tắt, cùng lời gọi trả `400` ERR-18-003. Bước 4 `200`, chế độ tắt, EVT-18-29 `readOnly = false`, tiêu thụ DLQ đọc tiếp từ offset đã commit. Bước 5 `200` 3 dòng có mô-đun, người tiêu thụ, lỗi cuối, số lần thử; không có nội dung sự kiện. Bước 6 `422` ERR-18-007.

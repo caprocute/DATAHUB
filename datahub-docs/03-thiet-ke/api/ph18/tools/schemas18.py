@@ -15,7 +15,7 @@ ENUMS = {
     'ErrorClass': ['TRANSIENT', 'BUSINESS', 'CONTRACT', 'POISON', 'UNKNOWN'],
     'Priority': ['P1', 'P2', 'P3', 'P4'],
     'ReplayJobStatus': ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'RUNNING', 'PAUSED', 'COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED', 'REJECTED'],
-    'ReplayItemStatus': ['PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED_DUPLICATE', 'CANCELLED'],
+    'ReplayItemStatus': ['PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'SKIPPED_DUPLICATE', 'CANCELLED'],
     'ReplayMode': ['KAFKA_TOPIC', 'HTTP_PORT', 'EVENT_LAYER', 'NONE'],
     'UseRevision': ['LATEST_APPROVED', 'ORIGINAL'],
     'DiscardReasonCode': ['HANDLED_AT_SOURCE', 'TEST_MESSAGE', 'OBSOLETE', 'DUPLICATE', 'OTHER'],
@@ -81,6 +81,8 @@ PATTERNS = {
 FACET = 'value!:s, count!:i'
 
 READ = {
+    'InboxFailure': 'module!:s, consumer!:s, eventId!:s, sourceTopic!:s, eventType:s, attempts!:i, lastError!:s, lastAttemptAt!:ts, receivedAt!:ts',
+    'NormalizationRuleSet': 'groupCode!:s, rules!:[#NormalizationRule], recomputedSamples:i, matchRate:n',
     'ParamNamespace': 'ns!:s, ownerPh!:ph, title!:s, description:s, approvalOwner:ph, cacheTtlSeconds:i, schemaVersion!:i, status!:e(ACTIVE|RETIRED), keyCount!:i, groups:[s]',
     'ParamDefinition': 'key!:pkey, ns!:s, type!:#ParamType, default:any, domain:#ParamDomain, level!:#ParamLevel, ceiling:#ParamDomain, secure!:b, approvalOwner!:ph, '
                        'group!:s, label!:s, description:s, unit:s, schemaVersion!:i, deprecatedAt:ts, removalDate:d',
@@ -154,6 +156,8 @@ DETAIL = {
 }
 
 PLAIN = {
+    'NormalizationRule': 'kind!:e(IGNORE_FIELD|DATE_FORMAT|NUMBER_FORMAT|SORT_ARRAY|TRIM), path!:s, description:s',
+    'ReplayPayload': 'dlqId!:u, revision!:i, idempotencyKey!:ikey, contentType!:s, sizeBytes!:i, sha256!:hash, payload:any, downloadUrl:s, expiresAt:ts',
     'ParamDomain': 'min:n, max:n, enum:[s], pattern:s, maxItems:i',
     'ParamValue': 'key!:pkey, ns!:s, value:any, version!:i, source!:e(DEFAULT|TENANT|CEILING), level!:#ParamLevel, secure!:b, status!:e(ACTIVE|PENDING_APPROVAL), '
                   'pendingRequestId:u, effectiveFrom:ts, updatedAt:ts, updatedBy:s',
@@ -337,7 +341,11 @@ INPUT = {
     'MigrationPlanItemsInput': 'items!:[#MigrationPlanItemInput]',
     'MigrationPlanItemInput': 'objectType!:#ObjectType, converter!:s, targetPh!:ph, order!:i, dependsOn:[#ObjectType], filter:s, fixRules:[s], enabled:b',
     'MigrationRunInput': 'planCode!:s, mode!:#RunMode, items:[#ObjectType], sampleLimit:i, basedOnDryRun:u, retryOf:u, errorIds:[u], reason:s',
-    'CutoverTransitionInput': 'target!:e(PARTIAL_CUTOVER|CUT_OVER|ROLLED_BACK), trafficPercent:i, reason!:s10',
+    'CutoverTransitionInput': 'action!:e(REQUEST|APPROVE|REJECT|ROLLBACK), target:e(PARTIAL_CUTOVER|CUT_OVER), trafficPercent:i, reason!:s10',
+    'MigrationErrorFixInput': 'errorIds!:[u], status!:e(FIXED_AT_SOURCE|RULE_ADDED|WONT_MIGRATE), reason:s10, ruleRef:s',
+    'NormalizationRulesInput': 'rules!:[#NormalizationRule], reason!:s10',
+    'ChecklistConfirmInput': 'evidence!:s, comment:s',
+    'DegradedModeInput': 'readOnly!:b, reason!:s10',
     'ShadowSampleBatch': 'items!:[#ShadowSampleInput]',
     'ShadowSampleInput': 'groupCode!:s, requestHash!:hash, route!:s, legacyStatus!:i, datahubStatus!:i, legacyBodyHash!:hash, datahubBodyHash!:hash, diffPaths:[s], latencyMs:i, sampledAt!:ts',
     'ReportGenerateInput': 'period!:e(MONTH|QUARTER), from!:d, to!:d',
@@ -345,7 +353,7 @@ INPUT = {
 
 # giới hạn số phần tử theo FRS
 MAX_ITEMS = {('DlqBatchInput', 'items'): 500, ('BulkTriageInput', 'dlqIds'): 1000, ('BulkDiscardInput', 'dlqIds'): 1000, ('ReplayJobInput', 'dlqIds'): 1000,
-             ('NotificationInput', 'recipients'): 500, ('ShadowSampleBatch', 'items'): 1000, ('ParamValidateInput', 'items'): 200}
+             ('NotificationInput', 'recipients'): 500, ('MigrationErrorFixInput', 'errorIds'): 1000, ('NormalizationRulesInput', 'rules'): 100, ('ShadowSampleBatch', 'items'): 1000, ('ParamValidateInput', 'items'): 200}
 STR_MAX = {('TriageInput', 'note'): 2000, ('TimelineInput', 'content'): 4000, ('TemplateVersionInput', 'subject'): 200, ('TemplateVersionInput', 'body'): 20000,
            ('TaskTypeInput', 'title'): 120, ('FeatureFlagInput', 'description'): 500}
 INT_RANGE = {('DlqSourceInput', 'maxRatePerSecond'): (1, 100), ('DlqSourcePatch', 'maxRatePerSecond'): (1, 100), ('ReplayJobInput', 'ratePerSecond'): (1, 100),

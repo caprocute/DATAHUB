@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sinh các khối giữa dấu <!-- gen:xxx:start/end --> của D03-04-PH18-api-van-hanh.md từ OpenAPI, AsyncAPI và FRS.
 Khối: stats (tóm tắt), perm (2.1), catalog (4), events (5.1), consume (5.3), errors (7), fr (10), dac-ta (14, bằng
-build/tools/sinh_dac_ta_api.py --vi-du cho đủ 180 operation).
+build/tools/sinh_dac_ta_api.py --vi-du cho đủ 188 operation).
 Chạy từ thư mục tools: python3 gen_md.py   (không sửa tay các khối sinh)."""
 import os
 import re
@@ -80,7 +80,7 @@ def catalog():
         by.setdefault(op['tags'][0], []).append((aid, m, path, op))
     for k, (tag, desc, a, b) in enumerate(G.TAGS, 1):
         rows = by[tag]
-        L += ['### 4.%d. %s' % (k, tag), '', '%s Nhóm có %d operation (API-18-%03d…%03d).' % (desc, len(rows), a, b), '',
+        L += ['### 4.%d. %s' % (k, tag), '', '%s Nhóm có %d operation (API-18-%03d…%03d%s).' % (desc, len(rows), a, b, ''.join(', %03d' % n for n, t in sorted(G.TAG_EXTRA.items()) if t == tag)), '',
               '| Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |', '|---|---|---|---|---|---|---|---|']
         for aid, m, path, op in rows:
             ok = ', '.join(c for c in op['responses'] if c[0] in '23')

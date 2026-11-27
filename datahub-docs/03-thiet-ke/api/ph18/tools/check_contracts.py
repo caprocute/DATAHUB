@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm tra hợp đồng PH-18: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 180, không trùng và khớp FRS §9.4
+"""Kiểm tra hợp đồng PH-18: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 188, không trùng và khớp FRS §9.4
 (phương thức, đường dẫn), mã lỗi gắn ở operation có ở FRS §9.1 và không là mã worker, AsyncAPI đủ 29 sự kiện EVT-18 đúng địa chỉ,
 dữ liệu sự kiện không mang khóa payload, giá trị hay bí mật (BR-18-050).
 Chạy: python3 check_contracts.py (từ thư mục tools). Thoát 1 nếu có lỗi."""
@@ -55,8 +55,8 @@ for path, item in OA['paths'].items():
         want = frs_rows.get(op['x-datahub-id'])
         if want != (m.upper(), path):
             errs.append('%s lệch FRS: %s %s, FRS %s' % (op['x-datahub-id'], m.upper(), path, want))
-if len(ids) != 180 or len(set(ids)) != 180:
-    errs.append('mã API không đủ 180 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
+if len(ids) != 188 or len(set(ids)) != 188:
+    errs.append('mã API không đủ 188 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
 if len(set(opids)) != len(opids):
     errs.append('operationId trùng')
 if set(frs_rows) != set(ids):

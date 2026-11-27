@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH18
 ten: Thiết kế chi tiết phần mềm phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kỹ sư tích hợp các phân hệ dùng tham số, DLQ, thông báo và hộp việc, DBA, vận hành nền tảng, ATTT, kiểm thử viên, kiến trúc sư, hội đồng thẩm định
@@ -81,7 +81,7 @@ Bảng dưới ghi từng tài liệu hoặc ADR và phần nội dung tập nà
 | D02-03-PH18 FRS 0.1 | 72 FR, 50 BR, 22 NFR, 61 tham số `18.*`, ERR-18-001…072 và 101…124, EVT-18-01…29, API-18-001…180, EN-18-01…55, UI-18-01…24 |
 | D02-04-PH18 UC 0.1 | 40 use case, các sơ đồ trình tự mức nghiệp vụ |
 | D03-03-PH18 CSDL 0.1 | Schema `ph18_ops`, 57 bảng, bốn vai, RLS, bốn bảng phân vùng, kho ngoài PostgreSQL |
-| D03-04-PH18 API | `openapi-ops.yaml` (`/api/ops/v1`, `/ops/internal/v1`), `asyncapi-ops.yaml` |
+| D03-04-PH18 API | `openapi-ops.yaml` (`/api/ops/v1`, `/ops/internal/v1`), `asyncapi-ops.yaml`. Đã hấp thụ ở 0.2: API-18-188; API-18-029 có `304` không thân; trường `occurrences` ở `DlqMessage` |
 | D03-01 SAD §4 | `dh-platform` Z3, `TPH-1`; nhóm `dh-batch` |
 | D03-07 ATTT | SEC-15, SEC-16, SEC-24, SEC-26, SEC-28, SEC-31, SEC-32, SEC-33, SEC-60, SEC-70, SEC-71, SEC-74, SEC-80, SEC-81, SEC-82, SEC-85, SEC-87 |
 | D03-09 §8 | Bảng đối tượng sao lưu §8.2, PITR §8.3, RBK-04 khôi phục một tenant §8.5, priority class `dh-batch` |
@@ -915,7 +915,7 @@ Nội dung là Markdown giới hạn (không HTML, không ảnh nhúng, liên k�
 
 : Hiện thực ReplayPort theo loại nguồn
 
-Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT` bị kiểm lúc đăng ký phải là tên dịch vụ trong cụm của DU nguồn (FR-18-012). FRS chưa nêu API để nguồn `KAFKA_TOPIC` lấy nội dung theo `payloadRef`; tập này đề xuất `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}` scope `ops:replay-callback`, chỉ trả cho đúng nguồn của mục trong hạn `18.dlq.replay.result-timeout-minutes` (mục 13.5).
+Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT` bị kiểm lúc đăng ký phải là tên dịch vụ trong cụm của DU nguồn (FR-18-012). Nguồn `KAFKA_TOPIC` lấy nội dung theo `payloadRef` qua API-18-188 `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}` scope `ops:replay-callback` (FRS 0.2), chỉ trả cho đúng nguồn của mục (ERR-18-038) trong hạn `18.dlq.replay.result-timeout-minutes`.
 
 **Tạo và chốt danh sách.** Lượt một mục (FR-18-027) là lượt loạt có một mục, đi cùng đường để chỉ có một bộ máy trạng thái. `ReplayJobService.create` nhận bộ lọc hoặc danh sách, `ReplayItemSnapshotter` chốt danh sách ngay lúc tạo vào `replay_item` (BR-18-021) và loại mục `POISON`, mục đang trong lượt khác, mục của nguồn `NONE`; kết quả rỗng thì ERR-18-036, quá `18.dlq.replay.batch-max` thì ERR-18-032. Khóa lũy đẳng mỗi mục là `dlqId:revision` với `revision` là bản sửa `APPROVED` mới nhất hoặc `0`. Gửi lượt: số mục ≤ `18.dlq.replay.approval-threshold` thì `APPROVED` ngay; lớn hơn thì `PENDING_APPROVAL` và mở việc `ph18.approve-replay`. Duyệt kiểm lại từng mục (mục đã đóng hoặc đã vào lượt khác bị đánh dấu `SKIPPED`), kiểm người duyệt khác người tạo (ERR-18-005).
 
@@ -1322,7 +1322,7 @@ Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT`
 
 **FR hiện thực.** FR-18-070, 071, 072; BR-18-007, 050; NFR-18-016, 018, 019.
 
-**Giao diện vào.** `OpsHealthApi`; API-18-177…180.
+**Giao diện vào.** `OpsHealthApi`; API-18-177…180, API-18-186, API-18-187.
 
 **Phụ thuộc ra.** API tra kiểm toán của PH-13 (lọc theo `module = ops`), Garage `report/`, `OutboxWriter`.
 
@@ -1337,7 +1337,7 @@ Không hiện thực nào nhận địa chỉ HTTT đích; URL của `HTTP_PORT`
 
 **Báo cáo.** `OpsReportJob` lập theo `18.report.schedule` một báo cáo mỗi loại `DLQ`, `BACKUP`, `MIGRATION`, `INCIDENT`, `PARAMETER` và một `SUMMARY`, chỉ số đếm và tỷ lệ, không payload hay dữ liệu cá nhân (BR-18-050); lưu dòng `ops_report` và tệp PDF ở Garage, phát EVT-18-28 cho PH-16.
 
-**Sức khỏe và suy giảm.** `HealthAggregator` gom trạng thái các phần: độ trễ tiêu thụ DLQ, độ trễ outbox, bộ gửi thông báo, bộ điều phối phát lại, Kafka, Garage, Valkey, máy chủ thư, Kubernetes API; mỗi phần `UP`, `DEGRADED`, `DOWN`, phát EVT-18-29 khi đổi. `DegradedModeGuard` đặt chế độ chỉ đọc khi `18.degraded.read-only = true` hoặc tự động khi ghi CSDL lỗi liên tục 60 giây; khi chỉ đọc, mọi API ghi trả ERR-18-071, API đọc và tiếp nhận DLQ vẫn chạy (tiếp nhận tự tạm dừng nếu CSDL không ghi được, bản tin chờ ở Kafka). Phân hệ khác không bị chặn vì đọc tham số qua bộ đệm và gửi thông báo, việc qua outbox của chính chúng (NFR-18-018).
+**Sức khỏe và suy giảm.** `HealthAggregator` gom trạng thái các phần: độ trễ tiêu thụ DLQ, độ trễ outbox, bộ gửi thông báo, bộ điều phối phát lại, Kafka, Garage, Valkey, máy chủ thư, Kubernetes API; mỗi phần `UP`, `DEGRADED`, `DOWN`, phát EVT-18-29 khi đổi. `DegradedModeGuard` đặt chế độ chỉ đọc khi `18.degraded.read-only = true` hoặc tự động khi ghi CSDL lỗi liên tục 60 giây; khi chỉ đọc, mọi API ghi trả ERR-18-071 trừ API-18-187 (`POST /degraded-mode`, `PERM-18-admin`) để PA tắt được chế độ này, API đọc và tiếp nhận DLQ vẫn chạy; danh sách inbox `FAILED` cho UI-18-24 qua API-18-186 (tiếp nhận tự tạm dừng nếu CSDL không ghi được, bản tin chờ ở Kafka). Phân hệ khác không bị chặn vì đọc tham số qua bộ đệm và gửi thông báo, việc qua outbox của chính chúng (NFR-18-018).
 
 ### 4.25. Lõi chung (`common`)
 
@@ -2312,7 +2312,7 @@ Năm ADR đề xuất của PH-18 đã có tệp ở `00-chung/adr/`; bảng ghi
 | ADR | Quyết định | Hiện thực ở tập này |
 |---|---|---|
 | ADR-180 | Kho tham số tập trung trên `ph18_ops`, lược đồ do phân hệ đăng ký, làm mới bằng sự kiện | §4.2 đến §4.5; Caffeine ≤ 60 giây, `ETag`, fail-soft |
-| ADR-181 | DLQ hợp nhất, payload gốc bất biến, payload lớn ở Garage, liên thông PH-10 | §4.6 đến §4.9, §4.12 |
+| ADR-181 | DLQ hợp nhất, payload gốc bất biến, payload lớn ở Garage, liên thông PH-10 | §4.6 đến §4.9, §4.12. Đã hấp thụ ở 0.2: ADR-181 dùng tham số `18.dlq.dedup-window-days`, giữ topic 14 ngày như FRS |
 | ADR-182 | Phát lại qua lối vào của nguồn, khóa `dlqId:revision`, bốn mắt loạt lớn | §4.11, SPI `ReplayPort` |
 | ADR-183 | Khung di trú `dh-migrate`, đọc JDBC chỉ đọc, ghi qua API nhập | §4.22, §4.23 |
 | ADR-184 | Thông báo qua outbox, SMTP/TLS, SMS REST, mẫu Mustache không logic | §4.13 đến §4.15 |
@@ -2323,20 +2323,20 @@ Tập không đề xuất ADR mới. Hai lựa chọn thiết kế có thể c�
 
 ### 13.5. Điểm lệch giữa FRS, CSDL, ADR và SAD
 
-Khi đối chiếu, tập này phát hiện mười điểm lệch. FRS là nguồn chuẩn khi lệch (brief PH-18 §8); tập này thiết kế theo cột "Theo" và ghi đề nghị sửa ở §13.6.
+Khi đối chiếu, tập này phát hiện mười điểm lệch. FRS là nguồn chuẩn khi lệch (brief PH-18 §8); tập này thiết kế theo cột "Theo" và ghi đề nghị sửa ở §13.6. Ở lượt đồng bộ 0.2, chín điểm nội bộ PH-18 (1 đến 9) đã hấp thụ ở FRS 0.2, CSDL 0.2, API 0.2 và ADR-181; điểm 10 liên quan D03-09, D03-10 và DDL của phân hệ khác nên giữ cho đợt đồng bộ cuối.
 
 | Số | Điểm lệch | Nguồn A | Nguồn B | Theo |
 |---|---|---|---|---|
-| 1 | Loại cổng phát lại | FRS §4.1, FR-18-012: trường `replayMode` ∈ `KAFKA_TOPIC`, `HTTP_PORT`, `EVENT_LAYER`, `NONE` | CSDL `dlq_source.replay_port` CHECK `PH04_RUNTIME`, `PH10_EVENT`, `REPLAY_PORT`, `NONE` | FRS; CSDL đổi tên cột và giá trị |
-| 2 | Bộ đếm lần gặp khi khử trùng | BR-18-015, ERR-18-105 "tăng số lần gặp" | `dlq_message` không có cột đếm, lần gặp cuối | FRS; CSDL thêm `occurrence_count`, `last_seen_at` |
-| 3 | Payload không phải JSON | ERR-18-101 "lưu dạng nhị phân" | `payload_inline jsonb` chỉ nhận JSON | Payload không phải JSON luôn vào Garage (§4.6); CSDL ghi rõ |
-| 4 | Tên khóa tham số | FRS `18.notify.log-retention-days`, `18.param.history-retention-days` | CSDL §3.58, §7 `18.notify.delivery-retention-days`, `18.param.history-retention-years` | FRS (thuộc 11 khóa lệch đã biết) |
-| 5 | Cửa sổ khử trùng của inbox DLQ | FRS `18.dlq.dedup-window-days` mặc định 7, miền 1…30 | CSDL §7 và ADR-181 ghi 30 ngày | FRS; mục mở vẫn được khử trùng theo `dlqKey` không phụ thuộc cửa sổ |
-| 6 | Thời hạn giữ topic DLQ | FRS NFR-18-016: 7 ngày | ADR-181: Kafka giữ 14 ngày | Chờ Q18-21; thiết kế không phụ thuộc giá trị nhờ đối soát |
-| 7 | Số bản sao `dh-platform` | FRS §8.1 điều kiện đo: 3 bản sao | SAD §4.3: 2 bản sao `QM-VUA` | SAD cho triển khai (2, HPA tới 4); FRS ghi rõ điều kiện đo là 3 |
-| 8 | Nguồn `KAFKA_TOPIC` lấy nội dung phát lại | EVT-18-09 mang `payloadRef` | FRS §9.4 và OpenAPI không có API lấy nội dung theo `payloadRef` | Đề xuất `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}`, scope `ops:replay-callback` |
-| 9 | Kho lần chạy Spring Batch | ADR-183 chọn Spring Batch, cần `JobRepository` để khởi động lại | CSDL 57 bảng không có bảng `BATCH_*` | Thêm bảng kho của Spring Batch vào `ph18_ops` (không RLS, chỉ `ph18_worker`) hoặc schema `ph18_batch` |
-| 10 | Khôi phục tenant ở cụm thật | D03-09 §8.5 nói "tắt trigger ghi outbox" và không nêu bảng loại trừ | CSDL không có vai ghi liên schema, trigger chặn xóa của các phân hệ không có ngoại lệ | Vai `dh_tenant_restorer`, cờ `app.restore_mode`, loại trừ bảng outbox, inbox, kiểm toán (§4.20) |
+| 1 | Loại cổng phát lại | FRS §4.1, FR-18-012: trường `replayMode` ∈ `KAFKA_TOPIC`, `HTTP_PORT`, `EVENT_LAYER`, `NONE` | CSDL `dlq_source.replay_port` CHECK `PH04_RUNTIME`, `PH10_EVENT`, `REPLAY_PORT`, `NONE` | FRS; CSDL đổi tên cột và giá trị. Đã hấp thụ ở 0.2: CSDL cột `replay_mode` |
+| 2 | Bộ đếm lần gặp khi khử trùng | BR-18-015, ERR-18-105 "tăng số lần gặp" | `dlq_message` không có cột đếm, lần gặp cuối | FRS; CSDL thêm `occurrence_count`, `last_seen_at`. Đã hấp thụ ở 0.2: CSDL `occurrence_count`, `last_seen_at` |
+| 3 | Payload không phải JSON | ERR-18-101 "lưu dạng nhị phân" | `payload_inline jsonb` chỉ nhận JSON | Payload không phải JSON luôn vào Garage (§4.6); CSDL ghi rõ. Đã hấp thụ ở 0.2: chú thích cột `payload_location` ở CSDL |
+| 4 | Tên khóa tham số | FRS `18.notify.log-retention-days`, `18.param.history-retention-days` | CSDL §3.58, §7 `18.notify.delivery-retention-days`, `18.param.history-retention-years` | FRS (thuộc 11 khóa lệch đã biết). Đã hấp thụ ở 0.2: CSDL sinh 61 khóa từ FRS §8.2 |
+| 5 | Cửa sổ khử trùng của inbox DLQ | FRS `18.dlq.dedup-window-days` mặc định 7, miền 1…30 | CSDL §7 và ADR-181 ghi 30 ngày | FRS; mục mở vẫn được khử trùng theo `dlqKey` không phụ thuộc cửa sổ. Đã hấp thụ ở 0.2: CSDL và ADR-181 theo tham số, mặc định 7 ngày |
+| 6 | Thời hạn giữ topic DLQ | FRS NFR-18-016: 7 ngày | ADR-181: Kafka giữ 14 ngày | Chờ Q18-21; thiết kế không phụ thuộc giá trị nhờ đối soát. Đã hấp thụ ở 0.2: chọn 14 ngày theo ADR-181, FRS NFR-18-016 và FR-18-018 sửa; Q18-21 đóng |
+| 7 | Số bản sao `dh-platform` | FRS §8.1 điều kiện đo: 3 bản sao | SAD §4.3: 2 bản sao `QM-VUA` | SAD cho triển khai (2, HPA tới 4); FRS ghi rõ điều kiện đo là 3. Đã hấp thụ ở 0.2: FRS §8.1 ghi 2 bản sao theo SAD, HPA tới 4 |
+| 8 | Nguồn `KAFKA_TOPIC` lấy nội dung phát lại | EVT-18-09 mang `payloadRef` | FRS §9.4 và OpenAPI không có API lấy nội dung theo `payloadRef` | Đề xuất `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}`, scope `ops:replay-callback`. Đã hấp thụ ở 0.2: API-18-188 |
+| 9 | Kho lần chạy Spring Batch | ADR-183 chọn Spring Batch, cần `JobRepository` để khởi động lại | CSDL 57 bảng không có bảng `BATCH_*` | Thêm bảng kho của Spring Batch vào `ph18_ops` (không RLS, chỉ `ph18_worker`) hoặc schema `ph18_batch`. Đã hấp thụ ở 0.2: CSDL schema `ph18_batch` (D03-03-PH18 §4.4) |
+| 10 | Khôi phục tenant ở cụm thật | D03-09 §8.5 nói "tắt trigger ghi outbox" và không nêu bảng loại trừ | CSDL không có vai ghi liên schema, trigger chặn xóa của các phân hệ không có ngoại lệ | Vai `dh_tenant_restorer`, cờ `app.restore_mode`, loại trừ bảng outbox, inbox, kiểm toán (§4.20). Giữ cho đợt cuối (liên PH) |
 
 : Điểm lệch phát hiện và hướng thiết kế đã theo
 
@@ -2344,12 +2344,12 @@ Ngoài mười điểm trên, `merge_transfer` cùng hướng chuyển sáp nh�
 
 ### 13.6. Đề nghị đồng bộ
 
-Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì tập này không tự sửa các tài liệu đó.
+Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì tập này không tự sửa các tài liệu đó. Bốn dòng đầu (D03-03-PH18, D02-03-PH18, D03-04-PH18, ADR-181) là đồng bộ nội bộ PH-18 và đã hấp thụ ở 0.2; các dòng còn lại liên phân hệ, giữ cho đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
 |---|---|
-| D03-03-PH18 CSDL | (1) Đổi `dlq_source.replay_port` thành `replay_mode` với giá trị của FRS. (2) Thêm `dlq_message.occurrence_count`, `last_seen_at` cho phép cập nhật (không nằm trong `tg_immutable`). (3) Ghi rõ payload không phải JSON luôn ở Garage. (4) Sửa hai tên khóa tham số theo FRS. (5) Cửa sổ khử trùng inbox DLQ theo `18.dlq.dedup-window-days`. (6) Bảng kho lần chạy Spring Batch. (7) Cho phép `ph18_worker` cập nhật nhịp sống và điểm dừng ở bảng trạng thái của worker |
-| D02-03-PH18 FRS | (1) Thêm API lấy nội dung phát lại theo `payloadRef` (§4.11) vào §9.4. (2) Ghi tiêu đề `X-Datahub-Migration` và yêu cầu API nhập của đích trả băm chuẩn tắc (FR-18-064). (3) Thống nhất thời hạn giữ topic DLQ với ADR-181 (Q18-21). (4) Ghi ba cờ `ff.ops.*` của §9.4 |
+| D03-03-PH18 CSDL | (1) Đổi `dlq_source.replay_port` thành `replay_mode` với giá trị của FRS. (2) Thêm `dlq_message.occurrence_count`, `last_seen_at` cho phép cập nhật (không nằm trong `tg_immutable`). (3) Ghi rõ payload không phải JSON luôn ở Garage. (4) Sửa hai tên khóa tham số theo FRS. (5) Cửa sổ khử trùng inbox DLQ theo `18.dlq.dedup-window-days`. (6) Bảng kho lần chạy Spring Batch. (7) Cho phép `ph18_worker` cập nhật nhịp sống và điểm dừng ở bảng trạng thái của worker. Đã hấp thụ ở 0.2: cả bảy việc (cột `replay_mode`, `occurrence_count`, ghi chú payload không phải JSON, tên khóa, cửa sổ khử trùng, schema `ph18_batch`, cột `heartbeat_at`, `checkpoint` cho vai worker) |
+| D02-03-PH18 FRS | (1) Thêm API lấy nội dung phát lại theo `payloadRef` (§4.11) vào §9.4. (2) Ghi tiêu đề `X-Datahub-Migration` và yêu cầu API nhập của đích trả băm chuẩn tắc (FR-18-064). (3) Thống nhất thời hạn giữ topic DLQ với ADR-181 (Q18-21). (4) Ghi ba cờ `ff.ops.*` của §9.4. Đã hấp thụ ở 0.2: API-18-188, FR-18-062 và 064, NFR-18-016 14 ngày, ba cờ ở FRS §8.2 |
 | D03-04-PH18 API | Thêm điểm cuối `replay-payloads` ở `openapi-ops.yaml`; mô tả `304` không thân của API-18-029; thêm trường `occurrenceCount` ở chi tiết mục DLQ |
 | ADR-181 | Sửa "Kafka giữ 14 ngày" cho khớp FRS hoặc sửa FRS theo ADR sau khi chốt Q18-21; sửa cửa sổ inbox 30 ngày thành tham số |
 | D03-01 SAD §4.3 | Bổ sung hai hồ sơ chạy `api`, `worker` của `dh-platform`; ảnh `dh-ops-worker` và CronJob `dh-backup-reporter` ở `dh-batch`; phụ thuộc Valkey của PH-18 |
@@ -2372,7 +2372,7 @@ Mười câu hỏi dưới đánh số Q18-20…29 theo dải của tập SDD.
 
 > **Câu hỏi mở Q18-20:** Spring Modulith bản dùng với Spring Boot 4 có hỗ trợ module lồng nhau đủ ổn định để `ops` là module cha của tám module con không; nếu không, có chấp nhận tám module phẳng `ops-param`, `ops-dlq`… cùng quy tắc phụ thuộc ở §3.2 không.
 
-> **Câu hỏi mở Q18-21:** Thời hạn giữ topic `{tenant}.ops.dlq.v1` là 7 ngày (FRS NFR-18-016) hay 14 ngày (ADR-181); con số này quyết định PH-18 được vắng tối đa bao lâu mà không mất bản tin lỗi.
+> **Câu hỏi mở Q18-21:** Thời hạn giữ topic `{tenant}.ops.dlq.v1` là 7 ngày (FRS NFR-18-016 bản 0.1) hay 14 ngày (ADR-181); con số này quyết định PH-18 được vắng tối đa bao lâu mà không mất bản tin lỗi. Đã chốt ở lượt đồng bộ 0.2: 14 ngày, FRS 0.2 NFR-18-016 đã sửa theo ADR-181.
 
 > **Câu hỏi mở Q18-22:** CronJob `dh-backup-reporter` (mô hình đẩy, quyền chỉ đọc CR sao lưu ở `dh-db` và `velero`) do nhóm PH-18 hay nhóm hạ tầng sở hữu và phát hành; nhóm hạ tầng có đồng ý cấp quyền đọc chéo namespace cho service account này không.
 
@@ -2394,6 +2394,7 @@ Mười câu hỏi dưới đánh số Q18-20…29 theo dải của tập SDD.
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18: đánh dấu chín điểm lệch §13.5 và bốn dòng đề nghị §13.6 đã hấp thụ ở FRS, CSDL, API 0.2 và ADR-181; dùng API-18-188 cho nguồn `KAFKA_TOPIC`; Q18-21 chốt 14 ngày |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.platform.ops` tám module và `common`, thư viện `dh-ops-client`, mô hình miền, 25 thành phần với khối đặc tả 10 mục, worker `dh-ops-worker` ba công cụ, mười lăm sơ đồ trình tự, bốn sơ đồ trạng thái, outbox và lũy đẳng, đa tenant, bảo mật, quan sát `dh_ops_*`, triển khai, kiểm thử, mười điểm lệch, đề nghị đồng bộ, câu hỏi mở Q18-20…29 |
 
 : Lịch sử phiên bản

@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D03-04-PH18
 ten: Đặc tả API và sự kiện phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, kiểm thử viên, tích hợp viên, cán bộ vận hành, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-18
-mo_ta: Hợp đồng 180 operation OpenAPI 3.1 gồm API người dùng và API nội bộ, 42 kênh AsyncAPI 3.0 gồm 29 sự kiện phát và 13 kênh tiêu thụ, quy ước RFC 9457, phân trang, khóa lạc quan, chống trùng và bốn mắt của kho tham số, DLQ hợp nhất, phát lại, thông báo, việc của tôi, lịch, sự cố, sao lưu, di trú, kèm bảng mã lỗi và kiểm tra hợp đồng trong CI.
+mo_ta: Hợp đồng 188 operation OpenAPI 3.1 gồm API người dùng và API nội bộ, 42 kênh AsyncAPI 3.0 gồm 29 sự kiện phát và 13 kênh tiêu thụ, quy ước RFC 9457, phân trang, khóa lạc quan, chống trùng và bốn mắt của kho tham số, DLQ hợp nhất, phát lại, thông báo, việc của tôi, lịch, sự cố, sao lưu, di trú, kèm bảng mã lỗi và kiểm tra hợp đồng trong CI.
 tai_lieu_lien_quan: D02-03-PH18 FRS; D03-02-PH18 SDD; D03-03-PH18 CSDL; D03-06-PH18 Màn hình; D05-02-PH18 Test case
 ---
 
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D02-03-PH18 FRS; D03-02-PH18 SDD; D03-03-PH18 CSDL; D03-06-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Hợp đồng API của PH-18 gồm hai tệp sinh từ [D02-03-PH18](../../02-yeu-cau/frs/D02-03-PH18-frs-van-hanh.md) §9: [`ph18/openapi-ops.yaml`](ph18/openapi-ops.yaml) (OpenAPI 3.1, 180 operation API-18-001…180) và [`ph18/asyncapi-ops.yaml`](ph18/asyncapi-ops.yaml) (AsyncAPI 3.0, 29 sự kiện EVT-18-01…29 và 13 kênh tiêu thụ). API người dùng `/api/ops/v1` phục vụ cán bộ qua BFF của cổng; API nội bộ `/ops/internal/v1` chỉ trong cụm cho các phân hệ khác, xác thực mTLS với danh tính SPIFFE và scope `ops:*`.
+Hợp đồng API của PH-18 gồm hai tệp sinh từ [D02-03-PH18](../../02-yeu-cau/frs/D02-03-PH18-frs-van-hanh.md) §9: [`ph18/openapi-ops.yaml`](ph18/openapi-ops.yaml) (OpenAPI 3.1, 188 operation API-18-001…188) và [`ph18/asyncapi-ops.yaml`](ph18/asyncapi-ops.yaml) (AsyncAPI 3.0, 29 sự kiện EVT-18-01…29 và 13 kênh tiêu thụ). API người dùng `/api/ops/v1` phục vụ cán bộ qua BFF của cổng; API nội bộ `/ops/internal/v1` chỉ trong cụm cho các phân hệ khác, xác thực mTLS với danh tính SPIFFE và scope `ops:*`.
 
 Năm điểm hội đồng cần lưu ý.
 
@@ -29,12 +29,12 @@ Năm điểm hội đồng cần lưu ý.
 <!-- gen:stats:start -->
 | Chỉ số | Giá trị |
 |---|---|
-| Operation | 180 (154 API người dùng `/api/ops/v1`, 26 API nội bộ `/ops/internal/v1`), 159 đường dẫn |
-| Phương thức | 75 `GET`, 90 `POST`, 7 `PUT`, 6 `PATCH`, 2 `DELETE` |
-| Có `If-Match` | 49 operation |
-| `Idempotency-Key` | 79 bắt buộc, 6 tùy chọn (lũy đẳng theo khóa tự nhiên) |
+| Operation | 188 (161 API người dùng `/api/ops/v1`, 27 API nội bộ `/ops/internal/v1`), 166 đường dẫn |
+| Phương thức | 77 `GET`, 94 `POST`, 8 `PUT`, 7 `PATCH`, 2 `DELETE` |
+| Có `If-Match` | 54 operation |
+| `Idempotency-Key` | 83 bắt buộc, 6 tùy chọn (lũy đẳng theo khóa tự nhiên) |
 | Duyệt bốn mắt (ERR-18-005) | 13 operation |
-| Lược đồ thành phần | 313 |
+| Lược đồ thành phần | 322 |
 | Kênh AsyncAPI | 42 (29 sự kiện phát EVT-18-01…29, 13 kênh tiêu thụ) |
 | Mã lỗi | 96 (ERR-18-001…072 trả qua HTTP, ERR-18-101…124 của worker); 401, 403, 428 dùng ERR-00 |
 
@@ -75,7 +75,7 @@ Bảng dưới đây liệt kê tài liệu mà hợp đồng dựa vào và ph�
 
 | Tài liệu | Nội dung dùng |
 |---|---|
-| D02-03-PH18 FRS §3, §4, §6, §8, §9 | Vai trò, quyền, scope, hợp đồng ngữ cảnh DLQ (bảng 4.1b), thực thể EN-18-01…55, FR-18-001…072, khóa `18.*`, ERR, EVT, API-18-001…180 |
+| D02-03-PH18 FRS §3, §4, §6, §8, §9 | Vai trò, quyền, scope, hợp đồng ngữ cảnh DLQ (bảng 4.1b), thực thể EN-18-01…55, FR-18-001…072, khóa `18.*`, ERR, EVT, API-18-001…188 |
 | D03-03-PH18 CSDL, `csdl/ph18/ddl/ph18_ops.sql` | Cột snake_case ứng với trường camelCase; FRS thắng khi lệch (mục 11.1) |
 | D03-04 khung chung | Quy ước đường dẫn, RFC 9457, phân trang, `Idempotency-Key`, mã nền ERR-00 |
 | D03-04-PH04, PH10, PH13, PH20 | Header DLQ của runtime, API DLQ tầng sự kiện, API chẩn đoán, sự kiện vòng đời tenant |
@@ -125,7 +125,7 @@ Hai mặt API khác nhau về bên gọi, xác thực và cách lỗi được x
 | Đường gốc | `/api/ops/v1` | `/ops/internal/v1` |
 | Bên gọi | Cán bộ qua BFF của cổng; PH-20 gọi `merge-transfers` bằng token dịch vụ (`ops:merge-transfer`) | Mọi DU qua thư viện `dh-ops-client`; máy chủ thư, SMS gateway; CronJob sao lưu; bộ so sánh bóng |
 | Xác thực | OIDC và PKCE ở BFF (quyền `PERM-18-*`) | `client_credentials`, mTLS và danh tính SPIFFE; một trong 14 scope `ops:*` |
-| Operation | 154 | 26 |
+| Operation | 161 | 27 |
 | Hiệu năng | Đọc p95 ≤ 500 ms, ghi p95 ≤ 1 s | Đọc lô tham số p95 ≤ 50 ms (có bộ đệm phía DU), gửi thông báo bất đồng bộ p95 ≤ 200 ms |
 | Khi PH-18 không khả dụng | Màn vận hành báo lỗi, không ảnh hưởng chức năng nghiệp vụ | DU dùng giá trị trong bộ đệm `dh-ops-client`; DLQ dồn trong Kafka, không mất; thông báo nằm ở outbox của bên gọi |
 
@@ -160,18 +160,18 @@ Mỗi operation ghi quyền `PERM-18-*` ở `x-datahub-permission`; dấu `/` l�
 <!-- gen:perm:start -->
 | Quyền hoặc scope | Số operation | Operation |
 |---|---|---|
-| `PERM-18-admin` | 10 | 017…019, 021, 023, 032, 033, 059, 155, 179 |
+| `PERM-18-admin` | 11 | 017…019, 021, 023, 032, 033, 059, 155, 179, 187 |
 | `PERM-18-approve` | 16 | 008…011, 055, 056, 070, 071, 088, 089, 142, 143, 146, 167, 168, 175 |
 | `PERM-18-backup` | 15 | 133, 134, 136, 138…141, 144, 145, 147…149, 151, 152, 154 |
 | `PERM-18-calendar` | 5 | 114, 115, 119…121 |
 | `PERM-18-config` | 9 | 006…009, 012, 015, 022, 025, 026 |
-| `PERM-18-dlq` | 30 | 037…046, 048…052, 063…069, 072…075, 077…080 |
+| `PERM-18-dlq` | 27 | 037…040, 042, 044, 046, 048…052, 063…069, 072…075, 077…080 |
 | `PERM-18-dlq-payload` | 3 | 047, 053, 054 |
 | `PERM-18-incident` | 7 | 124, 126…131 |
-| `PERM-18-migration` | 18 | 156…166, 169…175 |
-| `PERM-18-read` | 23 | 001…005, 013, 014, 016, 020, 024, 031, 057, 058, 081, 102, 108, 113, 118, 123, 125, 177, 178, 180 |
+| `PERM-18-migration` | 22 | 156…166, 169…175, 182…185 |
+| `PERM-18-read` | 27 | 001…005, 013, 014, 016, 020, 024, 031, 041, 043, 045 … |
 | `PERM-18-template` | 13 | 082…087, 090, 099…101, 103…105 |
-| `Đăng nhập (mọi vai trò)` | 6 | 095…098, 111, 112 |
+| `Đăng nhập (mọi vai trò)` | 7 | 095…098, 111, 112, 181 |
 | `scope ops:backup-report` | 2 | 135, 137 |
 | `scope ops:calendar-read` | 3 | 116, 117, 122 |
 | `scope ops:dlq-read` | 3 | 060…062 |
@@ -182,7 +182,7 @@ Mỗi operation ghi quyền `PERM-18-*` ở `x-datahub-permission`; dấu `/` l�
 | `scope ops:param-read` | 2 | 028, 029 |
 | `scope ops:param-register` | 1 | 027 |
 | `scope ops:param-write` | 1 | 030 |
-| `scope ops:replay-callback` | 1 | 076 |
+| `scope ops:replay-callback` | 2 | 076, 188 |
 | `scope ops:shadow-ingest` | 1 | 176 |
 | `scope ops:task` | 3 | 107, 109, 110 |
 
@@ -457,11 +457,11 @@ Danh sách có `facets`, nhóm dấu hiệu lỗi, chi tiết và chẩn đoán 
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|---|
-| API-18-041 | `GET /dlq/messages` | Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` | 019, 023 | dlq |  | 200 |  |
+| API-18-041 | `GET /dlq/messages` | Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` (siêu dữ liệu, thao tác cần `PERM-18-dlq`) | 019, 023 | read |  | 200 |  |
 | API-18-042 | `GET /dlq/messages:export` | Xuất danh sách đang lọc ra CSV (chỉ siêu dữ liệu, tối đa 50.000 dòng) | 019 | dlq |  | 200 |  |
-| API-18-043 | `GET /dlq/groups` | Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn | 020 | dlq |  | 200 |  |
+| API-18-043 | `GET /dlq/groups` | Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn | 020 | read |  | 200 |  |
 | API-18-044 | `POST /dlq/groups/{groupId}:assign` | Gán người xử lý, ưu tiên cho cả nhóm | 020, 023 | dlq | có | 200 |  |
-| API-18-045 | `GET /dlq/messages/{dlqId}` | Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại | 021 | dlq |  | 200 |  |
+| API-18-045 | `GET /dlq/messages/{dlqId}` | Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại (không payload) | 021 | read |  | 200 |  |
 | API-18-046 | `GET /dlq/messages/{dlqId}/diagnostics` | Ngữ cảnh chẩn đoán từ PH-13 (API-13-069), trả một phần khi PH-13 vắng | 021 | dlq |  | 200, 206 |  |
 | API-18-047 | `POST /dlq/messages/{dlqId}/payload:reveal` | Mở xem payload có lý do, trả phiếu xem 15 phút và nội dung đã che trường mã hóa | 022 | dlq-payload | có | 200 | 027 |
 | API-18-048 | `GET /dlq/messages/{dlqId}/payload/skeleton` | Khung cấu trúc payload không có giá trị (tên trường, kiểu) | 022, 026 | dlq |  | 200 |  |
@@ -485,7 +485,7 @@ Danh sách có `facets`, nhóm dấu hiệu lỗi, chi tiết và chẩn đoán 
 
 ### 4.4. Phát lại, bỏ qua và lưu giữ
 
-Phát lại một mục, lượt phát lại loạt có bốn mắt, điều khiển tốc độ, kết quả lũy đẳng, bỏ qua, mở lại, lưu giữ, thống kê (FR-18-027…034). Nhóm có 18 operation (API-18-064…081).
+Phát lại một mục, lượt phát lại loạt có bốn mắt, điều khiển tốc độ, kết quả lũy đẳng, bỏ qua, mở lại, lưu giữ, thống kê (FR-18-027…034). Nhóm có 19 operation (API-18-064…081, 188).
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|---|
@@ -507,6 +507,7 @@ Phát lại một mục, lượt phát lại loạt có bốn mắt, điều khi
 | API-18-079 | `POST /dlq/messages/{dlqId}:reopen` | Mở lại mục đã bỏ qua trong hạn lưu giữ | 032 | dlq | có | 200 | 034 |
 | API-18-080 | `GET /dlq/retention` | Số mục sắp hết hạn, lần dọn gần nhất, dung lượng Garage của DLQ | 033 | dlq |  | 200 |  |
 | API-18-081 | `GET /dlq/stats` | Thống kê DLQ theo nguồn, luồng, lớp lỗi, trạng thái, tuổi, xu hướng theo `khoang` | 034, 071 | read |  | 200 |  |
+| API-18-188 | `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}` | Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09 (bản gốc khi `revision = 0`) | 027, 028 | scope ops:replay-callback |  | 200 | 038 |
 
 : Danh mục API nhóm Phát lại, bỏ qua và lưu giữ
 
@@ -546,7 +547,7 @@ Mẫu thông báo có phiên bản và kiểm trường cấm, `NotificationApi`
 
 ### 4.6. Việc của tôi và lịch
 
-`TaskInboxApi` (loại việc, tạo, đóng việc lũy đẳng, Việc của tôi), `WorkingCalendarApi` (lịch năm, tính hạn), cửa sổ bảo trì và đóng băng (FR-18-042…046). Nhóm có 16 operation (API-18-107…122).
+`TaskInboxApi` (loại việc, tạo, đóng việc lũy đẳng, Việc của tôi), `WorkingCalendarApi` (lịch năm, tính hạn), cửa sổ bảo trì và đóng băng (FR-18-042…046). Nhóm có 17 operation (API-18-107…122, 181).
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|---|
@@ -566,6 +567,7 @@ Mẫu thông báo có phiên bản và kiểm trường cấm, `NotificationApi`
 | API-18-120 | `PATCH /maintenance-windows/{windowId}` | Sửa cửa sổ chưa bắt đầu (`If-Match`) | 046 | calendar |  | 200 | 050 |
 | API-18-121 | `POST /maintenance-windows/{windowId}:cancel` | Hủy cửa sổ kèm lý do | 046 | calendar | có | 200 |  |
 | API-18-122 | `GET /ops/internal/v1/freeze-status/{tenant}` | Trạng thái đóng băng, bảo trì hiện hành theo môi trường cho PH-02, PH-04 | 046 | scope ops:calendar-read |  | 200 |  |
+| API-18-181 | `POST /me/tasks/{taskId}:claim` | Nhận việc: chuyển `IN_PROGRESS`, ghi người nhận, báo người cùng nhận (EVT-18-14) | 044 | đăng nhập | có | 200 | 048 |
 
 : Danh mục API nhóm Việc của tôi và lịch
 
@@ -622,7 +624,7 @@ Bảng sao lưu, kiểm tra khôi phục, khôi phục tenant tám bước có b
 
 ### 4.9. Di trú và chạy song song
 
-Nguồn hệ cũ chỉ đọc, kế hoạch di trú, chạy thử và chạy thật có bốn mắt, bản ghi lỗi, đối chiếu, cấp lại thông tin xác thực, chạy song song, mẫu so sánh bóng, cắt chuyển và quay lui (FR-18-059…068). Nhóm có 21 operation (API-18-156…176).
+Nguồn hệ cũ chỉ đọc, kế hoạch di trú, chạy thử và chạy thật có bốn mắt, bản ghi lỗi, đối chiếu, cấp lại thông tin xác thực, chạy song song, mẫu so sánh bóng, cắt chuyển và quay lui (FR-18-059…068). Nhóm có 25 operation (API-18-156…176, 182, 183, 184, 185).
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|---|
@@ -645,14 +647,18 @@ Nguồn hệ cũ chỉ đọc, kế hoạch di trú, chạy thử và chạy th�
 | API-18-172 | `GET /credential-reissues` | Danh sách thông tin xác thực cần cấp lại theo HTTT, trạng thái | 065 | migration |  | 200 |  |
 | API-18-173 | `GET /parallel-groups` | Nhóm dịch vụ chạy song song, trạng thái cầu nối, tỷ lệ khớp | 066, 067 | migration |  | 200 |  |
 | API-18-174 | `GET /parallel-groups/{groupCode}` | Chi tiết nhóm, mẫu so sánh lệch, danh sách kiểm tra cắt chuyển, sổ cắt chuyển | 066, 067, 068 | migration |  | 200 |  |
-| API-18-175 | `POST /parallel-groups/{groupCode}:transition` | Cắt chuyển một phần, toàn phần hoặc quay lui (bốn mắt khi cắt chuyển) | 068 | migration / approve | có | 200 | 051, 066, 067, 068 |
+| API-18-175 | `POST /parallel-groups/{groupCode}:transition` | Cắt chuyển theo `action`: `REQUEST` đề nghị cắt chuyển một phần hoặc toàn phần, `APPROVE`, `REJECT` (bốn mắt, `PERM-18-approve`), `ROLLBACK` quay lui (`PERM-18-migration`) | 068 | migration / approve | có | 200 | 051, 066, 067, 068 |
 | API-18-176 | `POST /ops/internal/v1/shadow-samples` | Bộ so sánh nhận cặp phản hồi cũ và mới đã băm | 067 | scope ops:shadow-ingest | tùy chọn | 202 |  |
+| API-18-182 | `PATCH /migration-runs/{runId}/errors` | Đánh dấu cách xử lý một hoặc nhiều bản ghi lỗi (`FIXED_AT_SOURCE`, `RULE_ADDED`, `WONT_MIGRATE` kèm lý do) | 063 | migration |  | 200 | 036 |
+| API-18-183 | `POST /credential-reissues/{markerId}:waive` | Đánh dấu thông tin xác thực không cần cấp lại (`WAIVED`) kèm lý do | 065 | migration | có | 200 |  |
+| API-18-184 | `PUT /parallel-groups/{groupCode}/normalization-rules` | Thay bộ quy tắc chuẩn hóa so sánh của nhóm; mẫu trong cửa sổ được tính lại | 067 | migration |  | 200 |  |
+| API-18-185 | `POST /parallel-groups/{groupCode}/checklist/{itemCode}:confirm` | Xác nhận một mục kiểm tay của danh sách cắt chuyển kèm bằng chứng | 068 | migration | có | 200 | 067 |
 
 : Danh mục API nhóm Di trú và chạy song song
 
 ### 4.10. Quản trị và báo cáo
 
-Nhật ký thao tác vận hành, báo cáo định kỳ, sức khỏe phân hệ và chế độ suy giảm (FR-18-069…072). Nhóm có 4 operation (API-18-177…180).
+Nhật ký thao tác vận hành, báo cáo định kỳ, sức khỏe phân hệ và chế độ suy giảm (FR-18-069…072). Nhóm có 6 operation (API-18-177…180, 186, 187).
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | Idem. | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|---|
@@ -660,6 +666,8 @@ Nhật ký thao tác vận hành, báo cáo định kỳ, sức khỏe phân h�
 | API-18-178 | `GET /reports` | Danh sách báo cáo vận hành định kỳ | 071 | read |  | 200 |  |
 | API-18-179 | `POST /reports:generate` | Dựng báo cáo vận hành cho kỳ chọn | 071 | admin | có | 202 | 072 |
 | API-18-180 | `GET /health` | Sức khỏe các mô-đun PH-18, chế độ suy giảm, độ trễ tiêu thụ | 072 | read |  | 200 |  |
+| API-18-186 | `GET /inbox-failures` | Danh sách sự kiện inbox `FAILED` theo mô-đun, lỗi cuối, số lần thử | 072 | read |  | 200 |  |
+| API-18-187 | `POST /degraded-mode` | Bật, tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc | 072 | admin | có | 200 |  |
 
 : Danh mục API nhóm Quản trị và báo cáo
 <!-- gen:catalog:end -->
@@ -830,23 +838,23 @@ Bảng sinh dưới đây gồm mọi mã ERR-18 của FRS §9.1 cùng thông b�
 <!-- gen:errors:start -->
 | Mã | HTTP | Ý nghĩa | Thông báo | Dùng ở API |
 |---|---|---|---|---|
-| ERR-18-001 | 404 | Không tìm thấy đối tượng | "Không tìm thấy phiên bản {số} của {khóa}." | Mọi operation có tham số đường dẫn |
+| ERR-18-001 | 404 | Không tìm thấy đối tượng | "Không tìm thấy {đối tượng} {mã}." | Mọi operation có tham số đường dẫn |
 | ERR-18-002 | 409 | Mã đã tồn tại | "Mã {mã} đã được dùng. Chọn mã khác." | Theo FR liên quan |
 | ERR-18-003 | 400 | Dữ liệu vào không hợp lệ | "Dữ liệu không hợp lệ: {chi tiết}." | Mọi thao tác có thân hoặc bộ lọc |
 | ERR-18-004 | 412 | ETag lệch, dữ liệu đã đổi | "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu." | Mọi operation có `If-Match` |
-| ERR-18-005 | 403 | Người duyệt trùng người đề nghị | "Bạn là người đề nghị nên không được duyệt đề nghị này." | Duyệt, từ chối bốn mắt |
-| ERR-18-006 | 409 | Trạng thái không cho phép thao tác | "Đối soát đang chạy. Chờ lần hiện tại xong." | Mọi hành động chuyển trạng thái |
-| ERR-18-007 | 422 | Thiếu lý do hoặc lý do quá ngắn | "Nhập lý do xem nội dung (ít nhất 10 ký tự)." | Thao tác nhận lý do bắt buộc |
+| ERR-18-005 | 403 | Người duyệt trùng người đề nghị | "Bạn là người tạo {đối tượng} này nên không được duyệt." | Duyệt, từ chối bốn mắt |
+| ERR-18-006 | 409 | Trạng thái không cho phép thao tác | "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}." | Mọi hành động chuyển trạng thái |
+| ERR-18-007 | 422 | Thiếu lý do hoặc lý do quá ngắn | "Nhập lý do {thao tác} (ít nhất {n} ký tự)." | Thao tác nhận lý do bắt buộc |
 | ERR-18-008 | 503 | Không ghi được kiểm toán PH-13 | "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau." | Mọi thao tác ghi |
 | ERR-18-009 | 409 | Idempotency-Key dùng lại với thân khác | "Yêu cầu trùng khóa với một yêu cầu khác nội dung." | Mọi `POST` có `Idempotency-Key` |
 | ERR-18-010 | 429 | Vượt giới hạn tần suất | "Quá nhiều yêu cầu. Thử lại sau {giây} giây." | Mọi operation |
 | ERR-18-011 | 404 | Khóa tham số chưa đăng ký | "Khóa {khóa} chưa được đăng ký." | 003, 005…007, 013…015 |
 | ERR-18-012 | 422 | Sai kiểu giá trị | "Giá trị của {khóa} phải có kiểu {kiểu}." | 006, 007 |
-| ERR-18-013 | 422 | Giá trị ngoài miền | "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}." | 006, 007, 010, 017…019, 025 |
+| ERR-18-013 | 422 | Giá trị ngoài miền | "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}." | 006, 007, 010, 017…019, 025 |
 | ERR-18-014 | 422 | Giá trị vượt trần nền tảng | "Giá trị vượt giới hạn nền tảng của {khóa} ({trần}). Liên hệ quản trị nền tảng nếu cần nâng." | 006, 007 |
 | ERR-18-015 | 403 | Khóa mức PLATFORM | "Tham số {khóa} do quản trị nền tảng đặt, tỉnh chỉ xem được." | 006, 007 |
 | ERR-18-016 | 409 | Lược đồ khóa xung đột | "Lược đồ mới của {ns} xung đột với giá trị đang dùng ở {số} tenant. Xem danh sách trong chi tiết." | 027 |
-| ERR-18-017 | 403 | Không gian tên không thuộc phân hệ gọi | "Phân hệ không sở hữu không gian tên {ns}." | 027, 034, 107 |
+| ERR-18-017 | 403 | Đối tượng đăng ký không thuộc phân hệ gọi | "Phân hệ không sở hữu {đối tượng} {mã}." | 027, 034, 107 |
 | ERR-18-018 | 409 | Đã có đề nghị chờ duyệt | "Tham số {khóa} đang có đề nghị chờ duyệt của {người}. Chờ duyệt xong hoặc rút đề nghị." | 006 |
 | ERR-18-019 | 409 | Khóa do phân hệ khác giữ duyệt | "Tham số {khóa} được duyệt tại {phân hệ}. Mở màn {phân hệ} để đề nghị thay đổi." | 006, 010 |
 | ERR-18-020 | 422 | Gói tham số không hợp lệ | "Gói tham số không hợp lệ hoặc đã bị sửa: {chi tiết}." | 017…019 |
@@ -865,9 +873,9 @@ Bảng sinh dưới đây gồm mọi mã ERR-18 của FRS §9.1 cùng thông b�
 | ERR-18-033 | 409 | Nguồn không có cổng phát lại | "Nguồn {mã} chưa có cổng phát lại hoặc đang tạm ngừng." | 064 |
 | ERR-18-034 | 409 | Mục hết hạn, không mở lại được | "Mục đã hết hạn lưu giữ nên không thể mở lại." | 079 |
 | ERR-18-035 | 503 | PH-10 không phản hồi | "Chưa lấy được dữ liệu từ phân hệ sự kiện. Thử lại sau." | 039, 040 |
-| ERR-18-036 | 422 | Bộ lọc rỗng | "Bộ lọc không có mục nào phát lại được." | 065, 069, 164 |
+| ERR-18-036 | 422 | Không có mục phù hợp | "Không có mục nào phù hợp để {thao tác}." | 065, 069, 164, 182 |
 | ERR-18-037 | 422 | Tốc độ vượt trần | "Tốc độ {n} mục mỗi giây vượt giới hạn {trần} của nguồn {mã}." | 075 |
-| ERR-18-038 | 403 | Callback không khớp nguồn | "Danh tính gọi không khớp nguồn của mục." | 076 |
+| ERR-18-038 | 403 | Callback không khớp nguồn | "Danh tính gọi không khớp nguồn của mục." | 076, 188 |
 | ERR-18-039 | 422 | Mẫu chứa trường cấm | "Mẫu dùng trường {biến} mức {mức}. Thư chỉ được chứa liên kết, không chứa dữ liệu mức Hạn chế hoặc Nhạy cảm." | 085…087, 091, 092 |
 | ERR-18-040 | 422 | Cú pháp mẫu lỗi hoặc biến chưa khai báo | "Mẫu có lỗi tại dòng {dòng}: {chi tiết}." | 085…087 |
 | ERR-18-041 | 409 | Không có mẫu ACTIVE | "Mẫu {mã} chưa có phiên bản đang dùng." | 091, 092, 100, 101 |
@@ -877,7 +885,7 @@ Bảng sinh dưới đây gồm mọi mã ERR-18 của FRS §9.1 cùng thông b�
 | ERR-18-045 | 422 | Sự kiện chưa đăng ký tiêu thụ | "Sự kiện {sự kiện} chưa được phân hệ vận hành tiêu thụ nên không tạo được quy tắc." | 100, 101 |
 | ERR-18-046 | 422 | Không tắt được nhóm bắt buộc | "Không tắt được nhóm thông báo {nhóm} vì là thông báo bắt buộc." | 096 |
 | ERR-18-047 | 422 | Loại việc chưa đăng ký | "Loại việc {loại} chưa được đăng ký." | 109 |
-| ERR-18-048 | 409 | Việc đã đóng | "Việc {mã} đã đóng." | 109, 110 |
+| ERR-18-048 | 409 | Việc đã đóng | "Việc {mã} đã đóng." | 109, 110, 181 |
 | ERR-18-049 | 422 | Lịch không hợp lệ | "Lịch năm {năm} không hợp lệ: {chi tiết}." | 114, 115 |
 | ERR-18-050 | 409 | Cửa sổ chồng lấn | "Cửa sổ {loại} chồng với cửa sổ {mã} từ {bắt đầu} đến {kết thúc}." | 119, 120 |
 | ERR-18-051 | 409 | Đang trong cửa sổ đóng băng | "Đang trong thời gian đóng băng thay đổi {cửa sổ} nên chưa chạy thật được." | 164, 167, 175 |
@@ -896,11 +904,11 @@ Bảng sinh dưới đây gồm mọi mã ERR-18 của FRS §9.1 cùng thông b�
 | ERR-18-064 | 409 | Cần chạy thử gần đây | "Cần một lần chạy thử thành công trong {ngày} ngày gần nhất trước khi chạy thật." | 164, 167 |
 | ERR-18-065 | 409 | Kế hoạch chưa READY | "Kế hoạch {mã} chưa ở trạng thái sẵn sàng." | 164 |
 | ERR-18-066 | 422 | Tỷ lệ khớp chưa đạt | "Tỷ lệ khớp {tỷ lệ} thấp hơn ngưỡng {ngưỡng}." | 175 |
-| ERR-18-067 | 409 | Danh sách kiểm tra chưa đạt | "Chưa cắt chuyển được nhóm {nhóm}: còn {n} mục kiểm tra chưa đạt." | 175 |
+| ERR-18-067 | 409 | Danh sách kiểm tra chưa đạt | "Chưa cắt chuyển được nhóm {nhóm}: còn {n} mục kiểm tra chưa đạt." | 175, 185 |
 | ERR-18-068 | 409 | Quá cửa sổ quay lui | "Đã quá {phút} phút kể từ khi cắt chuyển nên không quay lui tự động được." | 175 |
-| ERR-18-069 | 503 | Phân hệ đích không nhận lô | "Phân hệ {ph} chưa nhận lô. Lần chạy tạm dừng." | Theo FR liên quan |
+| ERR-18-069 | 503 | Phân hệ đích không nhận lô | "Phân hệ {ph} không nhận dữ liệu. Lần chạy tạm dừng và tự thử lại sau {phút} phút." | Theo FR liên quan |
 | ERR-18-070 | 422 | Thông tin kết nối không phải tham chiếu kho bí mật | "Thông tin kết nối phải là tham chiếu kho bí mật, không nhập mật khẩu trực tiếp." | 157 |
-| ERR-18-071 | 503 | Chế độ chỉ đọc | "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được." | Mọi thao tác ghi nhóm tham số |
+| ERR-18-071 | 503 | Chế độ chỉ đọc | "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được." | Mọi thao tác ghi nhóm tham số |
 | ERR-18-072 | 422 | Kỳ báo cáo không hợp lệ | "Kỳ báo cáo {kỳ} không hợp lệ hoặc chưa kết thúc." | 179 |
 | ERR-18-101 | Không (worker) | Không giải mã được bản tin | "Không đọc được nội dung bản tin; lưu dạng nhị phân." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
 | ERR-18-102 | Không (worker) | Thiếu header ngữ cảnh | "Thiếu thông tin ngữ cảnh: {trường}." | Worker: trạng thái đối tượng, log, `dh_ops_errors_total{code}` |
@@ -980,7 +988,7 @@ Chương này nêu các kiểm tra chạy trong CI cho hai tệp YAML và tài l
 |---|---|---|
 | Cú pháp, khóa trùng, khóa rỗng | `build/tools/kiem_tra_yaml.py` | 0 lỗi |
 | OpenAPI 3.1 và AsyncAPI 3.0 hợp lệ | Spectral 6 với `build/tools/spectral.yaml` | 0 lỗi |
-| Hợp đồng PH-18 | [`ph18/tools/check_contracts.py`](ph18/tools/check_contracts.py) | `$ref` đủ đích; đủ 180 mã API, đúng phương thức và đường dẫn của FRS; mã lỗi có trong FRS, không gắn mã worker vào HTTP, có phản hồi ứng với mã HTTP; mọi `POST` khai báo chống trùng; ví dụ thân và tham số khớp lược đồ; đủ 29 kênh EVT đúng địa chỉ; sự kiện không có khóa nội dung hay bí mật |
+| Hợp đồng PH-18 | [`ph18/tools/check_contracts.py`](ph18/tools/check_contracts.py) | `$ref` đủ đích; đủ 188 mã API, đúng phương thức và đường dẫn của FRS; mã lỗi có trong FRS, không gắn mã worker vào HTTP, có phản hồi ứng với mã HTTP; mọi `POST` khai báo chống trùng; ví dụ thân và tham số khớp lược đồ; đủ 29 kênh EVT đúng địa chỉ; sự kiện không có khóa nội dung hay bí mật |
 | Mã trong tài liệu | `build/tools/kiem_tra_ma.py` | Không có lỗi mới |
 | Rò rỉ bí mật | `gitleaks detect --no-git` trên `ph18/` và tệp này | 0 phát hiện |
 | Thay đổi phá vỡ | `oasdiff breaking` với nhánh chính | Không có thay đổi phá vỡ trong `v1` |
@@ -988,7 +996,7 @@ Chương này nêu các kiểm tra chạy trong CI cho hai tệp YAML và tài l
 
 : Kiểm tra hợp đồng của API PH-18
 
-Chạy ngày 27/11/2026: `check_contracts.py` sạch (180 operation, 271 ví dụ OpenAPI, 42 kênh, 313 lược đồ); Spectral 0 lỗi (còn cảnh báo kiểu tài liệu của AsyncAPI như thiếu `tags`, `contact`); `kiem_tra_yaml.py` 0 lỗi; gitleaks 0 phát hiện.
+Chạy lại ngày 27/11/2026 cho bản 0.2: `check_contracts.py` sạch (188 operation, 284 ví dụ OpenAPI, 42 kênh, 322 lược đồ); `kiem_tra_yaml.py` 0 lỗi; gitleaks 0 phát hiện. Spectral chạy ở bản 0.1 (0 lỗi, còn cảnh báo kiểu tài liệu của AsyncAPI); môi trường của lượt đồng bộ 0.2 không có Spectral nên CI chạy lại bước này.
 
 ## 9. Ánh xạ từ hệ cũ
 
@@ -1002,7 +1010,7 @@ SRS cũ (`docs/07-srs/SRS-PH-18-ops.md`) chỉ có phần DLQ (tiếp nhận, ph
 | Phát lại đơn lẻ, hàng loạt, idempotent | API-18-064…076 | Thêm bản sửa payload có bốn mắt, lượt có ngưỡng duyệt và tốc độ |
 | Bỏ qua, mở lại, ghi vết | API-18-063, 077…079 | Lý do ≥ 10 ký tự, kiểm toán PH-13 |
 | Thống kê, cảnh báo ngưỡng | API-18-080, 081; EVT-18-06, 08 | Cảnh báo do PH-13 tạo từ sự kiện |
-| Không có ở SRS cũ | API-18-001…030, 082…180 | Kho tham số, thông báo, việc, lịch, sự cố, sao lưu, di trú là năng lực mới |
+| Không có ở SRS cũ | API-18-001…030, 082…188 | Kho tham số, thông báo, việc, lịch, sự cố, sao lưu, di trú là năng lực mới |
 
 : Ánh xạ nhóm chức năng SRS cũ sang API mới
 
@@ -1022,7 +1030,7 @@ Bảng sinh dưới đây ánh xạ mỗi FR-18 sang các API-18 hiện thực n
 | FR-18-005 | 003, 013…016 | FR-18-041 | 093, 102, 103 |
 | FR-18-006 | 016 | FR-18-042 | 107, 108 |
 | FR-18-007 | 001, 002, 004, 005, 007 | FR-18-043 | 109, 110 |
-| FR-18-008 | 017…019 | FR-18-044 | 111, 112 |
+| FR-18-008 | 017…019 | FR-18-044 | 111, 112, 181 |
 | FR-18-009 | 020…023, 028 | FR-18-045 | 113…117 |
 | FR-18-010 | 024…026, 028 | FR-18-046 | 118…122 |
 | FR-18-011 | 030 | FR-18-047 | 123, 132 |
@@ -1041,16 +1049,16 @@ Bảng sinh dưới đây ánh xạ mỗi FR-18 sang các API-18 hiện thực n
 | FR-18-024 | 052…056 | FR-18-060 | 159…163 |
 | FR-18-025 | 057…059, 062 | FR-18-061 | 164…166, 169 |
 | FR-18-026 | 048, 060…062 | FR-18-062 | 164…169 |
-| FR-18-027 | 064 | FR-18-063 | 164, 170 |
-| FR-18-028 | 065…071 | FR-18-064 | 171 |
-| FR-18-029 | 066, 067, 072…075 | FR-18-065 | 172 |
+| FR-18-027 | 064, 188 | FR-18-063 | 164, 170, 182 |
+| FR-18-028 | 065…071, 188 | FR-18-064 | 171 |
+| FR-18-029 | 066, 067, 072…075 | FR-18-065 | 172, 183 |
 | FR-18-030 | 064, 067, 068, 076 | FR-18-066 | 173, 174 |
-| FR-18-031 | 077, 078 | FR-18-067 | 173, 174, 176 |
-| FR-18-032 | 079 | FR-18-068 | 174, 175 |
+| FR-18-031 | 077, 078 | FR-18-067 | 173, 174, 176, 184 |
+| FR-18-032 | 079 | FR-18-068 | 174, 175, 185 |
 | FR-18-033 | 080 | FR-18-069 | 004, 006 |
 | FR-18-034 | 081 | FR-18-070 | 016, 063, 177 |
 | FR-18-035 | 082…090 | FR-18-071 | 081, 178, 179 |
-| FR-18-036 | 091…093, 097, 098 | FR-18-072 | 180 |
+| FR-18-036 | 091…093, 097, 098 | FR-18-072 | 180, 186, 187 |
 
 : Truy vết FR-18-001…072 sang API-18
 <!-- gen:fr:end -->
@@ -1061,30 +1069,47 @@ Tập này không sửa FRS, CSDL hay tài liệu của phân hệ khác; các �
 
 ### 11.1. Với FRS và CSDL
 
-Khi FRS và DDL lệch nhau, tập này theo FRS; bảng dưới đây liệt kê chỗ lệch để chủ D03-03-PH18 đồng bộ DDL hoặc chủ FRS xác nhận.
+Khi FRS và DDL lệch nhau, tập này theo FRS; bảng dưới đây liệt kê chỗ lệch giữa các tập của PH-18. Cả mười bốn mục là đồng bộ nội bộ và đã xử lý ở bản 0.2 (FRS 0.2, CSDL 0.2, tập này); cột cuối ghi cách hấp thụ.
 
 | Số | Nội dung | Đề nghị |
 |---|---|---|
-| 1 | Tham số lọc ở FRS §6 dùng tên giao diện tiếng Việt (`nguon`, `luong`, `ma-loi`, `nhom`, `khoang`); OpenAPI dùng camelCase tiếng Anh (`sourceCode`, `flow`, `errorCode`, `group`, `interval`, `groupBy`) | FRS ghi tên tham số API theo OpenAPI, giữ tên tiếng Việt cho nhãn màn hình (Q18-55) |
-| 2 | Lược đồ khóa: FRS dùng `type`, `default`, `secure`, `group`; DDL dùng `value_type`, `default_value`, `security_flag` | DDL đổi tên cột theo FRS, hoặc FRS chọn `valueType`, `defaultValue` (Q18-59) |
-| 3 | Cổng phát lại: FRS `KAFKA_TOPIC`, `HTTP_PORT`, `EVENT_LAYER`, `NONE`; DDL `replay_port` có `PH04_RUNTIME` | DDL theo enum FRS |
-| 4 | Cờ tính năng: FRS `retireBy`, `ownerPh`; DDL `removal_date`, `owner` | DDL theo FRS |
-| 5 | Sổ tay ERR: FRS `causes`, `steps`, `replayable` (`YES`, `AFTER_FIX`, `NO`); DDL `symptom`, `cause`, `resolution`, `recommended_action` | DDL theo FRS |
-| 6 | Lượt phát lại: FRS `ratePerSecond`; DDL `rate_per_minute` | DDL theo FRS |
-| 7 | Sự cố: FRS `hasPersonalData` và danh mục loại sự cố; DDL `involves_personal_data` và danh mục khác | DDL theo FRS |
-| 8 | Bản ghi lỗi di trú: FRS `RULE_ADDED`, `WONT_MIGRATE`; DDL `FIXED_BY_RULE`, `ACCEPTED_SKIP` | DDL theo FRS |
-| 9 | Loại thông tin xác thực, phương pháp kiểm tra khôi phục, loại diễn tập DR, mục đích egress và xuất tenant, môi trường (thêm `TEST`) lệch giữa FRS và DDL | DDL theo enum FRS (lược đồ `CredentialKind`, `DrillKind`, `ExportPurpose`, `Environment` ở OpenAPI) |
-| 10 | `targetPh` dạng `PH-nn`; CHECK của DDL thiếu PH-04 và PH-07 | DDL bổ sung |
-| 11 | Từ chối chạy di trú thật (API-18-168) đưa lần chạy về `CANCELLED` vì sơ đồ trạng thái FRS không có `REJECTED` | FRS xác nhận hoặc thêm trạng thái (Q18-58) |
-| 12 | API-18-150, 153 thuộc API người dùng `/api/ops/v1` nhưng chỉ PH-20 gọi bằng scope `ops:merge-transfer` | Giữ đường dẫn theo FRS; cân nhắc chuyển sang `/ops/internal/v1` ở bản sau |
-| 13 | ERR-18-010 (vượt tần suất) chỉ gắn ở vài API trong FRS; tập này gắn ở mọi operation vì APISIX áp hạn mức chung | FRS ghi ERR-18-010 là mã cấu trúc |
-| 14 | Ví dụ của API-18-003 và 027 bị bỏ vì Spectral hiểu đối tượng có `type` và `default` là lược đồ | Xem Q18-59 |
+| 1 | Tham số lọc ở FRS §6 dùng tên giao diện tiếng Việt (`nguon`, `luong`, `ma-loi`, `nhom`, `khoang`); OpenAPI dùng camelCase tiếng Anh (`sourceCode`, `flow`, `errorCode`, `group`, `interval`, `groupBy`) | FRS ghi tên tham số API theo OpenAPI, giữ tên tiếng Việt cho nhãn màn hình (Q18-55). Đã hấp thụ ở 0.2: giữ tên camelCase của OpenAPI cho tham số API, FRS giữ tên tiếng Việt cho tham số URL của màn hình (FRS §10.3); `dh-console` ánh xạ hai bộ tên |
+| 2 | Lược đồ khóa: FRS dùng `type`, `default`, `secure`, `group`; DDL dùng `value_type`, `default_value`, `security_flag` | DDL đổi tên cột theo FRS, hoặc FRS chọn `valueType`, `defaultValue` (Q18-59). Đã hấp thụ ở 0.2: CSDL đổi `security_flag` thành `secure`, giữ `value_type`, `default_value`, `display_group` vì từ khóa SQL, ghi ánh xạ ở chú thích cột; enum kiểu theo `ParamType` |
+| 3 | Cổng phát lại: FRS `KAFKA_TOPIC`, `HTTP_PORT`, `EVENT_LAYER`, `NONE`; DDL `replay_port` có `PH04_RUNTIME` | DDL theo enum FRS. Đã hấp thụ ở 0.2: CSDL cột `replay_mode` theo enum FRS |
+| 4 | Cờ tính năng: FRS `retireBy`, `ownerPh`; DDL `removal_date`, `owner` | DDL theo FRS. Đã hấp thụ ở 0.2: CSDL `retire_by`, `owner_ph`, `owner_user` |
+| 5 | Sổ tay ERR: FRS `causes`, `steps`, `replayable` (`YES`, `AFTER_FIX`, `NO`); DDL `symptom`, `cause`, `resolution`, `recommended_action` | DDL theo FRS. Đã hấp thụ ở 0.2: CSDL `causes`, `steps`, `replayable`, `default_class`, `links` |
+| 6 | Lượt phát lại: FRS `ratePerSecond`; DDL `rate_per_minute` | DDL theo FRS. Đã hấp thụ ở 0.2: CSDL `rate_per_second` |
+| 7 | Sự cố: FRS `hasPersonalData` và danh mục loại sự cố; DDL `involves_personal_data` và danh mục khác | DDL theo FRS. Đã hấp thụ ở 0.2: CSDL `has_personal_data`, `category` theo `IncidentCategory` |
+| 8 | Bản ghi lỗi di trú: FRS `RULE_ADDED`, `WONT_MIGRATE`; DDL `FIXED_BY_RULE`, `ACCEPTED_SKIP` | DDL theo FRS. Đã hấp thụ ở 0.2: CSDL `RULE_ADDED`, `WONT_MIGRATE`; API-18-182 ghi trạng thái này |
+| 9 | Loại thông tin xác thực, phương pháp kiểm tra khôi phục, loại diễn tập DR, mục đích egress và xuất tenant, môi trường (thêm `TEST`) lệch giữa FRS và DDL | DDL theo enum FRS (lược đồ `CredentialKind`, `DrillKind`, `ExportPurpose`, `Environment` ở OpenAPI). Đã hấp thụ ở 0.2: CSDL theo `CredentialKind`, `VerifyMethod`, `DrillKind`, `EgressPurpose`, `ExportPurpose`; cửa sổ bảo trì nhận `TEST` |
+| 10 | `targetPh` dạng `PH-nn`; CHECK của DDL thiếu PH-04 và PH-07 | DDL bổ sung. Đã hấp thụ ở 0.2: CSDL dùng mã `PH-nn` ở mọi cột phân hệ, CHECK có PH-04, PH-07 |
+| 11 | Từ chối chạy di trú thật (API-18-168) đưa lần chạy về `CANCELLED` vì sơ đồ trạng thái FRS không có `REJECTED` | FRS xác nhận hoặc thêm trạng thái (Q18-58). Đã hấp thụ ở 0.2: FRS §4.6 không có `REJECTED` cho lần chạy, giữ `CANCELLED` kèm lý do từ chối (Q18-58 đóng theo đề xuất tạm) |
+| 12 | API-18-150, 153 thuộc API người dùng `/api/ops/v1` nhưng chỉ PH-20 gọi bằng scope `ops:merge-transfer` | Giữ đường dẫn theo FRS; cân nhắc chuyển sang `/ops/internal/v1` ở bản sau. Giữ ở 0.2: FRS ghi rõ PH-20 gọi qua APISIX bằng token dịch vụ; chuyển sang `/ops/internal/v1` để bản sau cùng PH-20 (mục 11.2) |
+| 13 | ERR-18-010 (vượt tần suất) chỉ gắn ở vài API trong FRS; tập này gắn ở mọi operation vì APISIX áp hạn mức chung | FRS ghi ERR-18-010 là mã cấu trúc. Đã hấp thụ ở 0.2: tập này gắn ERR-18-010 ở mọi operation; FRS §9.1 coi 001…010 là mã cấu trúc |
+| 14 | Ví dụ của API-18-003 và 027 bị bỏ vì Spectral hiểu đối tượng có `type` và `default` là lược đồ | Xem Q18-59. Giữ ở 0.2: vẫn bỏ ví dụ của API-18-003, 027 (Q18-59) |
 
 : Đề nghị đồng bộ với FRS và CSDL
 
+Bản 0.2 thêm tám operation theo đề nghị nội bộ của các tập khác của PH-18 (FRS 0.2 §12.5). Bảng dưới ghi nguồn đề nghị và mã đã cấp.
+
+| Mã | Operation | Nguồn đề nghị |
+|---|---|---|
+| API-18-181 | `POST /me/tasks/{taskId}:claim` | UC ĐN-UC-03, MH B5 |
+| API-18-182 | `PATCH /migration-runs/{runId}/errors` | UC ĐN-UC-04, MH B1 |
+| API-18-183 | `POST /credential-reissues/{markerId}:waive` | UC ĐN-UC-05, MH B2 |
+| API-18-184 | `PUT /parallel-groups/{groupCode}/normalization-rules` | UC ĐN-UC-06, MH B3 |
+| API-18-185 | `POST /parallel-groups/{groupCode}/checklist/{itemCode}:confirm` | MH B4 |
+| API-18-186 | `GET /inbox-failures` | MH B6 |
+| API-18-187 | `POST /degraded-mode` | UC ĐN-UC-11, MH B7 |
+| API-18-188 | `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}` | SDD §13.5 điểm 8 |
+
+: Operation thêm ở bản 0.2
+
+Cùng đợt, API-18-041, 043, 045 nhận `PERM-18-read` (MH LC-05), API-18-175 nhận thân `action` với quyền theo từng giá trị (UC ĐN-UC-08), ERR-18-071 gắn mọi API ghi của người dùng trừ API-18-187 (UC ĐN-UC-02), `ReplayItemStatus` thêm `SKIPPED` (TC ĐN-TC-08) và API-18-035 ghi rõ đường API từ chối ERR-18-024 thay vì tạo mục `POISON` (BR-18-013).
+
 ### 11.2. Với tài liệu chung và phân hệ khác
 
-Người điều phối chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để D00-04 có API-18-001…180, EVT-18-01…29 và Q18-55…59 của tập này. Các đề nghị còn lại như sau.
+Người điều phối chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để D00-04 có API-18-001…188, EVT-18-01…29 và Q18-55…59 của tập này. Các đề nghị còn lại như sau.
 
 | Tài liệu | Đề nghị |
 |---|---|
@@ -1106,7 +1131,7 @@ Các câu hỏi dưới đây cần chủ tài liệu hoặc kiến trúc trả 
 | Q18-55 | Tham số truy vấn theo tên camelCase tiếng Anh hay theo tên giao diện của FRS §6 | Giữ camelCase tiếng Anh như các phân hệ khác; `dh-console` ánh xạ sang nhãn tiếng Việt |
 | Q18-56 | Hạn mức gọi của `/api/ops/v1` và API nội bộ chưa có khóa `18.*` | Giữ giả định ở mục 1.3 tại APISIX; thêm khóa `18.api.rate-user-per-min` và `18.api.rate-du-per-min` nếu FRS cần |
 | Q18-57 | `Location` của phản hồi `201`, `202` ở API nội bộ trỏ tới đường dẫn nào khi đối tượng chỉ đọc được ở API người dùng | API nội bộ trả `Location` tới đường dẫn nội bộ nếu có (API-18-093), không thì chỉ trả đối tượng |
-| Q18-58 | Từ chối chạy di trú thật nên là trạng thái `REJECTED` riêng hay `CANCELLED` kèm lý do | `CANCELLED` kèm `rejectReason`, chờ FRS xác nhận |
+| Q18-58 | Từ chối chạy di trú thật nên là trạng thái `REJECTED` riêng hay `CANCELLED` kèm lý do | Đã chốt ở FRS 0.2 §4.5: `CANCELLED` kèm `rejectReason` |
 | Q18-59 | Lược đồ khóa tham số có trường `type` và `default` khiến Spectral hiểu nhầm ví dụ là lược đồ | Giữ tên theo FRS, bỏ ví dụ ở API-18-003, 027; nếu đổi tên thì dùng `valueType`, `defaultValue` khớp DDL |
 
 : Câu hỏi mở của tập API PH-18
@@ -1359,7 +1384,7 @@ ETag: W/"3"
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-007, ERR-18-008, ERR-18-010, ERR-18-011, ERR-18-012, ERR-18-013, ERR-18-014, ERR-18-015, ERR-18-018, ERR-18-019, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Ghi giá trị theo tenant: kiểm kiểu (ERR-18-012), miền (ERR-18-013), trần nền tảng (ERR-18-014), mức `PLATFORM` (ERR-18-015), lý do tối thiểu `18.param.reason-min-length`. Khóa thường trả `200` và phát EVT-18-01; khóa ★ có `approvalOwner = PH-18` trả `202` kèm đề nghị và phát EVT-18-02; khóa do phân hệ khác giữ duyệt trả ERR-18-019.
+**Ghi chú.** Ghi giá trị theo tenant: kiểm kiểu (ERR-18-012), miền (ERR-18-013), trần nền tảng (ERR-18-014), mức `PLATFORM` (ERR-18-015), lý do tối thiểu `18.param.reason-min-length`. Khóa thường trả `200` và phát EVT-18-01; khóa ★ có `approvalOwner = PH-18` trả `202` kèm đề nghị và phát EVT-18-02; khóa do phân hệ khác giữ duyệt trả ERR-18-019. Khóa `18.degraded.read-only` không ghi qua API này (ERR-18-003), chỉ đổi qua API-18-187.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -2289,7 +2314,7 @@ HTTP/1.1 204 No Content
 
 **Phản hồi thành công.** `200` thành công, `NamespaceRegistration`; trường bắt buộc: `ns`, `schemaVersion`, `added`, `changed`, `deprecated`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-010, ERR-18-016, ERR-18-017, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-010, ERR-18-016, ERR-18-017 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** PH chủ đăng ký lược đồ khi khởi động; lũy đẳng theo `schemaVersion`. Không gian tên không thuộc phân hệ gọi: ERR-18-017; lược đồ mới xung đột giá trị đang dùng: ERR-18-016.
 :::
@@ -2487,7 +2512,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `DlqSource`; trường bắt buộc: `version`, `id`, `sourceCode`, `sourcePh`, `ingestChannel`, `replayMode`, `maxRatePerSecond`, `supportsRevision`, `status`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Khai báo nguồn DLQ thủ công (nguồn không tự đăng ký). Quyền PERM-18-admin; FR-18-012.
 :::
@@ -2537,7 +2562,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `DlqSource`; trường bắt buộc: `version`, `id`, `sourceCode`, `sourcePh`, `ingestChannel`, `replayMode`, `maxRatePerSecond`, `supportsRevision`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Sửa cổng phát lại, tạm ngừng hoặc bật lại nguồn (`If-Match`). Quyền PERM-18-admin; FR-18-012.
 :::
@@ -2637,7 +2662,7 @@ ETag: W/"3"
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `413`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-024, ERR-18-025, ERR-18-026 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Ghi một mục DLQ theo hợp đồng ngữ cảnh chuẩn (FRS bảng 4.1b). Thiếu trường bắt buộc: mục `POISON` và ERR-18-024 trong `missingFields`; payload > `18.dlq.payload.inline-max-kb` lưu ở Garage, > `18.dlq.payload.max-mb` trả ERR-18-025; khử trùng theo `dlqKey` (trùng trả `duplicate = true`).
+**Ghi chú.** Ghi một mục DLQ theo hợp đồng ngữ cảnh chuẩn (FRS bảng 4.1b). Thiếu trường bắt buộc: từ chối `422` với ERR-18-024, mục không được ghi (BR-18-013; đường topic mới ghi `POISON`); payload > `18.dlq.payload.inline-max-kb` lưu ở Garage, > `18.dlq.payload.max-mb` trả ERR-18-025; khử trùng theo `dlqKey` (trùng trả `duplicate = true`).
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -2765,7 +2790,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `DlqReconciliation`; trường bắt buộc: `runId`, `status`, `from`, `to`, `startedAt`, `missingTotal`, `extraTotal`, `partitions`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chạy đối soát ngay ngoài lịch. Quyền PERM-18-dlq; FR-18-018.
 :::
@@ -2848,7 +2873,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `EventReplayRequest`; trường bắt buộc: `entryRef`, `replayCode`, `status`, `requestedAt`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-035 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-035, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** PH-18 không tự phát lại mục tầng sự kiện; gọi API-10-064 với scope `event:replay`, PH-10 duyệt theo quy tắc của mình (ADR-181, Q18-03).
 :::
@@ -2873,14 +2898,14 @@ HTTP/1.1 202 Accepted
 
 Danh sách có `facets`, nhóm dấu hiệu lỗi, chi tiết và chẩn đoán từ PH-13, xem payload có lý do, phân loại, gán, bản sửa payload, sổ tay mã lỗi, API đọc cho PH-17 và PH-13 (FR-18-019…026). Mỗi operation một khối đặc tả 10 mục, kèm ví dụ yêu cầu và phản hồi sinh từ OpenAPI.
 
-#### API-18-041 · Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets`
+#### API-18-041 · Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` (siêu dữ liệu, thao tác cần `PERM-18-dlq`)
 
 ::: dac-ta
-**Mục đích.** Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets`.
+**Mục đích.** Danh sách mục DLQ: lọc, tìm, sắp xếp, phân trang, khối `facets` (siêu dữ liệu, thao tác cần `PERM-18-dlq`).
 
 **Phương thức, đường dẫn.** `GET /api/ops/v1/dlq/messages`.
 
-**Quyền.** `PERM-18-dlq`.
+**Quyền.** `PERM-18-read`.
 
 **FR hiện thực.** FR-18-019, FR-18-023.
 
@@ -2963,7 +2988,7 @@ dlqId,sourceCode,errorCode,errorClass,status,receivedAt
 
 **Phương thức, đường dẫn.** `GET /api/ops/v1/dlq/groups`.
 
-**Quyền.** `PERM-18-dlq`.
+**Quyền.** `PERM-18-read`.
 
 **FR hiện thực.** FR-18-020.
 
@@ -2977,7 +3002,7 @@ dlqId,sourceCode,errorCode,errorClass,status,receivedAt
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`; mã lỗi của thao tác: ERR-18-003, ERR-18-010 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn. Quyền PERM-18-dlq; FR-18-020.
+**Ghi chú.** Nhóm mục DLQ theo dấu hiệu lỗi, số mục, tuổi, nguồn. Quyền PERM-18-read; FR-18-020.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -3015,7 +3040,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `DlqGroup`; trường bắt buộc: `version`, `id`, `signature`, `sourceCode`, `errorCode`, `errorClass`, `firstSeenAt`, `lastSeenAt`, `openCount`, `totalCount`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gán người xử lý, ưu tiên cho cả nhóm. Quyền PERM-18-dlq; FR-18-020, 023.
 :::
@@ -3043,14 +3068,14 @@ ETag: W/"3"
  "openCount": 12, "totalCount": 12, "assignee": "tran.thi.binh", "priority": "P2"}
 ```
 
-#### API-18-045 · Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại
+#### API-18-045 · Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại (không payload)
 
 ::: dac-ta
-**Mục đích.** Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại.
+**Mục đích.** Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại (không payload).
 
 **Phương thức, đường dẫn.** `GET /api/ops/v1/dlq/messages/{dlqId}`.
 
-**Quyền.** `PERM-18-dlq`.
+**Quyền.** `PERM-18-read`.
 
 **FR hiện thực.** FR-18-021.
 
@@ -3064,7 +3089,7 @@ ETag: W/"3"
 
 **Lỗi.** HTTP `401`, `403`, `404`, `429`; mã lỗi của thao tác: ERR-18-001, ERR-18-010 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại. Quyền PERM-18-dlq; FR-18-021.
+**Ghi chú.** Chi tiết mục: ngữ cảnh, phân loại, lịch sử trạng thái, bản sửa, lượt phát lại (không payload). Quyền PERM-18-read; FR-18-021.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -3169,7 +3194,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `PayloadReveal`; trường bắt buộc: `dlqId`, `revision`, `contentType`, `maskedFields`, `revealExpiresAt`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-027, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Cần `PERM-18-dlq-payload` và lý do ≥ 10 ký tự; trả nội dung trong phiếu xem 15 phút, trường đã mã hóa vẫn che; ghi kiểm toán PH-13 trước khi trả (ERR-18-008).
 :::
@@ -3249,7 +3274,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `DlqMessage`; trường bắt buộc: `version`, `id`, `dlqKey`, `sourceCode`, `sourcePh`, `stage`, `reason`, `errorCode`, `errorClass`, `attempts`, `occurrences`, `status`, `receivedAt`, `ageMinutes`, `storage`, `currentRevisionNo`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gán lớp lỗi, ưu tiên, ghi chú; `NEW` sang `TRIAGED`. Quyền PERM-18-dlq; FR-18-023.
 :::
@@ -3304,7 +3329,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `DlqMessage`; trường bắt buộc: `version`, `id`, `dlqKey`, `sourceCode`, `sourcePh`, `stage`, `reason`, `errorCode`, `errorClass`, `attempts`, `occurrences`, `status`, `receivedAt`, `ageMinutes`, `storage`, `currentRevisionNo`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gán hoặc nhận người xử lý. Quyền PERM-18-dlq; FR-18-023.
 :::
@@ -3358,7 +3383,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `207`, `BulkResult`; trường bắt buộc: `requested`, `succeeded`, `failed`, `results`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Phân loại, gán hàng loạt theo danh sách tới 1.000 mục. Quyền PERM-18-dlq; FR-18-023.
 :::
@@ -3441,7 +3466,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `DlqRevision`; trường bắt buộc: `version`, `id`, `dlqId`, `revisionNo`, `payloadSha256`, `storage`, `reason`, `containsRestricted`, `status`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-029, ERR-18-030 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-029, ERR-18-030, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo bản sửa, không sửa bản gốc (ADR-181). Bản sửa có trường mức Hạn chế hoặc Nhạy cảm chờ duyệt bốn mắt (API-18-055); bản sửa thường `APPROVED` ngay.
 :::
@@ -3531,7 +3556,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `DlqRevision`; trường bắt buộc: `version`, `id`, `dlqId`, `revisionNo`, `payloadSha256`, `storage`, `reason`, `containsRestricted`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Duyệt bản sửa có dữ liệu Hạn chế (người thứ hai). Quyền PERM-18-approve; FR-18-024.
 :::
@@ -3582,7 +3607,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `DlqRevision`; trường bắt buộc: `version`, `id`, `dlqId`, `revisionNo`, `payloadSha256`, `storage`, `reason`, `containsRestricted`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Từ chối bản sửa kèm lý do. Quyền PERM-18-approve; FR-18-024.
 :::
@@ -3718,7 +3743,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ErrorGuide`; trường bắt buộc: `version`, `id`, `errCode`, `ownerPh`, `locale`, `title`, `causes`, `steps`, `replayable`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Soạn, sửa hướng dẫn của một mã (`If-Match`), phát EVT-18-11. Quyền PERM-18-admin; FR-18-025.
 :::
@@ -3960,7 +3985,7 @@ Phát lại một mục, lượt phát lại loạt có bốn mắt, điều khi
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `ReplayAccepted`; trường bắt buộc: `dlqId`, `status`, `idempotencyKey`, `revision`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-027, ERR-18-028, ERR-18-031, ERR-18-033 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-027, ERR-18-028, ERR-18-031, ERR-18-033, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Phát lại qua lối vào của nguồn (ADR-182), khóa lũy đẳng `dlqId:revision`; mục `POISON` trả ERR-18-028, mục đang trong lượt khác ERR-18-031, nguồn không có cổng ERR-18-033.
 :::
@@ -4000,7 +4025,7 @@ HTTP/1.1 202 Accepted
 
 **Phản hồi thành công.** `201` đã tạo, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-032, ERR-18-036 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-032, ERR-18-036, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lượt `DRAFT` theo bộ lọc hoặc danh sách (≤ `18.dlq.replay.batch-max`); trả `excluded[]` cho mục không phát lại được. Gửi bằng API-18-069.
 :::
@@ -4187,7 +4212,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-032, ERR-18-036 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-032, ERR-18-036, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Số mục ≤ `18.dlq.replay.approval-threshold` (500) thì `APPROVED` và chạy ngay; lớn hơn thì `PENDING_APPROVAL`, tạo việc duyệt trong Việc của tôi.
 :::
@@ -4239,7 +4264,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Duyệt lượt loạt lớn (người thứ hai). Quyền PERM-18-approve; FR-18-028.
 :::
@@ -4293,7 +4318,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Từ chối lượt kèm lý do. Quyền PERM-18-approve; FR-18-028.
 :::
@@ -4347,7 +4372,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạm dừng lượt đang chạy. Quyền PERM-18-dlq; FR-18-029.
 :::
@@ -4399,7 +4424,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tiếp tục lượt đã tạm dừng. Quyền PERM-18-dlq; FR-18-029.
 :::
@@ -4451,7 +4476,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Hủy lượt, mục chưa chạy trở về `TRIAGED`. Quyền PERM-18-dlq; FR-18-029.
 :::
@@ -4505,7 +4530,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ReplayJob`; trường bắt buộc: `version`, `id`, `jobCode`, `mode`, `useRevision`, `ratePerSecond`, `stopOnFailurePercent`, `reason`, `total`, `succeeded`, `failed`, `skipped`, `approvalRequired`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-037 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-037, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đổi tốc độ phát lại của lượt (`If-Match`). Quyền PERM-18-dlq; FR-18-029.
 :::
@@ -4598,7 +4623,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `DlqMessage`; trường bắt buộc: `version`, `id`, `dlqKey`, `sourceCode`, `sourcePh`, `stage`, `reason`, `errorCode`, `errorClass`, `attempts`, `occurrences`, `status`, `receivedAt`, `ageMinutes`, `storage`, `currentRevisionNo`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Bỏ qua một mục kèm lý do ≥ 10 ký tự. Quyền PERM-18-dlq; FR-18-031.
 :::
@@ -4653,7 +4678,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `207`, `BulkResult`; trường bắt buộc: `requested`, `succeeded`, `failed`, `results`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Bỏ qua hàng loạt tới 1.000 mục kèm một lý do chung. Quyền PERM-18-dlq; FR-18-031.
 :::
@@ -4694,7 +4719,7 @@ HTTP/1.1 207
 
 **Phản hồi thành công.** `200` thành công, `DlqMessage`; trường bắt buộc: `version`, `id`, `dlqKey`, `sourceCode`, `sourcePh`, `stage`, `reason`, `errorCode`, `errorClass`, `attempts`, `occurrences`, `status`, `receivedAt`, `ageMinutes`, `storage`, `currentRevisionNo`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-034 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-034, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Mở lại mục đã bỏ qua trong hạn lưu giữ. Quyền PERM-18-dlq; FR-18-032.
 :::
@@ -4806,6 +4831,48 @@ HTTP/1.1 200 OK
  "trend": [{"at": "2026-11-27T09:15:02+07:00", "received": 12, "resolved": 12, "discarded": 12}]}
 ```
 
+#### API-18-188 · Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09 (bản gốc khi `revision = 0`)
+
+::: dac-ta
+**Mục đích.** Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09 (bản gốc khi `revision = 0`).
+
+**Phương thức, đường dẫn.** `GET /ops/internal/v1/replay-payloads/{dlqId}/{revision}`.
+
+**Quyền.** scope ops:replay-callback; mTLS SPIFFE.
+
+**FR hiện thực.** FR-18-027, FR-18-028.
+
+**Tham số.** `dlqId` (path, string, bắt buộc); `revision` (path, integer, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayPayload`; trường bắt buộc: `dlqId`, `revision`, `idempotencyKey`, `contentType`, `sizeBytes`, `sha256`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `429`; mã lỗi của thao tác: ERR-18-001, ERR-18-010, ERR-18-038 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09: `revision = 0` là bản gốc, lớn hơn là bản sửa đã duyệt. Danh tính gọi phải khớp nguồn của mục (ERR-18-038); payload lớn trả `downloadUrl` Garage có hạn thay cho `payload`.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+GET /ops/internal/v1/replay-payloads/0190a1b2-c3d4-7e5f-8a6b-3431d1c97214/1
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"dlqId": "0190a1b2-c3d4-7e5f-8a6b-3431d1c97214", "revision": 1,
+ "idempotencyKey": "0190a1b2-c3d4-7e5f-8a6b-3431d1c97214:1",
+ "contentType": "application/json", "sizeBytes": 12,
+ "sha256": "e3b0c442e3b0c442e3b0c442e3b0c442e3b0c442e3b0c442e3b0c442e3b0c442",
+ "payload": {"soHoSo": "HS-2026-000123", "trangThai": "DA_TIEP_NHAN"},
+ "downloadUrl": "https://ops.t68.datahub.example.vn/tai-ve/BC-2026-11",
+ "expiresAt": "2026-11-27T09:15:02+07:00"}
+```
+
 ### 14.5. Thông báo
 
 Mẫu thông báo có phiên bản và kiểm trường cấm, `NotificationApi` bất đồng bộ và đồng bộ, người nhận, tùy chọn nhận, quy tắc theo sự kiện, nhật ký gửi, thư trả lại, danh sách chặn (FR-18-035…041). Mỗi operation một khối đặc tả 10 mục, kèm ví dụ yêu cầu và phản hồi sinh từ OpenAPI.
@@ -4869,7 +4936,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `NotificationTemplate`; trường bắt buộc: `version`, `id`, `templateCode`, `channel`, `ownerPh`, `title`, `category`, `mandatory`, `urgent`, `variables`, `status`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo mẫu mới (mã, kênh, PH chủ, biến khai báo). Quyền PERM-18-template; FR-18-035.
 :::
@@ -4972,7 +5039,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `201` đã tạo, `TemplateVersion`; trường bắt buộc: `version`, `id`, `templateCode`, `versionNo`, `locale`, `body`, `status`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-039, ERR-18-040 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-039, ERR-18-040, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo phiên bản nháp nội dung mẫu. Quyền PERM-18-template; FR-18-035.
 :::
@@ -5066,7 +5133,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `TemplateVersion`; trường bắt buộc: `version`, `id`, `templateCode`, `versionNo`, `locale`, `body`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-039, ERR-18-040 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-039, ERR-18-040, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gửi duyệt phiên bản (`DRAFT` sang `IN_REVIEW`). Quyền PERM-18-template; FR-18-035.
 :::
@@ -5116,7 +5183,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TemplateVersion`; trường bắt buộc: `version`, `id`, `templateCode`, `versionNo`, `locale`, `body`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Duyệt phiên bản thành `ACTIVE` (người thứ hai). Quyền PERM-18-approve; FR-18-035.
 :::
@@ -5168,7 +5235,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TemplateVersion`; trường bắt buộc: `version`, `id`, `templateCode`, `versionNo`, `locale`, `body`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Trả phiên bản về `DRAFT` kèm lý do. Quyền PERM-18-approve; FR-18-035.
 :::
@@ -5220,7 +5287,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `NotificationTemplate`; trường bắt buộc: `version`, `id`, `templateCode`, `channel`, `ownerPh`, `title`, `category`, `mandatory`, `urgent`, `variables`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ngừng mẫu (`RETIRED`). Quyền PERM-18-template; FR-18-035.
 :::
@@ -5474,7 +5541,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `NotificationPreferences`; trường bắt buộc: `userId`, `version`, `prefs`, `quietHours`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-046 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-046, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lưu tùy chọn nhận thông báo (`If-Match`). Quyền Đăng nhập (mọi vai trò); FR-18-038.
 :::
@@ -5556,7 +5623,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `ReadResult`; trường bắt buộc: `updated`, `unreadCount`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đánh dấu đã đọc một hoặc tất cả thông báo. Quyền Đăng nhập (mọi vai trò); FR-18-036.
 :::
@@ -5631,7 +5698,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `NotificationRule`; trường bắt buộc: `version`, `id`, `ruleCode`, `eventType`, `templateCode`, `recipients`, `priority`, `createTask`, `enabled`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-041, ERR-18-045 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-041, ERR-18-045, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo quy tắc (sự kiện, điều kiện, mẫu, người nhận, mức). Quyền PERM-18-template; FR-18-039.
 :::
@@ -5681,7 +5748,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `NotificationRule`; trường bắt buộc: `version`, `id`, `ruleCode`, `eventType`, `templateCode`, `recipients`, `priority`, `createTask`, `enabled`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-041, ERR-18-045 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-041, ERR-18-045, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Sửa, bật, tắt quy tắc (`If-Match`). Quyền PERM-18-template; FR-18-039.
 :::
@@ -5769,7 +5836,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `NotificationDelivery`; trường bắt buộc: `id`, `messageId`, `type`, `channel`, `recipientMasked`, `status`, `attempts`, `callerPh`, `queuedAt`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-043 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-043, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gửi lại một thông báo `FAILED` hoặc `BOUNCED` sau khi sửa đầu mối. Quyền PERM-18-template; FR-18-040, 041.
 :::
@@ -5853,7 +5920,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `204` không có nội dung.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-008, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gỡ địa chỉ khỏi danh sách chặn kèm lý do. Quyền PERM-18-template; FR-18-040.
 :::
@@ -6247,7 +6314,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `WorkCalendar`; trường bắt buộc: `version`, `id`, `year`, `calendarScope`, `timezone`, `weekendDays`, `holidays`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-049 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-049, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ghi lịch năm của tenant (`If-Match`). Quyền PERM-18-calendar; FR-18-045.
 :::
@@ -6293,7 +6360,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `201` đã tạo, `CalendarHoliday`; trường bắt buộc: `date`, `name`, `kind`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-049 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-049, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Thêm ngày lễ hoặc ngày làm bù. Quyền PERM-18-calendar; FR-18-045.
 :::
@@ -6451,7 +6518,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `MaintenanceWindow`; trường bắt buộc: `version`, `id`, `windowCode`, `kind`, `scope`, `environments`, `startsAt`, `endsAt`, `reason`, `notify`, `state`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-050 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-050, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo cửa sổ bảo trì hoặc đóng băng. Quyền PERM-18-calendar; FR-18-046.
 :::
@@ -6502,7 +6569,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MaintenanceWindow`; trường bắt buộc: `version`, `id`, `windowCode`, `kind`, `scope`, `environments`, `startsAt`, `endsAt`, `reason`, `notify`, `state`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-050 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-050, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Sửa cửa sổ chưa bắt đầu (`If-Match`). Quyền PERM-18-calendar; FR-18-046.
 :::
@@ -6552,7 +6619,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MaintenanceWindow`; trường bắt buộc: `version`, `id`, `windowCode`, `kind`, `scope`, `environments`, `startsAt`, `endsAt`, `reason`, `notify`, `state`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Hủy cửa sổ kèm lý do. Quyền PERM-18-calendar; FR-18-046.
 :::
@@ -6619,6 +6686,53 @@ HTTP/1.1 200 OK
    "startsAt": "2026-12-06T22:00:00+07:00", "endsAt": "2026-12-07T02:00:00+07:00"}]}
 ```
 
+#### API-18-181 · Nhận việc: chuyển `IN_PROGRESS`, ghi người nhận, báo người cùng nhận (EVT-18-14)
+
+::: dac-ta
+**Mục đích.** Nhận việc: chuyển `IN_PROGRESS`, ghi người nhận, báo người cùng nhận (EVT-18-14).
+
+**Phương thức, đường dẫn.** `POST /api/ops/v1/me/tasks/{taskId}:claim`.
+
+**Quyền.** Đăng nhập (mọi vai trò).
+
+**FR hiện thực.** FR-18-044.
+
+**Tham số.** `taskId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `TaskItem`; trường bắt buộc: `version`, `id`, `taskType`, `sourceRef`, `ownerPh`, `summary`, `assignees`, `status`, `priority`, `overdue`, `sourceVersion`, `link`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-048, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Người nhận việc báo người cùng nhận: việc `OPEN` chuyển `IN_PROGRESS`, ghi người nhận, phát EVT-18-14; việc đã đóng trả ERR-18-048; gọi lại khi đã nhận trả `200` không đổi.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/ops/v1/me/tasks/0190a1b2-c3d4-7e5f-8a6b-52fc4097b1a9:claim
+If-Match: W/"3"
+Idempotency-Key: dh-2026-11-27-0001
+```
+
+```http
+HTTP/1.1 200 OK
+ETag: W/"3"
+
+{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
+ "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
+ "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
+ "taskType": "ph01.approve-onboarding", "sourceRef": "onboarding:HS-0042",
+ "ownerPh": "PH-04", "summary": "Duyệt hồ sơ kết nạp HTTT quản lý văn bản",
+ "assignees": [{"kind": "USER", "ref": "tran.thi.binh"}], "status": "OPEN",
+ "priority": "NORMAL", "dueAt": "2026-11-27T09:15:02+07:00", "overdue": false,
+ "claimedBy": "tran.thi.binh", "sourceVersion": 3, "closedAt": "2026-11-27T09:15:02+07:00",
+ "outcome": "DONE", "link": "/ket-noi/ho-so/HS-0042"}
+```
+
 ### 14.7. Sự cố vận hành
 
 Hồ sơ sự cố từ sự kiện hoặc tạo tay, vòng đời, mốc thời gian, liên kết, chuyển PH-09, đóng có nguyên nhân và bài học (FR-18-047…051). Mỗi operation một khối đặc tả 10 mục, kèm ví dụ yêu cầu và phản hồi sinh từ OpenAPI.
@@ -6682,7 +6796,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `Incident`; trường bắt buộc: `version`, `id`, `incidentCode`, `title`, `severity`, `category`, `origin`, `status`, `detectedAt`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo sự cố thủ công. Quyền PERM-18-incident; FR-18-048.
 :::
@@ -6794,7 +6908,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `Incident`; trường bắt buộc: `version`, `id`, `incidentCode`, `title`, `severity`, `category`, `origin`, `status`, `detectedAt`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đổi mức độ, người xử lý, tóm tắt (`If-Match`). Quyền PERM-18-incident; FR-18-048.
 :::
@@ -6849,7 +6963,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `Incident`; trường bắt buộc: `version`, `id`, `incidentCode`, `title`, `severity`, `category`, `origin`, `status`, `detectedAt`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chuyển trạng thái sự cố theo vòng đời. Quyền PERM-18-incident; FR-18-048, 051.
 :::
@@ -6903,7 +7017,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `201` đã tạo, `IncidentTimelineEntry`; trường bắt buộc: `id`, `kind`, `content`, `occurredAt`, `actor`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Thêm mốc thời gian, ghi chú, hành động. Quyền PERM-18-incident; FR-18-049.
 :::
@@ -6947,7 +7061,7 @@ Location: /api/ops/v1/incidents/SC-2026-0007/timeline/0190a1b2-c3d4-7e5f-8a6b-b8
 
 **Phản hồi thành công.** `201` đã tạo, `IncidentLink`; trường bắt buộc: `id`, `targetType`, `targetRef`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Liên kết mục DLQ, nhóm lỗi, cảnh báo, lượt phát lại, sao lưu. Quyền PERM-18-incident; FR-18-049.
 :::
@@ -6988,7 +7102,7 @@ Location: /api/ops/v1/incidents/SC-2026-0007/links/0190a1b2-c3d4-7e5f-8a6b-b80bb
 
 **Phản hồi thành công.** `200` thành công, `EscalationResult`; trường bắt buộc: `incidentCode`, `privacyCaseRef`, `escalatedAt`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-053, ERR-18-054 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-053, ERR-18-054, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chuyển hồ sơ sang PH-09 (`INCIDENT_PH18`); PH-09 giữ đồng hồ 72 giờ. PH-09 không nhận thì thử lại mỗi 5 phút (ERR-18-054).
 :::
@@ -7031,7 +7145,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `Incident`; trường bắt buộc: `version`, `id`, `incidentCode`, `title`, `severity`, `category`, `origin`, `status`, `detectedAt`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-052 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-052, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đóng sự cố với nguyên nhân gốc, bài học, việc khắc phục. Quyền PERM-18-incident; FR-18-051.
 :::
@@ -7330,7 +7444,7 @@ HTTP/1.1 202 Accepted
 
 **Phản hồi thành công.** `201` đã tạo, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-056, ERR-18-057, ERR-18-058 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-056, ERR-18-057, ERR-18-058, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo yêu cầu khôi phục tenant (thời điểm đích, phạm vi) ở `DRAFT`. Quyền PERM-18-backup; FR-18-054.
 :::
@@ -7476,7 +7590,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-056, ERR-18-057, ERR-18-058 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-056, ERR-18-057, ERR-18-058, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gửi duyệt yêu cầu. Quyền PERM-18-backup; FR-18-054.
 :::
@@ -7527,7 +7641,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** PA duyệt (người thứ hai, ERR-18-005), tạo Job `dh-tenant-restore` trong `dh-batch`; tenant chuyển `SUSPENDED` trong khi chạy tám bước (RBK-04).
 :::
@@ -7580,7 +7694,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Từ chối kèm lý do. Quyền PERM-18-approve; FR-18-055.
 :::
@@ -7633,7 +7747,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Hủy yêu cầu chưa chạy. Quyền PERM-18-backup; FR-18-054.
 :::
@@ -7723,7 +7837,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `TenantRestore`; trường bắt buộc: `version`, `id`, `requestNo`, `targetTime`, `scope`, `includeObjects`, `includeIdentity`, `includeSecrets`, `reason`, `status`, `requestedBy`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Quay lui khi bước 5 đến 8 lỗi (từ bản trích trước khi thay). Quyền PERM-18-approve; FR-18-055.
 :::
@@ -7776,7 +7890,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `201` đã tạo, `TenantExport`; trường bắt buộc: `version`, `id`, `exportCode`, `purpose`, `includeObjects`, `format`, `status`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-057, ERR-18-059 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-057, ERR-18-059, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo lệnh xuất dữ liệu tenant (bàn giao, chuyển ô). Quyền PERM-18-backup; FR-18-056.
 :::
@@ -7872,7 +7986,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `DownloadLink`; trường bắt buộc: `url`, `expiresAt`, `sha256`, `sizeBytes`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Cấp liên kết tải có hạn 24 giờ, ghi kiểm toán. Quyền PERM-18-backup; FR-18-056.
 :::
@@ -8137,7 +8251,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `DrDrill`; trường bắt buộc: `version`, `id`, `drillCode`, `kind`, `startedAt`, `finishedAt`, `result`, `recordedBy`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ghi nhận diễn tập: loại, thời điểm, RTO, RPO đo được, biên bản. Quyền PERM-18-admin; FR-18-058.
 :::
@@ -8233,7 +8347,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `LegacySource`; trường bắt buộc: `version`, `id`, `sourceCode`, `name`, `legacySystem`, `jdbcUrl`, `credentialRef`, `schemas`, `status`, `readOnlyVerified`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-062, ERR-18-070 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-062, ERR-18-070, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Khai báo nguồn hệ cũ (JDBC chỉ đọc, tham chiếu OpenBao). Quyền PERM-18-migration; FR-18-059.
 :::
@@ -8284,7 +8398,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `ConnectionTestResult`; trường bắt buộc: `ok`, `readOnly`, `tables`, `estimatedRows`, `checkedAt`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-062 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-062, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Thử kết nối, kiểm quyền chỉ đọc, đếm bảng. Quyền PERM-18-migration; FR-18-059.
 :::
@@ -8360,7 +8474,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `MigrationPlan`; trường bắt buộc: `version`, `id`, `planCode`, `sourceCode`, `title`, `status`, `itemCount`; tiêu đề `Location`, `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tạo kế hoạch di trú cho nguồn. Quyền PERM-18-migration; FR-18-060.
 :::
@@ -8455,7 +8569,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MigrationPlanDetail`; trường bắt buộc: `version`, `id`, `planCode`, `sourceCode`, `title`, `status`, `itemCount`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-063 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-063, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ghi danh sách loại đối tượng, bộ chuyển, PH đích, thứ tự (`If-Match`). Quyền PERM-18-migration; FR-18-060.
 :::
@@ -8505,7 +8619,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MigrationPlanDetail`; trường bắt buộc: `version`, `id`, `planCode`, `sourceCode`, `title`, `status`, `itemCount`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-063 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-063, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Kiểm thứ tự phụ thuộc, chuyển `READY`. Quyền PERM-18-migration; FR-18-060.
 :::
@@ -8554,7 +8668,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `MigrationRun`; trường bắt buộc: `version`, `id`, `planCode`, `runNo`, `mode`, `status`, `requestedBy`, `read`, `written`, `rejected`, `skipped`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-036, ERR-18-051, ERR-18-057, ERR-18-064, ERR-18-065 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-036, ERR-18-051, ERR-18-057, ERR-18-064, ERR-18-065, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lần chạy `DRY_RUN` vào hàng đợi ngay; `REAL` cần lần chạy thử thành công trong `18.migration.dry-run-valid-days` (ERR-18-064), ở `PENDING_APPROVAL` chờ API-18-167. `retryOf` và `errorIds[]` chạy lại bản ghi lỗi.
 :::
@@ -8702,7 +8816,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MigrationRun`; trường bắt buộc: `version`, `id`, `planCode`, `runNo`, `mode`, `status`, `requestedBy`, `read`, `written`, `rejected`, `skipped`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-051, ERR-18-064 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-051, ERR-18-064, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Duyệt chạy thật (người thứ hai); không chạy được trong cửa sổ đóng băng (ERR-18-051).
 :::
@@ -8756,7 +8870,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MigrationRun`; trường bắt buộc: `version`, `id`, `planCode`, `runNo`, `mode`, `status`, `requestedBy`, `read`, `written`, `rejected`, `skipped`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Từ chối chạy thật kèm lý do. Quyền PERM-18-approve; FR-18-062.
 :::
@@ -8810,7 +8924,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `MigrationRun`; trường bắt buộc: `version`, `id`, `planCode`, `runNo`, `mode`, `status`, `requestedBy`, `read`, `written`, `rejected`, `skipped`, `items`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Hủy lần chạy, dừng sau lô hiện hành. Quyền PERM-18-migration; FR-18-061, 062.
 :::
@@ -9055,10 +9169,10 @@ ETag: W/"3"
    "occurredAt": "2026-11-27T09:15:02+07:00"}]}
 ```
 
-#### API-18-175 · Cắt chuyển một phần, toàn phần hoặc quay lui (bốn mắt khi cắt chuyển)
+#### API-18-175 · Cắt chuyển theo `action`: `REQUEST` đề nghị cắt chuyển một phần hoặc toàn phần, `APPROVE`, `REJECT` (bốn mắt, `PERM-18-approve`), `ROLLBACK` quay lui (`PERM-18-migration`)
 
 ::: dac-ta
-**Mục đích.** Cắt chuyển một phần, toàn phần hoặc quay lui (bốn mắt khi cắt chuyển).
+**Mục đích.** Cắt chuyển theo `action`: `REQUEST` đề nghị cắt chuyển một phần hoặc toàn phần, `APPROVE`, `REJECT` (bốn mắt, `PERM-18-approve`), `ROLLBACK` quay lui (`PERM-18-migration`).
 
 **Phương thức, đường dẫn.** `POST /api/ops/v1/parallel-groups/{groupCode}:transition`.
 
@@ -9068,15 +9182,15 @@ ETag: W/"3"
 
 **Tham số.** `groupCode` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
 
-**Thân yêu cầu.** application/json: `CutoverTransitionInput`; trường bắt buộc: `target`, `reason`.
+**Thân yêu cầu.** application/json: `CutoverTransitionInput`; trường bắt buộc: `action`, `reason`.
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
 **Phản hồi thành công.** `200` thành công, `ParallelGroup`; trường bắt buộc: `version`, `id`, `groupCode`, `title`, `routes`, `status`, `mirrorPercent`, `matchThresholdPercent`, `samplesTotal`, `samplesMatched`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-051, ERR-18-066, ERR-18-067, ERR-18-068 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-005, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-051, ERR-18-066, ERR-18-067, ERR-18-068, ERR-18-071 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Cắt chuyển một phần, toàn phần (bốn mắt: người duyệt khác người đề nghị) hoặc quay lui trong `18.migration.rollback-window-minutes` (ERR-18-068); kiểm danh sách cắt chuyển (ERR-18-067) và tỷ lệ khớp (ERR-18-066); phát EVT-18-27 để PH-03 đổi tuyến APISIX.
+**Ghi chú.** Thân `action` quyết định thao tác và quyền: `REQUEST` (đề nghị cắt chuyển một phần hoặc toàn phần theo `target`, `PERM-18-migration`), `APPROVE`, `REJECT` (bốn mắt, `PERM-18-approve`, người duyệt khác người đề nghị ERR-18-005), `ROLLBACK` (quay lui trong `18.migration.rollback-window-minutes`, ERR-18-068, không cần duyệt). Kiểm danh sách cắt chuyển (ERR-18-067) và tỷ lệ khớp (ERR-18-066); phát EVT-18-27 để PH-03 đổi tuyến APISIX.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -9086,8 +9200,8 @@ POST /api/ops/v1/parallel-groups/NHOM-HO-TICH:transition
 If-Match: W/"3"
 Idempotency-Key: dh-2026-11-27-0001
 
-{"target": "PARTIAL_CUTOVER", "trafficPercent": 20,
- "reason": "Đích đã phục hồi sau sự cố mạng, xử lý theo phiếu VH-2026-118"}
+{"action": "REQUEST", "target": "PARTIAL_CUTOVER", "trafficPercent": 20,
+ "reason": "Đạt ngưỡng khớp 7 ngày, cắt chuyển 20% theo kế hoạch tuần 49"}
 ```
 
 ```http
@@ -9146,6 +9260,183 @@ POST /ops/internal/v1/shadow-samples
 HTTP/1.1 202 Accepted
 
 {"accepted": 12, "matched": 12, "groupMatchRate": 99.7}
+```
+
+#### API-18-182 · Đánh dấu cách xử lý một hoặc nhiều bản ghi lỗi (`FIXED_AT_SOURCE`, `RULE_ADDED`, `WONT_MIGRATE` kèm lý do)
+
+::: dac-ta
+**Mục đích.** Đánh dấu cách xử lý một hoặc nhiều bản ghi lỗi (`FIXED_AT_SOURCE`, `RULE_ADDED`, `WONT_MIGRATE` kèm lý do).
+
+**Phương thức, đường dẫn.** `PATCH /api/ops/v1/migration-runs/{runId}/errors`.
+
+**Quyền.** `PERM-18-migration`.
+
+**FR hiện thực.** FR-18-063.
+
+**Tham số.** `runId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `MigrationErrorFixInput`; trường bắt buộc: `errorIds`, `status`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `BulkResult`; trường bắt buộc: `requested`, `succeeded`, `failed`, `results`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-008, ERR-18-010, ERR-18-036, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Đánh dấu cách xử lý cho tối đa 1.000 bản ghi lỗi của lần chạy; `WONT_MIGRATE` cần `reason` ≥ 10 ký tự (ERR-18-007) và được đưa vào báo cáo đối chiếu như chênh lệch đã giải trình. Phản hồi kết quả từng bản ghi.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+PATCH /api/ops/v1/migration-runs/0190a1b2-c3d4-7e5f-8a6b-45f9669b01c1/errors
+If-Match: W/"3"
+
+{"errorIds": ["0190a1b2-c3d4-7e5f-8a6b-ec7a7ff9dcd8"], "status": "FIXED_AT_SOURCE",
+ "reason": "Đích đã phục hồi sau sự cố mạng, xử lý theo phiếu VH-2026-118",
+ "ruleRef": "giá trị mẫu"}
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"requested": 12, "succeeded": 1180, "failed": 12,
+ "results": [{"dlqId": "0190a1b2-c3d4-7e5f-8a6b-3431d1c97214", "httpStatus": 201}]}
+```
+
+#### API-18-183 · Đánh dấu thông tin xác thực không cần cấp lại (`WAIVED`) kèm lý do
+
+::: dac-ta
+**Mục đích.** Đánh dấu thông tin xác thực không cần cấp lại (`WAIVED`) kèm lý do.
+
+**Phương thức, đường dẫn.** `POST /api/ops/v1/credential-reissues/{markerId}:waive`.
+
+**Quyền.** `PERM-18-migration`.
+
+**FR hiện thực.** FR-18-065.
+
+**Tham số.** `markerId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ReasonInput`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `CredentialReissue`; trường bắt buộc: `version`, `id`, `systemCode`, `applicationRef`, `credentialKind`, `targetPh`, `runId`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Dấu `PENDING` hoặc `NOTIFIED` chuyển `WAIVED` kèm lý do; dấu đã `REISSUED` trả ERR-18-006. Mục danh sách cắt chuyển `CREDENTIALS_REISSUED` tính `WAIVED` như đã đạt.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/ops/v1/credential-reissues/0190a1b2-c3d4-7e5f-8a6b-7f5f22681984:waive
+If-Match: W/"3"
+Idempotency-Key: dh-2026-11-27-0001
+
+{"reason": "Đích đã phục hồi sau sự cố mạng, xử lý theo phiếu VH-2026-118"}
+```
+
+```http
+HTTP/1.1 200 OK
+ETag: W/"3"
+
+{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
+ "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
+ "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
+ "systemCode": "HTTT-QLVB", "applicationRef": "app-qlvb", "credentialKind": "OAUTH_CLIENT",
+ "targetPh": "PH-04", "runId": "0190a1b2-c3d4-7e5f-8a6b-45f9669b01c1", "status": "PENDING",
+ "notifiedAt": "2026-11-27T09:15:02+07:00", "reissuedAt": "2026-11-27T09:15:02+07:00",
+ "waivedReason": "HTTT đã ngừng"}
+```
+
+#### API-18-184 · Thay bộ quy tắc chuẩn hóa so sánh của nhóm; mẫu trong cửa sổ được tính lại
+
+::: dac-ta
+**Mục đích.** Thay bộ quy tắc chuẩn hóa so sánh của nhóm; mẫu trong cửa sổ được tính lại.
+
+**Phương thức, đường dẫn.** `PUT /api/ops/v1/parallel-groups/{groupCode}/normalization-rules`.
+
+**Quyền.** `PERM-18-migration`.
+
+**FR hiện thực.** FR-18-067.
+
+**Tham số.** `groupCode` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `NormalizationRulesInput`; trường bắt buộc: `rules`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `NormalizationRuleSet`; trường bắt buộc: `version`, `id`, `groupCode`, `rules`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-007, ERR-18-008, ERR-18-010, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Thay toàn bộ bộ quy tắc chuẩn hóa của nhóm (`If-Match`, lý do); bộ so sánh nhận quy tắc mới, mẫu trong cửa sổ 7 ngày được tính lại và tỷ lệ khớp cập nhật.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+PUT /api/ops/v1/parallel-groups/NHOM-HO-TICH/normalization-rules
+If-Match: W/"3"
+
+{"rules": [{"kind": "IGNORE_FIELD", "path": "$.trangThai"}],
+ "reason": "Đích đã phục hồi sau sự cố mạng, xử lý theo phiếu VH-2026-118"}
+```
+
+```http
+HTTP/1.1 200 OK
+ETag: W/"3"
+
+{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3,
+ "createdAt": "2026-11-27T09:15:02+07:00", "createdBy": "nguyen.van.an",
+ "updatedAt": "2026-11-27T09:15:02+07:00", "updatedBy": "tran.thi.binh",
+ "groupCode": "NHOM-HO-TICH", "rules": [{"kind": "IGNORE_FIELD", "path": "$.trangThai"}],
+ "recomputedSamples": 12, "matchRate": 99.6}
+```
+
+#### API-18-185 · Xác nhận một mục kiểm tay của danh sách cắt chuyển kèm bằng chứng
+
+::: dac-ta
+**Mục đích.** Xác nhận một mục kiểm tay của danh sách cắt chuyển kèm bằng chứng.
+
+**Phương thức, đường dẫn.** `POST /api/ops/v1/parallel-groups/{groupCode}/checklist/{itemCode}:confirm`.
+
+**Quyền.** `PERM-18-migration`.
+
+**FR hiện thực.** FR-18-068.
+
+**Tham số.** `groupCode` (path, string, bắt buộc); `itemCode` (path, ChecklistItemCode, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ChecklistConfirmInput`; trường bắt buộc: `evidence`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `CutoverChecklistItem`; trường bắt buộc: `itemCode`, `description`, `checkKind`, `status`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `428`, `429`, `503`; mã lỗi của thao tác: ERR-18-001, ERR-18-003, ERR-18-004, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-067, ERR-18-071 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Xác nhận mục kiểm tay (`checkKind = MANUAL`) kèm bằng chứng; mục tự động trả ERR-18-006; mục chuyển `PASSED`, ghi người xác nhận vào sổ cắt chuyển.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/ops/v1/parallel-groups/NHOM-HO-TICH/checklist/STAKEHOLDER_SIGNOFF:confirm
+If-Match: W/"3"
+Idempotency-Key: dh-2026-11-27-0001
+
+{"evidence": "Biên bản họp ngày 25/11/2026",
+ "comment": "Đã đối chiếu với quy trình vận hành của tỉnh"}
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"itemCode": "DLQ_EMPTY", "description": "Mô tả ngắn phục vụ vận hành tỉnh",
+ "checkKind": "AUTO", "status": "PENDING", "evidence": "Biên bản họp ngày 25/11/2026",
+ "checkedBy": "le.thi.chi", "checkedAt": "2026-11-27T09:15:02+07:00"}
 ```
 
 ### 14.10. Quản trị và báo cáo
@@ -9249,7 +9540,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `OpsReport`; trường bắt buộc: `version`, `id`, `reportCode`, `period`, `from`, `to`, `status`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-072 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-006, ERR-18-008, ERR-18-009, ERR-18-010, ERR-18-071, ERR-18-072 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Dựng báo cáo vận hành cho kỳ chọn. Quyền PERM-18-admin; FR-18-071.
 :::
@@ -9314,6 +9605,86 @@ HTTP/1.1 200 OK
  "components": [{"component": "dlq-ingest", "status": "UP"}],
  "checkedAt": "2026-11-27T09:15:02+07:00"}
 ```
+
+#### API-18-186 · Danh sách sự kiện inbox `FAILED` theo mô-đun, lỗi cuối, số lần thử
+
+::: dac-ta
+**Mục đích.** Danh sách sự kiện inbox `FAILED` theo mô-đun, lỗi cuối, số lần thử.
+
+**Phương thức, đường dẫn.** `GET /api/ops/v1/inbox-failures`.
+
+**Quyền.** `PERM-18-read`.
+
+**FR hiện thực.** FR-18-072.
+
+**Tham số.** `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn); `module` (query, string, tùy chọn); `consumer` (query, string, tùy chọn); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `InboxFailurePage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `429`; mã lỗi của thao tác: ERR-18-003, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Sự kiện inbox `FAILED` theo mô-đun để người vận hành biết sự kiện nào chưa xử lý được (FR-18-072 bước 4); chỉ siêu dữ liệu, không nội dung sự kiện.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+GET /api/ops/v1/inbox-failures
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"items": [{"id": "0190a1b2-c3d4-7e5f-8a6b-b80bb7740288", "version": 3, "module": "ph01_onboarding",
+   "consumer": "giá trị mẫu", "eventId": "giá trị mẫu", "sourceTopic": "giá trị mẫu",
+   "attempts": 3, "lastError": "giá trị mẫu", "lastAttemptAt": "2026-11-27T09:15:02+07:00",
+   "receivedAt": "2026-11-27T09:15:02+07:00"}], "page": 0, "size": 20, "totalElements": 1}
+```
+
+#### API-18-187 · Bật, tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc
+
+::: dac-ta
+**Mục đích.** Bật, tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc.
+
+**Phương thức, đường dẫn.** `POST /api/ops/v1/degraded-mode`.
+
+**Quyền.** `PERM-18-admin`.
+
+**FR hiện thực.** FR-18-072.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `DegradedModeInput`; trường bắt buộc: `readOnly`, `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `Health`; trường bắt buộc: `status`, `readOnly`, `components`, `checkedAt`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-18-003, ERR-18-007, ERR-18-008, ERR-18-009, ERR-18-010 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** PA bật hoặc tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc (ERR-18-071 không áp dụng). Ghi khóa `18.degraded.read-only`, phát EVT-18-29, ghi kiểm toán.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/ops/v1/degraded-mode
+Idempotency-Key: dh-2026-11-27-0001
+
+{"readOnly": true, "reason": "Đích đã phục hồi sau sự cố mạng, xử lý theo phiếu VH-2026-118"}
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"status": "UP", "readOnly": true, "readOnlyReason": "Bảo trì cụm pg-core",
+ "components": [{"component": "dlq-ingest", "status": "UP"}],
+ "checkedAt": "2026-11-27T09:15:02+07:00"}
+```
 <!-- gen:dac-ta:end -->
 
 ## Lịch sử phiên bản
@@ -9322,6 +9693,7 @@ Bảng dưới đây ghi các phiên bản của tài liệu.
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18 theo FRS 0.2: thêm API-18-181…188, `PERM-18-read` cho API-18-041, 043, 045, thân `action` của API-18-175, ERR-18-071 ở mọi API ghi, `SKIPPED` ở mục phát lại, câu thông báo chung của §9.1; đánh dấu mục 11.1 đã hấp thụ; `check_contracts.py` sạch 188 operation |
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 180 operation OpenAPI 3.1, 29 sự kiện và 13 kênh tiêu thụ AsyncAPI 3.0, quy ước RFC 9457, bốn mắt, DLQ hợp nhất, bốn API dùng chung; đối chiếu FRS §9.4 đủ mã, sạch Spectral và `check_contracts.py` |
 
 : Lịch sử phiên bản

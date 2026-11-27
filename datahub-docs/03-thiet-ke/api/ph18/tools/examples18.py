@@ -201,6 +201,7 @@ EX = {
     91: ({'type': 'ph01.ho-so.da-duyet', 'recipients': [{'kind': 'SYSTEM_CONTACT', 'ref': 'HTTT-QLVB:CHU_QUAN'}], 'variables': {'maHoSo': 'HS-0042', 'lienKet': '/ket-noi/ho-so/HS-0042'},
           'priority': 'NORMAL', 'sourceRef': 'onboarding:HS-0042'},
          {'messageId': uid('messageId'), 'status': 'QUEUED', 'duplicate': False, 'recipients': 2}),
+    175: ({'action': 'REQUEST', 'target': 'PARTIAL_CUTOVER', 'trafficPercent': 20, 'reason': 'Đạt ngưỡng khớp 7 ngày, cắt chuyển 20% theo kế hoạch tuần 49'}, None),
     150: ({'mergePlanId': uid('mergePlanId'), 'module': 'ph01_onboarding', 'sourceTenant': 'T67', 'targetTenant': 'T68', 'mappingRef': 'ph20/merge-plans/MP-0003/mappings/ph01',
            'dryRun': True}, None),
 }
@@ -222,7 +223,8 @@ def examples(n, req_s, resp_s, S):
 
 PATHX = {'key': '18.dlq.replay.batch-max', 'versionNo': 4, 'revisionNo': 1, 'year': 2026, 'flagKey': 'ff.ph04.moi', 'tenant': 'T68', 'errCode': 'ERR-04-101',
          'templateCode': 'ph01.ho-so.da-duyet', 'ns': '18.', 'entryRef': 'ENTRY-77', 'notificationId': 'all', 'sourceRef': 'onboarding:HS-0042',
-         'incidentCode': 'SC-2026-0007', 'planCode': 'DT-BUS-01', 'groupCode': 'NHOM-HO-TICH'}
+         'incidentCode': 'SC-2026-0007', 'planCode': 'DT-BUS-01', 'groupCode': 'NHOM-HO-TICH',
+         'itemCode': 'STAKEHOLDER_SIGNOFF', 'revision': 1}
 
 
 def path_example(pn, path):

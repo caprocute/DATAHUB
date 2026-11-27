@@ -26,7 +26,7 @@ CREATE TABLE ph18_ops.notification_template (
   CONSTRAINT ck_notification_template_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_notification_template_code UNIQUE (tenant_id, template_code),
   CONSTRAINT ck_notification_template_code CHECK (template_code ~ '^[a-z0-9]+(\.[a-z0-9-]+)+$'),
-  CONSTRAINT ck_notification_template_module CHECK (owner_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_template_module CHECK (owner_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_template_category CHECK (category IN ('TASK', 'JOB_RESULT', 'ALERT', 'INFO')),
   CONSTRAINT ck_notification_template_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[])
 );
@@ -111,7 +111,7 @@ CREATE TABLE ph18_ops.notification_rule (
   CONSTRAINT uq_notification_rule_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_notification_rule_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_notification_rule_code UNIQUE (tenant_id, rule_code),
-  CONSTRAINT ck_notification_rule_module CHECK (source_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_rule_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_rule_event CHECK (event_type ~ '^[a-z0-9-]+(\.[a-z0-9-]+)+\.v[0-9]+$'),
   CONSTRAINT ck_notification_rule_recipient CHECK (recipient_kind IN ('USER', 'GROUP', 'ROLE', 'SYSTEM_CONTACT', 'EVENT_FIELD', 'ON_CALL')),
   CONSTRAINT ck_notification_rule_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[]),
@@ -155,7 +155,7 @@ CREATE TABLE ph18_ops.notification_message (
   CONSTRAINT ck_notification_message_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_notification_message_key UNIQUE (tenant_id, caller_module, message_key),
   CONSTRAINT fk_notification_message_rule FOREIGN KEY (rule_id) REFERENCES ph18_ops.notification_rule (id),
-  CONSTRAINT ck_notification_message_module CHECK (caller_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_message_module CHECK (caller_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_message_recipient CHECK (jsonb_typeof(recipient_ref) = 'array' AND jsonb_array_length(recipient_ref) BETWEEN 1 AND 500),
   CONSTRAINT ck_notification_message_category CHECK (category IN ('TASK', 'JOB_RESULT', 'ALERT', 'INFO')),
   CONSTRAINT ck_notification_message_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[]),
@@ -219,7 +219,7 @@ CREATE TRIGGER tg_notification_delivery_touch BEFORE UPDATE ON ph18_ops.notifica
 CREATE TRIGGER tg_notification_delivery_immutable BEFORE UPDATE ON ph18_ops.notification_delivery FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('message_id', 'channel', 'recipient_user_id', 'recipient_hash');
 CREATE TRIGGER tg_notification_delivery_fsm_status BEFORE UPDATE ON ph18_ops.notification_delivery FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'QUEUED>SENT,QUEUED>FAILED,QUEUED>SUPPRESSED,SENT>DELIVERED,SENT>BOUNCED,SENT>FAILED,DELIVERED>BOUNCED');
 CALL ph18_ops.p_enable_rls('ph18_ops.notification_delivery', false);
-COMMENT ON TABLE ph18_ops.notification_delivery IS 'EN-18-23 Lần gửi theo người nhận và kênh (nhật ký gửi): địa chỉ chỉ lưu dạng che và băm, trạng thái QUEUED sang SENT sang DELIVERED, BOUNCED hoặc FAILED; SUPPRESSED khi tùy chọn người dùng, giờ yên lặng, danh sách chặn. Kênh IN_APP là hộp thông báo DD-13 (read_at). Phân vùng tháng theo queued_at, giữ 18.notify.delivery-retention-days.';
+COMMENT ON TABLE ph18_ops.notification_delivery IS 'EN-18-23 Lần gửi theo người nhận và kênh (nhật ký gửi): địa chỉ chỉ lưu dạng che và băm, trạng thái QUEUED sang SENT sang DELIVERED, BOUNCED hoặc FAILED; SUPPRESSED khi tùy chọn người dùng, giờ yên lặng, danh sách chặn. Kênh IN_APP là hộp thông báo DD-13 (read_at). Phân vùng tháng theo queued_at, giữ 18.notify.log-retention-days.';
 --rollback DROP TABLE IF EXISTS ph18_ops.notification_delivery CASCADE;
 
 --changeset ph18:ph18-0350-user-notification-pref splitStatements:false

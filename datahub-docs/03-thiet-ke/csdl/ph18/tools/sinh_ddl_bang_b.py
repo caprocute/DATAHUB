@@ -12,11 +12,11 @@ G_TASK.append(T("task_type", "EN-18-26",
      "default_due_hours integer", "reminder_offsets_hours integer[] NOT NULL DEFAULT '{}'", "required_permission varchar(64) NOT NULL", "deep_link_pattern varchar(500) NOT NULL",
      "four_eyes boolean NOT NULL DEFAULT false", "enabled boolean NOT NULL DEFAULT true"],
     [("uq_task_type_code", "UNIQUE (tenant_id, type_code)"),
-     chk("task_type", "code", "type_code ~ '^ph[0-9]{2}\\.[a-z0-9-]+$' AND upper(left(type_code, 4)) = owner_module"),
+     chk("task_type", "code", "type_code ~ '^ph[0-9]{2}\\.[a-z0-9-]+$' AND 'PH-' || substr(type_code, 3, 2) = owner_module"),
      chk("task_type", "module", f"owner_module ~ '{MODULE_RE}'"), chk("task_type", "perm", "required_permission ~ '^PERM-[0-9]{2}-[a-z0-9-]+$'"),
      chk("task_type", "link", "deep_link_pattern ~ '^/[a-z0-9/_{}?=&.-]*$'"), chk("task_type", "due", "default_due_hours IS NULL OR default_due_hours BETWEEN 1 AND 8760")],
     rls="common", trig=[("immutable", ["type_code", "owner_module"])],
-    sample={"type_code": "'ph01.approve-onboarding'", "owner_module": "'PH01'", "title": "'Duyệt kết nạp HTTT'", "required_permission": "'PERM-01-approve'",
+    sample={"type_code": "'ph01.approve-onboarding'", "owner_module": "'PH-01'", "title": "'Duyệt kết nạp HTTT'", "required_permission": "'PERM-01-approve'",
             "deep_link_pattern": "'/ket-nap/ho-so/{ma}'"}))
 
 G_TASK.append(T("task_item", "EN-18-27",
@@ -71,7 +71,7 @@ G_TASK.append(T("maintenance_window", "EN-18-31",
      "status varchar(12) NOT NULL DEFAULT 'PLANNED'", "approved_by varchar(64)", "approved_at timestamptz"],
     [("uq_maintenance_window_code", "UNIQUE (tenant_id, window_code)"),
      chk("maintenance_window", "kind", f"kind IN {X('MAINTENANCE', 'FREEZE')}"), chk("maintenance_window", "module", f"scope_module IS NULL OR scope_module ~ '{MODULE_RE}'"),
-     chk("maintenance_window", "env", "environment IN ('PROD', 'STAGING', 'ALL')"), chk("maintenance_window", "period", "ends_at > starts_at"),
+     chk("maintenance_window", "env", "environment IN ('PROD', 'STAGING', 'TEST', 'ALL')"), chk("maintenance_window", "period", "ends_at > starts_at"),
      chk("maintenance_window", "reason", reason("reason")),
      chk("maintenance_window", "status", f"status IN {X('PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED')}"), four_eyes("maintenance_window", "approved_by"),
      chk("maintenance_window", "approved", "status IN ('PLANNED', 'CANCELLED') OR approved_by IS NOT NULL")],
@@ -87,24 +87,24 @@ G_TASK.append(T("maintenance_window", "EN-18-31",
 G_INC = []
 G_INC.append(T("incident", "EN-18-32",
     "Hồ sơ sự cố vận hành mở từ sự kiện (EVT-13-04, 05, DLQ vượt ngưỡng, sao lưu lỗi) hoặc tạo tay: mức độ, nhóm, chỉ huy, người xử lý, mốc thời gian, cờ dữ liệu cá nhân và tham chiếu PH-09 (INCIDENT_PH18, PH-09 giữ đồng hồ 72 giờ), nguyên nhân gốc và bài học khi đóng. Dòng COMMON là sự cố nền tảng.",
-    ["incident_no varchar(20) NOT NULL", "title varchar(255) NOT NULL", "severity varchar(4) NOT NULL", "category varchar(24) NOT NULL", "origin varchar(8) NOT NULL",
+    ["incident_no varchar(20) NOT NULL", "title varchar(255) NOT NULL", "severity varchar(4) NOT NULL", "category varchar(16) NOT NULL", "origin varchar(8) NOT NULL",
      "source_event_ref varchar(255)", "status varchar(16) NOT NULL DEFAULT 'OPEN'", "commander varchar(64)", "assignee varchar(64)",
      "detected_at timestamptz NOT NULL DEFAULT now()", "acknowledged_at timestamptz", "mitigated_at timestamptz", "resolved_at timestamptz", "closed_at timestamptz",
-     "involves_personal_data boolean NOT NULL DEFAULT false", "ph09_breach_ref varchar(64)", "ph09_reported_at timestamptz", "impact_summary text",
+     "has_personal_data boolean NOT NULL DEFAULT false", "ph09_breach_ref varchar(64)", "ph09_reported_at timestamptz", "impact_summary text",
      "root_cause text", "lessons_learned text"],
     [("uq_incident_no", "UNIQUE (tenant_id, incident_no)"),
      chk("incident", "no", "incident_no ~ '^INC-[0-9]{4}-[0-9]{6}$'"), chk("incident", "severity", "severity IN ('SEV1', 'SEV2', 'SEV3', 'SEV4')"),
-     chk("incident", "category", f"category IN {X('DLQ_THRESHOLD', 'BACKUP_FAILURE', 'SECURITY_ALERT', 'AUDIT_CHAIN', 'SERVICE_DEGRADATION', 'MIGRATION', 'RESTORE', 'OTHER')}"),
+     chk("incident", "category", f"category IN {X('AVAILABILITY', 'DATA_INTEGRITY', 'SECURITY', 'PERFORMANCE', 'OTHER')}"),
      chk("incident", "origin", "origin IN ('EVENT', 'MANUAL')"), chk("incident", "event", "origin <> 'EVENT' OR source_event_ref IS NOT NULL"),
      chk("incident", "status", f"status IN {X(*ST_INCIDENT)}"),
      chk("incident", "closed", "status <> 'CLOSED' OR (closed_at IS NOT NULL AND coalesce(char_length(btrim(root_cause)), 0) >= 20 AND coalesce(char_length(btrim(lessons_learned)), 0) >= 20)"),
      chk("incident", "resolved", "status NOT IN ('RESOLVED', 'CLOSED') OR resolved_at IS NOT NULL"),
-     chk("incident", "ph09", "NOT involves_personal_data OR status <> 'CLOSED' OR ph09_breach_ref IS NOT NULL")],
+     chk("incident", "ph09", "NOT has_personal_data OR status <> 'CLOSED' OR ph09_breach_ref IS NOT NULL")],
     idx=["CREATE INDEX ix_incident_open ON @incident (tenant_id, status, severity, detected_at DESC) WHERE status <> 'CLOSED';"],
     common_ok=True, trig=[("immutable", ["incident_no", "origin", "detected_at"]),
                          trans("status", ["OPEN>INVESTIGATING", "OPEN>RESOLVED", "INVESTIGATING>MITIGATED", "INVESTIGATING>RESOLVED", "MITIGATED>RESOLVED",
                                           "MITIGATED>INVESTIGATING", "RESOLVED>INVESTIGATING", "RESOLVED>CLOSED"])],
-    sample={"incident_no": "'INC-2026-000001'", "title": "'DLQ luồng hồ sơ vượt ngưỡng'", "severity": "'SEV3'", "category": "'DLQ_THRESHOLD'", "origin": "'MANUAL'"}))
+    sample={"incident_no": "'INC-2026-000001'", "title": "'DLQ luồng hồ sơ vượt ngưỡng'", "severity": "'SEV3'", "category": "'AVAILABILITY'", "origin": "'MANUAL'"}))
 
 G_INC.append(T("incident_timeline", "EN-18-33",
     "Mốc thời gian của sự cố: đổi trạng thái, ghi chú, gán, thông báo, chuyển PH-09, liên kết, hành động. Chỉ thêm.",
@@ -122,7 +122,7 @@ G_INC.append(T("incident_link", "EN-18-34",
     [("uq_incident_link", "UNIQUE (tenant_id, incident_id, link_kind, target_ref)"), fk("incident_link", "incident_id", "incident", cascade=True),
      chk("incident_link", "kind", f"link_kind IN {X('DLQ_MESSAGE', 'DLQ_GROUP', 'ALERT', 'BACKUP_RUN', 'MIGRATION_RUN', 'TRACE', 'PH09_BREACH', 'EXTERNAL')}"),
      chk("incident_link", "module", f"target_module ~ '{MODULE_RE}' OR target_module = 'EXT'")],
-    common_ok=True, app_delete=True, sample={"link_kind": "'DLQ_GROUP'", "target_module": "'PH18'", "target_ref": "'grp-0001'"}))
+    common_ok=True, app_delete=True, sample={"link_kind": "'DLQ_GROUP'", "target_module": "'PH-18'", "target_ref": "'grp-0001'"}))
 
 # ---------------------------------------------------------------------------------------------
 # 18-0070 Sao lưu, khôi phục, xuất tenant, sáp nhập (khối H)
@@ -162,11 +162,11 @@ G_BACKUP.append(T("restore_verification", "EN-18-37",
     ["object_id uuid NOT NULL", "backup_run_id uuid", "verified_at timestamptz NOT NULL DEFAULT now()", "method varchar(20) NOT NULL", "outcome varchar(8) NOT NULL",
      "duration_seconds integer NOT NULL", "rto_met boolean", "rows_checked bigint", "details jsonb NOT NULL DEFAULT '{}'", "job_ref varchar(128)"],
     [fk("restore_verification", "object_id", "backup_object"), fk("restore_verification", "backup_run_id", "backup_run"),
-     chk("restore_verification", "method", f"method IN {X('PITR_TEMP_CLUSTER', 'TENANT_REIMPORT', 'OBJECT_SAMPLE', 'OPENBAO_RESTORE', 'VELERO_RESTORE', 'CHAIN_INTEGRITY', 'BUNDLE_CHECK')}"),
+     chk("restore_verification", "method", f"method IN {X('RESTORE_LATEST', 'PITR_RANDOM', 'TENANT_IMPORT', 'SAMPLE_FILES', 'HASH_CHAIN')}"),
      chk("restore_verification", "outcome", "outcome IN ('PASSED', 'FAILED')"), chk("restore_verification", "duration", "duration_seconds >= 0")],
     idx=["CREATE INDEX ix_restore_verification_object ON @restore_verification (tenant_id, object_id, verified_at DESC);"],
     common_ok=True, append_only=True, worker="i",
-    sample={"method": "'TENANT_REIMPORT'", "outcome": "'PASSED'", "duration_seconds": "1200"}))
+    sample={"method": "'TENANT_IMPORT'", "outcome": "'PASSED'", "duration_seconds": "1200"}))
 
 RESTORE_STEPS = [(1, "APPROVAL"), (2, "BUILD_TEMP_CLUSTER"), (3, "EXTRACT_TENANT"), (4, "SUSPEND_TENANT"), (5, "REPLACE_DATA"), (6, "RESTORE_OTHER_STORES"),
                  (7, "AUDIT_RECORD"), (8, "VERIFY_AND_REOPEN")]
@@ -174,7 +174,7 @@ G_BACKUP.append(T("tenant_restore_request", "EN-18-38",
     "Yêu cầu khôi phục một tenant (RBK-04, D03-09 §8.5): thời điểm đích, phạm vi (toàn tenant hay một số schema), lý do; TA tạo, PA duyệt bốn mắt; dh-tenant-restore chạy tám bước, tenant SUSPENDED khi thay, phát ops.tenant.restored; mục tiêu ≤ 4 giờ cho tenant ≤ 200 GB. Mỗi tenant một yêu cầu đang hoạt động.",
     ["request_no varchar(24) NOT NULL", "restore_point timestamptz NOT NULL", "scope varchar(12) NOT NULL", "schemas varchar(32)[] NOT NULL DEFAULT '{}'",
      "reason text NOT NULL", "status varchar(20) NOT NULL DEFAULT 'DRAFT'", "requested_by varchar(64) NOT NULL", "approved_by varchar(64)", "approved_at timestamptz",
-     "rejected_reason varchar(1000)", "current_step smallint NOT NULL DEFAULT 0", "estimated_size_gb numeric(10,2)", "job_name varchar(128)",
+     "rejected_reason varchar(1000)", "current_step smallint NOT NULL DEFAULT 0", "estimated_size_gb numeric(10,2)", "job_name varchar(128)", "heartbeat_at timestamptz", "checkpoint jsonb",
      "tenant_suspended_at timestamptz", "tenant_resumed_at timestamptz", "started_at timestamptz", "finished_at timestamptz", "rows_replaced bigint"],
     [("uq_tenant_restore_request_no", "UNIQUE (tenant_id, request_no)"),
      chk("tenant_restore_request", "scope", "scope IN ('FULL_TENANT', 'SCHEMAS')"),
@@ -205,35 +205,35 @@ G_BACKUP.append(T("tenant_restore_step", "EN-18-39",
 
 G_BACKUP.append(T("tenant_export_job", "EN-18-40",
     "Lần xuất dữ liệu tenant bằng dh-tenant-export: bàn giao khi DECOMMISSIONED, chuyển ô CSDL, SHARED sang DEDICATED_DB, sáp nhập (PH-20 gọi) hoặc theo yêu cầu; định dạng, phân hệ, tệp ra ở kho sao lưu, tổng kiểm tra, hạn tải.",
-    ["purpose varchar(24) NOT NULL", "requested_by_module varchar(8) NOT NULL DEFAULT 'PH20'", "ph20_request_ref varchar(64)", "export_format varchar(8) NOT NULL DEFAULT 'PG_COPY'",
+    ["purpose varchar(24) NOT NULL", "requested_by_module varchar(8) NOT NULL DEFAULT 'PH-20'", "ph20_request_ref varchar(64)", "export_format varchar(8) NOT NULL DEFAULT 'PG_COPY'",
      "modules varchar(8)[] NOT NULL DEFAULT '{}'", "status varchar(24) NOT NULL DEFAULT 'QUEUED'", "output_location varchar(500)", "sha256 char(64)", "size_bytes bigint",
-     "expires_at timestamptz", "started_at timestamptz", "finished_at timestamptz", "job_name varchar(128)", "error_message varchar(2000)"],
-    [chk("tenant_export_job", "purpose", f"purpose IN {X('DECOMMISSION_HANDOVER', 'CELL_MOVE', 'DEDICATED_DB', 'MERGE', 'ON_REQUEST')}"),
-     chk("tenant_export_job", "module", f"requested_by_module ~ '{MODULE_RE}'"), chk("tenant_export_job", "format", "export_format IN ('PG_COPY', 'JSONL', 'CSV')"),
+     "expires_at timestamptz", "started_at timestamptz", "finished_at timestamptz", "job_name varchar(128)", "heartbeat_at timestamptz", "checkpoint jsonb", "error_message varchar(2000)"],
+    [chk("tenant_export_job", "purpose", f"purpose IN {X('HANDOVER', 'CELL_MOVE', 'DEDICATED_DB', 'ARCHIVE')}"),
+     chk("tenant_export_job", "module", f"requested_by_module ~ '{MODULE_RE}'"), chk("tenant_export_job", "format", "export_format IN ('PG_COPY', 'PG_DUMP')"),
      chk("tenant_export_job", "status", f"status IN {X(*ST_JOB)}"), chk("tenant_export_job", "sha", "sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'"),
      chk("tenant_export_job", "done", "status <> 'SUCCEEDED' OR (output_location IS NOT NULL AND sha256 IS NOT NULL)")],
     idx=["CREATE INDEX ix_tenant_export_job_status ON @tenant_export_job (tenant_id, status, created_at DESC);"],
     worker="rw", trig=[("immutable", ["purpose", "export_format"]),
                        trans("status", ["QUEUED>RUNNING", "QUEUED>CANCELLED", "RUNNING>SUCCEEDED", "RUNNING>SUCCEEDED_WITH_ERRORS", "RUNNING>FAILED", "RUNNING>CANCELLED"])],
-    sample={"purpose": "'ON_REQUEST'"}))
+    sample={"purpose": "'ARCHIVE'"}))
 
 G_BACKUP.append(T("dr_drill", "EN-18-41",
     "Ghi nhận diễn tập DR và PITR toàn cụm (PA thực hiện ngoài ứng dụng, PH-18 chỉ ghi nhận): loại, thời điểm, kết quả, RPO và RTO đạt được, phát hiện, hành động khắc phục, biên bản ở kho tài liệu.",
     ["drill_code varchar(32) NOT NULL", "drill_kind varchar(20) NOT NULL", "scheduled_at timestamptz", "performed_at timestamptz NOT NULL", "performed_by varchar(64) NOT NULL",
      "outcome varchar(8) NOT NULL", "rpo_achieved_minutes integer", "rto_achieved_minutes integer", "findings text", "actions text", "report_ref varchar(255)"],
     [("uq_dr_drill_code", "UNIQUE (tenant_id, drill_code)"),
-     chk("dr_drill", "kind", f"drill_kind IN {X('SITE_FAILOVER', 'PITR_CLUSTER', 'FULL_RESTORE', 'TENANT_RESTORE', 'BACKUP_RESTORE_TEST')}"),
-     chk("dr_drill", "outcome", "outcome IN ('PASSED', 'PARTIAL', 'FAILED')"),
+     chk("dr_drill", "kind", f"drill_kind IN {X('DR_SWITCHOVER', 'RBK_03', 'PITR_CLUSTER', 'TABLETOP')}"),
+     chk("dr_drill", "outcome", "outcome IN ('PASSED', 'PASSED_WITH_ISSUES', 'FAILED')"),
      chk("dr_drill", "findings", "outcome = 'PASSED' OR coalesce(char_length(btrim(findings)), 0) >= 20")],
     common_ok=True, trig=[("immutable", ["drill_code", "drill_kind", "performed_at"])],
-    sample={"drill_code": "'DR-2026-Q4'", "drill_kind": "'TENANT_RESTORE'", "performed_at": "now()", "performed_by": "'pa-an'", "outcome": "'PASSED'"}))
+    sample={"drill_code": "'DR-2026-Q4'", "drill_kind": "'RBK_03'", "performed_at": "now()", "performed_by": "'pa-an'", "outcome": "'PASSED'"}))
 
 G_BACKUP.append(T("merge_transfer", "EN-18-55",
     "Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; PH-18 báo tiến độ về PH-20 (participants/{module}:report). Dòng thuộc tenant đích. Mỗi kế hoạch, phân hệ chỉ một lần chạy thật đang hoạt động hoặc đã xong.",
     ["merge_plan_id varchar(64) NOT NULL", "module varchar(8) NOT NULL", "source_tenant varchar(16) NOT NULL", "target_tenant varchar(16) NOT NULL", "mapping_ref varchar(255) NOT NULL",
      "dry_run boolean NOT NULL DEFAULT true", "status varchar(24) NOT NULL DEFAULT 'QUEUED'", "progress_percent numeric(5,2) NOT NULL DEFAULT 0",
      "rows_total bigint", "rows_copied bigint NOT NULL DEFAULT 0", "rows_skipped bigint NOT NULL DEFAULT 0", "rows_failed bigint NOT NULL DEFAULT 0",
-     "export_job_id uuid", "job_name varchar(128)", "started_at timestamptz", "finished_at timestamptz", "last_reported_at timestamptz",
+     "export_job_id uuid", "job_name varchar(128)", "heartbeat_at timestamptz", "checkpoint jsonb", "started_at timestamptz", "finished_at timestamptz", "last_reported_at timestamptz",
      "report_status varchar(16) NOT NULL DEFAULT 'PENDING'", "error_message varchar(2000)"],
     [fk("merge_transfer", "export_job_id", "tenant_export_job"),
      chk("merge_transfer", "module", f"module ~ '{MODULE_RE}'"),
@@ -247,13 +247,13 @@ G_BACKUP.append(T("merge_transfer", "EN-18-55",
     worker="rw", trig=[("immutable", ["merge_plan_id", "module", "source_tenant", "target_tenant", "mapping_ref", "dry_run"]),
                        trans("status", ["QUEUED>RUNNING", "QUEUED>CANCELLED", "RUNNING>SUCCEEDED", "RUNNING>SUCCEEDED_WITH_ERRORS", "RUNNING>FAILED", "RUNNING>CANCELLED"])],
     ccomment={"mapping_ref": "Tham chiếu bảng ánh xạ mã của kế hoạch sáp nhập do PH-20 giữ (không chép nội dung)."},
-    sample={"merge_plan_id": "'MP-2026-0001'", "module": "'PH07'", "source_tenant": "'T91'", "target_tenant": "'T90'", "mapping_ref": "'mp-2026-0001/ph07'"}))
+    sample={"merge_plan_id": "'MP-2026-0001'", "module": "'PH-07'", "source_tenant": "'T91'", "target_tenant": "'T90'", "mapping_ref": "'mp-2026-0001/ph07'"}))
 
 # ---------------------------------------------------------------------------------------------
 # 18-0080 Di trú hệ cũ và chạy song song (khối I)
 # ---------------------------------------------------------------------------------------------
 OBJ_KINDS = ("CATALOG", "SYSTEM", "API", "PLAN", "SUBSCRIPTION", "TOPIC", "PUBLISHER", "SUBSCRIBER", "FLOW", "TRANSACTION")
-OBJ_MAP = "(object_kind = 'CATALOG' AND target_module = 'PH07') OR (object_kind = 'SYSTEM' AND target_module = 'PH01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH02', 'PH03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH10') OR (object_kind = 'FLOW' AND target_module = 'PH04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH19')"
+OBJ_MAP = "(object_kind = 'CATALOG' AND target_module = 'PH-07') OR (object_kind = 'SYSTEM' AND target_module = 'PH-01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH-02', 'PH-03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH-10') OR (object_kind = 'FLOW' AND target_module = 'PH-04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH-19')"
 G_MIG = []
 G_MIG.append(T("legacy_source", "EN-18-42",
     "Nguồn hệ cũ (IF-07): loại hệ (Bus, Tooling, Hub, APIM, Danh mục Aita, PayGov, NGSP), URL JDBC không kèm thông tin đăng nhập, tham chiếu bí mật OpenBao kv/dh/{tenant}/..., xác nhận kết nối chỉ đọc. Thông tin xác thực không di trú (FR-00-093).",
@@ -287,16 +287,16 @@ G_MIG.append(T("migration_plan_item", "EN-18-44",
     [("uq_migration_plan_item_seq", "UNIQUE (tenant_id, plan_id, seq_no)"), ("uq_migration_plan_item_kind", "UNIQUE (tenant_id, plan_id, object_kind)"),
      fk("migration_plan_item", "plan_id", "migration_plan"),
      chk("migration_plan_item", "kind", f"object_kind IN {X(*OBJ_KINDS)}"), chk("migration_plan_item", "target", OBJ_MAP),
-     chk("migration_plan_item", "api", "target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 3, 2)"),
+     chk("migration_plan_item", "api", "target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 4, 2)"),
      chk("migration_plan_item", "depends", f"depends_on <@ ARRAY{list(OBJ_KINDS)}::varchar(12)[] AND NOT (object_kind = ANY (depends_on))"),
      chk("migration_plan_item", "batch", "batch_size BETWEEN 1 AND 10000")],
     worker="r", trig=[("immutable", ["plan_id", "object_kind", "target_module"])],
-    sample={"seq_no": "1", "object_kind": "'API'", "target_module": "'PH02'", "converter_code": "'apim-api-v1'", "source_query_ref": "'apim.api-list'", "target_api": "'API-02-061'"}))
+    sample={"seq_no": "1", "object_kind": "'API'", "target_module": "'PH-02'", "converter_code": "'apim-api-v1'", "source_query_ref": "'apim.api-list'", "target_api": "'API-02-061'"}))
 
 G_MIG.append(T("migration_run", "EN-18-45",
     "Lần chạy di trú: DRY_RUN không ghi, REAL ghi qua API nhập của PH đích và cần bốn mắt (PENDING_APPROVAL trước QUEUED); idempotent nên chạy lại không tạo bản trùng; worker dh-migrate là Job K8s ở dh-batch; bộ đếm mục. Mỗi kế hoạch một lần chạy thật đang chạy.",
     ["plan_id uuid NOT NULL", "run_no integer NOT NULL", "run_mode varchar(8) NOT NULL", "status varchar(24) NOT NULL", "requested_by varchar(64) NOT NULL",
-     "approved_by varchar(64)", "approved_at timestamptz", "rerun_of_run_id uuid", "job_name varchar(128)", "started_at timestamptz", "finished_at timestamptz",
+     "approved_by varchar(64)", "approved_at timestamptz", "rerun_of_run_id uuid", "job_name varchar(128)", "heartbeat_at timestamptz", "checkpoint jsonb", "started_at timestamptz", "finished_at timestamptz",
      "items_total integer NOT NULL DEFAULT 0", "items_succeeded integer NOT NULL DEFAULT 0", "items_failed integer NOT NULL DEFAULT 0", "items_skipped integer NOT NULL DEFAULT 0"],
     [("uq_migration_run_no", "UNIQUE (tenant_id, plan_id, run_no)"), fk("migration_run", "plan_id", "migration_plan"),
      fk("migration_run", "rerun_of_run_id", "migration_run", name="fk_migration_run_rerun"),
@@ -325,13 +325,14 @@ G_MIG.append(T("migration_run_item_result", "EN-18-46",
     sample={"plan_item_id": "pg_temp.id('migration_plan_item')"}))
 
 G_MIG.append(T("migration_error_record", "EN-18-47",
-    "Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (sửa ở nguồn, sửa bằng quy tắc, chấp nhận bỏ qua).",
+    "Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (OPEN, FIXED_AT_SOURCE sửa ở nguồn, RULE_ADDED thêm quy tắc, WONT_MIGRATE không di trú kèm lý do; theo FRS FR-18-063, ghi qua API-18-182).",
     ["run_id uuid NOT NULL", "plan_item_id uuid NOT NULL", "source_record_ref varchar(255) NOT NULL", "error_code varchar(16) NOT NULL", "error_message varchar(2000) NOT NULL",
      "field_path varchar(255)", "source_snapshot jsonb", "fix_status varchar(16) NOT NULL DEFAULT 'OPEN'", "fixed_by varchar(64)", "fixed_at timestamptz", "fix_note varchar(1000)"],
     [fk("migration_error_record", "run_id", "migration_run", cascade=True), fk("migration_error_record", "plan_item_id", "migration_plan_item", name="fk_migration_error_record_item"),
      chk("migration_error_record", "code", "error_code ~ '^ERR-[0-9]{2}-[0-9]{3}$'"),
-     chk("migration_error_record", "fix", f"fix_status IN {X('OPEN', 'FIXED_AT_SOURCE', 'FIXED_BY_RULE', 'ACCEPTED_SKIP')}"),
+     chk("migration_error_record", "fix", f"fix_status IN {X('OPEN', 'FIXED_AT_SOURCE', 'RULE_ADDED', 'WONT_MIGRATE')}"),
      chk("migration_error_record", "fixed", "(fix_status = 'OPEN') = (fixed_at IS NULL)"),
+     chk("migration_error_record", "wont", "fix_status <> 'WONT_MIGRATE' OR coalesce(char_length(btrim(fix_note)), 0) >= 10"),
      chk("migration_error_record", "snapshot", "source_snapshot IS NULL OR NOT (source_snapshot ?| ARRAY['passwd', 'credential', 'client_secret', 'api_key'])")],
     idx=["CREATE INDEX ix_migration_error_record_run ON @migration_error_record (tenant_id, run_id, fix_status);"],
     worker="rw", trig=[("immutable", ["run_id", "plan_item_id", "source_record_ref", "error_code"])], ro_hide=["source_snapshot"],
@@ -354,23 +355,23 @@ G_MIG.append(T("migration_reconciliation", "EN-18-48",
             "target_checksum": "repeat('e', 64)", "matched": "true"}))
 
 G_MIG.append(T("credential_reissue_marker", "EN-18-49",
-    "Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-10; trạng thái chờ, đã báo, đã cấp lại, miễn. Điều kiện cắt chuyển CREDENTIALS_REISSUED.",
+    "Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-04, PH-07, PH-10, PH-19 (targetPh dạng PH-nn của FRS); trạng thái chờ, đã báo, đã cấp lại, miễn (WAIVED qua API-18-183 kèm lý do). Điều kiện cắt chuyển CREDENTIALS_REISSUED.",
     ["run_id uuid", "object_kind varchar(12) NOT NULL", "target_module varchar(8) NOT NULL", "target_ref varchar(255) NOT NULL", "legacy_ref varchar(255) NOT NULL",
      "credential_kind varchar(20) NOT NULL", "status varchar(12) NOT NULL DEFAULT 'PENDING'", "notified_at timestamptz", "reissued_at timestamptz", "reissued_ref varchar(255)",
      "waived_reason varchar(1000)"],
     [("uq_credential_reissue_marker", "UNIQUE (tenant_id, target_module, target_ref, credential_kind)"), fk("credential_reissue_marker", "run_id", "migration_run"),
      chk("credential_reissue_marker", "kind", f"object_kind IN {X(*OBJ_KINDS)}"),
-     chk("credential_reissue_marker", "module", "target_module IN ('PH01', 'PH02', 'PH03', 'PH10', 'PH19')"),
-     chk("credential_reissue_marker", "credential", f"credential_kind IN {X('OAUTH_CLIENT', 'MTLS_CERTIFICATE', 'BASIC_AUTH', 'APIM_SUBSCRIPTION', 'KAFKA_USER', 'PAYMENT_CHANNEL')}"),
+     chk("credential_reissue_marker", "module", "target_module IN ('PH-01', 'PH-02', 'PH-03', 'PH-04', 'PH-07', 'PH-10', 'PH-19')"),
+     chk("credential_reissue_marker", "credential", f"credential_kind IN {X('OAUTH_CLIENT', 'CLIENT_CERT', 'API_KEY_LEGACY', 'PASSWORD')}"),
      chk("credential_reissue_marker", "status", f"status IN {X('PENDING', 'NOTIFIED', 'REISSUED', 'WAIVED')}"),
      chk("credential_reissue_marker", "reissued", "status <> 'REISSUED' OR reissued_at IS NOT NULL"),
      chk("credential_reissue_marker", "waived", "status <> 'WAIVED' OR coalesce(char_length(btrim(waived_reason)), 0) >= 10")],
     idx=["CREATE INDEX ix_credential_reissue_marker_open ON @credential_reissue_marker (tenant_id, status) WHERE status IN ('PENDING', 'NOTIFIED');"],
     worker="rw", trig=[("immutable", ["target_module", "target_ref", "credential_kind", "legacy_ref"])],
-    sample={"object_kind": "'SUBSCRIPTION'", "target_module": "'PH03'", "target_ref": "'sub-0001'", "legacy_ref": "'apim:sub:77'", "credential_kind": "'OAUTH_CLIENT'"}))
+    sample={"object_kind": "'SUBSCRIPTION'", "target_module": "'PH-03'", "target_ref": "'sub-0001'", "legacy_ref": "'apim:sub:77'", "credential_kind": "'OAUTH_CLIENT'"}))
 
 G_MIG.append(T("parallel_run_group", "EN-18-50",
-    "Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.shadow.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.cutover.rollback-minutes).",
+    "Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.parallel.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.rollback-window-minutes).",
     ["group_code varchar(32) NOT NULL", "plan_id uuid", "title varchar(255) NOT NULL", "service_scope varchar(500) NOT NULL", "legacy_endpoint_ref varchar(255) NOT NULL",
      "datahub_endpoint_ref varchar(255) NOT NULL", "mirror_ratio_percent numeric(5,2) NOT NULL DEFAULT 100", "match_threshold_percent numeric(6,3) NOT NULL DEFAULT 99.5",
      "status varchar(16) NOT NULL DEFAULT 'PARALLEL'", "samples_total bigint NOT NULL DEFAULT 0", "samples_matched bigint NOT NULL DEFAULT 0", "match_rate numeric(6,3)",

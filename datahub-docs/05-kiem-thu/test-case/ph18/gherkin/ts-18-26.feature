@@ -30,3 +30,15 @@ Tính năng: TS-18-26 · Xử lý Việc của tôi, nhắc và quá hạn
     Khi `GET /me/tasks/TASK-KHONG-CO`.
     Và mở liên kết `/ca-nhan/viec/TASK-DONE-01`.
     Thì bước 1 `404` ERR-18-001. Bước 2 màn hiện câu thông báo ERR-18-048 và nút về danh sách.
+
+  @TC-18-166 @P2 @Dương @Âm @Lũy_đẳng
+  Kịch bản: TC-18-166 Nhận việc chuyển IN_PROGRESS, gọi lại không đổi, việc đã đóng bị từ chối
+    # Truy vết: FR-18-044 · API-18-181, 112 · EVT-18-14 · ERR-18-048, 001 · ERR-00-428 · UI-18-15
+    # Mục đích: Chứng minh FR-18-044 bước 3 qua API-18-181: nhận việc ghi người nhận, phát EVT-18-14, lũy đẳng khi gọi lại và từ chối việc đã đóng.
+    Biết T90; U-T90-TA2 có việc `TASK-OPEN-01` `OPEN` cùng nhóm nhận với U-T90-TA1; việc `TASK-DONE-01` đã `DONE`.
+    Khi TA2 `POST /me/tasks/TASK-OPEN-01:claim` kèm `If-Match`.
+    Và TA2 gửi lại bước 1 với ETag mới.
+    Và TA2 `POST /me/tasks/TASK-OPEN-01:claim` không có `If-Match`.
+    Và TA2 `POST /me/tasks/TASK-DONE-01:claim`.
+    Và TA1 mở UI-18-15.
+    Thì bước 1 `200` việc `IN_PROGRESS`, `claimedBy = U-T90-TA2`, EVT-18-14 phát một lần. Bước 2 `200` không đổi, không phát sự kiện mới. Bước 3 `428` ERR-00-428. Bước 4 `409` ERR-18-048. Bước 5 TA1 thấy việc ghi "TA2 đã nhận".

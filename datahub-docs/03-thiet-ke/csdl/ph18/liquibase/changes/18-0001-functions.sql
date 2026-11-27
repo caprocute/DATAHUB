@@ -161,19 +161,19 @@ DECLARE
   jt text := jsonb_typeof(p_value);
   v numeric;
 BEGIN
-  IF p_type = 'BOOLEAN' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
-  IF p_type IN ('INTEGER', 'DECIMAL') THEN
+  IF p_type = 'BOOL' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
+  IF p_type IN ('INT', 'DECIMAL') THEN
     IF jt <> 'number' THEN RETURN 'cần kiểu số'; END IF;
     v := (p_value #>> '{}')::numeric;
-    IF p_type = 'INTEGER' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
+    IF p_type = 'INT' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
     IF p_min IS NOT NULL AND v < p_min THEN RETURN format('nhỏ hơn miền %s', p_min); END IF;
     IF p_max IS NOT NULL AND v > p_max THEN RETURN format('lớn hơn miền %s', p_max); END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'number' AND v > (p_ceiling #>> '{}')::numeric THEN
       RETURN format('vượt trần nền tảng %s', p_ceiling);
     END IF;
   END IF;
-  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON', 'TIME_RANGE') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
-  IF p_type IN ('LIST_STRING', 'LIST_HOST') THEN
+  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
+  IF p_type IN ('LIST<STRING>', 'LIST<HOST>') THEN
     IF jt <> 'array' THEN RETURN 'cần danh sách'; END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'array' AND NOT p_ceiling @> p_value THEN
       RETURN 'danh sách vượt trần nền tảng';

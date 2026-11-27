@@ -95,8 +95,8 @@ CREATE TABLE ph18_ops.migration_plan_item (
   CONSTRAINT uq_migration_plan_item_kind UNIQUE (tenant_id, plan_id, object_kind),
   CONSTRAINT fk_migration_plan_item_plan FOREIGN KEY (tenant_id, plan_id) REFERENCES ph18_ops.migration_plan (tenant_id, id),
   CONSTRAINT ck_migration_plan_item_kind CHECK (object_kind IN ('CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION')),
-  CONSTRAINT ck_migration_plan_item_target CHECK ((object_kind = 'CATALOG' AND target_module = 'PH07') OR (object_kind = 'SYSTEM' AND target_module = 'PH01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH02', 'PH03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH10') OR (object_kind = 'FLOW' AND target_module = 'PH04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH19')),
-  CONSTRAINT ck_migration_plan_item_api CHECK (target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 3, 2)),
+  CONSTRAINT ck_migration_plan_item_target CHECK ((object_kind = 'CATALOG' AND target_module = 'PH-07') OR (object_kind = 'SYSTEM' AND target_module = 'PH-01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH-02', 'PH-03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH-10') OR (object_kind = 'FLOW' AND target_module = 'PH-04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH-19')),
+  CONSTRAINT ck_migration_plan_item_api CHECK (target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 4, 2)),
   CONSTRAINT ck_migration_plan_item_depends CHECK (depends_on <@ ARRAY['CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION']::varchar(12)[] AND NOT (object_kind = ANY (depends_on))),
   CONSTRAINT ck_migration_plan_item_batch CHECK (batch_size BETWEEN 1 AND 10000)
 );
@@ -119,6 +119,8 @@ CREATE TABLE ph18_ops.migration_run (
   approved_at     timestamptz,
   rerun_of_run_id uuid,
   job_name        varchar(128),
+  heartbeat_at    timestamptz,
+  checkpoint      jsonb,
   started_at      timestamptz,
   finished_at     timestamptz,
   items_total     integer NOT NULL DEFAULT 0,
@@ -214,15 +216,16 @@ CREATE TABLE ph18_ops.migration_error_record (
   CONSTRAINT fk_migration_error_record_run FOREIGN KEY (tenant_id, run_id) REFERENCES ph18_ops.migration_run (tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT fk_migration_error_record_item FOREIGN KEY (tenant_id, plan_item_id) REFERENCES ph18_ops.migration_plan_item (tenant_id, id),
   CONSTRAINT ck_migration_error_record_code CHECK (error_code ~ '^ERR-[0-9]{2}-[0-9]{3}$'),
-  CONSTRAINT ck_migration_error_record_fix CHECK (fix_status IN ('OPEN', 'FIXED_AT_SOURCE', 'FIXED_BY_RULE', 'ACCEPTED_SKIP')),
+  CONSTRAINT ck_migration_error_record_fix CHECK (fix_status IN ('OPEN', 'FIXED_AT_SOURCE', 'RULE_ADDED', 'WONT_MIGRATE')),
   CONSTRAINT ck_migration_error_record_fixed CHECK ((fix_status = 'OPEN') = (fixed_at IS NULL)),
+  CONSTRAINT ck_migration_error_record_wont CHECK (fix_status <> 'WONT_MIGRATE' OR coalesce(char_length(btrim(fix_note)), 0) >= 10),
   CONSTRAINT ck_migration_error_record_snapshot CHECK (source_snapshot IS NULL OR NOT (source_snapshot ?| ARRAY['passwd', 'credential', 'client_secret', 'api_key']))
 );
 CREATE INDEX ix_migration_error_record_run ON ph18_ops.migration_error_record (tenant_id, run_id, fix_status);
 CREATE TRIGGER tg_migration_error_record_touch BEFORE UPDATE ON ph18_ops.migration_error_record FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_migration_error_record_immutable BEFORE UPDATE ON ph18_ops.migration_error_record FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('run_id', 'plan_item_id', 'source_record_ref', 'error_code');
 CALL ph18_ops.p_enable_rls('ph18_ops.migration_error_record', false);
-COMMENT ON TABLE ph18_ops.migration_error_record IS 'EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (sửa ở nguồn, sửa bằng quy tắc, chấp nhận bỏ qua).';
+COMMENT ON TABLE ph18_ops.migration_error_record IS 'EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (OPEN, FIXED_AT_SOURCE sửa ở nguồn, RULE_ADDED thêm quy tắc, WONT_MIGRATE không di trú kèm lý do; theo FRS FR-18-063, ghi qua API-18-182).';
 --rollback DROP TABLE IF EXISTS ph18_ops.migration_error_record CASCADE;
 
 --changeset ph18:ph18-0600-migration-reconciliation splitStatements:false
@@ -291,8 +294,8 @@ CREATE TABLE ph18_ops.credential_reissue_marker (
   CONSTRAINT uq_credential_reissue_marker UNIQUE (tenant_id, target_module, target_ref, credential_kind),
   CONSTRAINT fk_credential_reissue_marker_run FOREIGN KEY (tenant_id, run_id) REFERENCES ph18_ops.migration_run (tenant_id, id),
   CONSTRAINT ck_credential_reissue_marker_kind CHECK (object_kind IN ('CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION')),
-  CONSTRAINT ck_credential_reissue_marker_module CHECK (target_module IN ('PH01', 'PH02', 'PH03', 'PH10', 'PH19')),
-  CONSTRAINT ck_credential_reissue_marker_credential CHECK (credential_kind IN ('OAUTH_CLIENT', 'MTLS_CERTIFICATE', 'BASIC_AUTH', 'APIM_SUBSCRIPTION', 'KAFKA_USER', 'PAYMENT_CHANNEL')),
+  CONSTRAINT ck_credential_reissue_marker_module CHECK (target_module IN ('PH-01', 'PH-02', 'PH-03', 'PH-04', 'PH-07', 'PH-10', 'PH-19')),
+  CONSTRAINT ck_credential_reissue_marker_credential CHECK (credential_kind IN ('OAUTH_CLIENT', 'CLIENT_CERT', 'API_KEY_LEGACY', 'PASSWORD')),
   CONSTRAINT ck_credential_reissue_marker_status CHECK (status IN ('PENDING', 'NOTIFIED', 'REISSUED', 'WAIVED')),
   CONSTRAINT ck_credential_reissue_marker_reissued CHECK (status <> 'REISSUED' OR reissued_at IS NOT NULL),
   CONSTRAINT ck_credential_reissue_marker_waived CHECK (status <> 'WAIVED' OR coalesce(char_length(btrim(waived_reason)), 0) >= 10)
@@ -301,7 +304,7 @@ CREATE INDEX ix_credential_reissue_marker_open ON ph18_ops.credential_reissue_ma
 CREATE TRIGGER tg_credential_reissue_marker_touch BEFORE UPDATE ON ph18_ops.credential_reissue_marker FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_credential_reissue_marker_immutable BEFORE UPDATE ON ph18_ops.credential_reissue_marker FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('target_module', 'target_ref', 'credential_kind', 'legacy_ref');
 CALL ph18_ops.p_enable_rls('ph18_ops.credential_reissue_marker', false);
-COMMENT ON TABLE ph18_ops.credential_reissue_marker IS 'EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-10; trạng thái chờ, đã báo, đã cấp lại, miễn. Điều kiện cắt chuyển CREDENTIALS_REISSUED.';
+COMMENT ON TABLE ph18_ops.credential_reissue_marker IS 'EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-04, PH-07, PH-10, PH-19 (targetPh dạng PH-nn của FRS); trạng thái chờ, đã báo, đã cấp lại, miễn (WAIVED qua API-18-183 kèm lý do). Điều kiện cắt chuyển CREDENTIALS_REISSUED.';
 --rollback DROP TABLE IF EXISTS ph18_ops.credential_reissue_marker CASCADE;
 
 --changeset ph18:ph18-0620-parallel-run-group splitStatements:false
@@ -346,7 +349,7 @@ CREATE TRIGGER tg_parallel_run_group_touch BEFORE UPDATE ON ph18_ops.parallel_ru
 CREATE TRIGGER tg_parallel_run_group_immutable BEFORE UPDATE ON ph18_ops.parallel_run_group FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('group_code');
 CREATE TRIGGER tg_parallel_run_group_fsm_status BEFORE UPDATE ON ph18_ops.parallel_run_group FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'PARALLEL>SHADOW_OK,SHADOW_OK>PARALLEL,SHADOW_OK>PARTIAL_CUTOVER,SHADOW_OK>CUT_OVER,PARTIAL_CUTOVER>CUT_OVER,PARTIAL_CUTOVER>ROLLED_BACK,CUT_OVER>ROLLED_BACK,ROLLED_BACK>PARALLEL');
 CALL ph18_ops.p_enable_rls('ph18_ops.parallel_run_group', false);
-COMMENT ON TABLE ph18_ops.parallel_run_group IS 'EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.shadow.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.cutover.rollback-minutes).';
+COMMENT ON TABLE ph18_ops.parallel_run_group IS 'EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.parallel.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.rollback-window-minutes).';
 --rollback DROP TABLE IF EXISTS ph18_ops.parallel_run_group CASCADE;
 
 --changeset ph18:ph18-0630-shadow-comparison-sample splitStatements:false

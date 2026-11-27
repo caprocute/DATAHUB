@@ -36,6 +36,9 @@ databaseChangeLog:
       file: changes/18-0090-report.sql
       relativeToChangelogFile: true
   - include:
+      file: changes/18-0085-batch.sql
+      relativeToChangelogFile: true
+  - include:
       file: changes/18-0091-views.sql
       relativeToChangelogFile: true
   - include:

@@ -9,7 +9,7 @@ CREATE TABLE ph18_ops.dlq_source (
   source_code      varchar(32) NOT NULL,
   source_module    varchar(8) NOT NULL,
   ingest_channel   varchar(12) NOT NULL,
-  replay_port      varchar(16) NOT NULL,
+  replay_mode      varchar(16) NOT NULL,
   replay_endpoint  varchar(255),
   callback_scope   varchar(64) NOT NULL DEFAULT 'ops:replay-callback',
   payload_viewable boolean NOT NULL DEFAULT true,
@@ -24,46 +24,52 @@ CREATE TABLE ph18_ops.dlq_source (
   CONSTRAINT uq_dlq_source_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dlq_source_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_dlq_source_code UNIQUE (tenant_id, source_code),
-  CONSTRAINT ck_dlq_source_code CHECK (source_code ~ '^PH[0-9]{2}-[A-Z0-9-]+$'),
-  CONSTRAINT ck_dlq_source_module CHECK (source_module ~ '^PH[0-9]{2}$' AND left(source_code, 4) = source_module),
+  CONSTRAINT ck_dlq_source_code CHECK (source_code ~ '^[a-z0-9-]{3,40}$'),
+  CONSTRAINT ck_dlq_source_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_dlq_source_channel CHECK (ingest_channel IN ('KAFKA', 'API', 'FEDERATED')),
-  CONSTRAINT ck_dlq_source_port CHECK (replay_port IN ('PH04_RUNTIME', 'PH10_EVENT', 'REPLAY_PORT', 'NONE')),
+  CONSTRAINT ck_dlq_source_mode CHECK (replay_mode IN ('KAFKA_TOPIC', 'HTTP_PORT', 'EVENT_LAYER', 'NONE')),
+  CONSTRAINT ck_dlq_source_event_layer CHECK ((replay_mode = 'EVENT_LAYER') = (ingest_channel = 'FEDERATED')),
   CONSTRAINT ck_dlq_source_endpoint CHECK (replay_endpoint IS NULL OR replay_endpoint ~ '^/[a-z0-9/_{}.:-]+$'),
-  CONSTRAINT ck_dlq_source_federated CHECK (ingest_channel <> 'FEDERATED' OR (source_module = 'PH10' AND NOT payload_viewable))
+  CONSTRAINT ck_dlq_source_federated CHECK (ingest_channel <> 'FEDERATED' OR (source_module = 'PH-10' AND NOT payload_viewable))
 );
 CREATE TRIGGER tg_dlq_source_touch BEFORE UPDATE ON ph18_ops.dlq_source FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_dlq_source_immutable BEFORE UPDATE ON ph18_ops.dlq_source FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('source_code', 'source_module');
 CALL ph18_ops.p_enable_rls('ph18_ops.dlq_source', true);
-COMMENT ON TABLE ph18_ops.dlq_source IS 'EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), cổng phát lại (PH04_RUNTIME, PH10_EVENT, REPLAY_PORT, NONE). Dòng COMMON là đăng ký nền tảng, tenant có thể tắt nguồn bằng dòng riêng.';
+COMMENT ON TABLE ph18_ops.dlq_source IS 'EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), chế độ phát lại replayMode của FRS (KAFKA_TOPIC nghe EVT-18-09, HTTP_PORT gọi cổng ReplayPort của nguồn, EVENT_LAYER đề nghị PH-10 qua API-10-064, NONE). Dòng COMMON là đăng ký nền tảng, tenant có thể tắt nguồn bằng dòng riêng.';
 COMMENT ON COLUMN ph18_ops.dlq_source.replay_endpoint IS 'Đường dẫn nội bộ (mTLS) của cổng phát lại ở PH nguồn; phát lại luôn qua lối vào của nguồn.';
 --rollback DROP TABLE IF EXISTS ph18_ops.dlq_source CASCADE;
 
 --changeset ph18:ph18-0210-error-guide splitStatements:false
 CREATE TABLE ph18_ops.error_guide (
-  id                 uuid NOT NULL,
-  tenant_id          varchar(16) NOT NULL,
-  error_code         varchar(16) NOT NULL,
-  locale             varchar(8) NOT NULL DEFAULT 'vi',
-  title              varchar(255) NOT NULL,
-  symptom            text NOT NULL,
-  cause              text NOT NULL,
-  resolution         text NOT NULL,
-  recommended_action varchar(16) NOT NULL,
-  runbook_path       varchar(500),
-  status             varchar(12) NOT NULL DEFAULT 'DRAFT',
-  published_at       timestamptz,
-  published_by       varchar(64),
-  created_at         timestamptz NOT NULL DEFAULT now(),
-  created_by         varchar(64) NOT NULL,
-  updated_at         timestamptz NOT NULL DEFAULT now(),
-  updated_by         varchar(64) NOT NULL,
-  version            integer NOT NULL DEFAULT 0,
+  id            uuid NOT NULL,
+  tenant_id     varchar(16) NOT NULL,
+  error_code    varchar(16) NOT NULL,
+  locale        varchar(8) NOT NULL DEFAULT 'vi',
+  title         varchar(255) NOT NULL,
+  owner_ph      varchar(8) NOT NULL,
+  causes        text[] NOT NULL,
+  steps         text[] NOT NULL,
+  replayable    varchar(10) NOT NULL,
+  default_class varchar(12),
+  links         text[] NOT NULL DEFAULT '{}',
+  runbook_path  varchar(500),
+  status        varchar(12) NOT NULL DEFAULT 'DRAFT',
+  published_at  timestamptz,
+  published_by  varchar(64),
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  created_by    varchar(64) NOT NULL,
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  updated_by    varchar(64) NOT NULL,
+  version       integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_error_guide PRIMARY KEY (id),
   CONSTRAINT uq_error_guide_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_error_guide_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_error_guide_code UNIQUE (tenant_id, error_code, locale),
   CONSTRAINT ck_error_guide_code CHECK (error_code ~ '^ERR-[0-9]{2}-[0-9]{3}$'),
-  CONSTRAINT ck_error_guide_action CHECK (recommended_action IN ('REPLAY', 'FIX_AND_REPLAY', 'DISCARD', 'ESCALATE', 'WAIT_SOURCE')),
+  CONSTRAINT ck_error_guide_replayable CHECK (replayable IN ('YES', 'AFTER_FIX', 'NO')),
+  CONSTRAINT ck_error_guide_class CHECK (default_class IS NULL OR default_class IN ('TRANSIENT', 'BUSINESS', 'CONTRACT', 'POISON', 'UNKNOWN')),
+  CONSTRAINT ck_error_guide_owner CHECK (owner_ph ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_error_guide_content CHECK (cardinality(causes) > 0 AND cardinality(steps) > 0),
   CONSTRAINT ck_error_guide_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'RETIRED')),
   CONSTRAINT ck_error_guide_published CHECK (status = 'DRAFT' OR (published_at IS NOT NULL AND published_by IS NOT NULL)),
   CONSTRAINT ck_error_guide_runbook CHECK (runbook_path IS NULL OR runbook_path ~ '^/[a-z0-9/_#.-]+$')
@@ -72,7 +78,7 @@ CREATE TRIGGER tg_error_guide_touch BEFORE UPDATE ON ph18_ops.error_guide FOR EA
 CREATE TRIGGER tg_error_guide_immutable BEFORE UPDATE ON ph18_ops.error_guide FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('error_code', 'locale');
 CREATE TRIGGER tg_error_guide_fsm_status BEFORE UPDATE ON ph18_ops.error_guide FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'DRAFT>PUBLISHED,PUBLISHED>DRAFT,PUBLISHED>RETIRED');
 CALL ph18_ops.p_enable_rls('ph18_ops.error_guide', true);
-COMMENT ON TABLE ph18_ops.error_guide IS 'EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): triệu chứng, nguyên nhân, cách xử lý, hành động khuyến nghị. Dòng COMMON là sổ tay nền tảng, tenant bổ sung ghi chú riêng. Bản PUBLISHED phát sự kiện đổi hướng dẫn để PH-17 lập chỉ mục lại.';
+COMMENT ON TABLE ph18_ops.error_guide IS 'EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): nguyên nhân (causes), các bước xử lý (steps), khả năng phát lại replayable (YES, AFTER_FIX, NO), lớp lỗi mặc định, liên kết; tên trường theo FRS FR-18-025. Dòng COMMON là sổ tay nền tảng, tenant bổ sung ghi chú riêng. Bản PUBLISHED phát sự kiện đổi hướng dẫn để PH-17 lập chỉ mục lại.';
 --rollback DROP TABLE IF EXISTS ph18_ops.error_guide CASCADE;
 
 --changeset ph18:ph18-0220-dlq-group splitStatements:false
@@ -149,6 +155,8 @@ CREATE TABLE ph18_ops.dlq_message (
   payload_size_bytes   integer,
   payload_sha256       char(64),
   current_revision_no  integer NOT NULL DEFAULT 0,
+  occurrence_count     integer NOT NULL DEFAULT 1,
+  last_seen_at         timestamptz NOT NULL DEFAULT now(),
   discard_reason       varchar(2000),
   resolved_at          timestamptz,
   closed_at            timestamptz,
@@ -165,14 +173,15 @@ CREATE TABLE ph18_ops.dlq_message (
   CONSTRAINT ck_dlq_message_status CHECK (status IN ('NEW', 'TRIAGED', 'REPLAY_PENDING', 'REPLAYING', 'RESOLVED', 'REPLAY_FAILED', 'DISCARDED', 'POISON', 'EXPIRED')),
   CONSTRAINT ck_dlq_message_class CHECK (error_class IN ('TRANSIENT', 'BUSINESS', 'CONTRACT', 'POISON', 'UNKNOWN')),
   CONSTRAINT ck_dlq_message_priority CHECK (priority IN ('P1', 'P2', 'P3', 'P4')),
-  CONSTRAINT ck_dlq_message_module CHECK (source_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_dlq_message_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_dlq_message_attempts CHECK (attempts >= 0),
+  CONSTRAINT ck_dlq_message_occurrence CHECK (occurrence_count >= 1 AND last_seen_at >= received_at),
   CONSTRAINT ck_dlq_message_trace CHECK (trace_id IS NULL OR trace_id ~ '^[0-9a-f]{32}$'),
   CONSTRAINT ck_dlq_message_location CHECK (payload_location IN ('INLINE', 'GARAGE', 'FEDERATED', 'PURGED')),
   CONSTRAINT ck_dlq_message_inline CHECK ((payload_location = 'INLINE') = (payload_inline IS NOT NULL)),
   CONSTRAINT ck_dlq_message_inline_size CHECK (payload_inline IS NULL OR (payload_size_bytes IS NOT NULL AND payload_size_bytes <= 262144)),
   CONSTRAINT ck_dlq_message_sha CHECK (payload_sha256 IS NULL OR payload_sha256 ~ '^[0-9a-f]{64}$'),
-  CONSTRAINT ck_dlq_message_federated CHECK (payload_location <> 'FEDERATED' OR (source_module = 'PH10' AND external_ref IS NOT NULL)),
+  CONSTRAINT ck_dlq_message_federated CHECK (payload_location <> 'FEDERATED' OR (source_module = 'PH-10' AND external_ref IS NOT NULL)),
   CONSTRAINT ck_dlq_message_poison CHECK (status <> 'POISON' OR cardinality(missing_context) > 0),
   CONSTRAINT ck_dlq_message_discard CHECK (status <> 'DISCARDED' OR coalesce(char_length(btrim(discard_reason)), 0) >= 10),
   CONSTRAINT ck_dlq_message_closed CHECK ((status IN ('RESOLVED', 'DISCARDED', 'EXPIRED')) = (closed_at IS NOT NULL)),
@@ -192,9 +201,12 @@ CREATE TRIGGER tg_dlq_message_immutable BEFORE UPDATE ON ph18_ops.dlq_message FO
 CREATE TRIGGER tg_dlq_message_payload BEFORE UPDATE ON ph18_ops.dlq_message FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_dlq_payload_guard();
 CREATE TRIGGER tg_dlq_message_fsm_status BEFORE UPDATE ON ph18_ops.dlq_message FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'NEW>TRIAGED,NEW>POISON,NEW>REPLAY_PENDING,NEW>DISCARDED,TRIAGED>REPLAY_PENDING,TRIAGED>DISCARDED,REPLAY_PENDING>REPLAYING,REPLAY_PENDING>TRIAGED,REPLAYING>RESOLVED,REPLAYING>REPLAY_FAILED,REPLAY_FAILED>REPLAY_PENDING,REPLAY_FAILED>DISCARDED,DISCARDED>TRIAGED,POISON>DISCARDED,POISON>TRIAGED,RESOLVED>EXPIRED,DISCARDED>EXPIRED');
 CALL ph18_ops.p_enable_rls('ph18_ops.dlq_message', false);
-COMMENT ON TABLE ph18_ops.dlq_message IS 'EN-18-09 Chỉ mục mục DLQ hợp nhất: hợp đồng ngữ cảnh chuẩn (dh-dlq-reason, dh-dlq-attempts, dh-dlq-stage, dh-dlq-error-code, dh-flow, dh-version, traceparent, dh-tenant, dh-source-ph), lớp lỗi, trạng thái, ưu tiên, nhóm. Payload ≤ 256 KB giữ ở payload_inline (trường nhạy cảm đã mã hóa bằng DEK tenant trước khi vào DLQ), lớn hơn ở Garage (dlq_payload_ref), FEDERATED không sao chép. Payload gốc không sửa; sửa tạo dlq_revision. Phân vùng tháng theo received_at; khử trùng dlqKey qua inbox_event.';
+COMMENT ON TABLE ph18_ops.dlq_message IS 'EN-18-09 Chỉ mục mục DLQ hợp nhất: hợp đồng ngữ cảnh chuẩn (dh-dlq-reason, dh-dlq-attempts, dh-dlq-stage, dh-dlq-error-code, dh-flow, dh-version, traceparent, dh-tenant, dh-source-ph), lớp lỗi, trạng thái, ưu tiên, nhóm. Payload ≤ 256 KB giữ ở payload_inline (trường nhạy cảm đã mã hóa bằng DEK tenant trước khi vào DLQ), lớn hơn ở Garage (dlq_payload_ref), FEDERATED không sao chép. Payload gốc không sửa; sửa tạo dlq_revision. Phân vùng tháng theo received_at; khử trùng dlqKey qua inbox_event trong 18.dlq.dedup-window-days (7 ngày) và theo mục chưa đóng cùng dlq_key (tăng occurrence_count).';
 COMMENT ON COLUMN ph18_ops.dlq_message.payload_inline IS 'Payload gốc ≤ 256 KB (18.dlq.payload.inline-max-kb), trường nhạy cảm đã mã hóa ở PH-04; chỉ được đặt NULL khi dọn (PURGED). Vai readonly không đọc.';
 COMMENT ON COLUMN ph18_ops.dlq_message.missing_context IS 'Tên header ngữ cảnh bị thiếu khi tiếp nhận; khác rỗng thì mục vào POISON.';
+COMMENT ON COLUMN ph18_ops.dlq_message.occurrence_count IS 'Số lần gặp (BR-18-015): bản tin cùng dlqKey đến khi mục chưa đóng chỉ tăng bộ đếm, không tạo mục mới (ERR-18-105); cập nhật được, không thuộc tg_immutable.';
+COMMENT ON COLUMN ph18_ops.dlq_message.last_seen_at IS 'Lần gặp cuối của dlqKey; cập nhật cùng occurrence_count.';
+COMMENT ON COLUMN ph18_ops.dlq_message.payload_location IS 'INLINE chỉ cho payload JSON ≤ 18.dlq.payload.inline-max-kb; payload không phải JSON (ERR-18-101) luôn ở GARAGE dạng nhị phân, dù nhỏ.';
 COMMENT ON COLUMN ph18_ops.dlq_message.retention_until IS 'Hạn giữ: đóng + 18.dlq.retention.closed-days; mục mở không có hạn.';
 --rollback DROP TABLE IF EXISTS ph18_ops.dlq_message CASCADE;
 
@@ -324,7 +336,7 @@ CREATE TABLE ph18_ops.replay_job (
   succeeded         integer NOT NULL DEFAULT 0,
   failed            integer NOT NULL DEFAULT 0,
   skipped           integer NOT NULL DEFAULT 0,
-  rate_per_minute   integer NOT NULL DEFAULT 60,
+  rate_per_second   integer NOT NULL DEFAULT 10,
   approval_required boolean NOT NULL DEFAULT false,
   status            varchar(20) NOT NULL DEFAULT 'DRAFT',
   approved_by       varchar(64),
@@ -346,7 +358,7 @@ CREATE TABLE ph18_ops.replay_job (
   CONSTRAINT ck_replay_job_single CHECK (mode <> 'SINGLE' OR total_items = 1),
   CONSTRAINT ck_replay_job_filter CHECK (mode <> 'BATCH_FILTER' OR filter IS NOT NULL),
   CONSTRAINT ck_replay_job_reason CHECK (coalesce(char_length(btrim(reason)), 0) >= 10),
-  CONSTRAINT ck_replay_job_rate CHECK (rate_per_minute BETWEEN 1 AND 6000),
+  CONSTRAINT ck_replay_job_rate CHECK (rate_per_second BETWEEN 1 AND 100),
   CONSTRAINT ck_replay_job_counts CHECK (total_items >= 1 AND succeeded >= 0 AND failed >= 0 AND skipped >= 0 AND succeeded + failed + skipped <= total_items),
   CONSTRAINT ck_replay_job_status CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'RUNNING', 'PAUSED', 'COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED', 'REJECTED')),
   CONSTRAINT ck_replay_job_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -387,7 +399,7 @@ CREATE TABLE ph18_ops.replay_item (
   CONSTRAINT fk_replay_item_job FOREIGN KEY (tenant_id, job_id) REFERENCES ph18_ops.replay_job (tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT fk_replay_item_dlq FOREIGN KEY (tenant_id, dlq_id, dlq_received_at) REFERENCES ph18_ops.dlq_message (tenant_id, id, received_at) ON DELETE CASCADE,
   CONSTRAINT ck_replay_item_idem CHECK (idempotency_key = dlq_id::text || ':' || revision_no::text),
-  CONSTRAINT ck_replay_item_status CHECK (status IN ('PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED_DUPLICATE', 'CANCELLED')),
+  CONSTRAINT ck_replay_item_status CHECK (status IN ('PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'SKIPPED_DUPLICATE', 'CANCELLED')),
   CONSTRAINT ck_replay_item_trace CHECK (replay_trace_id IS NULL OR replay_trace_id ~ '^[0-9a-f]{32}$')
 );
 CREATE INDEX ix_replay_item_pending ON ph18_ops.replay_item (tenant_id, job_id, status);

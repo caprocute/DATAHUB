@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh ../openapi-ops.yaml (OpenAPI 3.1) cho PH-18 từ FRS D02-03-PH18: §9.4 (API-18-001…180), §9.1 (ERR-18, cột FR).
+"""Sinh ../openapi-ops.yaml (OpenAPI 3.1) cho PH-18 từ FRS D02-03-PH18: §9.4 (API-18-001…188), §9.1 (ERR-18, cột FR).
 API người dùng `/api/ops/v1` qua APISIX; API nội bộ `/ops/internal/v1` chỉ trong cụm (mTLS, SPIFFE, scope máy).
 Mọi đường dẫn trong tệp viết đầy đủ (kể cả tiền tố) để hai mặt API không đụng nhau. Lược đồ ở schemas18.py,
 ví dụ sinh từ lược đồ bằng examples18.py (ghi đè tay vài thao tác chính ở EX).
@@ -24,7 +24,7 @@ USER_BASE, INT_BASE = '/api/ops/v1', '/ops/internal/v1'
 ROWS = re.findall(r'^\| API-18-(\d{3}) \| `(GET|POST|PUT|PATCH|DELETE) ([^`]+)` \| ([^|]+) \| ([^|]+) \| (.+) \|$', SEC94, re.M)
 _er = re.findall(r'^\| (ERR-18-\d{3}) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$', SEC91, re.M)
 ERRS = {c: ((int(h) if h.strip().isdigit() else None), m.strip(), t.strip().strip('"'), [int(x) for x in re.findall(r'\d{3}', fr)]) for c, h, m, t, fr in _er}
-assert len(ROWS) == 180, len(ROWS)
+assert len(ROWS) == 188, len(ROWS)
 assert len(ERRS) == 96, len(ERRS)
 FR_ERR = {}
 for _c, (_h, _m, _t, _frs) in ERRS.items():
@@ -33,6 +33,7 @@ for _c, (_h, _m, _t, _frs) in ERRS.items():
     for _f in _frs:
         FR_ERR.setdefault(_f, set()).add(_c)
 STRUCT = {'ERR-18-%03d' % i for i in range(1, 11)}
+READ_ONLY_TOGGLE = 187
 
 SCH = S18.build()
 
@@ -56,7 +57,14 @@ TAGS = [
 ]
 
 
+# API bổ sung ở FRS 0.2 (đồng bộ nội bộ PH-18) mang số 181 trở đi, gắn vào nhóm theo FR
+TAG_EXTRA = {181: 'Việc của tôi và lịch', 182: 'Di trú và chạy song song', 183: 'Di trú và chạy song song', 184: 'Di trú và chạy song song',
+             185: 'Di trú và chạy song song', 186: 'Quản trị và báo cáo', 187: 'Quản trị và báo cáo', 188: 'Phát lại, bỏ qua và lưu giữ'}
+
+
 def tag_of(n):
+    if n in TAG_EXTRA:
+        return TAG_EXTRA[n]
     return next(t for t, _, a, b in TAGS if a <= n <= b)
 
 
@@ -118,6 +126,9 @@ OP = {
     173: (None, 200, 'ParallelGroupPage'), 174: (None, 200, 'ParallelGroupDetail'), 175: ('CutoverTransitionInput', 200, 'ParallelGroup'),
     176: ('ShadowSampleBatch', 202, 'ShadowAck'),
     177: (None, 200, 'AuditEntryPage'), 178: (None, 200, 'OpsReportPage'), 179: ('ReportGenerateInput', 202, 'OpsReport'), 180: (None, 200, 'Health'),
+    181: (None, 200, 'TaskItem'), 182: ('MigrationErrorFixInput', 200, 'BulkResult'), 183: ('ReasonInput', 200, 'CredentialReissue'),
+    184: ('NormalizationRulesInput', 200, 'NormalizationRuleSet'), 185: ('ChecklistConfirmInput', 200, 'CutoverChecklistItem'), 186: (None, 200, 'InboxFailurePage'),
+    187: ('DegradedModeInput', 200, 'Health'), 188: (None, 200, 'ReplayPayload'),
 }
 # phản hồi thành công thêm (mã, lược đồ, mô tả)
 EXTRA_OK = {
@@ -146,13 +157,14 @@ FILT = {
     151: 'mergePlanId!:u, module:s', 154: 'kind:#DrillKind, from:ts, to:ts', 156: 'legacySystem:#LegacySystem, status:e(DRAFT|VERIFIED|DISABLED)',
     159: 'sourceCode:s, status:e(DRAFT|READY)', 165: 'planCode!:s, mode:#RunMode, status:#MigrationRunStatus',
     170: 'objectType:#ObjectType, reasonCode:s, status:#MigrationErrorStatus', 172: 'systemCode:s, status:e(PENDING|NOTIFIED|REISSUED|WAIVED), credentialKind:#CredentialKind',
-    173: 'status:#CutoverStatus, q:s', 177: 'action:s, objectType:s, actor:s, from!:ts, to!:ts', 178: 'period:e(MONTH|QUARTER), from:d, to:d',
+    173: 'status:#CutoverStatus, q:s', 186: 'module:s, consumer:s, from:ts, to:ts', 177: 'action:s, objectType:s, actor:s, from!:ts, to!:ts', 178: 'period:e(MONTH|QUARTER), from:d, to:d',
 }
 PATH_P = {'key': 'pkey', 'versionNo': 'i', 'revisionNo': 'i', 'year': 'i', 'flagKey': 'fkey', 'tenant': 'tn', 'errCode': 'err', 'templateCode': 'tcode',
-          'ns': 's', 'entryRef': 's', 'notificationId': 's', 'sourceRef': 's', 'incidentCode': 's', 'planCode': 's', 'groupCode': 's'}
+          'ns': 's', 'entryRef': 's', 'notificationId': 's', 'sourceRef': 's', 'incidentCode': 's', 'planCode': 's', 'groupCode': 's',
+          'itemCode': '#ChecklistItemCode', 'revision': 'i'}
 # mã nguồn DLQ ở /dlq-sources dùng mẫu SourceCode; ở /legacy-sources là chuỗi
 IFM_VERBS = {'approve', 'reject', 'withdraw', 'restore', 'apply', 'retire', 'triage', 'assign', 'discard', 'reopen', 'submit', 'pause', 'resume', 'cancel',
-             'transition', 'close', 'escalate-privacy', 'rollback', 'mark-ready'}
+             'transition', 'close', 'escalate-privacy', 'rollback', 'mark-ready', 'claim', 'waive', 'confirm'}
 NO_IFM = {44}
 # ví dụ có cả khóa `type` và `default` (tên trường FRS của lược đồ khóa) bị Spectral hiểu nhầm là lược đồ: bỏ ví dụ, xem D03-04-PH18 §12
 NO_EX = {3, 27}
@@ -165,10 +177,10 @@ ONLY = {28: [], 32: ['ERR-18-002'], 33: [], 34: ['ERR-18-017'], 55: [], 56: [], 
         105: [], 106: [], 110: ['ERR-18-048'], 117: [], 121: [], 127: [], 135: [], 137: [], 142: [], 143: [], 144: [], 146: [], 149: [], 153: [], 158: ['ERR-18-062'],
         160: ['ERR-18-002'], 167: ['ERR-18-051', 'ERR-18-064'], 168: [], 169: [], 23: [], 26: [], 12: [], 11: [], 22: ['ERR-18-021'], 15: ['ERR-18-023'],
         10: ['ERR-18-013', 'ERR-18-019'], 59: [], 61: [], 115: ['ERR-18-049'], 131: ['ERR-18-052'], 130: ['ERR-18-053', 'ERR-18-054'], 98: [], 87: ['ERR-18-039', 'ERR-18-040'],
-        141: ['ERR-18-056', 'ERR-18-057', 'ERR-18-058'], 163: ['ERR-18-063'], 162: ['ERR-18-063'], 76: ['ERR-18-038'], 128: [], 129: [], 124: [], 126: []}
+        141: ['ERR-18-056', 'ERR-18-057', 'ERR-18-058'], 181: ['ERR-18-048'], 182: ['ERR-18-036'], 183: [], 184: [], 185: ['ERR-18-067'], 187: [], 188: ['ERR-18-038'], 163: ['ERR-18-063'], 162: ['ERR-18-063'], 76: ['ERR-18-038'], 128: [], 129: [], 124: [], 126: []}
 EXCL = {64: {'ERR-18-038'}, 91: {'ERR-18-044', 'ERR-18-046'}, 92: {'ERR-18-046'}, 164: {'ERR-18-069'}, 109: {'ERR-18-039'}}
 ADD = {3: {'ERR-18-011'}, 5: {'ERR-18-011'}, 6: {'ERR-18-011'}, 13: {'ERR-18-011'}, 14: {'ERR-18-011'}, 15: {'ERR-18-011'}, 46: set(), 64: {'ERR-18-027'},
-       47: {'ERR-18-027'}, 41: {'ERR-18-003'}, 60: {'ERR-18-003'}, 164: {'ERR-18-065'}}
+       47: {'ERR-18-027'}, 41: {'ERR-18-003'}, 60: {'ERR-18-003'}, 164: {'ERR-18-065'}, 182: {'ERR-18-007'}}
 SC = {'ops:param-read': 'Đọc lô giá trị tham số, cờ, egress (mọi DU)', 'ops:param-register': 'Đăng ký lược đồ không gian tên của mình (mọi DU)',
       'ops:param-write': 'Ghi mặc định khi khởi tạo tenant (PH-20)', 'ops:dlq-write': 'Ghi DLQ qua API, đăng ký nguồn (PH-01, PH-06, PH-08, PH-19, dh-runtime)',
       'ops:dlq-read': 'Đọc siêu dữ liệu DLQ và sổ tay ERR bằng token đổi từ người dùng (PH-17, PH-13)', 'ops:replay-callback': 'Nguồn báo kết quả phát lại',
@@ -177,13 +189,11 @@ SC = {'ops:param-read': 'Đọc lô giá trị tham số, cờ, egress (mọi DU
       'ops:backup-report': 'Báo bản sao lưu, kết quả kiểm tra khôi phục', 'ops:merge-transfer': 'Yêu cầu, hủy chuyển dữ liệu sáp nhập (PH-20)',
       'ops:shadow-ingest': 'Bộ so sánh bóng gửi cặp phản hồi đã băm'}
 KEY_NOTE = {
-    6: 'Ghi giá trị theo tenant: kiểm kiểu (ERR-18-012), miền (ERR-18-013), trần nền tảng (ERR-18-014), mức `PLATFORM` (ERR-18-015), lý do tối thiểu `18.param.reason-min-length`. '
-       'Khóa thường trả `200` và phát EVT-18-01; khóa ★ có `approvalOwner = PH-18` trả `202` kèm đề nghị và phát EVT-18-02; khóa do phân hệ khác giữ duyệt trả ERR-18-019.',
     10: 'Duyệt bốn mắt: người duyệt khác người đề nghị (ERR-18-005); giá trị thành `ACTIVE`, phiên bản cũ `SUPERSEDED`, phát EVT-18-01.',
     27: 'PH chủ đăng ký lược đồ khi khởi động; lũy đẳng theo `schemaVersion`. Không gian tên không thuộc phân hệ gọi: ERR-18-017; lược đồ mới xung đột giá trị đang dùng: ERR-18-016.',
     28: 'Đọc lô cho `dh-ops-client` (bộ đệm Caffeine ≤ 60 giây, BR-18-006); gửi `If-None-Match` để nhận `304` khi không đổi (NFR-18-004).',
     30: 'PH-20 gọi khi nhận `platform.tenant.created.v1` hoặc khi khởi tạo; chỉ thêm khóa chưa có, không ghi đè giá trị tenant đã đặt (FR-18-011).',
-    35: 'Ghi một mục DLQ theo hợp đồng ngữ cảnh chuẩn (FRS bảng 4.1b). Thiếu trường bắt buộc: mục `POISON` và ERR-18-024 trong `missingFields`; '
+    35: 'Ghi một mục DLQ theo hợp đồng ngữ cảnh chuẩn (FRS bảng 4.1b). Thiếu trường bắt buộc: từ chối `422` với ERR-18-024, mục không được ghi (BR-18-013; đường topic mới ghi `POISON`); '
         'payload > `18.dlq.payload.inline-max-kb` lưu ở Garage, > `18.dlq.payload.max-mb` trả ERR-18-025; khử trùng theo `dlqKey` (trùng trả `duplicate = true`).',
     36: 'Ghi lô tới 500 mục; phản hồi `207` với kết quả từng mục theo `index`, không hủy cả lô khi một mục lỗi.',
     40: 'PH-18 không tự phát lại mục tầng sự kiện; gọi API-10-064 với scope `event:replay`, PH-10 duyệt theo quy tắc của mình (ADR-181, Q18-03).',
@@ -208,10 +218,24 @@ KEY_NOTE = {
     164: 'Lần chạy `DRY_RUN` vào hàng đợi ngay; `REAL` cần lần chạy thử thành công trong `18.migration.dry-run-valid-days` (ERR-18-064), ở `PENDING_APPROVAL` chờ API-18-167. '
          '`retryOf` và `errorIds[]` chạy lại bản ghi lỗi.',
     167: 'Duyệt chạy thật (người thứ hai); không chạy được trong cửa sổ đóng băng (ERR-18-051).',
-    175: 'Cắt chuyển một phần, toàn phần (bốn mắt: người duyệt khác người đề nghị) hoặc quay lui trong `18.migration.rollback-window-minutes` (ERR-18-068); '
-         'kiểm danh sách cắt chuyển (ERR-18-067) và tỷ lệ khớp (ERR-18-066); phát EVT-18-27 để PH-03 đổi tuyến APISIX.',
     176: 'Bộ so sánh gửi cặp băm của phản hồi đã chuẩn hóa, không gửi thân phản hồi hay dữ liệu cá nhân (Q18-14).',
     180: 'Trạng thái từng thành phần (tiếp nhận DLQ, outbox, gửi thông báo, worker), độ trễ tiêu thụ, cờ chỉ đọc `18.degraded.read-only`.',
+    6: 'Ghi giá trị theo tenant: kiểm kiểu (ERR-18-012), miền (ERR-18-013), trần nền tảng (ERR-18-014), mức `PLATFORM` (ERR-18-015), lý do tối thiểu `18.param.reason-min-length`. '
+       'Khóa thường trả `200` và phát EVT-18-01; khóa ★ có `approvalOwner = PH-18` trả `202` kèm đề nghị và phát EVT-18-02; khóa do phân hệ khác giữ duyệt trả ERR-18-019. '
+       'Khóa `18.degraded.read-only` không ghi qua API này (ERR-18-003), chỉ đổi qua API-18-187.',
+    175: 'Thân `action` quyết định thao tác và quyền: `REQUEST` (đề nghị cắt chuyển một phần hoặc toàn phần theo `target`, `PERM-18-migration`), `APPROVE`, `REJECT` '
+         '(bốn mắt, `PERM-18-approve`, người duyệt khác người đề nghị ERR-18-005), `ROLLBACK` (quay lui trong `18.migration.rollback-window-minutes`, ERR-18-068, không cần duyệt). '
+         'Kiểm danh sách cắt chuyển (ERR-18-067) và tỷ lệ khớp (ERR-18-066); phát EVT-18-27 để PH-03 đổi tuyến APISIX.',
+    181: 'Người nhận việc báo người cùng nhận: việc `OPEN` chuyển `IN_PROGRESS`, ghi người nhận, phát EVT-18-14; việc đã đóng trả ERR-18-048; gọi lại khi đã nhận trả `200` không đổi.',
+    182: 'Đánh dấu cách xử lý cho tối đa 1.000 bản ghi lỗi của lần chạy; `WONT_MIGRATE` cần `reason` ≥ 10 ký tự (ERR-18-007) và được đưa vào báo cáo đối chiếu như chênh lệch đã giải trình. '
+         'Phản hồi kết quả từng bản ghi.',
+    183: 'Dấu `PENDING` hoặc `NOTIFIED` chuyển `WAIVED` kèm lý do; dấu đã `REISSUED` trả ERR-18-006. Mục danh sách cắt chuyển `CREDENTIALS_REISSUED` tính `WAIVED` như đã đạt.',
+    184: 'Thay toàn bộ bộ quy tắc chuẩn hóa của nhóm (`If-Match`, lý do); bộ so sánh nhận quy tắc mới, mẫu trong cửa sổ 7 ngày được tính lại và tỷ lệ khớp cập nhật.',
+    185: 'Xác nhận mục kiểm tay (`checkKind = MANUAL`) kèm bằng chứng; mục tự động trả ERR-18-006; mục chuyển `PASSED`, ghi người xác nhận vào sổ cắt chuyển.',
+    186: 'Sự kiện inbox `FAILED` theo mô-đun để người vận hành biết sự kiện nào chưa xử lý được (FR-18-072 bước 4); chỉ siêu dữ liệu, không nội dung sự kiện.',
+    187: 'PA bật hoặc tắt chế độ chỉ đọc kèm lý do; là API ghi duy nhất không bị chặn bởi chế độ chỉ đọc (ERR-18-071 không áp dụng). Ghi khóa `18.degraded.read-only`, phát EVT-18-29, ghi kiểm toán.',
+    188: 'Nguồn có cổng `KAFKA_TOPIC` lấy nội dung cần phát lại theo `payloadRef` của EVT-18-09: `revision = 0` là bản gốc, lớn hơn là bản sửa đã duyệt. '
+         'Danh tính gọi phải khớp nguồn của mục (ERR-18-038); payload lớn trả `downloadUrl` Garage có hạn thay cho `payload`.',
 }
 CLS = {47: 'RESTRICTED', 53: 'RESTRICTED', 54: 'RESTRICTED', 45: 'INTERNAL', 61: 'INTERNAL'}
 HTTP_NAME = {400: 'BadRequest', 401: 'Unauthorized', 403: 'Forbidden', 404: 'NotFound', 409: 'Conflict', 412: 'PreconditionFailed', 413: 'PayloadTooLarge',
@@ -397,7 +421,8 @@ def build_paths():
         if idem:
             structural.add('ERR-18-009')
         structural.add('ERR-18-010')
-        if m != 'GET' and tag_of(n) == 'Tham số và cờ tính năng' and n not in SAFE_POST and n != 28:
+        # chế độ chỉ đọc (FR-18-072) chặn mọi API ghi của người dùng, trừ API-18-187 dùng để tắt chính chế độ này
+        if m != 'GET' and not internal and not machine_only and n not in SAFE_POST and n != READ_ONLY_TOGGLE:
             structural.add('ERR-18-071')
         allerr = sorted(dom | structural)
         for c in allerr:

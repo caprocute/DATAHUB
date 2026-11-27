@@ -11,7 +11,7 @@ SELECT d.param_key                                                     AS key,
        CASE WHEN t.id IS NOT NULL THEN 'TENANT' ELSE 'PLATFORM' END    AS scope,
        COALESCE(t.effective_from, p.effective_from, d.created_at)      AS effective_from,
        current_setting('app.tenant_id', false)                         AS tenant_id,
-       d.namespace_code, d.value_type, d.level, d.security_flag, d.display_group,
+       d.namespace_code, d.value_type, d.level, d.secure, d.display_group,
        COALESCE(t.current_version_no, p.current_version_no, 0)         AS version_no
   FROM ph18_ops.param_definition d
   LEFT JOIN ph18_ops.param_value p ON p.definition_id = d.id AND p.tenant_id = 'COMMON'

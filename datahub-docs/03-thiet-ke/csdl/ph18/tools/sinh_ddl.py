@@ -7,7 +7,7 @@ D03-03-PH18 mục 10 (Đề nghị đồng bộ). Kết quả có dấu @file, @
 DDL là nguồn chuẩn cho gen_tables_md.py, them_dac_ta_bang.py, gen_erd.py, sinh_test.py; không sửa tay tệp sinh ra.
 Không cần extension: gen_random_uuid(), sha256() có sẵn ở PostgreSQL 16 (extension, nếu có, chỉ cài ở schema public).
 """
-import os, sys
+import json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sinh_ddl_core import *
@@ -22,7 +22,7 @@ BY_NAME = {t["name"]: t for t in ALL}
 
 HEAD = r"""-- =============================================================================
 -- D03-03-PH18 · DDL schema ph18_ops, PH-18 Vận hành và xử lý lỗi
--- Phiên bản 0.1 · 2026-11-27 · Dự thảo
+-- Phiên bản 0.2 · 2026-11-27 · Dự thảo
 -- TỆP SINH bởi tools/sinh_ddl.py từ danh mục bảng (tools/sinh_ddl_bang_a.py, sinh_ddl_bang_b.py); sửa ở đó rồi sinh lại.
 --
 -- Chạy độc lập (phát triển):  psql -v ON_ERROR_STOP=1 -U postgres -d ph18_test -f ph18_ops.sql
@@ -231,19 +231,19 @@ DECLARE
   jt text := jsonb_typeof(p_value);
   v numeric;
 BEGIN
-  IF p_type = 'BOOLEAN' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
-  IF p_type IN ('INTEGER', 'DECIMAL') THEN
+  IF p_type = 'BOOL' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
+  IF p_type IN ('INT', 'DECIMAL') THEN
     IF jt <> 'number' THEN RETURN 'cần kiểu số'; END IF;
     v := (p_value #>> '{}')::numeric;
-    IF p_type = 'INTEGER' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
+    IF p_type = 'INT' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
     IF p_min IS NOT NULL AND v < p_min THEN RETURN format('nhỏ hơn miền %s', p_min); END IF;
     IF p_max IS NOT NULL AND v > p_max THEN RETURN format('lớn hơn miền %s', p_max); END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'number' AND v > (p_ceiling #>> '{}')::numeric THEN
       RETURN format('vượt trần nền tảng %s', p_ceiling);
     END IF;
   END IF;
-  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON', 'TIME_RANGE') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
-  IF p_type IN ('LIST_STRING', 'LIST_HOST') THEN
+  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
+  IF p_type IN ('LIST<STRING>', 'LIST<HOST>') THEN
     IF jt <> 'array' THEN RETURN 'cần danh sách'; END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'array' AND NOT p_ceiling @> p_value THEN
       RETURN 'danh sách vượt trần nền tảng';
@@ -313,46 +313,55 @@ COMMENT ON FUNCTION ph18_ops.tg_dlq_payload_guard() IS 'Bảo vệ payload gốc
 -- @rollback DROP FUNCTION IF EXISTS ph18_ops.tg_dlq_payload_guard();
 """
 
-SEED_NS = [("00", "PH00", "Tham số chung nền tảng"), ("onboarding", "PH01", "Kết nạp HTTT"), ("02", "PH02", "Danh mục dịch vụ"), ("04", "PH04", "Tích hợp"),
-           ("05", "PH05", "Bộ điều hợp"), ("06", "PH06", "Dữ liệu chủ"), ("07.rdm", "PH07", "Danh mục dùng chung"), ("08", "PH08", "Chất lượng dữ liệu"),
-           ("09", "PH09", "Quyền riêng tư"), ("10", "PH10", "Sự kiện"), ("11", "PH11", "Quy trình"), ("12", "PH12", "Định danh và phân quyền"),
-           ("13", "PH13", "Giám sát và kiểm toán"), ("14", "PH14", "Kết nối quốc gia"), ("15", "PH15", "Cổng nhà phát triển"), ("16", "PH16", "Báo cáo chỉ tiêu"),
-           ("17", "PH17", "Trợ lý AI"), ("18", "PH18", "Vận hành và xử lý lỗi"), ("20", "PH20", "Quản trị tenant"), ("ff", "PH18", "Cờ tính năng")]
-APPROVAL_OWNER = {"14": "PH14", "17": "PH17"}
+SEED_NS = [("00", "PH-00", "Tham số chung nền tảng"), ("onboarding", "PH-01", "Kết nạp HTTT"), ("02", "PH-02", "Danh mục dịch vụ"), ("04", "PH-04", "Tích hợp"),
+           ("05", "PH-05", "Bộ điều hợp"), ("06", "PH-06", "Dữ liệu chủ"), ("07.rdm", "PH-07", "Danh mục dùng chung"), ("08", "PH-08", "Chất lượng dữ liệu"),
+           ("09", "PH-09", "Quyền riêng tư"), ("10", "PH-10", "Sự kiện"), ("11", "PH-11", "Quy trình"), ("12", "PH-12", "Định danh và phân quyền"),
+           ("13", "PH-13", "Giám sát và kiểm toán"), ("14", "PH-14", "Kết nối quốc gia"), ("15", "PH-15", "Cổng nhà phát triển"), ("16", "PH-16", "Báo cáo chỉ tiêu"),
+           ("17", "PH-17", "Trợ lý AI"), ("18", "PH-18", "Vận hành và xử lý lỗi"), ("20", "PH-20", "Quản trị tenant"), ("ff", "PH-18", "Cờ tính năng")]
+APPROVAL_OWNER = {"14": "PH-14", "17": "PH-17"}
 
-# Tham số 18.* (nguồn: BRIEF-PH18 §3, đối chiếu FRS PH-18 §8.2 khi có). (khóa, kiểu, mặc định, min, max, đơn vị, mức, ★, nhóm, nhãn)
-SEED_18 = [
-    ("18.param.cache-seconds", "INTEGER", "60", 1, 60, "s", "PLATFORM", False, "param", "Thời gian đệm tham số ở PH đọc"),
-    ("18.param.change-request-ttl-hours", "INTEGER", "72", 1, 720, "h", "TENANT", False, "param", "Hạn đề nghị đổi tham số chờ duyệt"),
-    ("18.param.history-retention-years", "INTEGER", "5", 1, 10, "y", "PLATFORM", False, "param", "Thời gian giữ lịch sử tham số"),
-    ("18.dlq.payload.inline-max-kb", "INTEGER", "256", 16, 256, "KB", "PLATFORM", False, "dlq", "Ngưỡng payload giữ trong CSDL"),
-    ("18.dlq.dedup-window-days", "INTEGER", "30", 1, 90, "d", "PLATFORM", False, "dlq", "Cửa sổ khử trùng dlqKey"),
-    ("18.dlq.retention.closed-days", "INTEGER", "90", 30, 365, "d", "TENANT", True, "dlq", "Thời gian giữ mục DLQ đã đóng"),
-    ("18.dlq.retention.metadata-days", "INTEGER", "365", 90, 1825, "d", "TENANT", False, "dlq", "Thời gian giữ siêu dữ liệu mục hết hạn"),
-    ("18.dlq.audit.retention-months", "INTEGER", "60", 60, 120, "month", "PLATFORM", False, "dlq", "Thời gian giữ nhật ký thao tác DLQ"),
-    ("18.dlq.replay.batch-max", "INTEGER", "1000", 1, 10000, "item", "TENANT", False, "dlq", "Số mục tối đa một lượt phát lại"),
-    ("18.dlq.replay.approval-threshold", "INTEGER", "100", 1, 10000, "item", "TENANT", True, "dlq", "Ngưỡng phát lại cần bốn mắt"),
-    ("18.dlq.replay.rate-per-minute", "INTEGER", "60", 1, 6000, "item/min", "TENANT", False, "dlq", "Tốc độ phát lại mặc định"),
-    ("18.dlq.threshold.open-count", "INTEGER", "50", 1, 100000, "item", "TENANT", False, "dlq", "Ngưỡng mục mở phát sự kiện vượt ngưỡng"),
-    ("18.dlq.discard.reason-min-chars", "INTEGER", "10", 10, 200, "char", "PLATFORM", False, "dlq", "Độ dài tối thiểu lý do bỏ qua"),
-    ("18.notify.delivery-retention-days", "INTEGER", "180", 30, 730, "d", "TENANT", False, "notify", "Thời gian giữ nhật ký gửi"),
-    ("18.notify.retry.max-attempts", "INTEGER", "5", 1, 20, "lần", "PLATFORM", False, "notify", "Số lần thử gửi tối đa"),
-    ("18.notify.quiet-hours", "TIME_RANGE", '"22:00-06:00"', None, None, None, "TENANT", False, "notify", "Giờ yên lặng mặc định"),
-    ("18.notify.sms.enabled", "BOOLEAN", "false", None, None, None, "TENANT", False, "notify", "Bật kênh SMS"),
-    ("18.task.retention-days", "INTEGER", "365", 90, 1825, "d", "TENANT", False, "task", "Thời gian giữ việc đã đóng"),
-    ("18.task.reminder-before-hours", "INTEGER", "24", 1, 168, "h", "TENANT", False, "task", "Nhắc trước hạn"),
-    ("18.calendar.timezone", "STRING", '"Asia/Ho_Chi_Minh"', None, None, None, "PLATFORM", False, "calendar", "Múi giờ lịch"),
-    ("18.calendar.working-days", "LIST_STRING", '["MON", "TUE", "WED", "THU", "FRI"]', None, None, None, "TENANT", False, "calendar", "Ngày làm việc trong tuần"),
-    ("18.incident.retention-years", "INTEGER", "5", 3, 10, "y", "PLATFORM", False, "incident", "Thời gian giữ hồ sơ sự cố"),
-    ("18.backup.verification-interval-days", "INTEGER", "1", 1, 90, "d", "PLATFORM", False, "backup", "Chu kỳ kiểm tra khôi phục"),
-    ("18.restore.target-hours", "INTEGER", "4", 1, 24, "h", "PLATFORM", False, "backup", "Mục tiêu thời gian khôi phục tenant"),
-    ("18.export.download-ttl-days", "INTEGER", "7", 1, 30, "d", "TENANT", False, "backup", "Hạn tải tệp xuất tenant"),
-    ("18.migration.shadow.match-threshold-percent", "DECIMAL", "99.5", 90, 100, "%", "TENANT", True, "migration", "Ngưỡng khớp chạy song song"),
-    ("18.migration.shadow.sample-retention-days", "INTEGER", "90", 7, 365, "d", "TENANT", False, "migration", "Thời gian giữ mẫu so sánh"),
-    ("18.migration.cutover.rollback-minutes", "INTEGER", "15", 5, 120, "min", "PLATFORM", False, "migration", "Cửa sổ quay lui sau cắt chuyển"),
-    ("18.report.retention-months", "INTEGER", "24", 12, 120, "month", "TENANT", False, "report", "Thời gian giữ báo cáo vận hành"),
-    ("18.outbox.retention-days", "INTEGER", "3", 1, 30, "d", "PLATFORM", False, "core", "Thời gian giữ outbox đã phát"),
-]
+# Tham số 18.*: đọc từ bảng "Tham số `18.*` của PH-18" ở FRS D02-03-PH18 §8.2 (FRS là nguồn chuẩn, bản 0.2). Mỗi dòng thành
+# (khóa, kiểu, mặc định JSON, min, max, đơn vị, mức, ★, nhóm, nhãn, danh sách cho phép).
+FRS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "02-yeu-cau", "frs", "D02-03-PH18-frs-van-hanh.md")
+UNITS = [("-seconds", "s"), ("-ms", "ms"), ("-minutes", "min"), ("-hours", "h"), ("-days", "d"), ("-months", "month"), ("-years", "y"), ("-kb", "KB"),
+         ("-mb", "MB"), ("-percent", "%"), ("-max", "item"), ("-threshold", "item"), ("-per-second", "item/s"), ("-per-hour", "item/h"), ("-entries", "item")]
+
+
+def _frs_params():
+    txt = open(FRS, encoding="utf-8").read()
+    sec = txt[txt.index("### 8.2. Tham số theo tenant"):txt.index(": Tham số `18.*` của PH-18")]
+    out = []
+    for m in re.finditer(r"^\| `(18\.[a-z0-9.-]+)`( ★)? \| ([A-Z<>]+) \| (.+?) \| (.+?) \| (PLATFORM|TENANT) \| (.+?) \|$", sec, re.M):
+        k, star, typ, dflt, dom, lvl, lab = m.groups()
+        d = dflt.strip().strip("`")
+        lo = hi = None
+        allowed = None
+        mm = re.fullmatch(r"([0-9.]+)…([0-9.]+)", dom.strip())
+        if mm and typ in ("INT", "DECIMAL"):
+            lo, hi = mm.group(1), mm.group(2)
+        if typ == "INT" or typ == "DECIMAL":
+            dj = d
+        elif typ == "BOOL":
+            dj = d
+            if dom.strip() == "`true`":
+                allowed = "[true]"
+        elif typ.startswith("LIST"):
+            dj = "[]" if d == "rỗng" else json.dumps([x.strip() for x in d.split(",")])
+            vals = re.findall(r"`([A-Z]+)`", dom)
+            if vals:
+                allowed = json.dumps(vals)
+        else:
+            dj = json.dumps(d, ensure_ascii=False)
+            if typ == "ENUM":
+                allowed = json.dumps(re.findall(r"`([A-Z_]+)`", dom))
+        unit = next((u for suf, u in UNITS if k.endswith(suf)), None) if typ in ("INT", "DECIMAL") else None
+        out.append((k, typ, dj, lo, hi, unit, lvl, bool(star), k.split(".")[1], lab.strip().replace("`", ""), allowed))
+    if len(out) != 61:
+        raise SystemExit("FRS §8.2 phải có 61 khóa 18.*, đọc được %d" % len(out))
+    return out
+
+
+SEED_18 = _frs_params()
 
 SEED_BACKUP = [
     ("pg-base", "PostgreSQL mọi cụm, bản sao cơ sở", "POSTGRES_BASE", "CNPG_BARMAN", "0 1 * * *", 1440, 240, 35, "kho-sao-luu-bat-bien/pg", "TPH-1", 1),
@@ -369,12 +378,12 @@ SEED_BACKUP = [
     ("audit-worm", "Nhật ký kiểm toán WORM (PH-13)", "AUDIT_WORM", "PH13_WORM", "0 * * * *", 60, None, 1825, "kho-worm/audit", "TPH-1", 30),
 ]
 
-SEED_SOURCES = [("PH04-RUNTIME", "PH04", "KAFKA", "PH04_RUNTIME", "/integration/internal/v1/replays", True),
-                ("PH10-EVENT", "PH10", "FEDERATED", "PH10_EVENT", "/event/internal/v1/replays", False),
-                ("PH01-INBOX", "PH01", "API", "REPLAY_PORT", "/onboarding/internal/v1/replays", True),
-                ("PH06-MDM-JOB", "PH06", "API", "REPLAY_PORT", "/mdm/internal/v1/replays", True),
-                ("PH08-DQ", "PH08", "API", "REPLAY_PORT", "/dq/internal/v1/replays", True),
-                ("PH19-INBOX", "PH19", "API", "REPLAY_PORT", "/payment/internal/v1/replays", True)]
+SEED_SOURCES = [("ph04-runtime", "PH-04", "KAFKA", "KAFKA_TOPIC", "/integration/internal/v1/replays", True),
+                ("ph10-event", "PH-10", "FEDERATED", "EVENT_LAYER", "/event/internal/v1/replays", False),
+                ("ph01-inbox", "PH-01", "API", "HTTP_PORT", "/onboarding/internal/v1/replays", True),
+                ("ph06-mdm-job", "PH-06", "API", "HTTP_PORT", "/mdm/internal/v1/replays", True),
+                ("ph08-dq", "PH-08", "API", "HTTP_PORT", "/dq/internal/v1/replays", True),
+                ("ph19-inbox", "PH-19", "API", "HTTP_PORT", "/payment/internal/v1/replays", True)]
 
 
 def q(s):
@@ -392,16 +401,17 @@ def seed_sql():
          "-- Dữ liệu nền tảng (tenant COMMON): không gian tên, lược đồ khóa 18.*, nguồn DLQ, đối tượng sao lưu D03-09 §8.2, lịch quốc gia mặc định.",
          "SET app.tenant_id = 'COMMON';"]
     L.append(f"INSERT INTO {P}.param_namespace (id, tenant_id, code, owner_module, title, approval_owner, created_by, updated_by)\nSELECT md5('ph18-ns:' || s.c)::uuid, 'COMMON', s.c, s.m, s.t, s.a, 'system:seed', 'system:seed' FROM (VALUES\n  "
-             + ",\n  ".join("('%s', '%s', '%s', '%s')" % (c, m, q(t), APPROVAL_OWNER.get(c, "PH18")) for c, m, t in SEED_NS)
+             + ",\n  ".join("('%s', '%s', '%s', '%s')" % (c, m, q(t), APPROVAL_OWNER.get(c, "PH-18")) for c, m, t in SEED_NS)
              + "\n) AS s(c, m, t, a)\nON CONFLICT (tenant_id, code) DO NOTHING;")
     rows = []
-    for i, (k, typ, d, lo, hi, unit, lvl, star, grp, lab) in enumerate(SEED_18):
-        rows.append("('%s', '%s', '%s', %s, %s, %s, '%s', %s, '%s', %d, '%s')" % (k, typ, q(d), "NULL::numeric" if lo is None else lo, "NULL::numeric" if hi is None else hi,
-                                                                               "NULL::text" if unit is None else "'%s'" % unit, lvl, str(star).lower(), grp, (i + 1) * 10, q(lab)))
-    L.append(f"INSERT INTO {P}.param_definition (id, tenant_id, namespace_code, param_key, value_type, default_value, min_value, max_value, unit, level, security_flag, display_group, display_order, label, created_by, updated_by)\n"
-             f"SELECT md5('ph18-def:' || s.k)::uuid, 'COMMON', '18', s.k, s.t, s.d::jsonb, s.lo, s.hi, s.u, s.l, s.f, s.g, s.o, s.lab, 'system:seed', 'system:seed' FROM (VALUES\n  "
-             + ",\n  ".join(rows) + "\n) AS s(k, t, d, lo, hi, u, l, f, g, o, lab)\nON CONFLICT (tenant_id, param_key) DO NOTHING;")
-    L.append(f"INSERT INTO {P}.dlq_source (id, tenant_id, source_code, source_module, ingest_channel, replay_port, replay_endpoint, payload_viewable, created_by, updated_by)\n"
+    for i, (k, typ, d, lo, hi, unit, lvl, star, grp, lab, allowed) in enumerate(SEED_18):
+        rows.append("('%s', '%s', '%s', %s, %s, %s, '%s', %s, '%s', %d, '%s', %s)" % (k, typ, q(d), "NULL::numeric" if lo is None else lo, "NULL::numeric" if hi is None else hi,
+                                                                               "NULL::text" if unit is None else "'%s'" % unit, lvl, str(star).lower(), grp, (i + 1) * 10, q(lab),
+                                                                               "NULL::text" if allowed is None else "'%s'" % q(allowed)))
+    L.append(f"INSERT INTO {P}.param_definition (id, tenant_id, namespace_code, param_key, value_type, default_value, min_value, max_value, unit, level, secure, display_group, display_order, label, allowed_values, created_by, updated_by)\n"
+             f"SELECT md5('ph18-def:' || s.k)::uuid, 'COMMON', '18', s.k, s.t, s.d::jsonb, s.lo, s.hi, s.u, s.l, s.f, s.g, s.o, s.lab, s.av::jsonb, 'system:seed', 'system:seed' FROM (VALUES\n  "
+             + ",\n  ".join(rows) + "\n) AS s(k, t, d, lo, hi, u, l, f, g, o, lab, av)\nON CONFLICT (tenant_id, param_key) DO NOTHING;")
+    L.append(f"INSERT INTO {P}.dlq_source (id, tenant_id, source_code, source_module, ingest_channel, replay_mode, replay_endpoint, payload_viewable, created_by, updated_by)\n"
              f"SELECT md5('ph18-src:' || s.c)::uuid, 'COMMON', s.c, s.m, s.ch, s.p, s.e, s.v, 'system:seed', 'system:seed' FROM (VALUES\n  "
              + ",\n  ".join("('%s', '%s', '%s', '%s', '%s', %s)" % (c, m, ch, p, e, str(v).lower()) for c, m, ch, p, e, v in SEED_SOURCES)
              + "\n) AS s(c, m, ch, p, e, v)\nON CONFLICT (tenant_id, source_code) DO NOTHING;")
@@ -445,7 +455,7 @@ SELECT d.param_key                                                     AS key,
        CASE WHEN t.id IS NOT NULL THEN 'TENANT' ELSE 'PLATFORM' END    AS scope,
        COALESCE(t.effective_from, p.effective_from, d.created_at)      AS effective_from,
        current_setting('app.tenant_id', false)                         AS tenant_id,
-       d.namespace_code, d.value_type, d.level, d.security_flag, d.display_group,
+       d.namespace_code, d.value_type, d.level, d.secure, d.display_group,
        COALESCE(t.current_version_no, p.current_version_no, 0)         AS version_no
   FROM {S}.param_definition d
   LEFT JOIN {S}.param_value p ON p.definition_id = d.id AND p.tenant_id = 'COMMON'
@@ -464,6 +474,42 @@ SELECT d.id, d.tenant_id, d.recipient_user_id, m.category, d.rendered_title AS t
  WHERE d.channel = 'IN_APP';
 COMMENT ON VIEW {S}.notification IS 'DD-13 Thông báo: recipient_user_id, category, title, link, read_at, channels_sent; chỉ kênh IN_APP.';
 -- @rollback DROP VIEW IF EXISTS {S}.notification;
+"""
+
+BATCH = """-- @file 18-0085-batch.sql
+-- @changeset ph18-0850-batch-schema splitStatements:false
+-- Kho lần chạy Spring Batch (JobRepository) của dh-migrate, dh-tenant-restore, dh-tenant-export (ADR-183, SDD §13.5 điểm 9): schema riêng
+-- ph18_batch theo lược đồ chuẩn schema-postgresql.sql của Spring Batch 5, không RLS (dữ liệu kỹ thuật, tham số Job mang mã tenant, không
+-- dữ liệu nghiệp vụ); chỉ ph18_worker đọc ghi, ph18_app và ph18_readonly không có quyền. Trạng thái nghiệp vụ vẫn ở ph18_ops.
+RESET ROLE;
+CREATE SCHEMA IF NOT EXISTS ph18_batch AUTHORIZATION ph18_owner;
+COMMENT ON SCHEMA ph18_batch IS 'PH-18 kho lần chạy Spring Batch (JobRepository) của dh-ops-worker; khởi động lại Job từ bước dừng. Không RLS, chỉ ph18_worker.';
+REVOKE ALL ON SCHEMA ph18_batch FROM PUBLIC;
+GRANT USAGE ON SCHEMA ph18_batch TO ph18_worker;
+SET ROLE ph18_owner;
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_instance (job_instance_id bigint NOT NULL PRIMARY KEY, version bigint, job_name varchar(100) NOT NULL,
+  job_key varchar(32) NOT NULL, CONSTRAINT job_inst_un UNIQUE (job_name, job_key));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution (job_execution_id bigint NOT NULL PRIMARY KEY, version bigint, job_instance_id bigint NOT NULL,
+  create_time timestamp NOT NULL, start_time timestamp, end_time timestamp, status varchar(10), exit_code varchar(2500), exit_message varchar(2500),
+  last_updated timestamp, CONSTRAINT job_inst_exec_fk FOREIGN KEY (job_instance_id) REFERENCES ph18_batch.batch_job_instance (job_instance_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution_params (job_execution_id bigint NOT NULL, parameter_name varchar(100) NOT NULL,
+  parameter_type varchar(100) NOT NULL, parameter_value varchar(2500), identifying char(1) NOT NULL,
+  CONSTRAINT job_exec_params_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_step_execution (step_execution_id bigint NOT NULL PRIMARY KEY, version bigint NOT NULL, step_name varchar(100) NOT NULL,
+  job_execution_id bigint NOT NULL, create_time timestamp NOT NULL, start_time timestamp, end_time timestamp, status varchar(10), commit_count bigint,
+  read_count bigint, filter_count bigint, write_count bigint, read_skip_count bigint, write_skip_count bigint, process_skip_count bigint, rollback_count bigint,
+  exit_code varchar(2500), exit_message varchar(2500), last_updated timestamp,
+  CONSTRAINT job_exec_step_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_step_execution_context (step_execution_id bigint NOT NULL PRIMARY KEY, short_context varchar(2500) NOT NULL,
+  serialized_context text, CONSTRAINT step_exec_ctx_fk FOREIGN KEY (step_execution_id) REFERENCES ph18_batch.batch_step_execution (step_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution_context (job_execution_id bigint NOT NULL PRIMARY KEY, short_context varchar(2500) NOT NULL,
+  serialized_context text, CONSTRAINT job_exec_ctx_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_step_execution_seq MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_job_execution_seq MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_job_seq MAXVALUE 9223372036854775807 NO CYCLE;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ph18_batch TO ph18_worker;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA ph18_batch TO ph18_worker;
+-- @rollback DROP SCHEMA IF EXISTS ph18_batch CASCADE;
 """
 
 
@@ -520,6 +566,7 @@ def render_all():
             out.append(render_table(t, seq))
             out.append("")
             seq += 10
+    out.append(BATCH)
     out.append(VIEWS)
     out.append(seed_sql())
     out.append("")

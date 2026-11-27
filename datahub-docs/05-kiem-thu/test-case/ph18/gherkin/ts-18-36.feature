@@ -53,3 +53,14 @@ Tính năng: TS-18-36 · Chạy thật di trú có duyệt bốn mắt và đán
     Và rà payload các lời gọi nhập và log của `dh-migrate`.
     Và làm bộ xử lý sự kiện cấp lại phía PH-18 lỗi năm lần.
     Thì bước 2 52 dấu cấp lại theo HTTT, trạng thái `REQUIRED`. Bước 3 EVT-18-26 theo `systemCode` có `credentialType`, `count`. Bước 4 không có giá trị xác thực nào. Bước 5 ghi ERR-18-124, mục DLQ `PH18_INBOX`.
+
+  @TC-18-168 @P2 @Dương @Âm
+  Kịch bản: TC-18-168 Đánh dấu WAIVED cho HTTT không còn dùng, dấu đã cấp lại bị từ chối
+    # Truy vết: FR-18-065, 068 · API-18-183, 172, 174 · ERR-18-006, 007 · UI-18-22
+    # Mục đích: Chứng minh luồng thay thế FR-18-065 qua API-18-183: dấu `PENDING` hoặc `NOTIFIED` chuyển `WAIVED` có lý do và được tính là đạt ở danh sách cắt chuyển.
+    Biết T96; dấu `MK-01` `NOTIFIED`, dấu `MK-02` `REISSUED` của nhóm `PG-THUE`; U-T96-TA1 có `PERM-18-migration`.
+    Khi TA1 `POST /credential-reissues/MK-01:waive` kèm `reason` "HTTT dừng kết nối theo văn bản 12/STTTT".
+    Và TA1 `POST /credential-reissues/MK-01:waive` với `reason` rỗng.
+    Và TA1 `POST /credential-reissues/MK-02:waive` kèm lý do hợp lệ.
+    Và TA1 `GET /parallel-groups/PG-THUE` xem mục `CREDENTIALS_REISSUED`.
+    Thì bước 1 `200` dấu `WAIVED`, ghi lý do và người đánh dấu; kiểm toán có. Bước 2 `422` ERR-18-007. Bước 3 `409` ERR-18-006, dấu giữ `REISSUED`. Bước 4 mục `CREDENTIALS_REISSUED` tính `MK-01` như đã đạt.

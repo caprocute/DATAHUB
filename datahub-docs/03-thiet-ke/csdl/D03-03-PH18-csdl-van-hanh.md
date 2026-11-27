@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH18
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -24,7 +24,7 @@ Năm quyết định thiết kế hội đồng cần lưu ý.
 4. **Sáu bảng chỉ thêm, bốn vai tách bạch.** Nhật ký thao tác DLQ, mốc sự cố, sổ cắt chuyển, mẫu so sánh, báo cáo đối chiếu, kết quả kiểm tra khôi phục chặn UPDATE và DELETE kể cả với chủ đối tượng. Vai `ph18_worker` của Job K8s chỉ chạm bảng di trú, khôi phục, xuất, sáp nhập; vai `ph18_readonly` không đọc payload DLQ, biến mẫu thông báo, ảnh chụp bản ghi lỗi di trú. Phân vùng không cấp quyền trực tiếp cho vai nào.
 5. **Không lưu bí mật, không cần extension.** Nguồn hệ cũ chỉ lưu tham chiếu OpenBao `kv/dh/{tenant}/...` và URL JDBC không kèm thông tin đăng nhập (CHECK); thông báo chỉ lưu địa chỉ dạng che và băm. Schema không cài extension nào (`gen_random_uuid`, `sha256` có sẵn ở PostgreSQL 16).
 
-Rủi ro chính: FRS PH-18 đang viết song song nên tên trường và mã FR chưa đối chiếu được (mục 8.2, 10.1); cách khử trùng `dlqKey` qua `inbox_event` có cửa sổ 30 ngày thay cho ràng buộc duy nhất trên bảng phân vùng (Q18-50); dọn phân vùng `dlq_message` phụ thuộc mục mở lâu (Q18-51).
+Bản 0.2 đã đồng bộ với FRS PH-18 0.2: tên khóa `18.*`, enum và tên cột theo FRS và OpenAPI, mã phân hệ dạng `PH-nn`, bộ đếm lần gặp của mục DLQ, kho lần chạy Spring Batch ở schema `ph18_batch` (mục 4.4, 10.1). Rủi ro chính: cách khử trùng `dlqKey` qua `inbox_event` có cửa sổ 7 ngày (`18.dlq.dedup-window-days`) cộng với tra mục chưa đóng cùng khóa, thay cho ràng buộc duy nhất trên bảng phân vùng (Q18-50); dọn phân vùng `dlq_message` phụ thuộc mục mở lâu (Q18-51).
 
 ## 0. Giới thiệu
 
@@ -65,7 +65,7 @@ Các tài liệu sau là căn cứ thiết kế; khi lệch, tài liệu này gh
 |---|---|
 | Brief chung PH-18 (27/11/2026) | Mã, trạng thái chuẩn §4, thực thể EN-18-01…54 §5, hợp đồng PH-20 §7 |
 | Hợp đồng kỳ vọng ở PH-18 (tổng hợp 906 dòng nhắc PH-18) | Điều các PH khác cần ở PH-18: tham số, DLQ, sự kiện, thông báo, việc, lịch, sao lưu, di trú |
-| D02-03-PH18 FRS (đang viết, chưa có tệp) | Chức năng, quy tắc, tham số `18.*` (viết song song, đối chiếu ở mục 8.2) |
+| [D02-03-PH18](../../02-yeu-cau/frs/D02-03-PH18-frs-van-hanh.md) FRS 0.2 | Chức năng, quy tắc, 61 tham số `18.*` §8.2 (nguồn chuẩn, CSDL đọc trực tiếp để sinh dữ liệu khởi tạo), số FR của mục "FR phục vụ" |
 | [D02-07](../../02-yeu-cau/D02-07-tu-dien-du-lieu.md) Từ điển dữ liệu | DD-13 Thông báo, DD-14 Tham số cấu hình |
 | [D03-09](../ha-tang/D03-09-ha-tang-trien-khai-dr.md) Hạ tầng và DR | §8.2 đối tượng sao lưu, §8.5 khôi phục một tenant (RBK-04) |
 | D03-10 Thiết kế đa tenant | RLS theo `tenant_id`, tenant `COMMON`, sáp nhập tenant |
@@ -149,7 +149,7 @@ D02-07 đặt tên DD-13 là `ph18_ops.notification` và DD-14 là `ph18_ops.con
 
 | Khung nhìn | Trường | Nguồn |
 |---|---|---|
-| `config_param` | `key`, `value`, `schema`, `scope`, `effective_from`, `tenant_id`, `namespace_code`, `value_type`, `level`, `security_flag`, `display_group`, `version_no` | `param_definition` nối `param_value` dòng `COMMON` và dòng tenant phiên; giá trị hiệu lực là ghi đè tenant, nếu không thì giá trị nền tảng, nếu không thì mặc định |
+| `config_param` | `key`, `value`, `schema`, `scope`, `effective_from`, `tenant_id`, `namespace_code`, `value_type`, `level`, `secure`, `display_group`, `version_no` | `param_definition` nối `param_value` dòng `COMMON` và dòng tenant phiên; giá trị hiệu lực là ghi đè tenant, nếu không thì giá trị nền tảng, nếu không thì mặc định |
 | `notification` | `id`, `tenant_id`, `recipient_user_id`, `category`, `title`, `link`, `read_at`, `channels_sent`, `status`, `created_at` | `notification_delivery` kênh `IN_APP` nối `notification_message` |
 
 : Khung nhìn tương thích DD-13 và DD-14
@@ -457,7 +457,7 @@ Cột: `consumer` v(64); `event_id` v(255); `source_topic` v(249); `event_type` 
 ::: dac-ta
 **Mục đích.** EN-18-01 Không gian tên tham số do từng PH đăng ký khi khởi động (onboarding, 00, 02, 04, 05, 07.rdm, 10, 12, 14, 15, 17, 18, 20, ff; mở cho 06, 08, 09, 11, 13, 16; 19 do PH-19 tự giữ).
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-01.
+**FR phục vụ.** FR-18-001; EN-18-01.
 
 **Khóa chính.** `id`.
 
@@ -478,7 +478,7 @@ Cột: `consumer` v(64); `event_id` v(255); `source_topic` v(249); `event_type` 
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `approval_owner` | `varchar(8), mặc định 'PH18'` | PH giữ quy trình bốn mắt cho tham số ★ của không gian tên này; mặc định PH18. |
+| `approval_owner` | `varchar(8), mặc định 'PH-18'` | PH giữ quy trình bốn mắt cho tham số ★ của không gian tên này; mặc định PH-18. |
 | `cache_ttl_seconds` | `integer, mặc định 60` | Thời gian đệm tối đa ở PH đọc; trần 60 giây theo NFR-00-052 và CC-CFG-04. |
 
 : Cột của bảng `param_namespace`
@@ -490,7 +490,7 @@ Cột khác: `code` v(32); `owner_module` v(8); `title` v(255); `description` te
 ::: dac-ta
 **Mục đích.** EN-18-02 Lược đồ một khóa tham số (DD-14 schema): kiểu, mặc định, miền, trần nền tảng, mức PLATFORM hay TENANT, cờ bảo mật ★, nhóm hiển thị.
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-02.
+**FR phục vụ.** FR-18-001; EN-18-02.
 
 **Khóa chính.** `id`.
 
@@ -511,20 +511,23 @@ Cột khác: `code` v(32); `owner_module` v(8); `title` v(255); `description` te
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
+| `value_type` | `varchar(16)` | Trường type của FRS và OpenAPI (tên cột tránh từ khóa SQL). |
+| `default_value` | `jsonb` | Trường default của FRS và OpenAPI (tên cột tránh từ khóa SQL). |
 | `platform_ceiling` | `jsonb, NULL` | Trần nền tảng: giá trị tenant không vượt (số: không lớn hơn; danh sách: là tập con). |
 | `level` | `varchar(8), mặc định 'TENANT'` | PLATFORM: chỉ PA ghi giá trị (dòng COMMON), tenant chỉ đọc; TENANT: tenant ghi đè trong miền và trần. |
-| `security_flag` | `boolean, mặc định false` | Tham số ★ bảo mật: đổi cần bốn mắt (param_change_request) do approval_owner của không gian tên giữ. |
+| `secure` | `boolean, mặc định false` | Trường secure của FRS (lược đồ khóa). Tham số ★ bảo mật: đổi cần bốn mắt (param_change_request) do approval_owner của không gian tên giữ. |
+| `display_group` | `varchar(64), NULL` | Trường group của FRS và OpenAPI (tên cột tránh từ khóa SQL). |
 
 : Cột của bảng `param_definition`
 
-Cột khác: `namespace_code` v(32); `param_key` v(128); `value_type` v(16) {BOOLEAN, INTEGER, DECIMAL, STRING, ENUM, DURATION, CRON, TIME_RANGE, JSON, LIST_STRING, LIST_HOST}; `default_value` jsonb; `json_schema` jsonb; `min_value` numeric; `max_value` numeric; `allowed_values` jsonb; `unit` v(16); `display_group` v(64); `display_order` int; `label` v(255); `description` text; `deprecated_at` tstz; `removal_date` date.
+Cột khác: `namespace_code` v(32); `param_key` v(128); `json_schema` jsonb; `min_value` numeric; `max_value` numeric; `allowed_values` jsonb; `unit` v(16); `display_order` int; `label` v(255); `description` text; `deprecated_at` tstz; `removal_date` date.
 
 ### 3.5. `param_change_request`
 
 ::: dac-ta
 **Mục đích.** EN-18-05 Đề nghị đổi tham số ★ chờ duyệt bốn mắt: giá trị đề xuất, giá trị hiện tại, lý do; người duyệt khác người đề nghị.
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-05.
+**FR phục vụ.** FR-18-004; EN-18-05.
 
 **Khóa chính.** `id`.
 
@@ -550,7 +553,7 @@ Cột: `definition_id` uuid; `param_key` v(128); `proposed_value` jsonb; `curren
 ::: dac-ta
 **Mục đích.** EN-18-03 Giá trị hiện hành của một khóa theo tenant (DD-14 value, scope).
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-03.
+**FR phục vụ.** FR-18-003; EN-18-03.
 
 **Khóa chính.** `id`.
 
@@ -582,7 +585,7 @@ Cột khác: `definition_id` uuid; `param_key` v(128); `value` jsonb; `scope` v(
 ::: dac-ta
 **Mục đích.** EN-18-04 Lịch sử phiên bản giá trị tham số (DD-14 có phiên bản): mỗi lần ghi thêm một dòng; nội dung bất biến, chỉ trạng thái chuyển PENDING_APPROVAL sang ACTIVE hoặc REJECTED, ACTIVE sang SUPERSEDED.
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-04.
+**FR phục vụ.** FR-18-003, FR-18-004; EN-18-04.
 
 **Khóa chính.** `id`.
 
@@ -608,7 +611,7 @@ Cột: `definition_id` uuid; `param_key` v(128); `version_no` int; `value` jsonb
 ::: dac-ta
 **Mục đích.** EN-18-06 Cờ tính năng ff.{module}.{tính-năng} theo tenant (QT-BR-03, CC-CFG-04): chủ sở hữu, ngày gỡ bắt buộc.
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-06.
+**FR phục vụ.** FR-18-009; EN-18-06.
 
 **Khóa chính.** `id`.
 
@@ -618,49 +621,49 @@ Cột: `definition_id` uuid; `param_key` v(128); `version_no` int; `value` jsonb
 
 **Ràng buộc CHECK.** `ck_feature_flag_` + key, module, rollout, status.
 
-**Chỉ mục.** `ix_feature_flag_removal`.
+**Chỉ mục.** `ix_feature_flag_retire`.
 
 **Cách ly tenant.** FORCE RLS: đọc dòng của tenant phiên và dòng `COMMON` dùng chung, ghi chỉ dòng của tenant phiên; dòng `COMMON` chỉ phiên `COMMON` ghi.
 
-**Phân vùng, bất biến.** Bất biến: `flag_key`, `module`.
+**Phân vùng, bất biến.** Bất biến: `flag_key`, `owner_ph`.
 
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `flag_key` v(128); `module` v(8); `owner` v(64); `description` text; `enabled` bool; `rollout_percent` smallint; `removal_date` date; `status` v(12) {ACTIVE, RETIRED}.
+Cột: `flag_key` v(128); `owner_ph` v(8); `owner_user` v(64); `description` text; `enabled` bool; `rollout_percent` smallint; `retire_by` date; `status` v(12) {ACTIVE, RETIRED}.
 
 ### 3.9. `egress_allowlist_entry`
 
 ::: dac-ta
 **Mục đích.** EN-18-07 Danh sách đích egress cho phép theo tenant (kiểu LIST<HOST>, giải Q15-10): máy đích HTTPS, cổng, PH dùng (PH-15 backend thử và kho Git, PH-13 webhook).
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-07.
+**FR phục vụ.** FR-18-010; EN-18-07.
 
 **Khóa chính.** `id`.
 
-**Duy nhất.** `uq_egress_allowlist_entry_host` (tenant_id, host, port, purpose_module).
+**Duy nhất.** `uq_egress_allowlist_entry_host` (tenant_id, host, port, used_by).
 
 **Khóa ngoại.** Không.
 
-**Ràng buộc CHECK.** `ck_egress_allowlist_entry_` + host, port, scheme, module, four_eyes, enabled.
+**Ràng buộc CHECK.** `ck_egress_allowlist_entry_` + host, port, scheme, module, purpose, four_eyes, enabled.
 
 **Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
 
 **Cách ly tenant.** FORCE RLS theo `tenant_id`, bốn chính sách (đọc, chèn, sửa, xóa).
 
-**Phân vùng, bất biến.** Bất biến: `host`, `port`, `purpose_module`.
+**Phân vùng, bất biến.** Bất biến: `host`, `port`, `used_by`.
 
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `host` v(253); `port` int; `scheme` v(8); `purpose_module` v(8); `purpose` v(255); `enabled` bool; `approved_by` v(64); `approved_at` tstz; `expires_at` tstz; `revoked_at` tstz; `revoked_by` v(64).
+Cột: `host` v(253); `port` int; `scheme` v(8); `used_by` v(8); `purpose` v(24) {DEV_PORTAL_BACKEND, GIT_REPO, WEBHOOK, MODEL_PROVIDER, OTHER}; `reason` v(500); `enabled` bool; `approved_by` v(64); `approved_at` tstz; `expires_at` tstz; `revoked_at` tstz; `revoked_by` v(64).
 
 ### 3.10. `param_bundle`
 
 ::: dac-ta
 **Mục đích.** EN-18-08 Gói tham số xuất nhập giữa môi trường (DEV, TEST, STAGING, PROD): danh sách không gian tên, số khóa, tổng kiểm tra, khác biệt so với đích.
 
-**FR phục vụ.** Nhóm FR khối A, kho tham số và cờ tính năng; EN-18-08.
+**FR phục vụ.** FR-18-008; EN-18-08.
 
 **Khóa chính.** `id`.
 
@@ -684,9 +687,9 @@ Cột: `bundle_code` v(64); `direction` v(8) {EXPORT, IMPORT}; `source_env` v(8)
 ### 3.11. `dlq_source`
 
 ::: dac-ta
-**Mục đích.** EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), cổng phát lại (PH04_RUNTIME, PH10_EVENT, REPLAY_PORT, NONE).
+**Mục đích.** EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), chế độ phát lại replayMode của FRS (KAFKA_TOPIC nghe EVT-18-09, HTTP_PORT gọi cổng ReplayPort của nguồn, EVENT_LAYER đề nghị PH-10 qua API-10-064, NONE).
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-18.
+**FR phục vụ.** FR-18-012; EN-18-18.
 
 **Khóa chính.** `id`.
 
@@ -694,7 +697,7 @@ Cột: `bundle_code` v(64); `direction` v(8) {EXPORT, IMPORT}; `source_env` v(8)
 
 **Khóa ngoại.** Không.
 
-**Ràng buộc CHECK.** `ck_dlq_source_` + code, module, channel, port, endpoint, federated.
+**Ràng buộc CHECK.** `ck_dlq_source_` + code, module, channel, mode, event_layer, endpoint, federated.
 
 **Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
 
@@ -711,14 +714,14 @@ Cột: `bundle_code` v(64); `direction` v(8) {EXPORT, IMPORT}; `source_env` v(8)
 
 : Cột của bảng `dlq_source`
 
-Cột khác: `source_code` v(32); `source_module` v(8); `ingest_channel` v(12) {KAFKA, API, FEDERATED}; `replay_port` v(16) {PH04_RUNTIME, PH10_EVENT, REPLAY_PORT, NONE}; `callback_scope` v(64); `payload_viewable` bool; `enabled` bool; `description` v(500).
+Cột khác: `source_code` v(32); `source_module` v(8); `ingest_channel` v(12) {KAFKA, API, FEDERATED}; `replay_mode` v(16) {KAFKA_TOPIC, HTTP_PORT, EVENT_LAYER, NONE}; `callback_scope` v(64); `payload_viewable` bool; `enabled` bool; `description` v(500).
 
 ### 3.12. `error_guide`
 
 ::: dac-ta
-**Mục đích.** EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): triệu chứng, nguyên nhân, cách xử lý, hành động khuyến nghị.
+**Mục đích.** EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): nguyên nhân (causes), các bước xử lý (steps), khả năng phát lại replayable (YES, AFTER_FIX, NO), lớp lỗi mặc định, liên kết; tên trường theo FRS FR-18-025.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-15.
+**FR phục vụ.** FR-18-025; EN-18-15.
 
 **Khóa chính.** `id`.
 
@@ -726,7 +729,7 @@ Cột khác: `source_code` v(32); `source_module` v(8); `ingest_channel` v(12) {
 
 **Khóa ngoại.** Không.
 
-**Ràng buộc CHECK.** `ck_error_guide_` + code, action, status, published, runbook.
+**Ràng buộc CHECK.** `ck_error_guide_` + code, replayable, class, owner, content, status, published, runbook.
 
 **Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
 
@@ -737,14 +740,14 @@ Cột khác: `source_code` v(32); `source_module` v(8); `ingest_channel` v(12) {
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `error_code` v(16); `locale` v(8); `title` v(255); `symptom` text; `cause` text; `resolution` text; `recommended_action` v(16) {REPLAY, FIX_AND_REPLAY, DISCARD, ESCALATE, WAIT_SOURCE}; `runbook_path` v(500); `status` v(12) {DRAFT, PUBLISHED, RETIRED}; `published_at` tstz; `published_by` v(64).
+Cột: `error_code` v(16); `locale` v(8); `title` v(255); `owner_ph` v(8); `causes` text[]; `steps` text[]; `replayable` v(10) {YES, AFTER_FIX, NO}; `default_class` v(12) {TRANSIENT, BUSINESS, CONTRACT, POISON, UNKNOWN}; `links` text[]; `runbook_path` v(500); `status` v(12) {DRAFT, PUBLISHED, RETIRED}; `published_at` tstz; `published_by` v(64).
 
 ### 3.13. `dlq_group`
 
 ::: dac-ta
 **Mục đích.** EN-18-13 Nhóm dấu hiệu lỗi: băm SHA-256 của (nguồn, luồng, mã lỗi, thông điệp đã chuẩn hóa) để gom mục DLQ giống nhau, đếm mục mở, tổng, lần đầu, lần cuối; gắn hướng dẫn xử lý.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-13.
+**FR phục vụ.** FR-18-020; EN-18-13.
 
 **Khóa chính.** `id`.
 
@@ -770,7 +773,7 @@ Cột: `signature` char(64); `source_code` v(32); `flow_code` v(128); `error_cod
 ::: dac-ta
 **Mục đích.** EN-18-09 Chỉ mục mục DLQ hợp nhất: hợp đồng ngữ cảnh chuẩn (dh-dlq-reason, dh-dlq-attempts, dh-dlq-stage, dh-dlq-error-code, dh-flow, dh-version, traceparent, dh-tenant, dh-source-ph), lớp lỗi, trạng thái, ưu tiên, nhóm.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-09.
+**FR phục vụ.** FR-18-013; EN-18-09.
 
 **Khóa chính.** (id, received_at).
 
@@ -778,7 +781,7 @@ Cột: `signature` char(64); `source_code` v(32); `flow_code` v(128); `error_cod
 
 **Khóa ngoại.** (tenant_id, group_id) → `dlq_group`.
 
-**Ràng buộc CHECK.** `ck_dlq_message_` + status, class, priority, module, attempts, trace, location, inline, inline_size, sha, federated, poison, discard, closed, expired, headers.
+**Ràng buộc CHECK.** `ck_dlq_message_` + status, class, priority, module, attempts, occurrence, trace, location, inline, inline_size, sha, federated, poison, discard, closed, expired, headers.
 
 **Chỉ mục.** `ix_dlq_message_status`, `ix_dlq_message_key`, `ix_dlq_message_source`, `ix_dlq_message_group`, `ix_dlq_message_trace`, `ix_dlq_message_retention`, `ix_dlq_message_assignee`.
 
@@ -792,19 +795,22 @@ Cột: `signature` char(64); `source_code` v(32); `flow_code` v(128); `error_cod
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | `missing_context` | `varchar(32)[], mặc định '{}'` | Tên header ngữ cảnh bị thiếu khi tiếp nhận; khác rỗng thì mục vào POISON. |
+| `payload_location` | `varchar(10)` | INLINE chỉ cho payload JSON ≤ 18.dlq.payload.inline-max-kb; payload không phải JSON (ERR-18-101) luôn ở GARAGE dạng nhị phân, dù nhỏ. |
 | `payload_inline` | `jsonb, NULL` | Payload gốc ≤ 256 KB (18.dlq.payload.inline-max-kb), trường nhạy cảm đã mã hóa ở PH-04; chỉ được đặt NULL khi dọn (PURGED). Vai readonly không đọc. |
+| `occurrence_count` | `integer, mặc định 1` | Số lần gặp (BR-18-015): bản tin cùng dlqKey đến khi mục chưa đóng chỉ tăng bộ đếm, không tạo mục mới (ERR-18-105); cập nhật được, không thuộc tg_immutable. |
+| `last_seen_at` | `timestamptz, mặc định now()` | Lần gặp cuối của dlqKey; cập nhật cùng occurrence_count. |
 | `retention_until` | `timestamptz, NULL` | Hạn giữ: đóng + 18.dlq.retention.closed-days; mục mở không có hạn. |
 
 : Cột của bảng `dlq_message`
 
-Cột khác: `dlq_key` v(255); `source_code` v(32); `source_module` v(8); `flow_code` v(128); `flow_version` v(32); `stage` v(64); `reason_code` v(64); `error_code` v(16); `error_class` v(12) {TRANSIENT, BUSINESS, CONTRACT, POISON, UNKNOWN}; `error_message` v(2000); `attempts` int; `trace_id` char(32); `origin_topic` v(249); `origin_partition` int; `origin_offset` bigint; `dlq_partition` int; `dlq_offset` bigint; `external_ref` v(128); `first_failed_at` tstz; `received_at` tstz; `status` v(16) {NEW, TRIAGED, REPLAY_PENDING, REPLAYING, RESOLVED, REPLAY_FAILED, DISCARDED, POISON, EXPIRED}; `priority` v(2) {P1, P2, P3, P4}; `group_id` uuid; `assignee` v(64); `context_headers` jsonb; `schema_ref` v(255); `payload_location` v(10) {INLINE, GARAGE, FEDERATED, PURGED}; `payload_content_type` v(127); `payload_size_bytes` int; `payload_sha256` char(64); `current_revision_no` int; `discard_reason` v(2000); `resolved_at` tstz; `closed_at` tstz, phân vùng `RANGE (received_at)`.
+Cột khác: `dlq_key` v(255); `source_code` v(32); `source_module` v(8); `flow_code` v(128); `flow_version` v(32); `stage` v(64); `reason_code` v(64); `error_code` v(16); `error_class` v(12) {TRANSIENT, BUSINESS, CONTRACT, POISON, UNKNOWN}; `error_message` v(2000); `attempts` int; `trace_id` char(32); `origin_topic` v(249); `origin_partition` int; `origin_offset` bigint; `dlq_partition` int; `dlq_offset` bigint; `external_ref` v(128); `first_failed_at` tstz; `received_at` tstz; `status` v(16) {NEW, TRIAGED, REPLAY_PENDING, REPLAYING, RESOLVED, REPLAY_FAILED, DISCARDED, POISON, EXPIRED}; `priority` v(2) {P1, P2, P3, P4}; `group_id` uuid; `assignee` v(64); `context_headers` jsonb; `schema_ref` v(255); `payload_content_type` v(127); `payload_size_bytes` int; `payload_sha256` char(64); `current_revision_no` int; `discard_reason` v(2000); `resolved_at` tstz; `closed_at` tstz, phân vùng `RANGE (received_at)`.
 
 ### 3.15. `dlq_payload_ref`
 
 ::: dac-ta
 **Mục đích.** EN-18-10 Tham chiếu payload lớn hơn 256 KB ở Garage bucket dh-{tenant}-ops (không phải MinIO): bản gốc hoặc bản sửa, kích thước, SHA-256, mã hóa phía máy chủ.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-10.
+**FR phục vụ.** FR-18-013, FR-18-016; EN-18-10.
 
 **Khóa chính.** `id`.
 
@@ -830,7 +836,7 @@ Cột: `dlq_id` uuid; `dlq_received_at` tstz; `kind` v(10) {ORIGINAL, REVISION};
 ::: dac-ta
 **Mục đích.** EN-18-11 Bản sửa payload có kiểm soát: payload mới (inline hoặc Garage), khác biệt JSON Patch so với bản trước, lý do; có dữ liệu mức Hạn chế thì bốn mắt.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-11.
+**FR phục vụ.** FR-18-024; EN-18-11.
 
 **Khóa chính.** `id`.
 
@@ -856,7 +862,7 @@ Cột: `dlq_id` uuid; `dlq_received_at` tstz; `revision_no` int; `payload_locati
 ::: dac-ta
 **Mục đích.** EN-18-14 Gán người xử lý mục DLQ: người được gán, người gán, ưu tiên, ghi chú; mỗi mục chỉ một lần gán đang hiệu lực (unassigned_at rỗng).
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-14.
+**FR phục vụ.** FR-18-023; EN-18-14.
 
 **Khóa chính.** `id`.
 
@@ -882,7 +888,7 @@ Cột: `dlq_id` uuid; `dlq_received_at` tstz; `assignee` v(64); `assigned_by` v(
 ::: dac-ta
 **Mục đích.** EN-18-16 Lượt phát lại đơn hoặc loạt (theo bộ lọc hay danh sách, ≤ 18.dlq.replay.batch-max); vượt 18.dlq.replay.approval-threshold thì bốn mắt; tốc độ giới hạn; tạm dừng, hủy; bộ đếm kết quả.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-16.
+**FR phục vụ.** FR-18-027, FR-18-028, FR-18-029; EN-18-16.
 
 **Khóa chính.** `id`.
 
@@ -901,14 +907,14 @@ Cột: `dlq_id` uuid; `dlq_received_at` tstz; `assignee` v(64); `assigned_by` v(
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `mode` v(12) {SINGLE, BATCH_FILTER, BATCH_LIST}; `filter` jsonb; `reason` text; `total_items` int; `succeeded` int; `failed` int; `skipped` int; `rate_per_minute` int; `approval_required` bool; `status` v(20) {DRAFT, PENDING_APPROVAL, APPROVED, RUNNING, PAUSED, COMPLETED, PARTIAL, FAILED, CANCELLED, REJECTED}; `approved_by` v(64); `approved_at` tstz; `rejected_reason` v(1000); `started_at` tstz; `paused_at` tstz; `finished_at` tstz; `cancelled_by` v(64).
+Cột: `mode` v(12) {SINGLE, BATCH_FILTER, BATCH_LIST}; `filter` jsonb; `reason` text; `total_items` int; `succeeded` int; `failed` int; `skipped` int; `rate_per_second` int; `approval_required` bool; `status` v(20) {DRAFT, PENDING_APPROVAL, APPROVED, RUNNING, PAUSED, COMPLETED, PARTIAL, FAILED, CANCELLED, REJECTED}; `approved_by` v(64); `approved_at` tstz; `rejected_reason` v(1000); `started_at` tstz; `paused_at` tstz; `finished_at` tstz; `cancelled_by` v(64).
 
 ### 3.19. `replay_item`
 
 ::: dac-ta
 **Mục đích.** EN-18-17 Một mục trong lượt phát lại: mục DLQ, số bản sửa, khóa lũy đẳng dlqId:revision gửi cho nguồn, trạng thái, trace phát lại, kết quả do nguồn báo (callback ops:replay-callback hoặc EVT-10-12).
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-17.
+**FR phục vụ.** FR-18-028, FR-18-030; EN-18-17.
 
 **Khóa chính.** `id`.
 
@@ -927,14 +933,14 @@ Cột: `mode` v(12) {SINGLE, BATCH_FILTER, BATCH_LIST}; `filter` jsonb; `reason`
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `job_id` uuid; `dlq_id` uuid; `dlq_received_at` tstz; `revision_no` int; `idempotency_key` v(80); `status` v(20) {PENDING, SENT, SUCCEEDED, FAILED, SKIPPED_DUPLICATE, CANCELLED}; `replay_trace_id` char(32); `dispatched_at` tstz; `result_at` tstz; `result_error_code` v(16); `result_message` v(2000).
+Cột: `job_id` uuid; `dlq_id` uuid; `dlq_received_at` tstz; `revision_no` int; `idempotency_key` v(80); `status` v(20) {PENDING, SENT, SUCCEEDED, FAILED, SKIPPED, SKIPPED_DUPLICATE, CANCELLED}; `replay_trace_id` char(32); `dispatched_at` tstz; `result_at` tstz; `result_error_code` v(16); `result_message` v(2000).
 
 ### 3.20. `dlq_audit`
 
 ::: dac-ta
 **Mục đích.** EN-18-12 Nhật ký thao tác trên DLQ (xem payload có lý do, phân loại, gán, sửa, duyệt, phát lại, bỏ qua, mở lại, hết hạn, dọn): chỉ thêm, đồng thời gửi PH-13 kiểm toán.
 
-**FR phục vụ.** Nhóm FR khối B, C, D, tiếp nhận, phân loại, phát lại DLQ; EN-18-12.
+**FR phục vụ.** FR-18-023, FR-18-027, FR-18-030, FR-18-031, FR-18-032, FR-18-070; EN-18-12.
 
 **Khóa chính.** (id, occurred_at).
 
@@ -960,7 +966,7 @@ Cột: `dlq_id` uuid; `replay_job_id` uuid; `action` v(20) {INGEST, VIEW_PAYLOAD
 ::: dac-ta
 **Mục đích.** EN-18-19 Mẫu thông báo (thư, SMS, trong ứng dụng) của các PH: mã mẫu, PH sở hữu, nhóm DD-13, thông báo bắt buộc (không tắt bằng tùy chọn), khẩn (bỏ qua giờ yên lặng).
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-19.
+**FR phục vụ.** FR-18-035; EN-18-19.
 
 **Khóa chính.** `id`.
 
@@ -986,7 +992,7 @@ Cột: `template_code` v(64); `owner_module` v(8); `title` v(255); `description`
 ::: dac-ta
 **Mục đích.** EN-18-20 Phiên bản nội dung mẫu Mustache không logic: tiêu đề thư, thân, SMS, tiêu đề và liên kết trong ứng dụng, danh sách biến cho phép.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-20.
+**FR phục vụ.** FR-18-035; EN-18-20.
 
 **Khóa chính.** `id`.
 
@@ -1019,7 +1025,7 @@ Cột khác: `template_id` uuid; `version_no` int; `locale` v(8); `email_subject
 ::: dac-ta
 **Mục đích.** EN-18-21 Quy tắc thông báo theo sự kiện của các PH (hợp đồng §1.3): loại sự kiện, điều kiện lọc, mẫu, cách phân giải người nhận, kênh, loại việc tạo kèm.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-21.
+**FR phục vụ.** FR-18-039; EN-18-21.
 
 **Khóa chính.** `id`.
 
@@ -1045,7 +1051,7 @@ Cột: `rule_code` v(64); `source_module` v(8); `event_type` v(255); `condition`
 ::: dac-ta
 **Mục đích.** EN-18-22 Thông báo logic (outbox của NotificationApi, DD-13): khóa lũy đẳng của bên gọi, mẫu và phiên bản, người nhận recipient_ref (người, nhóm, vai trò, đầu mối HTTT; PH-18 tự phân giải địa chỉ), biến mẫu (CHECK chặn trường định danh), chế độ ASYNC hoặc SYNC (thư mang liên kết, Q01-52), trạng thái tổng hợp từ các lần gửi.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-22.
+**FR phục vụ.** FR-18-036; EN-18-22.
 
 **Khóa chính.** `id`.
 
@@ -1071,7 +1077,7 @@ Cột: `caller_module` v(8); `message_key` v(128); `template_code` v(64); `templ
 ::: dac-ta
 **Mục đích.** EN-18-23 Lần gửi theo người nhận và kênh (nhật ký gửi): địa chỉ chỉ lưu dạng che và băm, trạng thái QUEUED sang SENT sang DELIVERED, BOUNCED hoặc FAILED; SUPPRESSED khi tùy chọn người dùng, giờ yên lặng, danh sách chặn.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-23.
+**FR phục vụ.** FR-18-036, FR-18-040; EN-18-23.
 
 **Khóa chính.** (id, queued_at).
 
@@ -1097,7 +1103,7 @@ Cột: `message_id` uuid; `channel` v(8) {EMAIL, SMS, IN_APP}; `recipient_user_i
 ::: dac-ta
 **Mục đích.** EN-18-24 Tùy chọn nhận thông báo của người dùng (FR-00-061) theo nhóm và kênh, giờ yên lặng; thông báo bắt buộc và khẩn không bị tắt bằng tùy chọn.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-24.
+**FR phục vụ.** FR-18-038; EN-18-24.
 
 **Khóa chính.** `id`.
 
@@ -1123,7 +1129,7 @@ Cột: `user_id` v(64); `category` v(12) {TASK, JOB_RESULT, ALERT, INFO}; `chann
 ::: dac-ta
 **Mục đích.** EN-18-25 Danh sách chặn gửi do thư trả lại cứng, khiếu nại, địa chỉ sai hoặc chặn tay: địa chỉ che và băm, số lần trả lại; thư trả lại phát ops.notification.bounced để PH-01 cập nhật đầu mối.
 
-**FR phục vụ.** Nhóm FR khối E, thông báo; EN-18-25.
+**FR phục vụ.** FR-18-040; EN-18-25.
 
 **Khóa chính.** `id`.
 
@@ -1149,7 +1155,7 @@ Cột: `channel` v(8) {EMAIL, SMS}; `address_hash` char(64); `address_masked` v(
 ::: dac-ta
 **Mục đích.** EN-18-26 Loại việc do PH đăng ký qua TaskInboxApi (ph01.approve-onboarding, ph02.review-subscription, ph16.approve-report…): tiêu đề, hạn mặc định, mốc nhắc, quyền cần có, mẫu liên kết sâu, cờ bốn mắt.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-26.
+**FR phục vụ.** FR-18-042; EN-18-26.
 
 **Khóa chính.** `id`.
 
@@ -1175,7 +1181,7 @@ Cột: `type_code` v(64); `owner_module` v(8); `title` v(255); `description` v(1
 ::: dac-ta
 **Mục đích.** EN-18-27 Việc trong "Việc của tôi" (FR-00-070…072): loại việc, khóa lũy đẳng của PH tạo việc, tiêu đề không chứa dữ liệu Hạn chế, đối tượng, người hoặc vai trò được giao, hạn, trạng thái; việc bốn mắt thì người đóng khác người đề nghị.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-27.
+**FR phục vụ.** FR-18-043; EN-18-27.
 
 **Khóa chính.** `id`.
 
@@ -1201,7 +1207,7 @@ Cột: `type_id` uuid; `type_code` v(64); `task_key` v(128); `title` v(255); `su
 ::: dac-ta
 **Mục đích.** EN-18-28 Lịch nhắc việc: trước hạn, quá hạn, leo thang; thời điểm gửi và thông báo đã tạo. Mỗi việc, loại nhắc, thời điểm một dòng.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-28.
+**FR phục vụ.** FR-18-044; EN-18-28.
 
 **Khóa chính.** `id`.
 
@@ -1227,7 +1233,7 @@ Cột: `task_id` uuid; `kind` v(12) {BEFORE_DUE, OVERDUE, ESCALATION}; `remind_a
 ::: dac-ta
 **Mục đích.** EN-18-29 Lịch ngày làm việc theo tenant (WorkingCalendarApi, khóa 18.calendar.*): múi giờ, ngày làm việc trong tuần, giờ làm việc; dòng COMMON là lịch quốc gia, tenant kế thừa và bổ sung.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-29.
+**FR phục vụ.** FR-18-045; EN-18-29.
 
 **Khóa chính.** `id`.
 
@@ -1253,7 +1259,7 @@ Cột: `calendar_code` v(32); `name` v(255); `timezone` v(64); `working_days` sm
 ::: dac-ta
 **Mục đích.** EN-18-30 Ngày lễ, ngày nghỉ bù, ngày làm bù của một lịch; căn cứ pháp lý (thông báo nghỉ lễ). Dòng COMMON cho lịch quốc gia.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-30.
+**FR phục vụ.** FR-18-045; EN-18-30.
 
 **Khóa chính.** `id`.
 
@@ -1279,7 +1285,7 @@ Cột: `calendar_id` uuid; `holiday_date` date; `name` v(255); `kind` v(16) {HOL
 ::: dac-ta
 **Mục đích.** EN-18-31 Cửa sổ bảo trì và cửa sổ đóng băng thay đổi (PH-02 đọc cờ đóng băng môi trường thật; PH-04 giữ 04.freeze.windows riêng, đề nghị hợp nhất): phạm vi PH, môi trường, thời gian, lý do, mẫu thông báo, duyệt bốn mắt.
 
-**FR phục vụ.** Nhóm FR khối F, Việc của tôi và lịch; EN-18-31.
+**FR phục vụ.** FR-18-046; EN-18-31.
 
 **Khóa chính.** `id`.
 
@@ -1298,14 +1304,14 @@ Cột: `calendar_id` uuid; `holiday_date` date; `name` v(255); `kind` v(16) {HOL
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `window_code` v(64); `kind` v(12) {MAINTENANCE, FREEZE}; `scope_module` v(8); `environment` v(8) {PROD, STAGING, ALL}; `starts_at` tstz; `ends_at` tstz; `reason` text; `announce_template_code` v(64); `release_ref` v(64); `status` v(12) {PLANNED, ACTIVE, COMPLETED, CANCELLED}; `approved_by` v(64); `approved_at` tstz.
+Cột: `window_code` v(64); `kind` v(12) {MAINTENANCE, FREEZE}; `scope_module` v(8); `environment` v(8) {PROD, STAGING, TEST, ALL}; `starts_at` tstz; `ends_at` tstz; `reason` text; `announce_template_code` v(64); `release_ref` v(64); `status` v(12) {PLANNED, ACTIVE, COMPLETED, CANCELLED}; `approved_by` v(64); `approved_at` tstz.
 
 ### 3.34. `incident`
 
 ::: dac-ta
 **Mục đích.** EN-18-32 Hồ sơ sự cố vận hành mở từ sự kiện (EVT-13-04, 05, DLQ vượt ngưỡng, sao lưu lỗi) hoặc tạo tay: mức độ, nhóm, chỉ huy, người xử lý, mốc thời gian, cờ dữ liệu cá nhân và tham chiếu PH-09 (INCIDENT_PH18, PH-09 giữ đồng hồ 72 giờ), nguyên nhân gốc và bài học khi đóng.
 
-**FR phục vụ.** Nhóm FR khối G, sự cố vận hành; EN-18-32.
+**FR phục vụ.** FR-18-047, FR-18-069; EN-18-32.
 
 **Khóa chính.** `id`.
 
@@ -1324,14 +1330,14 @@ Cột: `window_code` v(64); `kind` v(12) {MAINTENANCE, FREEZE}; `scope_module` v
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `incident_no` v(20); `title` v(255); `severity` v(4) {SEV1, SEV2, SEV3, SEV4}; `category` v(24) {DLQ_THRESHOLD, BACKUP_FAILURE, SECURITY_ALERT, AUDIT_CHAIN, SERVICE_DEGRADATION, MIGRATION, RESTORE, OTHER}; `origin` v(8) {EVENT, MANUAL}; `source_event_ref` v(255); `status` v(16) {OPEN, INVESTIGATING, MITIGATED, RESOLVED, CLOSED}; `commander` v(64); `assignee` v(64); `detected_at` tstz; `acknowledged_at` tstz; `mitigated_at` tstz; `resolved_at` tstz; `closed_at` tstz; `involves_personal_data` bool; `ph09_breach_ref` v(64); `ph09_reported_at` tstz; `impact_summary` text; `root_cause` text; `lessons_learned` text.
+Cột: `incident_no` v(20); `title` v(255); `severity` v(4) {SEV1, SEV2, SEV3, SEV4}; `category` v(16) {AVAILABILITY, DATA_INTEGRITY, SECURITY, PERFORMANCE, OTHER}; `origin` v(8) {EVENT, MANUAL}; `source_event_ref` v(255); `status` v(16) {OPEN, INVESTIGATING, MITIGATED, RESOLVED, CLOSED}; `commander` v(64); `assignee` v(64); `detected_at` tstz; `acknowledged_at` tstz; `mitigated_at` tstz; `resolved_at` tstz; `closed_at` tstz; `has_personal_data` bool; `ph09_breach_ref` v(64); `ph09_reported_at` tstz; `impact_summary` text; `root_cause` text; `lessons_learned` text.
 
 ### 3.35. `incident_timeline`
 
 ::: dac-ta
 **Mục đích.** EN-18-33 Mốc thời gian của sự cố: đổi trạng thái, ghi chú, gán, thông báo, chuyển PH-09, liên kết, hành động. Chỉ thêm.
 
-**FR phục vụ.** Nhóm FR khối G, sự cố vận hành; EN-18-33.
+**FR phục vụ.** FR-18-049; EN-18-33.
 
 **Khóa chính.** `id`.
 
@@ -1357,7 +1363,7 @@ Cột: `incident_id` uuid; `occurred_at` tstz; `entry_kind` v(16) {STATUS_CHANGE
 ::: dac-ta
 **Mục đích.** EN-18-34 Liên kết sự cố với đối tượng: mục DLQ, nhóm lỗi, cảnh báo PH-13, bản sao lưu, lần di trú, trace, hồ sơ vi phạm PH-09, tham chiếu ngoài.
 
-**FR phục vụ.** Nhóm FR khối G, sự cố vận hành; EN-18-34.
+**FR phục vụ.** FR-18-049; EN-18-34.
 
 **Khóa chính.** `id`.
 
@@ -1383,7 +1389,7 @@ Cột: `incident_id` uuid; `link_kind` v(16) {DLQ_MESSAGE, DLQ_GROUP, ALERT, BAC
 ::: dac-ta
 **Mục đích.** EN-18-35 Đối tượng sao lưu theo D03-09 §8.2 (PostgreSQL cơ sở và WAL qua CNPG Barman Cloud, xuất logic theo tenant dh-tenant-export, Garage rclone, OpenBao Raft, Velero, ClickHouse, WORM kiểm toán…): công cụ, lịch, RPO, RTO, thời gian giữ, nơi lưu (chỉ tên kho, không thông tin xác thực), tầng phục hồi.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-35.
+**FR phục vụ.** FR-18-052; EN-18-35.
 
 **Khóa chính.** `id`.
 
@@ -1409,7 +1415,7 @@ Cột: `object_code` v(64); `name` v(255); `object_kind` v(20) {POSTGRES_BASE, P
 ::: dac-ta
 **Mục đích.** EN-18-36 Bản sao lưu thu từ nguồn (CNPG Backup CR, Velero Backup, nhật ký rclone, snapshot OpenBao, kết quả dh-tenant-export): mã bản ở nguồn, thời gian, trạng thái, kích thước, vị trí, tổng kiểm tra, lỗi.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-36.
+**FR phục vụ.** FR-18-052; EN-18-36.
 
 **Khóa chính.** `id`.
 
@@ -1435,7 +1441,7 @@ Cột: `object_id` uuid; `run_ref` v(255); `started_at` tstz; `finished_at` tstz
 ::: dac-ta
 **Mục đích.** EN-18-37 Kết quả kiểm tra khôi phục tự động (điều kiện 0 lỗi của 3-2-1-1-0): đối tượng, bản sao lưu, phương pháp, kết quả, thời lượng, đạt RTO, số dòng kiểm.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-37.
+**FR phục vụ.** FR-18-053; EN-18-37.
 
 **Khóa chính.** `id`.
 
@@ -1454,14 +1460,14 @@ Cột: `object_id` uuid; `run_ref` v(255); `started_at` tstz; `finished_at` tstz
 **Ghi chú.** Dòng không sửa sau khi thêm; `version` luôn 0.
 :::
 
-Cột: `object_id` uuid; `backup_run_id` uuid; `verified_at` tstz; `method` v(20) {PITR_TEMP_CLUSTER, TENANT_REIMPORT, OBJECT_SAMPLE, OPENBAO_RESTORE, VELERO_RESTORE, CHAIN_INTEGRITY, BUNDLE_CHECK}; `outcome` v(8) {PASSED, FAILED}; `duration_seconds` int; `rto_met` bool; `rows_checked` bigint; `details` jsonb; `job_ref` v(128).
+Cột: `object_id` uuid; `backup_run_id` uuid; `verified_at` tstz; `method` v(20) {RESTORE_LATEST, PITR_RANDOM, TENANT_IMPORT, SAMPLE_FILES, HASH_CHAIN}; `outcome` v(8) {PASSED, FAILED}; `duration_seconds` int; `rto_met` bool; `rows_checked` bigint; `details` jsonb; `job_ref` v(128).
 
 ### 3.40. `tenant_restore_request`
 
 ::: dac-ta
 **Mục đích.** EN-18-38 Yêu cầu khôi phục một tenant (RBK-04, D03-09 §8.5): thời điểm đích, phạm vi (toàn tenant hay một số schema), lý do; TA tạo, PA duyệt bốn mắt; dh-tenant-restore chạy tám bước, tenant SUSPENDED khi thay, phát ops.tenant.restored; mục tiêu ≤ 4 giờ cho tenant ≤ 200 GB.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-38.
+**FR phục vụ.** FR-18-054, FR-18-055; EN-18-38.
 
 **Khóa chính.** `id`.
 
@@ -1486,14 +1492,14 @@ Cột: `object_id` uuid; `backup_run_id` uuid; `verified_at` tstz; `method` v(20
 
 : Cột của bảng `tenant_restore_request`
 
-Cột khác: `request_no` v(24); `restore_point` tstz; `scope` v(12) {FULL_TENANT, SCHEMAS}; `reason` text; `status` v(20) {DRAFT, PENDING_APPROVAL, APPROVED, RUNNING, SUCCEEDED, FAILED, ROLLED_BACK, REJECTED, CANCELLED}; `requested_by` v(64); `approved_by` v(64); `approved_at` tstz; `rejected_reason` v(1000); `current_step` smallint; `estimated_size_gb` numeric(10,2); `job_name` v(128); `tenant_suspended_at` tstz; `tenant_resumed_at` tstz; `started_at` tstz; `finished_at` tstz; `rows_replaced` bigint.
+Cột khác: `request_no` v(24); `restore_point` tstz; `scope` v(12) {FULL_TENANT, SCHEMAS}; `reason` text; `status` v(20) {DRAFT, PENDING_APPROVAL, APPROVED, RUNNING, SUCCEEDED, FAILED, ROLLED_BACK, REJECTED, CANCELLED}; `requested_by` v(64); `approved_by` v(64); `approved_at` tstz; `rejected_reason` v(1000); `current_step` smallint; `estimated_size_gb` numeric(10,2); `job_name` v(128); `heartbeat_at` tstz; `checkpoint` jsonb; `tenant_suspended_at` tstz; `tenant_resumed_at` tstz; `started_at` tstz; `finished_at` tstz; `rows_replaced` bigint.
 
 ### 3.41. `tenant_restore_step`
 
 ::: dac-ta
 **Mục đích.** EN-18-39 Một trong tám bước của dh-tenant-restore (D03-09 §8.5): phê duyệt, dựng cụm tạm, trích dữ liệu, đặt tenant bảo trì, thay thế, kho khác, ghi kiểm toán, kiểm tra và mở lại; trạng thái, thời gian, số dòng.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-39.
+**FR phục vụ.** FR-18-055; EN-18-39.
 
 **Khóa chính.** `id`.
 
@@ -1519,7 +1525,7 @@ Cột: `request_id` uuid; `step_no` smallint; `step_code` v(24); `status` v(12) 
 ::: dac-ta
 **Mục đích.** EN-18-40 Lần xuất dữ liệu tenant bằng dh-tenant-export: bàn giao khi DECOMMISSIONED, chuyển ô CSDL, SHARED sang DEDICATED_DB, sáp nhập (PH-20 gọi) hoặc theo yêu cầu; định dạng, phân hệ, tệp ra ở kho sao lưu, tổng kiểm tra, hạn tải.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-40.
+**FR phục vụ.** FR-18-056; EN-18-40.
 
 **Khóa chính.** `id`.
 
@@ -1538,14 +1544,14 @@ Cột: `request_id` uuid; `step_no` smallint; `step_code` v(24); `status` v(12) 
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `purpose` v(24) {DECOMMISSION_HANDOVER, CELL_MOVE, DEDICATED_DB, MERGE, ON_REQUEST}; `requested_by_module` v(8); `ph20_request_ref` v(64); `export_format` v(8) {PG_COPY, JSONL, CSV}; `modules` v(8)[]; `status` v(24) {QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `output_location` v(500); `sha256` char(64); `size_bytes` bigint; `expires_at` tstz; `started_at` tstz; `finished_at` tstz; `job_name` v(128); `error_message` v(2000).
+Cột: `purpose` v(24) {HANDOVER, CELL_MOVE, DEDICATED_DB, ARCHIVE}; `requested_by_module` v(8); `ph20_request_ref` v(64); `export_format` v(8) {PG_COPY, PG_DUMP}; `modules` v(8)[]; `status` v(24) {QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `output_location` v(500); `sha256` char(64); `size_bytes` bigint; `expires_at` tstz; `started_at` tstz; `finished_at` tstz; `job_name` v(128); `heartbeat_at` tstz; `checkpoint` jsonb; `error_message` v(2000).
 
 ### 3.43. `dr_drill`
 
 ::: dac-ta
 **Mục đích.** EN-18-41 Ghi nhận diễn tập DR và PITR toàn cụm (PA thực hiện ngoài ứng dụng, PH-18 chỉ ghi nhận): loại, thời điểm, kết quả, RPO và RTO đạt được, phát hiện, hành động khắc phục, biên bản ở kho tài liệu.
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-41.
+**FR phục vụ.** FR-18-058; EN-18-41.
 
 **Khóa chính.** `id`.
 
@@ -1564,14 +1570,14 @@ Cột: `purpose` v(24) {DECOMMISSION_HANDOVER, CELL_MOVE, DEDICATED_DB, MERGE, O
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `drill_code` v(32); `drill_kind` v(20) {SITE_FAILOVER, PITR_CLUSTER, FULL_RESTORE, TENANT_RESTORE, BACKUP_RESTORE_TEST}; `scheduled_at` tstz; `performed_at` tstz; `performed_by` v(64); `outcome` v(8) {PASSED, PARTIAL, FAILED}; `rpo_achieved_minutes` int; `rto_achieved_minutes` int; `findings` text; `actions` text; `report_ref` v(255).
+Cột: `drill_code` v(32); `drill_kind` v(20) {DR_SWITCHOVER, RBK_03, PITR_CLUSTER, TABLETOP}; `scheduled_at` tstz; `performed_at` tstz; `performed_by` v(64); `outcome` v(8) {PASSED, PASSED_WITH_ISSUES, FAILED}; `rpo_achieved_minutes` int; `rto_achieved_minutes` int; `findings` text; `actions` text; `report_ref` v(255).
 
 ### 3.44. `merge_transfer`
 
 ::: dac-ta
 **Mục đích.** EN-18-55 Chuyển dữ liệu một phân hệ khi sáp nhập tenant (hợp đồng PH-20, BRIEF §7): PH-20 gọi POST /api/ops/v1/merge-transfers với mergePlanId, module, sourceTenant, targetTenant, mappingRef, dryRun; worker dh-tenant-export và nạp giữ id gốc, ghi origin_tenant_id ở PH đích; PH-18 báo tiến độ về PH-20 (participants/{module}:report).
 
-**FR phục vụ.** Nhóm FR khối H, sao lưu, khôi phục, xuất và sáp nhập tenant; EN-18-55.
+**FR phục vụ.** FR-18-057; EN-18-55.
 
 **Khóa chính.** `id`.
 
@@ -1596,14 +1602,14 @@ Cột: `drill_code` v(32); `drill_kind` v(20) {SITE_FAILOVER, PITR_CLUSTER, FULL
 
 : Cột của bảng `merge_transfer`
 
-Cột khác: `merge_plan_id` v(64); `module` v(8); `source_tenant` v(16); `target_tenant` v(16); `dry_run` bool; `status` v(24) {QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `progress_percent` numeric(5,2); `rows_total` bigint; `rows_copied` bigint; `rows_skipped` bigint; `rows_failed` bigint; `export_job_id` uuid; `job_name` v(128); `started_at` tstz; `finished_at` tstz; `last_reported_at` tstz; `report_status` v(16) {PENDING, REPORTED, REPORT_FAILED}; `error_message` v(2000).
+Cột khác: `merge_plan_id` v(64); `module` v(8); `source_tenant` v(16); `target_tenant` v(16); `dry_run` bool; `status` v(24) {QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `progress_percent` numeric(5,2); `rows_total` bigint; `rows_copied` bigint; `rows_skipped` bigint; `rows_failed` bigint; `export_job_id` uuid; `job_name` v(128); `heartbeat_at` tstz; `checkpoint` jsonb; `started_at` tstz; `finished_at` tstz; `last_reported_at` tstz; `report_status` v(16) {PENDING, REPORTED, REPORT_FAILED}; `error_message` v(2000).
 
 ### 3.45. `legacy_source`
 
 ::: dac-ta
 **Mục đích.** EN-18-42 Nguồn hệ cũ (IF-07): loại hệ (Bus, Tooling, Hub, APIM, Danh mục Aita, PayGov, NGSP), URL JDBC không kèm thông tin đăng nhập, tham chiếu bí mật OpenBao kv/dh/{tenant}/..., xác nhận kết nối chỉ đọc.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-42.
+**FR phục vụ.** FR-18-059; EN-18-42.
 
 **Khóa chính.** `id`.
 
@@ -1635,7 +1641,7 @@ Cột khác: `source_code` v(32); `name` v(255); `system_kind` v(12) {BUS, TOOLI
 ::: dac-ta
 **Mục đích.** EN-18-43 Kế hoạch di trú một nguồn: các loại đối tượng theo thứ tự phụ thuộc (danh mục, HTTT, API, gói, đăng ký, topic, luồng, giao dịch), ngày cắt chuyển dự kiến.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-43.
+**FR phục vụ.** FR-18-060; EN-18-43.
 
 **Khóa chính.** `id`.
 
@@ -1661,7 +1667,7 @@ Cột: `plan_code` v(32); `legacy_source_id` uuid; `title` v(255); `description`
 ::: dac-ta
 **Mục đích.** EN-18-44 Mục kế hoạch theo loại đối tượng: PH đích đúng cặp (CATALOG sang PH-07, SYSTEM sang PH-01, API, PLAN, SUBSCRIPTION sang PH-02 hoặc PH-03, TOPIC, PUBLISHER, SUBSCRIBER sang PH-10, FLOW sang PH-04 nháp, TRANSACTION sang PH-19 API nhập), bộ chuyển, truy vấn nguồn đóng gói, API nhập của PH đích, phụ thuộc, cỡ lô.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-44.
+**FR phục vụ.** FR-18-060; EN-18-44.
 
 **Khóa chính.** `id`.
 
@@ -1687,7 +1693,7 @@ Cột: `plan_id` uuid; `seq_no` int; `object_kind` v(12) {CATALOG, SYSTEM, API, 
 ::: dac-ta
 **Mục đích.** EN-18-45 Lần chạy di trú: DRY_RUN không ghi, REAL ghi qua API nhập của PH đích và cần bốn mắt (PENDING_APPROVAL trước QUEUED); idempotent nên chạy lại không tạo bản trùng; worker dh-migrate là Job K8s ở dh-batch; bộ đếm mục.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-45.
+**FR phục vụ.** FR-18-061; EN-18-45.
 
 **Khóa chính.** `id`.
 
@@ -1706,14 +1712,14 @@ Cột: `plan_id` uuid; `seq_no` int; `object_kind` v(12) {CATALOG, SYSTEM, API, 
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `plan_id` uuid; `run_no` int; `run_mode` v(8) {DRY_RUN, REAL}; `status` v(24) {PENDING_APPROVAL, QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `requested_by` v(64); `approved_by` v(64); `approved_at` tstz; `rerun_of_run_id` uuid; `job_name` v(128); `started_at` tstz; `finished_at` tstz; `items_total` int; `items_succeeded` int; `items_failed` int; `items_skipped` int.
+Cột: `plan_id` uuid; `run_no` int; `run_mode` v(8) {DRY_RUN, REAL}; `status` v(24) {PENDING_APPROVAL, QUEUED, RUNNING, SUCCEEDED, SUCCEEDED_WITH_ERRORS, FAILED, CANCELLED}; `requested_by` v(64); `approved_by` v(64); `approved_at` tstz; `rerun_of_run_id` uuid; `job_name` v(128); `heartbeat_at` tstz; `checkpoint` jsonb; `started_at` tstz; `finished_at` tstz; `items_total` int; `items_succeeded` int; `items_failed` int; `items_skipped` int.
 
 ### 3.49. `migration_run_item_result`
 
 ::: dac-ta
 **Mục đích.** EN-18-46 Kết quả một mục kế hoạch trong lần chạy: số bản ghi nguồn, đã chuyển, bỏ qua, lỗi, không đổi (chạy lại), tổng kiểm tra nguồn và đích.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-46.
+**FR phục vụ.** FR-18-061, FR-18-062, FR-18-064; EN-18-46.
 
 **Khóa chính.** `id`.
 
@@ -1737,9 +1743,9 @@ Cột: `run_id` uuid; `plan_item_id` uuid; `status` v(24) {QUEUED, RUNNING, SUCC
 ### 3.50. `migration_error_record`
 
 ::: dac-ta
-**Mục đích.** EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (sửa ở nguồn, sửa bằng quy tắc, chấp nhận bỏ qua).
+**Mục đích.** EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (OPEN, FIXED_AT_SOURCE sửa ở nguồn, RULE_ADDED thêm quy tắc, WONT_MIGRATE không di trú kèm lý do; theo FRS FR-18-063, ghi qua API-18-182).
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-47.
+**FR phục vụ.** FR-18-063; EN-18-47.
 
 **Khóa chính.** `id`.
 
@@ -1747,7 +1753,7 @@ Cột: `run_id` uuid; `plan_item_id` uuid; `status` v(24) {QUEUED, RUNNING, SUCC
 
 **Khóa ngoại.** (tenant_id, run_id) → `migration_run` xóa theo, (tenant_id, plan_item_id) → `migration_plan_item`.
 
-**Ràng buộc CHECK.** `ck_migration_error_record_` + code, fix, fixed, snapshot.
+**Ràng buộc CHECK.** `ck_migration_error_record_` + code, fix, fixed, wont, snapshot.
 
 **Chỉ mục.** `ix_migration_error_record_run`.
 
@@ -1758,14 +1764,14 @@ Cột: `run_id` uuid; `plan_item_id` uuid; `status` v(24) {QUEUED, RUNNING, SUCC
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `run_id` uuid; `plan_item_id` uuid; `source_record_ref` v(255); `error_code` v(16); `error_message` v(2000); `field_path` v(255); `source_snapshot` jsonb; `fix_status` v(16) {OPEN, FIXED_AT_SOURCE, FIXED_BY_RULE, ACCEPTED_SKIP}; `fixed_by` v(64); `fixed_at` tstz; `fix_note` v(1000).
+Cột: `run_id` uuid; `plan_item_id` uuid; `source_record_ref` v(255); `error_code` v(16); `error_message` v(2000); `field_path` v(255); `source_snapshot` jsonb; `fix_status` v(16) {OPEN, FIXED_AT_SOURCE, RULE_ADDED, WONT_MIGRATE}; `fixed_by` v(64); `fixed_at` tstz; `fix_note` v(1000).
 
 ### 3.51. `migration_reconciliation`
 
 ::: dac-ta
 **Mục đích.** EN-18-48 Báo cáo đối chiếu số lượng và tổng kiểm tra theo loại đối tượng sau lần chạy (FR-00-092): số nguồn, số đích, thiếu, thừa, lệch, tổng kiểm tra hai phía, khớp hay không.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-48.
+**FR phục vụ.** FR-18-064; EN-18-48.
 
 **Khóa chính.** `id`.
 
@@ -1789,9 +1795,9 @@ Cột: `run_id` uuid; `plan_item_id` uuid; `object_kind` v(12) {CATALOG, SYSTEM,
 ### 3.52. `credential_reissue_marker`
 
 ::: dac-ta
-**Mục đích.** EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-10; trạng thái chờ, đã báo, đã cấp lại, miễn.
+**Mục đích.** EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-04, PH-07, PH-10, PH-19 (targetPh dạng PH-nn của FRS); trạng thái chờ, đã báo, đã cấp lại, miễn (WAIVED qua API-18-183 kèm lý do).
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-49.
+**FR phục vụ.** FR-18-065; EN-18-49.
 
 **Khóa chính.** `id`.
 
@@ -1810,14 +1816,14 @@ Cột: `run_id` uuid; `plan_item_id` uuid; `object_kind` v(12) {CATALOG, SYSTEM,
 **Ghi chú.** ETag là `version`; ghi có `If-Match`.
 :::
 
-Cột: `run_id` uuid; `object_kind` v(12) {CATALOG, SYSTEM, API, PLAN, SUBSCRIPTION, TOPIC, PUBLISHER, SUBSCRIBER, FLOW, TRANSACTION}; `target_module` v(8) {PH01, PH02, PH03, PH10, PH19}; `target_ref` v(255); `legacy_ref` v(255); `credential_kind` v(20) {OAUTH_CLIENT, MTLS_CERTIFICATE, BASIC_AUTH, APIM_SUBSCRIPTION, KAFKA_USER, PAYMENT_CHANNEL}; `status` v(12) {PENDING, NOTIFIED, REISSUED, WAIVED}; `notified_at` tstz; `reissued_at` tstz; `reissued_ref` v(255); `waived_reason` v(1000).
+Cột: `run_id` uuid; `object_kind` v(12) {CATALOG, SYSTEM, API, PLAN, SUBSCRIPTION, TOPIC, PUBLISHER, SUBSCRIBER, FLOW, TRANSACTION}; `target_module` v(8) {}; `target_ref` v(255); `legacy_ref` v(255); `credential_kind` v(20) {OAUTH_CLIENT, CLIENT_CERT, API_KEY_LEGACY, PASSWORD}; `status` v(12) {PENDING, NOTIFIED, REISSUED, WAIVED}; `notified_at` tstz; `reissued_at` tstz; `reissued_ref` v(255); `waived_reason` v(1000).
 
 ### 3.53. `parallel_run_group`
 
 ::: dac-ta
-**Mục đích.** EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.shadow.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.cutover.rollback-minutes).
+**Mục đích.** EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.parallel.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.rollback-window-minutes).
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-50.
+**FR phục vụ.** FR-18-066; EN-18-50.
 
 **Khóa chính.** `id`.
 
@@ -1843,7 +1849,7 @@ Cột: `group_code` v(32); `plan_id` uuid; `title` v(255); `service_scope` v(500
 ::: dac-ta
 **Mục đích.** EN-18-51 Mẫu so sánh phản hồi cũ và mới khi APISIX nhân bản lưu lượng sang Datahub: dấu vân tay yêu cầu, mã trạng thái, độ trễ, băm thân hai phía, khớp hay không, loại lệch và đường dẫn trường lệch (không lưu giá trị).
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-51.
+**FR phục vụ.** FR-18-067; EN-18-51.
 
 **Khóa chính.** (id, sampled_at).
 
@@ -1869,7 +1875,7 @@ Cột: `group_id` uuid; `sampled_at` tstz; `route` v(255); `request_fingerprint`
 ::: dac-ta
 **Mục đích.** EN-18-52 Danh sách kiểm tra cắt chuyển của nhóm dịch vụ: DLQ rỗng, tỷ lệ khớp ≥ ngưỡng, đối chiếu khớp, thông tin xác thực đã cấp lại, sao lưu đã kiểm, sẵn sàng quay lui, xác nhận các bên, cửa sổ đóng băng; tự động hay thủ công, bằng chứng, người kiểm.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-52.
+**FR phục vụ.** FR-18-068; EN-18-52.
 
 **Khóa chính.** `id`.
 
@@ -1895,7 +1901,7 @@ Cột: `group_id` uuid; `item_code` v(24) {DLQ_EMPTY, MATCH_RATE, RECONCILIATION
 ::: dac-ta
 **Mục đích.** EN-18-53 Sổ cắt chuyển: bắt đầu chạy song song, xác nhận bóng đạt, cắt chuyển một phần, cắt chuyển, quay lui, ký danh sách kiểm tra, ghi chú; cắt chuyển và quay lui cần người duyệt khác người thực hiện.
 
-**FR phục vụ.** Nhóm FR khối I, di trú và chạy song song; EN-18-53.
+**FR phục vụ.** FR-18-068; EN-18-53.
 
 **Khóa chính.** `id`.
 
@@ -1921,7 +1927,7 @@ Cột: `group_id` uuid; `action` v(20) {START_PARALLEL, SHADOW_CONFIRMED, PARTIA
 ::: dac-ta
 **Mục đích.** EN-18-54 Báo cáo vận hành định kỳ (DLQ, sao lưu, di trú, sự cố, tham số, tổng hợp) gửi PH-16 qua sự kiện: kỳ, chỉ số tổng hợp, tệp ở Garage bucket dh-{tenant}-ops, tổng kiểm tra.
 
-**FR phục vụ.** Nhóm FR khối J, báo cáo vận hành; EN-18-54.
+**FR phục vụ.** FR-18-071; EN-18-54.
 
 **Khóa chính.** `id`.
 
@@ -1951,7 +1957,7 @@ Bốn bảng phân vùng theo tháng bằng `PARTITION BY RANGE`; DDL tạo sẵ
 |---|---|---|---|
 | `dlq_message` | `received_at` | Mục mở: đến khi đóng; đã đóng: `18.dlq.retention.closed-days` (90) rồi chỉ siêu dữ liệu tới `18.dlq.retention.metadata-days` (365) | Tác vụ lưu giữ chuyển `EXPIRED`, đặt payload `PURGED`, xóa đối tượng Garage; khi phân vùng không còn mục mở và quá hạn siêu dữ liệu thì xóa dòng (xóa theo bản sửa, tham chiếu, gán, mục phát lại) rồi DETACH, DROP |
 | `dlq_audit` | `occurred_at` | `18.dlq.audit.retention-months` (60) | DETACH, DROP phân vùng quá hạn; bản chính thức đã ở PH-13 |
-| `notification_delivery` | `queued_at` | `18.notify.delivery-retention-days` (180) | DETACH, DROP; `notification_message` xóa theo hạn cùng tham số |
+| `notification_delivery` | `queued_at` | `18.notify.log-retention-days` (180) | DETACH, DROP; `notification_message` xóa theo hạn cùng tham số |
 | `shadow_comparison_sample` | `sampled_at` | `18.migration.shadow.sample-retention-days` (90) | DETACH, DROP |
 
 : Phân vùng và cách dọn theo hạn giữ
@@ -1968,24 +1974,24 @@ Toàn bộ tệp nằm ở `03-thiet-ke/csdl/ph18/`.
 
 | Tệp | Nội dung | Cách tạo |
 |---|---|---|
-| `ddl/ph18_ops.sql` | 2.700 dòng: vai trò, schema, hàm và thủ tục, 57 bảng, 50 chỉ mục, 347 CHECK, 41 khóa ngoại, 135 trigger, 2 khung nhìn, dữ liệu `COMMON`, quyền; 74 changeset | `python3 tools/sinh_ddl.py` từ `tools/sinh_ddl_core.py`, `sinh_ddl_bang_a.py`, `sinh_ddl_bang_b.py` |
-| `test/ph18_isolation_test.sql` | 520 khối kiểm: danh mục hệ thống, cô lập từng bảng, quy tắc chốt, bảng chỉ thêm, vai, lưu giữ | `python3 tools/sinh_test.py` |
-| `liquibase/db.changelog-ph18.yaml`, `liquibase/changes/*.sql` | 14 tệp formatted SQL, mỗi tệp một nhóm changeset | `python3 tools/gen_liquibase.py` |
+| `ddl/ph18_ops.sql` | 2.790 dòng: vai trò, schema `ph18_ops` và `ph18_batch`, hàm và thủ tục, 57 bảng, 50 chỉ mục, 354 CHECK, 41 khóa ngoại, 135 trigger, 2 khung nhìn, sáu bảng JobRepository của Spring Batch, dữ liệu `COMMON`, quyền; 75 changeset | `python3 tools/sinh_ddl.py` từ `tools/sinh_ddl_core.py`, `sinh_ddl_bang_a.py`, `sinh_ddl_bang_b.py` |
+| `test/ph18_isolation_test.sql` | 525 khối kiểm: danh mục hệ thống, cô lập từng bảng, quy tắc chốt, bảng chỉ thêm, vai, lưu giữ | `python3 tools/sinh_test.py` |
+| `liquibase/db.changelog-ph18.yaml`, `liquibase/changes/*.sql` | 15 tệp formatted SQL, mỗi tệp một nhóm changeset | `python3 tools/gen_liquibase.py` |
 | `tools/gen_tables_md.py`, `tools/them_dac_ta_bang.py`, `tools/gen_erd.py`, `tools/gen_anh_xa.py` | Sinh chương 3, ERD, danh sách bảng, ánh xạ EN (chép từ PH-17, sửa cho PH-18) | Chạy theo thứ tự ở mục 4.3 |
 
 : Tệp DDL, kiểm thử, changelog và công cụ của PH-18
 
-Nhóm changeset theo tệp: `18-0000-bootstrap` (vai, schema, context `bootstrap`), `18-0001-functions`, `18-0010-core` (outbox, inbox), `18-0020-param`, `18-0030-dlq`, `18-0040-notify`, `18-0050-task`, `18-0060-incident`, `18-0070-backup`, `18-0080-migration`, `18-0090-report`, `18-0091-views`, `18-0095-seed` (context `seed`), `18-0900-grants` (`runAlways`).
+Nhóm changeset theo tệp: `18-0000-bootstrap` (vai, schema, context `bootstrap`), `18-0001-functions`, `18-0010-core` (outbox, inbox), `18-0020-param`, `18-0030-dlq`, `18-0040-notify`, `18-0050-task`, `18-0060-incident`, `18-0070-backup`, `18-0080-migration`, `18-0085-batch` (schema `ph18_batch`), `18-0090-report`, `18-0091-views`, `18-0095-seed` (context `seed`), `18-0900-grants` (`runAlways`).
 
 ### 4.2. Kết quả chạy thử
 
-DDL và bài kiểm được chạy thật ngày 27/11/2026 trên PostgreSQL 16.15 (Ubuntu 24.04) bằng công cụ CI `build/tools/chay_ddl.py`.
+DDL và bài kiểm được chạy thật lại ngày 27/11/2026 (bản 0.2) trên PostgreSQL 16.15 (Ubuntu 24.04) bằng công cụ CI `build/tools/chay_ddl.py`.
 
 | Bước | Kết quả |
 |---|---|
-| `ddl` trên CSDL rỗng `ci_ph18` | Sạch; 57 bảng cha, 16 phân vùng, 20 không gian tên, 30 khóa `18.*`, 6 nguồn DLQ, 12 đối tượng sao lưu |
-| `test` (`ph18_isolation_test.sql`) | 520 khối PASS: 9 kiểm danh mục, 343 kiểm cô lập (6 kiểm mỗi bảng cho 57 bảng và 1 kiểm phân vùng), 136 quy tắc chốt, 13 bảng chỉ thêm, 16 vai readonly và worker, 3 lưu giữ |
-| `liquibase` (14 tệp trên CSDL rỗng `ci_ph18_lb`) | Sạch |
+| `ddl` trên CSDL rỗng `ci_ph18` | Sạch; 57 bảng cha, 16 phân vùng, 20 không gian tên, 61 khóa `18.*`, 6 nguồn DLQ, 12 đối tượng sao lưu, schema `ph18_batch` sáu bảng |
+| `test` (`ph18_isolation_test.sql`) | 525 khối PASS: 9 kiểm danh mục, 343 kiểm cô lập (6 kiểm mỗi bảng cho 57 bảng và 1 kiểm phân vùng), 138 quy tắc chốt (thêm bộ đếm lần gặp), 13 bảng chỉ thêm, 19 vai readonly và worker (thêm quyền trên `ph18_batch`, nhịp sống và điểm dừng), 3 lưu giữ |
+| `liquibase` (15 tệp trên CSDL rỗng `ci_ph18_lb`) | Sạch |
 | `chung` (DDL và kiểm thử của 19 phân hệ trên một CSDL) | Sạch, không xung đột tên vai, schema, extension |
 
 : Kết quả chạy thử DDL ph18_ops
@@ -2004,55 +2010,90 @@ Quy trình sinh khi sửa danh mục bảng (từ thư mục `csdl/ph18`):
 4. `python3 tools/gen_tables_md.py --write`, `python3 tools/them_dac_ta_bang.py ../D03-03-PH18-csdl-van-hanh.md`, `python3 tools/gen_erd.py --write`, `python3 tools/gen_anh_xa.py --write` cập nhật tài liệu.
 5. `python3 ../../../build/tools/chay_ddl.py ph18` chạy thật.
 
+### 4.4. Kho lần chạy Spring Batch
+
+Worker `dh-migrate`, `dh-tenant-restore`, `dh-tenant-export` dùng Spring Batch (ADR-183) và cần `JobRepository` để khởi động lại Job từ bước dừng (SDD §13.5 điểm 9). Kho này đặt ở schema riêng `ph18_batch` (tệp `18-0085-batch.sql`), theo đúng lược đồ chuẩn `schema-postgresql.sql` của Spring Batch 5: `batch_job_instance`, `batch_job_execution`, `batch_job_execution_params`, `batch_step_execution`, `batch_step_execution_context`, `batch_job_execution_context` và ba sequence. Schema riêng giữ cho `ph18_ops` chỉ có bảng nghiệp vụ theo tenant có RLS; bảng Spring Batch không có `tenant_id` (mã tenant nằm trong tham số Job), không RLS, chỉ `ph18_worker` đọc ghi, `ph18_app` và `ph18_readonly` không có quyền (kiểm ở khối 4.17, 4.18). Trạng thái nghiệp vụ của lần chạy vẫn ở `migration_run`, `tenant_restore_request`, `tenant_export_job`, `merge_transfer`.
+
 ## 5. Dữ liệu khởi tạo
 
 Changeset `ph18-0950-seed-common` (context `seed`) nạp dữ liệu nền tảng ở tenant `COMMON`, chạy lại không nhân bản (`ON CONFLICT DO NOTHING`, `id` băm từ mã). Thủ tục `p_seed_tenant` được gọi khi tiêu thụ `platform.tenant.created.v1` của PH-20.
 
 | Dữ liệu | Số dòng | Nội dung |
 |---|---|---|
-| `param_namespace` | 20 | `00`, `onboarding`, `02`, `04`, `05`, `06`, `07.rdm`, `08`, `09`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`, `18`, `20`, `ff`; `14` và `17` có `approval_owner` là PH14, PH17 |
-| `param_definition` | 30 | Khóa `18.*` của PH-18 (bảng dưới) |
-| `dlq_source` | 6 | `PH04-RUNTIME` (Kafka), `PH10-EVENT` (liên thông, không xem payload), `PH01-INBOX`, `PH06-MDM-JOB`, `PH08-DQ`, `PH19-INBOX` (API) |
+| `param_namespace` | 20 | `00`, `onboarding`, `02`, `04`, `05`, `06`, `07.rdm`, `08`, `09`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`, `18`, `20`, `ff`; `14` và `17` có `approval_owner` là PH-14, PH-17 |
+| `param_definition` | 61 | Khóa `18.*` của PH-18 đọc từ FRS §8.2 (bảng dưới) |
+| `dlq_source` | 6 | `ph04-runtime` (Kafka, `KAFKA_TOPIC`), `ph10-event` (liên thông, `EVENT_LAYER`, không xem payload), `ph01-inbox`, `ph06-mdm-job`, `ph08-dq`, `ph19-inbox` (API, `HTTP_PORT`) |
 | `backup_object` | 12 | Đối tượng D03-09 §8.2: bản sao cơ sở và WAL PostgreSQL, xuất logic tenant, Garage, OpenBao, mảnh khóa niêm phong ngoại tuyến, Velero, Kopia, Git, Harbor, ClickHouse, WORM kiểm toán |
 | `work_calendar` | 1 | Lịch quốc gia `DEFAULT` (thứ Hai đến thứ Sáu, 07:30 đến 17:00, Asia/Ho_Chi_Minh) |
 | `p_seed_tenant(Tnn)` | 1 mỗi tenant | Lịch `DEFAULT` của tenant kế thừa lịch quốc gia; tham số không chép vì đọc mặc định từ lược đồ |
 
 : Dữ liệu khởi tạo của ph18_ops
 
-Khóa `18.*` khởi tạo dưới đây là bản của CSDL theo brief chung; khi FRS PH-18 chốt §8.2, tên và miền được đối chiếu lại (mục 10.1).
+Khóa `18.*` khởi tạo dưới đây sinh tự động từ bảng §8.2 của FRS PH-18 0.2 (`tools/sinh_ddl.py` đọc thẳng FRS), nên tên, kiểu, mặc định, miền, mức và cờ ★ luôn khớp FRS. Bản 0.1 dùng 30 khóa theo brief, trong đó 11 tên lệch FRS và khóa `18.dlq.discard.reason-min-chars` thừa (BR-18-023 cố định 10 ký tự); bản này bỏ các tên cũ.
 
 | Khóa | Kiểu | Mặc định | Miền | Mức | ★ |
 |---|---|---|---|---|---|
-| `18.param.cache-seconds` | INTEGER | 60 | 1 đến 60 | PLATFORM | |
-| `18.param.change-request-ttl-hours` | INTEGER | 72 | 1 đến 720 | TENANT | |
-| `18.param.history-retention-years` | INTEGER | 5 | 1 đến 10 | PLATFORM | |
-| `18.dlq.payload.inline-max-kb` | INTEGER | 256 | 16 đến 256 | PLATFORM | |
-| `18.dlq.dedup-window-days` | INTEGER | 30 | 1 đến 90 | PLATFORM | |
-| `18.dlq.retention.closed-days` | INTEGER | 90 | 30 đến 365 | TENANT | ★ |
-| `18.dlq.retention.metadata-days` | INTEGER | 365 | 90 đến 1825 | TENANT | |
-| `18.dlq.audit.retention-months` | INTEGER | 60 | 60 đến 120 | PLATFORM | |
-| `18.dlq.replay.batch-max` | INTEGER | 1000 | 1 đến 10000 | TENANT | |
-| `18.dlq.replay.approval-threshold` | INTEGER | 100 | 1 đến 10000 | TENANT | ★ |
-| `18.dlq.replay.rate-per-minute` | INTEGER | 60 | 1 đến 6000 | TENANT | |
-| `18.dlq.threshold.open-count` | INTEGER | 50 | 1 đến 100000 | TENANT | |
-| `18.dlq.discard.reason-min-chars` | INTEGER | 10 | 10 đến 200 | PLATFORM | |
-| `18.notify.delivery-retention-days` | INTEGER | 180 | 30 đến 730 | TENANT | |
-| `18.notify.retry.max-attempts` | INTEGER | 5 | 1 đến 20 | PLATFORM | |
-| `18.notify.quiet-hours` | TIME_RANGE | "22:00-06:00" | | TENANT | |
-| `18.notify.sms.enabled` | BOOLEAN | false | | TENANT | |
-| `18.task.retention-days` | INTEGER | 365 | 90 đến 1825 | TENANT | |
-| `18.task.reminder-before-hours` | INTEGER | 24 | 1 đến 168 | TENANT | |
-| `18.calendar.timezone` | STRING | "Asia/Ho_Chi_Minh" | | PLATFORM | |
-| `18.calendar.working-days` | LIST_STRING | MON đến FRI | | TENANT | |
-| `18.incident.retention-years` | INTEGER | 5 | 3 đến 10 | PLATFORM | |
-| `18.backup.verification-interval-days` | INTEGER | 1 | 1 đến 90 | PLATFORM | |
-| `18.restore.target-hours` | INTEGER | 4 | 1 đến 24 | PLATFORM | |
-| `18.export.download-ttl-days` | INTEGER | 7 | 1 đến 30 | TENANT | |
-| `18.migration.shadow.match-threshold-percent` | DECIMAL | 99,5 | 90 đến 100 | TENANT | ★ |
-| `18.migration.shadow.sample-retention-days` | INTEGER | 90 | 7 đến 365 | TENANT | |
-| `18.migration.cutover.rollback-minutes` | INTEGER | 15 | 5 đến 120 | PLATFORM | |
-| `18.report.retention-months` | INTEGER | 24 | 12 đến 120 | TENANT | |
-| `18.outbox.retention-days` | INTEGER | 3 | 1 đến 30 | PLATFORM | |
+| `18.param.cache-ttl-seconds` | INT | 60 | 10 đến 60 | PLATFORM |  |
+| `18.param.reason-min-length` | INT | 10 | 10 đến 200 | TENANT |  |
+| `18.param.history-retention-days` | INT | 1825 | 365 đến 3650 | PLATFORM |  |
+| `18.param.change-request-ttl-hours` | INT | 72 | 1 đến 720 | TENANT |  |
+| `18.ff.retire-warning-days` | INT | 14 | 1 đến 90 | TENANT |  |
+| `18.egress.allowlist` | LIST<HOST> | [] |  | TENANT |  |
+| `18.egress.max-entries` | INT | 200 | 1 đến 1000 | PLATFORM |  |
+| `18.dlq.payload.inline-max-kb` | INT | 256 | 64 đến 256 | PLATFORM |  |
+| `18.dlq.payload.max-mb` | INT | 20 | 1 đến 100 | PLATFORM |  |
+| `18.dlq.retention.closed-days` | INT | 90 | 30 đến 365 | TENANT |  |
+| `18.dlq.retention.metadata-days` | INT | 365 | 90 đến 1825 | TENANT |  |
+| `18.dlq.audit.retention-months` | INT | 60 | 12 đến 120 | PLATFORM |  |
+| `18.dlq.dedup-window-days` | INT | 7 | 1 đến 30 | PLATFORM |  |
+| `18.dlq.retention.open-max-days` | INT | 365 | 90 đến 1825 | TENANT |  |
+| `18.dlq.reveal.ttl-minutes` | INT | 15 | 5 đến 60 | TENANT | ★ |
+| `18.dlq.replay.batch-max` | INT | 10000 | 100 đến 50000 | TENANT |  |
+| `18.dlq.replay.approval-threshold` | INT | 500 | 10 đến 10000 | TENANT | ★ |
+| `18.dlq.replay.rate-per-second` | INT | 10 | 1 đến 100 | TENANT |  |
+| `18.dlq.replay.result-timeout-minutes` | INT | 30 | 1 đến 1440 | TENANT |  |
+| `18.dlq.threshold.depth` | INT | 1000 | 10 đến 1000000 | TENANT |  |
+| `18.dlq.threshold.age-hours` | INT | 24 | 1 đến 720 | TENANT |  |
+| `18.dlq.threshold.poison-per-hour` | INT | 10 | 1 đến 10000 | TENANT |  |
+| `18.dlq.threshold.replay-failure-percent` | INT | 20 | 1 đến 100 | TENANT |  |
+| `18.dlq.group.window-hours` | INT | 24 | 1 đến 168 | TENANT |  |
+| `18.dlq.reconcile.cron` | CRON | 0 30 2 * * * |  | PLATFORM |  |
+| `18.dlq.diagnostics.timeout-ms` | INT | 3000 | 500 đến 5000 | PLATFORM |  |
+| `18.notify.quiet-hours` | STRING | 22:00-06:00 |  | TENANT |  |
+| `18.notify.retry.max-attempts` | INT | 5 | 1 đến 10 | PLATFORM |  |
+| `18.notify.retry.window-hours` | INT | 24 | 1 đến 72 | PLATFORM |  |
+| `18.notify.sync.timeout-ms` | INT | 3000 | 1000 đến 10000 | PLATFORM |  |
+| `18.notify.bounce.soft-limit` | INT | 3 | 1 đến 10 | TENANT |  |
+| `18.notify.log-retention-days` | INT | 180 | 30 đến 730 | TENANT |  |
+| `18.notify.sms.enabled` | BOOL | false |  | TENANT |  |
+| `18.notify.sender-name` | STRING | Datahub {tỉnh} |  | TENANT |  |
+| `18.task.reminder.before-hours` | INT | 24 | 1 đến 168 | TENANT |  |
+| `18.task.overdue.escalate-hours` | INT | 48 | 1 đến 336 | TENANT |  |
+| `18.task.retention-days` | INT | 365 | 30 đến 1825 | TENANT |  |
+| `18.calendar.weekend-days` | LIST<STRING> | [SAT, SUN] |  | TENANT |  |
+| `18.calendar.timezone` | STRING | Asia/Ho_Chi_Minh |  | PLATFORM |  |
+| `18.maintenance.notice-hours` | INT | 72 | 1 đến 336 | TENANT |  |
+| `18.freeze.default-envs` | LIST<STRING> | [PROD] | [DEV, TEST, STAGING, PROD] | TENANT |  |
+| `18.incident.sev1-ack-minutes` | INT | 15 | 5 đến 60 | TENANT |  |
+| `18.incident.sev2-ack-minutes` | INT | 60 | 15 đến 240 | TENANT |  |
+| `18.incident.retention-years` | INT | 5 | 3 đến 10 | PLATFORM |  |
+| `18.backup.stale-hours` | INT | 26 | 2 đến 72 | PLATFORM |  |
+| `18.backup.freshness-max-minutes` | INT | 15 | 5 đến 60 | PLATFORM |  |
+| `18.backup.verification-interval-days` | INT | 1 | 1 đến 90 | PLATFORM |  |
+| `18.restore.max-duration-hours` | INT | 4 | 1 đến 24 | PLATFORM |  |
+| `18.restore.approval-required` | BOOL | true | [true] | PLATFORM | ★ |
+| `18.export.link-ttl-hours` | INT | 24 | 1 đến 72 | PLATFORM |  |
+| `18.export.retention-days` | INT | 30 | 7 đến 90 | PLATFORM |  |
+| `18.migration.dry-run-valid-days` | INT | 7 | 1 đến 30 | TENANT |  |
+| `18.migration.batch-size` | INT | 500 | 50 đến 5000 | TENANT |  |
+| `18.migration.parallel.match-threshold-percent` | DECIMAL | 99.5 | 90 đến 100 | TENANT |  |
+| `18.migration.shadow.sample-percent` | INT | 5 | 1 đến 100 | TENANT |  |
+| `18.migration.shadow.sample-retention-days` | INT | 90 | 7 đến 365 | TENANT |  |
+| `18.migration.rollback-window-minutes` | INT | 15 | 5 đến 120 | PLATFORM |  |
+| `18.report.schedule` | ENUM | MONTHLY | [MONTHLY, QUARTERLY] | TENANT |  |
+| `18.report.retention-months` | INT | 24 | 12 đến 120 | TENANT |  |
+| `18.degraded.read-only` | BOOL | false |  | PLATFORM |  |
+| `18.outbox.retention-days` | INT | 3 | 1 đến 30 | PLATFORM |  |
 
 : Khóa tham số 18.* khởi tạo ở param_definition
 
@@ -2087,12 +2128,13 @@ Mã hóa: đĩa và bản sao lưu mã hóa theo D03-09; payload DLQ đã mã h�
 | `dlq_message` mở | Đến khi đóng | | Không dọn |
 | `dlq_message` đã đóng, `dlq_payload_ref`, `dlq_revision` | 90 ngày rồi chỉ siêu dữ liệu tới 365 ngày | `18.dlq.retention.closed-days`, `18.dlq.retention.metadata-days` | `EXPIRED`, payload `PURGED`, xóa Garage, sau đó xóa dòng |
 | `dlq_audit` | 60 tháng | `18.dlq.audit.retention-months` | DROP phân vùng |
+| `ph18_batch.*` (Spring Batch) | Theo lần chạy nghiệp vụ | (cùng hạn di trú, khôi phục) | Vai chủ, xóa theo `job_instance_id` |
 | `replay_job`, `replay_item`, `dlq_assignment` | Theo mục DLQ | | Xóa theo |
-| `inbox_event` | 30 ngày (DLQ), 7 ngày (khác) | `18.dlq.dedup-window-days` | DELETE theo lô |
+| `inbox_event` | 7 ngày | `18.dlq.dedup-window-days` | DELETE theo lô |
 | `outbox_event` | 3 ngày sau phát | `18.outbox.retention-days` | DELETE theo lô |
-| `notification_message`, `notification_delivery` | 180 ngày | `18.notify.delivery-retention-days` | DROP phân vùng, DELETE |
+| `notification_message`, `notification_delivery` | 180 ngày | `18.notify.log-retention-days` | DROP phân vùng, DELETE |
 | `task_item`, `task_reminder` đã đóng | 365 ngày | `18.task.retention-days` | DELETE (vai chủ) |
-| `param_value_version`, `param_change_request` | 5 năm | `18.param.history-retention-years` | Vai chủ, có kiểm toán |
+| `param_value_version`, `param_change_request` | 1.825 ngày | `18.param.history-retention-days` | Vai chủ, có kiểm toán |
 | `incident`, `incident_timeline`, `incident_link` | 5 năm | `18.incident.retention-years` | Vai chủ |
 | `shadow_comparison_sample` | 90 ngày | `18.migration.shadow.sample-retention-days` | DROP phân vùng |
 | `ops_report` và tệp | 24 tháng | `18.report.retention-months` | DELETE, xóa Garage |
@@ -2172,7 +2214,7 @@ Mỗi thực thể EN-18 ứng với đúng một bảng cùng tên; hai bảng 
 
 ### 8.2. Chức năng sang bảng
 
-FRS PH-18 đang được viết song song và chưa có số FR chính thức khi lập bản 0.1 này, nên ánh xạ ở mức khối chức năng của brief §3 kèm FR-00 dùng chung. Khi FRS chốt chương 5 và Phụ lục A, công cụ `them_dac_ta_bang.py` đọc `tools/fr_bang.json` để thay mục "FR phục vụ" của từng bảng bằng số FR-18 (mục 10.1).
+Bảng dưới ánh xạ ở mức khối chức năng kèm FR-00 dùng chung. Từ bản 0.2, mục "FR phục vụ" của từng bảng ở chương 3 ghi số FR-18 lấy từ `tools/fr_bang.json`; tệp này lập bằng cách dò tên bảng trong khối đặc tả FR của FRS 0.2 chương 6, bổ sung tay cho mười một bảng mà khối FR không nêu tên (ĐN-CSDL18-06 đã hấp thụ).
 
 | Khối (brief §3) | FR dùng chung | Bảng ghi chính | Bảng đọc |
 |---|---|---|---|
@@ -2200,7 +2242,7 @@ SRS cũ `docs/07-srs/SRS-PH-18-ops.md` §M4 chỉ có sáu thực thể DLQ vớ
 | EN-18-03 cũ `REPLAY_JOB` | `replay_job` | Trạng thái `QUEUED`, `RUNNING`, `COMPLETED`, `CANCELLED`, `ABORTED` thành bộ brief §4 có `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PAUSED`, `PARTIAL`, `FAILED`, `REJECTED`; thêm bốn mắt |
 | EN-18-04 cũ `REPLAY_ITEM` | `replay_item` | `SKIPPED_DUP` thành `SKIPPED_DUPLICATE`, thêm `PENDING`, `CANCELLED`; khóa lũy đẳng chuẩn `dlqId:revision` |
 | EN-18-05 cũ `PAYLOAD_OBJECT` | `dlq_payload_ref` | `minio_uri` thành `bucket`, `object_key` ở Garage; `loai` thành `kind` |
-| EN-18-06 cũ `DLQ_ALERT_RULE`, `DLQ_ALERT_EVENT` | Không có bảng | PH-18 không làm luật cảnh báo (PH-13 giữ); ngưỡng là tham số `18.dlq.threshold.open-count`, sự kiện vượt ngưỡng qua outbox |
+| EN-18-06 cũ `DLQ_ALERT_RULE`, `DLQ_ALERT_EVENT` | Không có bảng | PH-18 không làm luật cảnh báo (PH-13 giữ); ngưỡng là tham số `18.dlq.threshold.depth`, sự kiện vượt ngưỡng qua outbox |
 
 : Ánh xạ mô hình DLQ của SRS cũ sang ph18_ops
 
@@ -2216,7 +2258,7 @@ Các câu hỏi dưới đây theo dải Q18-50…54 của tập CSDL; mỗi câ
 
 | Mã | Câu hỏi | Giả định đang dùng | Cần ai trả lời |
 |---|---|---|---|
-| Q18-50 | Khử trùng `dlqKey` trên bảng phân vùng: chấp nhận cửa sổ khử trùng qua `inbox_event` (30 ngày, `18.dlq.dedup-window-days`) hay cần bảng khóa riêng không phân vùng để khử trùng vĩnh viễn | Cửa sổ 30 ngày đủ vì nguồn chỉ gửi lại trong vài giờ (PH-04 thử lại, PH-19 tối đa 5 lần) | Luồng PH-04, PH-19, DBA |
+| Q18-50 | Khử trùng `dlqKey` trên bảng phân vùng: chấp nhận cửa sổ khử trùng qua `inbox_event` (7 ngày theo FRS, `18.dlq.dedup-window-days`) hay cần bảng khóa riêng không phân vùng để khử trùng vĩnh viễn | Cửa sổ 7 ngày đủ vì nguồn chỉ gửi lại trong vài giờ (PH-04 thử lại, PH-19 tối đa 5 lần); mục chưa đóng cùng `dlq_key` vẫn được khử trùng ngoài cửa sổ bằng cách tăng `occurrence_count` | Luồng PH-04, PH-19, DBA |
 | Q18-51 | Mục DLQ mở rất lâu giữ phân vùng cũ không dọn được: có cần hạn tối đa cho mục mở (tự chuyển `EXPIRED` sau N ngày có cảnh báo) không | Không có hạn; cảnh báo theo tuổi mục mở qua PH-13 | Chủ đầu tư, PO |
 | Q18-52 | Kho tham số: các PH chưa nói dùng DD-14 (`06.*`, `08.*`, `09.*`, `11.*`, `13.*`, `16.*`) có đăng ký vào `param_namespace` không, và PH-07 có bỏ hẳn tiền tố cờ `07.rdm.feature.*` sang `ff.rdm.*` không | Đã khởi tạo không gian tên cho mọi PH trừ `19`; cờ PH-07 giữ dạng tham số BOOLEAN cho tới khi PH-07 đồng bộ | Luồng PH-06, 08, 09, 11, 13, 16, 07 |
 | Q18-53 | Hạn giữ dữ liệu di trú, khôi phục, sao lưu, sáp nhập sau cắt chuyển | Tối thiểu 5 năm sau cắt chuyển, chưa có tham số | Chủ đầu tư, pháp chế |
@@ -2230,19 +2272,37 @@ Các điểm dưới đây lệch hoặc bổ sung so với brief, FRS và tài 
 
 ### 10.1. Đồng bộ với brief và FRS PH-18
 
-Bảng dưới gom các giá trị và thực thể CSDL đã dùng nhưng brief §4, §5 và FRS PH-18 chưa ghi, để FRS bổ sung khi chốt.
+Bảng dưới gom các giá trị và thực thể CSDL đã dùng nhưng brief §4, §5 và FRS PH-18 0.1 chưa ghi. Cả bảy mục là đồng bộ nội bộ PH-18 và đã hấp thụ ở 0.2 (FRS 0.2 §4.2, §4.5, §8.2 và tập này); cột cuối ghi chỗ hấp thụ. Ngược lại, tập này đã nhận các đề nghị nội bộ của SDD §13.6, API §11.1 và FRS §12.4 dành cho CSDL (bảng 10.1b).
 
 | Mã | Nội dung đề nghị | Lý do |
 |---|---|---|
-| ĐN-CSDL18-01 | FRS §4.2 bổ sung EN-18-55 `merge_transfer` (sáp nhập tenant, hợp đồng PH-20) | Brief §7 đã thêm, cần có trong FRS và nhóm FR khối H |
-| ĐN-CSDL18-02 | FRS dùng trạng thái của bảng ngoài brief §4: đề nghị tham số `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `EXPIRED`; bản sửa payload `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`; mục phát lại `PENDING`, `SENT`, `SUCCEEDED`, `FAILED`, `SKIPPED_DUPLICATE`, `CANCELLED`; gói tham số `DRAFT`, `VALIDATED`, `PENDING_APPROVAL`, `APPLIED`, `FAILED`, `REJECTED`; cửa sổ bảo trì `PLANNED`, `ACTIVE`, `COMPLETED`, `CANCELLED`; bước khôi phục `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`, `ROLLED_BACK`; sổ tay lỗi `DRAFT`, `PUBLISHED`, `RETIRED`; bản sao lưu `RUNNING`, `SUCCEEDED`, `PARTIAL`, `FAILED`, `EXPIRED`; nguồn hệ cũ `DRAFT`, `VERIFIED`, `DISABLED`; mục danh sách cắt chuyển `PENDING`, `PASSED`, `FAILED`, `WAIVED`; dấu cấp lại `PENDING`, `NOTIFIED`, `REISSUED`, `WAIVED` | Brief §4 chưa có máy trạng thái cho các đối tượng này |
-| ĐN-CSDL18-03 | Lần xuất tenant, kết quả mục di trú, lần sáp nhập, báo cáo vận hành dùng bộ trạng thái lần chạy (`QUEUED`, `RUNNING`, `SUCCEEDED`, `SUCCEEDED_WITH_ERRORS`, `FAILED`, `CANCELLED`) của brief §4 | Thống nhất một bộ cho mọi tác vụ nền |
-| ĐN-CSDL18-04 | Thông báo logic (`notification_message.status`) dùng chung bộ trạng thái lần gửi brief §4, là trạng thái tổng hợp | Tránh thêm bộ trạng thái mới |
-| ĐN-CSDL18-05 | Tên khóa `18.*` ở mục 5 do CSDL đặt theo brief; FRS §8.2 chốt tên chính thức, CSDL đổi dữ liệu khởi tạo theo | FRS chưa có §8.2 khi viết |
-| ĐN-CSDL18-06 | FRS cấp số FR-18 rồi điền `tools/fr_bang.json` (bảng sang danh sách FR) để sinh lại mục "FR phục vụ" | Ánh xạ FR ở mục 8.2 mới ở mức khối |
-| ĐN-CSDL18-07 | Lớp lỗi `error_class` thêm giá trị mặc định `UNKNOWN` khi chưa phân loại; header ngữ cảnh thiếu ghi ở `missing_context` | Theo brief §3 B, C |
+| ĐN-CSDL18-01 | FRS §4.2 bổ sung EN-18-55 `merge_transfer` (sáp nhập tenant, hợp đồng PH-20) | Brief §7 đã thêm, cần có trong FRS và nhóm FR khối H. Đã hấp thụ ở 0.2: FRS §4.2 có EN-18-55, khối H có FR-18-057 |
+| ĐN-CSDL18-02 | FRS dùng trạng thái của bảng ngoài brief §4: đề nghị tham số `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `EXPIRED`; bản sửa payload `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`; mục phát lại `PENDING`, `SENT`, `SUCCEEDED`, `FAILED`, `SKIPPED_DUPLICATE`, `CANCELLED`; gói tham số `DRAFT`, `VALIDATED`, `PENDING_APPROVAL`, `APPLIED`, `FAILED`, `REJECTED`; cửa sổ bảo trì `PLANNED`, `ACTIVE`, `COMPLETED`, `CANCELLED`; bước khôi phục `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`, `ROLLED_BACK`; sổ tay lỗi `DRAFT`, `PUBLISHED`, `RETIRED`; bản sao lưu `RUNNING`, `SUCCEEDED`, `PARTIAL`, `FAILED`, `EXPIRED`; nguồn hệ cũ `DRAFT`, `VERIFIED`, `DISABLED`; mục danh sách cắt chuyển `PENDING`, `PASSED`, `FAILED`, `WAIVED`; dấu cấp lại `PENDING`, `NOTIFIED`, `REISSUED`, `WAIVED` | Brief §4 chưa có máy trạng thái cho các đối tượng này. Đã hấp thụ ở 0.2: FRS §4.5 bảng trạng thái đối tượng phụ |
+| ĐN-CSDL18-03 | Lần xuất tenant, kết quả mục di trú, lần sáp nhập, báo cáo vận hành dùng bộ trạng thái lần chạy (`QUEUED`, `RUNNING`, `SUCCEEDED`, `SUCCEEDED_WITH_ERRORS`, `FAILED`, `CANCELLED`) của brief §4 | Thống nhất một bộ cho mọi tác vụ nền. Đã hấp thụ ở 0.2: FRS §4.5 |
+| ĐN-CSDL18-04 | Thông báo logic (`notification_message.status`) dùng chung bộ trạng thái lần gửi brief §4, là trạng thái tổng hợp | Tránh thêm bộ trạng thái mới. Đã hấp thụ ở 0.2: FRS §4.5 |
+| ĐN-CSDL18-05 | Tên khóa `18.*` ở mục 5 do CSDL đặt theo brief; FRS §8.2 chốt tên chính thức, CSDL đổi dữ liệu khởi tạo theo | FRS chưa có §8.2 khi viết. Đã hấp thụ ở 0.2: mục 5 sinh từ FRS §8.2 |
+| ĐN-CSDL18-06 | FRS cấp số FR-18 rồi điền `tools/fr_bang.json` (bảng sang danh sách FR) để sinh lại mục "FR phục vụ" | Ánh xạ FR ở mục 8.2 mới ở mức khối. Đã hấp thụ ở 0.2: `tools/fr_bang.json`, mục 8.2 |
+| ĐN-CSDL18-07 | Lớp lỗi `error_class` thêm giá trị mặc định `UNKNOWN` khi chưa phân loại; header ngữ cảnh thiếu ghi ở `missing_context` | Theo brief §3 B, C. Đã hấp thụ ở 0.2: FRS `ErrorClass` có `UNKNOWN`, `missingFields` ứng `missing_context` |
 
 : Đề nghị đồng bộ với brief và FRS PH-18
+
+Bảng 10.1b ghi các đề nghị nội bộ mà tập khác của PH-18 gửi cho CSDL và cách bản 0.2 đã hấp thụ.
+
+| Nguồn đề nghị | Nội dung | Đã hấp thụ ở 0.2 |
+|---|---|---|
+| FRS §12.4, SDD §13.5 điểm 4, MH LC-09 | Mười một tên khóa `18.*` lệch FRS, khóa `18.dlq.discard.reason-min-chars` thừa | Mục 5 sinh từ FRS §8.2 (61 khóa); không còn tên cũ |
+| SDD điểm 1, API §11.1 số 3 | `dlq_source.replay_port` có giá trị riêng | Cột `replay_mode` ∈ `KAFKA_TOPIC`, `HTTP_PORT`, `EVENT_LAYER`, `NONE`; CHECK `EVENT_LAYER` khi và chỉ khi `FEDERATED` |
+| SDD điểm 2, BR-18-015 | Thiếu bộ đếm lần gặp | `dlq_message.occurrence_count`, `last_seen_at`, cập nhật được, ngoài `tg_immutable` |
+| SDD điểm 3 | Payload không phải JSON | Ghi chú cột `payload_location`: luôn ở Garage dạng nhị phân |
+| SDD điểm 5, ADR-181 | Cửa sổ khử trùng 30 ngày | Theo FRS `18.dlq.dedup-window-days` = 7, miền 1…30 |
+| SDD điểm 9 | Kho lần chạy Spring Batch | Schema `ph18_batch` (mục 4.4) |
+| SDD §13.6 CSDL (7) | `ph18_worker` cập nhật nhịp sống và điểm dừng | Cột `heartbeat_at`, `checkpoint` ở `migration_run`, `tenant_restore_request`, `tenant_export_job`, `merge_transfer` (vai worker đã có quyền ghi) |
+| API §11.1 số 2 | Lược đồ khóa: `type`, `default`, `secure`, `group` | `secure` đổi tên; `value_type`, `default_value`, `display_group` giữ vì `type`, `default`, `group` là từ khóa SQL, ánh xạ ghi ở chú thích cột; enum kiểu theo `ParamType` (`INT`, `BOOL`, `LIST<HOST>`…) |
+| API §11.1 số 4 đến 9 | Cờ tính năng, sổ tay ERR, tốc độ phát lại, sự cố, bản ghi lỗi di trú, loại xác thực, phương pháp kiểm tra khôi phục, loại diễn tập, mục đích egress và xuất, môi trường | `owner_ph`, `owner_user`, `retire_by`; `causes`, `steps`, `replayable`, `default_class`, `links`; `rate_per_second`; `has_personal_data`, `category` theo `IncidentCategory`; `RULE_ADDED`, `WONT_MIGRATE`; `CredentialKind`, `VerifyMethod`, `DrillKind` (kết quả `PASSED_WITH_ISSUES`), `EgressPurpose` (cột `used_by`, `reason`), `ExportPurpose`, định dạng `PG_COPY`, `PG_DUMP`; cửa sổ bảo trì nhận `TEST` |
+| API §11.1 số 10 | `targetPh` dạng `PH-nn`, thiếu PH-04, PH-07 | Mọi cột mã phân hệ theo mẫu `^PH-[0-9]{2}$`; `credential_reissue_marker.target_module` gồm PH-01, 02, 03, 04, 07, 10, 19; mã nguồn DLQ viết thường như `SourceCode` |
+| TC ĐN-TC-08, FRS §4.5 | Mục phát lại bị loại khi duyệt | `replay_item.status` thêm `SKIPPED` |
+
+: Đề nghị nội bộ PH-18 gửi CSDL và cách hấp thụ ở 0.2
 
 ### 10.2. Đồng bộ tài liệu chung và phân hệ khác
 
@@ -2265,6 +2325,7 @@ Bảng dưới gom các điểm cần tài liệu chung hoặc phân hệ khác 
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18 theo FRS 0.2: 61 khóa `18.*` sinh từ FRS §8.2, `replay_mode`, bộ đếm lần gặp, enum và tên cột theo FRS và OpenAPI, mã phân hệ `PH-nn`, cửa sổ khử trùng 7 ngày, schema `ph18_batch` cho Spring Batch, FR phục vụ theo số FR-18; kiểm cô lập 525 khối PASS, changelog 15 tệp; đánh dấu mục đề nghị nội bộ đã hấp thụ |
 | 0.1 | 2026-11-27 | Luồng CSDL PH-18 | Bản đầu: 57 bảng (EN-18-01…55 và outbox, inbox), RLS FORCE, bốn vai, bốn bảng phân vùng tháng, dữ liệu `COMMON`, khung nhìn DD-13, DD-14, kiểm cô lập 520 khối PASS, changelog Liquibase 14 tệp |
 
 : Lịch sử phiên bản D03-03-PH18

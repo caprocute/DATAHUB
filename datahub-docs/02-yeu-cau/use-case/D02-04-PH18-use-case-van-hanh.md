@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH18
 ten: Đặc tả use case phân hệ PH-18 Vận hành và xử lý lỗi
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -14,9 +14,9 @@ tai_lieu_lien_quan: D02-03-PH18 FRS; D03-02-PH18 SDD; D03-03-PH18 CSDL; D03-04-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tài liệu đặc tả 40 use case của PH-18, phủ toàn bộ 72 FR (57 mức M, 12 mức S, 3 mức C) của [D02-03-PH18](../frs/D02-03-PH18-frs-van-hanh.md). Use case đi theo một ngày làm việc của "phòng máy" Datahub ở một tỉnh: phân hệ khác đăng ký và đọc tham số; bản tin lỗi của mọi phân hệ đổ về một hàng DLQ (Dead Letter Queue, hàng bản tin lỗi) hợp nhất, được chẩn đoán, sửa có kiểm soát, phát lại qua lối vào của nguồn hoặc bỏ qua có lý do; thư, SMS và hộp "Việc của tôi" đưa việc tới đúng người; sự cố được mở từ cảnh báo và đóng khi có nguyên nhân gốc; sao lưu được theo dõi, một tenant được khôi phục về thời điểm cũ trong tám bước có bốn mắt; dữ liệu hệ cũ được chạy thử, chạy thật, đối chiếu rồi cắt chuyển từng nhóm dịch vụ, quay lui được trong 15 phút. Căn cứ: REQ-18, REQ-22 của BRD; FR-00-050…054, FR-00-061, FR-00-062, FR-00-070…072, FR-00-090…093 của SRS; CMP-LAW-05 (Luật BVDLCN 91/2025), CMP-LAW-08 (TCVN 14423:2026).
+Tài liệu đặc tả 40 use case của PH-18, phủ toàn bộ 72 FR (57 mức M, 12 mức S, 3 mức C) và 188 API của [D02-03-PH18](../frs/D02-03-PH18-frs-van-hanh.md) bản 0.2. Use case đi theo một ngày làm việc của "phòng máy" Datahub ở một tỉnh: phân hệ khác đăng ký và đọc tham số; bản tin lỗi của mọi phân hệ đổ về một hàng DLQ (Dead Letter Queue, hàng bản tin lỗi) hợp nhất, được chẩn đoán, sửa có kiểm soát, phát lại qua lối vào của nguồn hoặc bỏ qua có lý do; thư, SMS và hộp "Việc của tôi" đưa việc tới đúng người; sự cố được mở từ cảnh báo và đóng khi có nguyên nhân gốc; sao lưu được theo dõi, một tenant được khôi phục về thời điểm cũ trong tám bước có bốn mắt; dữ liệu hệ cũ được chạy thử, chạy thật, đối chiếu rồi cắt chuyển từng nhóm dịch vụ, quay lui được trong 15 phút. Căn cứ: REQ-18, REQ-22 của BRD; FR-00-050…054, FR-00-061, FR-00-062, FR-00-070…072, FR-00-090…093 của SRS; CMP-LAW-05 (Luật BVDLCN 91/2025), CMP-LAW-08 (TCVN 14423:2026).
 
-Bốn điểm hội đồng cần lưu ý. Thứ nhất, hệ cũ chỉ có hai chức năng liên quan (LGC-BUS-031 cấu hình hệ thống, LGC-BUS-037 thực hiện lại hoặc bỏ qua) nên hầu hết use case là năng lực mới; DLQ của hệ cũ không có chẩn đoán, không có bốn mắt và không bảo đảm lũy đẳng khi phát lại. Thứ hai, PH-18 không đứng trên đường chính: phân hệ khác đọc tham số từ bộ đệm, giữ bản tin lỗi trong Kafka hoặc hàng lỗi của mình, và coi là không đóng băng khi PH-18 vắng (LP-18-04). Thứ ba, mọi thao tác có hậu quả khó đảo ngược đều qua bốn mắt (LP-18-01): tham số bảo mật ★, bản sửa payload chạm trường mức Hạn chế, lượt phát lại vượt 500 mục, phiên bản mẫu thông báo, khôi phục tenant, chạy di trú thật và cắt chuyển; hủy, tạm dừng và quay lui thì không cần vì làm giảm rủi ro. Thứ tư, tập phát hiện 15 điểm lệch hoặc thiếu so với FRS 0.1 (Phụ lục A), trong đó đáng kể nhất là bốn thao tác ghi chưa có API (nhận việc, đánh dấu bản ghi di trú lỗi, đánh dấu không cần cấp lại xác thực, thêm quy tắc chuẩn hóa đối soát bóng) và chế độ chỉ đọc không tắt được bằng chính API ghi tham số.
+Bốn điểm hội đồng cần lưu ý. Thứ nhất, hệ cũ chỉ có hai chức năng liên quan (LGC-BUS-031 cấu hình hệ thống, LGC-BUS-037 thực hiện lại hoặc bỏ qua) nên hầu hết use case là năng lực mới; DLQ của hệ cũ không có chẩn đoán, không có bốn mắt và không bảo đảm lũy đẳng khi phát lại. Thứ hai, PH-18 không đứng trên đường chính: phân hệ khác đọc tham số từ bộ đệm, giữ bản tin lỗi trong Kafka hoặc hàng lỗi của mình, và coi là không đóng băng khi PH-18 vắng (LP-18-04). Thứ ba, mọi thao tác có hậu quả khó đảo ngược đều qua bốn mắt (LP-18-01): tham số bảo mật ★, bản sửa payload chạm trường mức Hạn chế, lượt phát lại vượt 500 mục, phiên bản mẫu thông báo, khôi phục tenant, chạy di trú thật và cắt chuyển; hủy, tạm dừng và quay lui thì không cần vì làm giảm rủi ro. Thứ tư, bản 0.1 phát hiện 15 điểm lệch hoặc thiếu so với FRS 0.1 (Phụ lục A); FRS 0.2 đã hấp thụ mười hai điểm, gồm bốn thao tác ghi trước đây chưa có API (nay là API-18-181 nhận việc, API-18-182 đánh dấu bản ghi di trú lỗi, API-18-183 đánh dấu `WAIVED`, API-18-184 quy tắc chuẩn hóa) và chế độ chỉ đọc nay bật, tắt qua API-18-187 không bị chặn; ba điểm còn lại chờ đợt đồng bộ liên phân hệ.
 
 ## 1. Giới thiệu
 
@@ -68,7 +68,7 @@ Thuật ngữ đầy đủ ở FRS mục 1.4. Các thuật ngữ cần cho tập
 
 | Tài liệu | Dùng để |
 |---|---|
-| D02-03-PH18 FRS 0.1 | Nguồn FR, BR, ERR, EVT, API, UI, tham số `18.*`; câu thông báo nguyên văn mục 9.1 |
+| D02-03-PH18 FRS 0.2 | Nguồn FR, BR, ERR, EVT, API, UI, tham số `18.*`; câu thông báo nguyên văn mục 9.1 |
 | D02-08 | Quyền `PERM-18-*` và vai trò |
 | D02-01 BRD | REQ-18, REQ-22; quy trình BP-07, BP-08, BP-09 |
 | D03-09 §8.2, §8.5 | Danh mục đối tượng sao lưu, sổ tay khôi phục một tenant (RBK-04) |
@@ -354,7 +354,7 @@ Mỗi use case có ít nhất một màn hình hoặc API. UC-18-07, 10, 25 là 
 | UC-18-13 | UI-18-03 | 045, 046, 047, 048, 058 |
 | UC-18-14 | UI-18-03, UI-18-04, UI-18-15 | 052, 053, 054, 055, 056 |
 | UC-18-15 | UI-18-07, UI-18-03 | 048, 057, 058, 059, 060, 061, 062 |
-| UC-18-16 | UI-18-03 | 064, 076 |
+| UC-18-16 | UI-18-03 | 064, 076, 188 |
 | UC-18-17 | UI-18-01, UI-18-02, UI-18-05, UI-18-15 | 065, 066, 067, 068, 069, 070, 071, 072, 073, 074, 075, 076 |
 | UC-18-18 | UI-18-01, UI-18-03 | 077, 078, 079 |
 | UC-18-19 | UI-18-06, UI-18-24 | 080, 081 |
@@ -364,7 +364,7 @@ Mỗi use case có ít nhất một màn hình hoặc API. UC-18-07, 10, 25 là 
 | UC-18-23 | UI-18-11 | 099, 100, 101 |
 | UC-18-24 | UI-18-13 | 093, 102, 103, 104, 105, 106 |
 | UC-18-25 | UI-18-15 | 107, 108, 109, 110 |
-| UC-18-26 | UI-18-15 | 111, 112 |
+| UC-18-26 | UI-18-15 | 111, 112, 181 |
 | UC-18-27 | UI-18-16 | 113, 114, 115, 116, 117, 118, 119, 120, 121, 122 |
 | UC-18-28 | UI-18-17, UI-18-18 | 123, 124, 125, 126, 127, 128, 129, 131, 132 |
 | UC-18-29 | UI-18-18 | 130 |
@@ -373,12 +373,12 @@ Mỗi use case có ít nhất một màn hình hoặc API. UC-18-07, 10, 25 là 
 | UC-18-32 | UI-18-20 | 147, 148, 149 |
 | UC-18-33 | UI-18-20 | 150, 151, 152, 153 |
 | UC-18-34 | UI-18-21 | 156, 157, 158, 159, 160, 161, 162, 163 |
-| UC-18-35 | UI-18-21, UI-18-22 | 164, 165, 166, 169, 170, 171 |
-| UC-18-36 | UI-18-21, UI-18-22, UI-18-15 | 164, 165, 166, 167, 168, 169, 171, 172 |
-| UC-18-37 | UI-18-23 | 173, 174, 176 |
-| UC-18-38 | UI-18-23, UI-18-15 | 174, 175 |
+| UC-18-35 | UI-18-21, UI-18-22 | 164, 165, 166, 169, 170, 171, 182 |
+| UC-18-36 | UI-18-21, UI-18-22, UI-18-15 | 164, 165, 166, 167, 168, 169, 171, 172, 183 |
+| UC-18-37 | UI-18-23 | 173, 174, 176, 184 |
+| UC-18-38 | UI-18-23, UI-18-15 | 174, 175, 185 |
 | UC-18-39 | UI-18-24, UI-18-03 | 016, 063, 081, 177, 178, 179 |
-| UC-18-40 | UI-18-24 | 006, 180 |
+| UC-18-40 | UI-18-24 | 180, 186, 187 |
 
 : Use case, màn hình và API
 
@@ -522,10 +522,10 @@ Mỗi use case một mục `6.n` theo thứ tự UC-18-01 đến UC-18-40, nhóm
 - **6a. Sự kiện đến trước bản sao CSDL.** Khách so `version` trong sự kiện với `version` đọc được; nhỏ hơn thì đọc lại sau 1 giây, tối đa 5 lần.
 
 **Luồng ngoại lệ.**
-- **E1. Không gian tên không thuộc phân hệ gọi (bước 1).** ERR-18-017 (403): "Phân hệ không sở hữu không gian tên {ns}." Hiện cho người vận hành ở UI-18-24.
+- **E1. Không gian tên không thuộc phân hệ gọi (bước 1).** ERR-18-017 (403): "Phân hệ không sở hữu {đối tượng} {mã}." Hiện cho người vận hành ở UI-18-24.
 - **E2. Lược đồ sai cấu trúc (bước 2).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 - **E3. Lược đồ mới xung đột với giá trị đang dùng (bước 3).** ERR-18-016 (409): "Lược đồ mới của {ns} xung đột với giá trị đang dùng ở {số} tenant. Xem danh sách trong chi tiết."
-- **E4. Tenant không tồn tại hoặc đã ngừng (bước 5).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (câu của FRS mục 9.1 không hợp ngữ cảnh tenant, xem ĐN-UC-01).
+- **E4. Tenant không tồn tại hoặc đã ngừng (bước 5).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
 - **E5. Quá 50 yêu cầu mỗi giây mỗi DU (bước 5).** ERR-18-010 (429): "Quá nhiều yêu cầu. Thử lại sau {giây} giây."
 - **E6. Không phát được sự kiện sau 5 phút (bước 6).** ERR-18-124 (worker): "Xử lý sự kiện {mã} thất bại; đã chuyển vào DLQ." UI-18-24 hiện thẻ sự kiện đổi tham số đang chậm; bộ đệm vẫn hết hạn sau 60 giây nên giá trị mới vẫn có hiệu lực.
 
@@ -573,13 +573,13 @@ Mỗi use case một mục `6.n` theo thứ tự UC-18-01 đến UC-18-40, nhóm
 
 **Luồng ngoại lệ.**
 - **E1. Khóa chưa đăng ký (bước 3).** ERR-18-011 (404): "Khóa {khóa} chưa được đăng ký."
-- **E2. Thiếu lý do (bước 3).** ERR-18-007 (422): "Nhập lý do xem nội dung (ít nhất 10 ký tự)." (câu của mục 9.1 viết cho xem payload, xem ĐN-UC-01).
+- **E2. Thiếu lý do (bước 3).** ERR-18-007 (422): "Nhập lý do {thao tác} (ít nhất {n} ký tự).".
 - **E3. TA ghi khóa mức nền tảng (bước 4).** ERR-18-015 (403): "Tham số {khóa} do quản trị nền tảng đặt, tỉnh chỉ xem được."
 - **E4. Sai kiểu (bước 2, 4).** ERR-18-012 (422): "Giá trị của {khóa} phải có kiểu {kiểu}."
-- **E5. Ngoài miền (bước 2, 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}."
+- **E5. Ngoài miền (bước 2, 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}."
 - **E6. Vượt trần nền tảng (bước 2, 4).** ERR-18-014 (422): "Giá trị vượt giới hạn nền tảng của {khóa} ({trần}). Liên hệ quản trị nền tảng nếu cần nâng."
 - **E7. Phiên bản đã đổi (bước 4).** ERR-18-004 (412): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu." Hộp thoại "Dữ liệu đã đổi" có nút "Tải lại".
-- **E8. PH-18 ở chế độ chỉ đọc (bước 3).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được."
+- **E8. PH-18 ở chế độ chỉ đọc (bước 3).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được."
 
 **Quy tắc áp dụng.** BR-18-002; BR-18-003; BR-18-004; BR-18-005; BR-18-006; BR-18-049; LP-18-02; LP-18-03.
 
@@ -625,8 +625,8 @@ Mỗi use case một mục `6.n` theo thứ tự UC-18-01 đến UC-18-40, nhóm
 **Luồng ngoại lệ.**
 - **E1. Đã có đề nghị chờ duyệt (bước 1).** ERR-18-018 (409): "Tham số {khóa} đang có đề nghị chờ duyệt của {người}. Chờ duyệt xong hoặc rút đề nghị."
 - **E2. Khóa do phân hệ khác giữ duyệt (nhánh 1a).** ERR-18-019 (409): "Tham số {khóa} được duyệt tại {phân hệ}. Mở màn {phân hệ} để đề nghị thay đổi."
-- **E3. Người duyệt trùng người đề nghị (bước 3).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
-- **E4. Lược đồ đã đổi làm giá trị đề nghị không còn hợp lệ (bước 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}."
+- **E3. Người duyệt trùng người đề nghị (bước 3).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
+- **E4. Lược đồ đã đổi làm giá trị đề nghị không còn hợp lệ (bước 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}."
 - **E5. PH-13 không ghi được kiểm toán (bước 4).** ERR-18-008 (503): "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
 
 **Quy tắc áp dụng.** BR-18-004; BR-18-005; BR-18-046; LP-18-01; LP-18-02.
@@ -689,9 +689,9 @@ Hình cho thấy giá trị mới chỉ có hiệu lực sau khi người thứ 
 - **4a. Khóa ★.** Phiên bản 7 ở `PENDING_APPROVAL` và đi tiếp theo UC-18-03.
 
 **Luồng ngoại lệ.**
-- **E1. Không tìm thấy phiên bản (bước 2, 3).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}."
+- **E1. Không tìm thấy phiên bản (bước 2, 3).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}."
 - **E2. Giá trị cũ không còn hợp lệ với lược đồ mới (bước 3).** ERR-18-023 (409): "Phiên bản {số} không còn hợp lệ với lược đồ hiện hành của {khóa}: {lý do}."
-- **E3. Thiếu lý do (bước 3).** ERR-18-007 (422): "Nhập lý do xem nội dung (ít nhất 10 ký tự)."
+- **E3. Thiếu lý do (bước 3).** ERR-18-007 (422): "Nhập lý do {thao tác} (ít nhất {n} ký tự)."
 
 **Quy tắc áp dụng.** BR-18-005; LP-18-02; LP-18-03.
 
@@ -732,7 +732,7 @@ Hình cho thấy giá trị mới chỉ có hiệu lực sau khi người thứ 
 
 **Luồng ngoại lệ.**
 - **E1. Gói hỏng hoặc khác tổng kiểm tra (bước 2).** ERR-18-020 (422): "Gói tham số không hợp lệ hoặc đã bị sửa: {chi tiết}."
-- **E2. Khóa sai lược đồ (bước 3, 4).** ERR-18-013 (422) cho từng khóa: "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}."
+- **E2. Khóa sai lược đồ (bước 3, 4).** ERR-18-013 (422) cho từng khóa: "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}."
 
 **Quy tắc áp dụng.** BR-18-002; BR-18-004; BR-18-048; LP-18-01.
 
@@ -779,7 +779,7 @@ Hình cho thấy giá trị mới chỉ có hiệu lực sau khi người thứ 
 - **E1. Cờ thiếu chủ sở hữu hoặc ngày gỡ (bước 1).** ERR-18-021 (422): "Cờ tính năng cần chủ sở hữu và ngày gỡ dự kiến trong vòng 365 ngày."
 - **E2. Khóa cờ hoặc đích đã có (bước 1, 4).** ERR-18-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
 - **E3. Đích nội bộ, IP hoặc không HTTPS (bước 3).** ERR-18-022 (422): "Đích {đích} không được phép: chỉ chấp nhận tên miền công khai qua HTTPS."
-- **E4. Danh sách đã đủ số mục (bước 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {khóa}: {miền}." (xem ĐN-UC-01).
+- **E4. Danh sách đã đủ số mục (bước 4).** ERR-18-013 (422): "Giá trị {giá trị} nằm ngoài miền cho phép của {trường}: {miền}.".
 - **E5. Phiên bản cờ đã đổi (bước 2).** ERR-18-004 (412): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu."
 
 **Quy tắc áp dụng.** BR-18-008; BR-18-009; LP-18-03.
@@ -822,8 +822,8 @@ Hình cho thấy giá trị mới chỉ có hiệu lực sau khi người thứ 
 - **1b. Gọi lại.** PH-20 gọi lại sau lỗi mạng: hệ thống trả kết quả "0 khóa thêm", không đổi gì.
 
 **Luồng ngoại lệ.**
-- **E1. Tenant không có trong registry (bước 1).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (xem ĐN-UC-01).
-- **E2. PH-18 không sẵn sàng (bước 1).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được." PH-20 thử lại theo lịch của mình và hiện ở màn khởi tạo tenant.
+- **E1. Tenant không có trong registry (bước 1).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
+- **E2. PH-18 không sẵn sàng (bước 1).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được." PH-20 thử lại theo lịch của mình và hiện ở màn khởi tạo tenant.
 - **E3. Registry PH-20 không phản hồi khi chạy từ sự kiện (nhánh 1a).** ERR-18-124 (worker): "Xử lý sự kiện {mã} thất bại; đã chuyển vào DLQ." Inbox `FAILED`, hiện ở UI-18-24 (LP-18-06).
 
 **Quy tắc áp dụng.** BR-18-010; LP-18-06.
@@ -920,7 +920,7 @@ Hình cho thấy giá trị mới chỉ có hiệu lực sau khi người thứ 
 - **E4. Bản tin trùng mục đang mở (bước 4).** ERR-18-105 (worker): "Bản tin trùng mục đang mở; đã tăng số lần gặp." Chỉ ghi chỉ số.
 - **E5. Garage lỗi hoặc tổng kiểm tra lệch (bước 5).** ERR-18-104 (worker): "Nội dung bản tin trong kho không khớp tổng kiểm tra. Báo quản trị nền tảng." Thử lại 3 lần rồi không commit.
 - **E6. Đối soát không đọc được topic (bước 7).** ERR-18-124 (worker): "Xử lý sự kiện {mã} thất bại; đã chuyển vào DLQ." UI-18-06 báo lần sau sẽ chạy lại.
-- **E7. Đã có lần đối soát đang chạy (nhánh 7b).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong."
+- **E7. Đã có lần đối soát đang chạy (nhánh 7b).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}."
 
 **Quy tắc áp dụng.** BR-18-011; BR-18-013; BR-18-014; BR-18-015; BR-18-023; LP-18-04.
 
@@ -1092,7 +1092,7 @@ Hình cho thấy PH-18 chỉ là cửa sổ xem và kênh đề nghị; quyền 
 
 **Luồng ngoại lệ.**
 - **E1. Bộ lọc sai hoặc vượt giới hạn xuất (bước 2, nhánh 2b).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
-- **E2. Trạng thái không cho phép, hoặc nhóm không còn mục cần xử lý (bước 4).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong." (câu của mục 9.1 không hợp ngữ cảnh, xem ĐN-UC-01).
+- **E2. Trạng thái không cho phép, hoặc nhóm không còn mục cần xử lý (bước 4).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.".
 - **E3. Người được gán không có quyền DLQ (bước 4).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 - **E4. Phiên bản mục đã đổi (bước 4).** ERR-18-004 (412): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu."
 
@@ -1139,9 +1139,9 @@ Hình cho thấy PH-18 chỉ là cửa sổ xem và kênh đề nghị; quyền 
 - **5a. Chỉ xem khung.** Quân bấm "Xem khung" (API-18-048): tên trường và kiểu, không giá trị, không cần lý do.
 
 **Luồng ngoại lệ.**
-- **E1. Không tìm thấy mục (bước 1).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (xem ĐN-UC-01).
+- **E1. Không tìm thấy mục (bước 1).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
 - **E2. PH-13 quá thời gian (bước 3).** ERR-18-106 (worker): "Chưa lấy được ngữ cảnh chẩn đoán."
-- **E3. Thiếu lý do (bước 5).** ERR-18-007 (422): "Nhập lý do xem nội dung (ít nhất 10 ký tự)."
+- **E3. Thiếu lý do (bước 5).** ERR-18-007 (422): "Nhập lý do {thao tác} (ít nhất {n} ký tự)."
 - **E4. Payload đã xóa do hết hạn (bước 5).** ERR-18-027 (409): "Nội dung bản tin đã bị xóa do hết hạn lưu giữ. Chỉ còn thông tin mô tả."
 - **E5. PH-13 không ghi được kiểm toán (bước 6).** ERR-18-008 (503): "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
 - **E6. Tổng kiểm tra lệch (bước 6).** ERR-18-104 (worker): "Nội dung bản tin trong kho không khớp tổng kiểm tra. Báo quản trị nền tảng."
@@ -1210,9 +1210,9 @@ Hình cho thấy chẩn đoán là phụ thuộc mềm (quá 3 giây thì bỏ q
 
 **Luồng ngoại lệ.**
 - **E1. Đã có bản sửa chờ duyệt (bước 1).** ERR-18-030 (409): "Mục đã có bản sửa số {n} chờ duyệt. Chờ duyệt xong trước khi sửa tiếp."
-- **E2. Thiếu lý do (bước 1).** ERR-18-007 (422): "Nhập lý do xem nội dung (ít nhất 10 ký tự)."
+- **E2. Thiếu lý do (bước 1).** ERR-18-007 (422): "Nhập lý do {thao tác} (ít nhất {n} ký tự)."
 - **E3. Bản sửa sai lược đồ (bước 2).** ERR-18-029 (422): "Nội dung sửa không đúng lược đồ {lược đồ}: {chi tiết}."
-- **E4. Người duyệt trùng người sửa (bước 4).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
+- **E4. Người duyệt trùng người sửa (bước 4).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 
 **Quy tắc áp dụng.** BR-18-012; BR-18-018; BR-18-020; LP-18-01; LP-18-02.
 
@@ -1278,7 +1278,7 @@ Hình cho thấy quyết định cần bốn mắt hay không dựa trên mức 
 
 **Luồng ngoại lệ.**
 - **E1. Mã sai mẫu hoặc nội dung bị lọc (bước 1, 2).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
-- **E2. Hướng dẫn đã được người khác sửa (bước 3).** ERR-18-004 (412): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu." (xem ĐN-UC-01).
+- **E2. Hướng dẫn đã được người khác sửa (bước 3).** ERR-18-004 (412): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới trước khi lưu.".
 - **E3. Người dùng trong token không có quyền (bước 4).** ERR-00-403 (403); PH-17 hiện câu của mình.
 - **E4. Quá 20 yêu cầu mỗi giây mỗi người (bước 4).** ERR-18-010 (429): "Quá nhiều yêu cầu. Thử lại sau {giây} giây."
 
@@ -1313,7 +1313,7 @@ Hình cho thấy quyết định cần bốn mắt hay không dựa trên mức 
 **Luồng chính.**
 1. Chi bấm "Phát lại". Hộp xác nhận nêu nguồn, luồng, bản dùng (bản sửa số 1). Hệ thống kiểm mục không `POISON`, không trong lượt khác, nguồn có cổng.
 2. Hệ thống đọc trạng thái đóng băng của môi trường: phát lại không bị chặn vì không đổi cấu hình, chỉ hiện cảnh báo nếu đang đóng băng.
-3. Hệ thống chuyển mục `REPLAY_PENDING` rồi `REPLAYING`, phát EVT-18-09 với khóa lũy đẳng `dlq-000123:1` cho cổng `KAFKA_TOPIC` (API-18-064), ghi `dlq_audit`, tăng `replayCount`.
+3. Hệ thống chuyển mục `REPLAY_PENDING` rồi `REPLAYING`, phát EVT-18-09 với khóa lũy đẳng `dlq-000123:1` cho cổng `KAFKA_TOPIC` (API-18-064); nguồn lấy nội dung cần phát lại theo `payloadRef` qua API-18-188; hệ thống ghi `dlq_audit`, tăng `replayCount`.
 4. `dh-runtime-t68` đưa bản tin vào lối vào của luồng `hotich-khaisinh-dongbo` phiên bản 3, xử lý thành công và gọi callback `SUCCEEDED` (API-18-076).
 5. Hệ thống kiểm danh tính gọi là nguồn của mục và khóa tồn tại, kiểm khóa chưa có kết quả cuối.
 6. Hệ thống đặt mục `RESOLVED`, cập nhật `replay_item` (nếu có), ghi `dlq_audit`, phát EVT-18-07 và đóng việc `ph18.dlq-assigned`.
@@ -1400,11 +1400,11 @@ Hình cho thấy PH-18 không gọi hệ đích; cả hai phía đều giữ kh�
 - **1b. Xem lượt.** Chi xem danh sách lượt (API-18-066).
 
 **Luồng ngoại lệ.**
-- **E1. Bộ lọc không có mục (bước 1).** ERR-18-036 (422): "Bộ lọc không có mục nào phát lại được."
+- **E1. Bộ lọc không có mục (bước 1).** ERR-18-036 (422): "Không có mục nào phù hợp để {thao tác}."
 - **E2. Vượt số mục tối đa (bước 1).** ERR-18-032 (422): "Lượt có {n} mục, vượt giới hạn {tối đa}. Thu hẹp bộ lọc hoặc chia thành nhiều lượt." (`18.dlq.replay.batch-max` 10.000).
-- **E3. Người duyệt trùng người tạo (bước 4).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
+- **E3. Người duyệt trùng người tạo (bước 4).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 - **E4. Tốc độ vượt trần của nguồn (bước 3, nhánh 5b).** ERR-18-037 (422): "Tốc độ {n} mục mỗi giây vượt giới hạn {trần} của nguồn {mã}."
-- **E5. Lượt không ở trạng thái điều khiển được (nhánh 5a, 5c).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong." (xem ĐN-UC-01).
+- **E5. Lượt không ở trạng thái điều khiển được (nhánh 5a, 5c).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.".
 
 **Quy tắc áp dụng.** BR-18-020; BR-18-021; BR-18-022; LP-18-01; LP-18-03.
 
@@ -1468,8 +1468,8 @@ Hình cho thấy duyệt nằm trước khi gửi mục đầu tiên; trong khi 
 - **4a. Mở lại.** Mười ngày sau, Chi phát hiện bỏ nhầm một mục, bấm "Mở lại" kèm lý do (API-18-079). Hệ thống kiểm mục `DISCARDED` và chưa hết hạn, chuyển `TRIAGED`, giữ phân loại cũ, xóa `expiresAt`, ghi `dlq_audit`, phát EVT-18-07.
 
 **Luồng ngoại lệ.**
-- **E1. Lý do thiếu hoặc ngắn (bước 1).** ERR-18-007 (422): "Nhập lý do xem nội dung (ít nhất 10 ký tự)." (xem ĐN-UC-01).
-- **E2. Trạng thái không cho phép (bước 1, nhánh 4a).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong." (xem ĐN-UC-01).
+- **E1. Lý do thiếu hoặc ngắn (bước 1).** ERR-18-007 (422): "Nhập lý do {thao tác} (ít nhất {n} ký tự).".
+- **E2. Trạng thái không cho phép (bước 1, nhánh 4a).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.".
 - **E3. Mục đã hết hạn lưu giữ (nhánh 4a).** ERR-18-034 (409): "Mục đã hết hạn lưu giữ nên không thể mở lại."
 
 **Quy tắc áp dụng.** BR-18-023; BR-18-024; BR-18-025; LP-18-02.
@@ -1561,7 +1561,7 @@ Hình cho thấy duyệt nằm trước khi gửi mục đầu tiên; trong khi 
 **Luồng ngoại lệ.**
 - **E1. Cú pháp sai hoặc biến chưa khai báo (bước 1).** ERR-18-040 (422): "Mẫu có lỗi tại dòng {dòng}: {chi tiết}."
 - **E2. Mẫu dùng biến cấm `soDienThoaiDauMoi` (bước 2).** ERR-18-039 (422): "Mẫu dùng trường {biến} mức {mức}. Thư chỉ được chứa liên kết, không chứa dữ liệu mức Hạn chế hoặc Nhạy cảm."
-- **E3. Người duyệt trùng người soạn (bước 4).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
+- **E3. Người duyệt trùng người soạn (bước 4).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 
 **Quy tắc áp dụng.** BR-18-027; LP-18-01.
 
@@ -1788,7 +1788,7 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 - **E3. Thư trả lại (bước 3).** ERR-18-112 (worker): "Thư bị trả lại ({loại})."
 - **E4. Người nhận bị chặn (bước 4).** ERR-18-113 (worker): "Không gửi vì người nhận trong danh sách chặn."
 - **E5. Gửi đồng bộ tới địa chỉ bị chặn (UC-18-21 nhánh 1b).** ERR-18-043 (409): "Người nhận đang trong danh sách chặn."
-- **E6. Gửi lại thông báo đã `DELIVERED` (bước 6).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong." (xem ĐN-UC-01).
+- **E6. Gửi lại thông báo đã `DELIVERED` (bước 6).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.".
 - **E7. Bộ lọc nhật ký sai (bước 5).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 
 **Quy tắc áp dụng.** BR-18-029; BR-18-031.
@@ -1832,7 +1832,7 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 - **1a. Xem loại việc.** Người có `PERM-18-read` xem danh sách loại (API-18-108).
 
 **Luồng ngoại lệ.**
-- **E1. Mã loại không thuộc phân hệ gọi (bước 1).** ERR-18-017 (403): "Phân hệ không sở hữu không gian tên {ns}." (câu viết cho tham số, xem ĐN-UC-01). Hiện ở UI-18-24.
+- **E1. Mã loại không thuộc phân hệ gọi (bước 1).** ERR-18-017 (403): "Phân hệ không sở hữu {đối tượng} {mã}.". Hiện ở UI-18-24.
 - **E2. Quyền xem hoặc liên kết màn không hợp lệ (bước 1).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 - **E3. Loại việc chưa đăng ký (bước 2).** ERR-18-047 (422): "Loại việc {loại} chưa được đăng ký."
 - **E4. Tóm tắt chứa trường mức cấm (bước 2).** ERR-18-039 (422): "Mẫu dùng trường {biến} mức {mức}. Thư chỉ được chứa liên kết, không chứa dữ liệu mức Hạn chế hoặc Nhạy cảm."
@@ -1869,7 +1869,7 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 **Luồng chính.**
 1. Tuấn mở danh sách (API-18-111). Hệ thống trả việc `OPEN`, `IN_PROGRESS` của Tuấn, kiểm lại quyền xem tại thời điểm đọc.
 2. Hệ thống hiển thị tên loại, tóm tắt, phân hệ, hạn (đỏ khi quá hạn), người cùng nhận, liên kết.
-3. Tuấn mở việc `ph18.approve-replay` (API-18-112), bấm "Nhận việc" để báo người cùng nhận (`IN_PROGRESS`, EVT-18-14), rồi bấm liên kết sang UI-18-05.
+3. Tuấn mở việc `ph18.approve-replay` (API-18-112), bấm "Nhận việc" (API-18-181) để báo người cùng nhận (`IN_PROGRESS`, EVT-18-14), rồi bấm liên kết sang UI-18-05.
 4. Tác vụ nhắc gửi nhắc trước hạn `18.task.reminder.before-hours` (24 giờ) và khi quá hạn; quá hạn `18.task.overdue.escalate-hours` (48 giờ) thì gửi cho người quản lý theo `recipientRef` leo thang của loại.
 
 **Luồng thay thế.**
@@ -1877,12 +1877,12 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 - **4a. Dọn.** Việc `DONE` quá `18.task.retention-days` (365 ngày) bị xóa.
 
 **Luồng ngoại lệ.**
-- **E1. Việc không còn thuộc người dùng (bước 3).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (xem ĐN-UC-01).
+- **E1. Việc không còn thuộc người dùng (bước 3).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
 - **E2. Nhận việc đã đóng (bước 3).** ERR-18-048 (409): "Việc {mã} đã đóng."
 
 **Quy tắc áp dụng.** BR-18-032.
 
-**Màn hình, API.** UI-18-15; API-18-111, 112 (thao tác "Nhận việc" chưa có API, xem ĐN-UC-03).
+**Màn hình, API.** UI-18-15; API-18-111, 112, 181.
 :::
 
 ### 6.27. UC-18-27 · Quản lý lịch ngày làm việc, cửa sổ bảo trì và đóng băng
@@ -1977,8 +1977,8 @@ Hình cho thấy địa chỉ chỉ xuất hiện giữa PH-18 và máy chủ th
 **Luồng ngoại lệ.**
 - **E1. Không xử lý được sự kiện sau 5 lần (bước 1).** ERR-18-124 (worker): "Xử lý sự kiện {mã} thất bại; đã chuyển vào DLQ." UI-18-24 hiện số sự kiện mở sự cố chưa xử lý được (LP-18-06).
 - **E2. Thiếu trường bắt buộc khi tạo tay (nhánh 1c).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
-- **E3. Chuyển trạng thái sai, thêm mốc vào sự cố đã đóng, hoặc hồ sơ PH-09 còn mở (bước 3, 4, 6).** ERR-18-006 (409): "Đối soát đang chạy. Chờ lần hiện tại xong." (xem ĐN-UC-01).
-- **E4. Đối tượng liên kết không tồn tại (bước 4).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (xem ĐN-UC-01).
+- **E3. Chuyển trạng thái sai, thêm mốc vào sự cố đã đóng, hoặc hồ sơ PH-09 còn mở (bước 3, 4, 6).** ERR-18-006 (409): "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.".
+- **E4. Đối tượng liên kết không tồn tại (bước 4).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
 - **E5. Thiếu nguyên nhân hoặc bài học (bước 6).** ERR-18-052 (422): "Đóng sự cố cần nêu nguyên nhân gốc và bài học (mỗi phần ít nhất 30 ký tự)."
 
 **Quy tắc áp dụng.** BR-18-036; BR-18-037; BR-18-046; LP-18-02; LP-18-06.
@@ -2089,7 +2089,7 @@ Hình cho thấy đồng hồ 72 giờ thuộc PH-09 và bắt đầu từ thờ
 - **E1. CronJob dùng danh tính sai (bước 1).** ERR-00-403 (403).
 - **E2. Không thu được trạng thái từ mọi nguồn (bước 5).** ERR-18-055 (503): "Chưa thu được trạng thái sao lưu từ {công cụ}."
 - **E3. Thu trạng thái một đối tượng lỗi (nhánh 1a).** ERR-18-122 (worker): "Chưa thu được trạng thái của {đối tượng}."
-- **E4. Đối tượng chưa khai báo (bước 4).** ERR-18-001 (404): "Không tìm thấy phiên bản {số} của {khóa}." (xem ĐN-UC-01).
+- **E4. Đối tượng chưa khai báo (bước 4).** ERR-18-001 (404): "Không tìm thấy {đối tượng} {mã}.".
 - **E5. Thiếu biên bản diễn tập (bước 6).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 
 **Quy tắc áp dụng.** BR-18-047; BR-18-048.
@@ -2141,7 +2141,7 @@ Hình cho thấy đồng hồ 72 giờ thuộc PH-09 và bắt đầu từ thờ
 - **E1. Thời điểm ngoài cửa sổ PITR (bước 1).** ERR-18-056 (422): "Thời điểm {thời điểm} nằm ngoài cửa sổ khôi phục 30 ngày."
 - **E2. Phạm vi không hợp lệ (bước 1).** ERR-18-058 (422): "Phạm vi khôi phục không hợp lệ: {chi tiết}."
 - **E3. Tenant đang có tác vụ nặng khác (bước 1, 4).** ERR-18-057 (409): "Tỉnh đang có {tác vụ} chạy. Chờ xong trước khi yêu cầu khôi phục."
-- **E4. Người duyệt trùng người tạo (bước 4).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
+- **E4. Người duyệt trùng người tạo (bước 4).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 - **E5. PH-13 không ghi được kiểm toán (bước 4).** ERR-18-008 (503): "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau."
 - **E6. Bước của Job lỗi (bước 5, 6).** ERR-18-114 (worker): "Bước {n} lỗi: {lý do}. Đang quay lui."
 - **E7. Đối chiếu số dòng lệch (bước 6).** ERR-18-115 (worker): "Số dòng sau khôi phục lệch ở {bảng}." Tenant giữ `SUSPENDED` chờ PA quyết định.
@@ -2360,7 +2360,7 @@ Hình cho thấy PH-20 giữ quyết định ở mọi bước; PH-18 chỉ th�
 4. Job kết thúc `SUCCEEDED_WITH_ERRORS` (danh mục 18.420 bản ghi đọc, 18.391 hợp lệ, 29 lỗi), phát EVT-18-25; Mai theo dõi ở UI-18-22 (API-18-165, 166).
 5. Mai mở tab "Đối chiếu" (API-18-171): hệ thống hiện `migration_reconciliation` và đánh dấu chênh lệch chưa giải trình; Mai tải báo cáo PDF, CSV (liên kết có hạn).
 6. Lan mở tab "Bản ghi lỗi" (API-18-170): khóa nguồn, loại, lý do (mã ERR của đích hoặc của bộ chuyển), bước lỗi; xuất CSV.
-7. Lan đánh dấu cách xử lý: 25 bản ghi sửa ở nguồn, 4 bản ghi không di trú kèm lý do (`WONT_MIGRATE`).
+7. Lan đánh dấu cách xử lý (API-18-182): 25 bản ghi sửa ở nguồn, 4 bản ghi không di trú kèm lý do (`WONT_MIGRATE`).
 8. Sau khi nguồn sửa xong, Mai bấm "Chạy lại bản ghi lỗi" (API-18-164 với `retryOf`): hệ thống tạo lần chạy mới chỉ gồm 25 bản ghi, cùng chế độ chạy thử; bản ghi chuyển được thì đóng, còn lỗi thì cập nhật lý do mới.
 
 **Luồng thay thế.**
@@ -2374,11 +2374,11 @@ Hình cho thấy PH-20 giữ quyết định ở mọi bước; PH-18 chỉ th�
 - **E2. Đọc nguồn lỗi (bước 2).** ERR-18-117 (worker): "Đọc nguồn {mã} lỗi." Hiện ở UI-18-22.
 - **E3. Bộ chuyển lỗi một bản ghi (bước 2).** ERR-18-118 (worker): "Bản ghi {khóa} không chuyển đổi được: {lý do}." Bản ghi vào danh sách lỗi, lần chạy tiếp tục.
 - **E4. Tổng kiểm tra lệch (bước 5).** ERR-18-120 (worker): "Tổng kiểm tra của {đối tượng} lệch."
-- **E5. Không có bản ghi lỗi để chạy lại (bước 8).** ERR-18-036 (422): "Bộ lọc không có mục nào phát lại được." (câu viết cho phát lại DLQ, xem ĐN-UC-07).
+- **E5. Không có bản ghi lỗi để chạy lại (bước 8).** ERR-18-036 (422): "Không có mục nào phù hợp để {thao tác}.".
 
 **Quy tắc áp dụng.** BR-18-040; BR-18-041; BR-18-043.
 
-**Màn hình, API.** UI-18-21, UI-18-22; API-18-164, 165, 166, 169, 170, 171 (đánh dấu cách xử lý bản ghi lỗi chưa có API, xem ĐN-UC-04).
+**Màn hình, API.** UI-18-21, UI-18-22; API-18-164, 165, 166, 169, 170, 171, 182.
 :::
 
 ### 6.36. UC-18-36 · Chạy thật di trú có duyệt bốn mắt và đánh dấu cấp lại xác thực
@@ -2405,30 +2405,31 @@ Hình cho thấy PH-20 giữ quyết định ở mọi bước; PH-18 chỉ th�
 **Đảm bảo thành công.** `migration_run` `REAL` kết thúc `SUCCEEDED` hoặc `SUCCEEDED_WITH_ERRORS`; báo cáo đối chiếu có tổng kiểm tra cả nguồn và dữ liệu đọc lại từ đích; `credential_reissue_marker` `PENDING` cho từng HTTT và loại xác thực; EVT-18-25, EVT-18-26 phát.
 
 **Luồng chính.**
-1. Mai tạo lần chạy thật (API-18-164, `mode = REAL`). Hệ thống kiểm lần chạy thử hợp lệ, không đóng băng, không tác vụ nặng khác; lần chạy `PENDING_APPROVAL`, việc `ph18.approve-migration` cho người có `PERM-18-approve` trừ Mai.
+1. Mai tạo lần chạy thật (API-18-164, `mode = REAL`). Hệ thống kiểm kế hoạch `READY`, lần chạy thử hợp lệ, không đóng băng, không tác vụ nặng khác; lần chạy `PENDING_APPROVAL`, việc `ph18.approve-migration` cho người có `PERM-18-approve` trừ Mai.
 2. Hà xem báo cáo chạy thử và đối chiếu (API-18-166, 171), bấm "Duyệt" (API-18-167). Hệ thống kiểm Hà khác Mai; lần chạy `QUEUED`, Job bắt đầu.
 3. Job đọc nguồn, chuyển đổi, bỏ trường xác thực khỏi bản ghi application, subscription có khóa, client chứng thư trước khi gửi và đếm số trường đã bỏ.
 4. Job gọi API nhập của phân hệ đích (ví dụ API-01-080 của PH-01, API-07-002 của PH-07) với khóa lũy đẳng và cờ `migration = true`; bản ghi đã có cùng khóa được bỏ qua hoặc cập nhật theo chính sách của bộ chuyển.
 5. Job ghi `credential_reissue_marker` `PENDING` cho 182 HTTT, phát EVT-18-26 để PH-01, PH-03 tạo việc cấp lại cho đầu mối HTTT.
 6. Job tính đối chiếu số lượng và tổng kiểm tra trên dữ liệu đọc lại từ đích qua API đọc, ghi bản ghi lỗi, kết thúc và phát EVT-18-25.
-7. Khi PH-01 phát EVT-01-05 (đã cấp thông tin xác thực) cho từng HTTT, hệ thống chuyển dấu tương ứng sang `DONE`; Mai theo dõi ở UI-18-22, UI-18-23 (API-18-172).
+7. Khi PH-01 phát EVT-01-05 (đã cấp thông tin xác thực) cho từng HTTT, hệ thống chuyển dấu tương ứng sang `REISSUED`; Mai theo dõi ở UI-18-22, UI-18-23 (API-18-172).
 
 **Luồng thay thế.**
 - **2a. Từ chối.** Hà từ chối kèm lý do (API-18-168): lần chạy kết thúc, không ghi gì.
 - **4a. Hủy giữa chừng.** Mai hủy (API-18-169): Job dừng sau lô hiện hành, bản ghi đã ghi giữ nguyên.
 - **4b. Chạy lại bản ghi lỗi.** Như UC-18-35 bước 8 nhưng chế độ thật, vẫn cần duyệt.
-- **7a. HTTT không còn dùng.** Mai đánh dấu `NOT_NEEDED` kèm lý do (chưa có API, xem ĐN-UC-05).
+- **7a. HTTT không còn dùng.** Mai đánh dấu `WAIVED` kèm lý do từ 10 ký tự (API-18-183); dấu đã `REISSUED` thì trả ERR-18-006.
 - **1a. Xem lần chạy.** Mai xem danh sách lần chạy (API-18-165).
 
 **Luồng ngoại lệ.**
 - **E1. Chưa có chạy thử hợp lệ (bước 1).** ERR-18-064 (409): "Cần một lần chạy thử thành công trong {ngày} ngày gần nhất trước khi chạy thật."
 - **E2. Đang đóng băng (bước 1).** ERR-18-051 (409): "Đang trong thời gian đóng băng thay đổi {cửa sổ} nên chưa chạy thật được."
 - **E3. Tenant đang có tác vụ nặng khác (bước 1).** ERR-18-057 (409): "Tỉnh đang có {tác vụ} chạy. Chờ xong trước khi yêu cầu khôi phục."
-- **E4. Người duyệt trùng người tạo (bước 2).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
-- **E5. Phân hệ đích không nhận lô (bước 4).** ERR-18-069 (503): "Phân hệ {ph} chưa nhận lô. Lần chạy tạm dừng." Job tự thử lại.
+- **E4. Người duyệt trùng người tạo (bước 2).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
+- **E5. Phân hệ đích không nhận lô (bước 4).** ERR-18-069 (503): "Phân hệ {ph} không nhận dữ liệu. Lần chạy tạm dừng và tự thử lại sau {phút} phút."
 - **E6. Phân hệ đích từ chối bản ghi (bước 4).** ERR-18-119 (worker): "Phân hệ đích từ chối bản ghi {khóa}: {mã lỗi}." Bản ghi vào danh sách lỗi.
 - **E7. Không phát được sự kiện cấp lại (bước 5).** ERR-18-124 (worker): "Xử lý sự kiện {mã} thất bại; đã chuyển vào DLQ."
 - **E8. Tổng kiểm tra lệch (bước 6).** ERR-18-120 (worker): "Tổng kiểm tra của {đối tượng} lệch."
+- **E9. Kế hoạch chưa sẵn sàng (bước 1).** ERR-18-065 (409): "Kế hoạch {mã} chưa ở trạng thái sẵn sàng."
 
 **Quy tắc áp dụng.** BR-18-040; BR-18-041; BR-18-042; BR-18-043; LP-18-01; LP-18-05.
 
@@ -2492,7 +2493,7 @@ Hình cho thấy Job chỉ đọc hệ cũ và chỉ ghi qua API nhập của ph
 
 **Luồng thay thế.**
 - **3a. Tỷ lệ tụt dưới ngưỡng.** Nhóm về `PARALLEL`, gửi thông báo cho đội chuyển đổi.
-- **2a. Lệch đã biết và chấp nhận.** Mai thêm quy tắc chuẩn hóa cho nhóm (ví dụ định dạng ngày); mẫu cũ được tính lại (chưa có API, xem ĐN-UC-06).
+- **2a. Lệch đã biết và chấp nhận.** Mai thêm quy tắc chuẩn hóa cho nhóm (ví dụ định dạng ngày); mẫu trong cửa sổ 7 ngày được tính lại (API-18-184, `If-Match`, lý do).
 - **4a. PH-10 đã cắt chuyển cầu nối.** EVT-10-15 cho nhóm: hệ thống ghi sổ cắt chuyển và đóng theo dõi phần sự kiện của nhóm.
 - **4b. Nhóm không dùng sự kiện.** Bỏ phần cầu nối.
 
@@ -2502,7 +2503,7 @@ Hình cho thấy Job chỉ đọc hệ cũ và chỉ ghi qua API nhập của ph
 
 **Quy tắc áp dụng.** BR-18-044; LP-18-06.
 
-**Màn hình, API.** UI-18-23; API-18-173, 174, 176.
+**Màn hình, API.** UI-18-23; API-18-173, 174, 176, 184.
 :::
 
 ### 6.38. UC-18-38 · Cắt chuyển nhóm dịch vụ và quay lui
@@ -2530,25 +2531,25 @@ Hình cho thấy Job chỉ đọc hệ cũ và chỉ ghi qua API nhập của ph
 
 **Luồng chính.**
 1. Mai mở danh sách kiểm tra của `nhom-hotich` (API-18-174). Hệ thống tự đánh giá: DLQ của nhóm không còn mục `NEW`, `TRIAGED`, `REPLAY_FAILED`; tỷ lệ khớp không dưới ngưỡng; 100% HTTT đã cấp lại xác thực; báo cáo đối chiếu không còn chênh lệch chưa giải trình; không đóng băng.
-2. Mai xác nhận hai mục tay (đã thông báo HTTT, đã bố trí người trực) và gửi đề nghị cắt chuyển 100% lưu lượng (API-18-175): việc `ph18.approve-cutover` cho người có `PERM-18-approve` trừ Mai.
-3. Tuấn duyệt. Hệ thống kiểm Tuấn khác Mai, ghi `cutover_log`, gửi yêu cầu đổi tuyến cho PH-03 và cắt chuyển cầu nối cho PH-10, chuyển nhóm `CUT_OVER` với `rollbackUntil` sau `18.migration.rollback-window-minutes` (15 phút), phát EVT-18-27.
-4. Mười phút sau, Chi thấy tỷ lệ lỗi tăng; Mai bấm "Quay lui". Hệ thống kiểm còn trong cửa sổ 15 phút, ghi sổ, yêu cầu PH-03 trả tuyến về hệ cũ, nhóm `ROLLED_BACK` rồi `PARALLEL`, phát EVT-18-27.
+2. Mai xác nhận hai mục tay (đã thông báo HTTT, đã bố trí người trực) qua API-18-185 và gửi đề nghị cắt chuyển 100% lưu lượng (API-18-175, `action = REQUEST`): việc `ph18.approve-cutover` cho người có `PERM-18-approve` trừ Mai.
+3. Tuấn duyệt (API-18-175, `action = APPROVE`). Hệ thống kiểm Tuấn khác Mai, ghi `cutover_log`, gửi yêu cầu đổi tuyến cho PH-03 và cắt chuyển cầu nối cho PH-10, chuyển nhóm `CUT_OVER` với `rollbackUntil` sau `18.migration.rollback-window-minutes` (15 phút), phát EVT-18-27.
+4. Mười phút sau, Chi thấy tỷ lệ lỗi tăng; Mai bấm "Quay lui" (API-18-175, `action = ROLLBACK`, không cần bốn mắt). Hệ thống kiểm còn trong cửa sổ 15 phút, ghi sổ, yêu cầu PH-03 trả tuyến về hệ cũ, nhóm `ROLLED_BACK` rồi `PARALLEL`, phát EVT-18-27.
 
 **Luồng thay thế.**
 - **2a. Cắt chuyển một phần.** Từ `SHADOW_OK`, Mai đề nghị 20% lưu lượng; sau duyệt nhóm `PARTIAL_CUTOVER`, quay lui được bất cứ lúc nào.
-- **3a. Từ chối.** Người duyệt từ chối: nhóm giữ trạng thái (thao tác từ chối chưa có API riêng, xem ĐN-UC-08).
+- **3a. Từ chối.** Người duyệt từ chối kèm lý do (API-18-175, `action = REJECT`): nhóm giữ trạng thái.
 - **4a. Không quay lui.** Hết 15 phút không có sự cố: nhóm giữ `CUT_OVER`.
 
 **Luồng ngoại lệ.**
 - **E1. Tỷ lệ khớp chưa đạt (bước 1).** ERR-18-066 (422): "Tỷ lệ khớp {tỷ lệ} thấp hơn ngưỡng {ngưỡng}."
 - **E2. Danh sách kiểm tra chưa đạt (bước 2).** ERR-18-067 (409): "Chưa cắt chuyển được nhóm {nhóm}: còn {n} mục kiểm tra chưa đạt."
 - **E3. Đang đóng băng (bước 1, 3).** ERR-18-051 (409): "Đang trong thời gian đóng băng thay đổi {cửa sổ} nên chưa chạy thật được."
-- **E4. Người duyệt trùng người đề nghị (bước 3).** ERR-18-005 (403): "Bạn là người đề nghị nên không được duyệt đề nghị này."
+- **E4. Người duyệt trùng người đề nghị (bước 3).** ERR-18-005 (403): "Bạn là người tạo {đối tượng} này nên không được duyệt."
 - **E5. Quá cửa sổ quay lui (bước 4).** ERR-18-068 (409): "Đã quá {phút} phút kể từ khi cắt chuyển nên không quay lui tự động được."
 
 **Quy tắc áp dụng.** BR-18-044; LP-18-01.
 
-**Màn hình, API.** UI-18-23, UI-18-15; API-18-174, 175.
+**Màn hình, API.** UI-18-23, UI-18-15; API-18-174, 175, 185.
 :::
 
 ```{.mermaid caption="Trình tự cắt chuyển nhóm dịch vụ có duyệt bốn mắt và quay lui"}
@@ -2634,7 +2635,7 @@ Hình cho thấy cắt chuyển cần hai người còn quay lui chỉ cần m�
 
 **Tiền điều kiện.** Không.
 
-**Kích hoạt.** Kiểm tra sức khỏe mỗi 15 giây; Hà đặt `18.degraded.read-only = true`; Khoa mở UI-18-24.
+**Kích hoạt.** Kiểm tra sức khỏe mỗi 15 giây; Hà bật chế độ chỉ đọc (API-18-187); Khoa mở UI-18-24.
 
 **Đảm bảo tối thiểu.** Ở chế độ chỉ đọc, bản tin lỗi dồn ở Kafka không mất, thông báo đã vào outbox vẫn được gửi; phân hệ khác đọc tham số từ bộ đệm (LP-18-04).
 
@@ -2643,18 +2644,19 @@ Hình cho thấy cắt chuyển cần hai người còn quay lui chỉ cần m�
 **Luồng chính.**
 1. Hệ thống kiểm từng thành phần mỗi 15 giây: CSDL, Kafka (độ trễ tiêu thụ DLQ, inbox), Garage, máy chủ thư, SMS gateway, PH-13, PH-10, registry PH-20, Kubernetes API (tạo Job); phát `dh_ops_component_up{component}`.
 2. SMS gateway lỗi: hệ thống đặt PH-18 `DEGRADED`, phát EVT-18-29; chỉ kênh SMS suy giảm, phần khác chạy bình thường.
-3. Khoa mở UI-18-24 (API-18-180): thấy trạng thái từng thành phần, độ trễ tiêu thụ, outbox tồn, inbox `FAILED`, Job đang chạy.
-4. Trước khi bảo trì CSDL, Hà đặt `18.degraded.read-only = true` (API-18-006). Hệ thống phát EVT-18-29 với `readOnly = true`; API ghi của người dùng trả lỗi chỉ đọc; tiêu thụ DLQ tạm dừng; thông báo vẫn gửi từ outbox đã có.
+3. Khoa mở UI-18-24 (API-18-180): thấy trạng thái từng thành phần, độ trễ tiêu thụ, outbox tồn, danh sách inbox `FAILED` theo mô-đun (API-18-186), Job đang chạy.
+4. Trước khi bảo trì CSDL, Hà bật chế độ chỉ đọc kèm lý do (API-18-187, `PERM-18-admin`); hệ thống ghi khóa `18.degraded.read-only`, phát EVT-18-29 với `readOnly = true`; API ghi của người dùng trả lỗi chỉ đọc, trừ API-18-187; tiêu thụ DLQ tạm dừng; thông báo vẫn gửi từ outbox đã có.
 
 **Luồng thay thế.**
-- **4a. Kết thúc bảo trì.** Hà tắt chế độ chỉ đọc; tiêu thụ DLQ đọc tiếp từ offset đã commit (cách tắt khi API ghi đang bị chặn chưa rõ, xem ĐN-UC-11).
+- **4a. Kết thúc bảo trì.** Hà tắt chế độ chỉ đọc qua API-18-187 (API này không bị chặn); tiêu thụ DLQ đọc tiếp từ offset đã commit.
 
 **Luồng ngoại lệ.**
-- **E1. Ghi khi đang chỉ đọc (bước 4).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thay đổi tham số tạm thời không thực hiện được." (câu chỉ nói tham số, xem ĐN-UC-02).
+- **E1. Ghi khi đang chỉ đọc (bước 4).** ERR-18-071 (503): "Phân hệ vận hành đang ở chế độ chỉ đọc. Thao tác tạm thời không thực hiện được.".
+- **E2. Đổi khóa chỉ đọc qua API-18-006 (bước 4).** ERR-18-003 (400): "Dữ liệu không hợp lệ: {chi tiết}." Khóa `18.degraded.read-only` chỉ đổi qua API-18-187.
 
 **Quy tắc áp dụng.** BR-18-007; BR-18-011; LP-18-04.
 
-**Màn hình, API.** UI-18-24; API-18-006, 180.
+**Màn hình, API.** UI-18-24; API-18-180, 186, 187.
 :::
 
 ## 7. Luồng phụ dùng chung
@@ -2678,11 +2680,11 @@ Chương này tổng kết mã do tập tạo ra, độ phủ so với FRS và n
 
 ### 8.1. Mã mới và độ phủ
 
-Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-18-01 đến UC-18-40, LP-18-01 đến LP-18-06, câu hỏi mở Q18-45 đến Q18-49, đề nghị đồng bộ ĐN-UC-01 đến ĐN-UC-15. Đề nghị D05-02-PH18 dựng kịch bản kiểm thử TS-18-nn ứng một một với UC-18-nn. Cả 72 FR thuộc ít nhất một use case (mục 5.4); cả 180 API và 24 màn hình của FRS đều xuất hiện ở mục 5.2. Mã ERR, EVT, API, UI, PERM, trạng thái và tham số `18.*` lấy đúng FRS mục 3, 4, 8.2, 9, 10.1; câu thông báo nguyên văn FRS mục 9.1.
+Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-18-01 đến UC-18-40, LP-18-01 đến LP-18-06, câu hỏi mở Q18-45 đến Q18-49, đề nghị đồng bộ ĐN-UC-01 đến ĐN-UC-15. Đề nghị D05-02-PH18 dựng kịch bản kiểm thử TS-18-nn ứng một một với UC-18-nn. Cả 72 FR thuộc ít nhất một use case (mục 5.4); cả 188 API và 24 màn hình của FRS đều xuất hiện ở mục 5.2. Mã ERR, EVT, API, UI, PERM, trạng thái và tham số `18.*` lấy đúng FRS mục 3, 4, 8.2, 9, 10.1; câu thông báo nguyên văn FRS mục 9.1.
 
-### 8.2. Đối chiếu với FRS 0.1
+### 8.2. Đối chiếu với FRS 0.2
 
-Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS. Mọi mã lỗi, sự kiện, API và màn hình của FRS đều được ít nhất một use case dẫn; chỗ câu thông báo của mục 9.1 không hợp ngữ cảnh được ghi chú ngay tại luồng ngoại lệ và gom ở Phụ lục A.
+Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS. Mọi mã lỗi, sự kiện, API và màn hình của FRS đều được ít nhất một use case dẫn; từ FRS 0.2, câu thông báo của mục 9.1 là câu chung có tham số nên được dẫn nguyên văn, không còn ghi chú lệch ngữ cảnh.
 
 | Hạng mục | Số trong FRS | Số được dẫn trong tập này |
 |---|---|---|
@@ -2690,7 +2692,7 @@ Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS. Mọi mã l
 | ERR control plane (ERR-18-001…072) | 72 | 72 |
 | ERR worker (ERR-18-101…124) | 24 | 24 |
 | EVT phát (EVT-18-01…29) | 29 | 29 |
-| API (API-18-001…180) | 180 | 180 |
+| API (API-18-001…188) | 188 | 188 |
 | Màn hình (UI-18-01…24) | 24 | 24 |
 | BR (BR-18-001…050) | 50 | 50 |
 | Use case máy với máy (UC-18-01, 07, 10, 25, 33) | 5 | 5 |
@@ -2699,7 +2701,7 @@ Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS. Mọi mã l
 
 ### 8.3. Đề nghị đồng bộ
 
-Tập này không sửa tài liệu khác. Mười lăm đề nghị cho chủ tài liệu (FRS, D03-04-PH18, D03-06-PH18, D02-08, D05-02-PH18) nằm ở Phụ lục A; mười một đề nghị đầu là chỗ FRS 0.1 còn lệch, thiếu hoặc chưa rõ khi viết use case.
+Tập này không sửa tài liệu khác. Mười lăm đề nghị cho chủ tài liệu (FRS, D03-04-PH18, D03-06-PH18, D02-08, D05-02-PH18) nằm ở Phụ lục A; mười một đề nghị đầu là chỗ FRS 0.1 còn lệch, thiếu hoặc chưa rõ khi viết use case. Ở bản 0.2, mười hai đề nghị đã được hấp thụ (cột "Trạng thái"); ba đề nghị còn giữ cho đợt đồng bộ liên phân hệ.
 
 ## 9. Câu hỏi mở
 
@@ -2717,25 +2719,25 @@ Các câu hỏi Q18-01 đến Q18-19 nằm ở FRS mục 13. Dưới đây là n
 
 ## Phụ lục A. Đề nghị đồng bộ
 
-Phụ lục ghi những điểm lệch, thiếu hoặc chưa rõ phát hiện khi viết use case, để chủ tài liệu quyết định. Đề nghị ĐN-UC-01 đến ĐN-UC-11 dành cho FRS 0.1 (và D03-04-PH18 khi API liên quan); ĐN-UC-12 đến ĐN-UC-15 dành cho tập khác. FRS vẫn là nguồn chuẩn cho tới khi chủ tài liệu nhận đề nghị.
+Phụ lục ghi những điểm lệch, thiếu hoặc chưa rõ phát hiện khi viết use case, để chủ tài liệu quyết định. Đề nghị ĐN-UC-01 đến ĐN-UC-11 dành cho FRS 0.1 (và D03-04-PH18 khi API liên quan); ĐN-UC-12 đến ĐN-UC-15 dành cho tập khác. FRS vẫn là nguồn chuẩn cho tới khi chủ tài liệu nhận đề nghị. Cột "Trạng thái" ghi kết quả đợt đồng bộ nội bộ ở bản 0.2.
 
-| Mã | Đối tượng | Đề nghị | Nguồn |
-|---|---|---|---|
-| ĐN-UC-01 | FRS mục 9.1 | Năm mã dùng ở nhiều ngữ cảnh có câu thông báo viết cho một ngữ cảnh: ERR-18-001 ("Không tìm thấy phiên bản {số} của {khóa}" nhưng dùng cho tenant, mục DLQ, việc, đối tượng sao lưu), ERR-18-005 ("người đề nghị" nhưng dùng cho người tạo bản sửa, lượt, yêu cầu), ERR-18-006 ("Đối soát đang chạy" nhưng dùng cho mọi sai trạng thái), ERR-18-007 ("lý do xem nội dung" nhưng dùng cho tham số, bỏ qua, bản sửa), ERR-18-013 (dùng cho cả số mục egress), cùng ERR-18-017 (dùng cho loại việc). Khối FR ở chương 6 của FRS đã viết câu theo ngữ cảnh. Đề nghị đổi cột "Thông báo" thành câu chung có tham số (ví dụ "Không tìm thấy {đối tượng} {mã}.", "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.") hoặc liệt kê biến thể theo FR; tập này đã dẫn nguyên văn và ghi chú tại chỗ | UC-18-01, 02, 06, 07, 12, 13, 15, 17, 18, 24, 25, 26, 28, 30 |
-| ĐN-UC-02 | FRS ERR-18-071 | Câu "Thay đổi tham số tạm thời không thực hiện được" ở mục 9.1 hẹp hơn FR-18-072 ("Thao tác tạm thời không thực hiện được") trong khi chế độ chỉ đọc chặn mọi API ghi. Đề nghị dùng câu chung của FR-18-072 | UC-18-02, 07, 40 |
-| ĐN-UC-03 | FRS FR-18-044, D03-04-PH18 | Thao tác "Nhận việc" (`IN_PROGRESS`, phát EVT-18-14) không có API ghi; API-18-111, 112 chỉ đọc. Đề nghị thêm `POST /me/tasks/{taskId}:claim` | UC-18-26 bước 3 |
-| ĐN-UC-04 | FRS FR-18-063, D03-04-PH18 | Đánh dấu cách xử lý bản ghi lỗi di trú (sửa ở nguồn, thêm quy tắc, `WONT_MIGRATE` kèm lý do) không có API ghi; API-18-170 chỉ đọc. Đề nghị thêm `PATCH /migration-runs/{runId}/errors/{errorId}` và thao tác hàng loạt, quyền `PERM-18-migration` (DS ○) | UC-18-35 bước 7 |
-| ĐN-UC-05 | FRS FR-18-065, D03-04-PH18 | TA đánh dấu `NOT_NEEDED` cho thông tin xác thực không cần cấp lại không có API; API-18-172 chỉ đọc. Đề nghị thêm `POST /credential-reissues/{markerId}:not-needed` có lý do | UC-18-36 nhánh 7a |
-| ĐN-UC-06 | FRS FR-18-067, D03-04-PH18 | Thêm quy tắc chuẩn hóa so sánh cho nhóm (để chấp nhận lệch đã biết và tính lại mẫu cũ) không có API. Đề nghị thêm `PUT /parallel-groups/{groupCode}/normalization-rules` | UC-18-37 nhánh 2a |
-| ĐN-UC-07 | FRS FR-18-063 | FR-18-063 dùng ERR-18-036 với câu "Không có bản ghi lỗi nào để chạy lại", khác câu của mục 9.1 ("Bộ lọc không có mục nào phát lại được"). Đề nghị câu chung "Không có mục nào phù hợp để {thao tác}." hoặc cấp mã riêng | UC-18-35 E5 |
-| ĐN-UC-08 | FRS FR-18-068, D03-04-PH18 | Cắt chuyển có bốn mắt nhưng chỉ có API-18-175 `:transition` (quyền "migration, approve"), chưa tách đề nghị, duyệt, từ chối và quay lui. Đề nghị nêu rõ thân `action` (`REQUEST`, `APPROVE`, `REJECT`, `ROLLBACK`) và quyền theo từng giá trị, hoặc tách bốn endpoint như lượt phát lại | UC-18-38 bước 2, 3, nhánh 3a |
-| ĐN-UC-09 | FRS mục 10.1 | UI-18-18 ghi vai "DPO", UI-18-21 đến UI-18-23 ghi vai "MO", nhưng hai vai này không có ở bảng tác nhân mục 3.1 và ma trận quyền mục 3.2. Đề nghị thay bằng SO (UI-18-18) và PA, TA (UI-18-21 đến 23), hoặc định nghĩa vai | Mục 3, UC-18-29, 34 đến 38 |
-| ĐN-UC-10 | FRS mục 9.4, D03-04-PH18 | API-18-150, 153 (`/merge-transfers`) nằm ở tiền tố người dùng `/api/ops/v1` nhưng chỉ dùng scope máy `ops:merge-transfer` của PH-20. Đề nghị ghi rõ PH-20 gọi qua APISIX bằng client credentials, hoặc chuyển sang `/ops/internal/v1` cho thống nhất với các API máy khác | UC-18-33 |
-| ĐN-UC-11 | FRS FR-18-072 | Chế độ chỉ đọc bật bằng khóa `18.degraded.read-only` qua API-18-006 (quyền `PERM-18-config`), trong khi FR-18-072 ghi quyền `PERM-18-admin`; khi đã chỉ đọc thì API ghi trả ERR-18-071 nên không tắt được bằng chính API đó. Đề nghị miễn khóa này khỏi chặn chỉ đọc hoặc thêm thao tác riêng cho PA | UC-18-40 bước 4, nhánh 4a |
-| ĐN-UC-12 | D02-08 | Dòng `PERM-18-*` ở D02-08 lệch ma trận FRS mục 3.2: `PERM-18-dlq` (D02-08 không cấp cho PA, cấp đủ cho IE; FRS cấp hạn chế cho PA, IE, DS), `PERM-18-dlq-payload` (D02-08 không cấp cho PO, IE; FRS cấp hạn chế cho PO, cấp đủ cho IE), `PERM-18-approve` (D02-08 không cấp cho SO; FRS cấp cho SO). Tập này theo FRS; đề nghị đối chiếu lại như FRS mục 12.4 đã nêu | Mục 3, UC-18-03, 13, 14 |
-| ĐN-UC-13 | FRS FR-18-062 | Tiền điều kiện của chạy thật là kế hoạch `READY` nhưng luồng chính không kiểm và ERR-18-065 chỉ gắn FR-18-061. Đề nghị thêm bước kiểm kế hoạch `READY` (ERR-18-065) vào FR-18-062 | UC-18-36 bước 1 |
-| ĐN-UC-14 | D03-06-PH18 | Lấy câu thông báo và luồng thao tác từ chương 6; với các mã ở ĐN-UC-01 dùng câu theo ngữ cảnh khi FRS nhận đề nghị; dải cảnh báo chỉ đọc trên mọi màn `/van-hanh` | Chương 6 |
-| ĐN-UC-15 | D05-02-PH18 | Dựng TS-18-nn ứng một một với UC-18-nn; bắt buộc có kịch bản bốn mắt (mỗi UC trong LP-18-01 một ca người duyệt trùng người đề nghị), kịch bản lũy đẳng phát lại (gọi lại cùng khóa, kết quả đến muộn), kịch bản khôi phục lỗi ở bước 3 và bước 5, kịch bản cắt chuyển rồi quay lui ở phút thứ 14 và phút thứ 16 (đồng hồ giả lập) | UC-18-14, 16, 17, 31, 38 |
+| Mã | Đối tượng | Đề nghị | Nguồn | Trạng thái |
+|---|---|---|---|---|
+| ĐN-UC-01 | FRS mục 9.1 | Năm mã dùng ở nhiều ngữ cảnh có câu thông báo viết cho một ngữ cảnh: ERR-18-001 ("Không tìm thấy phiên bản {số} của {khóa}" nhưng dùng cho tenant, mục DLQ, việc, đối tượng sao lưu), ERR-18-005 ("người đề nghị" nhưng dùng cho người tạo bản sửa, lượt, yêu cầu), ERR-18-006 ("Đối soát đang chạy" nhưng dùng cho mọi sai trạng thái), ERR-18-007 ("lý do xem nội dung" nhưng dùng cho tham số, bỏ qua, bản sửa), ERR-18-013 (dùng cho cả số mục egress), cùng ERR-18-017 (dùng cho loại việc). Khối FR ở chương 6 của FRS đã viết câu theo ngữ cảnh. Đề nghị đổi cột "Thông báo" thành câu chung có tham số (ví dụ "Không tìm thấy {đối tượng} {mã}.", "{Đối tượng} đang ở trạng thái {trạng thái} nên không thể {thao tác}.") hoặc liệt kê biến thể theo FR; tập này đã dẫn nguyên văn và ghi chú tại chỗ | UC-18-01, 02, 06, 07, 12, 13, 15, 17, 18, 24, 25, 26, 28, 30 | Đã hấp thụ ở 0.2: FRS mục 9.1 dùng câu chung có tham số |
+| ĐN-UC-02 | FRS ERR-18-071 | Câu "Thay đổi tham số tạm thời không thực hiện được" ở mục 9.1 hẹp hơn FR-18-072 ("Thao tác tạm thời không thực hiện được") trong khi chế độ chỉ đọc chặn mọi API ghi. Đề nghị dùng câu chung của FR-18-072 | UC-18-02, 07, 40 | Đã hấp thụ ở 0.2: câu chung của FR-18-072 |
+| ĐN-UC-03 | FRS FR-18-044, D03-04-PH18 | Thao tác "Nhận việc" (`IN_PROGRESS`, phát EVT-18-14) không có API ghi; API-18-111, 112 chỉ đọc. Đề nghị thêm `POST /me/tasks/{taskId}:claim` | UC-18-26 bước 3 | Đã hấp thụ ở 0.2: API-18-181 |
+| ĐN-UC-04 | FRS FR-18-063, D03-04-PH18 | Đánh dấu cách xử lý bản ghi lỗi di trú (sửa ở nguồn, thêm quy tắc, `WONT_MIGRATE` kèm lý do) không có API ghi; API-18-170 chỉ đọc. Đề nghị thêm `PATCH /migration-runs/{runId}/errors/{errorId}` và thao tác hàng loạt, quyền `PERM-18-migration` (DS ○) | UC-18-35 bước 7 | Đã hấp thụ ở 0.2: API-18-182 (thao tác hàng loạt trên `/migration-runs/{runId}/errors`) |
+| ĐN-UC-05 | FRS FR-18-065, D03-04-PH18 | TA đánh dấu `NOT_NEEDED` cho thông tin xác thực không cần cấp lại không có API; API-18-172 chỉ đọc. Đề nghị thêm `POST /credential-reissues/{markerId}:not-needed` có lý do | UC-18-36 nhánh 7a | Đã hấp thụ ở 0.2: API-18-183 `:waive`, trạng thái `WAIVED` |
+| ĐN-UC-06 | FRS FR-18-067, D03-04-PH18 | Thêm quy tắc chuẩn hóa so sánh cho nhóm (để chấp nhận lệch đã biết và tính lại mẫu cũ) không có API. Đề nghị thêm `PUT /parallel-groups/{groupCode}/normalization-rules` | UC-18-37 nhánh 2a | Đã hấp thụ ở 0.2: API-18-184 |
+| ĐN-UC-07 | FRS FR-18-063 | FR-18-063 dùng ERR-18-036 với câu "Không có bản ghi lỗi nào để chạy lại", khác câu của mục 9.1 ("Bộ lọc không có mục nào phát lại được"). Đề nghị câu chung "Không có mục nào phù hợp để {thao tác}." hoặc cấp mã riêng | UC-18-35 E5 | Đã hấp thụ ở 0.2: câu chung "Không có mục nào phù hợp để {thao tác}." |
+| ĐN-UC-08 | FRS FR-18-068, D03-04-PH18 | Cắt chuyển có bốn mắt nhưng chỉ có API-18-175 `:transition` (quyền "migration, approve"), chưa tách đề nghị, duyệt, từ chối và quay lui. Đề nghị nêu rõ thân `action` (`REQUEST`, `APPROVE`, `REJECT`, `ROLLBACK`) và quyền theo từng giá trị, hoặc tách bốn endpoint như lượt phát lại | UC-18-38 bước 2, 3, nhánh 3a | Đã hấp thụ ở 0.2: API-18-175 nhận `action` (`REQUEST`, `APPROVE`, `REJECT`, `ROLLBACK`), quyền theo từng giá trị; mục tay qua API-18-185 |
+| ĐN-UC-09 | FRS mục 10.1 | UI-18-18 ghi vai "DPO", UI-18-21 đến UI-18-23 ghi vai "MO", nhưng hai vai này không có ở bảng tác nhân mục 3.1 và ma trận quyền mục 3.2. Đề nghị thay bằng SO (UI-18-18) và PA, TA (UI-18-21 đến 23), hoặc định nghĩa vai | Mục 3, UC-18-29, 34 đến 38 | Đã hấp thụ ở 0.2: FRS mục 10.1 dùng SO, PA, TA |
+| ĐN-UC-10 | FRS mục 9.4, D03-04-PH18 | API-18-150, 153 (`/merge-transfers`) nằm ở tiền tố người dùng `/api/ops/v1` nhưng chỉ dùng scope máy `ops:merge-transfer` của PH-20. Đề nghị ghi rõ PH-20 gọi qua APISIX bằng client credentials, hoặc chuyển sang `/ops/internal/v1` cho thống nhất với các API máy khác | UC-18-33 | Giữ: chờ đợt đồng bộ liên phân hệ (PH-20, APISIX) |
+| ĐN-UC-11 | FRS FR-18-072 | Chế độ chỉ đọc bật bằng khóa `18.degraded.read-only` qua API-18-006 (quyền `PERM-18-config`), trong khi FR-18-072 ghi quyền `PERM-18-admin`; khi đã chỉ đọc thì API ghi trả ERR-18-071 nên không tắt được bằng chính API đó. Đề nghị miễn khóa này khỏi chặn chỉ đọc hoặc thêm thao tác riêng cho PA | UC-18-40 bước 4, nhánh 4a | Đã hấp thụ ở 0.2: API-18-187, miễn chặn chỉ đọc |
+| ĐN-UC-12 | D02-08 | Dòng `PERM-18-*` ở D02-08 lệch ma trận FRS mục 3.2: `PERM-18-dlq` (D02-08 không cấp cho PA, cấp đủ cho IE; FRS cấp hạn chế cho PA, IE, DS), `PERM-18-dlq-payload` (D02-08 không cấp cho PO, IE; FRS cấp hạn chế cho PO, cấp đủ cho IE), `PERM-18-approve` (D02-08 không cấp cho SO; FRS cấp cho SO). Tập này theo FRS; đề nghị đối chiếu lại như FRS mục 12.4 đã nêu | Mục 3, UC-18-03, 13, 14 | Giữ: chờ D02-08 |
+| ĐN-UC-13 | FRS FR-18-062 | Tiền điều kiện của chạy thật là kế hoạch `READY` nhưng luồng chính không kiểm và ERR-18-065 chỉ gắn FR-18-061. Đề nghị thêm bước kiểm kế hoạch `READY` (ERR-18-065) vào FR-18-062 | UC-18-36 bước 1 | Đã hấp thụ ở 0.2: FR-18-062 kiểm `READY` (ERR-18-065) |
+| ĐN-UC-14 | D03-06-PH18 | Lấy câu thông báo và luồng thao tác từ chương 6; với các mã ở ĐN-UC-01 dùng câu theo ngữ cảnh khi FRS nhận đề nghị; dải cảnh báo chỉ đọc trên mọi màn `/van-hanh` | Chương 6 | Giữ: chờ D03-06-PH18 bản sau (đã nhận một phần) |
+| ĐN-UC-15 | D05-02-PH18 | Dựng TS-18-nn ứng một một với UC-18-nn; bắt buộc có kịch bản bốn mắt (mỗi UC trong LP-18-01 một ca người duyệt trùng người đề nghị), kịch bản lũy đẳng phát lại (gọi lại cùng khóa, kết quả đến muộn), kịch bản khôi phục lỗi ở bước 3 và bước 5, kịch bản cắt chuyển rồi quay lui ở phút thứ 14 và phút thứ 16 (đồng hồ giả lập) | UC-18-14, 16, 17, 31, 38 | Đã hấp thụ ở 0.2: D05-02-PH18 đã dựng TS-18-nn |
 
 : Đề nghị đồng bộ cho tài liệu khác
 
@@ -2744,3 +2746,4 @@ Phụ lục ghi những điểm lệch, thiếu hoặc chưa rõ phát hiện kh
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 40 use case phủ 72 FR của FRS 0.1, sáu sơ đồ use case theo nhóm, mười bốn sơ đồ trình tự (bốn mắt tham số, tiếp nhận DLQ, DLQ tầng sự kiện, chẩn đoán và xem nội dung, sửa payload, phát lại một mục, phát lại loạt, mẫu thông báo, gửi thông báo, chuyển PH-09, khôi phục tenant tám bước, sáp nhập, di trú thật, cắt chuyển), ma trận truy vết hai chiều, sáu luồng phụ, mười lăm đề nghị đồng bộ, năm câu hỏi mở Q18-45…49 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ theo FRS 0.2: câu thông báo ERR-18-001, 005, 006, 007, 013, 017, 036, 069, 071 dẫn nguyên văn câu chung có tham số; thêm API-18-181…188 vào luồng và ma trận mục 5.2 (UC-18-16, 26, 35 đến 38, 40); `NOT_NEEDED` đổi thành `WAIVED`; cắt chuyển dùng `action` của API-18-175; UC-18-36 kiểm kế hoạch `READY` (ERR-18-065); chế độ chỉ đọc bật, tắt qua API-18-187; Phụ lục A thêm cột trạng thái, 12 đề nghị đã hấp thụ, giữ ĐN-UC-10, 12, 14 |

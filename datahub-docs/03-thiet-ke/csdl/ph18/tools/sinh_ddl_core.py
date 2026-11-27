@@ -30,7 +30,7 @@ ST_RUN = ("PENDING_APPROVAL", "QUEUED", "RUNNING", "SUCCEEDED", "SUCCEEDED_WITH_
 ST_JOB = ("QUEUED", "RUNNING", "SUCCEEDED", "SUCCEEDED_WITH_ERRORS", "FAILED", "CANCELLED")
 ST_CUTOVER = ("PARALLEL", "SHADOW_OK", "PARTIAL_CUTOVER", "CUT_OVER", "ROLLED_BACK")
 ERROR_CLASS = ("TRANSIENT", "BUSINESS", "CONTRACT", "POISON", "UNKNOWN")
-MODULE_RE = "^PH[0-9]{2}$"
+MODULE_RE = "^PH-[0-9]{2}$"
 
 
 def T(name, en, comment, cols, cons=(), idx=(), part=None, tid=True, trig=(), ccomment=None, rls="tenant", common_ok=False,

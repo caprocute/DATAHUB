@@ -7,10 +7,10 @@ Tính năng: TS-18-38 · Cắt chuyển nhóm dịch vụ và quay lui
   Kịch bản: TC-18-126 Danh sách kiểm tra đạt, đề nghị và người thứ hai duyệt cắt chuyển toàn phần
     # Truy vết: FR-18-068 · API-18-174, 175 · BR-18-044 · EVT-18-27 · UI-18-15, 23
     # Mục đích: Chứng minh BR-18-044 và AC-18-12: `PARALLEL → SHADOW_OK → CUT_OVER`, EVT-18-27 cho PH-03 đổi tuyến APISIX, có `rollbackUntil`.
-    Biết T96; `PG-THUE` tỷ lệ khớp 99,7 %, DLQ của nhóm rỗng, 52 dấu cấp lại đã `DONE`, đối chiếu đã giải trình; U-T96-TA1 đề nghị, U-T96-TA2 duyệt.
+    Biết T96; `PG-THUE` tỷ lệ khớp 99,7 %, DLQ của nhóm rỗng, 52 dấu cấp lại đã `REISSUED`, đối chiếu đã giải trình; U-T96-TA1 đề nghị, U-T96-TA2 duyệt.
     Khi TA1 mở UI-18-23, xem danh sách kiểm tra.
-    Và TA1 `:transition` `action = REQUEST`, mục tiêu `CUT_OVER`.
-    Và TA2 duyệt từ việc.
+    Và TA1 `:transition` `action = REQUEST`, `target = CUT_OVER`.
+    Và TA2 mở việc, `:transition` `action = APPROVE`.
     Thì bước 1 mọi mục `DLQ_EMPTY`, `MATCH_RATE`, `CREDENTIALS_REISSUED`, `RECONCILIATION_MATCHED` đạt. Bước 2 `202` chờ duyệt. Bước 3 `200` `CUT_OVER`, EVT-18-27 có `routes`, `rollbackUntil` = thời điểm + 15 phút; sổ cắt chuyển ghi người đề nghị, người duyệt.
 
   @TC-18-127 @P1 @Âm @Bảo_mật
@@ -40,3 +40,16 @@ Tính năng: TS-18-38 · Cắt chuyển nhóm dịch vụ và quay lui
     Biết T95; nhóm `PG-THUE` `CUT_OVER` lại.
     Khi tua 16 phút, TA1 gửi `ROLLBACK`.
     Thì `409` ERR-18-068; trạng thái giữ `CUT_OVER`; màn chỉ dẫn quy trình quay lui thủ công qua đề nghị bốn mắt mới.
+
+  @TC-18-170 @P1 @Dương @Âm @Bảo_mật
+  Kịch bản: TC-18-170 Xác nhận mục kiểm tay, người duyệt từ chối đề nghị cắt chuyển
+    # Truy vết: FR-18-068 · API-18-185, 175, 174 · BR-18-044 · ERR-18-006, 005, 067 · EVT-18-27 · UI-18-23
+    # Mục đích: Chứng minh FR-18-068 bước 1 và thân `action` của API-18-175: mục tay chỉ đạt khi có người xác nhận qua API-18-185, mục tự động không xác nhận tay được, `REJECT` giữ nguyên trạng thái nhóm.
+    Biết T96; `PG-THUE` mọi mục tự động đạt, hai mục tay `HTTT_NOTIFIED`, `ONCALL_READY` `PENDING`; U-T96-TA1 đề nghị, U-T96-TA2 duyệt.
+    Khi TA1 `POST /parallel-groups/PG-THUE/checklist/HTTT_NOTIFIED:confirm` kèm bằng chứng (số công văn).
+    Và TA1 `:transition` `action = REQUEST` khi `ONCALL_READY` còn `PENDING`.
+    Và TA1 xác nhận `ONCALL_READY`, rồi `:transition` `action = REQUEST`, `target = CUT_OVER`.
+    Và TA1 `:confirm` mục tự động `MATCH_RATE`.
+    Và TA1 `:transition` `action = APPROVE` trên đề nghị của chính mình.
+    Và TA2 `:transition` `action = REJECT` kèm lý do.
+    Thì bước 1 `200` mục `PASSED`, sổ cắt chuyển ghi người xác nhận. Bước 2 `409` ERR-18-067. Bước 3 `202` chờ duyệt. Bước 4 `409` ERR-18-006. Bước 5 `403` ERR-18-005. Bước 6 `200`, đề nghị đóng, nhóm giữ `SHADOW_OK`, sổ cắt chuyển ghi người từ chối và lý do, không gửi yêu cầu đổi tuyến cho PH-03.

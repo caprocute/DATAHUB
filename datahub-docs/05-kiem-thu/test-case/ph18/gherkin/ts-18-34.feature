@@ -8,7 +8,7 @@ Tính năng: TS-18-34 · Khai báo nguồn hệ cũ và lập kế hoạch di tr
     # Truy vết: FR-18-059 · API-18-156, 157, 158 · BR-18-040, 048 · UI-18-21
     # Mục đích: Chứng minh FR-18-059: thông tin kết nối chỉ là tham chiếu `kv/dh/t96/legacy/aita`, thử kết nối kiểm quyền `SELECT` và đếm bảng.
     Biết T96; PostgreSQL giả lập hệ cũ `LEG-AITA` có tài khoản chỉ đọc; OpenBao dev có khóa tại `kv/dh/t96/legacy/aita`; U-T96-TA1 (`PERM-18-migration`).
-    Khi `POST /legacy-sources` `LEG-AITA`, JDBC, `credentialRef = kv/dh/t96/legacy/aita`.
+    Khi `POST /legacy-sources` `LEG-AITA`, JDBC, `credentialRef` trỏ tới `kv/dh/t96/legacy/aita`.
     Và `POST /legacy-sources/LEG-AITA:test-connection`.
     Và `GET /legacy-sources`.
     Thì bước 1 `201`, không lưu giá trị bí mật trong `ph18_ops`. Bước 2 `200` `readOnly = true`, số bảng. Bước 3 trạng thái kết nối `OK`.

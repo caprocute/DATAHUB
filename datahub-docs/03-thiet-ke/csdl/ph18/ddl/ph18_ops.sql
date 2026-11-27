@@ -1,6 +1,6 @@
 -- =============================================================================
 -- D03-03-PH18 · DDL schema ph18_ops, PH-18 Vận hành và xử lý lỗi
--- Phiên bản 0.1 · 2026-11-27 · Dự thảo
+-- Phiên bản 0.2 · 2026-11-27 · Dự thảo
 -- TỆP SINH bởi tools/sinh_ddl.py từ danh mục bảng (tools/sinh_ddl_bang_a.py, sinh_ddl_bang_b.py); sửa ở đó rồi sinh lại.
 --
 -- Chạy độc lập (phát triển):  psql -v ON_ERROR_STOP=1 -U postgres -d ph18_test -f ph18_ops.sql
@@ -209,19 +209,19 @@ DECLARE
   jt text := jsonb_typeof(p_value);
   v numeric;
 BEGIN
-  IF p_type = 'BOOLEAN' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
-  IF p_type IN ('INTEGER', 'DECIMAL') THEN
+  IF p_type = 'BOOL' AND jt <> 'boolean' THEN RETURN 'cần kiểu boolean'; END IF;
+  IF p_type IN ('INT', 'DECIMAL') THEN
     IF jt <> 'number' THEN RETURN 'cần kiểu số'; END IF;
     v := (p_value #>> '{}')::numeric;
-    IF p_type = 'INTEGER' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
+    IF p_type = 'INT' AND v <> trunc(v) THEN RETURN 'cần số nguyên'; END IF;
     IF p_min IS NOT NULL AND v < p_min THEN RETURN format('nhỏ hơn miền %s', p_min); END IF;
     IF p_max IS NOT NULL AND v > p_max THEN RETURN format('lớn hơn miền %s', p_max); END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'number' AND v > (p_ceiling #>> '{}')::numeric THEN
       RETURN format('vượt trần nền tảng %s', p_ceiling);
     END IF;
   END IF;
-  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON', 'TIME_RANGE') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
-  IF p_type IN ('LIST_STRING', 'LIST_HOST') THEN
+  IF p_type IN ('STRING', 'ENUM', 'DURATION', 'CRON') AND jt <> 'string' THEN RETURN 'cần kiểu chuỗi'; END IF;
+  IF p_type IN ('LIST<STRING>', 'LIST<HOST>') THEN
     IF jt <> 'array' THEN RETURN 'cần danh sách'; END IF;
     IF p_tenant_row AND p_ceiling IS NOT NULL AND jsonb_typeof(p_ceiling) = 'array' AND NOT p_ceiling @> p_value THEN
       RETURN 'danh sách vượt trần nền tảng';
@@ -361,7 +361,7 @@ CREATE TABLE ph18_ops.param_namespace (
   owner_module      varchar(8) NOT NULL,
   title             varchar(255) NOT NULL,
   description       text,
-  approval_owner    varchar(8) NOT NULL DEFAULT 'PH18',
+  approval_owner    varchar(8) NOT NULL DEFAULT 'PH-18',
   cache_ttl_seconds integer NOT NULL DEFAULT 60,
   status            varchar(12) NOT NULL DEFAULT 'ACTIVE',
   created_at        timestamptz NOT NULL DEFAULT now(),
@@ -374,8 +374,8 @@ CREATE TABLE ph18_ops.param_namespace (
   CONSTRAINT ck_param_namespace_tenant CHECK (tenant_id = 'COMMON'),
   CONSTRAINT uq_param_namespace_code UNIQUE (tenant_id, code),
   CONSTRAINT ck_param_namespace_code CHECK (code ~ '^[a-z0-9]+(\.[a-z0-9-]+)*$' AND code <> '19'),
-  CONSTRAINT ck_param_namespace_owner CHECK (owner_module ~ '^PH[0-9]{2}$'),
-  CONSTRAINT ck_param_namespace_approval CHECK (approval_owner ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_param_namespace_owner CHECK (owner_module ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_param_namespace_approval CHECK (approval_owner ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_param_namespace_ttl CHECK (cache_ttl_seconds BETWEEN 1 AND 60),
   CONSTRAINT ck_param_namespace_status CHECK (status IN ('ACTIVE', 'RETIRED'))
 );
@@ -384,7 +384,7 @@ CREATE TRIGGER tg_param_namespace_immutable BEFORE UPDATE ON ph18_ops.param_name
 CALL ph18_ops.p_enable_rls('ph18_ops.param_namespace', true);
 COMMENT ON TABLE ph18_ops.param_namespace IS 'EN-18-01 Không gian tên tham số do từng PH đăng ký khi khởi động (onboarding, 00, 02, 04, 05, 07.rdm, 10, 12, 14, 15, 17, 18, 20, ff; mở cho 06, 08, 09, 11, 13, 16; 19 do PH-19 tự giữ). Chỉ dòng COMMON. approval_owner khác PH18 thì PH đó tự giữ bốn mắt (PH-14, PH-17).';
 COMMENT ON COLUMN ph18_ops.param_namespace.cache_ttl_seconds IS 'Thời gian đệm tối đa ở PH đọc; trần 60 giây theo NFR-00-052 và CC-CFG-04.';
-COMMENT ON COLUMN ph18_ops.param_namespace.approval_owner IS 'PH giữ quy trình bốn mắt cho tham số ★ của không gian tên này; mặc định PH18.';
+COMMENT ON COLUMN ph18_ops.param_namespace.approval_owner IS 'PH giữ quy trình bốn mắt cho tham số ★ của không gian tên này; mặc định PH-18.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.param_namespace CASCADE;
 
 -- @changeset ph18-0130-param-definition splitStatements:false
@@ -402,7 +402,7 @@ CREATE TABLE ph18_ops.param_definition (
   platform_ceiling jsonb,
   unit             varchar(16),
   level            varchar(8) NOT NULL DEFAULT 'TENANT',
-  security_flag    boolean NOT NULL DEFAULT false,
+  secure           boolean NOT NULL DEFAULT false,
   display_group    varchar(64),
   display_order    integer NOT NULL DEFAULT 100,
   label            varchar(255) NOT NULL,
@@ -420,7 +420,7 @@ CREATE TABLE ph18_ops.param_definition (
   CONSTRAINT uq_param_definition_key UNIQUE (tenant_id, param_key),
   CONSTRAINT fk_param_definition_namespace FOREIGN KEY (tenant_id, namespace_code) REFERENCES ph18_ops.param_namespace (tenant_id, code),
   CONSTRAINT ck_param_definition_key CHECK (param_key ~ '^[a-z0-9]+(\.[A-Za-z0-9-]+)+$' AND left(param_key, char_length(namespace_code) + 1) = namespace_code || '.'),
-  CONSTRAINT ck_param_definition_type CHECK (value_type IN ('BOOLEAN', 'INTEGER', 'DECIMAL', 'STRING', 'ENUM', 'DURATION', 'CRON', 'TIME_RANGE', 'JSON', 'LIST_STRING', 'LIST_HOST')),
+  CONSTRAINT ck_param_definition_type CHECK (value_type IN ('INT', 'DECIMAL', 'BOOL', 'STRING', 'ENUM', 'DURATION', 'CRON', 'LIST<STRING>', 'LIST<HOST>', 'JSON')),
   CONSTRAINT ck_param_definition_level CHECK (level IN ('PLATFORM', 'TENANT')),
   CONSTRAINT ck_param_definition_range CHECK (min_value IS NULL OR max_value IS NULL OR min_value <= max_value),
   CONSTRAINT ck_param_definition_allowed CHECK (allowed_values IS NULL OR jsonb_typeof(allowed_values) = 'array'),
@@ -433,9 +433,12 @@ CREATE TRIGGER tg_param_definition_immutable BEFORE UPDATE ON ph18_ops.param_def
 CREATE TRIGGER tg_param_definition_validate BEFORE INSERT OR UPDATE ON ph18_ops.param_definition FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_param_definition_check();
 CALL ph18_ops.p_enable_rls('ph18_ops.param_definition', true);
 COMMENT ON TABLE ph18_ops.param_definition IS 'EN-18-02 Lược đồ một khóa tham số (DD-14 schema): kiểu, mặc định, miền, trần nền tảng, mức PLATFORM hay TENANT, cờ bảo mật ★, nhóm hiển thị. Chỉ dòng COMMON; PH sở hữu đăng ký qua scope ops:param-register. Khóa có ngày gỡ thì vẫn đọc được tới removal_date.';
+COMMENT ON COLUMN ph18_ops.param_definition.value_type IS 'Trường type của FRS và OpenAPI (tên cột tránh từ khóa SQL).';
+COMMENT ON COLUMN ph18_ops.param_definition.default_value IS 'Trường default của FRS và OpenAPI (tên cột tránh từ khóa SQL).';
+COMMENT ON COLUMN ph18_ops.param_definition.display_group IS 'Trường group của FRS và OpenAPI (tên cột tránh từ khóa SQL).';
 COMMENT ON COLUMN ph18_ops.param_definition.level IS 'PLATFORM: chỉ PA ghi giá trị (dòng COMMON), tenant chỉ đọc; TENANT: tenant ghi đè trong miền và trần.';
 COMMENT ON COLUMN ph18_ops.param_definition.platform_ceiling IS 'Trần nền tảng: giá trị tenant không vượt (số: không lớn hơn; danh sách: là tập con).';
-COMMENT ON COLUMN ph18_ops.param_definition.security_flag IS 'Tham số ★ bảo mật: đổi cần bốn mắt (param_change_request) do approval_owner của không gian tên giữ.';
+COMMENT ON COLUMN ph18_ops.param_definition.secure IS 'Trường secure của FRS (lược đồ khóa). Tham số ★ bảo mật: đổi cần bốn mắt (param_change_request) do approval_owner của không gian tên giữ.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.param_definition CASCADE;
 
 -- @changeset ph18-0140-param-change-request splitStatements:false
@@ -454,7 +457,7 @@ CREATE TABLE ph18_ops.param_change_request (
   decided_at            timestamptz,
   decision_note         varchar(1000),
   expires_at            timestamptz NOT NULL,
-  approval_owner        varchar(8) NOT NULL DEFAULT 'PH18',
+  approval_owner        varchar(8) NOT NULL DEFAULT 'PH-18',
   external_approval_ref varchar(128),
   created_at            timestamptz NOT NULL DEFAULT now(),
   created_by            varchar(64) NOT NULL,
@@ -469,7 +472,7 @@ CREATE TABLE ph18_ops.param_change_request (
   CONSTRAINT ck_param_change_request_reason CHECK (coalesce(char_length(btrim(reason)), 0) >= 10),
   CONSTRAINT ck_param_change_request_four_eyes CHECK (decided_by IS NULL OR decided_by <> requested_by),
   CONSTRAINT ck_param_change_request_decided CHECK (status IN ('PENDING_APPROVAL', 'EXPIRED', 'CANCELLED') OR (decided_by IS NOT NULL AND decided_at IS NOT NULL) OR external_approval_ref IS NOT NULL),
-  CONSTRAINT ck_param_change_request_owner CHECK (approval_owner ~ '^PH[0-9]{2}$')
+  CONSTRAINT ck_param_change_request_owner CHECK (approval_owner ~ '^PH-[0-9]{2}$')
 );
 CREATE UNIQUE INDEX uq_param_change_request_pending ON ph18_ops.param_change_request (tenant_id, param_key) WHERE status = 'PENDING_APPROVAL';
 CREATE INDEX ix_param_change_request_status ON ph18_ops.param_change_request (tenant_id, status, requested_at);
@@ -552,7 +555,7 @@ CREATE TRIGGER tg_param_value_version_immutable BEFORE UPDATE ON ph18_ops.param_
 CREATE TRIGGER tg_param_value_version_fsm_status BEFORE UPDATE ON ph18_ops.param_value_version FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'PENDING_APPROVAL>ACTIVE,PENDING_APPROVAL>REJECTED,ACTIVE>SUPERSEDED');
 CREATE TRIGGER tg_param_value_version_no_delete BEFORE DELETE ON ph18_ops.param_value_version FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_no_delete();
 CALL ph18_ops.p_enable_rls('ph18_ops.param_value_version', true);
-COMMENT ON TABLE ph18_ops.param_value_version IS 'EN-18-04 Lịch sử phiên bản giá trị tham số (DD-14 có phiên bản): mỗi lần ghi thêm một dòng; nội dung bất biến, chỉ trạng thái chuyển PENDING_APPROVAL sang ACTIVE hoặc REJECTED, ACTIVE sang SUPERSEDED. Mỗi khóa một phiên bản ACTIVE. Không xóa; giữ 18.param.history-retention-years.';
+COMMENT ON TABLE ph18_ops.param_value_version IS 'EN-18-04 Lịch sử phiên bản giá trị tham số (DD-14 có phiên bản): mỗi lần ghi thêm một dòng; nội dung bất biến, chỉ trạng thái chuyển PENDING_APPROVAL sang ACTIVE hoặc REJECTED, ACTIVE sang SUPERSEDED. Mỗi khóa một phiên bản ACTIVE. Không xóa; giữ 18.param.history-retention-days.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.param_value_version CASCADE;
 
 -- @changeset ph18-0170-feature-flag splitStatements:false
@@ -560,12 +563,12 @@ CREATE TABLE ph18_ops.feature_flag (
   id              uuid NOT NULL,
   tenant_id       varchar(16) NOT NULL,
   flag_key        varchar(128) NOT NULL,
-  module          varchar(8) NOT NULL,
-  owner           varchar(64) NOT NULL,
+  owner_ph        varchar(8) NOT NULL,
+  owner_user      varchar(64) NOT NULL,
   description     text NOT NULL,
   enabled         boolean NOT NULL DEFAULT false,
   rollout_percent smallint NOT NULL DEFAULT 100,
-  removal_date    date NOT NULL,
+  retire_by       date NOT NULL,
   status          varchar(12) NOT NULL DEFAULT 'ACTIVE',
   created_at      timestamptz NOT NULL DEFAULT now(),
   created_by      varchar(64) NOT NULL,
@@ -577,50 +580,52 @@ CREATE TABLE ph18_ops.feature_flag (
   CONSTRAINT ck_feature_flag_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_feature_flag_key UNIQUE (tenant_id, flag_key),
   CONSTRAINT ck_feature_flag_key CHECK (flag_key ~ '^ff\.[a-z0-9-]+\.[a-z0-9-]+$'),
-  CONSTRAINT ck_feature_flag_module CHECK (module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_feature_flag_module CHECK (owner_ph ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_feature_flag_rollout CHECK (rollout_percent BETWEEN 0 AND 100),
   CONSTRAINT ck_feature_flag_status CHECK (status IN ('ACTIVE', 'RETIRED'))
 );
-CREATE INDEX ix_feature_flag_removal ON ph18_ops.feature_flag (removal_date) WHERE status = 'ACTIVE';
+CREATE INDEX ix_feature_flag_retire ON ph18_ops.feature_flag (retire_by) WHERE status = 'ACTIVE';
 CREATE TRIGGER tg_feature_flag_touch BEFORE UPDATE ON ph18_ops.feature_flag FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
-CREATE TRIGGER tg_feature_flag_immutable BEFORE UPDATE ON ph18_ops.feature_flag FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('flag_key', 'module');
+CREATE TRIGGER tg_feature_flag_immutable BEFORE UPDATE ON ph18_ops.feature_flag FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('flag_key', 'owner_ph');
 CALL ph18_ops.p_enable_rls('ph18_ops.feature_flag', true);
 COMMENT ON TABLE ph18_ops.feature_flag IS 'EN-18-06 Cờ tính năng ff.{module}.{tính-năng} theo tenant (QT-BR-03, CC-CFG-04): chủ sở hữu, ngày gỡ bắt buộc. Dòng COMMON là mặc định nền tảng, dòng Tnn ghi đè. Hiệu lực ≤ 60 giây qua sự kiện đổi.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.feature_flag CASCADE;
 
 -- @changeset ph18-0180-egress-allowlist-entry splitStatements:false
 CREATE TABLE ph18_ops.egress_allowlist_entry (
-  id             uuid NOT NULL,
-  tenant_id      varchar(16) NOT NULL,
-  host           varchar(253) NOT NULL,
-  port           integer NOT NULL DEFAULT 443,
-  scheme         varchar(8) NOT NULL DEFAULT 'https',
-  purpose_module varchar(8) NOT NULL,
-  purpose        varchar(255) NOT NULL,
-  enabled        boolean NOT NULL DEFAULT false,
-  approved_by    varchar(64),
-  approved_at    timestamptz,
-  expires_at     timestamptz,
-  revoked_at     timestamptz,
-  revoked_by     varchar(64),
-  created_at     timestamptz NOT NULL DEFAULT now(),
-  created_by     varchar(64) NOT NULL,
-  updated_at     timestamptz NOT NULL DEFAULT now(),
-  updated_by     varchar(64) NOT NULL,
-  version        integer NOT NULL DEFAULT 0,
+  id          uuid NOT NULL,
+  tenant_id   varchar(16) NOT NULL,
+  host        varchar(253) NOT NULL,
+  port        integer NOT NULL DEFAULT 443,
+  scheme      varchar(8) NOT NULL DEFAULT 'https',
+  used_by     varchar(8) NOT NULL,
+  purpose     varchar(24) NOT NULL,
+  reason      varchar(500),
+  enabled     boolean NOT NULL DEFAULT false,
+  approved_by varchar(64),
+  approved_at timestamptz,
+  expires_at  timestamptz,
+  revoked_at  timestamptz,
+  revoked_by  varchar(64),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  created_by  varchar(64) NOT NULL,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  updated_by  varchar(64) NOT NULL,
+  version     integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_egress_allowlist_entry PRIMARY KEY (id),
   CONSTRAINT uq_egress_allowlist_entry_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_egress_allowlist_entry_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
-  CONSTRAINT uq_egress_allowlist_entry_host UNIQUE (tenant_id, host, port, purpose_module),
+  CONSTRAINT uq_egress_allowlist_entry_host UNIQUE (tenant_id, host, port, used_by),
   CONSTRAINT ck_egress_allowlist_entry_host CHECK (host ~ '^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$'),
   CONSTRAINT ck_egress_allowlist_entry_port CHECK (port BETWEEN 1 AND 65535),
   CONSTRAINT ck_egress_allowlist_entry_scheme CHECK (scheme = 'https'),
-  CONSTRAINT ck_egress_allowlist_entry_module CHECK (purpose_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_egress_allowlist_entry_module CHECK (used_by ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_egress_allowlist_entry_purpose CHECK (purpose IN ('DEV_PORTAL_BACKEND', 'GIT_REPO', 'WEBHOOK', 'MODEL_PROVIDER', 'OTHER')),
   CONSTRAINT ck_egress_allowlist_entry_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
   CONSTRAINT ck_egress_allowlist_entry_enabled CHECK (NOT enabled OR (approved_by IS NOT NULL AND approved_at IS NOT NULL AND revoked_at IS NULL))
 );
 CREATE TRIGGER tg_egress_allowlist_entry_touch BEFORE UPDATE ON ph18_ops.egress_allowlist_entry FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
-CREATE TRIGGER tg_egress_allowlist_entry_immutable BEFORE UPDATE ON ph18_ops.egress_allowlist_entry FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('host', 'port', 'purpose_module');
+CREATE TRIGGER tg_egress_allowlist_entry_immutable BEFORE UPDATE ON ph18_ops.egress_allowlist_entry FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('host', 'port', 'used_by');
 CALL ph18_ops.p_enable_rls('ph18_ops.egress_allowlist_entry', false);
 COMMENT ON TABLE ph18_ops.egress_allowlist_entry IS 'EN-18-07 Danh sách đích egress cho phép theo tenant (kiểu LIST<HOST>, giải Q15-10): máy đích HTTPS, cổng, PH dùng (PH-15 backend thử và kho Git, PH-13 webhook). Không nhận địa chỉ IP trần; duyệt bốn mắt trước khi hiệu lực; PH dùng vẫn kiểm lại khi gọi và chặn dải nội bộ.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.egress_allowlist_entry CASCADE;
@@ -678,7 +683,7 @@ CREATE TABLE ph18_ops.dlq_source (
   source_code      varchar(32) NOT NULL,
   source_module    varchar(8) NOT NULL,
   ingest_channel   varchar(12) NOT NULL,
-  replay_port      varchar(16) NOT NULL,
+  replay_mode      varchar(16) NOT NULL,
   replay_endpoint  varchar(255),
   callback_scope   varchar(64) NOT NULL DEFAULT 'ops:replay-callback',
   payload_viewable boolean NOT NULL DEFAULT true,
@@ -693,46 +698,52 @@ CREATE TABLE ph18_ops.dlq_source (
   CONSTRAINT uq_dlq_source_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dlq_source_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_dlq_source_code UNIQUE (tenant_id, source_code),
-  CONSTRAINT ck_dlq_source_code CHECK (source_code ~ '^PH[0-9]{2}-[A-Z0-9-]+$'),
-  CONSTRAINT ck_dlq_source_module CHECK (source_module ~ '^PH[0-9]{2}$' AND left(source_code, 4) = source_module),
+  CONSTRAINT ck_dlq_source_code CHECK (source_code ~ '^[a-z0-9-]{3,40}$'),
+  CONSTRAINT ck_dlq_source_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_dlq_source_channel CHECK (ingest_channel IN ('KAFKA', 'API', 'FEDERATED')),
-  CONSTRAINT ck_dlq_source_port CHECK (replay_port IN ('PH04_RUNTIME', 'PH10_EVENT', 'REPLAY_PORT', 'NONE')),
+  CONSTRAINT ck_dlq_source_mode CHECK (replay_mode IN ('KAFKA_TOPIC', 'HTTP_PORT', 'EVENT_LAYER', 'NONE')),
+  CONSTRAINT ck_dlq_source_event_layer CHECK ((replay_mode = 'EVENT_LAYER') = (ingest_channel = 'FEDERATED')),
   CONSTRAINT ck_dlq_source_endpoint CHECK (replay_endpoint IS NULL OR replay_endpoint ~ '^/[a-z0-9/_{}.:-]+$'),
-  CONSTRAINT ck_dlq_source_federated CHECK (ingest_channel <> 'FEDERATED' OR (source_module = 'PH10' AND NOT payload_viewable))
+  CONSTRAINT ck_dlq_source_federated CHECK (ingest_channel <> 'FEDERATED' OR (source_module = 'PH-10' AND NOT payload_viewable))
 );
 CREATE TRIGGER tg_dlq_source_touch BEFORE UPDATE ON ph18_ops.dlq_source FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_dlq_source_immutable BEFORE UPDATE ON ph18_ops.dlq_source FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('source_code', 'source_module');
 CALL ph18_ops.p_enable_rls('ph18_ops.dlq_source', true);
-COMMENT ON TABLE ph18_ops.dlq_source IS 'EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), cổng phát lại (PH04_RUNTIME, PH10_EVENT, REPLAY_PORT, NONE). Dòng COMMON là đăng ký nền tảng, tenant có thể tắt nguồn bằng dòng riêng.';
+COMMENT ON TABLE ph18_ops.dlq_source IS 'EN-18-18 Đăng ký nguồn DLQ: PH nguồn, kênh vào (KAFKA topic {tenant}.ops.dlq.v1, API ops:dlq-write, FEDERATED liên thông DLQ tầng sự kiện PH-10 qua API-10-060, 061 không sao chép nội dung), chế độ phát lại replayMode của FRS (KAFKA_TOPIC nghe EVT-18-09, HTTP_PORT gọi cổng ReplayPort của nguồn, EVENT_LAYER đề nghị PH-10 qua API-10-064, NONE). Dòng COMMON là đăng ký nền tảng, tenant có thể tắt nguồn bằng dòng riêng.';
 COMMENT ON COLUMN ph18_ops.dlq_source.replay_endpoint IS 'Đường dẫn nội bộ (mTLS) của cổng phát lại ở PH nguồn; phát lại luôn qua lối vào của nguồn.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.dlq_source CASCADE;
 
 -- @changeset ph18-0210-error-guide splitStatements:false
 CREATE TABLE ph18_ops.error_guide (
-  id                 uuid NOT NULL,
-  tenant_id          varchar(16) NOT NULL,
-  error_code         varchar(16) NOT NULL,
-  locale             varchar(8) NOT NULL DEFAULT 'vi',
-  title              varchar(255) NOT NULL,
-  symptom            text NOT NULL,
-  cause              text NOT NULL,
-  resolution         text NOT NULL,
-  recommended_action varchar(16) NOT NULL,
-  runbook_path       varchar(500),
-  status             varchar(12) NOT NULL DEFAULT 'DRAFT',
-  published_at       timestamptz,
-  published_by       varchar(64),
-  created_at         timestamptz NOT NULL DEFAULT now(),
-  created_by         varchar(64) NOT NULL,
-  updated_at         timestamptz NOT NULL DEFAULT now(),
-  updated_by         varchar(64) NOT NULL,
-  version            integer NOT NULL DEFAULT 0,
+  id            uuid NOT NULL,
+  tenant_id     varchar(16) NOT NULL,
+  error_code    varchar(16) NOT NULL,
+  locale        varchar(8) NOT NULL DEFAULT 'vi',
+  title         varchar(255) NOT NULL,
+  owner_ph      varchar(8) NOT NULL,
+  causes        text[] NOT NULL,
+  steps         text[] NOT NULL,
+  replayable    varchar(10) NOT NULL,
+  default_class varchar(12),
+  links         text[] NOT NULL DEFAULT '{}',
+  runbook_path  varchar(500),
+  status        varchar(12) NOT NULL DEFAULT 'DRAFT',
+  published_at  timestamptz,
+  published_by  varchar(64),
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  created_by    varchar(64) NOT NULL,
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  updated_by    varchar(64) NOT NULL,
+  version       integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_error_guide PRIMARY KEY (id),
   CONSTRAINT uq_error_guide_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_error_guide_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_error_guide_code UNIQUE (tenant_id, error_code, locale),
   CONSTRAINT ck_error_guide_code CHECK (error_code ~ '^ERR-[0-9]{2}-[0-9]{3}$'),
-  CONSTRAINT ck_error_guide_action CHECK (recommended_action IN ('REPLAY', 'FIX_AND_REPLAY', 'DISCARD', 'ESCALATE', 'WAIT_SOURCE')),
+  CONSTRAINT ck_error_guide_replayable CHECK (replayable IN ('YES', 'AFTER_FIX', 'NO')),
+  CONSTRAINT ck_error_guide_class CHECK (default_class IS NULL OR default_class IN ('TRANSIENT', 'BUSINESS', 'CONTRACT', 'POISON', 'UNKNOWN')),
+  CONSTRAINT ck_error_guide_owner CHECK (owner_ph ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_error_guide_content CHECK (cardinality(causes) > 0 AND cardinality(steps) > 0),
   CONSTRAINT ck_error_guide_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'RETIRED')),
   CONSTRAINT ck_error_guide_published CHECK (status = 'DRAFT' OR (published_at IS NOT NULL AND published_by IS NOT NULL)),
   CONSTRAINT ck_error_guide_runbook CHECK (runbook_path IS NULL OR runbook_path ~ '^/[a-z0-9/_#.-]+$')
@@ -741,7 +752,7 @@ CREATE TRIGGER tg_error_guide_touch BEFORE UPDATE ON ph18_ops.error_guide FOR EA
 CREATE TRIGGER tg_error_guide_immutable BEFORE UPDATE ON ph18_ops.error_guide FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('error_code', 'locale');
 CREATE TRIGGER tg_error_guide_fsm_status BEFORE UPDATE ON ph18_ops.error_guide FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'DRAFT>PUBLISHED,PUBLISHED>DRAFT,PUBLISHED>RETIRED');
 CALL ph18_ops.p_enable_rls('ph18_ops.error_guide', true);
-COMMENT ON TABLE ph18_ops.error_guide IS 'EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): triệu chứng, nguyên nhân, cách xử lý, hành động khuyến nghị. Dòng COMMON là sổ tay nền tảng, tenant bổ sung ghi chú riêng. Bản PUBLISHED phát sự kiện đổi hướng dẫn để PH-17 lập chỉ mục lại.';
+COMMENT ON TABLE ph18_ops.error_guide IS 'EN-18-15 Sổ tay xử lý theo mã lỗi ERR (nguồn tri thức loại ERROR_CODE, GUIDE cho PH-17): nguyên nhân (causes), các bước xử lý (steps), khả năng phát lại replayable (YES, AFTER_FIX, NO), lớp lỗi mặc định, liên kết; tên trường theo FRS FR-18-025. Dòng COMMON là sổ tay nền tảng, tenant bổ sung ghi chú riêng. Bản PUBLISHED phát sự kiện đổi hướng dẫn để PH-17 lập chỉ mục lại.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.error_guide CASCADE;
 
 -- @changeset ph18-0220-dlq-group splitStatements:false
@@ -818,6 +829,8 @@ CREATE TABLE ph18_ops.dlq_message (
   payload_size_bytes   integer,
   payload_sha256       char(64),
   current_revision_no  integer NOT NULL DEFAULT 0,
+  occurrence_count     integer NOT NULL DEFAULT 1,
+  last_seen_at         timestamptz NOT NULL DEFAULT now(),
   discard_reason       varchar(2000),
   resolved_at          timestamptz,
   closed_at            timestamptz,
@@ -834,14 +847,15 @@ CREATE TABLE ph18_ops.dlq_message (
   CONSTRAINT ck_dlq_message_status CHECK (status IN ('NEW', 'TRIAGED', 'REPLAY_PENDING', 'REPLAYING', 'RESOLVED', 'REPLAY_FAILED', 'DISCARDED', 'POISON', 'EXPIRED')),
   CONSTRAINT ck_dlq_message_class CHECK (error_class IN ('TRANSIENT', 'BUSINESS', 'CONTRACT', 'POISON', 'UNKNOWN')),
   CONSTRAINT ck_dlq_message_priority CHECK (priority IN ('P1', 'P2', 'P3', 'P4')),
-  CONSTRAINT ck_dlq_message_module CHECK (source_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_dlq_message_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_dlq_message_attempts CHECK (attempts >= 0),
+  CONSTRAINT ck_dlq_message_occurrence CHECK (occurrence_count >= 1 AND last_seen_at >= received_at),
   CONSTRAINT ck_dlq_message_trace CHECK (trace_id IS NULL OR trace_id ~ '^[0-9a-f]{32}$'),
   CONSTRAINT ck_dlq_message_location CHECK (payload_location IN ('INLINE', 'GARAGE', 'FEDERATED', 'PURGED')),
   CONSTRAINT ck_dlq_message_inline CHECK ((payload_location = 'INLINE') = (payload_inline IS NOT NULL)),
   CONSTRAINT ck_dlq_message_inline_size CHECK (payload_inline IS NULL OR (payload_size_bytes IS NOT NULL AND payload_size_bytes <= 262144)),
   CONSTRAINT ck_dlq_message_sha CHECK (payload_sha256 IS NULL OR payload_sha256 ~ '^[0-9a-f]{64}$'),
-  CONSTRAINT ck_dlq_message_federated CHECK (payload_location <> 'FEDERATED' OR (source_module = 'PH10' AND external_ref IS NOT NULL)),
+  CONSTRAINT ck_dlq_message_federated CHECK (payload_location <> 'FEDERATED' OR (source_module = 'PH-10' AND external_ref IS NOT NULL)),
   CONSTRAINT ck_dlq_message_poison CHECK (status <> 'POISON' OR cardinality(missing_context) > 0),
   CONSTRAINT ck_dlq_message_discard CHECK (status <> 'DISCARDED' OR coalesce(char_length(btrim(discard_reason)), 0) >= 10),
   CONSTRAINT ck_dlq_message_closed CHECK ((status IN ('RESOLVED', 'DISCARDED', 'EXPIRED')) = (closed_at IS NOT NULL)),
@@ -861,9 +875,12 @@ CREATE TRIGGER tg_dlq_message_immutable BEFORE UPDATE ON ph18_ops.dlq_message FO
 CREATE TRIGGER tg_dlq_message_payload BEFORE UPDATE ON ph18_ops.dlq_message FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_dlq_payload_guard();
 CREATE TRIGGER tg_dlq_message_fsm_status BEFORE UPDATE ON ph18_ops.dlq_message FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'NEW>TRIAGED,NEW>POISON,NEW>REPLAY_PENDING,NEW>DISCARDED,TRIAGED>REPLAY_PENDING,TRIAGED>DISCARDED,REPLAY_PENDING>REPLAYING,REPLAY_PENDING>TRIAGED,REPLAYING>RESOLVED,REPLAYING>REPLAY_FAILED,REPLAY_FAILED>REPLAY_PENDING,REPLAY_FAILED>DISCARDED,DISCARDED>TRIAGED,POISON>DISCARDED,POISON>TRIAGED,RESOLVED>EXPIRED,DISCARDED>EXPIRED');
 CALL ph18_ops.p_enable_rls('ph18_ops.dlq_message', false);
-COMMENT ON TABLE ph18_ops.dlq_message IS 'EN-18-09 Chỉ mục mục DLQ hợp nhất: hợp đồng ngữ cảnh chuẩn (dh-dlq-reason, dh-dlq-attempts, dh-dlq-stage, dh-dlq-error-code, dh-flow, dh-version, traceparent, dh-tenant, dh-source-ph), lớp lỗi, trạng thái, ưu tiên, nhóm. Payload ≤ 256 KB giữ ở payload_inline (trường nhạy cảm đã mã hóa bằng DEK tenant trước khi vào DLQ), lớn hơn ở Garage (dlq_payload_ref), FEDERATED không sao chép. Payload gốc không sửa; sửa tạo dlq_revision. Phân vùng tháng theo received_at; khử trùng dlqKey qua inbox_event.';
+COMMENT ON TABLE ph18_ops.dlq_message IS 'EN-18-09 Chỉ mục mục DLQ hợp nhất: hợp đồng ngữ cảnh chuẩn (dh-dlq-reason, dh-dlq-attempts, dh-dlq-stage, dh-dlq-error-code, dh-flow, dh-version, traceparent, dh-tenant, dh-source-ph), lớp lỗi, trạng thái, ưu tiên, nhóm. Payload ≤ 256 KB giữ ở payload_inline (trường nhạy cảm đã mã hóa bằng DEK tenant trước khi vào DLQ), lớn hơn ở Garage (dlq_payload_ref), FEDERATED không sao chép. Payload gốc không sửa; sửa tạo dlq_revision. Phân vùng tháng theo received_at; khử trùng dlqKey qua inbox_event trong 18.dlq.dedup-window-days (7 ngày) và theo mục chưa đóng cùng dlq_key (tăng occurrence_count).';
 COMMENT ON COLUMN ph18_ops.dlq_message.payload_inline IS 'Payload gốc ≤ 256 KB (18.dlq.payload.inline-max-kb), trường nhạy cảm đã mã hóa ở PH-04; chỉ được đặt NULL khi dọn (PURGED). Vai readonly không đọc.';
 COMMENT ON COLUMN ph18_ops.dlq_message.missing_context IS 'Tên header ngữ cảnh bị thiếu khi tiếp nhận; khác rỗng thì mục vào POISON.';
+COMMENT ON COLUMN ph18_ops.dlq_message.occurrence_count IS 'Số lần gặp (BR-18-015): bản tin cùng dlqKey đến khi mục chưa đóng chỉ tăng bộ đếm, không tạo mục mới (ERR-18-105); cập nhật được, không thuộc tg_immutable.';
+COMMENT ON COLUMN ph18_ops.dlq_message.last_seen_at IS 'Lần gặp cuối của dlqKey; cập nhật cùng occurrence_count.';
+COMMENT ON COLUMN ph18_ops.dlq_message.payload_location IS 'INLINE chỉ cho payload JSON ≤ 18.dlq.payload.inline-max-kb; payload không phải JSON (ERR-18-101) luôn ở GARAGE dạng nhị phân, dù nhỏ.';
 COMMENT ON COLUMN ph18_ops.dlq_message.retention_until IS 'Hạn giữ: đóng + 18.dlq.retention.closed-days; mục mở không có hạn.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.dlq_message CASCADE;
 
@@ -993,7 +1010,7 @@ CREATE TABLE ph18_ops.replay_job (
   succeeded         integer NOT NULL DEFAULT 0,
   failed            integer NOT NULL DEFAULT 0,
   skipped           integer NOT NULL DEFAULT 0,
-  rate_per_minute   integer NOT NULL DEFAULT 60,
+  rate_per_second   integer NOT NULL DEFAULT 10,
   approval_required boolean NOT NULL DEFAULT false,
   status            varchar(20) NOT NULL DEFAULT 'DRAFT',
   approved_by       varchar(64),
@@ -1015,7 +1032,7 @@ CREATE TABLE ph18_ops.replay_job (
   CONSTRAINT ck_replay_job_single CHECK (mode <> 'SINGLE' OR total_items = 1),
   CONSTRAINT ck_replay_job_filter CHECK (mode <> 'BATCH_FILTER' OR filter IS NOT NULL),
   CONSTRAINT ck_replay_job_reason CHECK (coalesce(char_length(btrim(reason)), 0) >= 10),
-  CONSTRAINT ck_replay_job_rate CHECK (rate_per_minute BETWEEN 1 AND 6000),
+  CONSTRAINT ck_replay_job_rate CHECK (rate_per_second BETWEEN 1 AND 100),
   CONSTRAINT ck_replay_job_counts CHECK (total_items >= 1 AND succeeded >= 0 AND failed >= 0 AND skipped >= 0 AND succeeded + failed + skipped <= total_items),
   CONSTRAINT ck_replay_job_status CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'RUNNING', 'PAUSED', 'COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED', 'REJECTED')),
   CONSTRAINT ck_replay_job_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -1056,7 +1073,7 @@ CREATE TABLE ph18_ops.replay_item (
   CONSTRAINT fk_replay_item_job FOREIGN KEY (tenant_id, job_id) REFERENCES ph18_ops.replay_job (tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT fk_replay_item_dlq FOREIGN KEY (tenant_id, dlq_id, dlq_received_at) REFERENCES ph18_ops.dlq_message (tenant_id, id, received_at) ON DELETE CASCADE,
   CONSTRAINT ck_replay_item_idem CHECK (idempotency_key = dlq_id::text || ':' || revision_no::text),
-  CONSTRAINT ck_replay_item_status CHECK (status IN ('PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED_DUPLICATE', 'CANCELLED')),
+  CONSTRAINT ck_replay_item_status CHECK (status IN ('PENDING', 'SENT', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'SKIPPED_DUPLICATE', 'CANCELLED')),
   CONSTRAINT ck_replay_item_trace CHECK (replay_trace_id IS NULL OR replay_trace_id ~ '^[0-9a-f]{32}$')
 );
 CREATE INDEX ix_replay_item_pending ON ph18_ops.replay_item (tenant_id, job_id, status);
@@ -1132,7 +1149,7 @@ CREATE TABLE ph18_ops.notification_template (
   CONSTRAINT ck_notification_template_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_notification_template_code UNIQUE (tenant_id, template_code),
   CONSTRAINT ck_notification_template_code CHECK (template_code ~ '^[a-z0-9]+(\.[a-z0-9-]+)+$'),
-  CONSTRAINT ck_notification_template_module CHECK (owner_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_template_module CHECK (owner_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_template_category CHECK (category IN ('TASK', 'JOB_RESULT', 'ALERT', 'INFO')),
   CONSTRAINT ck_notification_template_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[])
 );
@@ -1217,7 +1234,7 @@ CREATE TABLE ph18_ops.notification_rule (
   CONSTRAINT uq_notification_rule_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_notification_rule_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_notification_rule_code UNIQUE (tenant_id, rule_code),
-  CONSTRAINT ck_notification_rule_module CHECK (source_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_rule_module CHECK (source_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_rule_event CHECK (event_type ~ '^[a-z0-9-]+(\.[a-z0-9-]+)+\.v[0-9]+$'),
   CONSTRAINT ck_notification_rule_recipient CHECK (recipient_kind IN ('USER', 'GROUP', 'ROLE', 'SYSTEM_CONTACT', 'EVENT_FIELD', 'ON_CALL')),
   CONSTRAINT ck_notification_rule_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[]),
@@ -1261,7 +1278,7 @@ CREATE TABLE ph18_ops.notification_message (
   CONSTRAINT ck_notification_message_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_notification_message_key UNIQUE (tenant_id, caller_module, message_key),
   CONSTRAINT fk_notification_message_rule FOREIGN KEY (rule_id) REFERENCES ph18_ops.notification_rule (id),
-  CONSTRAINT ck_notification_message_module CHECK (caller_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_notification_message_module CHECK (caller_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_notification_message_recipient CHECK (jsonb_typeof(recipient_ref) = 'array' AND jsonb_array_length(recipient_ref) BETWEEN 1 AND 500),
   CONSTRAINT ck_notification_message_category CHECK (category IN ('TASK', 'JOB_RESULT', 'ALERT', 'INFO')),
   CONSTRAINT ck_notification_message_channels CHECK (cardinality(channels) >= 1 AND channels <@ ARRAY['EMAIL', 'SMS', 'IN_APP']::varchar(8)[]),
@@ -1325,7 +1342,7 @@ CREATE TRIGGER tg_notification_delivery_touch BEFORE UPDATE ON ph18_ops.notifica
 CREATE TRIGGER tg_notification_delivery_immutable BEFORE UPDATE ON ph18_ops.notification_delivery FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('message_id', 'channel', 'recipient_user_id', 'recipient_hash');
 CREATE TRIGGER tg_notification_delivery_fsm_status BEFORE UPDATE ON ph18_ops.notification_delivery FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'QUEUED>SENT,QUEUED>FAILED,QUEUED>SUPPRESSED,SENT>DELIVERED,SENT>BOUNCED,SENT>FAILED,DELIVERED>BOUNCED');
 CALL ph18_ops.p_enable_rls('ph18_ops.notification_delivery', false);
-COMMENT ON TABLE ph18_ops.notification_delivery IS 'EN-18-23 Lần gửi theo người nhận và kênh (nhật ký gửi): địa chỉ chỉ lưu dạng che và băm, trạng thái QUEUED sang SENT sang DELIVERED, BOUNCED hoặc FAILED; SUPPRESSED khi tùy chọn người dùng, giờ yên lặng, danh sách chặn. Kênh IN_APP là hộp thông báo DD-13 (read_at). Phân vùng tháng theo queued_at, giữ 18.notify.delivery-retention-days.';
+COMMENT ON TABLE ph18_ops.notification_delivery IS 'EN-18-23 Lần gửi theo người nhận và kênh (nhật ký gửi): địa chỉ chỉ lưu dạng che và băm, trạng thái QUEUED sang SENT sang DELIVERED, BOUNCED hoặc FAILED; SUPPRESSED khi tùy chọn người dùng, giờ yên lặng, danh sách chặn. Kênh IN_APP là hộp thông báo DD-13 (read_at). Phân vùng tháng theo queued_at, giữ 18.notify.log-retention-days.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.notification_delivery CASCADE;
 
 -- @changeset ph18-0350-user-notification-pref splitStatements:false
@@ -1416,8 +1433,8 @@ CREATE TABLE ph18_ops.task_type (
   CONSTRAINT uq_task_type_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_task_type_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_task_type_code UNIQUE (tenant_id, type_code),
-  CONSTRAINT ck_task_type_code CHECK (type_code ~ '^ph[0-9]{2}\.[a-z0-9-]+$' AND upper(left(type_code, 4)) = owner_module),
-  CONSTRAINT ck_task_type_module CHECK (owner_module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_task_type_code CHECK (type_code ~ '^ph[0-9]{2}\.[a-z0-9-]+$' AND 'PH-' || substr(type_code, 3, 2) = owner_module),
+  CONSTRAINT ck_task_type_module CHECK (owner_module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_task_type_perm CHECK (required_permission ~ '^PERM-[0-9]{2}-[a-z0-9-]+$'),
   CONSTRAINT ck_task_type_link CHECK (deep_link_pattern ~ '^/[a-z0-9/_{}?=&.-]*$'),
   CONSTRAINT ck_task_type_due CHECK (default_due_hours IS NULL OR default_due_hours BETWEEN 1 AND 8760)
@@ -1587,8 +1604,8 @@ CREATE TABLE ph18_ops.maintenance_window (
   CONSTRAINT ck_maintenance_window_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_maintenance_window_code UNIQUE (tenant_id, window_code),
   CONSTRAINT ck_maintenance_window_kind CHECK (kind IN ('MAINTENANCE', 'FREEZE')),
-  CONSTRAINT ck_maintenance_window_module CHECK (scope_module IS NULL OR scope_module ~ '^PH[0-9]{2}$'),
-  CONSTRAINT ck_maintenance_window_env CHECK (environment IN ('PROD', 'STAGING', 'ALL')),
+  CONSTRAINT ck_maintenance_window_module CHECK (scope_module IS NULL OR scope_module ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_maintenance_window_env CHECK (environment IN ('PROD', 'STAGING', 'TEST', 'ALL')),
   CONSTRAINT ck_maintenance_window_period CHECK (ends_at > starts_at),
   CONSTRAINT ck_maintenance_window_reason CHECK (coalesce(char_length(btrim(reason)), 0) >= 10),
   CONSTRAINT ck_maintenance_window_status CHECK (status IN ('PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED')),
@@ -1607,46 +1624,46 @@ COMMENT ON TABLE ph18_ops.maintenance_window IS 'EN-18-31 Cửa sổ bảo trì 
 -- @file 18-0060-incident.sql
 -- @changeset ph18-0430-incident splitStatements:false
 CREATE TABLE ph18_ops.incident (
-  id                     uuid NOT NULL,
-  tenant_id              varchar(16) NOT NULL,
-  incident_no            varchar(20) NOT NULL,
-  title                  varchar(255) NOT NULL,
-  severity               varchar(4) NOT NULL,
-  category               varchar(24) NOT NULL,
-  origin                 varchar(8) NOT NULL,
-  source_event_ref       varchar(255),
-  status                 varchar(16) NOT NULL DEFAULT 'OPEN',
-  commander              varchar(64),
-  assignee               varchar(64),
-  detected_at            timestamptz NOT NULL DEFAULT now(),
-  acknowledged_at        timestamptz,
-  mitigated_at           timestamptz,
-  resolved_at            timestamptz,
-  closed_at              timestamptz,
-  involves_personal_data boolean NOT NULL DEFAULT false,
-  ph09_breach_ref        varchar(64),
-  ph09_reported_at       timestamptz,
-  impact_summary         text,
-  root_cause             text,
-  lessons_learned        text,
-  created_at             timestamptz NOT NULL DEFAULT now(),
-  created_by             varchar(64) NOT NULL,
-  updated_at             timestamptz NOT NULL DEFAULT now(),
-  updated_by             varchar(64) NOT NULL,
-  version                integer NOT NULL DEFAULT 0,
+  id                uuid NOT NULL,
+  tenant_id         varchar(16) NOT NULL,
+  incident_no       varchar(20) NOT NULL,
+  title             varchar(255) NOT NULL,
+  severity          varchar(4) NOT NULL,
+  category          varchar(16) NOT NULL,
+  origin            varchar(8) NOT NULL,
+  source_event_ref  varchar(255),
+  status            varchar(16) NOT NULL DEFAULT 'OPEN',
+  commander         varchar(64),
+  assignee          varchar(64),
+  detected_at       timestamptz NOT NULL DEFAULT now(),
+  acknowledged_at   timestamptz,
+  mitigated_at      timestamptz,
+  resolved_at       timestamptz,
+  closed_at         timestamptz,
+  has_personal_data boolean NOT NULL DEFAULT false,
+  ph09_breach_ref   varchar(64),
+  ph09_reported_at  timestamptz,
+  impact_summary    text,
+  root_cause        text,
+  lessons_learned   text,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  created_by        varchar(64) NOT NULL,
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  updated_by        varchar(64) NOT NULL,
+  version           integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_incident PRIMARY KEY (id),
   CONSTRAINT uq_incident_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_incident_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_incident_no UNIQUE (tenant_id, incident_no),
   CONSTRAINT ck_incident_no CHECK (incident_no ~ '^INC-[0-9]{4}-[0-9]{6}$'),
   CONSTRAINT ck_incident_severity CHECK (severity IN ('SEV1', 'SEV2', 'SEV3', 'SEV4')),
-  CONSTRAINT ck_incident_category CHECK (category IN ('DLQ_THRESHOLD', 'BACKUP_FAILURE', 'SECURITY_ALERT', 'AUDIT_CHAIN', 'SERVICE_DEGRADATION', 'MIGRATION', 'RESTORE', 'OTHER')),
+  CONSTRAINT ck_incident_category CHECK (category IN ('AVAILABILITY', 'DATA_INTEGRITY', 'SECURITY', 'PERFORMANCE', 'OTHER')),
   CONSTRAINT ck_incident_origin CHECK (origin IN ('EVENT', 'MANUAL')),
   CONSTRAINT ck_incident_event CHECK (origin <> 'EVENT' OR source_event_ref IS NOT NULL),
   CONSTRAINT ck_incident_status CHECK (status IN ('OPEN', 'INVESTIGATING', 'MITIGATED', 'RESOLVED', 'CLOSED')),
   CONSTRAINT ck_incident_closed CHECK (status <> 'CLOSED' OR (closed_at IS NOT NULL AND coalesce(char_length(btrim(root_cause)), 0) >= 20 AND coalesce(char_length(btrim(lessons_learned)), 0) >= 20)),
   CONSTRAINT ck_incident_resolved CHECK (status NOT IN ('RESOLVED', 'CLOSED') OR resolved_at IS NOT NULL),
-  CONSTRAINT ck_incident_ph09 CHECK (NOT involves_personal_data OR status <> 'CLOSED' OR ph09_breach_ref IS NOT NULL)
+  CONSTRAINT ck_incident_ph09 CHECK (NOT has_personal_data OR status <> 'CLOSED' OR ph09_breach_ref IS NOT NULL)
 );
 CREATE INDEX ix_incident_open ON ph18_ops.incident (tenant_id, status, severity, detected_at DESC) WHERE status <> 'CLOSED';
 CREATE TRIGGER tg_incident_touch BEFORE UPDATE ON ph18_ops.incident FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
@@ -1706,7 +1723,7 @@ CREATE TABLE ph18_ops.incident_link (
   CONSTRAINT uq_incident_link UNIQUE (tenant_id, incident_id, link_kind, target_ref),
   CONSTRAINT fk_incident_link_incident FOREIGN KEY (tenant_id, incident_id) REFERENCES ph18_ops.incident (tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT ck_incident_link_kind CHECK (link_kind IN ('DLQ_MESSAGE', 'DLQ_GROUP', 'ALERT', 'BACKUP_RUN', 'MIGRATION_RUN', 'TRACE', 'PH09_BREACH', 'EXTERNAL')),
-  CONSTRAINT ck_incident_link_module CHECK (target_module ~ '^PH[0-9]{2}$' OR target_module = 'EXT')
+  CONSTRAINT ck_incident_link_module CHECK (target_module ~ '^PH-[0-9]{2}$' OR target_module = 'EXT')
 );
 CREATE TRIGGER tg_incident_link_touch BEFORE UPDATE ON ph18_ops.incident_link FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CALL ph18_ops.p_enable_rls('ph18_ops.incident_link', false);
@@ -1816,7 +1833,7 @@ CREATE TABLE ph18_ops.restore_verification (
   CONSTRAINT ck_restore_verification_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT fk_restore_verification_object FOREIGN KEY (tenant_id, object_id) REFERENCES ph18_ops.backup_object (tenant_id, id),
   CONSTRAINT fk_restore_verification_backup_run FOREIGN KEY (tenant_id, backup_run_id) REFERENCES ph18_ops.backup_run (tenant_id, id),
-  CONSTRAINT ck_restore_verification_method CHECK (method IN ('PITR_TEMP_CLUSTER', 'TENANT_REIMPORT', 'OBJECT_SAMPLE', 'OPENBAO_RESTORE', 'VELERO_RESTORE', 'CHAIN_INTEGRITY', 'BUNDLE_CHECK')),
+  CONSTRAINT ck_restore_verification_method CHECK (method IN ('RESTORE_LATEST', 'PITR_RANDOM', 'TENANT_IMPORT', 'SAMPLE_FILES', 'HASH_CHAIN')),
   CONSTRAINT ck_restore_verification_outcome CHECK (outcome IN ('PASSED', 'FAILED')),
   CONSTRAINT ck_restore_verification_duration CHECK (duration_seconds >= 0)
 );
@@ -1844,6 +1861,8 @@ CREATE TABLE ph18_ops.tenant_restore_request (
   current_step        smallint NOT NULL DEFAULT 0,
   estimated_size_gb   numeric(10,2),
   job_name            varchar(128),
+  heartbeat_at        timestamptz,
+  checkpoint          jsonb,
   tenant_suspended_at timestamptz,
   tenant_resumed_at   timestamptz,
   started_at          timestamptz,
@@ -1914,7 +1933,7 @@ CREATE TABLE ph18_ops.tenant_export_job (
   id                  uuid NOT NULL,
   tenant_id           varchar(16) NOT NULL,
   purpose             varchar(24) NOT NULL,
-  requested_by_module varchar(8) NOT NULL DEFAULT 'PH20',
+  requested_by_module varchar(8) NOT NULL DEFAULT 'PH-20',
   ph20_request_ref    varchar(64),
   export_format       varchar(8) NOT NULL DEFAULT 'PG_COPY',
   modules             varchar(8)[] NOT NULL DEFAULT '{}',
@@ -1926,6 +1945,8 @@ CREATE TABLE ph18_ops.tenant_export_job (
   started_at          timestamptz,
   finished_at         timestamptz,
   job_name            varchar(128),
+  heartbeat_at        timestamptz,
+  checkpoint          jsonb,
   error_message       varchar(2000),
   created_at          timestamptz NOT NULL DEFAULT now(),
   created_by          varchar(64) NOT NULL,
@@ -1935,9 +1956,9 @@ CREATE TABLE ph18_ops.tenant_export_job (
   CONSTRAINT pk_tenant_export_job PRIMARY KEY (id),
   CONSTRAINT uq_tenant_export_job_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_tenant_export_job_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
-  CONSTRAINT ck_tenant_export_job_purpose CHECK (purpose IN ('DECOMMISSION_HANDOVER', 'CELL_MOVE', 'DEDICATED_DB', 'MERGE', 'ON_REQUEST')),
-  CONSTRAINT ck_tenant_export_job_module CHECK (requested_by_module ~ '^PH[0-9]{2}$'),
-  CONSTRAINT ck_tenant_export_job_format CHECK (export_format IN ('PG_COPY', 'JSONL', 'CSV')),
+  CONSTRAINT ck_tenant_export_job_purpose CHECK (purpose IN ('HANDOVER', 'CELL_MOVE', 'DEDICATED_DB', 'ARCHIVE')),
+  CONSTRAINT ck_tenant_export_job_module CHECK (requested_by_module ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_tenant_export_job_format CHECK (export_format IN ('PG_COPY', 'PG_DUMP')),
   CONSTRAINT ck_tenant_export_job_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'SUCCEEDED_WITH_ERRORS', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_tenant_export_job_sha CHECK (sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'),
   CONSTRAINT ck_tenant_export_job_done CHECK (status <> 'SUCCEEDED' OR (output_location IS NOT NULL AND sha256 IS NOT NULL))
@@ -1974,8 +1995,8 @@ CREATE TABLE ph18_ops.dr_drill (
   CONSTRAINT uq_dr_drill_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dr_drill_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_dr_drill_code UNIQUE (tenant_id, drill_code),
-  CONSTRAINT ck_dr_drill_kind CHECK (drill_kind IN ('SITE_FAILOVER', 'PITR_CLUSTER', 'FULL_RESTORE', 'TENANT_RESTORE', 'BACKUP_RESTORE_TEST')),
-  CONSTRAINT ck_dr_drill_outcome CHECK (outcome IN ('PASSED', 'PARTIAL', 'FAILED')),
+  CONSTRAINT ck_dr_drill_kind CHECK (drill_kind IN ('DR_SWITCHOVER', 'RBK_03', 'PITR_CLUSTER', 'TABLETOP')),
+  CONSTRAINT ck_dr_drill_outcome CHECK (outcome IN ('PASSED', 'PASSED_WITH_ISSUES', 'FAILED')),
   CONSTRAINT ck_dr_drill_findings CHECK (outcome = 'PASSED' OR coalesce(char_length(btrim(findings)), 0) >= 20)
 );
 CREATE TRIGGER tg_dr_drill_touch BEFORE UPDATE ON ph18_ops.dr_drill FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
@@ -2002,6 +2023,8 @@ CREATE TABLE ph18_ops.merge_transfer (
   rows_failed      bigint NOT NULL DEFAULT 0,
   export_job_id    uuid,
   job_name         varchar(128),
+  heartbeat_at     timestamptz,
+  checkpoint       jsonb,
   started_at       timestamptz,
   finished_at      timestamptz,
   last_reported_at timestamptz,
@@ -2016,7 +2039,7 @@ CREATE TABLE ph18_ops.merge_transfer (
   CONSTRAINT uq_merge_transfer_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_merge_transfer_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_merge_transfer_export_job FOREIGN KEY (tenant_id, export_job_id) REFERENCES ph18_ops.tenant_export_job (tenant_id, id),
-  CONSTRAINT ck_merge_transfer_module CHECK (module ~ '^PH[0-9]{2}$'),
+  CONSTRAINT ck_merge_transfer_module CHECK (module ~ '^PH-[0-9]{2}$'),
   CONSTRAINT ck_merge_transfer_tenants CHECK (source_tenant ~ '^T[0-9]{2}$' AND target_tenant = tenant_id AND source_tenant <> target_tenant),
   CONSTRAINT ck_merge_transfer_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'SUCCEEDED_WITH_ERRORS', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_merge_transfer_progress CHECK (progress_percent BETWEEN 0 AND 100),
@@ -2129,8 +2152,8 @@ CREATE TABLE ph18_ops.migration_plan_item (
   CONSTRAINT uq_migration_plan_item_kind UNIQUE (tenant_id, plan_id, object_kind),
   CONSTRAINT fk_migration_plan_item_plan FOREIGN KEY (tenant_id, plan_id) REFERENCES ph18_ops.migration_plan (tenant_id, id),
   CONSTRAINT ck_migration_plan_item_kind CHECK (object_kind IN ('CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION')),
-  CONSTRAINT ck_migration_plan_item_target CHECK ((object_kind = 'CATALOG' AND target_module = 'PH07') OR (object_kind = 'SYSTEM' AND target_module = 'PH01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH02', 'PH03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH10') OR (object_kind = 'FLOW' AND target_module = 'PH04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH19')),
-  CONSTRAINT ck_migration_plan_item_api CHECK (target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 3, 2)),
+  CONSTRAINT ck_migration_plan_item_target CHECK ((object_kind = 'CATALOG' AND target_module = 'PH-07') OR (object_kind = 'SYSTEM' AND target_module = 'PH-01') OR (object_kind IN ('API', 'PLAN', 'SUBSCRIPTION') AND target_module IN ('PH-02', 'PH-03')) OR (object_kind IN ('TOPIC', 'PUBLISHER', 'SUBSCRIBER') AND target_module = 'PH-10') OR (object_kind = 'FLOW' AND target_module = 'PH-04') OR (object_kind = 'TRANSACTION' AND target_module = 'PH-19')),
+  CONSTRAINT ck_migration_plan_item_api CHECK (target_api ~ '^API-[0-9]{2}-[0-9]{3}$' AND substr(target_api, 5, 2) = substr(target_module, 4, 2)),
   CONSTRAINT ck_migration_plan_item_depends CHECK (depends_on <@ ARRAY['CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION']::varchar(12)[] AND NOT (object_kind = ANY (depends_on))),
   CONSTRAINT ck_migration_plan_item_batch CHECK (batch_size BETWEEN 1 AND 10000)
 );
@@ -2153,6 +2176,8 @@ CREATE TABLE ph18_ops.migration_run (
   approved_at     timestamptz,
   rerun_of_run_id uuid,
   job_name        varchar(128),
+  heartbeat_at    timestamptz,
+  checkpoint      jsonb,
   started_at      timestamptz,
   finished_at     timestamptz,
   items_total     integer NOT NULL DEFAULT 0,
@@ -2248,15 +2273,16 @@ CREATE TABLE ph18_ops.migration_error_record (
   CONSTRAINT fk_migration_error_record_run FOREIGN KEY (tenant_id, run_id) REFERENCES ph18_ops.migration_run (tenant_id, id) ON DELETE CASCADE,
   CONSTRAINT fk_migration_error_record_item FOREIGN KEY (tenant_id, plan_item_id) REFERENCES ph18_ops.migration_plan_item (tenant_id, id),
   CONSTRAINT ck_migration_error_record_code CHECK (error_code ~ '^ERR-[0-9]{2}-[0-9]{3}$'),
-  CONSTRAINT ck_migration_error_record_fix CHECK (fix_status IN ('OPEN', 'FIXED_AT_SOURCE', 'FIXED_BY_RULE', 'ACCEPTED_SKIP')),
+  CONSTRAINT ck_migration_error_record_fix CHECK (fix_status IN ('OPEN', 'FIXED_AT_SOURCE', 'RULE_ADDED', 'WONT_MIGRATE')),
   CONSTRAINT ck_migration_error_record_fixed CHECK ((fix_status = 'OPEN') = (fixed_at IS NULL)),
+  CONSTRAINT ck_migration_error_record_wont CHECK (fix_status <> 'WONT_MIGRATE' OR coalesce(char_length(btrim(fix_note)), 0) >= 10),
   CONSTRAINT ck_migration_error_record_snapshot CHECK (source_snapshot IS NULL OR NOT (source_snapshot ?| ARRAY['passwd', 'credential', 'client_secret', 'api_key']))
 );
 CREATE INDEX ix_migration_error_record_run ON ph18_ops.migration_error_record (tenant_id, run_id, fix_status);
 CREATE TRIGGER tg_migration_error_record_touch BEFORE UPDATE ON ph18_ops.migration_error_record FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_migration_error_record_immutable BEFORE UPDATE ON ph18_ops.migration_error_record FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('run_id', 'plan_item_id', 'source_record_ref', 'error_code');
 CALL ph18_ops.p_enable_rls('ph18_ops.migration_error_record', false);
-COMMENT ON TABLE ph18_ops.migration_error_record IS 'EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (sửa ở nguồn, sửa bằng quy tắc, chấp nhận bỏ qua).';
+COMMENT ON TABLE ph18_ops.migration_error_record IS 'EN-18-47 Bản ghi không chuyển được kèm lý do (FR-00-091, 092): mã bản ghi nguồn, mã lỗi, trường lỗi, ảnh chụp nguồn đã che (không thông tin xác thực), trạng thái sửa (OPEN, FIXED_AT_SOURCE sửa ở nguồn, RULE_ADDED thêm quy tắc, WONT_MIGRATE không di trú kèm lý do; theo FRS FR-18-063, ghi qua API-18-182).';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.migration_error_record CASCADE;
 
 -- @changeset ph18-0600-migration-reconciliation splitStatements:false
@@ -2325,8 +2351,8 @@ CREATE TABLE ph18_ops.credential_reissue_marker (
   CONSTRAINT uq_credential_reissue_marker UNIQUE (tenant_id, target_module, target_ref, credential_kind),
   CONSTRAINT fk_credential_reissue_marker_run FOREIGN KEY (tenant_id, run_id) REFERENCES ph18_ops.migration_run (tenant_id, id),
   CONSTRAINT ck_credential_reissue_marker_kind CHECK (object_kind IN ('CATALOG', 'SYSTEM', 'API', 'PLAN', 'SUBSCRIPTION', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'FLOW', 'TRANSACTION')),
-  CONSTRAINT ck_credential_reissue_marker_module CHECK (target_module IN ('PH01', 'PH02', 'PH03', 'PH10', 'PH19')),
-  CONSTRAINT ck_credential_reissue_marker_credential CHECK (credential_kind IN ('OAUTH_CLIENT', 'MTLS_CERTIFICATE', 'BASIC_AUTH', 'APIM_SUBSCRIPTION', 'KAFKA_USER', 'PAYMENT_CHANNEL')),
+  CONSTRAINT ck_credential_reissue_marker_module CHECK (target_module IN ('PH-01', 'PH-02', 'PH-03', 'PH-04', 'PH-07', 'PH-10', 'PH-19')),
+  CONSTRAINT ck_credential_reissue_marker_credential CHECK (credential_kind IN ('OAUTH_CLIENT', 'CLIENT_CERT', 'API_KEY_LEGACY', 'PASSWORD')),
   CONSTRAINT ck_credential_reissue_marker_status CHECK (status IN ('PENDING', 'NOTIFIED', 'REISSUED', 'WAIVED')),
   CONSTRAINT ck_credential_reissue_marker_reissued CHECK (status <> 'REISSUED' OR reissued_at IS NOT NULL),
   CONSTRAINT ck_credential_reissue_marker_waived CHECK (status <> 'WAIVED' OR coalesce(char_length(btrim(waived_reason)), 0) >= 10)
@@ -2335,7 +2361,7 @@ CREATE INDEX ix_credential_reissue_marker_open ON ph18_ops.credential_reissue_ma
 CREATE TRIGGER tg_credential_reissue_marker_touch BEFORE UPDATE ON ph18_ops.credential_reissue_marker FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_touch();
 CREATE TRIGGER tg_credential_reissue_marker_immutable BEFORE UPDATE ON ph18_ops.credential_reissue_marker FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('target_module', 'target_ref', 'credential_kind', 'legacy_ref');
 CALL ph18_ops.p_enable_rls('ph18_ops.credential_reissue_marker', false);
-COMMENT ON TABLE ph18_ops.credential_reissue_marker IS 'EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-10; trạng thái chờ, đã báo, đã cấp lại, miễn. Điều kiện cắt chuyển CREDENTIALS_REISSUED.';
+COMMENT ON TABLE ph18_ops.credential_reissue_marker IS 'EN-18-49 Đánh dấu đối tượng đã di trú cần cấp lại thông tin xác thực ở PH đích (FR-00-093: không di trú bí mật): PH-01 (HTTT), PH-03 (đăng ký cổng), PH-02, PH-04, PH-07, PH-10, PH-19 (targetPh dạng PH-nn của FRS); trạng thái chờ, đã báo, đã cấp lại, miễn (WAIVED qua API-18-183 kèm lý do). Điều kiện cắt chuyển CREDENTIALS_REISSUED.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.credential_reissue_marker CASCADE;
 
 -- @changeset ph18-0620-parallel-run-group splitStatements:false
@@ -2380,7 +2406,7 @@ CREATE TRIGGER tg_parallel_run_group_touch BEFORE UPDATE ON ph18_ops.parallel_ru
 CREATE TRIGGER tg_parallel_run_group_immutable BEFORE UPDATE ON ph18_ops.parallel_run_group FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_immutable('group_code');
 CREATE TRIGGER tg_parallel_run_group_fsm_status BEFORE UPDATE ON ph18_ops.parallel_run_group FOR EACH ROW EXECUTE FUNCTION ph18_ops.tg_transition('status', 'PARALLEL>SHADOW_OK,SHADOW_OK>PARALLEL,SHADOW_OK>PARTIAL_CUTOVER,SHADOW_OK>CUT_OVER,PARTIAL_CUTOVER>CUT_OVER,PARTIAL_CUTOVER>ROLLED_BACK,CUT_OVER>ROLLED_BACK,ROLLED_BACK>PARALLEL');
 CALL ph18_ops.p_enable_rls('ph18_ops.parallel_run_group', false);
-COMMENT ON TABLE ph18_ops.parallel_run_group IS 'EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.shadow.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.cutover.rollback-minutes).';
+COMMENT ON TABLE ph18_ops.parallel_run_group IS 'EN-18-50 Nhóm dịch vụ chạy song song và cắt chuyển: phạm vi route, điểm cuối cũ và mới (tên, không thông tin xác thực), tỷ lệ nhân bản lưu lượng APISIX, ngưỡng khớp (18.migration.parallel.match-threshold-percent), tỷ lệ khớp, cầu nối PH-10 (EVT-10-15, 16), mốc cắt chuyển và hạn quay lui 15 phút (18.migration.rollback-window-minutes).';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.parallel_run_group CASCADE;
 
 -- @changeset ph18-0630-shadow-comparison-sample splitStatements:false
@@ -2529,6 +2555,41 @@ CALL ph18_ops.p_enable_rls('ph18_ops.ops_report', false);
 COMMENT ON TABLE ph18_ops.ops_report IS 'EN-18-54 Báo cáo vận hành định kỳ (DLQ, sao lưu, di trú, sự cố, tham số, tổng hợp) gửi PH-16 qua sự kiện: kỳ, chỉ số tổng hợp, tệp ở Garage bucket dh-{tenant}-ops, tổng kiểm tra. Mỗi loại, kỳ một báo cáo; dòng COMMON là báo cáo nền tảng.';
 -- @rollback DROP TABLE IF EXISTS ph18_ops.ops_report CASCADE;
 
+-- @file 18-0085-batch.sql
+-- @changeset ph18-0850-batch-schema splitStatements:false
+-- Kho lần chạy Spring Batch (JobRepository) của dh-migrate, dh-tenant-restore, dh-tenant-export (ADR-183, SDD §13.5 điểm 9): schema riêng
+-- ph18_batch theo lược đồ chuẩn schema-postgresql.sql của Spring Batch 5, không RLS (dữ liệu kỹ thuật, tham số Job mang mã tenant, không
+-- dữ liệu nghiệp vụ); chỉ ph18_worker đọc ghi, ph18_app và ph18_readonly không có quyền. Trạng thái nghiệp vụ vẫn ở ph18_ops.
+RESET ROLE;
+CREATE SCHEMA IF NOT EXISTS ph18_batch AUTHORIZATION ph18_owner;
+COMMENT ON SCHEMA ph18_batch IS 'PH-18 kho lần chạy Spring Batch (JobRepository) của dh-ops-worker; khởi động lại Job từ bước dừng. Không RLS, chỉ ph18_worker.';
+REVOKE ALL ON SCHEMA ph18_batch FROM PUBLIC;
+GRANT USAGE ON SCHEMA ph18_batch TO ph18_worker;
+SET ROLE ph18_owner;
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_instance (job_instance_id bigint NOT NULL PRIMARY KEY, version bigint, job_name varchar(100) NOT NULL,
+  job_key varchar(32) NOT NULL, CONSTRAINT job_inst_un UNIQUE (job_name, job_key));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution (job_execution_id bigint NOT NULL PRIMARY KEY, version bigint, job_instance_id bigint NOT NULL,
+  create_time timestamp NOT NULL, start_time timestamp, end_time timestamp, status varchar(10), exit_code varchar(2500), exit_message varchar(2500),
+  last_updated timestamp, CONSTRAINT job_inst_exec_fk FOREIGN KEY (job_instance_id) REFERENCES ph18_batch.batch_job_instance (job_instance_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution_params (job_execution_id bigint NOT NULL, parameter_name varchar(100) NOT NULL,
+  parameter_type varchar(100) NOT NULL, parameter_value varchar(2500), identifying char(1) NOT NULL,
+  CONSTRAINT job_exec_params_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_step_execution (step_execution_id bigint NOT NULL PRIMARY KEY, version bigint NOT NULL, step_name varchar(100) NOT NULL,
+  job_execution_id bigint NOT NULL, create_time timestamp NOT NULL, start_time timestamp, end_time timestamp, status varchar(10), commit_count bigint,
+  read_count bigint, filter_count bigint, write_count bigint, read_skip_count bigint, write_skip_count bigint, process_skip_count bigint, rollback_count bigint,
+  exit_code varchar(2500), exit_message varchar(2500), last_updated timestamp,
+  CONSTRAINT job_exec_step_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_step_execution_context (step_execution_id bigint NOT NULL PRIMARY KEY, short_context varchar(2500) NOT NULL,
+  serialized_context text, CONSTRAINT step_exec_ctx_fk FOREIGN KEY (step_execution_id) REFERENCES ph18_batch.batch_step_execution (step_execution_id));
+CREATE TABLE IF NOT EXISTS ph18_batch.batch_job_execution_context (job_execution_id bigint NOT NULL PRIMARY KEY, short_context varchar(2500) NOT NULL,
+  serialized_context text, CONSTRAINT job_exec_ctx_fk FOREIGN KEY (job_execution_id) REFERENCES ph18_batch.batch_job_execution (job_execution_id));
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_step_execution_seq MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_job_execution_seq MAXVALUE 9223372036854775807 NO CYCLE;
+CREATE SEQUENCE IF NOT EXISTS ph18_batch.batch_job_seq MAXVALUE 9223372036854775807 NO CYCLE;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ph18_batch TO ph18_worker;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA ph18_batch TO ph18_worker;
+-- @rollback DROP SCHEMA IF EXISTS ph18_batch CASCADE;
+
 -- @file 18-0091-views.sql
 -- @changeset ph18-0900-view-config-param splitStatements:false
 -- Tương thích DD-14 (D02-07 dòng 151, FRS-07 nêu ph18_ops.config_param): khung nhìn giá trị hiệu lực theo tenant phiên. security_invoker nên RLS của bảng gốc áp cho người đọc.
@@ -2539,7 +2600,7 @@ SELECT d.param_key                                                     AS key,
        CASE WHEN t.id IS NOT NULL THEN 'TENANT' ELSE 'PLATFORM' END    AS scope,
        COALESCE(t.effective_from, p.effective_from, d.created_at)      AS effective_from,
        current_setting('app.tenant_id', false)                         AS tenant_id,
-       d.namespace_code, d.value_type, d.level, d.security_flag, d.display_group,
+       d.namespace_code, d.value_type, d.level, d.secure, d.display_group,
        COALESCE(t.current_version_no, p.current_version_no, 0)         AS version_no
   FROM ph18_ops.param_definition d
   LEFT JOIN ph18_ops.param_value p ON p.definition_id = d.id AND p.tenant_id = 'COMMON'
@@ -2565,70 +2626,101 @@ COMMENT ON VIEW ph18_ops.notification IS 'DD-13 Thông báo: recipient_user_id, 
 SET app.tenant_id = 'COMMON';
 INSERT INTO ph18_ops.param_namespace (id, tenant_id, code, owner_module, title, approval_owner, created_by, updated_by)
 SELECT md5('ph18-ns:' || s.c)::uuid, 'COMMON', s.c, s.m, s.t, s.a, 'system:seed', 'system:seed' FROM (VALUES
-  ('00', 'PH00', 'Tham số chung nền tảng', 'PH18'),
-  ('onboarding', 'PH01', 'Kết nạp HTTT', 'PH18'),
-  ('02', 'PH02', 'Danh mục dịch vụ', 'PH18'),
-  ('04', 'PH04', 'Tích hợp', 'PH18'),
-  ('05', 'PH05', 'Bộ điều hợp', 'PH18'),
-  ('06', 'PH06', 'Dữ liệu chủ', 'PH18'),
-  ('07.rdm', 'PH07', 'Danh mục dùng chung', 'PH18'),
-  ('08', 'PH08', 'Chất lượng dữ liệu', 'PH18'),
-  ('09', 'PH09', 'Quyền riêng tư', 'PH18'),
-  ('10', 'PH10', 'Sự kiện', 'PH18'),
-  ('11', 'PH11', 'Quy trình', 'PH18'),
-  ('12', 'PH12', 'Định danh và phân quyền', 'PH18'),
-  ('13', 'PH13', 'Giám sát và kiểm toán', 'PH18'),
-  ('14', 'PH14', 'Kết nối quốc gia', 'PH14'),
-  ('15', 'PH15', 'Cổng nhà phát triển', 'PH18'),
-  ('16', 'PH16', 'Báo cáo chỉ tiêu', 'PH18'),
-  ('17', 'PH17', 'Trợ lý AI', 'PH17'),
-  ('18', 'PH18', 'Vận hành và xử lý lỗi', 'PH18'),
-  ('20', 'PH20', 'Quản trị tenant', 'PH18'),
-  ('ff', 'PH18', 'Cờ tính năng', 'PH18')
+  ('00', 'PH-00', 'Tham số chung nền tảng', 'PH-18'),
+  ('onboarding', 'PH-01', 'Kết nạp HTTT', 'PH-18'),
+  ('02', 'PH-02', 'Danh mục dịch vụ', 'PH-18'),
+  ('04', 'PH-04', 'Tích hợp', 'PH-18'),
+  ('05', 'PH-05', 'Bộ điều hợp', 'PH-18'),
+  ('06', 'PH-06', 'Dữ liệu chủ', 'PH-18'),
+  ('07.rdm', 'PH-07', 'Danh mục dùng chung', 'PH-18'),
+  ('08', 'PH-08', 'Chất lượng dữ liệu', 'PH-18'),
+  ('09', 'PH-09', 'Quyền riêng tư', 'PH-18'),
+  ('10', 'PH-10', 'Sự kiện', 'PH-18'),
+  ('11', 'PH-11', 'Quy trình', 'PH-18'),
+  ('12', 'PH-12', 'Định danh và phân quyền', 'PH-18'),
+  ('13', 'PH-13', 'Giám sát và kiểm toán', 'PH-18'),
+  ('14', 'PH-14', 'Kết nối quốc gia', 'PH-14'),
+  ('15', 'PH-15', 'Cổng nhà phát triển', 'PH-18'),
+  ('16', 'PH-16', 'Báo cáo chỉ tiêu', 'PH-18'),
+  ('17', 'PH-17', 'Trợ lý AI', 'PH-17'),
+  ('18', 'PH-18', 'Vận hành và xử lý lỗi', 'PH-18'),
+  ('20', 'PH-20', 'Quản trị tenant', 'PH-18'),
+  ('ff', 'PH-18', 'Cờ tính năng', 'PH-18')
 ) AS s(c, m, t, a)
 ON CONFLICT (tenant_id, code) DO NOTHING;
-INSERT INTO ph18_ops.param_definition (id, tenant_id, namespace_code, param_key, value_type, default_value, min_value, max_value, unit, level, security_flag, display_group, display_order, label, created_by, updated_by)
-SELECT md5('ph18-def:' || s.k)::uuid, 'COMMON', '18', s.k, s.t, s.d::jsonb, s.lo, s.hi, s.u, s.l, s.f, s.g, s.o, s.lab, 'system:seed', 'system:seed' FROM (VALUES
-  ('18.param.cache-seconds', 'INTEGER', '60', 1, 60, 's', 'PLATFORM', false, 'param', 10, 'Thời gian đệm tham số ở PH đọc'),
-  ('18.param.change-request-ttl-hours', 'INTEGER', '72', 1, 720, 'h', 'TENANT', false, 'param', 20, 'Hạn đề nghị đổi tham số chờ duyệt'),
-  ('18.param.history-retention-years', 'INTEGER', '5', 1, 10, 'y', 'PLATFORM', false, 'param', 30, 'Thời gian giữ lịch sử tham số'),
-  ('18.dlq.payload.inline-max-kb', 'INTEGER', '256', 16, 256, 'KB', 'PLATFORM', false, 'dlq', 40, 'Ngưỡng payload giữ trong CSDL'),
-  ('18.dlq.dedup-window-days', 'INTEGER', '30', 1, 90, 'd', 'PLATFORM', false, 'dlq', 50, 'Cửa sổ khử trùng dlqKey'),
-  ('18.dlq.retention.closed-days', 'INTEGER', '90', 30, 365, 'd', 'TENANT', true, 'dlq', 60, 'Thời gian giữ mục DLQ đã đóng'),
-  ('18.dlq.retention.metadata-days', 'INTEGER', '365', 90, 1825, 'd', 'TENANT', false, 'dlq', 70, 'Thời gian giữ siêu dữ liệu mục hết hạn'),
-  ('18.dlq.audit.retention-months', 'INTEGER', '60', 60, 120, 'month', 'PLATFORM', false, 'dlq', 80, 'Thời gian giữ nhật ký thao tác DLQ'),
-  ('18.dlq.replay.batch-max', 'INTEGER', '1000', 1, 10000, 'item', 'TENANT', false, 'dlq', 90, 'Số mục tối đa một lượt phát lại'),
-  ('18.dlq.replay.approval-threshold', 'INTEGER', '100', 1, 10000, 'item', 'TENANT', true, 'dlq', 100, 'Ngưỡng phát lại cần bốn mắt'),
-  ('18.dlq.replay.rate-per-minute', 'INTEGER', '60', 1, 6000, 'item/min', 'TENANT', false, 'dlq', 110, 'Tốc độ phát lại mặc định'),
-  ('18.dlq.threshold.open-count', 'INTEGER', '50', 1, 100000, 'item', 'TENANT', false, 'dlq', 120, 'Ngưỡng mục mở phát sự kiện vượt ngưỡng'),
-  ('18.dlq.discard.reason-min-chars', 'INTEGER', '10', 10, 200, 'char', 'PLATFORM', false, 'dlq', 130, 'Độ dài tối thiểu lý do bỏ qua'),
-  ('18.notify.delivery-retention-days', 'INTEGER', '180', 30, 730, 'd', 'TENANT', false, 'notify', 140, 'Thời gian giữ nhật ký gửi'),
-  ('18.notify.retry.max-attempts', 'INTEGER', '5', 1, 20, 'lần', 'PLATFORM', false, 'notify', 150, 'Số lần thử gửi tối đa'),
-  ('18.notify.quiet-hours', 'TIME_RANGE', '"22:00-06:00"', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'notify', 160, 'Giờ yên lặng mặc định'),
-  ('18.notify.sms.enabled', 'BOOLEAN', 'false', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'notify', 170, 'Bật kênh SMS'),
-  ('18.task.retention-days', 'INTEGER', '365', 90, 1825, 'd', 'TENANT', false, 'task', 180, 'Thời gian giữ việc đã đóng'),
-  ('18.task.reminder-before-hours', 'INTEGER', '24', 1, 168, 'h', 'TENANT', false, 'task', 190, 'Nhắc trước hạn'),
-  ('18.calendar.timezone', 'STRING', '"Asia/Ho_Chi_Minh"', NULL::numeric, NULL::numeric, NULL::text, 'PLATFORM', false, 'calendar', 200, 'Múi giờ lịch'),
-  ('18.calendar.working-days', 'LIST_STRING', '["MON", "TUE", "WED", "THU", "FRI"]', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'calendar', 210, 'Ngày làm việc trong tuần'),
-  ('18.incident.retention-years', 'INTEGER', '5', 3, 10, 'y', 'PLATFORM', false, 'incident', 220, 'Thời gian giữ hồ sơ sự cố'),
-  ('18.backup.verification-interval-days', 'INTEGER', '1', 1, 90, 'd', 'PLATFORM', false, 'backup', 230, 'Chu kỳ kiểm tra khôi phục'),
-  ('18.restore.target-hours', 'INTEGER', '4', 1, 24, 'h', 'PLATFORM', false, 'backup', 240, 'Mục tiêu thời gian khôi phục tenant'),
-  ('18.export.download-ttl-days', 'INTEGER', '7', 1, 30, 'd', 'TENANT', false, 'backup', 250, 'Hạn tải tệp xuất tenant'),
-  ('18.migration.shadow.match-threshold-percent', 'DECIMAL', '99.5', 90, 100, '%', 'TENANT', true, 'migration', 260, 'Ngưỡng khớp chạy song song'),
-  ('18.migration.shadow.sample-retention-days', 'INTEGER', '90', 7, 365, 'd', 'TENANT', false, 'migration', 270, 'Thời gian giữ mẫu so sánh'),
-  ('18.migration.cutover.rollback-minutes', 'INTEGER', '15', 5, 120, 'min', 'PLATFORM', false, 'migration', 280, 'Cửa sổ quay lui sau cắt chuyển'),
-  ('18.report.retention-months', 'INTEGER', '24', 12, 120, 'month', 'TENANT', false, 'report', 290, 'Thời gian giữ báo cáo vận hành'),
-  ('18.outbox.retention-days', 'INTEGER', '3', 1, 30, 'd', 'PLATFORM', false, 'core', 300, 'Thời gian giữ outbox đã phát')
-) AS s(k, t, d, lo, hi, u, l, f, g, o, lab)
+INSERT INTO ph18_ops.param_definition (id, tenant_id, namespace_code, param_key, value_type, default_value, min_value, max_value, unit, level, secure, display_group, display_order, label, allowed_values, created_by, updated_by)
+SELECT md5('ph18-def:' || s.k)::uuid, 'COMMON', '18', s.k, s.t, s.d::jsonb, s.lo, s.hi, s.u, s.l, s.f, s.g, s.o, s.lab, s.av::jsonb, 'system:seed', 'system:seed' FROM (VALUES
+  ('18.param.cache-ttl-seconds', 'INT', '60', 10, 60, 's', 'PLATFORM', false, 'param', 10, 'Thời hạn bộ đệm tham số phía dh-ops-client', NULL::text),
+  ('18.param.reason-min-length', 'INT', '10', 10, 200, NULL::text, 'TENANT', false, 'param', 20, 'Độ dài tối thiểu của lý do đổi tham số', NULL::text),
+  ('18.param.history-retention-days', 'INT', '1825', 365, 3650, 'd', 'PLATFORM', false, 'param', 30, 'Thời gian giữ phiên bản tham số', NULL::text),
+  ('18.param.change-request-ttl-hours', 'INT', '72', 1, 720, 'h', 'TENANT', false, 'param', 40, 'Đề nghị đổi khóa ★ chưa duyệt quá hạn thì tự hết hiệu lực', NULL::text),
+  ('18.ff.retire-warning-days', 'INT', '14', 1, 90, 'd', 'TENANT', false, 'ff', 50, 'Số ngày trước ngày gỡ cờ thì nhắc chủ sở hữu', NULL::text),
+  ('18.egress.allowlist', 'LIST<HOST>', '[]', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'egress', 60, 'Danh sách đích egress cho phép (FR-18-010)', NULL::text),
+  ('18.egress.max-entries', 'INT', '200', 1, 1000, 'item', 'PLATFORM', false, 'egress', 70, 'Số mục egress tối đa mỗi tenant', NULL::text),
+  ('18.dlq.payload.inline-max-kb', 'INT', '256', 64, 256, 'KB', 'PLATFORM', false, 'dlq', 80, 'Ngưỡng payload lưu nội tuyến, lớn hơn lưu Garage', NULL::text),
+  ('18.dlq.payload.max-mb', 'INT', '20', 1, 100, 'MB', 'PLATFORM', false, 'dlq', 90, 'Kích thước payload tối đa nhận vào DLQ', NULL::text),
+  ('18.dlq.retention.closed-days', 'INT', '90', 30, 365, 'd', 'TENANT', false, 'dlq', 100, 'Thời gian giữ payload của mục đã đóng', NULL::text),
+  ('18.dlq.retention.metadata-days', 'INT', '365', 90, 1825, 'd', 'TENANT', false, 'dlq', 110, 'Thời gian giữ siêu dữ liệu của mục EXPIRED', NULL::text),
+  ('18.dlq.audit.retention-months', 'INT', '60', 12, 120, 'month', 'PLATFORM', false, 'dlq', 120, 'Thời gian giữ bản sao nhật ký thao tác DLQ (dlq_audit); bản chính thức ở PH-13', NULL::text),
+  ('18.dlq.dedup-window-days', 'INT', '7', 1, 30, 'd', 'PLATFORM', false, 'dlq', 130, 'Cửa sổ khử trùng của inbox tiêu thụ DLQ', NULL::text),
+  ('18.dlq.retention.open-max-days', 'INT', '365', 90, 1825, 'd', 'TENANT', false, 'dlq', 140, 'Tuổi mục mở thì nhắc và phát sự kiện AGE', NULL::text),
+  ('18.dlq.reveal.ttl-minutes', 'INT', '15', 5, 60, 'min', 'TENANT', true, 'dlq', 150, 'Hạn phiếu xem payload', NULL::text),
+  ('18.dlq.replay.batch-max', 'INT', '10000', 100, 50000, 'item', 'TENANT', false, 'dlq', 160, 'Số mục tối đa một lượt phát lại', NULL::text),
+  ('18.dlq.replay.approval-threshold', 'INT', '500', 10, 10000, 'item', 'TENANT', true, 'dlq', 170, 'Lượt vượt số mục này cần bốn mắt', NULL::text),
+  ('18.dlq.replay.rate-per-second', 'INT', '10', 1, 100, 'item/s', 'TENANT', false, 'dlq', 180, 'Tốc độ phát lại mặc định', NULL::text),
+  ('18.dlq.replay.result-timeout-minutes', 'INT', '30', 1, 1440, 'min', 'TENANT', false, 'dlq', 190, 'Thời gian chờ kết quả phát lại', NULL::text),
+  ('18.dlq.threshold.depth', 'INT', '1000', 10, 1000000, NULL::text, 'TENANT', false, 'dlq', 200, 'Ngưỡng số mục chưa xử lý để phát EVT-18-08', NULL::text),
+  ('18.dlq.threshold.age-hours', 'INT', '24', 1, 720, 'h', 'TENANT', false, 'dlq', 210, 'Ngưỡng tuổi mục cũ nhất chưa xử lý', NULL::text),
+  ('18.dlq.threshold.poison-per-hour', 'INT', '10', 1, 10000, 'item/h', 'TENANT', false, 'dlq', 220, 'Ngưỡng số mục POISON mỗi giờ', NULL::text),
+  ('18.dlq.threshold.replay-failure-percent', 'INT', '20', 1, 100, '%', 'TENANT', false, 'dlq', 230, 'Tỷ lệ lỗi làm lượt phát lại tự dừng', NULL::text),
+  ('18.dlq.group.window-hours', 'INT', '24', 1, 168, 'h', 'TENANT', false, 'dlq', 240, 'Cửa sổ gom nhóm dấu hiệu lỗi', NULL::text),
+  ('18.dlq.reconcile.cron', 'CRON', '"0 30 2 * * *"', NULL::numeric, NULL::numeric, NULL::text, 'PLATFORM', false, 'dlq', 250, 'Lịch đối soát chỉ mục với Kafka', NULL::text),
+  ('18.dlq.diagnostics.timeout-ms', 'INT', '3000', 500, 5000, 'ms', 'PLATFORM', false, 'dlq', 260, 'Thời gian chờ ngữ cảnh chẩn đoán từ PH-13', NULL::text),
+  ('18.notify.quiet-hours', 'STRING', '"22:00-06:00"', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'notify', 270, 'Giờ yên lặng mặc định của tenant', NULL::text),
+  ('18.notify.retry.max-attempts', 'INT', '5', 1, 10, NULL::text, 'PLATFORM', false, 'notify', 280, 'Số lần thử gửi tối đa', NULL::text),
+  ('18.notify.retry.window-hours', 'INT', '24', 1, 72, 'h', 'PLATFORM', false, 'notify', 290, 'Khoảng thời gian thử gửi tối đa', NULL::text),
+  ('18.notify.sync.timeout-ms', 'INT', '3000', 1000, 10000, 'ms', 'PLATFORM', false, 'notify', 300, 'Thời gian chờ ở chế độ gửi đồng bộ', NULL::text),
+  ('18.notify.bounce.soft-limit', 'INT', '3', 1, 10, NULL::text, 'TENANT', false, 'notify', 310, 'Số lần trả lại mềm trong 30 ngày thì chặn', NULL::text),
+  ('18.notify.log-retention-days', 'INT', '180', 30, 730, 'd', 'TENANT', false, 'notify', 320, 'Thời gian giữ nhật ký gửi', NULL::text),
+  ('18.notify.sms.enabled', 'BOOL', 'false', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'notify', 330, 'Bật kênh SMS cho tenant', NULL::text),
+  ('18.notify.sender-name', 'STRING', '"Datahub {tỉnh}"', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'notify', 340, 'Tên người gửi hiển thị trên thư', NULL::text),
+  ('18.task.reminder.before-hours', 'INT', '24', 1, 168, 'h', 'TENANT', false, 'task', 350, 'Nhắc trước hạn việc', NULL::text),
+  ('18.task.overdue.escalate-hours', 'INT', '48', 1, 336, 'h', 'TENANT', false, 'task', 360, 'Quá hạn bao lâu thì leo thang', NULL::text),
+  ('18.task.retention-days', 'INT', '365', 30, 1825, 'd', 'TENANT', false, 'task', 370, 'Thời gian giữ việc đã đóng', NULL::text),
+  ('18.calendar.weekend-days', 'LIST<STRING>', '["SAT", "SUN"]', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'calendar', 380, 'Ngày nghỉ cuối tuần', NULL::text),
+  ('18.calendar.timezone', 'STRING', '"Asia/Ho_Chi_Minh"', NULL::numeric, NULL::numeric, NULL::text, 'PLATFORM', false, 'calendar', 390, 'Múi giờ tính ngày làm việc', NULL::text),
+  ('18.maintenance.notice-hours', 'INT', '72', 1, 336, 'h', 'TENANT', false, 'maintenance', 400, 'Báo trước bảo trì bao nhiêu giờ', NULL::text),
+  ('18.freeze.default-envs', 'LIST<STRING>', '["PROD"]', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'freeze', 410, 'Môi trường mặc định của cửa sổ đóng băng', '["DEV", "TEST", "STAGING", "PROD"]'),
+  ('18.incident.sev1-ack-minutes', 'INT', '15', 5, 60, 'min', 'TENANT', false, 'incident', 420, 'Thời hạn nhận sự cố SEV1 trước khi leo thang', NULL::text),
+  ('18.incident.sev2-ack-minutes', 'INT', '60', 15, 240, 'min', 'TENANT', false, 'incident', 430, 'Thời hạn nhận sự cố SEV2', NULL::text),
+  ('18.incident.retention-years', 'INT', '5', 3, 10, 'y', 'PLATFORM', false, 'incident', 440, 'Thời gian giữ hồ sơ sự cố đã đóng', NULL::text),
+  ('18.backup.stale-hours', 'INT', '26', 2, 72, 'h', 'PLATFORM', false, 'backup', 450, 'Bản sao lưu hằng ngày quá số giờ này là trễ', NULL::text),
+  ('18.backup.freshness-max-minutes', 'INT', '15', 5, 60, 'min', 'PLATFORM', false, 'backup', 460, 'Độ trễ tối đa của trạng thái thu thập', NULL::text),
+  ('18.backup.verification-interval-days', 'INT', '1', 1, 90, 'd', 'PLATFORM', false, 'backup', 470, 'Chu kỳ kiểm tra khôi phục tự động mỗi đối tượng', NULL::text),
+  ('18.restore.max-duration-hours', 'INT', '4', 1, 24, 'h', 'PLATFORM', false, 'restore', 480, 'Chỉ tiêu thời gian khôi phục, vượt thì cảnh báo', NULL::text),
+  ('18.restore.approval-required', 'BOOL', 'true', NULL::numeric, NULL::numeric, NULL::text, 'PLATFORM', true, 'restore', 490, 'Khôi phục tenant bắt buộc bốn mắt (không tắt được)', '[true]'),
+  ('18.export.link-ttl-hours', 'INT', '24', 1, 72, 'h', 'PLATFORM', false, 'export', 500, 'Hạn liên kết tải gói xuất', NULL::text),
+  ('18.export.retention-days', 'INT', '30', 7, 90, 'd', 'PLATFORM', false, 'export', 510, 'Thời gian giữ gói xuất', NULL::text),
+  ('18.migration.dry-run-valid-days', 'INT', '7', 1, 30, 'd', 'TENANT', false, 'migration', 520, 'Hạn hiệu lực của lần chạy thử', NULL::text),
+  ('18.migration.batch-size', 'INT', '500', 50, 5000, NULL::text, 'TENANT', false, 'migration', 530, 'Kích thước lô đọc và nhập', NULL::text),
+  ('18.migration.parallel.match-threshold-percent', 'DECIMAL', '99.5', 90, 100, '%', 'TENANT', false, 'migration', 540, 'Ngưỡng tỷ lệ khớp để sang SHADOW_OK', NULL::text),
+  ('18.migration.shadow.sample-percent', 'INT', '5', 1, 100, '%', 'TENANT', false, 'migration', 550, 'Tỷ lệ lưu lượng nhân bản', NULL::text),
+  ('18.migration.shadow.sample-retention-days', 'INT', '90', 7, 365, 'd', 'TENANT', false, 'migration', 560, 'Thời gian giữ mẫu so sánh chạy bóng (chỉ tổng kiểm tra)', NULL::text),
+  ('18.migration.rollback-window-minutes', 'INT', '15', 5, 120, 'min', 'PLATFORM', false, 'migration', 570, 'Cửa sổ quay lui sau cắt chuyển', NULL::text),
+  ('18.report.schedule', 'ENUM', '"MONTHLY"', NULL::numeric, NULL::numeric, NULL::text, 'TENANT', false, 'report', 580, 'Kỳ báo cáo vận hành tự động', '["MONTHLY", "QUARTERLY"]'),
+  ('18.report.retention-months', 'INT', '24', 12, 120, 'month', 'TENANT', false, 'report', 590, 'Thời gian giữ báo cáo vận hành', NULL::text),
+  ('18.degraded.read-only', 'BOOL', 'false', NULL::numeric, NULL::numeric, NULL::text, 'PLATFORM', false, 'degraded', 600, 'Chế độ chỉ đọc của PH-18', NULL::text),
+  ('18.outbox.retention-days', 'INT', '3', 1, 30, 'd', 'PLATFORM', false, 'outbox', 610, 'Thời gian giữ bản ghi outbox đã gửi', NULL::text)
+) AS s(k, t, d, lo, hi, u, l, f, g, o, lab, av)
 ON CONFLICT (tenant_id, param_key) DO NOTHING;
-INSERT INTO ph18_ops.dlq_source (id, tenant_id, source_code, source_module, ingest_channel, replay_port, replay_endpoint, payload_viewable, created_by, updated_by)
+INSERT INTO ph18_ops.dlq_source (id, tenant_id, source_code, source_module, ingest_channel, replay_mode, replay_endpoint, payload_viewable, created_by, updated_by)
 SELECT md5('ph18-src:' || s.c)::uuid, 'COMMON', s.c, s.m, s.ch, s.p, s.e, s.v, 'system:seed', 'system:seed' FROM (VALUES
-  ('PH04-RUNTIME', 'PH04', 'KAFKA', 'PH04_RUNTIME', '/integration/internal/v1/replays', true),
-  ('PH10-EVENT', 'PH10', 'FEDERATED', 'PH10_EVENT', '/event/internal/v1/replays', false),
-  ('PH01-INBOX', 'PH01', 'API', 'REPLAY_PORT', '/onboarding/internal/v1/replays', true),
-  ('PH06-MDM-JOB', 'PH06', 'API', 'REPLAY_PORT', '/mdm/internal/v1/replays', true),
-  ('PH08-DQ', 'PH08', 'API', 'REPLAY_PORT', '/dq/internal/v1/replays', true),
-  ('PH19-INBOX', 'PH19', 'API', 'REPLAY_PORT', '/payment/internal/v1/replays', true)
+  ('ph04-runtime', 'PH-04', 'KAFKA', 'KAFKA_TOPIC', '/integration/internal/v1/replays', true),
+  ('ph10-event', 'PH-10', 'FEDERATED', 'EVENT_LAYER', '/event/internal/v1/replays', false),
+  ('ph01-inbox', 'PH-01', 'API', 'HTTP_PORT', '/onboarding/internal/v1/replays', true),
+  ('ph06-mdm-job', 'PH-06', 'API', 'HTTP_PORT', '/mdm/internal/v1/replays', true),
+  ('ph08-dq', 'PH-08', 'API', 'HTTP_PORT', '/dq/internal/v1/replays', true),
+  ('ph19-inbox', 'PH-19', 'API', 'HTTP_PORT', '/payment/internal/v1/replays', true)
 ) AS s(c, m, ch, p, e, v)
 ON CONFLICT (tenant_id, source_code) DO NOTHING;
 INSERT INTO ph18_ops.backup_object (id, tenant_id, object_code, name, object_kind, tool, schedule, rpo_minutes, rto_minutes, retention_days, target_location, recovery_tier, verification_interval_days, created_by, updated_by)
@@ -2686,7 +2778,7 @@ GRANT SELECT, INSERT ON ph18_ops.outbox_event, ph18_ops.restore_verification, ph
 GRANT SELECT ON ph18_ops.config_param TO ph18_worker;
 -- Báo cáo: đọc mọi bảng; không đọc payload DLQ, header ngữ cảnh, payload bản sửa, biến mẫu và người nhận thông báo, ảnh chụp bản ghi lỗi di trú.
 GRANT SELECT ON ph18_ops.outbox_event, ph18_ops.inbox_event, ph18_ops.param_namespace, ph18_ops.param_definition, ph18_ops.param_change_request, ph18_ops.param_value, ph18_ops.param_value_version, ph18_ops.feature_flag, ph18_ops.egress_allowlist_entry, ph18_ops.param_bundle, ph18_ops.dlq_source, ph18_ops.error_guide, ph18_ops.dlq_group, ph18_ops.dlq_payload_ref, ph18_ops.dlq_assignment, ph18_ops.replay_job, ph18_ops.replay_item, ph18_ops.dlq_audit, ph18_ops.notification_template, ph18_ops.notification_template_version, ph18_ops.notification_rule, ph18_ops.notification_delivery, ph18_ops.user_notification_pref, ph18_ops.suppression_entry, ph18_ops.task_type, ph18_ops.task_item, ph18_ops.task_reminder, ph18_ops.work_calendar, ph18_ops.calendar_holiday, ph18_ops.maintenance_window, ph18_ops.incident, ph18_ops.incident_timeline, ph18_ops.incident_link, ph18_ops.backup_object, ph18_ops.backup_run, ph18_ops.restore_verification, ph18_ops.tenant_restore_request, ph18_ops.tenant_restore_step, ph18_ops.tenant_export_job, ph18_ops.dr_drill, ph18_ops.merge_transfer, ph18_ops.legacy_source, ph18_ops.migration_plan, ph18_ops.migration_plan_item, ph18_ops.migration_run, ph18_ops.migration_run_item_result, ph18_ops.migration_reconciliation, ph18_ops.credential_reissue_marker, ph18_ops.parallel_run_group, ph18_ops.shadow_comparison_sample, ph18_ops.cutover_checklist, ph18_ops.cutover_log, ph18_ops.ops_report TO ph18_readonly;
-GRANT SELECT (id, tenant_id, dlq_key, source_code, source_module, flow_code, flow_version, stage, reason_code, error_code, error_class, error_message, attempts, trace_id, origin_topic, origin_partition, origin_offset, dlq_partition, dlq_offset, external_ref, first_failed_at, received_at, status, priority, group_id, assignee, missing_context, schema_ref, payload_location, payload_content_type, payload_size_bytes, payload_sha256, current_revision_no, discard_reason, resolved_at, closed_at, retention_until, created_at, created_by, updated_at, updated_by, version) ON ph18_ops.dlq_message TO ph18_readonly;
+GRANT SELECT (id, tenant_id, dlq_key, source_code, source_module, flow_code, flow_version, stage, reason_code, error_code, error_class, error_message, attempts, trace_id, origin_topic, origin_partition, origin_offset, dlq_partition, dlq_offset, external_ref, first_failed_at, received_at, status, priority, group_id, assignee, missing_context, schema_ref, payload_location, payload_content_type, payload_size_bytes, payload_sha256, current_revision_no, occurrence_count, last_seen_at, discard_reason, resolved_at, closed_at, retention_until, created_at, created_by, updated_at, updated_by, version) ON ph18_ops.dlq_message TO ph18_readonly;
 GRANT SELECT (id, tenant_id, dlq_id, dlq_received_at, revision_no, payload_location, payload_sha256, diff, reason, contains_restricted, status, approved_by, approved_at, rejected_reason, created_at, created_by, updated_at, updated_by, version) ON ph18_ops.dlq_revision TO ph18_readonly;
 GRANT SELECT (id, tenant_id, caller_module, message_key, template_code, template_version_no, rule_id, source_event_id, category, channels, link, mode, priority, status, requested_at, dispatched_at, expires_at, created_at, created_by, updated_at, updated_by, version) ON ph18_ops.notification_message TO ph18_readonly;
 GRANT SELECT (id, tenant_id, run_id, plan_item_id, source_record_ref, error_code, error_message, field_path, fix_status, fixed_by, fixed_at, fix_note, created_at, created_by, updated_at, updated_by, version) ON ph18_ops.migration_error_record TO ph18_readonly;
