@@ -369,7 +369,7 @@ S["Setting"] = ob({"key": st(pattern=r"^02\.[a-z.-]+$"), "default": {}, "domain"
 S["SettingList"] = ob({"items": A(R("Setting")), "effectiveAt": ts(), "impact": st()}, ("items",))
 S["SettingPatch"] = ob({"values": ob({}, additionalProperties=True, minProperties=1), "reason": R("Reason")}, ("values", "reason"), strict=True)
 S["HistoryPage"] = pg(ob({"at": ts(), "kind": st(example="VERSION_STATE_CHANGED"), "actor": st(), "summary": st(), "versionNo": R("VersionNo"), "details": OBJ}, ("at", "kind", "actor", "summary")))
-S["OperationStatus"] = ob({"operationId": uid(), "kind": st(example="SPEC_REFRESH", desc="Loại tác vụ, khớp `async_operation.kind` ở D03-03-PH02: `SPEC_REFRESH`, `ROUTE_SKELETON`, `DIFF`, `IMPACT_ANALYSIS`, `LEGACY_IMPORT_COMMIT`; đề nghị thêm `NATIONAL_SYNC_RUN`, `GATEWAY_RECONCILE` (Q02-61)."), "status": en("QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"), "progress": it(minimum=0, maximum=100),
+S["OperationStatus"] = ob({"operationId": uid(), "kind": st(example="SPEC_REFRESH", desc="Loại tác vụ, khớp `async_operation.kind` ở D03-03-PH02: `SPEC_REFRESH`, `ROUTE_SKELETON`, `DIFF`, `IMPACT_ANALYSIS`, `LEGACY_IMPORT_COMMIT`, `NATIONAL_SYNC_RUN`, `GATEWAY_RECONCILE` (Q02-61 đã chốt 27/11/2026)."), "status": en("QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"), "progress": it(minimum=0, maximum=100),
                            "result": OBJ, "error": R("ProblemDetails"), "startedAt": ts(), "finishedAt": ts()}, ("operationId", "kind", "status"))
 
 # ---- Ví dụ thân yêu cầu (kiểm khớp lược đồ ở check_contracts.py)

@@ -298,12 +298,12 @@ Mỗi use case có ít nhất một màn hình hoặc API; UC-06-10 và UC-06-22
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-BP-01…09 theo D02-01; BP-10 "Quản lý dữ liệu chủ" là đề nghị bổ sung (FRS Phụ lục B). "—" là năng lực mới, không có ở hệ cũ.
+BP-01…09 theo D02-01; BP-10 "Quản lý dữ liệu chủ" là quy trình đã chốt ngày 27/11/2026, bổ sung vào D02-01 mục 6.2 (FRS Phụ lục B). "—" là năng lực mới, không có ở hệ cũ.
 
 | UC | REQ | BP | Chức năng hệ cũ (LGC) |
 |---|---|---|---|
 | UC-06-01 | REQ-06 | BP-08 | — |
-| UC-06-02 | REQ-06, REQ-09 | BP-10 (đề nghị) | — |
+| UC-06-02 | REQ-06, REQ-09 | BP-10 | — |
 | UC-06-03 | REQ-06 | BP-10 | — |
 | UC-06-04 | REQ-06 | BP-01, BP-10 | — (LGC-NGSP-003, 005 là nguồn qua PH-14) |
 | UC-06-05 | REQ-06, REQ-04, REQ-10 | BP-04 | — |
@@ -412,7 +412,7 @@ Khi tenant mới được khởi tạo (BP-08), tỉnh có ngay ba domain chuẩ
 
 **FR hiện thực.** FR-06-001, FR-06-007.
 
-**Truy vết.** REQ-06; BP-08 (khởi tạo tenant), BP-10 đề nghị; hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-06; BP-08 (khởi tạo tenant), BP-10; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Tenant `T68` `ACTIVE`; PH-07 đã nạp ĐVHC, giới tính, dân tộc, quốc tịch; Hà có `PERM-06-config` gói `COMMON`.
 
@@ -460,7 +460,7 @@ Tỉnh thêm thuộc tính địa phương (ví dụ `ethnicity`, `occupation`) 
 
 **FR hiện thực.** FR-06-002, FR-06-003, FR-06-004, FR-06-005.
 
-**Truy vết.** REQ-06, REQ-09; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06, REQ-09; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-06-config`; domain chưa có bản nháp khác.
 
@@ -513,7 +513,7 @@ Tỉnh thêm thuộc tính địa phương (ví dụ `ethnicity`, `occupation`) 
 
 **FR hiện thực.** FR-06-006.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Nháp qua kiểm tra UC-06-02; domain `ACTIVE` hoặc `DRAFT` (domain mới); người duyệt có `PERM-06-approve`.
 
@@ -561,7 +561,7 @@ Thứ tự "nguồn nào thắng khi mâu thuẫn" là quyết định quản l�
 
 **FR hiện thực.** FR-06-008, FR-06-009.
 
-**Truy vết.** REQ-06; BP-01 (HTTT đã kết nạp mới đăng ký được), BP-10 đề nghị; hệ cũ: không có (LGC-NGSP-003, 005 là nguồn qua PH-14, §5.3).
+**Truy vết.** REQ-06; BP-01 (HTTT đã kết nạp mới đăng ký được), BP-10; hệ cũ: không có (LGC-NGSP-003, 005 là nguồn qua PH-14, §5.3).
 
 **Tiền điều kiện.** HTTT `ACTIVE` ở PH-01 (trừ `NATIONAL_DB`, `MANUAL_ENTRY`); domain `ACTIVE`; Lan có `PERM-06-config`.
 
@@ -664,7 +664,7 @@ Dành cho dữ liệu lịch sử hoặc đơn vị chưa có kết nối. Tệp
 
 **FR hiện thực.** FR-06-013.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-ingest`; nguồn `FILE-XA-00004` `ACTIVE` kênh `FILE`.
 
@@ -710,7 +710,7 @@ Hệ thống đưa giá trị về dạng chuẩn (tên Việt có và không d�
 
 **FR hiện thực.** FR-06-014, FR-06-015, FR-06-017.
 
-**Truy vết.** REQ-06, REQ-07; BP-10 đề nghị; hệ cũ: không có; LGC-DMDC-015, 019 (PH-07 cung cấp mã ĐVHC, §5.3).
+**Truy vết.** REQ-06, REQ-07; BP-10; hệ cũ: không có; LGC-DMDC-015, 019 (PH-07 cung cấp mã ĐVHC, §5.3).
 
 **Tiền điều kiện.** Ứng viên `RECEIVED`; xem cần `PERM-06-read`, xử lý lại và loại bỏ cần `PERM-06-ingest`.
 
@@ -760,7 +760,7 @@ Bộ quy tắc là cấu hình có phiên bản, không sửa mã. Ba ranh giớ
 
 **FR hiện thực.** FR-06-018, FR-06-019, FR-06-023.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-config`; domain `ACTIVE`; không sửa được bộ quy tắc `ACTIVE`.
 
@@ -807,7 +807,7 @@ Bộ quy tắc chỉ kích hoạt khi đánh giá trên tập nhãn khóa ≥ 1.
 
 **FR hiện thực.** FR-06-018, FR-06-024, FR-06-025, FR-06-026.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Bộ quy tắc `DRAFT` hoặc `TESTING`; domain `ACTIVE`.
 
@@ -858,7 +858,7 @@ Bộ quy tắc chỉ kích hoạt khi đánh giá trên tập nhãn khóa ≥ 1.
 
 **FR hiện thực.** FR-06-020, FR-06-021, FR-06-034.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Ứng viên `NORMALIZED`; bộ quy tắc `ACTIVE`.
 
@@ -925,7 +925,7 @@ Việc trực tuyến không so được mọi cặp trong khối, nên nạp ba
 
 **FR hiện thực.** FR-06-022.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; D03-01 (Splink theo lô); hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; D03-01 (Splink theo lô); hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-operate`; bộ quy tắc `ACTIVE` (hoặc `TESTING` với `dryRun`); không có job `BATCH_MATCH` khác của domain.
 
@@ -998,7 +998,7 @@ Mỗi kết luận không chắc chắn thành một việc rõ ràng, xếp the
 
 **FR hiện thực.** FR-06-027, FR-06-028, FR-06-032.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-steward`; có mục `OPEN`; phân công cho người khác cần DA hoặc TA.
 
@@ -1045,7 +1045,7 @@ Màn hình quan trọng nhất của phân hệ: hai bản ghi cạnh nhau, đi�
 
 **FR hiện thực.** FR-06-029, FR-06-030.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Mục `ASSIGNED` cho Lan, còn hiệu lực; `PERM-06-steward`, hợp nhất cần thêm `PERM-06-merge`.
 
@@ -1097,7 +1097,7 @@ Hợp nhất có hậu quả lớn chỉ có hiệu lực khi người thứ hai
 
 **FR hiện thực.** FR-06-031.
 
-**Truy vết.** REQ-06; FR-00-071, ADR-046; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; FR-00-071, ADR-046; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Mục `PENDING_APPROVAL` hoặc `golden_operation` `PENDING_APPROVAL` (từ UC-06-13, 18, 19, 20); hai bản ghi vàng `LOCKED`; Hùng có `PERM-06-approve`, `PERM-06-merge`.
 
@@ -1161,7 +1161,7 @@ Hình cho thấy hai bản ghi bị khóa từ lúc đề nghị đến lúc DA 
 
 **FR hiện thực.** FR-06-033, FR-06-042.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Domain `ACTIVE`; bảng ưu tiên nguồn đã duyệt (UC-06-04).
 
@@ -1208,7 +1208,7 @@ Dùng để trả lời khiếu nại: giá trị này từ đâu, lúc nào, th
 
 **FR hiện thực.** FR-06-035, FR-06-041, FR-06-043.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-read`.
 
@@ -1255,7 +1255,7 @@ Sửa trên bản ghi vàng chỉ là biện pháp tạm, có hạn, luôn kèm 
 
 **FR hiện thực.** FR-06-036, FR-06-040.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Sửa: `PERM-06-update`, bản ghi `ACTIVE`, thuộc tính không thẩm quyền quốc gia. Ngừng, khôi phục: `PERM-06-merge`.
 
@@ -1303,7 +1303,7 @@ Dùng khi người quản lý phát hiện trùng ngoài hàng đợi, ví dụ 
 
 **FR hiện thực.** FR-06-037.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-merge`; mọi bản ghi `ACTIVE`, cùng domain.
 
@@ -1352,7 +1352,7 @@ Sửa một hợp nhất nhầm: hai người khác nhau bị trộn thành mộ
 
 **FR hiện thực.** FR-06-038, FR-06-044.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-merge` (tách), `PERM-06-update` (gỡ); bản ghi `ACTIVE`, không `LOCKED`, tách cần ≥ 2 liên kết hiệu lực.
 
@@ -1417,7 +1417,7 @@ Hoàn tác là thao tác mới, không xóa lịch sử (BR-06-024); là biện 
 
 **FR hiện thực.** FR-06-039.
 
-**Truy vết.** REQ-06; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-merge`; thao tác `APPLIED`, chưa `UNDONE`.
 
@@ -1483,7 +1483,7 @@ Cửa khai thác dữ liệu chủ cho HTTT và người dùng. Mọi lượt tr
 
 **FR hiện thực.** FR-06-045, FR-06-046, FR-06-048, FR-06-052.
 
-**Truy vết.** REQ-06, REQ-09; BP-10 đề nghị; hệ cũ: không có; LGC-NGSP-003 (tra BHXH hộ gia đình làm chính ở PH-14, §5.3).
+**Truy vết.** REQ-06, REQ-09; BP-10; hệ cũ: không có; LGC-NGSP-003 (tra BHXH hộ gia đình làm chính ở PH-14, §5.3).
 
 **Tiền điều kiện.** Bên gọi có scope hoặc `PERM-06-read` và mục đích PH-09 cho domain; nguồn của bên gọi `ACTIVE`.
 
@@ -1535,7 +1535,7 @@ Luồng PH-04 làm giàu bản tin hoặc HTTT kiểm tra trùng trước khi t�
 
 **FR hiện thực.** FR-06-047.
 
-**Truy vết.** REQ-06, REQ-09; BP-04, BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06, REQ-09; BP-04, BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** Bộ quy tắc `ACTIVE`; mục đích PH-09 cho domain; hạn mức còn.
 
@@ -1599,7 +1599,7 @@ Hình cho thấy dữ liệu chỉ rời `dh-data` sau khi mục đích được
 
 **FR hiện thực.** FR-06-049.
 
-**Truy vết.** REQ-06, REQ-09; BP-10 đề nghị; hệ cũ: không có.
+**Truy vết.** REQ-06, REQ-09; BP-10; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-export`; mục đích xuất được PH-09 ghi nhận.
 
@@ -1806,7 +1806,7 @@ Hình cho thấy quyết định tạm dừng nằm ở `dh-data` sau khi so sá
 
 **FR hiện thực.** FR-06-058.
 
-**Truy vết.** REQ-06, REQ-09; BP-10 đề nghị; CMP-LAW-05, CMP-LAW-04; hệ cũ: không có.
+**Truy vết.** REQ-06, REQ-09; BP-10; CMP-LAW-05, CMP-LAW-04; hệ cũ: không có.
 
 **Tiền điều kiện.** Yêu cầu có thông tin xác minh danh tính (qua PH-09 hoặc đối chiếu giấy tờ).
 
@@ -1852,7 +1852,7 @@ Hình cho thấy quyết định tạm dừng nằm ở `dh-data` sau khi so sá
 
 **FR hiện thực.** FR-06-059, FR-06-060.
 
-**Truy vết.** REQ-06, REQ-20; BP-10 đề nghị; CMP-LAW-05; hệ cũ: không có.
+**Truy vết.** REQ-06, REQ-20; BP-10; CMP-LAW-05; hệ cũ: không có.
 
 **Tiền điều kiện.** `PERM-06-config`.
 
@@ -1942,4 +1942,4 @@ D03-06-PH06 lấy câu thông báo từ chương 6 và thêm câu cho ERR-06-003
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 28 use case phủ 60 FR, năm sơ đồ use case, sơ đồ trình tự cho bốn mắt, tách, resolve, đồng bộ quốc gia, job Splink, sơ đồ hoạt động cho đối sánh và hoàn tác; ma trận truy vết FR cũ, REQ, LGC |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: đánh dấu ĐN-UC-01…07 đã áp; UC-06-09 dùng khóa tập nhãn (API-06-123), tự tắt tự hợp nhất, ERR-06-051; UC-06-11 `decision` (API-06-106); UC-06-12 nhận việc tiếp theo (API-06-124); UC-06-13 mở lại quyết định (API-06-121, ERR-06-053); UC-06-20 danh sách thao tác (API-06-122); UC-06-27 gỡ hạn chế (API-06-125) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: UC-06-25 trỏ UC-14-30 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: UC-06-25 trỏ UC-14-30; chốt câu hỏi mở đợt đồng bộ: Q384 |

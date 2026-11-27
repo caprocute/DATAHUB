@@ -7,7 +7,7 @@ trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kiến trúc sư, lập trình viên L-DATA, đội phát triển HTTT thành viên, kiểm thử viên
 phan_he: PH-07
 nguoi_lap: Nhóm phân hệ PH-07
-mo_ta: Đặc tả 76 endpoint REST, 10 sự kiện Kafka và mã lỗi ERR-07 của phân hệ Danh mục dùng chung, sinh từ OpenAPI và AsyncAPI đã kiểm tra trong CI.
+mo_ta: Đặc tả 77 endpoint REST, 10 sự kiện Kafka và mã lỗi ERR-07 của phân hệ Danh mục dùng chung, sinh từ OpenAPI và AsyncAPI đã kiểm tra trong CI.
 tai_lieu_lien_quan: D02-03-PH07 FRS; D03-02-PH07 SDD; D03-03-PH07 CSDL; D03-06-PH07 Màn hình; D05-02-PH07 Test case; D04-01 Quy ước mã
 ---
 
@@ -23,7 +23,7 @@ Tài liệu này là văn xuôi giải thích hai tệp hợp đồng. Khi văn 
 
 | Tệp | Nội dung | Quy mô |
 |---|---|---|
-| [`ph07/openapi-rdm.yaml`](ph07/openapi-rdm.yaml) | API REST | 76 endpoint, 132 lược đồ, 127 ví dụ |
+| [`ph07/openapi-rdm.yaml`](ph07/openapi-rdm.yaml) | API REST | 77 endpoint, 135 lược đồ, 127 ví dụ |
 | [`ph07/asyncapi-rdm.yaml`](ph07/asyncapi-rdm.yaml) | Sự kiện Kafka | 10 sự kiện EVT-07-01…10 |
 
 : Tóm tắt cho hội đồng thẩm định
@@ -32,7 +32,7 @@ Mọi tên miền, máy chủ, định danh và dữ liệu trong hợp đồng 
 
 ## 0. Giới thiệu
 
-Tài liệu đặc tả giao diện lập trình của PH-07: 76 endpoint REST cho tra cứu, quản trị, nhập xuất và đồng bộ danh mục, 10 sự kiện Kafka, hợp đồng với phân hệ khác và bảng mã lỗi ERR-07. Nguồn chuẩn là hai tệp máy đọc nêu ở phần Tóm tắt. Chương 9 đặc tả từng endpoint theo 10 mục, sinh tự động từ OpenAPI nên luôn khớp hợp đồng.
+Tài liệu đặc tả giao diện lập trình của PH-07: 77 endpoint REST cho tra cứu, quản trị, nhập xuất và đồng bộ danh mục, 10 sự kiện Kafka, hợp đồng với phân hệ khác và bảng mã lỗi ERR-07. Nguồn chuẩn là hai tệp máy đọc nêu ở phần Tóm tắt. Chương 9 đặc tả từng endpoint theo 10 mục, sinh tự động từ OpenAPI nên luôn khớp hợp đồng.
 
 | Người đọc | Phần cần đọc |
 |---|---|
@@ -75,6 +75,8 @@ API có hai kiểu chủ thể. HTTT thành viên lấy token bằng OAuth 2.1 C
 
 APISIX kiểm tra chữ ký token, scope và giới hạn tần suất trước khi chuyển tới `dh-data`. `dh-data` kiểm tra lại tenant, quyền `PERM-07-*` và quyền khai thác danh mục `RESTRICTED` (BR-07-019, FR-07-052); lớp kiểm tra thứ hai này bảo đảm an toàn kể cả khi cấu hình gateway sai. Mỗi endpoint ghi quyền yêu cầu trong mở rộng `x-datahub-permission`.
 
+**Token đổi của PH-17 (đã chốt 27/11/2026, Q427).** Điểm cuối bản nháp của PH-07 mà trợ lý AI (PH-17) gọi bằng token đổi theo RFC 8693 dùng một scope đọc bản nháp riêng, không dùng chung `assist:infer`; tên scope và hợp đồng do PH-17 chốt trước (PH-07 sẽ thêm API đọc bản nháp riêng sau đó, nay chưa thêm). Ghi bản nháp vẫn qua API ghi hiện có bằng token người dùng đã đổi, theo quyền `PERM-07-*` của người dùng đó.
+
 ## 3. Danh mục endpoint
 
 Bảng dưới đây liệt kê toàn bộ endpoint, sinh từ `openapi-rdm.yaml`. Cột "FR" ghi số FR-07 được hiện thực; cột "Ví dụ" là số ví dụ yêu cầu và phản hồi thành công có trong hợp đồng (ví dụ lỗi dùng chung ở `components/responses`). Mọi ví dụ đã được kiểm tra tự động khớp lược đồ.
@@ -111,6 +113,7 @@ Bảng dưới đây liệt kê toàn bộ endpoint, sinh từ `openapi-rdm.yaml
 | API-07-028 | PATCH | `/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}` | Sửa bản ghi trên bản nháp | 012 | PERM-07-update | 1/1 |
 | API-07-029 | POST | `/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:deprecate` | Ngừng dùng bản ghi, ghi mã thay thế | 012, 019 | PERM-07-update | 0/1 |
 | API-07-030 | DELETE | `/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}` | Xóa bản ghi mới thêm trong bản nháp | 012 | PERM-07-update | 0/0 |
+| API-07-077 | POST | `/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:restore` | Khôi phục bản ghi đã ngừng dùng trong bản nháp | 012 | PERM-07-update | 0/1 |
 | API-07-031 | POST | `/catalogs/{catalogCode}/versions/{versionRef}/items:batch` | Nhập lô bản ghi vào bản nháp (≤ 5.000 thao tác) | 023 | PERM-07-update | 1/1 |
 | API-07-032 | GET | `/catalogs/{catalogCode}/import-template` | Tải tệp mẫu nhập theo lược đồ | 020 | PERM-07-read | 0/1 |
 | API-07-033 | POST | `/import-jobs` | Tải tệp và tạo tác vụ nhập (pha 1) | 021, 022 | PERM-07-update | 0/1 |
@@ -162,7 +165,7 @@ Bảng dưới đây liệt kê toàn bộ endpoint, sinh từ `openapi-rdm.yaml
 
 Ba endpoint trả tệp nhị phân (khuôn nhập xlsx của API-07-032, báo cáo lỗi xlsx của API-07-035, tệp xlsx của API-07-038) không có ví dụ thân trong hợp đồng; mẫu tệp nằm ở D03-06-PH07 và ở bộ dữ liệu kiểm thử D05-02-PH07 §2.
 
-Endpoint API-07-076 (tham số PH-07) được bỏ; tham số `07.rdm.*` đọc, ghi qua API tham số chung của PH-18 (FR-07-053).
+Mã API-07-076 (tham số PH-07) được bỏ nên API mới của PH-07 lấy số tiếp theo là API-07-077 (khôi phục bản ghi); tham số `07.rdm.*` đọc, ghi qua API tham số chung của PH-18 (FR-07-053).
 
 ## 4. Danh mục sự kiện
 
@@ -982,7 +985,7 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 
 **Lỗi.** `401` Thiếu token hoặc token không hợp lệ, hết hạn (ERR-07-041); `403` Không đủ quyền (ERR-07-046), danh mục chỉ đọc (ERR-07-003), tự duyệt (ERR-07-015), HTTT chưa được cấp quyền danh mục hạn chế (ERR-07-030); `404` Không tìm thấy danh mục (ERR-07-001), phiên bản (ERR-07-006), mã bản ghi tại thời điểm (ERR-07-007), ánh xạ (ERR-07-027) hoặc tài nguyên khác (ERR-07-045). Đối tượng của tenant khác luôn trả 404 để không lộ sự tồn tại (FR-00-011); `409` Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037); `412` ETag không khớp, đối tượng đã bị người khác sửa (ERR-07-018); `422` Dữ liệu đúng cú pháp nhưng vi phạm quy tắc nghiệp vụ (ERR-07-009…012, 014, 017, 019, 021, 024, 034, 035, 036).
 
-**Ghi chú.** Đặt `status = DEPRECATED`, ghi `replacedBy` (mỗi mã phải tồn tại và ACTIVE trong cùng bản nháp) và `validTo` (mặc định bằng `effectiveFrom` của bản nháp). Bản ghi con còn ACTIVE làm thao tác thất bại 422 ERR-07-010 trừ khi `cascade = true` (ngừng dùng cả nhánh). Gọi lại với `reactivate = true` để khôi phục ACTIVE trong cùng bản nháp.
+**Ghi chú.** Đặt `status = DEPRECATED`, ghi `replacedBy` (mỗi mã phải tồn tại và ACTIVE trong cùng bản nháp) và `validTo` (mặc định bằng `effectiveFrom` của bản nháp). Bản ghi con còn ACTIVE làm thao tác thất bại 422 ERR-07-010 trừ khi `cascade = true` (ngừng dùng cả nhánh). Khôi phục bản ghi đã ngừng dùng về ACTIVE trong cùng bản nháp dùng thao tác riêng `:restore` (API-07-077), không đi qua `PATCH` hay thao tác này.
 :::
 
 #### API-07-030 · Xóa bản ghi mới thêm trong bản nháp
@@ -1026,11 +1029,35 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `200` thành công, `BatchResult`; trường bắt buộc: `total`, `succeeded`, `failed`, `results`; tiêu đề `ETag`, `Idempotent-Replayed`.
+**Phản hồi thành công.** `200` thành công, `BatchResult`; trường bắt buộc: `total`, `succeeded`, `failed`, `results`; tiêu đề `ETag`, `Idempotent-Replayed`; `207`, `BatchResult`; trường bắt buộc: `total`, `succeeded`, `failed`, `results`; tiêu đề `ETag`, `Idempotent-Replayed`.
 
-**Lỗi.** `400` Yêu cầu sai cú pháp hoặc vi phạm giới hạn đầu vào (ERR-07-023, 025, 026, 040); `401` Thiếu token hoặc token không hợp lệ, hết hạn (ERR-07-041); `403` Không đủ quyền (ERR-07-046), danh mục chỉ đọc (ERR-07-003), tự duyệt (ERR-07-015), HTTT chưa được cấp quyền danh mục hạn chế (ERR-07-030); `404` Không tìm thấy danh mục (ERR-07-001), phiên bản (ERR-07-006), mã bản ghi tại thời điểm (ERR-07-007), ánh xạ (ERR-07-027) hoặc tài nguyên khác (ERR-07-045). Đối tượng của tenant khác luôn trả 404 để không lộ sự tồn tại (FR-00-011); `409` Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037); `413` Thân yêu cầu hoặc tệp vượt kích thước tối đa (ERR-07-042); `422` Dữ liệu đúng cú pháp nhưng vi phạm quy tắc nghiệp vụ (ERR-07-009…012, 014, 017, 019, 021, 024, 034, 035, 036); `429` Vượt giới hạn tần suất (ERR-07-044), do APISIX hoặc `dh-data` trả.
+**Lỗi.** `400` Yêu cầu sai cú pháp hoặc vi phạm giới hạn đầu vào (ERR-07-023, 025, 026, 040); `401` Thiếu token hoặc token không hợp lệ, hết hạn (ERR-07-041); `403` Không đủ quyền (ERR-07-046), danh mục chỉ đọc (ERR-07-003), tự duyệt (ERR-07-015), HTTT chưa được cấp quyền danh mục hạn chế (ERR-07-030); `404` Không tìm thấy danh mục (ERR-07-001), phiên bản (ERR-07-006), mã bản ghi tại thời điểm (ERR-07-007), ánh xạ (ERR-07-027) hoặc tài nguyên khác (ERR-07-045). Đối tượng của tenant khác luôn trả 404 để không lộ sự tồn tại (FR-00-011); `409` Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037); `412` ETag không khớp, đối tượng đã bị người khác sửa (ERR-07-018); `413` Thân yêu cầu hoặc tệp vượt kích thước tối đa (ERR-07-042); `422` Dữ liệu đúng cú pháp nhưng vi phạm quy tắc nghiệp vụ (ERR-07-009…012, 014, 017, 019, 021, 024, 034, 035, 036); `429` Vượt giới hạn tần suất (ERR-07-044), do APISIX hoặc `dh-data` trả.
 
-**Ghi chú.** Áp dụng tối đa 5.000 thao tác `upsert`, `deprecate`, `delete` trong một giao dịch (`atomic = true`, mặc định: một thao tác lỗi thì không thao tác nào được ghi, trả 422 với `errors[].row` là chỉ số thao tác) hoặc từng phần (`atomic = false`: thao tác hợp lệ được ghi, trả 200 với `results[].status = FAILED` cho thao tác lỗi). `versionRef` thường là `draft`; nếu chưa có bản nháp và `createDraftIfMissing = true` thì máy chủ tạo bản nháp từ phiên bản hiện hành trước. Bắt buộc `Idempotency-Key` để HTTT gửi lại an toàn khi mất kết nối: cùng khóa và cùng băm thân trong 24 giờ trả lại đúng kết quả cũ với header `Idempotent-Replayed: true`; cùng khóa khác thân trả 409 ERR-07-022. Giới hạn 5.000 là tham số `07.rdm.batch-max-ops` (PH-18), vượt trả 400 ERR-07-026. Không yêu cầu `If-Match` vì lô thường do máy gửi; xung đột với người sửa song song được xử lý bằng khóa hàng.
+**Ghi chú.** Áp dụng tối đa 5.000 thao tác `upsert`, `deprecate`, `delete` trong một giao dịch (`atomic = true`, mặc định: một thao tác lỗi thì không thao tác nào được ghi, trả 422 với `errors[].row` là chỉ số thao tác) hoặc từng phần (`atomic = false`: thao tác hợp lệ được ghi, trả 200 với `results[].status = FAILED` cho thao tác lỗi). `versionRef` thường là `draft`; nếu chưa có bản nháp và `createDraftIfMissing = true` thì máy chủ tạo bản nháp từ phiên bản hiện hành trước. Mỗi thao tác nhận `ifMatch` riêng (ETag của bản ghi); lệch thì thao tác đó lỗi ERR-07-018 (`atomic = true`: không ghi gì và trả 412 kèm `results`; `atomic = false`: các thao tác còn lại vẫn ghi). Khi `atomic = false` và có thao tác lỗi, phản hồi là 207 Multi-Status kèm kết quả từng phần; mọi thao tác đạt thì trả 200. Bắt buộc `Idempotency-Key` để HTTT gửi lại an toàn khi mất kết nối: cùng khóa và cùng băm thân trong 24 giờ trả lại đúng kết quả cũ với header `Idempotent-Replayed: true`; cùng khóa khác thân trả 409 ERR-07-022. Giới hạn 5.000 là tham số `07.rdm.batch-max-ops` (PH-18), vượt trả 400 ERR-07-026. Không yêu cầu `If-Match` vì lô thường do máy gửi; xung đột với người sửa song song được xử lý bằng khóa hàng.
+:::
+
+#### API-07-077 · Khôi phục bản ghi đã ngừng dùng trong bản nháp
+
+::: dac-ta
+**Mục đích.** Khôi phục bản ghi đã ngừng dùng trong bản nháp.
+
+**Phương thức, đường dẫn.** `POST /catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:restore`.
+
+**Quyền.** `PERM-07-update`.
+
+**FR hiện thực.** FR-07-012.
+
+**Tham số.** `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ItemRestoreRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CatalogItem`; trường bắt buộc: `code`, `name`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** `400` Yêu cầu sai cú pháp hoặc vi phạm giới hạn đầu vào (ERR-07-023, 025, 026, 040); `401` Thiếu token hoặc token không hợp lệ, hết hạn (ERR-07-041); `403` Không đủ quyền (ERR-07-046), danh mục chỉ đọc (ERR-07-003), tự duyệt (ERR-07-015), HTTT chưa được cấp quyền danh mục hạn chế (ERR-07-030); `404` Không tìm thấy danh mục (ERR-07-001), phiên bản (ERR-07-006), mã bản ghi tại thời điểm (ERR-07-007), ánh xạ (ERR-07-027) hoặc tài nguyên khác (ERR-07-045). Đối tượng của tenant khác luôn trả 404 để không lộ sự tồn tại (FR-00-011); `409` Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037); `412` ETag không khớp, đối tượng đã bị người khác sửa (ERR-07-018); `422` Dữ liệu đúng cú pháp nhưng vi phạm quy tắc nghiệp vụ (ERR-07-009…012, 014, 017, 019, 021, 024, 034, 035, 036).
+
+**Ghi chú.** Đặt lại `status = ACTIVE` cho bản ghi đang `DEPRECATED` trong bản nháp, xóa `replacedBy` và `validTo` đã ghi khi ngừng dùng; bắt buộc `reason`. Thao tác riêng vì `ItemUpdateRequest` (API-07-028) không có trường `status`. Bản ghi con đã ngừng dùng theo `cascade` không tự khôi phục: khôi phục từng bản ghi hoặc đặt `cascade = true` để khôi phục cả nhánh. Mã cha phải đang ACTIVE, nếu không trả 422 ERR-07-010. Bản ghi không ở `DEPRECATED` trả 409 ERR-07-004; bản nháp không ở `DRAFT` trả 409 ERR-07-004.
 :::
 
 ### Nhập xuất
@@ -2137,6 +2164,6 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: quy ước, xác thực, danh mục 76 endpoint, sự kiện, mã lỗi |
 | 0.2 | 2026-11-26 | Nâng theo chuẩn kết hợp: thêm Giới thiệu, chương 9 đặc tả từng endpoint 10 mục sinh từ OpenAPI, chú thích bảng |
-| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: thêm tham số lọc API-07-001, xuất CSV XLSX, isLocalExtension, precision, allowedActions và disabledReasons |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: thêm tham số lọc API-07-001, xuất CSV XLSX, isLocalExtension, precision, allowedActions và disabledReasons; Chốt câu hỏi mở đợt đồng bộ: Q427, Q442, Q443 |
 
 : Lịch sử phiên bản

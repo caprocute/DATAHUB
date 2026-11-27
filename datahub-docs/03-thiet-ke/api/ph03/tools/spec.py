@@ -128,6 +128,8 @@ OPS = [
     ("094", "GET", "/tenant-redirects", "Danh sách chuyển tiếp tenant sáp nhập", "037", "read", "", "200", "redirect"),
     ("095", "POST", "/tenant-redirects", "Tạo chuyển tiếp tenant sáp nhập", "037", "admin", "x", "201", "redirect"),
     ("096", "POST", "/tenant-redirects/{redirectId}:end", "Kết thúc chuyển tiếp tenant sáp nhập", "037", "admin", "", "200", "redirect"),
+    ("097", "POST", "/waf/virtual-patches:dry-run", "Thử khô luật vá ảo trên mẫu yêu cầu 24 giờ gần nhất", "008", "waf", "", "200", "waf"),
+    ("098", "POST", "/snapshots:release-hold", "Bỏ giữ tổng hợp tự động sau quay lui", "044", "operate", "", "200", "snapshot"),
 ]
 
 TAGS = {

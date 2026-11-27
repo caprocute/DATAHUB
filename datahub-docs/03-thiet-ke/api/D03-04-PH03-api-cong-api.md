@@ -6,7 +6,7 @@ ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, gateway, giao diện; đơn vị kết nối (PH-01, PH-12, PH-13); ATTT; kiểm thử viên; hội đồng thẩm định
 phan_he: PH-03
-mo_ta: Đặc tả 96 endpoint REST của mặt phẳng điều khiển cổng API, 12 sự kiện Kafka, 57 mã lỗi và hợp đồng giữa cổng với bên gọi, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
+mo_ta: Đặc tả 98 endpoint REST của mặt phẳng điều khiển cổng API, 12 sự kiện Kafka, 57 mã lỗi và hợp đồng giữa cổng với bên gọi, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
 tai_lieu_lien_quan: D02-03-PH03 FRS; D02-04-PH03 Use case; D03-02-PH03 SDD; D03-03-PH03 CSDL; D03-06-PH03 Màn hình; D05-02-PH03 Test case; D02-08 Ma trận phân quyền
 ---
 
@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D02-03-PH03 FRS; D02-04-PH03 Use case; D03-02-PH03 SDD; D03-
 
 **Mục tiêu.** Tài liệu chốt hợp đồng giao diện của PH-03 để các nhóm viết mã cùng lúc mà không lệch nhau: giao diện quản trị gọi gì, PH-01, PH-12, PH-13 gọi gì, cổng phát những sự kiện nào, và khi có lỗi thì bên gọi nhận được gì. Nguồn chuẩn là hai tệp máy đọc được, bảng và đặc tả trong tài liệu này đều sinh từ chúng nên không thể lệch nhau.
 
-**Phạm vi.** Ba loại hợp đồng. (1) **API quản trị** của mặt phẳng điều khiển `dh-connect` dưới `/api/gateway/v1`: 96 operation chia 24 nhóm, từ route, consumer, hạn mức, WAF đến ảnh chụp cấu hình, nút, nhật ký lượt gọi và tham số. (2) **Sự kiện** 12 loại trên Kafka. (3) **Hợp đồng của cổng với bên gọi API**: 30 mã lỗi `ERR-03-101…130` mà APISIX trả cho HTTT, cùng các tiêu đề giới hạn tần suất và ngừng dùng. API mà HTTT công bố để trao đổi dữ liệu (ví dụ tra cứu hộ tịch) do PH-02 quản lý và không nằm trong tập này; chúng đi qua cổng chứ không phải API của cổng.
+**Phạm vi.** Ba loại hợp đồng. (1) **API quản trị** của mặt phẳng điều khiển `dh-connect` dưới `/api/gateway/v1`: 98 operation chia 24 nhóm, từ route, consumer, hạn mức, WAF đến ảnh chụp cấu hình, nút, nhật ký lượt gọi và tham số. (2) **Sự kiện** 12 loại trên Kafka. (3) **Hợp đồng của cổng với bên gọi API**: 30 mã lỗi `ERR-03-101…130` mà APISIX trả cho HTTT, cùng các tiêu đề giới hạn tần suất và ngừng dùng. API mà HTTT công bố để trao đổi dữ liệu (ví dụ tra cứu hộ tịch) do PH-02 quản lý và không nằm trong tập này; chúng đi qua cổng chứ không phải API của cổng.
 
 **Căn cứ pháp lý.** CMP-LAW-09 (Công văn 631/THH-THHT: quản lý API, xác thực OAuth, giới hạn tần suất); CMP-LAW-08 (TCVN 14423:2026: kiểm soát truy cập, nhật ký); CMP-LAW-05 (Luật BVDLCN 91/2025: không ghi dữ liệu cá nhân vào nhật ký lượt gọi); CMP-LAW-16 (Luật An ninh mạng 116/2025: nhật ký, bảo vệ hệ thống).
 
@@ -33,13 +33,13 @@ tai_lieu_lien_quan: D02-03-PH03 FRS; D02-04-PH03 Use case; D03-02-PH03 SDD; D03-
 
 | Chỉ số | Giá trị |
 |---|---|
-| Operation REST | 96 (API-03-001…096): 47 GET, 33 POST, 12 PUT, 4 DELETE; 80 đường dẫn; 24 nhóm |
+| Operation REST | 98 (API-03-001…098): 47 GET, 35 POST, 12 PUT, 4 DELETE; 82 đường dẫn; 24 nhóm |
 | Operation có `If-Match` (khóa lạc quan) | 33; có `Idempotency-Key` bắt buộc: 17 |
 | Operation gọi bằng token dịch vụ | 4 (API-03-013, 014, 015 scope `gateway:sync`; API-03-053 scope `gateway:revoke`) |
 | Operation có hai nhánh thành công (200 hoặc 202, 200 hoặc 201) | 6 |
 | Sự kiện Kafka | 12 (EVT-03-01…12), 12 kênh AsyncAPI 3.0 |
 | Mã lỗi | 57: 27 control plane (ERR-03-001…027), 30 gateway trả cho bên gọi (ERR-03-101…130) |
-| Lược đồ OpenAPI | 125 lược đồ; 35 ví dụ OpenAPI, 15 khối JSON trong tài liệu và 9 ví dụ sự kiện đã kiểm khớp lược đồ |
+| Lược đồ OpenAPI | 129 lược đồ; 36 ví dụ OpenAPI, 15 khối JSON trong tài liệu và 9 ví dụ sự kiện đã kiểm khớp lược đồ |
 | Phủ yêu cầu | 59 FR: 57 FR có ít nhất một API; FR-03-013 (xác định tenant) và FR-03-032 (định danh truy vết) thuần ở mặt phẳng dữ liệu, ghi rõ ở §3.2 |
 | Kiểm tra hợp đồng | OpenAPI qua `openapi-spec-validator`; Spectral với `spectral:oas` và OWASP API Security: 0 lỗi, 270 cảnh báo mức thấp; AsyncAPI qua `@asyncapi/parser` 3: 0 lỗi |
 
@@ -116,7 +116,7 @@ Hợp đồng này dựa vào ba tập cùng phân hệ và một số tài li�
 
 | Mã | Tài liệu | Dùng cho |
 |---|---|---|
-| D02-03-PH03 | [FRS Cổng API](../../02-yeu-cau/frs/D02-03-PH03-frs-cong-api.md) | 59 FR, danh mục 96 API (§9.4), 57 mã lỗi (§9.1), 12 sự kiện (§9.3), thông báo (§9.2) |
+| D02-03-PH03 | [FRS Cổng API](../../02-yeu-cau/frs/D02-03-PH03-frs-cong-api.md) | 59 FR, danh mục 98 API (§9.4), 57 mã lỗi (§9.1), 12 sự kiện (§9.3), thông báo (§9.2) |
 | D02-04-PH03 | [Use case Cổng API](../../02-yeu-cau/use-case/D02-04-PH03-use-case-cong-api.md) | Luồng người dùng và hệ thống gọi API |
 | D03-02-PH03 | [SDD Cổng API](../sdd/D03-02-PH03-sdd-cong-api.md) | DTO (§3.4), khóa Valkey, outbox (§8.2), ánh xạ ngoại lệ sang mã lỗi (§8.4) |
 | D03-03-PH03 | [CSDL Cổng API](../csdl/D03-03-PH03-csdl-cong-api.md) | Bảng `idempotency_key`, `outbox`, RLS |
@@ -137,7 +137,7 @@ Mười chương theo thứ tự người đọc cần: quy ước và quyền t
 |---|---|
 | 1 | Quy ước chung: đường gốc, phiên bản, khóa lạc quan, chống trùng, phân trang, lỗi |
 | 2 | Xác thực và phân quyền: bên gọi, quyền theo operation, bốn mắt, đa tenant |
-| 3 | Danh mục 96 endpoint, phủ FR, luồng chính, ví dụ yêu cầu và phản hồi |
+| 3 | Danh mục 98 endpoint, phủ FR, luồng chính, ví dụ yêu cầu và phản hồi |
 | 4 | Danh mục 12 sự kiện, khung sự kiện, tương thích, kênh nhanh Valkey |
 | 5 | Hợp đồng với PH-01, 02, 12, 13, 20, với bên gọi qua cổng và với nút gateway |
 | 6 | Bảng mã lỗi ERR-03 và thông điệp |
@@ -165,7 +165,7 @@ Bảng gom các quy ước áp cho mọi operation; mỗi dòng là một quy t�
 | Hành động | Hậu tố `:{động-từ}` trên tài nguyên theo AIP-136: `:stop`, `:start`, `:suspend`, `:resume`, `:approve`, `:reject`, `:revoke`, `:retire`, `:renew`, `:acknowledge`, `:validate`, `:build`, `:publish`, `:rollback`, `:export`, `:import`, `:apply`, `:end` |
 | Khóa lạc quan | `GET` trả `ETag` (số `version` của bản ghi). Mọi `PUT`, `PATCH`, `DELETE` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả ERR-03-004 (`412`) kèm `currentEtag`. Ngoại lệ có `If-Match` tùy chọn: API-03-013, 014 (PH-01 gọi lại trong saga) và API-03-017, 019 (tạm ngừng khẩn cấp không được chậm vì tranh chấp phiên bản) |
 | Chống trùng | 17 operation tạo, phát, xuất, đẩy thu hồi bắt buộc `Idempotency-Key` (16 đến 128 ký tự, giữ 24 giờ ở bảng `idempotency_key`). Cùng khóa cùng thân trả đúng phản hồi cũ; cùng khóa khác thân trả ERR-03-003 (SDD §4.13) |
-| Phân trang | `page` (từ 1, mặc định 1), `size` (1 đến 100, mặc định 20); phản hồi `items`, `page`, `size`, `totalElements` |
+| Phân trang | `page` (từ 1, mặc định 1), `size` (1 đến 100, mặc định 20); phản hồi `items`, `page`, `size`, `totalElements`; riêng API-03-039, 074 (nhật ký ClickHouse) dùng phân trang con trỏ `cursor`, `limit`, phản hồi `items`, `page.next`, `page.limit`, `page.approxTotal` (ngoại lệ đã chốt 27/11/2026, Q03-56) |
 | Lọc, sắp xếp | Tham số truy vấn tên tiếng Anh; giá trị lặp dạng `state=ACTIVE,STOPPED`; tìm tự do `q` (không dấu, tối thiểu 2 ký tự); sắp xếp `sort=-updatedAt` (dấu `-` là giảm dần) |
 | Thời gian | ISO 8601 có múi giờ (`2026-11-26T09:14:03+07:00`), lưu UTC. Ranh giới chu kỳ hạn ngạch theo `Asia/Ho_Chi_Minh` |
 | Tiến trình dài | Xuất nhật ký, xuất báo cáo, nhập hệ cũ, gia hạn chứng thư trả `202` kèm `Location`; tổng hợp, ký, phát ảnh chụp chạy đồng bộ trong thời hạn của yêu cầu (giả định 1.000 route trong 5 giây, GĐ-03-07) |
@@ -287,8 +287,8 @@ Bảng dưới đếm theo quyền; cột "Cho phép" tóm tắt D02-08 và FRS 
 | `PERM-03-limit` | Hạn mức toàn tenant, ghi đè hạn mức | PA, TA | 024, 026, 027, 028 | 4 |
 | `PERM-03-waf-request` | Đề nghị ngoại lệ WAF, xem sự kiện chặn của WAF | PA, TA, TO, SO | 039, 042, 043, 047 | 4 |
 | `PERM-03-waf-approve` | Duyệt, từ chối ngoại lệ WAF | SO | 044, 045 | 2 |
-| `PERM-03-waf` | Đổi chế độ WAF, luật vá ảo, chặn và bỏ chặn địa chỉ, thu hồi ngoại lệ | PA, SO | 037, 038, 041, 046, 048, 049 | 6 |
-| `PERM-03-operate` | Dừng, mở, tạm ngừng khẩn cấp, quay lui, gia hạn chứng thư, xác nhận cảnh báo | PA, TA, TO, SO | 003, 004, 017, 018, 019, 020, 061, 070 và 1 API khác | 9 |
+| `PERM-03-waf` | Đổi chế độ WAF, luật vá ảo, chặn và bỏ chặn địa chỉ, thu hồi ngoại lệ | PA, SO | 037, 038, 041, 046, 048, 049, 097 | 7 |
+| `PERM-03-operate` | Dừng, mở, tạm ngừng khẩn cấp, quay lui, gia hạn chứng thư, xác nhận cảnh báo | PA, TA, TO, SO | 003, 004, 017, 018, 019, 020, 061, 070 và 2 API khác | 10 |
 | `PERM-03-publish` | Kiểm tra, xây, phát ảnh chụp cấu hình | PA, TA | 058, 059, 060 | 3 |
 | `PERM-03-approve` | Duyệt yêu cầu thay đổi bốn mắt | TA, SO | 072, 073 | 2 |
 | `PERM-03-log-read` | Nhật ký lượt gọi chi tiết, xuất nhật ký và báo cáo | PA, TA, TO, SO, AU | 074, 075, 076, 090 | 4 |
@@ -594,6 +594,20 @@ Cột "Quyền" là `PERM-03-…` của người dùng hoặc scope dịch vụ.
 | API-03-096 | `POST /tenant-redirects/{redirectId}:end` | Kết thúc chuyển tiếp tenant sáp nhập | 037 | `PERM-03-admin` |  | 200 |
 
 : Danh mục endpoint · Chuyển tiếp tenant sáp nhập
+
+**WAF**
+
+| Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
+|---|---|---|---|---|---|---|
+| API-03-097 | `POST /waf/virtual-patches:dry-run` | Thử khô luật vá ảo trên mẫu yêu cầu 24 giờ gần nhất | 008 | `PERM-03-waf` |  | 200 |
+
+: Danh mục endpoint · WAF
+
+**Ảnh chụp cấu hình**
+
+| Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
+|---|---|---|---|---|---|---|
+| API-03-098 | `POST /snapshots:release-hold` | Bỏ giữ tổng hợp tự động sau quay lui | 044 | `PERM-03-operate` |  | 200 |
 <!-- gen:endpoints:end -->
 
 ### 3.2. Phủ chức năng bằng API
@@ -610,7 +624,7 @@ Nguyên tắc: mỗi FR có ít nhất một API, hoặc được ghi rõ là ch
 | FR-03-005 | A | WAF Coraza với bộ luật OWASP CRS | 039 |
 | FR-03-006 | A | Chế độ phát hiện, chặn của WAF và tự hạ khi quá tải | 040, 041, 071, 072, 073 |
 | FR-03-007 | A | Ngoại lệ luật WAF có thời hạn | 042, 043, 044, 045, 046 |
-| FR-03-008 | A | Luật vá ảo khẩn cấp | 047, 048, 049 |
+| FR-03-008 | A | Luật vá ảo khẩn cấp | 047, 048, 049, 097 |
 | FR-03-009 | A | Kiểm tra lược đồ và giới hạn kích thước yêu cầu | 002, 009 |
 | FR-03-010 | A | Xử lý CORS | 050, 051 |
 | FR-03-011 | A | Tiêu đề bảo mật và che thông tin máy chủ | 086, 087 |
@@ -646,7 +660,7 @@ Nguyên tắc: mỗi FR có ít nhất một API, hoặc được ghi rõ là ch
 | FR-03-041 | E | Sinh ảnh chụp cấu hình có phiên bản và chữ ký | 057, 059 |
 | FR-03-042 | E | Phát ảnh chụp tới Git và bucket | 060 |
 | FR-03-043 | E | Nạp ảnh chụp ở nút gateway | 063, 064 |
-| FR-03-044 | E | Quay lui về phiên bản cấu hình trước | 056, 061, 062 |
+| FR-03-044 | E | Quay lui về phiên bản cấu hình trước | 056, 061, 062, 098 |
 | FR-03-045 | E | Theo dõi nút và trạng thái đồng bộ | 063, 064 |
 | FR-03-046 | E | Đồng bộ consumer và thông tin xác thực công khai | 011, 012, 013, 014, 015 |
 | FR-03-047 | E | Tạm ngừng khẩn cấp route hoặc consumer | 017, 018, 019, 020 |
@@ -973,9 +987,11 @@ Phản hồi `201` là ảnh chụp **mới** (ví dụ phiên bản 48214, `tri
       "synthetic": false
     }
   ],
-  "page": 1,
-  "size": 2,
-  "totalElements": 412
+  "page": {
+    "next": "eyJ0cyI6IjIwMjYtMTEtMjZUMDM6MTU6MDBaIiwiaWQiOiI0MTIifQ",
+    "limit": 2,
+    "approxTotal": 412
+  }
 }
 ```
 
@@ -1157,11 +1173,14 @@ Bảng nêu với từng đối tác: hướng và giao diện, điều PH-03 b�
 |---|---|---|---|---|
 | PH-01 Kết nạp HTTT | PH-01 gọi API-03-013, 014, 015 (scope `gateway:sync`); hỏi `GatewaySyncStatusApi.consumerStatus` trong tiến trình | Lũy đẳng theo `Idempotency-Key` 24 giờ; không lưu bí mật; `IN_SYNC` chỉ khi mọi nút của cả hai cửa đã nạp; xóa mềm, mã không dùng lại | `systemCode` ở trạng thái `ACTIVE`; gửi `Idempotency-Key` ổn định cho mỗi bước saga; chỉ gửi phần công khai | `409` ERR-03-017 khi gỡ consumer còn đăng ký: saga phải thu hồi đăng ký trước. `400` ERR-03-003: sửa thân, không thử lại |
 | PH-02 Danh mục dịch vụ | PH-03 đọc `PublishedConfigApi`; nhận dữ liệu công bố từ API-02-080 (ndjson, `sinceConfigVersion`; `gap = true` thì nạp lại toàn bộ) bằng scope `catalog:gateway-read` và xác nhận đã nạp qua API-02-082 bằng scope `catalog:gateway-ack`; đặt tên route `{apiCode}:v{major}:{operationId}` để PH-13 gom số đo theo API; nhận EVT-03-01, 03, 07, 12 | Chỉ phát cấu hình đã qua kiểm tra hợp lệ; báo lại PH-02 khi từ chối (EVT-03-12); không duyệt lần hai nội dung đã duyệt ở PH-02 | Nguồn đủ: lược đồ OpenAPI đã duyệt, `policyPackage`, `critical`, `deprecatedAt`, `sunsetAt` | Nguồn cũ quá 24 giờ: dùng bản chiếu gần nhất và cảnh báo (`dh_gateway_source_stale_seconds`) |
-| PH-12 Định danh và phân quyền | PH-12 gọi API-03-053 (scope `gateway:revoke`); PH-03 đọc JWKS theo realm và gói chính sách OPA ở bucket `dh-platform-policy` | Thu hồi token có hiệu lực tại gateway ≤ 60 giây (SEC-25); gói chính sách lưu bền nên OPA khởi động lại vẫn có chính sách gần nhất | JWKS có `kid`; gói chính sách ký; thu hồi gửi đủ `tokenExpiresAt` để PH-03 đặt thời hạn khóa | Keycloak ngừng: dùng JWKS đã đệm tới 24 giờ rồi ERR-03-124. OPA không phản hồi: đóng an toàn ERR-03-124 |
-| PH-13 Giám sát và kiểm toán | PH-03 gửi chỉ số, vết, nhật ký (OTLP) và EVT-03-01…12; PH-13 đọc trạng thái bằng scope `gateway:read-state` | Nhật ký lượt gọi chỉ có siêu dữ liệu; chỉ số nhãn `consumer` giới hạn 500 giá trị (Q03-08 của FRS); bộ đệm đĩa 1 GiB mỗi pod khi PH-13 ngừng | Kho ClickHouse (nhãn `tenant` bắt buộc), Mimir, Alertmanager; luật cảnh báo GW-A01…A13 | PH-13 không trả số liệu: API đọc trả ERR-03-026 (503), giao diện hiện "chưa có số liệu", không hiện số 0 |
+| PH-12 Định danh và phân quyền | PH-12 gọi API-03-053 (scope `gateway:revoke`, đường đẩy nhanh); plugin `dh-authz` của PH-03 kéo API-12-079 mỗi 10 giây kèm `X-DH-Applied-Version`, xử lý `blockAll`, làm đường bù khi mất đẩy (đã chốt 27/11/2026); PH-03 đọc JWKS theo realm và gói chính sách OPA ở bucket `dh-platform-policy` | Thu hồi token có hiệu lực tại gateway ≤ 60 giây (SEC-25); gói chính sách lưu bền nên OPA khởi động lại vẫn có chính sách gần nhất | JWKS có `kid`; gói chính sách ký; thu hồi gửi đủ `tokenExpiresAt` để PH-03 đặt thời hạn khóa | Keycloak ngừng: dùng JWKS đã đệm tới 24 giờ rồi ERR-03-124. OPA không phản hồi: đóng an toàn ERR-03-124 |
+| PH-13 Giám sát và kiểm toán | PH-03 gửi chỉ số (kể cả `dh_connect_config_revision`), vết, nhật ký (OTLP), `kafka-logger` ghi `{tenant}.obs.access.logged.v1` theo lược đồ `AccessLogged` cho mọi route và EVT-03-01…12; công bố `/api/observability/v1`, `/api/audit/v1` cho BFF console, giữ `/api/platform/v1` và mọi `/internal/*` chỉ ở `apisix-int` (đã chốt 27/11/2026); PH-13 đọc trạng thái bằng scope `gateway:read-state` | Nhật ký lượt gọi chỉ có siêu dữ liệu; chỉ số nhãn `consumer` giới hạn 500 giá trị (Q03-08 của FRS); bộ đệm đĩa 1 GiB mỗi pod khi PH-13 ngừng | Kho ClickHouse (nhãn `tenant` bắt buộc), Mimir, Alertmanager; luật cảnh báo GW-A01…A13 | PH-13 không trả số liệu: API đọc trả ERR-03-026 (503), giao diện hiện "chưa có số liệu", không hiện số 0 |
 | PH-20 Quản trị tenant | PH-03 đọc host, hạn mức hợp đồng, trạng thái `MERGED`; PH-20 nhận EVT-03-10, 11 | Hạn mức tenant, ghi đè không vượt trần hợp đồng (ERR-03-018); chuyển tiếp chỉ cho tenant đã `MERGED` (ERR-03-025) | Trần hợp đồng và trạng thái sáp nhập đúng, kịp thời | Dùng giá trị đã lưu gần nhất |
 | PH-19 Thanh toán, PH-15 Cổng nhà phát triển | Dùng route `EXT` (callback thanh toán, cổng nhà phát triển) | Route ra cửa Internet chỉ sau bốn mắt (API-03-008, 072); WAF mức hoang tưởng 1 cho API máy với máy | Khai báo dải địa chỉ cố định của nhà cung cấp nếu có (`ipAllowCidrs`) | ERR-03-011 nếu chưa đủ điều kiện |
-| PH-14 Kết nối quốc gia (NDXP) | Bên gọi hoặc backend của route | Dải địa chỉ NDXP nằm trong danh sách tin cậy, miễn giới hạn theo IP (`gw.ip.trustedCidrs`, GĐ-03-09) | Dải địa chỉ cố định, khai báo được | Chặn nhầm: SO bỏ chặn bằng API-03-038 |
+| PH-14 Kết nối quốc gia (NDXP) | Bên gọi hoặc backend của route; tuyến chiều vào `/inbound/v1/*` ở vùng biên (mTLS, giới hạn tần suất, WAF, mẫu `tpl-inbound-ndxp`), tuyến cung cấp lại viết sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation`, bộ lọc vân tay nạp từ EVT-14-13 (đã chốt 27/11/2026) | Dải địa chỉ NDXP nằm trong danh sách tin cậy, miễn giới hạn theo IP (`gw.ip.trustedCidrs`, GĐ-03-09) | Dải địa chỉ cố định, khai báo được | Chặn nhầm: SO bỏ chặn bằng API-03-038 |
+| PH-15 Cổng nhà phát triển (sandbox) | Tuyến sandbox tĩnh mẫu `tpl-sandbox-static` kèm `forward-auth` gọi API-15-082 (`allow_degradation = false`, 300 ms; đã chốt 27/11/2026) | Từ chối khi API-15-082 không trả lời, không suy giảm | API-15-082 trả lời trong 300 ms | ERR-03-124 (`503`) cho bên gọi sandbox |
+| PH-17 Trợ lý AI | Tuyến egress mô hình mẫu `tpl-ai-egress`: `ai-proxy`, `ai-proxy-multi`, danh sách trắng egress mô hình, chỉ ở `apisix-int`, không đệm luồng SSE (đã chốt 27/11/2026) | Chỉ đích trong danh sách trắng | Danh sách đích do PH-17 khai | Từ chối đích ngoài danh sách |
+| PH-18 Vận hành (di trú) | Tuyến bóng mẫu `tpl-migration-shadow` và API đổi trọng số tuyến đồng bộ có xác nhận, thêm vào tập này khi PH-18 chốt Q18-25 (đã chốt 27/11/2026) | Cắt chuyển, quay lui di trú có xác nhận áp dụng | PH-18 chốt Q18-25 | Giữ tuyến hiện hành |
 | Hộp việc chung (FR-00-070) | PH-03 gửi `TaskInboxApi` | Mỗi yêu cầu thay đổi chờ duyệt có một việc cho người duyệt | Phân phối đúng vai trò TA, SO | Yêu cầu hết hạn sau 14 ngày |
 
 : Hợp đồng theo đối tác
@@ -1335,7 +1354,7 @@ Trả bởi `dh-connect`, thân `ProblemDetails`. Cột cuối nêu API phát si
 | ERR-03-016 | 422 | Chứng thư không hợp lệ (chuỗi, hạn, khóa, host) | 014, 070 |
 | ERR-03-017 | 409 | Consumer còn đăng ký sử dụng đang hiệu lực | 015 |
 | ERR-03-018 | 422 | Hạn mức hoặc tham số vượt trần hợp đồng hoặc dưới mức tối thiểu | 009, 010, 024, 026, 027, 033, 067, 087 |
-| ERR-03-019 | 409 | Đối tượng đã ở trạng thái đích hoặc đang được dùng (đã dừng, đã tạm ngừng, mẫu đang dùng) | 003, 004, 017, 018, 019, 020, 034, 041 và 13 API khác |
+| ERR-03-019 | 409 | Đối tượng đã ở trạng thái đích hoặc đang được dùng (đã dừng, đã tạm ngừng, mẫu đang dùng) | 003, 004, 017, 018, 019, 020, 034, 041 và 14 API khác |
 | ERR-03-020 | 422 | Gói nhập từ gateway cũ không đọc được, thiếu trường hoặc bị bộ quét từ chối | 091, 093 |
 | ERR-03-021 | 400 | Khoảng thời gian truy vấn, báo cáo hoặc số dòng xuất vượt giới hạn | 039, 074, 076, 089, 090 |
 | ERR-03-022 | 403 | Thiếu quyền (`PERM`) hoặc thiếu scope dịch vụ | Mọi API |
@@ -1462,7 +1481,7 @@ Mười hai kiểm tra dưới đây chạy ở CI-5; cột cuối cho biết ki
 | 4 | Lệnh ghi có `If-Match`; hành động đổi trạng thái có `If-Match`; operation `x-datahub-idempotent` có `Idempotency-Key` | `tools/check_contracts.py` | Không lỗi | Có |
 | 5 | Không lược đồ nào có thuộc tính dạng bí mật (`secret`, `password`, `privateKey`, `apiKey`, `token`, `authorization`, `cookie`…); lược đồ nhật ký lượt gọi và sự kiện WAF không có thân, tiêu đề, giá trị truy vấn | `tools/check_contracts.py` | Không lỗi | Có |
 | 6 | Mọi ví dụ (lược đồ, phản hồi lỗi, khối JSON trong tài liệu này) khớp lược đồ | `tools/check_contracts.py` (jsonschema 2020-12) | Không lỗi | Có |
-| 7 | Danh mục khớp FRS: 96 API (mã, phương thức, đường dẫn), 57 mã lỗi, 12 sự kiện và topic | `tools/check_contracts.py` đọc FRS §9.1, 9.3, 9.4 | Không lệch | Có |
+| 7 | Danh mục khớp FRS: 98 API (mã, phương thức, đường dẫn), 57 mã lỗi, 12 sự kiện và topic | `tools/check_contracts.py` đọc FRS §9.1, 9.3, 9.4 | Không lệch | Có |
 | 8 | Không thay đổi phá vỡ trong `v1` so với nhánh chính | `oasdiff breaking` | Không thay đổi phá vỡ khi chưa tăng phiên bản chính (CC-API-03, NFR-00-055) | Có |
 | 9 | AsyncAPI 3.0 nạp được, mỗi sự kiện có kênh, thông điệp, lược đồ | `@asyncapi/parser` 3 | Không lỗi | Có |
 | 10 | Lược đồ sự kiện tương thích `BACKWARD` với bản đã đăng ký | Apicurio (kiểm tương thích khi đăng ký, ADR-070) | Tương thích | Có |
@@ -1477,10 +1496,10 @@ Bảng dưới ghi kết quả thật của lần chạy khi viết bản 0.1; c
 
 | Hạng mục | Kết quả |
 |---|---|
-| `openapi-gateway.yaml` | Hợp lệ OpenAPI 3.1; 96 operation, 125 lược đồ; `operationId` duy nhất |
+| `openapi-gateway.yaml` | Hợp lệ OpenAPI 3.1; 98 operation, 129 lược đồ; `operationId` duy nhất |
 | Spectral (`spectral:oas` kế thừa OWASP API Security, bỏ luật CORS có lý do ở 7.4) | 0 lỗi; 270 cảnh báo mức thấp: 265 `string-restricted` (trường văn bản tự do như lý do, mô tả, tên hiển thị không thể có `pattern`), 5 `define-error-validation` (năm `GET` không có tham số nên không có `400`) |
 | Ví dụ khớp lược đồ | 35 ví dụ trong OpenAPI, 15 khối JSON trong tài liệu này, 9 ví dụ sự kiện (7 ở AsyncAPI, 2 ở tài liệu); 0 lệch |
-| Đối chiếu FRS | 96 API, 57 mã lỗi, 12 sự kiện khớp từng dòng |
+| Đối chiếu FRS | 98 API, 57 mã lỗi, 12 sự kiện khớp từng dòng |
 | `asyncapi-gateway.yaml` | `@asyncapi/parser` 3: 0 lỗi; một gợi ý mức thông tin (có bản 3.1.0), giữ 3.0 theo quy ước dự án |
 | `oasdiff`, Apicurio, kiểm thử hợp đồng hai phía | Chưa chạy: cần nhánh chính có hợp đồng (bản đầu), kho Apicurio và mã `dh-connect`; thiết lập ở giai đoạn lập trình |
 
@@ -1630,7 +1649,7 @@ Năm câu hỏi dưới đây phát sinh khi chuyển FRS, SDD và CSDL thành h
 
 > **Câu hỏi mở Q03-55:** FRS §9.1 chưa có mã lỗi cho hai tình huống ở mặt phẳng điều khiển: `401` (thiếu token, token hết hạn) và `500` (lỗi nội bộ của `dh-connect`). Hợp đồng hiện dùng `GenericProblem` không có `code` ERR-03 cho hai trường hợp này, trái với thông lệ "mọi lỗi có mã" của các phân hệ khác. Đề xuất: thêm hai mã mới ngay sau mã cuối của dải control plane (một cho `401`, một cho `500`) vào FRS §9.1 và bảng 6.1, rồi đổi `GenericProblem` thành `ProblemDetails`. Cần ý kiến nhóm viết FRS PH-03 và D00-01 (nếu mã `401`, `500` dùng chung toàn hệ thống thì chuyển về nhóm FR-00).
 
-> **Câu hỏi mở Q03-56:** Phân trang `page`, `size`, `totalElements` (quy ước D00-04) phù hợp với dữ liệu ở PostgreSQL nhưng không phù hợp với nhật ký lượt gọi và sự kiện chặn WAF đọc từ ClickHouse: giả định 5 triệu bản ghi mỗi ngày mỗi tenant (GĐ-03-02) và khoảng tra cứu tới 31 ngày nên đếm tổng và bỏ qua `page × size` dòng đều đắt, p95 ≤ 3 giây (NFR-03-022) khó giữ khi `page` lớn. Đề xuất: API-03-039, 074 dùng phân trang con trỏ (`cursor`, `limit`, phản hồi `page.next`) như PH-05, không có `totalElements` chính xác (chỉ ước lượng `approxTotal`), các API còn lại giữ `page`, `size`. Cần ý kiến nhóm giao diện và PH-13; nếu chấp nhận thì đổi OpenAPI và FRS §9.4 (ghi chú) ở bản 0.2.
+> **Đã chốt 27/11/2026 (Q03-56):** API-03-039, 074 dùng phân trang con trỏ (`cursor`, `limit`, phản hồi `page.next`) và chỉ trả ước lượng `approxTotal` thay `page`, `size`, `totalElements`, vì nhật ký lượt gọi và sự kiện chặn WAF đọc từ ClickHouse (5 triệu bản ghi mỗi ngày mỗi tenant, tra tới 31 ngày); các API còn lại giữ `page`, `size`. OpenAPI đã đổi. Ngoại lệ ghi vào quy ước phân trang của D00-04 do nhóm tài liệu chung thực hiện.
 
 > **Câu hỏi mở Q03-57:** Hai điểm về hợp đồng với PH-01 ở API-03-013, 014. (a) `If-Match` đang tùy chọn để saga gọi lại không vướng ETag, nghĩa là ghi sau thắng. Với consumer, người vận hành có thể vừa tạm ngừng khẩn cấp (API-03-017) vừa bị saga `PUT state=ACTIVE` ghi đè. Đề xuất: trạng thái tạm ngừng khẩn cấp (`emergencyBlock`) độc lập với `state`; `PUT` của PH-01 không bao giờ gỡ nó, chỉ API-03-018 gỡ; phản hồi luôn trả `emergencyBlock` để saga biết. (b) `trustedSource=true` chỉ do SO duyệt (FR-03-046) nhưng lời gọi là token dịch vụ nên `dh-connect` không tự kiểm được người duyệt. Đề xuất: PH-01 ghi bằng chứng duyệt của SO ở hồ sơ kết nạp, `dh-connect` ghi kiểm toán cờ này và phát EVT-03-09 mức Trung bình khi cờ chuyển sang `true`. Cần ý kiến PH-01 và ATTT.
 
@@ -1691,7 +1710,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-001, ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `impact` (`consumersLast15m`, `routesAffected`) để nêu hậu quả bằng số trước khi xác nhận; có `eligibility` (danh sách điều kiện mở cửa Internet, đạt hoặc chưa) khi gọi với `eligibility=true`. Có `ETag`.
+**Ghi chú.** Trả `allowedActions` và `disabledReasons` để giao diện bật, tắt nút đúng như máy chủ sẽ kiểm. Có `impact` để nêu hậu quả bằng số trước khi xác nhận; có `eligibility` khi gọi với `eligibility=true`. Có `ETag`.
 :::
 
 #### API-03-003 · Dừng API
@@ -1933,7 +1952,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-001, ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Không có bí mật. Có `impact` và `subscriptions` (API, gói, hiệu lực lấy từ bản chiếu PH-02, cho tab Đăng ký ở UI-03-05). Có `ETag`.
+**Ghi chú.** Không có bí mật. Có `impact` và `subscriptions` (API, gói, hiệu lực lấy từ bản chiếu PH-02). Có `ETag`.
 :::
 
 #### API-03-013 · Tạo hoặc cập nhật consumer
@@ -1943,7 +1962,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Phương thức, đường dẫn.** `PUT /consumers/{consumerCode}`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `gateway:sync`.
 
 **FR hiện thực.** FR-03-046.
 
@@ -1967,7 +1986,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Phương thức, đường dẫn.** `PUT /consumers/{consumerCode}/credentials`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `gateway:sync`.
 
 **FR hiện thực.** FR-03-046.
 
@@ -1991,7 +2010,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Phương thức, đường dẫn.** `DELETE /consumers/{consumerCode}`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `gateway:sync`.
 
 **FR hiện thực.** FR-03-046.
 
@@ -2583,13 +2602,13 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **FR hiện thực.** FR-03-005.
 
-**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `routeCode` (query, RouteCode, tùy chọn); `ruleId` (query, string, tùy chọn); `action` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
+**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `routeCode` (query, RouteCode, tùy chọn); `ruleId` (query, string, tùy chọn); `action` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `WafEventPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`; tiêu đề `ETag`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+**Phản hồi thành công.** `200` thành công, `WafEventPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`, `500`, `503`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-021, ERR-03-022, ERR-03-026 (ý nghĩa ở chương mã lỗi).
 
@@ -2836,6 +2855,30 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 **Ghi chú.** Gỡ luật vá ảo.
 :::
 
+#### API-03-097 · Thử khô luật vá ảo trên mẫu yêu cầu 24 giờ gần nhất
+
+::: dac-ta
+**Mục đích.** Thử khô luật vá ảo trên mẫu yêu cầu 24 giờ gần nhất.
+
+**Phương thức, đường dẫn.** `POST /waf/virtual-patches:dry-run`.
+
+**Quyền.** `PERM-03-waf`.
+
+**FR hiện thực.** FR-03-008.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `VirtualPatchDryRunRequest`; trường bắt buộc: `ruleText`, `appliesTo`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `VirtualPatchDryRunResult`; trường bắt buộc: `windowHours`, `sampledRequests`, `wouldBlock`, `computedAt`; tiêu đề `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Nút "Thử khô" của UI-03-08: đếm trên mẫu yêu cầu 24 giờ gần nhất (đọc từ PH-13) số yêu cầu sẽ bị chặn. Không ghi, không phát sự kiện, không tạo luật.
+:::
+
 ### CORS
 
 #### API-03-050 · Danh sách chính sách CORS theo route
@@ -2919,7 +2962,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Phương thức, đường dẫn.** `POST /revocations`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `gateway:revoke`.
 
 **FR hiện thực.** FR-03-018.
 
@@ -3152,6 +3195,30 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 **Lỗi.** HTTP `400`, `401`, `403`, `404`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-001, ERR-03-003, ERR-03-022 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** So với bản đang chạy hoặc bản chỉ định ở `against`.
+:::
+
+#### API-03-098 · Bỏ giữ tổng hợp tự động sau quay lui
+
+::: dac-ta
+**Mục đích.** Bỏ giữ tổng hợp tự động sau quay lui.
+
+**Phương thức, đường dẫn.** `POST /snapshots:release-hold`.
+
+**Quyền.** `PERM-03-operate`.
+
+**FR hiện thực.** FR-03-044.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `ReasonRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReleaseHoldResult`; trường bắt buộc: `scope`, `released`, `releasedAt`; tiêu đề `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `429`, `500`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-019, ERR-03-022 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Nút "Bỏ giữ" của UI-03-10 sau quay lui (FRS §6.6): bỏ hạn giữ tổng hợp tự động `holdHours` của API-03-061, tách khỏi thao tác phát. Lý do bắt buộc; ghi kiểm toán.
 :::
 
 ### Nút gateway
@@ -3439,13 +3506,13 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **FR hiện thực.** FR-03-050, FR-03-051.
 
-**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `consumerCode` (query, ConsumerCode, tùy chọn); `routeCode` (query, RouteCode, tùy chọn); `statusClass` (query, string, tùy chọn); `errorCode` (query, string, tùy chọn); `traceId` (query, string, tùy chọn); `srcIp` (query, string, tùy chọn); `sort` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
+**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `consumerCode` (query, ConsumerCode, tùy chọn); `routeCode` (query, RouteCode, tùy chọn); `statusClass` (query, string, tùy chọn); `errorCode` (query, string, tùy chọn); `traceId` (query, string, tùy chọn); `srcIp` (query, string, tùy chọn); `sort` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `AccessLogPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`; tiêu đề `ETag`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+**Phản hồi thành công.** `200` thành công, `AccessLogPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`, `500`, `503`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-021, ERR-03-022, ERR-03-026 (ý nghĩa ở chương mã lỗi).
 
@@ -3523,7 +3590,7 @@ Chương này sinh tự động từ [`ph03/openapi-gateway.yaml`](ph03/openapi-
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`, `500`, `503`, `default`; mã lỗi của thao tác: ERR-03-003, ERR-03-022, ERR-03-026 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Tổng quan lưu lượng, độ trễ, nút, suy giảm, kèm `kpis[]` có `trend` so với kỳ liền trước. PH-13 không trả số liệu thì ERR-03-026, không trả số 0 giả.
+**Ghi chú.** Tổng quan lưu lượng, độ trễ, nút, suy giảm. PH-13 không trả số liệu thì ERR-03-026, không trả số 0 giả.
 :::
 
 #### API-03-078 · HTTT gọi nhiều nhất
@@ -4027,4 +4094,4 @@ Tập này không sửa tài liệu dùng chung hay tập khác của PH-03; cá
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: 96 operation REST (API-03-001…096) dưới `/api/gateway/v1`, 12 sự kiện (EVT-03-01…12), 57 mã lỗi (27 control plane, 30 gateway); OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script `ph03/tools`; 5 câu hỏi mở Q03-55…59 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: hợp đồng với PH-02 (API-02-080, 082), ánh xạ trường với cột, impact, subscriptions, kpis, eligibility ở API-03-002, 012, 077; sinh lại OpenAPI |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: hợp đồng với PH-02 (API-02-080, 082), ánh xạ trường với cột, impact, subscriptions, kpis, eligibility ở API-03-002, 012, 077; sinh lại OpenAPI; chốt câu hỏi mở đợt đồng bộ: Q413, Q414, Q394, Q398, Q404, Q416, Q429 (hợp đồng đối tác), Q438 (API-03-097), Q439 (API-03-098), Q441 (Q03-56 phân trang con trỏ) |

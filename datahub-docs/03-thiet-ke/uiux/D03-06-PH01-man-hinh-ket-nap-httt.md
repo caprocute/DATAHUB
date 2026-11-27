@@ -898,7 +898,7 @@ Bảng dưới nêu cách UI-01-05 hiển thị ở từng trạng thái (đang 
 
 ### 11.5. Thông báo, bàn phím, truy cập
 
-Thông báo: ERR-01-017 (người được giao đã tham gia hồ sơ), ERR-01-020 (bước đã đóng hoặc hồ sơ ở trạng thái khác, tải lại hàng đợi), ERR-01-052 (không đủ quyền). Phím tắt: `/` vào ô tìm; `↑`, `↓` chọn dòng; `Enter` mở UI-01-06; `A` nhận việc dòng chọn; `Space` chọn dòng; `Shift+A` phân công khi có dòng chọn. Mỗi thẻ lọc và nhãn quá hạn có chữ; bảng có `aria-sort`; bảng chọn nhiều thông báo "đã chọn n dòng" bằng vùng `aria-live`. Nút "Nhận việc" dùng API nhận việc nêu ở Phụ lục B (API-01-028 hiện chỉ cho TA phân công).
+Thông báo: ERR-01-017 (người được giao đã tham gia hồ sơ), ERR-01-020 (bước đã đóng hoặc hồ sơ ở trạng thái khác, tải lại hàng đợi), ERR-01-052 (không đủ quyền). Phím tắt: `/` vào ô tìm; `↑`, `↓` chọn dòng; `Enter` mở UI-01-06; `A` nhận việc dòng chọn; `Space` chọn dòng; `Shift+A` phân công khi có dòng chọn. Mỗi thẻ lọc và nhãn quá hạn có chữ; bảng có `aria-sort`; bảng chọn nhiều thông báo "đã chọn n dòng" bằng vùng `aria-live`. Nút "Nhận việc" của IE, SO chỉ có từ Đợt 2 (đã chốt 27/11/2026, Q01-35); ở MVP chỉ TA phân công qua API-01-028.
 
 ## 12. UI-01-06 Thẩm định hồ sơ (siêu chi tiết)
 
@@ -1035,7 +1035,7 @@ Khi "Hoàn tất" vô hiệu, tooltip và dòng chữ ngay dưới nút nêu lý
 
 ### 12.10. Vùng R7: ngăn kéo văn bản căn cứ
 
-`CMP-Drawer` rộng `size-drawer-lg`, khung `glass-modal` nhưng vùng đọc văn bản nền đặc `color-surface-solid`. Đầu ngăn kéo: tên văn bản, loại tệp, cỡ, trạng thái quét ("đã quét sạch"); thân: xem trước PDF trong khung cô lập (không tải về máy, liên kết ký 60 giây cấp khi mở, Q01-31) với điều khiển trang; tệp DOCX, XLSX hiện tên và nút "Tải về"; chân: "Mở cơ sở dữ liệu văn bản pháp luật" (mở tab mới để tự kiểm chứng căn cứ, BR-01-002) và "Đóng". Mở ngăn kéo không làm mất dữ liệu đã nhập ở R4. Hệ thống không tự kiểm tra tính hợp lệ của văn bản; chỉ hỗ trợ hiển thị và kiểm tra hiệu lực theo ngày (BR-01-002).
+`CMP-Drawer` rộng `size-drawer-lg`, khung `glass-modal` nhưng vùng đọc văn bản nền đặc `color-surface-solid`. Đầu ngăn kéo: tên văn bản, loại tệp, cỡ, trạng thái quét ("đã quét sạch"); thân: tệp PDF tải qua liên kết ký 60 giây cấp khi mở rồi hiển thị bằng trình xem PDF của trình duyệt (đã chốt 27/11/2026, Q01-31; không xem trước nội tuyến bằng `Range`, `inline`) với điều khiển trang của trình xem; tệp DOCX, XLSX hiện tên và nút "Tải về"; chân: "Mở cơ sở dữ liệu văn bản pháp luật" (mở tab mới để tự kiểm chứng căn cứ, BR-01-002) và "Đóng". Mở ngăn kéo không làm mất dữ liệu đã nhập ở R4. Hệ thống không tự kiểm tra tính hợp lệ của văn bản; chỉ hỗ trợ hiển thị và kiểm tra hiệu lực theo ngày (BR-01-002).
 
 ### 12.11. Lưu, đồng thời, xung đột
 
@@ -1280,7 +1280,7 @@ Bảng dưới nêu cách UI-01-08 hiển thị ở từng trạng thái (đang 
 
 ### 14.5. Thông báo, bàn phím, truy cập
 
-Thông báo: ERR-01-021, 022, 023 (khối tiến độ), ERR-01-027, 028 (dưới ô tải khóa, CSR), ERR-01-029, 030, 033, 034, 035 (các hộp), ERR-01-048 (tạo lại liên kết). Sau xoay vòng thành công: `CMP-Toast` "Đã bắt đầu xoay vòng. Liên kết bàn giao đã gửi tới {đầu mối}." Nếu người xoay vòng chính là đầu mối kỹ thuật của HTTT, hộp xoay vòng hiển thị thêm nút "Nhận thông tin mới ngay", mở UI-01-09 trong tab mới (Q01-34). Phím tắt: `↑`, `↓` chọn dòng; `Enter` mở chi tiết; `R` xoay vòng; `Del` mở hộp thu hồi (luôn qua hộp xác nhận). Bảng định danh có `caption`; nhãn hạn có chữ; các hộp xoay vòng, thu hồi bẫy focus, `Esc` đóng và trả focus; ô tải khóa có nút "Chọn tệp" thay thế kéo thả.
+Thông báo: ERR-01-021, 022, 023 (khối tiến độ), ERR-01-027, 028 (dưới ô tải khóa, CSR), ERR-01-029, 030, 033, 034, 035 (các hộp), ERR-01-048 (tạo lại liên kết). Sau xoay vòng thành công: `CMP-Toast` "Đã bắt đầu xoay vòng. Liên kết bàn giao đã gửi tới {đầu mối}." Liên kết bàn giao luôn gửi qua thư, kể cả khi người xoay vòng chính là đầu mối kỹ thuật của HTTT; không có nút "Nhận thông tin mới ngay" (đã chốt 27/11/2026, Q01-34). Phím tắt: `↑`, `↓` chọn dòng; `Enter` mở chi tiết; `R` xoay vòng; `Del` mở hộp thu hồi (luôn qua hộp xác nhận). Bảng định danh có `caption`; nhãn hạn có chữ; các hộp xoay vòng, thu hồi bẫy focus, `Esc` đóng và trả focus; ô tải khóa có nút "Chọn tệp" thay thế kéo thả.
 
 ## 15. UI-01-09 Bàn giao thông tin xác thực
 
@@ -2230,13 +2230,13 @@ Chênh lệch giữa giao diện và D03-04-PH01 hiện tại; mỗi dòng kèm 
 
 | # | Đề nghị | Màn | Xử lý tạm thời |
 |---|---|---|---|
-| 1 | Thêm thao tác tự nhận việc thẩm định: mở rộng API-01-028 cho người có đúng vai trò của bước (IE kỹ thuật, SO ATTT, TA pháp lý) khi `assigneeId` là chính họ, hoặc thêm `POST /systems/{systemCode}/reviews:claim`; hiện API-01-028 chỉ cho `PERM-01-approve` (TA) | UI-01-05 | Chỉ TA có nút "Phân công"; IE, SO nhận việc qua TA (Q01-35) |
-| 2 | API-01-069 nhận tùy chọn `orgIds[]` (tên chuẩn ở D03-04-PH01; bản đầu của tập này ghi `organizationIds[]`) để gửi nhắc, gửi lại phiếu cho các đơn vị chưa phản hồi. Đã có ở API-01-069, màn dùng `orgIds[]` | UI-01-12 | Nút "Gửi nhắc đơn vị" chỉ hiện khi API hỗ trợ; ảnh hi-fi minh họa bản đích (Q01-36) |
+| 1 | Thêm thao tác tự nhận việc thẩm định: mở rộng API-01-028 cho người có đúng vai trò của bước (IE kỹ thuật, SO ATTT, TA pháp lý) khi `assigneeId` là chính họ, hoặc thêm `POST /systems/{systemCode}/reviews:claim`; hiện API-01-028 chỉ cho `PERM-01-approve` (TA) | UI-01-05 | Đã chốt 27/11/2026 (Q01-35): giữ TA phân công ở MVP, chỉ TA có nút "Phân công"; IE, SO nhận việc do TA giao. Tự nhận việc để Đợt 2 kèm quy tắc OPA, không mở rộng API-01-028 và không thêm `reviews:claim` ở MVP |
+| 2 | API-01-069 nhận tùy chọn `orgIds[]` (tên chuẩn ở D03-04-PH01; bản đầu của tập này ghi `organizationIds[]`) để gửi nhắc, gửi lại phiếu cho các đơn vị chưa phản hồi. Đã có ở API-01-069, màn dùng `orgIds[]` | UI-01-12 | Đã chốt 27/11/2026 (Q01-36): API-01-069 nhận tham số tùy chọn `orgIds[]` (đã có ở OpenAPI); ảnh hi-fi giữ nút "Gửi nhắc đơn vị" |
 | 3 | Phản hồi API-01-002 và API-01-001 có `flags[]`, `waitingOn` (bản đầu ghi `waitingFor`), `dueAt`, `allowedActions`, `disabledReasons` thống nhất tên với D03-04-PH01 §1. Đã có ở OpenAPI; màn dùng `waitingOn` | UI-01-02, 03, 04 | Dựa vào mô tả §1; xác nhận khi sinh client |
-| 4 | Xem trước PDF trong khung cô lập: API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` với `Content-Security-Policy: sandbox` | UI-01-06 R7 | Tải cả tệp qua liên kết ký 60 giây rồi hiển thị bằng trình xem PDF của trình duyệt (Q01-31) |
-| 5 | Phản hồi API-01-013 có cờ `stateSecret` cho mục thuộc danh mục bí mật nhà nước | UI-01-01, 06 | Chặn bằng ERR-01-016 sau khi gửi (Q01-32) |
-| 6 | Phản hồi API-01-045 trả `handoverToken` khi người xoay vòng chính là đầu mối kỹ thuật, để mở UI-01-09 ngay | UI-01-08 | Chỉ gửi liên kết qua thư (Q01-34) |
-| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng, đã có dưới tên `platformCeiling` ở lược đồ `Setting`; màn dùng tên này) và `securityRelated` (cờ tham số an ninh, chưa có, chờ chốt) cho từng khóa | UI-01-16 | Hiển thị lỗi ERR-01-044 sau khi lưu |
+| 4 | Xem trước PDF trong khung cô lập: API-01-008 hỗ trợ `Range` và `Content-Disposition: inline` với `Content-Security-Policy: sandbox` | UI-01-06 R7 | Đã chốt 27/11/2026 (Q01-31): không hỗ trợ `Range` và `inline` ở MVP; tải cả tệp qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt |
+| 5 | Phản hồi API-01-013 có cờ `stateSecret` cho mục thuộc danh mục bí mật nhà nước | UI-01-01, 06 | Đã chốt 27/11/2026 (Q01-32): không thêm cờ `stateSecret`; giữ chặn sau khi gửi bằng ERR-01-016 cho tới khi pháp chế chốt danh mục |
+| 6 | Phản hồi API-01-045 trả `handoverToken` khi người xoay vòng chính là đầu mối kỹ thuật, để mở UI-01-09 ngay | UI-01-08 | Đã chốt 27/11/2026 (Q01-34): API-01-045 không trả `handoverToken`; chỉ gửi liên kết bàn giao qua thư |
+| 7 | API-01-084 và API-01-083 trả thêm `platformMax` (trần của nền tảng, đã có dưới tên `platformCeiling` ở lược đồ `Setting`; màn dùng tên này) và `securityRelated` (cờ tham số an ninh, chưa có, chờ chốt) cho từng khóa | UI-01-16 | Đã chốt 27/11/2026: không thêm `securityRelated`; giao diện dùng `platformCeiling` có sẵn và hiện ERR-01-044 sau khi lưu |
 
 : Phụ lục B. Đề nghị bổ sung API
 
@@ -2272,17 +2272,17 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 
 > **Câu hỏi mở Q01-30:** Trang bàn giao và trang xác nhận của đơn vị đặt ở miền nào: cùng miền của `dh-console` hay miền con riêng. Giả định: cùng miền của tenant, đường dẫn `/ket-noi/ban-giao/{token}` và `/ket-noi/xac-nhan/{token}` định tuyến ở APISIX tới gói tĩnh `apps/handover/`, không nạp mã của console; nếu có miền riêng thì chỉ đổi cấu hình định tuyến. Người trả lời: chủ đầu tư, kỹ sư nền tảng.
 
-> **Câu hỏi mở Q01-31:** Xem trước văn bản căn cứ ở UI-01-06 dùng trình xem PDF của trình duyệt với liên kết ký 60 giây, hay trình xem trong khung cô lập không cho tải về. Giả định: khung cô lập, kèm nút "Tải về" làm phương án thay thế cho trợ năng. Người trả lời: Cán bộ ATTT.
+> **Đã chốt 27/11/2026 (Q01-31):** không xem trước PDF nội tuyến ở MVP; UI-01-06 tải qua liên kết ký 60 giây rồi mở bằng trình xem PDF của trình duyệt, API-01-008 không hỗ trợ `Range` và `Content-Disposition: inline`. Người trả lời: Cán bộ ATTT (đề xuất kỹ thuật được áp).
 
-> **Câu hỏi mở Q01-32:** Cách giao diện biết một mục nhu cầu thuộc danh mục bí mật nhà nước (liên quan Q01-08): cờ `stateSecret` từ API hay danh sách riêng do tỉnh khai. Giả định: API trả cờ ở API-01-013 (Phụ lục B #5); chưa có thì chỉ chặn sau khi gửi bằng ERR-01-016. Người trả lời: Cán bộ ATTT, pháp chế.
+> **Đã chốt 27/11/2026 (Q01-32):** giữ chặn sau khi gửi bằng ERR-01-016 cho tới khi pháp chế chốt danh mục bí mật nhà nước; API-01-013 chưa trả cờ `stateSecret`.
 
 > **Câu hỏi mở Q01-33:** Cột "Lượt gọi 30 ngày" ở UI-01-03 và cột "Lượt dùng trong kỳ" ở UI-01-12 lấy số liệu từ PH-13; khi PH-13 chậm hoặc không khả dụng, giao diện hiện "—" và không chặn tải danh sách. Giả định: chấp nhận, cột này không phải điều kiện nghiệp vụ ở UI-01-03; ở UI-01-12 chỉ chặn quyết định "thu hồi vì không dùng" khi chưa có số liệu. Người trả lời: Quản trị tỉnh.
 
-> **Câu hỏi mở Q01-34:** Khi người bấm "Xoay vòng" ở UI-01-08 chính là đầu mối kỹ thuật của HTTT, có cho hiển thị bí mật mới ngay trong tab mới (dùng cùng API-01-040) hay luôn gửi liên kết qua thư như người khác. Giả định: gửi liên kết qua thư và cho mở nhanh bằng nút "Nhận thông tin mới ngay" (Phụ lục B #6); D03-06-00 PTN-04 nêu "Modal hiện bí mật một lần" cần đồng bộ với quy tắc bàn giao. Người trả lời: Cán bộ ATTT.
+> **Đã chốt 27/11/2026 (Q01-34):** luôn gửi liên kết bàn giao qua thư, kể cả khi người xoay vòng là đầu mối kỹ thuật; API-01-045 không trả `handoverToken`, không có nút "Nhận thông tin mới ngay".
 
-> **Câu hỏi mở Q01-35:** IE và SO nhận việc thẩm định theo cách nào khi API-01-028 chỉ cho TA phân công. Giả định: thêm thao tác tự nhận (Phụ lục B #1); đến khi có, UI-01-05 chỉ hiện "Phân công" cho TA và IE, SO nhận việc do TA giao. Người trả lời: nhóm API PH-01, quản trị tỉnh.
+> **Đã chốt 27/11/2026 (Q01-35):** giữ TA phân công ở MVP; IE, SO nhận việc thẩm định do TA giao. Tự nhận việc (mở rộng API-01-028 hoặc `reviews:claim`) để Đợt 2 kèm quy tắc OPA.
 
-> **Câu hỏi mở Q01-36:** Nút "Gửi nhắc đơn vị" ở UI-01-12 có dùng lại API-01-069 hay cần API riêng (Phụ lục B #2); cũng cần quy định số lần nhắc tối đa. Giả định: nhắc tối đa 2 lần mỗi kỳ, dùng cùng API với tham số danh sách đơn vị. Người trả lời: nhóm API PH-01.
+> **Đã chốt 27/11/2026 (Q01-36):** API-01-069 nhận tham số tùy chọn `orgIds[]` (đã có ở OpenAPI) để nhắc, gửi lại phiếu cho đơn vị chưa phản hồi; nút "Gửi nhắc đơn vị" giữ ở UI-01-12; nhắc tối đa 2 lần mỗi kỳ.
 
 > **Câu hỏi mở Q01-37:** Phím chữ đơn (`C`, `T`, `X`, `A`, `R`, `G`, `H`, `V`…) có đè lên phím của trình đọc màn hình ở máy cơ quan nhà nước không. Giả định: tắt được ở Cài đặt cá nhân, tự tắt khi focus ở ô nhập (A11Y-01-08); cần thử với NVDA, JAWS trong UAT. Người trả lời: nhóm kiểm thử trợ năng.
 
@@ -2297,4 +2297,4 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng gi�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-01-01…17 kèm ảnh hi-fi |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm mục 1.6 Cấu trúc tài liệu, đoạn mở cho 65 mục, câu thông báo cho kích hoạt 202, ghi tình trạng Phụ lục B so với API 0.2 |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng waitingOn theo API-01 |
-| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên chuẩn `CMP-SegmentedControl`, `CMP-OrganizationSelect` và dẫn D03-05 cho biến thể `bare`, `verdict`; Phụ lục A ghi đã thêm vào design system; Phụ lục B ghi `orgIds`, `waitingOn`, `platformCeiling` đã có ở D03-04-PH01 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: dùng tên chuẩn `CMP-SegmentedControl`, `CMP-OrganizationSelect` và dẫn D03-05 cho biến thể `bare`, `verdict`; Phụ lục A ghi đã thêm vào design system; Phụ lục B ghi `orgIds`, `waitingOn`, `platformCeiling` đã có ở D03-04-PH01; chốt câu hỏi mở đợt đồng bộ: Q431 (Q01-35), Q432 (Q01-36), Q433 (Q01-31), Q434 (Q01-32), Q435 (Q01-34), Q436 (securityRelated) |

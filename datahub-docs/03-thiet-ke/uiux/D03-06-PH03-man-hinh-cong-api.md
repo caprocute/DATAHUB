@@ -36,7 +36,7 @@ Tập màn **không tự đặt** token, `CMP-*` hay `PTN-*`; dùng tên chuẩn
 |---|---|
 | Màn hình | 18 (UI-03-01…18), trong đó 1 màn siêu chi tiết (UI-03-03) |
 | Mẫu màn dùng | PTN-01 (9 màn), PTN-02, PTN-04, PTN-05, PTN-06, PTN-10, PTN-11 (2 màn), PTN-12; không tạo mẫu mới |
-| API được gọi | 91 trong 96 operation API-03-001…096 (5 operation còn lại là API nội bộ cho PH-01, PH-12 hoặc danh sách upstream không cần màn: API-03-005, 013, 014, 015, 053) |
+| API được gọi | 93 trong 98 operation API-03-001…098 (5 operation còn lại là API nội bộ cho PH-01, PH-12 hoặc danh sách upstream không cần màn: API-03-005, 013, 014, 015, 053) |
 | Mã lỗi chuyển thành câu hiển thị | 27 mã `ERR-03-001…027` của control plane và 12 mã gateway hay gặp ở nhật ký lượt gọi |
 | Ảnh hi-fi | 18 ảnh, một ảnh mỗi màn, khung 1440 × 900 |
 | Câu hỏi mở | 5 (Q03-30…34) |
@@ -1024,7 +1024,7 @@ Thông điệp: vượt trần ERR-03-018; xung đột phiên bản ST-13 (ERR-0
 | 3 | Thanh lọc | `CMP-FilterBar`, `CMP-DateRangePicker`, `CMP-Select`, `CMP-Input` | Khoảng thời gian ≤ 31 ngày (ERR-03-021), mã luật, route, địa chỉ, hành động | API-03-039 | Ghi URL |
 | 4 | Biểu đồ số sự kiện | `CMP-Chart` | Cột theo giờ, tách chặn và chỉ ghi | API-03-039 `histogram` | Bảng tương đương |
 | 5 | Bảng sự kiện | `CMP-DataTable` (gọn), `CMP-LogViewer` biến thể bảng | Cột mục 13.3 | `items` | Chế độ trực tiếp thêm dòng ở đầu |
-| 6 | Drawer chi tiết | `CMP-Drawer`, `CMP-DescriptionList`, `CMP-CodeBlock` | Luật, điểm bất thường, mẫu trích đã che, cảnh báo liên quan | `chon` | Mở bằng Enter |
+| 6 | Drawer chi tiết | `CMP-Drawer`, `CMP-DescriptionList`, `CMP-CodeBlock` | Mã luật, điểm bất thường, hành động, route, `traceId`; không hiển thị mẫu trích của yêu cầu (BR-03-007, đã chốt 27/11/2026) | `chon` | Mở bằng Enter |
 | 7 | Nút "Đề nghị ngoại lệ" | `CMP-Button` | Mở Drawer biểu mẫu UI-03-08 điền sẵn route, luật, sự kiện căn cứ | API-03-043 | Cần `PERM-03-waf-request` |
 | 8 | Nút "Chặn địa chỉ" | `CMP-Button` | Mở hộp chặn của UI-03-15 điền sẵn địa chỉ | API-03-037 | Cần `PERM-03-waf` |
 
@@ -1111,7 +1111,7 @@ Phím tắt: `/` vào ô lọc; `↑`, `↓` chọn dòng; `Enter` mở Drawer; 
 | 6 | Drawer đề nghị | `CMP-Drawer`, `CMP-Form` | Route, mã luật, lý do, hạn, sự kiện căn cứ | API-03-043 | Điền sẵn khi mở từ UI-03-07 |
 | 7 | Khối duyệt | `CMP-ApprovalPanel`, `CMP-DecisionPanel` | Mẫu yêu cầu đã che (`CMP-CodeBlock`), số lần chặn 7 ngày, ý kiến, "Duyệt", "Từ chối" | API-03-044, 045 | Nút "Duyệt" vô hiệu với người đề nghị (ERR-03-008) |
 | 8 | Thu hồi | `CMP-ReasonDialog` | Lý do bắt buộc | API-03-046 | Cần `PERM-03-waf` |
-| 9 | Tab Luật vá ảo | `CMP-DataTable`, `CMP-CodeEditor` | Soạn SecLang, phạm vi, căn cứ, hạn; "Thử khô" | API-03-047, 048, 049 | Mục 14.4 |
+| 9 | Tab Luật vá ảo | `CMP-DataTable`, `CMP-CodeEditor` | Soạn SecLang, phạm vi, căn cứ, hạn; "Thử khô" | API-03-047, 048, 049, 097 | Mục 14.4 |
 
 : UI-03-08 · Thành phần
 
@@ -1284,7 +1284,7 @@ Phím tắt: `/` vào ô lọc; `↑`, `↓` chọn dòng; `Enter` mở Drawer; 
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
-| 1 | Dải hiện hành | `CMP-Card`, `CMP-StatusTag`, `CMP-Switch` (chỉ đọc) | Phiên bản hiện hành, số nút áp dụng, thời điểm ký, trạng thái tổng hợp tự động (Bật, Giữ đến {giờ}) | API-03-056, 063 | Khi giữ sau quay lui có nút "Bỏ giữ" |
+| 1 | Dải hiện hành | `CMP-Card`, `CMP-StatusTag`, `CMP-Switch` (chỉ đọc) | Phiên bản hiện hành, số nút áp dụng, thời điểm ký, trạng thái tổng hợp tự động (Bật, Giữ đến {giờ}) | API-03-056, 063 | Khi giữ sau quay lui có nút "Bỏ giữ" (API-03-098) |
 | 2 | Bảng phiên bản | `CMP-DataTable`, `CMP-StatusTag` | Phiên bản, kích hoạt (Tự động, Thủ công, Quay lui), nguồn, trạng thái, số route thêm, bớt, đổi, người, giờ | API-03-056 | Phiên bản cuối là `1288` cao nhất |
 | 3 | Nút "Kiểm tra thử" | `CMP-Button` | Tổng hợp và kiểm tra hợp lệ, không phát (`dryRun`) | API-03-058 | Tác vụ ngắn; hiện báo cáo ở Drawer |
 | 4 | Nút "Xây và phát thủ công" | `CMP-Button` primary | Tổng hợp rồi phát (cần `PERM-03-publish`) | API-03-059, 060 | Hộp xác nhận nêu số thay đổi |
@@ -2036,14 +2036,14 @@ Các điểm dưới đây là chỗ giao diện cần dữ liệu mà D03-04-PH
 
 | # | Đề nghị | Màn | Lý do |
 |---|---|---|---|
-| 1 | Thêm `POST /waf/virtual-patches:dry-run` trả số yêu cầu mẫu 24 giờ sẽ bị chặn | UI-03-08 | Nút "Thử khô" của FRS §10.2 chưa có API |
-| 2 | Thêm tham số `releaseHold=true` cho API-03-059 hoặc API riêng `POST /snapshots:release-hold` | UI-03-10 | Nút "Bỏ giữ" sau quay lui (FRS §6.6) chưa có API |
+| 1 | Thêm `POST /waf/virtual-patches:dry-run` trả số yêu cầu mẫu 24 giờ sẽ bị chặn | UI-03-08 | Đã chốt 27/11/2026: thêm API-03-097 (quyền `waf`) ở D03-04-PH03 và FRS §9.4; nút "Thử khô" của FRS §10.2 dùng API này |
+| 2 | Thêm tham số `releaseHold=true` cho API-03-059 hoặc API riêng `POST /snapshots:release-hold` | UI-03-10 | Đã chốt 27/11/2026: API riêng `POST /snapshots:release-hold` (API-03-098, quyền `operate`, lý do bắt buộc), không thêm tham số `releaseHold` vào API-03-059, để tách khỏi thao tác phát |
 | 3 | API-03-001, 002, 004, 017 trả `impact.consumersLast15m` và `impact.routesAffected` | UI-03-02, 03, 04, 05 | Hộp xác nhận nêu hậu quả bằng số trước khi bấm |
-| 4 | Thêm `GET /waf/events/{eventId}` hoặc xác nhận API-03-039 trả đủ trường cho Drawer | UI-03-07 | Drawer chi tiết sự kiện |
+| 4 | Thêm `GET /waf/events/{eventId}` hoặc xác nhận API-03-039 trả đủ trường cho Drawer | UI-03-07 | Đã chốt 27/11/2026: không hiển thị mẫu trích đã che (trái BR-03-007); Drawer chỉ dùng mã luật, điểm, hành động, route, `traceId` có sẵn ở API-03-039, không thêm `GET /waf/events/{eventId}` |
 | 5 | Thêm `GET /routes/{routeCode}/history` hoặc dùng truy vấn kiểm toán của PH-13 | UI-03-03 tab Lịch sử | Chưa có API lịch sử thay đổi của route |
 | 6 | API-03-012 trả danh sách đăng ký (API, gói, hiệu lực) của consumer | UI-03-05 tab Đăng ký | Tab Đăng ký |
 | 7 | API-03-077 trả `degraded.valkey`, `degraded.waf`, `kpis[]` có `trend` so với kỳ trước | UI-03-01 | Banner và thẻ có xu hướng |
-| 8 | API-03-039, 074 dùng phân trang con trỏ và `approxTotal` (đã nêu ở Q03-56 của D03-04-PH03) | UI-03-07, 09 | Hiệu năng ClickHouse |
+| 8 | API-03-039, 074 dùng phân trang con trỏ và `approxTotal` (đã nêu ở Q03-56 của D03-04-PH03) | UI-03-07, 09 | Hiệu năng ClickHouse; đã chốt 27/11/2026 (Q03-56), OpenAPI đã đổi, ngoại lệ ghi ở quy ước phân trang của D00-04 |
 | 9 | Thêm tham số `eligibility` ở API-03-002 cho điều kiện mở cửa Internet (danh sách điều kiện đạt hoặc chưa) | UI-03-03 tab Cửa vào | Danh sách kiểm điều kiện |
 
 : Phụ lục B. Đề nghị bổ sung API
@@ -2101,4 +2101,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 18 màn UI-03-01…18 theo khuôn K-MH (bảng đặc tả đầu mỗi màn, route `/cong-api/...`, mẫu PTN, thành phần `CMP-*` chuẩn, trạng thái, 27 thông điệp `ERR-03-…`, phím tắt, truy cập WCAG 2.2 AA), UI-03-03 siêu chi tiết, ảnh hi-fi 18 màn, ma trận vai trò, truy vết 59 FR, phụ lục đề nghị bổ sung D03-05 và API; 5 câu hỏi mở Q03-30…34 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi bốn biến thể (`decal`, `checklist`, `cursor`, `seclang`) đã có ở D03-05-04 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi bốn biến thể (`decal`, `checklist`, `cursor`, `seclang`) đã có ở D03-05-04; chốt câu hỏi mở đợt đồng bộ: Q438, Q439, Q440, Q441 (Phụ lục B) |

@@ -30,7 +30,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH03 Use case; D03-02-PH03 Thiết kế c
 | Quy tắc nghiệp vụ | 30 (BR-03-001…030) |
 | Yêu cầu phi chức năng | 27 (NFR-03-001…027) |
 | Màn hình | 18 (UI-03-01…18) |
-| API | 96 operation (API-03-001…096), 12 sự kiện (EVT-03-01…12) |
+| API | 98 operation (API-03-001…098), 12 sự kiện (EVT-03-01…12) |
 | Mã lỗi | 27 mã control plane (ERR-03-001…027), 30 mã gateway trả cho bên gọi (ERR-03-101…130) |
 | Chức năng hệ cũ được phủ | 9 mục `LGC` có PH-03 là phân hệ đích (LGC-BUS-041, LGC-APIM-005; 011…015, 022, 023) và 4 mục liên quan; 17 FR cũ của repo ánh xạ đủ sang mã mới |
 | Mức đợt | MVP 51 FR; Đợt 2 có 7 FR mức S; Đợt 3 có 1 FR mức C |
@@ -650,6 +650,8 @@ flowchart TB
 - SNI không khớp host nào: trả ERR-03-128 (421), "Địa chỉ truy cập không thuộc dịch vụ nào của nền tảng."
 - Ngoại lệ TLS quá 180 ngày hoặc thiếu lý do: ERR-03-003 (400), "Thời hạn ngoại lệ không được quá 180 ngày và phải có lý do."
 
+Tuyến chiều vào `/inbound/v1/*` của PH-14 ở vùng biên cũng kết thúc TLS theo hồ sơ này (mẫu `tpl-inbound-ndxp`, đã chốt 27/11/2026).
+
 **Đầu ra.** Kết nối TLS được thiết lập; yêu cầu HTTP đã giải mã chuyển cho chuỗi plugin. Chỉ số `dh_gateway_tls_handshake_total`.
 
 **Kết quả.** HTTT kết nối được qua TLS 1.3; HTTT cũ có đường kết nối tạm thời có hạn, hiển thị rõ ở UI-03-12 để theo dõi thanh lý.
@@ -705,7 +707,7 @@ flowchart TB
 5. Plugin định danh đối chiếu vân tay với bảng `certThumbprint` của các consumer trong tenant; có khớp thì gắn `consumer` vào ngữ cảnh; không khớp mà route yêu cầu mTLS làm phương thức duy nhất thì từ chối (ERR-03-108).
 6. Yêu cầu đi tiếp tới chốt thứ hai (FR-03-003).
 
-**Luồng thay thế.** Route chấp nhận OAuth 2.1 làm phương thức chính và mTLS chỉ để ràng buộc token (FR-03-014): chứng thư không khớp consumer vẫn đi tiếp tới bước xác minh token, nơi vân tay được đối chiếu với `cnf`.
+**Luồng thay thế.** Tuyến chiều vào `/inbound/v1/*` của PH-14 bắt buộc mTLS với chứng thư của Nền tảng quốc gia, kèm giới hạn tần suất, WAF và bộ lọc vân tay nạp từ EVT-14-13 (đã chốt 27/11/2026). Route chấp nhận OAuth 2.1 làm phương thức chính và mTLS chỉ để ràng buộc token (FR-03-014): chứng thư không khớp consumer vẫn đi tiếp tới bước xác minh token, nơi vân tay được đối chiếu với `cnf`.
 
 **Luồng ngoại lệ.**
 
@@ -1061,7 +1063,7 @@ Hình cho thấy ngoại lệ chỉ có hiệu lực ở gateway sau khi ngườ
 
 **Quy tắc nghiệp vụ.** BR-03-019; BR-03-006.
 
-**Màn hình, API.** UI-03-08; API-03-047, API-03-048, API-03-049.
+**Màn hình, API.** UI-03-08; API-03-047, API-03-048, API-03-049; API-03-097 (nút "Thử khô": số yêu cầu mẫu 24 giờ gần nhất sẽ bị chặn, quyền `PERM-03-waf`, không ghi, không tạo luật; đã chốt 27/11/2026).
 :::
 
 #### FR-03-009 · Kiểm tra lược đồ và giới hạn kích thước yêu cầu
@@ -1564,6 +1566,8 @@ Hình cho thấy đường làm mới JWKS chỉ chạy khi gặp `kid` lạ và
 6. Khi Valkey mất dữ liệu, `dh-connect` nạp lại từ bảng `revoked_token` các bản ghi chưa hết hạn.
 
 **Luồng thay thế.** Thu hồi theo client: chặn `sub` của client với `notBefore = now`, mọi token phát trước đó bị chặn, token mới (sau khi khóa client được xoay) dùng được.
+
+**Đường bù khi mất đẩy.** Đã chốt 27/11/2026: giữ đường đẩy (PH-12 gọi API-03-053) làm đường nhanh và thêm đường kéo làm đường bù. Plugin `dh-authz` ở mỗi nút kéo API-12-079 của PH-12 mỗi 10 giây kèm tiêu đề `X-DH-Applied-Version`, xử lý cờ `blockAll`, nên thu hồi vẫn có hiệu lực khi một lần đẩy bị mất; plugin dùng chung bộ fixture quyết định của PH-12.
 
 **Luồng ngoại lệ.**
 
@@ -2610,7 +2614,7 @@ flowchart TB
 5. Được duyệt thì ảnh chụp mới gắn route vào nhóm `apisix-ext`; nút `apisix-ext` nạp route và áp các chốt ở biên (TLS, chặn địa chỉ, WAF, giới hạn thân, `ip-restriction` theo `ipAllowCidrs`) rồi chuyển lượt gọi sang `apisix-int`, nơi áp phần còn lại của chuỗi chốt (xác thực, thu hồi, hạn mức, OPA, định tuyến).
 6. Đưa route về `INT` (thu hồi cửa ngoài) có hiệu lực ngay, không cần duyệt lại (giảm bề mặt tấn công).
 
-**Luồng thay thế.** Callback của nhà cung cấp thanh toán (PH-19) dùng mẫu route `EXT` có sẵn: giới hạn theo dải nguồn đã công bố, xác minh chữ ký ở DU (SEC-48), hạn mức riêng.
+**Luồng thay thế.** Tuyến chiều vào `/inbound/v1/*` của PH-14 đặt ở vùng biên `apisix-ext` bằng mẫu `tpl-inbound-ndxp`, viết lại sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation`; `/api/platform/v1` và mọi `/internal/*` chỉ ở `apisix-int`, `/api/observability/v1` và `/api/audit/v1` công bố cho BFF console (đã chốt 27/11/2026). Callback của nhà cung cấp thanh toán (PH-19) dùng mẫu route `EXT` có sẵn: giới hạn theo dải nguồn đã công bố, xác minh chữ ký ở DU (SEC-48), hạn mức riêng.
 
 **Luồng ngoại lệ.**
 
@@ -2954,7 +2958,7 @@ flowchart TB
 2. Hệ thống kiểm tra phiên bản đích còn đọc được và các đối tượng tham chiếu (consumer, chứng thư, upstream) còn tồn tại (không: ERR-03-007).
 3. Hệ thống tạo ảnh chụp **mới** có nội dung của phiên bản đích (không đưa phiên bản cũ trở lại), chạy kiểm tra hợp lệ (FR-03-040), ký và phát (FR-03-041, 042) theo đường ưu tiên.
 4. Hệ thống đặt tenant ở trạng thái **giữ** (`holdHours`): các sự kiện từ PH-02, PH-01 xếp hàng, không tự tổng hợp lại, để lần đối chiếu định kỳ không âm thầm hoàn tác việc quay lui.
-5. Người vận hành xử lý nguyên nhân, rồi bấm "Bỏ giữ"; hệ thống tổng hợp lại từ dữ liệu nguồn mới nhất (FR-03-039). Hết `holdHours` mà chưa bỏ giữ thì cảnh báo, hệ thống không tự bỏ giữ.
+5. Người vận hành xử lý nguyên nhân, rồi bấm "Bỏ giữ" (API-03-098, nêu lý do); hệ thống tổng hợp lại từ dữ liệu nguồn mới nhất (FR-03-039). Hết `holdHours` mà chưa bỏ giữ thì cảnh báo, hệ thống không tự bỏ giữ.
 6. Hệ thống phát EVT-03-02.
 
 **Luồng thay thế.** Quay lui một route đơn lẻ: dùng dừng API (FR-03-036) hoặc tạm ngừng khẩn cấp (FR-03-047), không cần quay lui cả mảnh tenant.
@@ -2977,7 +2981,7 @@ flowchart TB
 
 **Quy tắc nghiệp vụ.** BR-03-018; BR-03-016.
 
-**Màn hình, API.** UI-03-10; API-03-061, API-03-062, API-03-056.
+**Màn hình, API.** UI-03-10; API-03-061, API-03-062, API-03-056; API-03-098 (nút "Bỏ giữ": API riêng `POST /snapshots:release-hold`, quyền `PERM-03-operate`, lý do bắt buộc, tách khỏi thao tác phát; đã chốt 27/11/2026).
 :::
 
 #### FR-03-045 · Theo dõi nút và trạng thái đồng bộ
@@ -3188,7 +3192,7 @@ Hình cho thấy gateway chỉ nhận phần công khai và chỉ báo hoàn t�
 3. PH-02 khi soạn gói chọn một mẫu và các tham số trong miền; tham số ngoài miền bị từ chối ở FR-03-040 (ERR-03-013).
 4. Khi nền tảng phát hành phiên bản mẫu mới, PH-03 tổng hợp lại các route dùng mẫu theo chính sách nâng cấp (mặc định: áp phiên bản mới ở lần phát kế tiếp, có ghi chú thay đổi).
 5. Plugin không thuộc danh mục (kể cả mã Lua do tenant viết) không có đường vào: không có API nào cho phép tải plugin lên.
-6. Danh mục plugin do Datahub tự viết (`dh-revocation`, `dh-ip-block`, `dh-kill-switch`, `dh-path-acl`, `dh-waf-guard`, `dh-adaptive-throttle`) được xây cùng ảnh APISIX, ký bằng cosign và quét lỗ hổng như mọi ảnh khác (SEC-55 đến SEC-57).
+6. Danh mục plugin do Datahub tự viết (`dh-revocation`, `dh-authz`, `dh-ip-block`, `dh-kill-switch`, `dh-path-acl`, `dh-waf-guard`, `dh-adaptive-throttle`) được xây cùng ảnh APISIX, ký bằng cosign và quét lỗ hổng như mọi ảnh khác (SEC-55 đến SEC-57).
 
 **Luồng thay thế.** Tenant cần một biến thể không có trong danh mục: gửi đề nghị tới PA để thêm mẫu ở bản phát hành sau, không có đường tự thêm (ghi ở "Đề nghị đồng bộ" nếu cần ADR bổ sung plugin).
 
@@ -3221,8 +3225,15 @@ Hình cho thấy gateway chỉ nhận phần công khai và chỉ báo hoàn t�
 | `tpl-ui-bff` | Đường dẫn giao diện `/api/{nhóm}/v{n}` gọi từ BFF | như `tpl-api-oauth2`, mức IP 50 yêu cầu/giây | 2 |
 | `tpl-callback-ext` | Callback từ Internet (PayGov, đối tác) ở cửa `EXT` | `ip-restriction` theo dải công bố, `limit-req`, WAF, `request-validation`, chữ ký kiểm ở DU | 1 |
 | `tpl-websocket` | API kết nối dài | như `tpl-api-oauth2`, cộng giới hạn kết nối WebSocket | 1 |
+| `tpl-sandbox-static` | Tuyến sandbox tĩnh của cổng nhà phát triển (PH-15) | `limit-conn`, `limit-req`, WAF, `forward-auth` gọi API-15-082 (`allow_degradation = false`, `timeout = 300` ms), `opentelemetry` | 1 |
+| `tpl-ai-egress` | Tuyến egress mô hình AI của PH-17, chỉ ở `apisix-int` | `ai-proxy` hoặc `ai-proxy-multi`, `limit-req`, danh sách trắng đích egress mô hình, `opentelemetry`; không đệm luồng SSE | 1 |
+| `tpl-platform-int` | Đường dẫn nền tảng `/api/platform/v1` và mọi `/internal/*`, chỉ ở `apisix-int` | như `tpl-api-oauth2`, cộng `kafka-logger`; không cắt `traceparent` | 1 |
+| `tpl-inbound-ndxp` | Tuyến chiều vào `/inbound/v1/*` ở vùng biên cho PH-14, viết lại sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation` | `ip-restriction`, mTLS, `limit-req`, WAF, bộ lọc vân tay nạp từ EVT-14-13, `request-validation`, `opentelemetry` | 1 |
+| `tpl-migration-shadow` | Tuyến bóng cho cắt chuyển và quay lui di trú (PH-18) | `proxy-mirror`, bộ chạm băm phản hồi, như `tpl-api-oauth2` | 1 |
 
 : Mẫu chính sách gateway được duyệt sẵn
+
+> **Đã chốt 27/11/2026 (mẫu chính sách cho phân hệ khác):** (a) `tpl-sandbox-static` phục vụ tuyến sandbox tĩnh của PH-15 kèm `forward-auth` gọi API-15-082, `allow_degradation` là `false` và hạn chờ 300 ms (Q394). (b) `tpl-ai-egress` hỗ trợ `ai-proxy`, `ai-proxy-multi` và danh sách trắng egress mô hình cho PH-17, chỉ ở `apisix-int`, không đệm luồng SSE (Q398). (c) `tpl-platform-int` giữ `/api/platform/v1` và mọi `/internal/*` chỉ ở `apisix-int`, còn `/api/observability/v1` và `/api/audit/v1` của PH-13 được công bố cho BFF console bằng mẫu `tpl-ui-bff`; `kafka-logger` ghi nhật ký truy cập cho mọi route (FR-03-050, Q414). (d) `tpl-inbound-ndxp` phục vụ tuyến chiều vào của PH-14: `/inbound/v1/*` ở vùng biên với mTLS, giới hạn tần suất, WAF và bộ lọc vân tay nạp từ EVT-14-13, tuyến cung cấp lại viết sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation` (Q416, Q404; FR-03-001, 002, 038). (e) `tpl-migration-shadow` hỗ trợ tuyến bóng và bộ chạm băm phản hồi cho cắt chuyển, quay lui di trú của PH-18; API đổi trọng số tuyến đồng bộ có xác nhận thêm vào D03-04-PH03 khi PH-18 chốt Q18-25 (Q429).
 
 #### FR-03-049 · Quản lý chứng thư biên
 
@@ -3300,7 +3311,7 @@ flowchart TB
 
 **Truy vết.** REQ-03, REQ-13; LGC-APIM-022; CMP-LAW-05; SEC-32, SEC-61; NFR-00-029, NFR-00-062; ADR-011.
 
-**Tiền điều kiện.** Plugin ghi nhật ký của APISIX bật ở mọi route; đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được.
+**Tiền điều kiện.** Plugin ghi nhật ký của APISIX bật ở mọi route (đã chốt 27/11/2026: `kafka-logger` bật cho mọi route theo FR-13-006, ghi `{tenant}.obs.access.logged.v1` với khối lượng lớn, chỉ siêu dữ liệu không thân bản tin); đường tới PH-13 (OTel Collector hoặc Kafka) truy cập được.
 
 **Kích hoạt.** Sau mỗi lượt gọi, kể cả lượt bị từ chối ở bất kỳ chốt nào.
 
@@ -3315,14 +3326,14 @@ flowchart TB
 5. PH-13 ghi vào kho lưu lượng (ClickHouse) với nhãn `tenant` bắt buộc; bản ghi thiếu nhãn tenant bị từ chối ở Collector (SEC-84).
 6. Khi PH-13 hoặc Collector không khả dụng, bản ghi nằm ở bộ đệm đĩa và gửi lại sau; chỉ khi bộ đệm đầy mới bỏ bản ghi cũ nhất, kèm chỉ số `dh_gateway_accesslog_dropped_total` và cảnh báo Cao.
 
-**Luồng thay thế.** Route dữ liệu mở (`KEYLESS`): không có consumer; trường `consumerCode` để trống, địa chỉ nguồn vẫn ghi.
+**Luồng thay thế.** Route dữ liệu mở (`KEYLESS`): không có consumer; trường `consumerCode` để trống, địa chỉ nguồn vẫn ghi. Nhãn consumer gắn kèm môi trường định danh (`SANDBOX`, `PRODUCTION`) trong mọi bản ghi để PH-01 kiểm thử SANDBOX lấy số liệu từ PH-13 (`sandboxActivity`); PH-03 không cung cấp API nhật ký riêng cho PH-01 (đã chốt 27/11/2026).
 
 **Luồng ngoại lệ.**
 
 - Bộ đệm đĩa đầy do PH-13 ngừng lâu: bỏ bản ghi cũ nhất, cảnh báo Cao ở FR-03-054; không ảnh hưởng lượt gọi.
 - Bản ghi chứa giá trị khớp mẫu dữ liệu nhạy cảm sau bước 4: bộ quét mẫu của CI và kiểm thử chạy hằng ngày báo lỗi (NFR-03-014); không có ca ngoại lệ được chấp nhận.
 
-**Đầu ra.** Bản ghi siêu dữ liệu ở PH-13; chỉ số `dh_gateway_accesslog_sent_total`.
+**Đầu ra.** Bản ghi siêu dữ liệu ở PH-13 (qua `kafka-logger`, topic `{tenant}.obs.access.logged.v1`); chỉ số `dh_gateway_accesslog_sent_total` và `dh_connect_config_revision` (phiên bản cấu hình đang chạy, PH-13 theo dõi độ lệch; đã chốt 27/11/2026).
 
 **Kết quả.** Mọi lượt gọi truy vết được theo thời gian, HTTT, route, kết quả, `traceId`; 0 dữ liệu cá nhân trong nhật ký.
 
@@ -4239,6 +4250,8 @@ Sự kiện nghiệp vụ của `dh-connect` đi qua outbox tới Kafka theo ADR
 | API-03-094 | `GET /tenant-redirects` | 037 | read | 200 |
 | API-03-095 | `POST /tenant-redirects` | 037 | admin | 201 |
 | API-03-096 | `POST /tenant-redirects/{redirectId}:end` | 037 | admin | 200 |
+| API-03-097 | `POST /waf/virtual-patches:dry-run` | 008 | waf | 200 |
+| API-03-098 | `POST /snapshots:release-hold` | 044 | operate | 200 |
 
 : Danh mục API của PH-03
 
@@ -4560,4 +4573,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo chuẩn kết hợp: 59 FR (47 M, 11 S, 1 C) đặc tả 17 mục, 30 BR, 27 NFR, 18 UI, 96 API, 12 sự kiện, 57 mã lỗi; ma trận truy vết 9 mục LGC của D00-03 phần A và ánh xạ đủ 17 FR, 28 NFR, 12 BR của SRS PH-03 cũ; điều chỉnh theo ADR-005 bản 0.2 (APISIX khai báo không etcd), ADR-033, SEC-24, SEC-25, SEC-80, SEC-86; 12 câu hỏi mở Q03-01…12 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm EN-03-16…20, thứ tự chốt 9 và 10, FR-03-038 và 026, §8.2 gw.ip.*, câu ERR-03-001…004, 022, 023 ở §9.2, cột mã thành công ở §9.4 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm EN-03-16…20, thứ tự chốt 9 và 10, FR-03-038 và 026, §8.2 gw.ip.*, câu ERR-03-001…004, 022, 023 ở §9.2, cột mã thành công ở §9.4; chốt câu hỏi mở đợt đồng bộ: Q381, Q391, Q394, Q398, Q404, Q413, Q414, Q416, Q429 (mẫu chính sách, dh-authz, kafka-logger, tuyến inbound), Q438 (API-03-097), Q439 (API-03-098) |

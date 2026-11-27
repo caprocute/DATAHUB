@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH16
 ten: Đặc tả use case phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, lãnh đạo UBND và sở ngành, quản trị tỉnh, cán bộ tổng hợp, kỹ sư dh-platform, kiểm thử viên
 phan_he: PH-16
@@ -307,28 +307,28 @@ Bảng là ma trận use case với màn hình (UI) và API. UC-16-06, 11, 24 ch
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-BP-11 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" là quy trình do FRS đề nghị bổ sung vào D02-01 (Phụ lục B của FRS); sổ kiến trúc chưa có quy trình riêng nên UC-16-23…26 ghi "—". Hệ cũ không có chức năng báo cáo chỉ tiêu; các mục LGC dưới đây là màn thống kê của phân hệ khác mà PH-16 nâng thành chỉ tiêu định kỳ.
+BP-13 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" là quy trình đã được thêm vào D02-01 mục 6.2 (chốt 27/11/2026); riêng UC-16-23…26 ghi "—". Hệ cũ không có chức năng báo cáo chỉ tiêu; các mục LGC dưới đây là màn thống kê của phân hệ khác mà PH-16 nâng thành chỉ tiêu định kỳ.
 
 | UC | REQ | BP | LGC |
 |---|---|---|---|
-| UC-16-01…03 | REQ-16 | BP-11 | — |
-| UC-16-04 | REQ-16, REQ-20 | BP-11 | — |
-| UC-16-05 | REQ-16 | BP-11 | — |
-| UC-16-06 | REQ-16 | BP-11 | LGC-BUS-027 (gián tiếp) |
-| UC-16-07…10 | REQ-16 | BP-11 | — |
-| UC-16-11 | REQ-16 | BP-11 | LGC-APIM-026 (gián tiếp) |
-| UC-16-12…17 | REQ-16 | BP-11 | — |
-| UC-16-18 | REQ-16, REQ-13 | BP-11 | — |
-| UC-16-19 | REQ-16, REQ-17 | BP-11 | — |
-| UC-16-20 | REQ-16 | BP-11 | LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004 (gián tiếp) |
-| UC-16-21 | REQ-16, REQ-20 | BP-11 | — |
-| UC-16-22 | REQ-16, REQ-13 | BP-11 | LGC-BUS-027 (gián tiếp) |
+| UC-16-01…03 | REQ-16 | BP-13 | — |
+| UC-16-04 | REQ-16, REQ-20 | BP-13 | — |
+| UC-16-05 | REQ-16 | BP-13 | — |
+| UC-16-06 | REQ-16 | BP-13 | LGC-BUS-027 (gián tiếp) |
+| UC-16-07…10 | REQ-16 | BP-13 | — |
+| UC-16-11 | REQ-16 | BP-13 | LGC-APIM-026 (gián tiếp) |
+| UC-16-12…17 | REQ-16 | BP-13 | — |
+| UC-16-18 | REQ-16, REQ-13 | BP-13 | — |
+| UC-16-19 | REQ-16, REQ-17 | BP-13 | — |
+| UC-16-20 | REQ-16 | BP-13 | LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004 (gián tiếp) |
+| UC-16-21 | REQ-16, REQ-20 | BP-13 | — |
+| UC-16-22 | REQ-16, REQ-13 | BP-13 | LGC-BUS-027 (gián tiếp) |
 | UC-16-23 | REQ-16 | — | — |
 | UC-16-24 | REQ-16, REQ-01, REQ-02, REQ-04, REQ-10, REQ-13 | — | — |
 | UC-16-25…26 | REQ-16 | — | — |
-| UC-16-27 | REQ-16, REQ-14 | BP-11 | — |
-| UC-16-28…29 | REQ-16, REQ-14 | BP-11 | LGC-NGSP-004 (gián tiếp) |
-| UC-16-30 | REQ-16, REQ-13 | BP-11 | — |
+| UC-16-27 | REQ-16, REQ-14 | BP-13 | — |
+| UC-16-28…29 | REQ-16, REQ-14 | BP-13 | LGC-NGSP-004 (gián tiếp) |
+| UC-16-30 | REQ-16, REQ-13 | BP-13 | — |
 
 : Use case, REQ, BP và LGC
 
@@ -380,7 +380,7 @@ Bộ chỉ tiêu là danh mục mà mọi báo cáo dựa vào. Người dùng t
 
 **FR hiện thực.** FR-16-001, FR-16-007.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Đã đăng nhập, chọn tenant `T68` (FR-00-004); có `PERM-16-read`; sửa trọng số cần `PERM-16-admin`.
 
@@ -425,7 +425,7 @@ Một chỉ tiêu mới hoặc một phiên bản mới của chỉ tiêu có s�
 
 **FR hiện thực.** FR-16-002, FR-16-003, FR-16-004.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-admin`; nhóm chỉ tiêu tồn tại; khi mở phiên bản mới, chỉ tiêu không có phiên bản `DRAFT` hay `PENDING_APPROVAL` khác.
 
@@ -476,7 +476,7 @@ Một chỉ tiêu mới hoặc một phiên bản mới của chỉ tiêu có s�
 
 **FR hiện thực.** FR-16-005, FR-16-006.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Phiên bản `DRAFT` có công thức (trừ `MANUAL`), mục tiêu, ngưỡng, đã thử tính trên nội dung hiện tại (UC-16-02); người duyệt có `PERM-16-approve` và khác người soạn, người gửi.
 
@@ -547,7 +547,7 @@ Tenant mới không bắt đầu từ trang trắng: PH-20 kích hoạt việc k
 
 **FR hiện thực.** FR-16-008.
 
-**Truy vết.** REQ-16, REQ-20; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16, REQ-20; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Mẫu ở `COMMON` có phiên bản `ACTIVE`; nhận cập nhật cần `PERM-16-admin`, kích hoạt cần `PERM-16-approve`; Hà soạn mẫu ở `COMMON`.
 
@@ -607,7 +607,7 @@ Mọi biến trong công thức phải có nguồn. Cán bộ đăng ký nguồn
 
 **FR hiện thực.** FR-16-009, FR-16-013.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-source`; với `EVENT`, topic đã được PH-10 cấp và PH-16 có quyền đọc (FR-10-067); với `PULL_API`, phân hệ nguồn đã cấp scope đọc chỉ số cho tài khoản dịch vụ PH-16.
 
@@ -675,7 +675,7 @@ Hình cho thấy trạng thái nguồn đổi ở một nơi và được phát 
 
 **FR hiện thực.** FR-16-010, FR-16-011, FR-16-012.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); LGC-BUS-027 (gián tiếp).
+**Truy vết.** REQ-16; BP-13 (đề nghị); LGC-BUS-027 (gián tiếp).
 
 **Tiền điều kiện.** Nguồn `ACTIVE` hoặc `STALE` (UC-16-05); với kéo API, nguồn không ở `PAUSED`, `RETIRED`; với API đẩy, `clientId` của bên gọi khớp nguồn `PUSH_API`.
 
@@ -743,7 +743,7 @@ Bản tin bị loại không biến mất: cán bộ tra được vì sao, sửa
 
 **FR hiện thực.** FR-16-016.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Xử lý lại cần `PERM-16-source`; xem nhật ký cần `PERM-16-read`; PO xem toàn nền tảng.
 
@@ -787,7 +787,7 @@ Chỉ tiêu không đo tự động được (ví dụ KPI-08 hồ sơ cấp đ�
 
 **FR hiện thực.** FR-16-014, FR-16-015.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Chỉ tiêu `MANUAL` hoặc `MIXED`, phiên bản `ACTIVE`, `confirmerRoles = ["SO"]`; kỳ chưa `CLOSED`; người nhập có `PERM-16-manual`.
 
@@ -859,7 +859,7 @@ Kỳ là khung thời gian của mọi con số. Hệ thống tự sinh kỳ; qu
 
 **FR hiện thực.** FR-16-017, FR-16-024.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** `16.period.types` có loại kỳ cần sinh; chốt và mở lại cần `PERM-16-run` do TA giữ (TO không chốt); chốt cần kỳ `COMPUTED` hoặc `REOPENED`, mở lại cần kỳ `CLOSED`.
 
@@ -908,7 +908,7 @@ Tổng hợp là việc tính mọi chỉ tiêu của một kỳ. Hệ thống c
 
 **FR hiện thực.** FR-16-018, FR-16-023.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Kỳ ở `OPEN`, `COLLECTING`, `COMPUTED` hoặc `REOPENED`; không có lần `QUEUED`, `RUNNING` cho kỳ; có `PERM-16-run`.
 
@@ -971,7 +971,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 
 **FR hiện thực.** FR-16-019, FR-16-020, FR-16-021, FR-16-022.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); LGC-APIM-026 (gián tiếp).
+**Truy vết.** REQ-16; BP-13 (đề nghị); LGC-APIM-026 (gián tiếp).
 
 **Tiền điều kiện.** Lần tổng hợp `RUNNING` (UC-16-10); có phiên bản định nghĩa `ACTIVE` với `effectiveFrom` không sau ngày cuối kỳ.
 
@@ -1017,7 +1017,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 
 **FR hiện thực.** FR-16-025.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-admin`.
 
@@ -1058,7 +1058,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 
 **FR hiện thực.** FR-16-026, FR-16-027, FR-16-032.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-report`; kỳ `COMPUTED`, `CLOSED` hoặc `REOPENED`; mẫu `ACTIVE`.
 
@@ -1104,7 +1104,7 @@ Báo cáo chính thức không đi tiếp nếu thiếu số bắt buộc hay th
 
 **FR hiện thực.** FR-16-028.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Báo cáo `DRAFT`; với `PERIODIC`, `NATIONAL` kỳ đã `CLOSED`; người gửi có `PERM-16-report`, người duyệt có `PERM-16-approve`.
 
@@ -1171,7 +1171,7 @@ Công bố biến báo cáo đã duyệt thành bản không thể sửa: chụp
 
 **FR hiện thực.** FR-16-029.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới); CMP-LAW-15.
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới); CMP-LAW-15.
 
 **Tiền điều kiện.** Báo cáo `APPROVED`; có `PERM-16-approve`.
 
@@ -1234,7 +1234,7 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 
 **FR hiện thực.** FR-16-030.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Báo cáo `PUBLISHED`; lập đính chính cần `PERM-16-report`, duyệt, công bố, rút cần `PERM-16-approve`.
 
@@ -1276,7 +1276,7 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 
 **FR hiện thực.** FR-16-031, FR-16-036.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-read`; tải bằng chứng cần `PERM-16-export` (AU, TA) và báo cáo `PUBLISHED`, `SUPERSEDED` hoặc `WITHDRAWN`.
 
@@ -1319,7 +1319,7 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 
 **FR hiện thực.** FR-16-033, FR-16-034.
 
-**Truy vết.** REQ-16, REQ-13; BP-11 (đề nghị); hệ cũ: không có (năng lực mới); CMP-LAW-15 cho thể thức PDF.
+**Truy vết.** REQ-16, REQ-13; BP-13 (đề nghị); hệ cũ: không có (năng lực mới); CMP-LAW-15 cho thể thức PDF.
 
 **Tiền điều kiện.** Có `PERM-16-export` và quyền xem đối tượng xuất; kênh thư công vụ đã cấu hình ở PH-13.
 
@@ -1381,7 +1381,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 
 **FR hiện thực.** FR-16-035, FR-16-037.
 
-**Truy vết.** REQ-16, REQ-17; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16, REQ-17; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Bên gọi được cấp `kpi.read` cho tenant; thẻ cần tenant có ít nhất một kỳ đã tính và người dùng có `PERM-16-read`.
 
@@ -1424,7 +1424,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 
 **FR hiện thực.** FR-16-038, FR-16-039, FR-16-040.
 
-**Truy vết.** REQ-16; BP-11 (đề nghị); LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004 (gián tiếp).
+**Truy vết.** REQ-16; BP-13 (đề nghị); LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004 (gián tiếp).
 
 **Tiền điều kiện.** Có `PERM-16-read`, có ít nhất một kỳ đã tính; xem quan sát gốc cần thêm `PERM-16-source` hoặc AU.
 
@@ -1467,7 +1467,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 
 **FR hiện thực.** FR-16-041.
 
-**Truy vết.** REQ-16, REQ-20; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16, REQ-20; BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-compare`; ít nhất `16.compare.min-tenants` (3) tenant có giá trị chính thức của chỉ tiêu trong kỳ, dùng cùng phiên bản mẫu không tùy biến công thức.
 
@@ -1506,7 +1506,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 
 **FR hiện thực.** FR-16-042, FR-16-058.
 
-**Truy vết.** REQ-16, REQ-13; BP-11 (đề nghị); LGC-BUS-027 (gián tiếp).
+**Truy vết.** REQ-16, REQ-13; BP-13 (đề nghị); LGC-BUS-027 (gián tiếp).
 
 **Tiền điều kiện.** Có `PERM-16-read`; PO xem toàn nền tảng.
 
@@ -1755,7 +1755,7 @@ Hình cho thấy mức tuân thủ chỉ đổi sau khi người thứ hai xác 
 
 **FR hiện thực.** FR-16-050.
 
-**Truy vết.** REQ-16, REQ-14; BP-11 (đề nghị); CMP-LAW-11 (dự thảo); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-16, REQ-14; BP-13 (đề nghị); CMP-LAW-11 (dự thảo); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-16-admin` ở `COMMON`; khung quốc gia chưa ban hành nên mẫu là cấu hình thử nghiệm (Q16-02, Q16-03 của FRS).
 
@@ -1794,7 +1794,7 @@ Hình cho thấy mức tuân thủ chỉ đổi sau khi người thứ hai xác 
 
 **FR hiện thực.** FR-16-051, FR-16-052.
 
-**Truy vết.** REQ-16, REQ-14; BP-11 (đề nghị); LGC-NGSP-004 (gián tiếp).
+**Truy vết.** REQ-16, REQ-14; BP-13 (đề nghị); LGC-NGSP-004 (gián tiếp).
 
 **Tiền điều kiện.** `16.national.enabled = true` (mặc định `false`); có `PERM-16-national`; báo cáo `PUBLISHED` loại `PERIODIC` hoặc `NATIONAL`; mẫu gói `ACTIVE` (UC-16-27).
 
@@ -1859,7 +1859,7 @@ Hình cho thấy PH-16 không gọi thẳng hệ quốc gia: gói đi qua outbox
 
 **FR hiện thực.** FR-16-053, FR-16-054.
 
-**Truy vết.** REQ-16, REQ-14; BP-11 (đề nghị); LGC-NGSP-004 (gián tiếp).
+**Truy vết.** REQ-16, REQ-14; BP-13 (đề nghị); LGC-NGSP-004 (gián tiếp).
 
 **Tiền điều kiện.** Gói đã được lập (UC-16-28); gửi lại cần `PERM-16-national`; đối soát cần ít nhất một gói `ACKNOWLEDGED`.
 
@@ -1919,7 +1919,7 @@ Hình cho thấy biên nhận chỉ được nhận khi mã băm khớp và mọ
 
 **FR hiện thực.** FR-16-055, FR-16-056, FR-16-057.
 
-**Truy vết.** REQ-16, REQ-13; BP-11 (đề nghị); CMP-LAW-16.
+**Truy vết.** REQ-16, REQ-13; BP-13 (đề nghị); CMP-LAW-16.
 
 **Tiền điều kiện.** Sửa tham số cần `PERM-16-config`; tra kiểm toán cần `PERM-16-audit-read`.
 
@@ -2022,5 +2022,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Claude | Bản đầu: 30 use case phủ 58 FR, 13 sơ đồ trình tự, năm luồng phụ, câu hỏi mở Q16-45…49, 12 đề nghị đồng bộ cho FRS |
 | 0.2 | 2026-11-26 | Claude | Đồng bộ với FRS 0.2: câu thông báo theo câu chuẩn có tham số của FRS §9.2 kèm giá trị biến; ERR-16-059 (UC-16-08), ERR-16-060 (UC-16-07, 20, 30), ERR-16-061 và luồng "Trả về soạn" (UC-16-14), EVT-16-14 (UC-16-09), ERR-16-058 ở quy ước chung, `16.overview.pinned-indicators` (UC-16-19), số ký hiệu và nơi nhận (UC-16-13); đóng Q16-46…48; ghi kết quả hấp thụ A-01…A-12 |
+| 0.3 | 2026-11-27 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q396: mã BP-13 cho quy trình tổng hợp và báo cáo chỉ tiêu |
 
 : Lịch sử phiên bản

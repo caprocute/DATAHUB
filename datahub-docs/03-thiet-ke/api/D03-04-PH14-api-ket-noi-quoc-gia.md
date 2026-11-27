@@ -2,11 +2,11 @@
 ma_tai_lieu: D03-04-PH14
 ten: Đặc tả API và sự kiện phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.2
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, APISIX; đơn vị kết nối (PH-02, PH-04, PH-07); ATTT; hội đồng thẩm định
 phan_he: PH-14
-mo_ta: Đặc tả 92 endpoint REST ở ba mặt phẳng (điều khiển, dữ liệu nội bộ, chiều vào), 17 sự kiện Kafka và 72 mã lỗi của phân hệ Kết nối quốc gia, sinh từ OpenAPI và AsyncAPI đã kiểm tra trong CI.
+mo_ta: Đặc tả 94 endpoint REST ở ba mặt phẳng (điều khiển, dữ liệu nội bộ, chiều vào), 17 sự kiện Kafka và 72 mã lỗi của phân hệ Kết nối quốc gia, sinh từ OpenAPI và AsyncAPI đã kiểm tra trong CI.
 tai_lieu_lien_quan: D02-03-PH14 FRS; D02-04-PH14 Use case; D03-02-PH14 SDD; D03-03-PH14 CSDL; D03-04-PH05 API Bộ điều hợp; D04-01 Quy ước mã
 ---
 
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D02-03-PH14 FRS; D02-04-PH14 Use case; D03-02-PH14 SDD; D03-
 
 ## Tóm tắt cho hội đồng thẩm định
 
-**Mục tiêu.** PH-14 là cổng duy nhất để HTTT của tỉnh gọi các dịch vụ do nền tảng cấp quốc gia (NDXP, NDOP, hệ thống đăng ký danh mục dịch vụ) cung cấp và để trung ương gọi vào tỉnh. Tài liệu này chốt hợp đồng giao diện của phân hệ: 92 operation REST (API-14-001…092), 17 sự kiện Kafka (EVT-14-01…17) cùng ba chủ đề nội bộ giữa hai mặt phẳng, và 72 mã lỗi (ERR-14-001…039, 101…133). Hợp đồng máy đọc được nằm ở hai tệp:
+**Mục tiêu.** PH-14 là cổng duy nhất để HTTT của tỉnh gọi các dịch vụ do nền tảng cấp quốc gia (NDXP, NDOP, hệ thống đăng ký danh mục dịch vụ) cung cấp và để trung ương gọi vào tỉnh. Tài liệu này chốt hợp đồng giao diện của phân hệ: 94 operation REST (API-14-001…094), 17 sự kiện Kafka (EVT-14-01…17) cùng ba chủ đề nội bộ giữa hai mặt phẳng, và 72 mã lỗi (ERR-14-001…039, 101…133). Hợp đồng máy đọc được nằm ở hai tệp:
 
 - [`ph14/openapi-national.yaml`](ph14/openapi-national.yaml): OpenAPI 3.1, 145 lược đồ, 25 ví dụ đã kiểm khớp lược đồ bằng [`check_contracts.py`](ph14/tools/check_contracts.py), đã qua `openapi-spec-validator` và Spectral `spectral:oas` (0 lỗi, 0 cảnh báo).
 - [`ph14/asyncapi-national.yaml`](ph14/asyncapi-national.yaml): AsyncAPI 3.0, 20 kênh (17 sự kiện công bố, 3 nội bộ), 4 ví dụ đã kiểm, đã qua `@asyncapi/cli validate` (0 lỗi, 0 cảnh báo).
@@ -37,11 +37,11 @@ Cả hai sinh từ bảng mã [`ph14/tools/spec.py`](ph14/tools/spec.py); các b
 
 | Chỉ số | Giá trị |
 |---|---|
-| Operation REST | 92 (điều khiển 80, dữ liệu nội bộ 10, chiều vào 2) |
+| Operation REST | 94 (điều khiển 82, dữ liệu nội bộ 10, chiều vào 2) |
 | Phủ FR | 57/57 FR có API hoặc ghi rõ cách hiện thực (chương 11) |
 | Sự kiện công bố, nội bộ | 17, 3 |
 | Mã lỗi | 72 (39 điều khiển, 33 dữ liệu) |
-| Lược đồ OpenAPI, ví dụ đã kiểm | 145, 25 |
+| Lược đồ OpenAPI, ví dụ đã kiểm | 147, 25 |
 | Câu hỏi mở mới | 5 (Q14-55…Q14-59) |
 
 : Con số chính của tập API PH-14
@@ -94,7 +94,7 @@ Tài liệu chia thành mười một chương và phần cuối; bảng dưới
 | Chương | Nội dung |
 |---|---|
 | 1, 2 | Quy ước chung, xác thực và phân quyền |
-| 3 | Danh mục 92 endpoint, ví dụ yêu cầu và phản hồi |
+| 3 | Danh mục 94 endpoint, ví dụ yêu cầu và phản hồi |
 | 4, 5 | Sự kiện; hợp đồng với phân hệ khác và bên ngoài |
 | 6 | Mã lỗi ERR-14 và thông điệp |
 | 7, 8, 9 | Kiểm tra hợp đồng trong CI; ánh xạ từ hệ cũ; câu hỏi mở |
@@ -105,7 +105,7 @@ Tài liệu chia thành mười một chương và phần cuối; bảng dưới
 
 ## 1. Quy ước chung
 
-Chương này gom các quy ước áp cho cả 92 endpoint để chương 3 và chương 10 không phải nhắc lại. Khác biệt giữa ba mặt phẳng được nêu rõ ở các dòng tương ứng.
+Chương này gom các quy ước áp cho cả 94 endpoint để chương 3 và chương 10 không phải nhắc lại. Khác biệt giữa ba mặt phẳng được nêu rõ ở các dòng tương ứng.
 
 | Mục | Quy ước |
 |---|---|
@@ -160,7 +160,7 @@ Thông tin xác thực của tỉnh với NDXP không cấp cho bất kỳ clien
 
 ## 3. Danh mục endpoint
 
-Mỗi operation một mã `API-14-nnn`. Mã 001…090 do FRS §9.4 đề xuất; tập này giữ nguyên và bổ sung hai mã: **API-14-091** (ảnh chụp cấu hình cho `dh-runtime`, đề xuất của SDD §4.3) và **API-14-092** (xóa chứng thư chưa từng kích hoạt, FRS FR-14-029 có luồng này nhưng chưa có API). Cột FR là số FR-14; chi tiết tham số, lược đồ và mô tả lỗi theo từng operation ở OpenAPI và chương 10.
+Mỗi operation một mã `API-14-nnn`. Mã 001…090 do FRS §9.4 đề xuất; tập này giữ nguyên và bổ sung bốn mã: **API-14-091** (ảnh chụp cấu hình cho `dh-runtime`, đề xuất của SDD §4.3) và **API-14-092** (xóa chứng thư chưa từng kích hoạt, FRS FR-14-029 có luồng này nhưng chưa có API), **API-14-093** (liệt kê yêu cầu chờ duyệt bốn mắt) và **API-14-094** (duyệt hoặc từ chối một yêu cầu); hai mã sau chốt ngày 27/11/2026 theo Q448 để UI-14-17 có API duyệt chung cho năm loại thay đổi chưa có API duyệt riêng (hạn mức môi trường thật, bật điểm cuối chiều vào, tham số bảo mật, giảm kiểm soát dịch vụ, lần công bố dữ liệu mở đầu tiên). Cột FR là số FR-14; chi tiết tham số, lược đồ và mô tả lỗi theo từng operation ở OpenAPI và chương 10.
 
 <!-- gen:endpoints:start -->
 **Nền tảng quốc gia**
@@ -305,6 +305,15 @@ Mỗi operation một mã `API-14-nnn`. Mã 001…090 do FRS §9.4 đề xuất;
 | API-14-089 | `POST /migration/parallel-runs/{runId}/observations` | Gửi quan sát cho phiên chạy song song | 055 | `national.parallel-observe` (dịch vụ) |  | 202 |
 
 : Danh mục endpoint · Tham số và chuyển đổi
+
+**Duyệt bốn mắt chung**
+
+| Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
+|---|---|---|---|---|---|---|
+| API-14-093 | `GET /approval-requests` | Liệt kê yêu cầu chờ duyệt bốn mắt của phân hệ | 003, 005, 013, 028, 030, 032, 039, 045 | `PERM-14-approve` |  | 200 |
+| API-14-094 | `POST /approval-requests/{approvalId}:decide` | Duyệt hoặc từ chối một yêu cầu chờ duyệt | 005, 032, 039, 045 | `PERM-14-approve` |  | 200 |
+
+: Danh mục endpoint · Duyệt bốn mắt chung
 
 **Gọi dịch vụ (nội bộ)**
 
@@ -543,13 +552,13 @@ Bảng dưới liệt kê các mã lỗi của mặt phẳng điều khiển, t�
 
 | Mã | HTTP | Ý nghĩa | API phát sinh (API-14-) |
 |---|---|---|---|
-| ERR-14-001 | 404 | Không tìm thấy đối tượng, hoặc đối tượng thuộc tenant khác (cùng thân với không tồn tại) | 003, 004, 005, 006, 007, 008, 009, 012 và 36 API khác |
+| ERR-14-001 | 404 | Không tìm thấy đối tượng, hoặc đối tượng thuộc tenant khác (cùng thân với không tồn tại) | 003, 004, 005, 006, 007, 008, 009, 012 và 37 API khác |
 | ERR-14-002 | 409 | Mã đã tồn tại, kể cả đối tượng đã ngừng dùng | 002, 011, 030 |
-| ERR-14-003 | 400 | Tham số sai kiểu, sai miền, thiếu trường bắt buộc, khoảng thời gian quá rộng, thiếu lý do | 001, 002, 004, 005, 006, 007, 008, 009 và 64 API khác |
-| ERR-14-004 | 409, 412 | Trạng thái hiện tại không cho phép thao tác, vượt số lần thử lại, thiếu điều kiện đóng (409); `If-Match` lệch `ETag` hiện tại (412) | 004, 005, 006, 007, 008, 009, 013, 016 và 24 API khác |
+| ERR-14-003 | 400 | Tham số sai kiểu, sai miền, thiếu trường bắt buộc, khoảng thời gian quá rộng, thiếu lý do | 001, 002, 004, 005, 006, 007, 008, 009 và 66 API khác |
+| ERR-14-004 | 409, 412 | Trạng thái hiện tại không cho phép thao tác, vượt số lần thử lại, thiếu điều kiện đóng (409); `If-Match` lệch `ETag` hiện tại (412) | 004, 005, 006, 007, 008, 009, 013, 016 và 25 API khác |
 | ERR-14-005 | 422 | Kết nối PH-05 không tồn tại hoặc loại không phù hợp với cách xác thực | 002, 004 |
 | ERR-14-006 | 409 | Đã có yêu cầu kích hoạt đang chờ duyệt | 008, 032 |
-| ERR-14-007 | 403 | Người duyệt trùng người đề nghị hoặc người sửa gần nhất (bốn mắt) | 009, 027, 033, 090 |
+| ERR-14-007 | 403 | Người duyệt trùng người đề nghị hoặc người sửa gần nhất (bốn mắt) | 009, 027, 033, 090, 094 |
 | ERR-14-008 | 422 | Chưa có kiểm tra kết nối đạt trong 24 giờ | 008 |
 | ERR-14-009 | 422 | Dịch vụ chưa đủ điều kiện chuyển `ACTIVE` (thiếu đặc tả `ACTIVE` hoặc nền tảng chưa `ACTIVE`) | 013 |
 | ERR-14-010 | 409 | Trùng số phiên bản đặc tả nhưng khác nội dung | 019 |
@@ -680,7 +689,7 @@ Hợp đồng OpenAPI và AsyncAPI của PH-14 được kiểm tự động tron
 |---|---|---|
 | OpenAPI 3.1 hợp lệ, ví dụ khớp lược đồ, mỗi operation có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors`; lệnh ghi có `If-Match`; `POST` chống trùng có `Idempotency-Key` | `check_contracts.py` (`openapi-spec-validator`, `jsonschema`) | CI-5 |
 | Không trường bí mật, khóa riêng (`privateKey`, `clientSecret`, `password`, `secret`) ở lược đồ nào | `check_contracts.py` | CI-5 |
-| Mã API 001…092 đủ, không trùng; mã lỗi tham chiếu đều có ở bảng chương 6 | `check_contracts.py` | CI-5 |
+| Mã API 001…094 đủ, không trùng; mã lỗi tham chiếu đều có ở bảng chương 6 | `check_contracts.py` | CI-5 |
 | AsyncAPI 3.0 hợp lệ, đủ 17 EVT, ví dụ khớp | `check_contracts.py` và `@asyncapi/parser` 3 | CI-5 |
 | Lint quy ước (tên `operationId`, `summary`, lỗi RFC 9457) | Spectral với bộ luật dự án | CI-5 |
 | Thay đổi phá vỡ trong `v1` | oasdiff `breaking` so với `main` | CI-5 |
@@ -2674,6 +2683,56 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Luồng cắt chuyển của PH-04 gửi băm kết quả; không nhận dữ liệu. Lũy đẳng theo `observationId`.
 :::
 
+### Duyệt bốn mắt chung
+
+#### API-14-093 · Liệt kê yêu cầu chờ duyệt bốn mắt của phân hệ
+
+::: dac-ta
+**Mục đích.** Liệt kê yêu cầu chờ duyệt bốn mắt của phân hệ.
+
+**Phương thức, đường dẫn.** `GET /api/national/v1/approval-requests`.
+
+**Quyền.** `PERM-14-approve`.
+
+**FR hiện thực.** FR-14-003, FR-14-005, FR-14-013, FR-14-028, FR-14-030, FR-14-032, FR-14-039, FR-14-045.
+
+**Tham số.** `type` (query, array, tùy chọn); `state` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequestList`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `500`; mã lỗi của thao tác: ERR-14-003 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Hộp "Việc của tôi" của UI-14-17 cho năm loại `ph14.quota-prod`, `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first`; chỉ trả yêu cầu của tenant trong token. Ba loại còn lại có API duyệt riêng (API-14-009, 027, 033).
+:::
+
+#### API-14-094 · Duyệt hoặc từ chối một yêu cầu chờ duyệt
+
+::: dac-ta
+**Mục đích.** Duyệt hoặc từ chối một yêu cầu chờ duyệt.
+
+**Phương thức, đường dẫn.** `POST /api/national/v1/approval-requests/{approvalId}:decide`.
+
+**Quyền.** `PERM-14-approve`.
+
+**FR hiện thực.** FR-14-005, FR-14-032, FR-14-039, FR-14-045.
+
+**Tham số.** `approvalId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ApprovalDecision`; trường bắt buộc: `decision`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequest`; trường bắt buộc: `approvalId`, `type`, `targetRef`, `state`, `requestedBy`, `requestedAt`, `expiresAt`, `version`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Bốn mắt: người duyệt khác người đề nghị và người sửa gần nhất (ERR-14-007, BR-14-022). Duyệt thì áp thay đổi (hạn mức, điểm cuối chiều vào, tham số bảo mật, giảm kiểm soát dịch vụ, lần công bố dữ liệu mở đầu tiên) và phát sự kiện tương ứng; từ chối giữ cấu hình cũ. Kích hoạt điểm cuối chiều vào còn cần xác nhận vân tay (API-14-090).
+:::
+
 ### Gọi dịch vụ (nội bộ)
 
 #### API-14-075 · Gọi dịch vụ quốc gia qua điểm gọi chung
@@ -2979,9 +3038,9 @@ Bảng dưới đối chiếu 57 FR của FRS với API, để bảo đảm mỗ
 |---|---|---|---|
 | FR-14-001 | Liệt kê nền tảng quốc gia, trạng thái và mức sức khỏe | M, MVP | API-14-001, 003 |
 | FR-14-002 | Khai báo nền tảng quốc gia và gắn kết nối PH-05 | M, MVP | API-14-002, 003, 004 |
-| FR-14-003 | Bật, tạm ngừng, tiếp tục và ngừng dùng nền tảng | M, MVP | API-14-005, 006, 007, 008, 009 |
+| FR-14-003 | Bật, tạm ngừng, tiếp tục và ngừng dùng nền tảng | M, MVP | API-14-005, 006, 007, 008, 009, 093 |
 | FR-14-004 | Liệt kê và tìm dịch vụ quốc gia | M, MVP | API-14-010 |
-| FR-14-005 | Khai báo và sửa dịch vụ quốc gia | M, MVP | API-14-011, 013 |
+| FR-14-005 | Khai báo và sửa dịch vụ quốc gia | M, MVP | API-14-011, 013, 093, 094 |
 | FR-14-006 | Xem chi tiết dịch vụ, hợp đồng và nhãn đối chiếu | M, MVP | API-14-012 |
 | FR-14-007 | Đối chiếu danh mục dịch vụ với danh mục hiện hành của NDXP | M, MVP | API-14-014, 015, 016, 017 |
 | FR-14-008 | Nạp đặc tả dịch vụ có phiên bản và phát hiện lệch | M, MVP | API-14-018, 019, 020 |
@@ -2989,7 +3048,7 @@ Bảng dưới đối chiếu 57 FR của FRS với API, để bảo đảm mỗ
 | FR-14-010 | Gọi dịch vụ quốc gia qua điểm gọi chung | M, MVP | API-14-075, 091 |
 | FR-14-011 | Kiểm tra mục đích khai thác và ủy quyền theo mục đích | M, MVP | Hiện thực ở chặng `purpose` của API-14-075, 076 (ERR-14-106, 107, 132); cờ `purposeRequired` khai ở API-14-011, 013 |
 | FR-14-012 | Định tuyến tới nền tảng và dịch vụ đích | M, MVP | API-14-028, 091 |
-| FR-14-013 | Quản lý bảng định tuyến | M, MVP | API-14-024, 025, 026, 027, 028 |
+| FR-14-013 | Quản lý bảng định tuyến | M, MVP | API-14-024, 025, 026, 027, 028, 093 |
 | FR-14-014 | Chuyển đổi bản tin theo hợp đồng dịch vụ | M, MVP | Hiện thực ở chặng chuyển đổi bản tin trong cổng; hợp đồng và đặc tả khai ở API-14-011, 019 |
 | FR-14-015 | Phân loại và chuẩn hóa lỗi từ quốc gia | M, MVP | Hiện thực ở chặng `normalize` trong cổng; lỗi trả ERR-14-102, 128 ở phản hồi API-14-075 |
 | FR-14-016 | Gọi bất đồng bộ qua hàng chờ | M, MVP | API-14-076, 077, 078 |
@@ -3004,24 +3063,24 @@ Bảng dưới đối chiếu 57 FR của FRS với API, để bảo đảm mỗ
 | FR-14-025 | Xoay vòng và cấp lại thông tin xác thực | M, MVP | API-14-039, 040 |
 | FR-14-026 | Ký số bản tin gửi đi | M, MVP | Hiện thực ở chặng gửi của API-14-075; chứng thư và khóa quản lý ở API-14-030…034, kiểm khớp khóa ở API-14-030 |
 | FR-14-027 | Xác minh chữ ký phản hồi | M, MVP | Hiện thực ở chặng `verify` của API-14-075, 084; sự cố chữ ký xem ở API-14-037, 038 |
-| FR-14-028 | Nạp và kích hoạt chứng thư số | M, MVP | API-14-030, 032, 033 |
+| FR-14-028 | Nạp và kích hoạt chứng thư số | M, MVP | API-14-030, 032, 033, 093 |
 | FR-14-029 | Theo dõi hạn chứng thư, cảnh báo và chuyển tiếp | M, MVP | API-14-029, 031, 034, 092 |
-| FR-14-030 | Cập nhật chuỗi tin cậy và danh sách thu hồi | M, MVP | API-14-035, 036 |
+| FR-14-030 | Cập nhật chuỗi tin cậy và danh sách thu hồi | M, MVP | API-14-035, 036, 093 |
 | FR-14-031 | Xử lý sự cố chữ ký như sự cố an ninh | M, MVP | API-14-037, 038 |
-| FR-14-032 | Khai báo hạn mức do trung ương áp | M, MVP | API-14-041, 042 |
+| FR-14-032 | Khai báo hạn mức do trung ương áp | M, MVP | API-14-041, 042, 093, 094 |
 | FR-14-033 | Đếm hạn mức, kiểm tra trước mỗi lượt gọi và cảnh báo ngưỡng | M, MVP | API-14-041, 043, 091 |
 | FR-14-034 | Phân bổ hạn mức theo HTTT và ưu tiên dịch vụ thiết yếu | M, MVP | API-14-044, 045 |
 | FR-14-035 | Đệm phản hồi theo loại dữ liệu | M, MVP | API-14-046 |
 | FR-14-036 | Vô hiệu đệm | S, MVP | API-14-047 |
 | FR-14-037 | Dùng dữ liệu đệm quá hạn có cờ | M, MVP | Dùng đệm quá hạn qua tiêu đề `X-DH-Accept-Stale` ở API-14-075; cờ `staleAllowed` khai ở API-14-011 |
 | FR-14-038 | Ngắt mạch và thử lại | M, MVP | API-14-086 |
-| FR-14-039 | Đăng ký điểm cuối chiều vào và nguồn được phép | M, MVP | API-14-048, 049, 050, 051, 052, 090 |
+| FR-14-039 | Đăng ký điểm cuối chiều vào và nguồn được phép | M, MVP | API-14-048, 049, 050, 051, 052, 090, 093, 094 |
 | FR-14-040 | Tiếp nhận yêu cầu từ nền tảng quốc gia | M, MVP | API-14-084 |
 | FR-14-041 | Chuyển cho luồng PH-04 và trả phản hồi có ký | M, MVP | API-14-084 |
 | FR-14-042 | Tiếp nhận thông báo thay đổi từ quốc gia | S, Đợt 2 | API-14-085 |
 | FR-14-043 | Đồng bộ danh mục dịch vụ lên Bộ | M, MVP | API-14-053, 054, 055 |
 | FR-14-044 | Cầu nối đồng bộ dữ liệu chủ hai chiều | S, Đợt 3 | API-14-056 |
-| FR-14-045 | Công bố dữ liệu mở lên NDOP | S, Đợt 3 | API-14-087, 088 |
+| FR-14-045 | Công bố dữ liệu mở lên NDOP | S, Đợt 3 | API-14-087, 088, 093, 094 |
 | FR-14-046 | Theo dõi trạng thái đồng bộ, xử lý lỗi và lệch | M, MVP | API-14-053, 055, 057 |
 | FR-14-047 | Kiểm tra kết nối chủ động | M, MVP | API-14-058, 059 |
 | FR-14-048 | Tổng quan kết nối quốc gia | M, MVP | API-14-060 |
@@ -3037,6 +3096,11 @@ Bảng dưới đối chiếu 57 FR của FRS với API, để bảo đảm mỗ
 
 : Phủ FR bằng API
 <!-- gen:fr-cover:end -->
+
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-02 có thêm loại API "dịch vụ quốc gia" nhận bản nháp từ PH-14 với `Idempotency-Key`, chỉ tạo `DRAFT`, sự kiện đã công bố mang `apiCode`, kèm danh sách dịch vụ chia sẻ `PUBLISHED` (API-14-023, 054).
+- PH-03 có tuyến `/inbound/v1/*` ở vùng biên (mTLS, giới hạn tần suất, WAF), tuyến cung cấp lại viết sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation`, và bộ lọc vân tay chứng thư nạp từ EVT-14-13 (API-14-084, 085); PH-03 ghi vào FR-03-001, 002, 038 và bảng PH-14 ở D03-04-PH03 mục 5.1.
 
 ## Đề nghị đồng bộ
 
@@ -3066,4 +3130,4 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập API PH-14: 92 operation ở ba mặt phẳng, 17 sự kiện và ba chủ đề nội bộ, 72 mã lỗi, theo khuôn K-API và chuẩn trình bày K-TRINH-BAY. Giữ nguyên 90 mã API-14-001…090 do FRS đề xuất, thêm API-14-091 (cấu hình runtime, SDD) và API-14-092 (xóa chứng thư), thêm ERR-14-133. OpenAPI 3.1 và AsyncAPI 3.0 sinh từ `ph14/tools`. Có 5 câu hỏi mở (Q14-55…59) và mục Đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag 412, cổng PH-09, PH-01, PH-16, phân trang keyset, trường bảng điều khiển, sinh lại từ OpenAPI |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag 412, cổng PH-09, PH-01, PH-16, phân trang keyset, trường bảng điều khiển, sinh lại từ OpenAPI; chốt Q448, Q415, Q416: thêm API-14-093, 094 (duyệt bốn mắt chung, 94 operation); ghi quyết định PH-02 nhận bản nháp dịch vụ quốc gia và PH-03 thêm tuyến /inbound/v1 |

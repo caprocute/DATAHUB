@@ -1273,7 +1273,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
 
-**Ghi chú.** Không gian hoặc luồng không tồn tại ở PH-04 ERR-05-033. Phát EVT-05-05.
+**Ghi chú.** Không gian hoặc luồng không tồn tại ở PH-04, hoặc API không tồn tại ở PH-02 (phạm vi API, API-02-002) ERR-05-033; kết nối không thuộc nhóm http-* với phạm vi API ERR-05-003. Phát EVT-05-05.
 :::
 
 #### API-05-024 · Thu hồi quyền sử dụng
@@ -2884,4 +2884,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API; OpenAPI, AsyncAPI sinh từ bảng mã, đã kiểm | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng |
-| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: sinh lại cột Quyền, mẫu type ERR-05-nnn, người nhận EVT-05-08 | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: sinh lại cột Quyền, mẫu type ERR-05-nnn, người nhận EVT-05-08 | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng; chốt câu hỏi mở đợt đồng bộ: Q383 |

@@ -106,6 +106,9 @@ CREATE TABLE ph02_catalog.lint_finding (
   acknowledged_by  varchar(64),
   acknowledged_at  timestamptz,
   acknowledge_reason varchar(1000),
+  dispute_requested boolean     NOT NULL DEFAULT false,
+  dispute_reason   varchar(1000),
+  dispute_requested_by varchar(64),
   checked_at       timestamptz   NOT NULL DEFAULT now(),
   created_by       varchar(64)   NOT NULL,
   CONSTRAINT pk_lint_finding PRIMARY KEY (id, checked_at),
@@ -116,6 +119,7 @@ CREATE TABLE ph02_catalog.lint_finding (
   CONSTRAINT ck_lint_finding_status CHECK (status IN ('OPEN', 'RESOLVED', 'ACKNOWLEDGED')),
   CONSTRAINT ck_lint_finding_secret CHECK (layer <> 'SECRET' OR (severity = 'ERROR' AND fingerprint IS NOT NULL)),
   CONSTRAINT ck_lint_finding_ack CHECK ((status = 'ACKNOWLEDGED') = (acknowledged_by IS NOT NULL AND acknowledged_at IS NOT NULL AND length(btrim(coalesce(acknowledge_reason, ''))) > 0)),
+  CONSTRAINT ck_lint_finding_dispute CHECK (dispute_requested = (dispute_requested_by IS NOT NULL AND length(btrim(coalesce(dispute_reason, ''))) > 0)),
   CONSTRAINT ck_lint_finding_fingerprint CHECK (fingerprint IS NULL OR fingerprint ~ '^[0-9a-f]{16}$')
 ) PARTITION BY RANGE (checked_at);
 CREATE INDEX ix_lint_finding_spec ON ph02_catalog.lint_finding (tenant_id, spec_id, severity) WHERE status = 'OPEN';
@@ -125,6 +129,9 @@ CALL ph02_catalog.p_enable_rls('ph02_catalog.lint_finding', 'P');
 CALL ph02_catalog.p_ensure_month_partitions('ph02_catalog.lint_finding', now()::date, 4);
 COMMENT ON TABLE ph02_catalog.lint_finding IS 'EN-02-04 Phát hiện của một lần kiểm tra đặc tả persist: lớp, mức, mã luật, vị trí, hướng dẫn (FR-02-016…018). KHÔNG lưu chuỗi khớp của bộ quét bí mật, chỉ dấu vân tay 16 ký tự hex của băm có muối (NFR-02-012, FR-02-018). Phân vùng tháng theo checked_at, giữ 1 năm (NFR-02-017). Chế độ PREVIEW không ghi gì.';
 COMMENT ON COLUMN ph02_catalog.lint_finding.fingerprint IS 'Dấu vân tay (16 ký tự đầu của HMAC-SHA256 có muối theo tenant) của chuỗi khớp, để nhận ra cùng một bí mật ở lần quét sau mà không giữ giá trị.';
+COMMENT ON COLUMN ph02_catalog.lint_finding.dispute_requested IS 'Người dùng đề nghị coi phát hiện là "không phải bí mật" (API-02-093); phát hiện vẫn OPEN và vẫn chặn gửi duyệt cho tới khi SO xác nhận ở API-02-094.';
+COMMENT ON COLUMN ph02_catalog.lint_finding.dispute_reason IS 'Lý do đề nghị không phải bí mật (API-02-093); bắt buộc khi dispute_requested = true.';
+COMMENT ON COLUMN ph02_catalog.lint_finding.dispute_requested_by IS 'Người gửi đề nghị không phải bí mật (API-02-093).';
 COMMENT ON COLUMN ph02_catalog.lint_finding.status IS 'OPEN, RESOLVED (lần quét sau không còn), ACKNOWLEDGED (người dùng xác nhận không phải bí mật, ghi người và lý do; SECRET cần TA, kiểm ở dịch vụ).';
 -- @rollback DROP TABLE IF EXISTS ph02_catalog.lint_finding CASCADE;
 

@@ -270,6 +270,8 @@ Quyền chức năng theo FRS §3.2 và D02-08:
 
 Mức không gian làm việc (`VIEW`, `EDIT`, `MAINTAIN`, FR-04-007) ghi ở `x-datahub-permission.workspaceLevel`. Chỉ áp dụng khi tham số `04.workspace.enforce` bật; TA và PA không bị giới hạn. Người duyệt cần mức `MAINTAIN` khi tham số bật.
 
+**Token đổi của PH-17 (đã chốt 27/11/2026, Q427).** Điểm cuối bản nháp của PH-04 mà trợ lý AI (PH-17) gọi bằng token đổi theo RFC 8693 dùng một scope đọc bản nháp riêng, không dùng chung `assist:infer`; tên scope và hợp đồng do PH-17 chốt trước (PH-04 sẽ thêm API đọc bản nháp riêng sau đó, nay chưa thêm). Ghi bản nháp vẫn qua API ghi hiện có bằng token người dùng đã đổi, theo quyền chức năng của người dùng đó.
+
 Hai kiểm tra đặc biệt:
 
 - **Bốn mắt (BR-04-005).** `:review` từ chối người đã tạo phiên bản, người trong `flow_version_contributor` và người gửi duyệt (ERR-04-015, 403). Kiểm tra ở máy chủ, giao diện chỉ ẩn nút.
@@ -455,7 +457,8 @@ Ghi chú cho lập trình viên:
 4. **Phát hành (API-04-054)** ghi bản ghi `deployment` và outbox trong giao dịch, rồi `GitOpsWriter` commit vào `env/{environment}` của kho `dh-flows-{tenant}` (với PROD là merge request, ADR-068). Lỗi Git đưa triển khai sang `FAILED` với ERR-04-022, không cuộn lại phiên bản. Trạng thái `SYNCED` đến khi mọi bản sao báo đúng `contentHash` qua nhịp tim EVT-04-12.
 5. **Lệnh runtime (API-04-061)** trả 202 ngay khi đã ký và gửi. Giao diện theo dõi `GET .../commands/{id}`: `ACKNOWLEDGED` khi đủ bản sao, `PARTIAL` sau 30 giây, `REJECTED` khi có bản sao từ chối (ERR-04-024 nằm trong `acks[].reason`, không phải mã HTTP). `EMERGENCY_STOP` đi trước Git; tiến trình đối soát đưa trạng thái mong muốn vào Git trong 5 phút (ADR-065, BR-04-018).
 6. **Catalog (API-04-070)** trả chỉ mục đã lọc theo chính sách nền và chính sách tỉnh, kèm nhóm bảng thành phần. ETag ghép `catalogVersion`, `policyVersion`, `paletteRulesVersion`; trình duyệt giữ bản đệm và gửi `If-None-Match`.
-7. **Đọc lịch sử, số liệu** (API-04-063, 091) chỉ là lớp chuyển tiếp tới PH-13, lọc sẵn theo tenant và luồng. PH-13 không sẵn sàng thì trả 503 ERR-04-047; các màn hình khác vẫn dùng được.
+7. **API nội bộ chạy thử (API-04-092, 093)** nằm ngoài bảng trên vì dưới `/internal/v1`, chỉ trong cụm; xem §5.1 và `ph04/openapi-integration-internal.yaml`.
+8. **Đọc lịch sử, số liệu** (API-04-063, 091) chỉ là lớp chuyển tiếp tới PH-13, lọc sẵn theo tenant và luồng. PH-13 không sẵn sàng thì trả 503 ERR-04-047; các màn hình khác vẫn dùng được.
 
 ## 4. Danh mục sự kiện
 
@@ -999,14 +1002,102 @@ Chương này nêu những gì PH-04 cần từ phân hệ khác và từ hệ n
 
 : Phân hệ và hệ ngoài mà dh-integration gọi
 
-Chiều ngược lại, sandbox gọi hai API nội bộ của `dh-integration` (SDD §8.2 bước 2 và 4). Hai API này nằm dưới `/internal/v1`, chỉ trong cụm, xác thực bằng mTLS và tài khoản dịch vụ của sandbox, không qua `apisix-int` và không có trong `openapi-integration.yaml`. Bản 0.2 chưa cấp mã API cho chúng; đề nghị ở chương 11.
+Chiều ngược lại, sandbox gọi hai API nội bộ của `dh-integration` (SDD §8.2 bước 2 và 4). Hai API này nằm dưới `/internal/v1`, chỉ trong cụm, xác thực bằng mTLS và tài khoản dịch vụ của sandbox, không qua `apisix-int` và không có trong `openapi-integration.yaml`. Đã chốt 27/11/2026 (Q410): cấp mã API-04-092 và API-04-093, đặc tả trong tệp riêng `ph04/openapi-integration-internal.yaml` (viết tay, hợp lệ OpenAPI 3.1, `kiem_tra_yaml.py` kiểm) và ở §5.1.
 
 | Bên gọi | Thao tác | Nội dung | Ghi chú |
 |---|---|---|---|
-| Sandbox | `GET /internal/v1/testruns/{id}/bundle` | Lấy YAML chuẩn hóa, `*.jq`, bản tin, ca kiểm thử, cấu hình mô phỏng, giá trị kết nối TEST (chỉ `SANDBOX_LIVE`) | Chỉ khi lần chạy ở `QUEUED` hoặc `RUNNING`; không trả bí mật PROD |
-| Sandbox | `POST /internal/v1/testruns/{id}/steps` | Gửi kết quả từng chặng theo lô 200 ms (`nodeId`, `status`, `startOffsetMs`, `durationMs`, tiêu đề đã lọc, thân đã che ≤ 64 KiB) và kết quả cuối | `dh-integration` ghi `test_run_step`, đẩy SSE API-04-042, phát EVT-04-10 |
+| Sandbox | API-04-092 `GET /internal/v1/testruns/{id}/bundle` | Lấy YAML chuẩn hóa, `*.jq`, bản tin, ca kiểm thử, cấu hình mô phỏng, giá trị kết nối TEST (chỉ `SANDBOX_LIVE`) | Chỉ khi lần chạy ở `QUEUED` hoặc `RUNNING`; không trả bí mật PROD |
+| Sandbox | API-04-093 `POST /internal/v1/testruns/{id}/steps` | Gửi kết quả từng chặng theo lô 200 ms (`nodeId`, `status`, `startOffsetMs`, `durationMs`, tiêu đề đã lọc, thân đã che ≤ 64 KiB) và kết quả cuối | `dh-integration` ghi `test_run_step`, đẩy SSE API-04-042, phát EVT-04-10 |
 
-: API nội bộ sandbox gọi dh-integration (chưa có mã)
+: API nội bộ sandbox gọi dh-integration
+
+### 5.1. Đặc tả API nội bộ của chạy thử
+
+Hai API dưới đây sinh từ `ph04/openapi-integration-internal.yaml` bằng `build/tools/sinh_dac_ta_api.py --vi-du`; đường dẫn tính từ `/internal/v1`.
+
+#### API-04-092 · Lấy gói chạy thử cho sandbox
+
+::: dac-ta
+**Mục đích.** Lấy gói chạy thử cho sandbox.
+
+**Phương thức, đường dẫn.** `GET /testruns/{id}/bundle`.
+
+**Quyền.** Token dịch vụ, scope `integration:testrun-bundle`.
+
+**FR hiện thực.** FR-04-030, FR-04-031.
+
+**Tham số.** `id` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `TestRunBundle`; trường bắt buộc: `runId`, `mode`, `definitionHash`, `timeoutSeconds`, `definitionYaml`.
+
+**Lỗi.** `401` Thiếu hoặc sai chứng chỉ, token dịch vụ (ERR-04-044); `403` Thiếu scope dịch vụ (ERR-04-045); `404` Không có lần chạy, hoặc lần chạy đã kết thúc (ERR-04-001).
+
+**Ghi chú.** Trả YAML chuẩn hóa, các tệp `*.jq`, bản tin, ca kiểm thử, cấu hình mô phỏng và giá trị kết nối TEST (chỉ khi `mode = SANDBOX_LIVE`). Chỉ trả khi lần chạy ở `QUEUED` hoặc `RUNNING`; không bao giờ trả bí mật PROD.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+GET /internal/v1/testruns/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41/bundle
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"runId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "mode": "MOCK",
+ "definitionHash": "sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e",
+ "timeoutSeconds": 60, "captureBodies": true, "fromNodeId": null,
+ "definitionYaml": "- route:\n    id: tra-cuu\n    from:\n      uri: direct:dh-test-entry\n",
+ "jqFiles": [{"name": "map-ho-tich.jq", "content": "{hoTen: .name}"}],
+ "message": {"headers": {}, "body": "{\"name\": \"Nguyễn Văn A\"}"},
+ "testCase": {"name": "Tra cứu hợp lệ", "assertions": []}, "mockConfig": {"samples": {}},
+ "connections": []}
+```
+
+#### API-04-093 · Gửi kết quả từng chặng của lần chạy thử
+
+::: dac-ta
+**Mục đích.** Gửi kết quả từng chặng của lần chạy thử.
+
+**Phương thức, đường dẫn.** `POST /testruns/{id}/steps`.
+
+**Quyền.** Token dịch vụ, scope `integration:testrun-steps`.
+
+**FR hiện thực.** FR-04-030, FR-04-032.
+
+**Tham số.** `id` (path, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TestRunStepBatch`; trường bắt buộc: `batchSeq`, `steps`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `400` Thân sai (ERR-04-049); `401` Thiếu hoặc sai chứng chỉ, token dịch vụ (ERR-04-044); `403` Thiếu scope dịch vụ (ERR-04-045); `404` Không có lần chạy, hoặc lần chạy đã kết thúc (ERR-04-001); `413` Thân chặng vượt 64 KiB mỗi lần hoặc lô vượt giới hạn (ERR-04-021).
+
+**Ghi chú.** Sandbox gửi theo lô mỗi 200 ms; lô cuối mang `final` (kết quả khẳng định và trạng thái cuối). `dh-integration` ghi `test_run_step`, cập nhật trạng thái, đẩy SSE (API-04-042) và phát EVT-04-10. Gửi lại lô cùng `batchSeq` thì bỏ qua (không ghi trùng).
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /internal/v1/testruns/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41/steps
+
+{"batchSeq": 1,
+ "steps": [{"seqNo": 1, "nodeId": "n1", "routeId": "tra-cuu", "stage": "transform", "status": "OK",
+   "startOffsetMs": 0, "durationMs": 12, "headers": {},
+   "bodyInPreview": "{\"hoTen\": \"Nguyễn Văn A\"}", "truncated": false}],
+ "final": {"status": "PASSED", "durationMs": 412,
+  "assertions": [{"name": "hoTen khác rỗng", "passed": true}]}}
+```
+
+```http
+HTTP/1.1 204 No Content
+```
 
 Trong giai đoạn chạy song song với Bus cũ (D06-01), PH-04 không gọi Bus. Chuyển luồng cũ dùng tệp XML do người vận hành xuất từ Bus và tải lên (API-04-028).
 
@@ -4082,7 +4173,7 @@ Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập
 | 1 | D03-06-PH04 §5.3 | Thêm câu hiển thị cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 đúng như FRS D02-03-PH04 §9.2 (bản 0.2) và §6.1 ở đây | Bảng màn hình chưa có các mã này; câu đã thống nhất ở FRS | Đã hấp thụ (0.2): MH §5.3 có đủ các câu này |
 | 2 | D03-06-PH04 §5.3; D02-03-PH04 §9.2 | Thêm ba câu mới: ERR-04-044 "Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục."; ERR-04-046 "Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ."; ERR-04-048 "Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây." | Ba mã chưa có câu ở cả FRS và màn hình | Đã hấp thụ (0.2): ERR-04-044, 046, 048 có câu ở FRS §9.2 và MH §5.3 |
 | 3 | D03-06-PH04 §5.3 (mục lỗi runtime cho người vận hành) | Dẫn câu `title` của ERR-04-101…112 (§6.2) cho màn vận hành và DLQ | Người vận hành thấy cùng câu với bên gọi | Đã hấp thụ (0.2): MH §5.3 có bảng câu ERR-04-101…112 cho người vận hành |
-| 4 | D03-02-PH04 §8.2; bản hợp đồng sau | Cấp mã cho hai API nội bộ của sandbox, đánh số tiếp sau mã lớn nhất API-04-091 (dự kiến số 092 cho `GET /internal/v1/testruns/{id}/bundle`, số 093 cho `POST /internal/v1/testruns/{id}/steps`), đặc tả trong một tệp OpenAPI nội bộ riêng `ph04/openapi-integration-internal.yaml` | Hai DU khác nhau trao đổi qua hai API này nên cần hợp đồng có kiểm CI; bản 0.2 chưa thêm mã vì chưa có quyết định ở SDD | Chờ bản hợp đồng sau (cần mã API mới và tệp OpenAPI nội bộ) |
+| 4 | D03-02-PH04 §8.2; bản hợp đồng sau | Cấp mã cho hai API nội bộ của sandbox, đánh số tiếp sau mã lớn nhất API-04-091 (dự kiến số 092 cho `GET /internal/v1/testruns/{id}/bundle`, số 093 cho `POST /internal/v1/testruns/{id}/steps`), đặc tả trong một tệp OpenAPI nội bộ riêng `ph04/openapi-integration-internal.yaml` | Hai DU khác nhau trao đổi qua hai API này nên cần hợp đồng có kiểm CI; bản 0.2 chưa thêm mã vì chưa có quyết định ở SDD | Đã chốt 27/11/2026 (Q410): API-04-092, 093 và tệp `ph04/openapi-integration-internal.yaml` đã có (§5.1) |
 | 5 | D04-01; bản hợp đồng `v1` sau | Tách mã cho operation đang dùng chung (API-04-002, 004, 028, 034, 042, 044, 054, 061, 072, 074, 082, 090) theo K-API §3 "mỗi operation một mã", đánh số mới tiếp sau mã lớn nhất; giữ mã cũ cho operation đầu của nhóm | Bản 0.1 trái K-API; đổi mã cần đồng bộ FRS §9.4, màn hình, ca kiểm thử nên để một đợt riêng | Chờ đợt đồng bộ cuối (D04-01 ngoài PH-04, đổi mã kéo theo FRS, MH, TC) |
 | 6 | D05-02-PH04 | Dùng ví dụ yêu cầu và phản hồi ở chương 10 (đã kiểm khớp lược đồ) làm dữ liệu cho ca kiểm thử hợp đồng; chạy `check_contracts.py` ở CI-5 | Tránh mỗi tập tự viết ví dụ khác nhau | Còn mở: D05-02-PH04 (Schemathesis trên `openapi-integration.yaml`, TS-04-28) chưa dẫn ví dụ chương 10 làm dữ liệu ca; xử lý ở bản sau |
 | 7 | D04-02 (CI-5) | Thêm `ph04/tools/check_contracts.py` vào cổng CI-5 bên cạnh công cụ của PH-05 | Hiện CI chỉ ghi kiểm tra bằng lời | Chờ đợt đồng bộ cuối (D04-02 ngoài PH-04) |
@@ -4095,6 +4186,6 @@ Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: 70 operation, 14 sự kiện, bảng ERR-04 đầy đủ, ánh xạ hệ cũ và W2 |
 | 0.2 | 2026-11-26 | Lên chuẩn trình bày kết hợp, giữ mọi nội dung 0.1: chương Giới thiệu với sơ đồ kiến trúc và hai sơ đồ trình tự; đặc tả 14 sự kiện kèm ví dụ payload; cột câu hiển thị cho ERR-04-001…049 và câu trả bên gọi cho ERR-04-101…112; đặc tả 70 operation sinh từ OpenAPI kèm ví dụ yêu cầu và phản hồi; mô tả và ví dụ bổ sung ở nguồn sinh; sửa lược đồ `allOf`; công cụ `check_contracts.py`; đề nghị đồng bộ |
-| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: dh-dlq-error-code, restOperations và dependsOn của sự kiện, mẫu type ERR-04-nnn |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: dh-dlq-error-code, restOperations và dependsOn của sự kiện, mẫu type ERR-04-nnn; Chốt câu hỏi mở đợt đồng bộ: Q410, Q427 |
 
 : Lịch sử phiên bản

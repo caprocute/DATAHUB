@@ -9829,6 +9829,101 @@ paths:
           $ref: '#/components/responses/Unprocessable'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
+  /internal/stewardship/items:from-dq:
+    post:
+      tags:
+      - Hàng đợi người quản lý
+      operationId: postInternalStewardshipItemsFromDq126
+      summary: Tạo mục hàng đợi từ phát hiện chất lượng (PH-08)
+      x-datahub-id: API-06-126
+      x-datahub-fr:
+      - FR-06-027
+      x-datahub-permission:
+        permission: scope `mdm:steward-intake`
+      x-datahub-scope: mdm:steward-intake
+      security:
+      - oauth2Machine:
+        - mdm:steward-intake
+      x-datahub-idempotent: required
+      x-datahub-internal: true
+      description: API nội bộ chỉ qua `apisix-int` với scope `mdm:steward-intake` của PH-08; tạo mục lý do `DQ_FINDING` (điểm cơ sở 35, hạn theo `06.queue.sla-days`,
+        người nhận là DS của miền). `201` mục mới; `200` khi đã có mục mở cho `goldenId` nên chỉ gắn thêm mã quy tắc. Không nhận lý do khác.
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-06-047
+      - ERR-06-050
+      - ERR-06-003
+      - ERR-06-015
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StewardIntakeRequest'
+            examples:
+              vi-du:
+                value:
+                  domainCode: CITIZEN
+                  goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                  ruleCodes:
+                  - DQ-NAME-001
+                  suggestedAction: REVIEW_DUPLICATE
+                  findingIds:
+                  - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                  note: Hai bản ghi vàng cùng họ tên, ngày sinh và địa chỉ.
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StewardIntakeResult'
+              examples:
+                vi-du:
+                  value:
+                    itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    created: true
+                    reason: DQ_FINDING
+                    priority: 35
+                    dueAt: '2026-11-20T08:00:00+07:00'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+            Location:
+              schema:
+                type: string
+              description: Đường dẫn tài nguyên mới.
+        '200':
+          description: Thành công một phần hoặc chờ xử lý.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StewardIntakeResult'
+              examples:
+                vi-du:
+                  value:
+                    itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                    created: true
+                    reason: DQ_FINDING
+                    priority: 35
+                    dueAt: '2026-11-20T08:00:00+07:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
 components:
   securitySchemes:
     oauth2User:
@@ -9853,6 +9948,7 @@ components:
             mdm:resolve: Giải quyết trực tuyến
             mdm:search: Tìm kiếm hạn chế
             mdm:national-sync: Đồng bộ quốc gia (PH-14)
+            mdm:steward-intake: PH-08 tạo mục hàng đợi từ lỗi chất lượng
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -11573,6 +11669,63 @@ components:
           type: boolean
       required:
       - cause
+    StewardIntakeRequest:
+      type: object
+      description: PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (FR-06-027, FR-08-046); mục lý do `DQ_FINDING`.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        goldenId:
+          type: string
+          format: uuid
+        ruleCodes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 50
+        suggestedAction:
+          type: string
+          enum:
+          - REVIEW_DUPLICATE
+          - REVIEW_SURVIVORSHIP
+          - REVIEW_VALUE
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        note:
+          type: string
+          maxLength: 500
+      required:
+      - domainCode
+      - goldenId
+      - ruleCodes
+      - suggestedAction
+    StewardIntakeResult:
+      type: object
+      description: Mục hàng đợi đã tạo hoặc đã có (gắn thêm lý do).
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        created:
+          type: boolean
+        reason:
+          $ref: '#/components/schemas/QueueReason'
+        priority:
+          type: integer
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - itemId
+      - created
+      - reason
+      - priority
+      - dueAt
     ClaimNextRequest:
       type: object
       description: Bộ lọc khi nhận mục tiếp theo (FR-06-028); thân rỗng nghĩa là không lọc.
@@ -13388,6 +13541,7 @@ components:
       - IDENTIFIER_CONFLICT
       - ORPHANED
       - TIMEOUT
+      - DQ_FINDING
     RelinkMode:
       type: string
       enum:

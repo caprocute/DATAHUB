@@ -40,6 +40,7 @@ CREATE TABLE ph06_mdm.steward_item (
   reopened_by       varchar(64),
   reopen_reason     varchar(2000),
   decision_history  jsonb NOT NULL DEFAULT '[]',
+  dq_context        jsonb,
   created_at        timestamptz NOT NULL DEFAULT now(),
   created_by        varchar(64) NOT NULL,
   updated_at        timestamptz NOT NULL DEFAULT now(),
@@ -49,7 +50,7 @@ CREATE TABLE ph06_mdm.steward_item (
   CONSTRAINT uq_steward_item_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_steward_item_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_steward_item_domain FOREIGN KEY (tenant_id, domain_code) REFERENCES ph06_mdm.mdm_domain (tenant_id, domain_code),
-  CONSTRAINT ck_steward_item_reason CHECK (reason IN ('POSSIBLE_MATCH', 'MULTIPLE_CANDIDATES', 'INSUFFICIENT_ATTRIBUTES', 'CRITICAL_CONFLICT', 'IDENTIFIER_CONFLICT', 'ORPHANED', 'TIMEOUT')),
+  CONSTRAINT ck_steward_item_reason CHECK (reason IN ('POSSIBLE_MATCH', 'MULTIPLE_CANDIDATES', 'INSUFFICIENT_ATTRIBUTES', 'CRITICAL_CONFLICT', 'IDENTIFIER_CONFLICT', 'ORPHANED', 'TIMEOUT', 'DQ_FINDING')),
   CONSTRAINT ck_steward_item_status CHECK (status IN ('OPEN', 'ASSIGNED', 'DEFERRED', 'PENDING_APPROVAL', 'RESOLVED', 'CANCELLED')),
   CONSTRAINT ck_steward_item_risk CHECK (risk_level IN ('LOW', 'HIGH')),
   CONSTRAINT ck_steward_item_decision CHECK (decision IS NULL OR decision IN ('MATCH', 'NO_MATCH', 'DEFER')),
@@ -61,9 +62,12 @@ CREATE TABLE ph06_mdm.steward_item (
   CONSTRAINT ck_steward_item_pending CHECK (status <> 'PENDING_APPROVAL' OR (decision = 'MATCH' AND risk_level = 'HIGH' AND decided_by IS NOT NULL)),
   CONSTRAINT ck_steward_item_resolved CHECK (status <> 'RESOLVED' OR (decision IN ('MATCH', 'NO_MATCH') AND decided_by IS NOT NULL AND decided_at IS NOT NULL)),
   CONSTRAINT ck_steward_item_assigned CHECK (status NOT IN ('ASSIGNED', 'PENDING_APPROVAL') OR assignee IS NOT NULL),
-  CONSTRAINT ck_steward_item_defer CHECK ((status = 'DEFERRED') = (defer_until IS NOT NULL))
+  CONSTRAINT ck_steward_item_defer CHECK ((status = 'DEFERRED') = (defer_until IS NOT NULL)),
+  CONSTRAINT ck_steward_item_dq CHECK (reason <> 'DQ_FINDING' OR (left_golden_id IS NOT NULL AND right_golden_id IS NULL AND dq_context IS NOT NULL AND decision IS DISTINCT FROM 'MATCH')),
+  CONSTRAINT ck_steward_item_dqctx CHECK (dq_context IS NULL OR reason = 'DQ_FINDING')
 );
 CREATE UNIQUE INDEX uq_steward_item_open_pair ON ph06_mdm.steward_item (tenant_id, domain_code, COALESCE(left_candidate_id, left_golden_id), right_golden_id) WHERE status NOT IN ('RESOLVED', 'CANCELLED') AND right_golden_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_steward_item_open_dq ON ph06_mdm.steward_item (tenant_id, domain_code, left_golden_id) WHERE reason = 'DQ_FINDING' AND status NOT IN ('RESOLVED', 'CANCELLED');
 CREATE INDEX ix_steward_item_queue ON ph06_mdm.steward_item (tenant_id, domain_code, status, priority DESC, due_at);
 CREATE INDEX ix_steward_item_assignee ON ph06_mdm.steward_item (tenant_id, assignee, status) WHERE assignee IS NOT NULL;
 CREATE INDEX ix_steward_item_nomatch ON ph06_mdm.steward_item (tenant_id, domain_code, left_golden_id, right_golden_id) WHERE decision = 'NO_MATCH' AND status = 'RESOLVED';
@@ -72,5 +76,6 @@ CREATE TRIGGER tg_steward_item_immutable BEFORE UPDATE ON ph06_mdm.steward_item 
 CALL ph06_mdm.p_enable_rls('ph06_mdm.steward_item');
 COMMENT ON TABLE ph06_mdm.steward_item IS 'EN-06-05 Mục hàng đợi người quản lý dữ liệu (FR-06-027…032). Máy trạng thái 4.4. Quyết định cần lý do ≥ 20 ký tự (BR-06-008); MATCH rủi ro cao chờ DA duyệt khác người quyết định (BR-06-019, ERR-06-005). Mỗi cặp một mục mở.';
 COMMENT ON COLUMN ph06_mdm.steward_item.hold_until IS 'Hết hạn giữ 30 phút (06.queue.hold-minutes) thì trả OPEN.';
-COMMENT ON COLUMN ph06_mdm.steward_item.left_golden_id IS 'Cặp NO_MATCH đã RESOLVED là liên kết âm (BR-06-023): không đề xuất lại; chỉ mục ix_steward_item_nomatch.';
+COMMENT ON COLUMN ph06_mdm.steward_item.left_golden_id IS 'Cặp NO_MATCH đã RESOLVED là liên kết âm (BR-06-023): không đề xuất lại; chỉ mục ix_steward_item_nomatch. Mục DQ_FINDING chỉ có left_golden_id.';
+COMMENT ON COLUMN ph06_mdm.steward_item.dq_context IS 'Chỉ cho lý do DQ_FINDING (PH-08, API-06-126): ruleCodes, suggestedAction, findingIds, note; mỗi goldenId một mục mở (uq_steward_item_open_dq).';
 --rollback DROP TABLE IF EXISTS ph06_mdm.steward_item CASCADE;

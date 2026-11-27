@@ -1273,26 +1273,27 @@ COMMENT ON COLUMN ph17_assist.knowledge_document.delete_reason IS 'Lý do xóa v
 
 -- @changeset ph17-0340-knowledge-chunk
 CREATE TABLE ph17_assist.knowledge_chunk (
-  id               uuid NOT NULL,
-  tenant_id        varchar(16) NOT NULL,
-  source_id        uuid NOT NULL,
-  document_id      uuid NOT NULL,
-  chunk_no         integer NOT NULL,
-  content          text NOT NULL,
-  content_norm     text NOT NULL,
-  content_tsv      tsvector GENERATED ALWAYS AS (to_tsvector('simple', content_norm)) STORED,
-  embedding        real[] NOT NULL,
-  embed_version_id uuid NOT NULL,
-  class_level      varchar(16) NOT NULL,
-  acl              jsonb NOT NULL,
-  content_hash     char(64) NOT NULL,
-  token_count      integer NOT NULL,
-  object_ref       varchar(512),
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  created_by       varchar(64) NOT NULL,
-  updated_at       timestamptz NOT NULL DEFAULT now(),
-  updated_by       varchar(64) NOT NULL,
-  version          integer NOT NULL DEFAULT 0,
+  id                uuid NOT NULL,
+  tenant_id         varchar(16) NOT NULL,
+  source_id         uuid NOT NULL,
+  document_id       uuid NOT NULL,
+  chunk_no          integer NOT NULL,
+  content           text NOT NULL,
+  content_norm      text NOT NULL,
+  content_tsv       tsvector GENERATED ALWAYS AS (to_tsvector('simple', content_norm)) STORED,
+  embedding         real[] NOT NULL,
+  embed_version_id  uuid NOT NULL,
+  class_level       varchar(16) NOT NULL,
+  acl               jsonb NOT NULL,
+  content_hash      char(64) NOT NULL,
+  token_count       integer NOT NULL,
+  object_ref        varchar(512),
+  injection_suspect boolean NOT NULL DEFAULT false,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  created_by        varchar(64) NOT NULL,
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  updated_by        varchar(64) NOT NULL,
+  version           integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_knowledge_chunk PRIMARY KEY (id),
   CONSTRAINT uq_knowledge_chunk_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_knowledge_chunk_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
@@ -1319,6 +1320,7 @@ COMMENT ON COLUMN ph17_assist.knowledge_chunk.embedding IS 'vector(1024) khi có
 COMMENT ON COLUMN ph17_assist.knowledge_chunk.content_norm IS 'Nội dung không dấu, chữ thường, dùng cho tìm từ khóa (tsvector cấu hình simple).';
 COMMENT ON COLUMN ph17_assist.knowledge_chunk.acl IS 'Phạm vi quyền đọc: visibility TENANT, ORG (orgIds) hoặc ROLE (roles); truy hồi lọc theo acl rồi xác minh quyền người hỏi (BR-17-035).';
 COMMENT ON COLUMN ph17_assist.knowledge_chunk.embed_version_id IS 'Phiên bản mô hình nhúng; không trộn vector của hai phiên bản trong một truy hồi (BR-17-016).';
+COMMENT ON COLUMN ph17_assist.knowledge_chunk.injection_suspect IS 'Đoạn bị quét mẫu tiêm lệnh gián tiếp khi lập chỉ mục gắn cờ nghi ngờ (chốt 27/11/2026); đoạn vẫn được giữ và vẫn bọc như dữ liệu không tin cậy khi dùng, cờ chỉ để SO và chủ phân hệ nguồn rà (FR-17-018).';
 -- @rollback DROP TABLE IF EXISTS ph17_assist.knowledge_chunk CASCADE;
 
 -- @changeset ph17-0350-index-job

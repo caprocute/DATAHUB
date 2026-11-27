@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm hợp đồng PH-12: OpenAPI 3.1 hợp lệ, ví dụ khớp lược đồ, mỗi operation có x-datahub-*, mã API đủ 001…111 và khớp FRS §9.4,
+"""Kiểm hợp đồng PH-12: OpenAPI 3.1 hợp lệ, ví dụ khớp lược đồ, mỗi operation có x-datahub-*, mã API đủ 001…113 và khớp FRS §9.4,
 lệnh sửa có If-Match, không lược đồ nào trả bí mật, mọi mã ERR của FRS có trong OpenAPI hoặc bảng mã lỗi.
 
 Chạy: python3 tools/check_contracts.py   (từ thư mục api/ph12). Cần: openapi-spec-validator, jsonschema ≥ 4.18.
@@ -39,7 +39,7 @@ for p, m in d["paths"].items():
         if meth in ("patch", "put", "delete") and "IfMatch" not in names and "/realms/dh-" not in p:
             bad += 1; print(f"{o['operationId']}: lệnh ghi thiếu If-Match")
         if not o.get("responses"): bad += 1; print(f"{o['operationId']}: thiếu responses")
-want = [f"API-12-{i:03d}" for i in range(1, 112)]
+want = [f"API-12-{i:03d}" for i in range(1, 114)]
 if sorted(ids) != want: bad += 1; print("mã API lệch:", set(want) ^ set(ids))
 tbl = dict(re.findall(r"^\| (API-12-\d{3}) \| `([A-Z]+ [^`]+)` \|", frs, re.M))
 for p, m in d["paths"].items():

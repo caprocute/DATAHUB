@@ -6,7 +6,7 @@ ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư tích hợp, kỹ sư dh-data, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-06
-mo_ta: Hợp đồng REST và sự kiện của PH-06 Dữ liệu chủ gồm 125 operation (96 mã gốc của FRS, 24 mã tách từ dòng gộp và 5 mã mới của FRS 0.2) và 15 sự kiện EVT-06, kèm quy ước chung, quyền, scope máy, mã lỗi RFC 9457, ví dụ, kiểm tra hợp đồng và đề nghị bổ sung cho FRS.
+mo_ta: Hợp đồng REST và sự kiện của PH-06 Dữ liệu chủ gồm 126 operation (96 mã gốc của FRS, 24 mã tách từ dòng gộp, 5 mã mới của FRS 0.2 và API-06-126 của đợt đồng bộ cuối) và 15 sự kiện EVT-06, kèm quy ước chung, quyền, scope máy, mã lỗi RFC 9457, ví dụ, kiểm tra hợp đồng và đề nghị bổ sung cho FRS.
 tai_lieu_lien_quan: D02-03-PH06 FRS; D03-02-PH06 SDD; D03-03-PH06 CSDL; D03-06-PH06 Giao diện; D05-02-PH06 Test case
 ---
 
@@ -14,11 +14,11 @@ tai_lieu_lien_quan: D02-03-PH06 FRS; D03-02-PH06 SDD; D03-03-PH06 CSDL; D03-06-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tập này là hợp đồng giao tiếp của phân hệ PH-06 Dữ liệu chủ: nơi giữ một bản ghi vàng cho mỗi công dân, tổ chức, địa chỉ và liên kết nó với bản ghi của từng hệ thống nguồn. PH-06 công bố **125 operation REST** gốc `/api/mdm/v1` (module `mdm` của `dh-data`) và **15 sự kiện** `EVT-06-01…15` trên Kafka. Mã API-06-001…096 giữ đúng đường dẫn và phương thức của FRS §9.4; 15 dòng gộp nhiều hành động ở FRS (như `:{suspend,resume,retire}`) được tách thành operation riêng, cấp mã mới **API-06-097…120** (24 mã, mục 3.1); FRS 0.2 đã áp cách tách này ở 9.4 và thêm **API-06-121…125** (mở lại quyết định, danh sách thao tác, khóa tập nhãn, nhận việc tiếp theo, gỡ hạn chế xử lý).
+Tập này là hợp đồng giao tiếp của phân hệ PH-06 Dữ liệu chủ: nơi giữ một bản ghi vàng cho mỗi công dân, tổ chức, địa chỉ và liên kết nó với bản ghi của từng hệ thống nguồn. PH-06 công bố **126 operation REST** gốc `/api/mdm/v1` (module `mdm` của `dh-data`) và **15 sự kiện** `EVT-06-01…15` trên Kafka. Mã API-06-001…096 giữ đúng đường dẫn và phương thức của FRS §9.4; 15 dòng gộp nhiều hành động ở FRS (như `:{suspend,resume,retire}`) được tách thành operation riêng, cấp mã mới **API-06-097…120** (24 mã, mục 3.1); FRS 0.2 đã áp cách tách này ở 9.4 và thêm **API-06-121…125** (mở lại quyết định, danh sách thao tác, khóa tập nhãn, nhận việc tiếp theo, gỡ hạn chế xử lý).
 
 Hợp đồng máy đọc được, sinh từ một nguồn và đã kiểm:
 
-- [`ph06/openapi-mdm.yaml`](ph06/openapi-mdm.yaml): OpenAPI 3.1, 201 lược đồ, mỗi operation có ví dụ yêu cầu (khi có thân) và ví dụ phản hồi; 225 ví dụ khớp lược đồ theo [`check_contracts.py`](ph06/tools/check_contracts.py); `openapi-spec-validator` hợp lệ.
+- [`ph06/openapi-mdm.yaml`](ph06/openapi-mdm.yaml): OpenAPI 3.1, 203 lược đồ, mỗi operation có ví dụ yêu cầu (khi có thân) và ví dụ phản hồi; 225 ví dụ khớp lược đồ theo [`check_contracts.py`](ph06/tools/check_contracts.py); `openapi-spec-validator` hợp lệ.
 - [`ph06/asyncapi-mdm.yaml`](ph06/asyncapi-mdm.yaml): AsyncAPI 3.0, 15 kênh, 15 operation, 15 thông điệp CloudEvents, 15 ví dụ khớp payload.
 
 Bốn nguyên tắc hợp đồng:
@@ -137,6 +137,7 @@ Bên gọi là máy dùng scope `mdm:*` cấp ở Keycloak khi đăng ký client
 | `mdm:resolve` | HTTT, PH-04 | 071 | Chỉ máy; không có quyền người dùng |
 | `mdm:search` | HTTT (cấp hạn chế) | 072 | Trả trường rút gọn |
 | `mdm:national-sync` | PH-14 | 081 | Kích hoạt lượt đồng bộ từ phía PH-14 |
+| `mdm:steward-intake` | PH-08 | 126 | Tạo mục hàng đợi lý do `DQ_FINDING`; chỉ qua `apisix-int` |
 
 : Scope máy
 
@@ -254,6 +255,7 @@ Bảng sinh từ [`ph06/tools/spec.py`](ph06/tools/spec.py) bằng `gen_md.py`, 
 | API-06-109 | `POST /stewardship/items/{itemId}:reject` | approve | 031 | If-Match | 200 |
 | API-06-121 | `POST /stewardship/items/{itemId}:reopen` | steward | 030 | If-Match | 200 |
 | API-06-124 | `POST /stewardship/items:claim-next` | steward | 028 | - | 200,204 |
+| API-06-126 | `POST /internal/stewardship/items:from-dq` | scope `mdm:steward-intake` | 027 | Idem | 201,200 |
 
 : Danh mục endpoint · Hàng đợi người quản lý
 
@@ -499,7 +501,7 @@ Bảng liệt kê từng bên tương tác với PH-06, hướng gọi và hợp
 |---|---|---|---|
 | ERR-06-001 | 404, 410 | Không tìm thấy đối tượng, thuộc tenant khác; `410` khi bản ghi vàng `RETIRED` | 100 API |
 | ERR-06-002 | 409 | Mã đã tồn tại (domain, thuộc tính, nguồn, khóa, tập nhãn) | 14 API |
-| ERR-06-003 | 400 | Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại | 85 API |
+| ERR-06-003 | 400 | Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại | 86 API |
 | ERR-06-004 | 409 | Xung đột phiên bản (`If-Match` không khớp `ETag`) | 55 API |
 | ERR-06-005 | 403 | Vi phạm bốn mắt: người đề nghị, gửi duyệt hoặc quyết định bước trước tự duyệt, chấp thuận | 30 API |
 | ERR-06-006 | 409 | Trạng thái hiện tại không cho thao tác | 42 API |
@@ -511,7 +513,7 @@ Bảng liệt kê từng bên tương tác với PH-06, hướng gọi và hợp
 | ERR-06-012 | 422 | HTTT chưa `ACTIVE` ở PH-01 | 014, 015, 016, 017, 099, 100 |
 | ERR-06-013 | 422 | Thiếu căn cứ phê duyệt thứ tự ưu tiên nguồn | 018, 019, 020, 101 |
 | ERR-06-014 | 403 | Bên gửi không phải nguồn đã đăng ký, chưa `ACTIVE` cho domain | 021, 022 |
-| ERR-06-015 | 409 | `Idempotency-Key` dùng lại với nội dung khác | 21 API |
+| ERR-06-015 | 409 | `Idempotency-Key` dùng lại với nội dung khác | 22 API |
 | ERR-06-016 | 422 | Bản ghi thiếu `sourceKey` | 021 |
 | ERR-06-017 | 422 | Bản ghi ứng viên sai lược đồ domain | 021, 022 |
 | ERR-06-018 | 413 | Lô, tệp vượt giới hạn | 021, 023, 024, 025, 068, 069 |
@@ -543,10 +545,10 @@ Bảng liệt kê từng bên tương tác với PH-06, hướng gọi và hợp
 | ERR-06-044 | 409 | Đồng bộ quốc gia đang tạm dừng | 022, 080, 081, 082, 118 |
 | ERR-06-045 | 422 | Thuộc tính không được gửi lên CSDL quốc gia | 022, 080, 081, 082, 118 |
 | ERR-06-046 | 422 | Yêu cầu của chủ thể chưa xác minh danh tính | 090, 091, 092, 119, 120, 125 |
-| ERR-06-047 | 422 | Tham số ngoài miền | 11 API |
+| ERR-06-047 | 422 | Tham số ngoài miền | 12 API |
 | ERR-06-048 | 429 | Vượt hạn mức gọi | 021, 071 |
 | ERR-06-049 | 422 | Thời hạn lưu giữ dưới mức tối thiểu | 093, 094 |
-| ERR-06-050 | 404 | Không có bản ghi vàng khớp khóa, liên kết hoặc resolve `NO_MATCH` | 056, 068, 069, 070, 071 |
+| ERR-06-050 | 404 | Không có bản ghi vàng khớp khóa, liên kết hoặc resolve `NO_MATCH` | 056, 068, 069, 070, 071, 126 |
 | ERR-06-051 | 422 | Cặp nhãn không hợp lệ (nhãn sai, hai tham chiếu trùng hoặc không tồn tại, cặp đã có) | 037, 038, 039, 123 |
 | ERR-06-052 | 422 | Khóa định danh `CMND_9` khai xác định (`deterministic = true`) | 006, 013 |
 | ERR-06-053 | 409 | Quyết định hàng đợi quá hạn mở lại hoặc đã có thao tác phụ thuộc | 048, 121 |
@@ -591,7 +593,7 @@ Hợp đồng được kiểm tự động ở CI để OpenAPI, AsyncAPI, FRS v
 | OpenAPI 3.1 hợp lệ; mọi ví dụ khớp lược đồ; mỗi operation có `x-datahub-id` duy nhất, `x-datahub-fr`, `x-datahub-permission`, `x-datahub-errors`; lệnh ghi có `If-Match`, lệnh tạo có `Idempotency-Key`; mã ERR có ở FRS và mã HTTP của nó có trong responses; không trường bí mật | `check_contracts.py` | CI-5 |
 | AsyncAPI 3.0: kênh, operation, thông điệp tham chiếu đúng; ví dụ khớp payload; đủ 15 topic đúng FRS | `check_contracts.py`; `@asyncapi/parser` 3 | CI-5 |
 | Lint quy ước; thay đổi phá vỡ trong `v1` | `@redocly/cli lint`; oasdiff `breaking` | CI-5 |
-| Enum, trường, ERR, EVT, PERM, đường dẫn API-06-001…125 và FR của từng dòng khớp FRS | [`doi_chieu_frs.py`](ph06/tools/doi_chieu_frs.py) | CI-5 |
+| Enum, trường, ERR, EVT, PERM, đường dẫn API-06-001…126 và FR của từng dòng khớp FRS | [`doi_chieu_frs.py`](ph06/tools/doi_chieu_frs.py) | CI-5 |
 | Tệp sinh khớp nguồn | Chạy lại `gen_openapi.py`, `gen_asyncapi.py`, `gen_md.py`, rồi `git diff --exit-code` | CI-5 |
 | Mã API, EVT, ERR khớp tài liệu gốc | `build/tools/kiem_tra_ma.py` | CI-1 |
 
@@ -662,7 +664,7 @@ Mỗi FR-06 có ít nhất một API hoặc ghi rõ nơi xử lý. Bảng sinh t
 | FR-06-024 | Chạy thử bộ quy tắc trên mẫu | 033 |
 | FR-06-025 | Quản lý tập nhãn kiểm chứng | 037, 038, 039, 123 |
 | FR-06-026 | Đo precision, recall và chặn kích hoạt quy tắc kém | 034, 040 |
-| FR-06-027 | Tạo mục hàng đợi và tính mức ưu tiên | Hệ thống tạo mục; xem ở 045 |
+| FR-06-027 | Tạo mục hàng đợi và tính mức ưu tiên | 126 |
 | FR-06-028 | Liệt kê, nhận việc và phân công mục hàng đợi | 045, 047, 107, 108, 124 |
 | FR-06-029 | So sánh cạnh nhau hai bản ghi | 046 |
 | FR-06-030 | Quyết định khớp, không khớp, hoãn | 048, 121 |
@@ -2348,6 +2350,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Một lệnh nguyên tử (`SKIP LOCKED`); hết mục phù hợp trả `204`, không lỗi. Mục gán `ASSIGNED` giữ `06.queue.hold-minutes`.
 :::
 
+#### API-06-126 · Tạo mục hàng đợi từ phát hiện chất lượng (PH-08)
+
+::: dac-ta
+**Mục đích.** Tạo mục hàng đợi từ phát hiện chất lượng (PH-08).
+
+**Phương thức, đường dẫn.** `POST /internal/stewardship/items:from-dq`.
+
+**Quyền.** scope `mdm:steward-intake`.
+
+**FR hiện thực.** FR-06-027.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StewardIntakeRequest`; trường bắt buộc: `domainCode`, `goldenId`, `ruleCodes`, `suggestedAction`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `StewardIntakeResult`; trường bắt buộc: `itemId`, `created`, `reason`, `priority`, `dueAt`; tiêu đề `ETag`, `Location`; `200` thành công, `StewardIntakeResult`; trường bắt buộc: `itemId`, `created`, `reason`, `priority`, `dueAt`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-06-047, ERR-06-050, ERR-06-003, ERR-06-015 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** API nội bộ chỉ qua `apisix-int` với scope `mdm:steward-intake` của PH-08; tạo mục lý do `DQ_FINDING` (điểm cơ sở 35, hạn theo `06.queue.sla-days`, người nhận là DS của miền). `201` mục mới; `200` khi đã có mục mở cho `goldenId` nên chỉ gắn thêm mã quy tắc. Không nhận lý do khác.
+:::
+
 ### Quy tắc sống sót
 
 #### API-06-051 · Cấu hình sống sót hiện hành
@@ -3786,4 +3812,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-API và K-TRINH-BAY: 120 operation (96 mã FRS, 24 mã tách), 15 sự kiện, OpenAPI và AsyncAPI sinh từ một nguồn, kiểm hợp đồng 217 ví dụ; năm câu hỏi mở Q06-55…59 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thêm API-06-121…125 (125 operation, 225 ví dụ kiểm); `decision` ở API-06-106, `cause` ở API-06-118, `partition` ở API-06-045; định nghĩa ERR-06-051…053; khung lỗi nền ERR-00-401, 403, 428 ở mục 6; đánh dấu các đề nghị mục 10.2 đã áp |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mẫu type ERR-06-nnn, trường phản hồi mới của màn hình bàn làm việc |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mẫu type ERR-06-nnn, trường phản hồi mới của màn hình bàn làm việc; chốt câu hỏi mở đợt đồng bộ: Q387, Q411 |

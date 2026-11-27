@@ -2394,12 +2394,17 @@ Mười câu hỏi dưới đánh số Q18-20…29 theo dải của tập SDD.
 
 > **Câu hỏi mở Q18-29:** Chuyển sáp nhập ghi thẳng schema phân hệ đích bằng hai phiên tenant (theo hợp đồng PH-20) hay phải đi qua API nhập như di trú hệ cũ; nếu ghi thẳng thì phân hệ nào chưa có cột `origin_tenant_id` và ai thêm.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-01, PH-02, PH-03 giữ API nhập riêng theo hợp đồng của mình (nhập có xem trước, tác vụ nền) và PH-18 gọi qua đó; khi PH-18 chốt khung nhập, các API này nhận thêm tiêu đề `X-Datahub-Migration: true` và khóa lũy đẳng `legacySystem:objectType:legacyKey`.
+- PH-03 hỗ trợ tuyến bóng và bộ chạm băm phản hồi, cùng API đổi trọng số tuyến đồng bộ có xác nhận cho cắt chuyển và quay lui di trú; khai ở mẫu route và thêm vào D03-04-PH03 khi PH-18 chốt Q18-25.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-18 là chủ topic DLQ, merge-transfers qua apisix-int và lượt bù DELTA, route `/viec-cua-toi`, phân vùng và dọn lưu giữ của phân hệ khác |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18: đánh dấu chín điểm lệch §13.5 và bốn dòng đề nghị §13.6 đã hấp thụ ở FRS, CSDL, API 0.2 và ADR-181; dùng API-18-188 cho nguồn `KAFKA_TOPIC`; Q18-21 chốt 14 ngày |
-| 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.platform.ops` tám module và `common`, thư viện `dh-ops-client`, mô hình miền, 25 thành phần với khối đặc tả 10 mục, worker `dh-ops-worker` ba công cụ, mười lăm sơ đồ trình tự, bốn sơ đồ trạng thái, outbox và lũy đẳng, đa tenant, bảo mật, quan sát `dh_ops_*`, triển khai, kiểm thử, mười điểm lệch, đề nghị đồng bộ, câu hỏi mở Q18-20…29 |
+| 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.platform.ops` tám module và `common`, thư viện `dh-ops-client`, mô hình miền, 25 thành phần với khối đặc tả 10 mục, worker `dh-ops-worker` ba công cụ, mười lăm sơ đồ trình tự, bốn sơ đồ trạng thái, outbox và lũy đẳng, đa tenant, bảo mật, quan sát `dh_ops_*`, triển khai, kiểm thử, mười điểm lệch, đề nghị đồng bộ, câu hỏi mở Q18-20…29; chốt Q428, Q429: PH-01, 02, 03 giữ API nhập riêng, thêm X-Datahub-Migration và khóa lũy đẳng khi PH-18 chốt khung; PH-03 hỗ trợ tuyến bóng và API đổi trọng số có xác nhận |
 
 : Lịch sử phiên bản

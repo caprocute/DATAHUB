@@ -121,6 +121,8 @@ OPS = [
     ("109", "GET", "/reports/mfa-coverage", "Báo cáo phủ xác thực hai yếu tố", "060", "PERM-12-read", "200", "audit", "iam"),
     ("110", "GET", "/settings", "Tham số phân hệ của tenant", "061", "PERM-12-read", "200", "admin", "iam"),
     ("111", "PUT", "/settings", "Sửa tham số phân hệ trong trần", "061", "PERM-12-admin", "200", "admin", "iam"),
+    ("112", "PUT", "/policies/{policyCode}/versions/{versionNo}", "Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu)", "052", "PERM-12-policy-edit", "200", "policy", "iam"),
+    ("113", "GET", "/realms", "Danh sách realm của các tenant, lọc theo lệch cấu hình", "042", "PERM-12-realm-admin", "200", "realm", "iam"),
 ]
 
 TAGS = {

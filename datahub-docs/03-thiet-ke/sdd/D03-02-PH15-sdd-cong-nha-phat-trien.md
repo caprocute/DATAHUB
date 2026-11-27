@@ -2,7 +2,7 @@
 ma_tai_lieu: D03-02-PH15
 ten: Thiết kế chi tiết phần mềm phân hệ PH-15 Cổng nhà phát triển
 phien_ban: 0.4
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect và dh-portal, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
 phan_he: PH-15
@@ -1325,6 +1325,10 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 
 Phân vùng và lưu giữ: `try_run` theo tháng (bỏ phân vùng sau `15.try.history-days`), `inbox_message` theo tháng, `outbox_event` dọn sau 7 ngày đã phát. Trường tiêu đề liên quan DLCN của nhà thầu (`dev_account.email`, `full_name`, `phone`) mã hóa trường theo ADR-032 nếu D03-03 phân loại là nhạy cảm; tìm theo thư dùng HMAC tìm kiếm (SEC-88).
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-03 phục vụ tuyến sandbox tĩnh kèm `forward-auth` (`allow_degradation: false`, 300 ms), `jwt-auth` và mẫu route; `apisix-int` có `/quan-tri-cong` (QĐ-15-02, BR-15-031). PH-03 ghi mẫu route vào FR-03-048 và bảng PH-15 ở D03-04-PH03 mục 5.1.
+
 ## Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -1354,4 +1358,4 @@ Các đề nghị dưới đây không sửa tài liệu ngoài tập PH-15; ch�
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD: 14 thành phần, 8 sơ đồ tuần tự, 16 quyết định thiết kế, bảng CSDL dự kiến, câu hỏi mở Q15-20…29 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bộ PH-15: ghi chú tên bảng cuối cùng theo DDL ở Phụ lục A, `try_run` phân vùng tháng, enum `PENDING` thay `PROVISIONING`, mã ERR-15-102 ở hình thu hồi thông tin xác thực |
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, API-12-063 và wrappingToken, API-01-063, 064, giá trị provisioning_state |
-| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A khớp DDL D03-03-PH15: bỏ hoặc gộp tám bảng không có ở DDL, thêm `sync_state`, `legacy_mapping`, `ticket_counter`, sửa các chỗ dẫn bảng ở thân tập |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A khớp DDL D03-03-PH15: bỏ hoặc gộp tám bảng không có ở DDL, thêm `sync_state`, `legacy_mapping`, `ticket_counter`, sửa các chỗ dẫn bảng ở thân tập; chốt Q394: PH-03 phục vụ tuyến sandbox tĩnh kèm forward-auth (allow_degradation false, 300 ms) |

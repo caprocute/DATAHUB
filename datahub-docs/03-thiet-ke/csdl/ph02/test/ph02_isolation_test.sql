@@ -368,10 +368,10 @@ INSERT INTO ph02_catalog.version_contributor (id, tenant_id, api_version_id, con
   (gen_random_uuid(), 'T68', pg_temp.id('v68c'), 'SPEC_EDITOR', 'tuan', 'tuan', 'tuan'),
   (gen_random_uuid(), 'T68', pg_temp.id('v68c'), 'SUBMITTER', 'an', 'an', 'an');
 INSERT INTO ph02_catalog.review_request (id, tenant_id, kind, subject_kind, subject_id, api_version_id, requested_by, created_by, updated_by)
-VALUES (pg_temp.id('rq1'), 'T68', 'PUBLISH', 'API_VERSION', pg_temp.id('v68c'), pg_temp.id('v68c'), 'an', 'an', 'an');
+VALUES (pg_temp.id('rq1'), 'T68', 'VERSION_PUBLISH', 'API_VERSION', pg_temp.id('v68c'), pg_temp.id('v68c'), 'an', 'an', 'an');
 DO $$ BEGIN
   INSERT INTO ph02_catalog.review_request (id, tenant_id, kind, subject_kind, subject_id, api_version_id, requested_by, created_by, updated_by)
-  VALUES (gen_random_uuid(), 'T68', 'PUBLISH', 'API_VERSION', pg_temp.id('v68c'), pg_temp.id('v68c'), 'an', 'an', 'an');
+  VALUES (gen_random_uuid(), 'T68', 'VERSION_PUBLISH', 'API_VERSION', pg_temp.id('v68c'), pg_temp.id('v68c'), 'an', 'an', 'an');
   RAISE EXCEPTION 'KHONG-CHAN';
 EXCEPTION WHEN OTHERS THEN PERFORM pg_temp.ok('17 một yêu cầu OPEN mỗi đối tượng', '23505', 'uq_review_request_one_open', SQLSTATE, SQLERRM);
 END $$;
@@ -409,7 +409,7 @@ EXCEPTION WHEN OTHERS THEN PERFORM pg_temp.ok('17g quyết định duyệt chỉ
 END $$;
 -- Đăng ký sử dụng: CHECK bốn mắt ở chính bảng quyết định (không qua trigger người sửa)
 INSERT INTO ph02_catalog.review_request (id, tenant_id, kind, subject_kind, subject_id, requested_by, created_by, updated_by, api_version_id)
-VALUES (pg_temp.id('n68'), 'T68', 'SUBSCRIBE', 'SUBSCRIPTION', pg_temp.id('sub68'), 'an', 'an', 'an', pg_temp.id('v68'));
+VALUES (pg_temp.id('n68'), 'T68', 'SUBSCRIPTION', 'SUBSCRIPTION', pg_temp.id('sub68'), 'an', 'an', 'an', pg_temp.id('v68'));
 DO $$ BEGIN
   INSERT INTO ph02_catalog.review_decision (id, tenant_id, review_request_id, requested_by, decision, decided_by, decider_role, created_by)
   VALUES (gen_random_uuid(), 'T68', pg_temp.id('n68'), 'an', 'APPROVE', 'an', 'SV', 'an');
@@ -418,7 +418,7 @@ EXCEPTION WHEN OTHERS THEN PERFORM pg_temp.ok('17b2 CHECK bốn mắt ở review
 END $$;
 -- API SENSITIVE: hai người CA và TA
 INSERT INTO ph02_catalog.review_request (id, tenant_id, kind, subject_kind, subject_id, api_version_id, requested_by, required_approvals, created_by, updated_by)
-VALUES (pg_temp.id('rq2'), 'T68', 'PUBLISH', 'API_VERSION', pg_temp.id('vR'), pg_temp.id('vR'), 'an', 2, 'an', 'an');
+VALUES (pg_temp.id('rq2'), 'T68', 'VERSION_PUBLISH', 'API_VERSION', pg_temp.id('vR'), pg_temp.id('vR'), 'an', 2, 'an', 'an');
 INSERT INTO ph02_catalog.review_decision (id, tenant_id, review_request_id, requested_by, decision, decided_by, decider_role, created_by)
 VALUES (gen_random_uuid(), 'T68', pg_temp.id('rq2'), 'an', 'APPROVE', 'binh', 'CA', 'binh');
 DO $$ BEGIN

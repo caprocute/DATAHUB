@@ -559,10 +559,12 @@ Ngoài các scope dành cho HTTT ở bảng trên, các phân hệ gọi nhau b�
 
 | Phân hệ chủ | Scope | Bên giữ | Dùng cho |
 |---|---|---|---|
+| PH-01 | `onboarding:internal-read` | PH-15 | Đọc lược đồ biểu mẫu kết nạp và định danh production của HTTT (chỉ đọc, không trả bí mật), chốt 27/11/2026 |
 | PH-02 | `catalog:gateway-read`, `catalog:gateway-ack` | PH-03 | Đọc dữ liệu công bố; xác nhận đã nạp cấu hình (tách riêng để token chỉ đọc không ghi được trạng thái công bố) |
 | PH-02 | `catalog:portal-read` | PH-15 | Đọc danh mục cho cổng nhà phát triển |
 | PH-02 | `catalog:flow-sync` | PH-04 | Đọc đặc tả đã gộp tham chiếu và gửi sự kiện luồng |
 | PH-02 | `catalog:metrics-read` | PH-13, PH-16 | Đọc số liệu tuân thủ danh mục |
+| PH-02 | `catalog:read-meta` | PH-17 (`svc-assist-index`) | Đọc siêu dữ liệu danh mục (không trả bản ghi nghiệp vụ) để lập chỉ mục dữ liệu Công khai và Nội bộ; chốt 27/11/2026 |
 | PH-03 | `gateway:sync` | PH-01, PH-02 | Tạo, gỡ consumer, báo thay đổi gói |
 | PH-03 | `gateway:revoke` | PH-12 | Đẩy danh sách chặn token |
 | PH-03 | `gateway:read-state` | PH-13 | Đọc cấu hình, trạng thái nút |
@@ -652,4 +654,4 @@ D05-01 sinh tự động từ ma trận mục 3 hai nhóm ca kiểm thử cho m�
 | 0.2 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.3 thay bằng 48 quyền và ma trận của khung PH-19 §13; vai trò thanh toán đổi `PAYMENT_OFFICER` thành `PAYMENT_ACCOUNTANT`, thêm `PAYMENT_OPERATOR`, `PARTNER_SYSTEM`; tách mục 3.4 cho nhà phát triển |
 | 0.3 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.1: thêm tám quyền PH-05 (`adapter`, `test`, `operate`, `approve`, `db-write-consent`, `kamelet-submit`, `audit-read`, `admin`), mở rộng mô tả `PERM-05-connection`, `PERM-05-kamelet-approve` thêm IA cho Kamelet của tỉnh (D02-03-PH05 §3.2) |
 | 0.4 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm tóm tắt cho hội đồng thẩm định, sáu mục giới thiệu (mục 1.1 đến 1.6), sơ đồ mô hình phân quyền, sơ đồ cặp vai trò xung đột và sơ đồ duyệt bốn mắt kèm thuyết minh, đoạn mở cho các mục còn thiếu, viết lại chú thích bảng. Giữ nguyên toàn bộ vai trò, quyền, ma trận |
-| 0.5 | 2026-11-27 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tách `PERM-04-create`, `PERM-04-update` và `PERM-07-create`, `PERM-07-update`; thêm sáu quyền PH-04 và bốn quyền PH-07; ghi PU và các quyền của ROLE-PLATFORM_AUDITOR; thêm bảng cặp loại trừ theo quyền, bảng scope máy nội bộ của 13 phân hệ, bảng ánh xạ vai trò của repo |
+| 0.5 | 2026-11-27 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tách `PERM-04-create`, `PERM-04-update` và `PERM-07-create`, `PERM-07-update`; thêm sáu quyền PH-04 và bốn quyền PH-07; ghi PU và các quyền của ROLE-PLATFORM_AUDITOR; thêm bảng cặp loại trừ theo quyền, bảng scope máy nội bộ của 13 phân hệ, bảng ánh xạ vai trò của repo; chốt Q395, Q399: thêm scope máy `onboarding:internal-read` (PH-01 cho PH-15) và `catalog:read-meta` (PH-02 cho PH-17) ở mục 5 |

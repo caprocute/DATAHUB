@@ -8031,7 +8031,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API nội bộ, tạo mục hàng đợi lý do `DQ_FINDING`.
+      description: Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API-06-126 (`POST /internal/stewardship/items:from-dq`, scope `mdm:steward-intake`), tạo mục hàng đợi lý do `DQ_FINDING`.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/IssueCode'

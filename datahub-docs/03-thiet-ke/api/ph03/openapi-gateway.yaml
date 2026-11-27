@@ -2408,8 +2408,8 @@ paths:
           enum:
           - LOGGED
           - BLOCKED
-      - $ref: '#/components/parameters/Page'
-      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -4590,8 +4590,8 @@ paths:
           pattern: ^-?(ts|latencyMs)$
           maxLength: 255
         description: Tên trường, thêm `-` phía trước để giảm dần.
-      - $ref: '#/components/parameters/Page'
-      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -5970,6 +5970,109 @@ paths:
       - ERR-03-004
       - ERR-03-019
       - ERR-03-022
+  /waf/virtual-patches:dry-run:
+    post:
+      tags:
+      - WAF
+      operationId: dryRunVirtualPatch
+      summary: Thử khô luật vá ảo trên mẫu yêu cầu 24 giờ gần nhất
+      x-datahub-id: API-03-097
+      x-datahub-fr:
+      - FR-03-008
+      x-datahub-permission:
+        permission: PERM-03-waf
+      security:
+      - oauth2User: []
+      description: 'Nút "Thử khô" của UI-03-08: đếm trên mẫu yêu cầu 24 giờ gần nhất (đọc từ PH-13) số yêu cầu sẽ bị chặn. Không ghi, không phát
+        sự kiện, không tạo luật.'
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VirtualPatchDryRunRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualPatchDryRunResult'
+          headers:
+            X-RateLimit-Limit: *id001
+            X-RateLimit-Remaining: *id002
+            X-RateLimit-Reset: *id003
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/Problem'
+      x-datahub-errors:
+      - ERR-03-003
+      - ERR-03-022
+  /snapshots:release-hold:
+    post:
+      tags:
+      - Ảnh chụp cấu hình
+      operationId: releaseSnapshotHold
+      summary: Bỏ giữ tổng hợp tự động sau quay lui
+      x-datahub-id: API-03-098
+      x-datahub-fr:
+      - FR-03-044
+      x-datahub-permission:
+        permission: PERM-03-operate
+      security:
+      - oauth2User: []
+      description: 'Nút "Bỏ giữ" của UI-03-10 sau quay lui (FRS §6.6): bỏ hạn giữ tổng hợp tự động `holdHours` của API-03-061, tách khỏi thao
+        tác phát. Lý do bắt buộc; ghi kiểm toán.'
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseHoldResult'
+          headers:
+            X-RateLimit-Limit: *id001
+            X-RateLimit-Remaining: *id002
+            X-RateLimit-Reset: *id003
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/Problem'
+      x-datahub-errors:
+      - ERR-03-003
+      - ERR-03-019
+      - ERR-03-022
 components:
   securitySchemes:
     oauth2User:
@@ -6114,6 +6217,23 @@ components:
         default: 1
         format: int32
         maximum: 2147483647
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        maxLength: 2048
+      description: Con trỏ mờ lấy từ `page.next` của lần gọi trước.
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+        format: int32
+      description: Số dòng mỗi trang, tối đa 100.
     Size:
       name: size
       in: query
@@ -8270,26 +8390,33 @@ components:
             $ref: '#/components/schemas/WafEvent'
           maxItems: 1000
         page:
-          type: integer
-          minimum: 1
-          format: int32
-          maximum: 2147483647
-        size:
-          type: integer
-          minimum: 1
-          maximum: 100
-          format: int32
-        totalElements:
-          type: integer
-          minimum: 0
-          format: int32
-          maximum: 2147483647
+          type: object
+          properties:
+            next:
+              type:
+              - string
+              - 'null'
+              maxLength: 2048
+              description: Con trỏ mờ cho trang kế; `null` khi hết.
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              format: int32
+            approxTotal:
+              type: integer
+              minimum: 0
+              format: int32
+              maximum: 2147483647
+          additionalProperties: false
+          required:
+          - next
+          - limit
+          description: Phân trang con trỏ, không có `totalElements` chính xác; `approxTotal` chỉ là ước lượng (Q03-56 đã chốt 27/11/2026).
       additionalProperties: false
       required:
       - items
       - page
-      - size
-      - totalElements
     WafModeInfo:
       type: object
       properties:
@@ -8622,6 +8749,59 @@ components:
       - page
       - size
       - totalElements
+    VirtualPatchDryRunRequest:
+      type: object
+      properties:
+        ruleText:
+          type: string
+          maxLength: 4096
+          description: Cú pháp SecLang.
+        appliesTo:
+          type: string
+          enum:
+          - TENANT
+          - ROUTE
+        routeCodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteCode'
+          maxItems: 1000
+      additionalProperties: false
+      required:
+      - ruleText
+      - appliesTo
+      description: Luật cần thử; không lưu, không đưa vào ảnh chụp.
+      examples:
+      - ruleText: SecRule REQUEST_URI "@contains /actuator/" "id:1900001,phase:1,deny,status:403,msg:'chặn actuator'"
+        appliesTo: TENANT
+    VirtualPatchDryRunResult:
+      type: object
+      properties:
+        windowHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          format: int32
+        sampledRequests:
+          type: integer
+          minimum: 0
+          format: int32
+          maximum: 2147483647
+        wouldBlock:
+          type: integer
+          minimum: 0
+          format: int32
+          maximum: 2147483647
+        wouldBlockRatio: *id010
+        computedAt: *id005
+        partial: *id004
+      additionalProperties: false
+      required:
+      - windowHours
+      - sampledRequests
+      - wouldBlock
+      - computedAt
+      description: Số yêu cầu mẫu trong 24 giờ gần nhất sẽ bị luật chặn nếu bật ở chế độ `BLOCK`. Chỉ có số đếm, không có nội dung yêu cầu (BR-03-007).
     CorsPolicy:
       type: object
       properties:
@@ -9201,6 +9381,32 @@ components:
       required:
       - valid
       - findings
+    ReleaseHoldResult:
+      type: object
+      properties:
+        scope:
+          type: string
+          enum:
+          - TENANT
+          - PLATFORM
+        released: *id004
+        heldSince:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        holdUntil:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        releasedAt: *id005
+      additionalProperties: false
+      required:
+      - scope
+      - released
+      - releasedAt
+      description: 'Kết quả bỏ giữ: `released = false` khi không có hạn giữ nào đang hiệu lực.'
     RollbackRequest:
       type: object
       properties:
@@ -9796,26 +10002,33 @@ components:
             $ref: '#/components/schemas/AccessLogEntry'
           maxItems: 1000
         page:
-          type: integer
-          minimum: 1
-          format: int32
-          maximum: 2147483647
-        size:
-          type: integer
-          minimum: 1
-          maximum: 100
-          format: int32
-        totalElements:
-          type: integer
-          minimum: 0
-          format: int32
-          maximum: 2147483647
+          type: object
+          properties:
+            next:
+              type:
+              - string
+              - 'null'
+              maxLength: 2048
+              description: Con trỏ mờ cho trang kế; `null` khi hết.
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              format: int32
+            approxTotal:
+              type: integer
+              minimum: 0
+              format: int32
+              maximum: 2147483647
+          additionalProperties: false
+          required:
+          - next
+          - limit
+          description: Phân trang con trỏ, không có `totalElements` chính xác; `approxTotal` chỉ là ước lượng (Q03-56 đã chốt 27/11/2026).
       additionalProperties: false
       required:
       - items
       - page
-      - size
-      - totalElements
     AccessLogExportRequest:
       type: object
       properties:

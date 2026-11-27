@@ -58,6 +58,7 @@ tags:
 - name: Đồng bộ
 - name: Giám sát và nhật ký khai thác
 - name: Tham số và chuyển đổi
+- name: Duyệt bốn mắt chung
 - name: Gọi dịch vụ (nội bộ)
 - name: Cổng danh mục và cấu hình (nội bộ)
 - name: Chiều vào (vùng biên)
@@ -4004,6 +4005,134 @@ paths:
       x-datahub-errors:
       - ERR-14-003
       - ERR-14-032
+  /api/national/v1/approval-requests:
+    get:
+      tags:
+      - Duyệt bốn mắt chung
+      operationId: listApprovalRequests
+      summary: Liệt kê yêu cầu chờ duyệt bốn mắt của phân hệ
+      x-datahub-id: API-14-093
+      x-datahub-fr:
+      - FR-14-003
+      - FR-14-005
+      - FR-14-013
+      - FR-14-028
+      - FR-14-030
+      - FR-14-032
+      - FR-14-039
+      - FR-14-045
+      x-datahub-permission:
+        permission: PERM-14-approve
+      description: Hộp "Việc của tôi" của UI-14-17 cho năm loại `ph14.quota-prod`, `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`,
+        `ph14.open-data-first`; chỉ trả yêu cầu của tenant trong token. Ba loại còn lại có API duyệt riêng (API-14-009, 027, 033).
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - ph14.quota-prod
+            - ph14.inbound-activate
+            - ph14.setting-security
+            - ph14.service-relax
+            - ph14.open-data-first
+        style: form
+        explode: false
+      - name: state
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - EXPIRED
+            - CANCELLED
+        style: form
+        explode: false
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequestList'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-datahub-errors:
+      - ERR-14-003
+  /api/national/v1/approval-requests/{approvalId}:decide:
+    post:
+      tags:
+      - Duyệt bốn mắt chung
+      operationId: decideApprovalRequest
+      summary: Duyệt hoặc từ chối một yêu cầu chờ duyệt
+      x-datahub-id: API-14-094
+      x-datahub-fr:
+      - FR-14-005
+      - FR-14-032
+      - FR-14-039
+      - FR-14-045
+      x-datahub-permission:
+        permission: PERM-14-approve
+      description: 'Bốn mắt: người duyệt khác người đề nghị và người sửa gần nhất (ERR-14-007, BR-14-022). Duyệt thì áp thay đổi (hạn mức, điểm
+        cuối chiều vào, tham số bảo mật, giảm kiểm soát dịch vụ, lần công bố dữ liệu mở đầu tiên) và phát sự kiện tương ứng; từ chối giữ cấu hình
+        cũ. Kích hoạt điểm cuối chiều vào còn cần xác nhận vân tay (API-14-090).'
+      parameters:
+      - $ref: '#/components/parameters/ApprovalIdPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-datahub-errors:
+      - ERR-14-001
+      - ERR-14-003
+      - ERR-14-004
+      - ERR-14-007
   /internal/national/v1/invocations:
     post:
       tags:
@@ -4758,6 +4887,11 @@ components:
       in: path
       required: true
       schema: *id004
+    ApprovalIdPath:
+      name: approvalId
+      in: path
+      required: true
+      schema: *id004
     RequestIdPath:
       name: requestId
       in: path
@@ -5358,7 +5492,7 @@ components:
             type: string
             maxLength: 255
             description: Chỉ tên miền, không có đường dẫn hay thông tin xác thực.
-          lastPassedTestAt: &id007
+          lastPassedTestAt: &id005
             type:
             - string
             - 'null'
@@ -5479,6 +5613,76 @@ components:
       examples:
       - decision: APPROVE
         comment: Đã đối chiếu kết quả kiểm tra kết nối ngày 26/11/2026
+    ApprovalRequest:
+      type: object
+      properties:
+        approvalId: *id004
+        type:
+          type: string
+          enum:
+          - ph14.quota-prod
+          - ph14.inbound-activate
+          - ph14.setting-security
+          - ph14.service-relax
+          - ph14.open-data-first
+        targetRef:
+          type: string
+          maxLength: 128
+          description: Mã đối tượng bị đổi (hạn mức, điểm cuối, khóa tham số, dịch vụ, tập dữ liệu); ứng với `object_code` của `approval_request`.
+        state:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+          - CANCELLED
+        summary:
+          type: string
+          maxLength: 500
+        requestedBy:
+          type: string
+          maxLength: 64
+        requestedAt: *id002
+        reason:
+          type: string
+          maxLength: 1000
+        diff: &id006
+          type: object
+          additionalProperties: true
+        decidedBy:
+          type: string
+          maxLength: 64
+        decidedAt: *id005
+        expiresAt: *id002
+        version:
+          type: integer
+      additionalProperties: false
+      required:
+      - approvalId
+      - type
+      - targetRef
+      - state
+      - requestedBy
+      - requestedAt
+      - expiresAt
+      - version
+      description: Yêu cầu chờ người thứ hai duyệt cho năm loại thay đổi chưa có API duyệt riêng, ứng với `request_type` `QUOTA_PROD`, `INBOUND_ENABLE`,
+        `SECURITY_PARAM_CHANGE`, `SERVICE_RELAX_CONTROL`, `OPEN_DATA_FIRST_PUBLISH` của bảng `ph14_national.approval_request`; ba loại còn lại
+        (bật nền tảng, luật định tuyến, kích hoạt chứng thư) dùng API-14-009, 027, 033.
+    ApprovalRequestList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalRequest'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      additionalProperties: false
+      required:
+      - items
+      - page
     PlatformList:
       type: object
       properties:
@@ -5540,10 +5744,8 @@ components:
           type: string
           maxLength: 16
           pattern: ^[0-9]+\.[0-9]+$
-        inputSchema: &id005
-          type: object
-          additionalProperties: true
-        outputSchema: *id005
+        inputSchema: *id006
+        outputSchema: *id006
         errorCodes:
           type: array
           items:
@@ -5735,12 +5937,12 @@ components:
         facets:
           type: object
           properties:
-            group: &id006
+            group: &id007
               type: object
               additionalProperties:
                 type: integer
-            state: *id006
-            reconcileLabel: *id006
+            state: *id007
+            reconcileLabel: *id007
           additionalProperties: false
       additionalProperties: false
       required:
@@ -5798,9 +6000,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReconcileItem'
-        summary: *id006
+        summary: *id007
         startedAt: *id002
-        finishedAt: *id007
+        finishedAt: *id005
       additionalProperties: false
       required:
       - runId
@@ -5861,7 +6063,7 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        activatedAt: *id007
+        activatedAt: *id005
       additionalProperties: false
       required:
       - serviceCode
@@ -5945,7 +6147,7 @@ components:
             - string
             - 'null'
             format: uuid
-          publishedAt: *id007
+          publishedAt: *id005
         additionalProperties: false
         required:
         - serviceCode
@@ -6178,7 +6380,7 @@ components:
             type: string
             maxLength: 255
             description: Tham chiếu khóa ở OpenBao `transit`, không bao giờ là khóa.
-          keyMatchVerifiedAt: *id007
+          keyMatchVerifiedAt: *id005
           chainOk: *id001
           supersededBy:
             type:
@@ -6193,7 +6395,7 @@ components:
           approvedBy:
             type: string
             maxLength: 64
-          approvedAt: *id007
+          approvedAt: *id005
           version:
             type: integer
         additionalProperties: false
@@ -6313,7 +6515,7 @@ components:
                 - OK
                 - STALE
             additionalProperties: false
-        lastRefreshedAt: *id007
+        lastRefreshedAt: *id005
         pendingChangeRequestId:
           type:
           - string
@@ -6350,7 +6552,7 @@ components:
             - string
             - 'null'
           openedAt: *id002
-          resolvedAt: *id007
+          resolvedAt: *id005
           resolution:
             type: string
             maxLength: 2000
@@ -6430,7 +6632,7 @@ components:
           - AWAITING_REVOCATION
           - DONE
           - CANCELLED
-        transitionUntil: *id007
+        transitionUntil: *id005
         startedAt: *id002
       additionalProperties: false
       required:
@@ -6944,7 +7146,7 @@ components:
             - string
             - 'null'
           startedAt: *id002
-          finishedAt: *id007
+          finishedAt: *id005
           startedBy:
             type: string
             maxLength: 64
@@ -7166,7 +7368,7 @@ components:
     Dashboard:
       type: object
       properties:
-        platforms: *id006
+        platforms: *id007
         calls24h:
           type: integer
         errorRate24h: *id009
@@ -7282,7 +7484,7 @@ components:
           payloadHash:
             type: string
             maxLength: 71
-          payloadExpiresAt: *id007
+          payloadExpiresAt: *id005
           attempts:
             type: integer
           quotaCharged: *id001
@@ -7346,8 +7548,8 @@ components:
       properties:
         transactionCode:
           type: string
-        request: *id005
-        response: *id005
+        request: *id006
+        response: *id006
         expiresAt: *id002
         viewId: *id004
       additionalProperties: false
@@ -7461,7 +7663,7 @@ components:
             - OFF_HOURS
             - SPIKE
             - CASE_FANOUT
-          evidence: *id005
+          evidence: *id006
           state:
             type: string
             enum:
@@ -7562,7 +7764,7 @@ components:
           - HALF_OPEN
           - FORCED_OPEN
           - FORCED_CLOSED
-        overrideUntil: *id007
+        overrideUntil: *id005
       additionalProperties: false
       required:
       - platformCode
@@ -7757,7 +7959,7 @@ components:
           type: string
           maxLength: 41
           pattern: ^[a-z][a-zA-Z0-9]{1,40}$
-        params: *id005
+        params: *id006
         purposeCode:
           type: string
           maxLength: 41
@@ -7792,7 +7994,7 @@ components:
           - 'null'
         stale: *id001
         signatureVerified: *id001
-        dataTime: *id007
+        dataTime: *id005
         durationMs:
           type: integer
       additionalProperties: false
@@ -7890,7 +8092,7 @@ components:
           - string
           - 'null'
         createdAt: *id002
-        finishedAt: *id007
+        finishedAt: *id005
       additionalProperties: false
       required:
       - requestId
@@ -7914,7 +8116,7 @@ components:
         remoteVersion:
           type: string
           maxLength: 32
-        updatedAt: *id007
+        updatedAt: *id005
         recordCountHint:
           type:
           - integer
@@ -7973,7 +8175,7 @@ components:
       properties:
         items:
           type: array
-          items: *id005
+          items: *id006
         remoteVersion:
           type: string
           maxLength: 32
@@ -7990,7 +8192,7 @@ components:
       properties:
         entries:
           type: array
-          items: *id005
+          items: *id006
           minItems: 1
           maxItems: 1000
         reason:
@@ -8037,30 +8239,30 @@ components:
           description: Chữ ký của ảnh chụp, cổng xác minh trước khi nạp (SDD §4.3).
         platforms:
           type: array
-          items: *id005
+          items: *id006
         services:
           type: array
-          items: *id005
+          items: *id006
         routingRules:
           type: array
-          items: *id005
+          items: *id006
         certificates:
           type: array
-          items: *id005
+          items: *id006
           description: Chỉ phần công khai và `keyRef`.
         trustAnchors:
           type: array
-          items: *id005
+          items: *id006
         quotas:
           type: array
-          items: *id005
+          items: *id006
         allocations:
           type: array
-          items: *id005
+          items: *id006
         inboundEndpoints:
           type: array
-          items: *id005
-        settings: *id005
+          items: *id006
+        settings: *id006
       additionalProperties: false
       required:
       - tenant
@@ -8081,7 +8283,7 @@ components:
         certificate:
           type: string
           maxLength: 16384
-        payload: *id005
+        payload: *id006
       additionalProperties: false
       required:
       - messageId
@@ -8101,7 +8303,7 @@ components:
           maxLength: 128
         transactionCode:
           type: string
-        result: *id005
+        result: *id006
         signature:
           type: string
           maxLength: 8192
@@ -8130,7 +8332,7 @@ components:
         signature:
           type: string
           maxLength: 8192
-        detail: *id005
+        detail: *id006
       additionalProperties: false
       required:
       - messageId

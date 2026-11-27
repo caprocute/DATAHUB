@@ -30,7 +30,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-08 Ma trận phân quyền; D02-04-PH12 Use 
 | Quy tắc nghiệp vụ | 45 (BR-12-001…045) |
 | Yêu cầu phi chức năng | 33 (NFR-12-001…033) |
 | Màn hình | 19 (UI-12-01…19) |
-| API | 111 operation (API-12-001…111), 16 sự kiện (EVT-12-01…16) |
+| API | 113 operation (API-12-001…113), 16 sự kiện (EVT-12-01…16) |
 | Quyền | 16 (`PERM-12-*`, trong đó 2 đã có ở D02-08 và 14 đề nghị bổ sung) |
 | Chức năng hệ cũ được phủ | 12 mục `LGC` (8 mục LGC-IAM và 4 mục của khối Bus, APIM, NGSP có phần PH-12) |
 | FR cũ của repo được ánh xạ | 19 FR, 30 NFR, 17 BR (mục 11.2, 11.3) |
@@ -2903,7 +2903,7 @@ Hình cho thấy `dh-platform` không bao giờ trả bí mật cho PH-01: bí m
 2. Hệ thống kiểm tra lý do (ERR-12-014) và không phải tự thu hồi mình (ERR-12-013).
 3. Hệ thống vô hiệu hoặc tạm ngừng đối tượng ở Keycloak, hủy mọi phiên, thu hồi mọi refresh token.
 4. Hệ thống ghi một mục vào danh sách chặn: `sub` hoặc `client`, mốc `notBefore = bây giờ`, cờ `blockAll` bật tới khi Keycloak xác nhận đã vô hiệu đối tượng, hạn giữ bằng thời hạn token lớn nhất cộng 30 giây; mọi token có `iat` trước mốc đều bị từ chối.
-5. Hệ thống phát EVT-12-05 để các DU nhận qua Kafka, và APISIX lấy danh sách qua API mỗi 10 giây bằng scope `iam:revocation-read`; ngoài ra hệ thống đẩy mục thu hồi sang PH-03 qua API-03-053 (`POST /revocations`, scope `gateway:revoke`) để `dh-connect` ghi vào Valkey, còn đường kéo là đường đối chiếu.
+5. Hệ thống phát EVT-12-05 để các DU nhận qua Kafka, và APISIX lấy danh sách qua API mỗi 10 giây bằng scope `iam:revocation-read`; ngoài ra hệ thống đẩy mục thu hồi sang PH-03 qua API-03-053 (`POST /revocations`, scope `gateway:revoke`) để `dh-connect` ghi vào Valkey, còn đường kéo là đường bù khi mất đẩy và đường đối chiếu (đã chốt 27/11/2026).
 6. Hệ thống hiển thị "Đã áp dụng ở {n}/{m} nút cổng" dựa trên số phiên bản danh sách mà các nút báo về.
 7. Hệ thống ghi kiểm toán kèm lý do và người thực hiện.
 
@@ -3094,7 +3094,7 @@ Hình cho thấy mọi cấu hình đến từ mẫu cố định trong Git ch�
 
 **Quy tắc nghiệp vụ.** BR-12-038.
 
-**Màn hình, API.** UI-12-19; API-12-081, API-12-082, API-12-083.
+**Màn hình, API.** UI-12-19; API-12-081, API-12-082, API-12-083, API-12-113 (danh sách realm, lọc `driftStatus=DRIFTED`, quyền `PERM-12-realm-admin`; đã chốt 27/11/2026).
 :::
 
 #### FR-12-043 · Tạm ngừng, khôi phục, chuyển chỉ-đọc realm theo vòng đời tenant
@@ -3690,6 +3690,7 @@ Hình cho thấy hai nguồn tới gói: dữ liệu tự sinh (gán vai trò, m
 4. Hệ thống chạy `opa test` với các ca đã khai báo; mỗi chính sách cần ít nhất một ca dương và một ca âm, độ phủ từ 90% (ERR-12-025 khi chưa đạt).
 5. Với chính sách phạm vi `TENANT`, hệ thống kiểm tra tĩnh: chỉ được thêm luật `deny` và nghĩa vụ, không có luật `allow`, không tham chiếu dữ liệu tenant khác, không gọi hàm ngoài danh sách cho phép (ERR-12-028).
 6. Hệ thống lưu nội dung vào Git (một commit mỗi phiên bản), ghi `contentHash`; kết quả kiểm thử gắn với `contentHash`, sửa nội dung làm mất kết quả cũ.
+7. Tự lưu ở trình soạn: giao diện ghi đè nội dung bản nháp bằng `PUT` kèm `If-Match` (API-12-112), không tạo phiên bản mới mỗi lần lưu. Chỉ phiên bản `DRAFT` của chính người soạn được ghi đè (phiên bản ở trạng thái khác: ERR-12-027); mỗi lần ghi đè xóa kết quả kiểm thử và chạy khô đã có vì `contentHash` đổi (đã chốt 27/11/2026).
 
 **Luồng thay thế.** Bỏ bản nháp: `DISCARDED`. Soạn từ phiên bản cũ để quay lui nội dung. Nhiều người cùng đóng góp một phiên bản: mỗi người được ghi nhận để bốn mắt tính đủ (BR-12-008).
 
@@ -3712,7 +3713,7 @@ Hình cho thấy hai nguồn tới gói: dữ liệu tự sinh (gán vai trò, m
 
 **Quy tắc nghiệp vụ.** BR-12-007; BR-12-008; BR-12-009.
 
-**Màn hình, API.** UI-12-12; API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094.
+**Màn hình, API.** UI-12-12; API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094, API-12-112.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -4705,6 +4706,8 @@ Sự kiện phát qua outbox của `dh-platform` vào Kafka, định dạng Clou
 | API-12-109 | `GET /reports/mfa-coverage` | PERM-12-read | 060 |
 | API-12-110 | `GET /settings` | PERM-12-read | 061 |
 | API-12-111 | `PUT /settings` | PERM-12-admin | 061 |
+| API-12-112 | `PUT /policies/{policyCode}/versions/{versionNo}` | PERM-12-policy-edit | 052 |
+| API-12-113 | `GET /realms` | PERM-12-realm-admin | 042 |
 
 : Danh mục API của PH-12
 
@@ -5092,5 +5095,5 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-12: 62 FR đủ khối 17 mục (52 M, 9 S, 1 C) trong tám nhóm; 45 BR, 33 NFR, 38 tham số `12.*`, 66 mã lỗi (47 điều khiển, 19 runtime), 16 sự kiện, 111 API, 19 màn hình, 2 ảnh hi-fi; ma trận truy vết 12 mục LGC và ánh xạ mã cũ sang mã mới cho 19 FR, 30 NFR, 17 BR của repo; 15 câu hỏi mở (Q12-01…15); đề nghị đồng bộ D02-08 (14 quyền, 7 scope) |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, cột UC mục 5, đẩy thu hồi sang API-03-053, bước S01_RECORD, S03_REALM, vai trò INTEGRATION_*, thông báo ERR-12-002, đường dẫn ảnh hi-fi; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446 |
 

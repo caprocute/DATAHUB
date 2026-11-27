@@ -38,7 +38,7 @@ Bảng sau tóm tắt các con số chính của phân hệ.
 | Quy tắc nghiệp vụ (BR) | 29 |
 | Yêu cầu phi chức năng (NFR) | 15 |
 | Màn hình (UI) | 13 |
-| API | 75 (API-07-001…075; API-07-076 chuyển sang PH-18) |
+| API | 76 (API-07-001…075 và API-07-077; API-07-076 chuyển sang PH-18) |
 | Sự kiện (EVT) | 10 |
 | Chức năng hệ cũ được phủ (LGC) | 21 |
 
@@ -517,7 +517,7 @@ stateDiagram-v2
     MOI_TRONG_NHAP --> ACTIVE : Phiên bản được phát hành
     ACTIVE --> ACTIVE : Sửa tên, thuộc tính, thứ tự\ntrong bản nháp mới
     ACTIVE --> DEPRECATED : Ngừng dùng (FR-07-012, FR-07-019)\ncó thể kèm mã thay thế
-    DEPRECATED --> ACTIVE : Khôi phục trong bản nháp mới\n(cùng ý nghĩa, phải có lý do)
+    DEPRECATED --> ACTIVE : Khôi phục trong bản nháp mới (API-07-077)\n(cùng ý nghĩa, phải có lý do)
     DEPRECATED --> DEPRECATED : Sửa mã thay thế
 ```
 
@@ -1494,7 +1494,7 @@ Mọi thay đổi bản ghi đi qua bản nháp; bản nháp chỉ thành dữ l
 
 **Kích hoạt.** Người dùng thêm dòng, sửa ô hoặc chọn "Ngừng dùng" trên một dòng ở lưới của UI-07-05.
 
-**Đầu vào.** Đầu vào của thao tác thêm (API-07-027) và sửa (API-07-028, JSON Merge Patch) được mô tả trong bảng ngay sau khối đặc tả. Đầu vào của thao tác ngừng dùng (API-07-029) được mô tả trong bảng ngay sau khối đặc tả; thao tác xóa (API-07-030) không có thân.
+**Đầu vào.** Đầu vào của thao tác thêm (API-07-027) và sửa (API-07-028, JSON Merge Patch) được mô tả trong bảng ngay sau khối đặc tả. Đầu vào của thao tác ngừng dùng (API-07-029) được mô tả trong bảng ngay sau khối đặc tả; thao tác xóa (API-07-030) không có thân. Khôi phục bản ghi `DEPRECATED` về `ACTIVE` dùng thao tác riêng `:restore` (API-07-077, đã chốt 27/11/2026), không đổi `status` qua API-07-028 vì `ItemUpdateRequest` không có trường `status`; thân gồm `reason` (bắt buộc, 10…1.000 ký tự) và `cascade` (mặc định `false`).
 
 **Luồng xử lý chính.**
 
@@ -1504,7 +1504,8 @@ Mọi thay đổi bản ghi đi qua bản nháp; bản nháp chỉ thành dữ l
 4. Khi ngừng dùng: nếu bản ghi có con `ACTIVE` và `cascade = false` thì trả `ERR-07-010` với danh sách con; nếu `cascade = true` thì ngừng dùng cả cây con. Ngừng dùng là thay đổi phá vỡ.
 5. Khi xóa: nếu mã đã xuất hiện ở bất kỳ phiên bản đã phát hành nào thì trả `ERR-07-013`; nếu bản ghi có con trong bản nháp thì trả `ERR-07-010`.
 6. Khi sửa `parentCode`: hệ thống kiểm tra không vòng (cha mới không thuộc cây con của bản ghi), tính lại `depth`, `path` cho bản ghi và toàn bộ cây con, kiểm tra độ sâu cây con sau khi dời không vượt `max_depth`. Đổi mã cha của bản ghi đã từng phát hành là thay đổi phá vỡ.
-7. Hệ thống ghi thay đổi, cập nhật `stats` (đếm lại theo so sánh với phiên bản gốc), tăng `version` của bản nháp, ghi kiểm toán, trong một giao dịch.
+7. Khi khôi phục (API-07-077): bản ghi phải đang `DEPRECATED` (ERR-07-004 nếu không), mã cha phải `ACTIVE` (ERR-07-010); hệ thống đặt `status = ACTIVE`, xóa `replacedBy` và `validTo` đã ghi khi ngừng dùng, với `cascade = true` khôi phục cả các bản ghi con đã ngừng dùng.
+8. Hệ thống ghi thay đổi, cập nhật `stats` (đếm lại theo so sánh với phiên bản gốc), tăng `version` của bản nháp, ghi kiểm toán, trong một giao dịch.
 
 **Luồng thay thế.** Bản ghi chưa từng phát hành được xóa hẳn khỏi bản nháp; bản ghi đã từng phát hành chỉ ngừng dùng kèm mã thay thế (FR-07-019).
 
@@ -1533,7 +1534,7 @@ Mọi thay đổi bản ghi đi qua bản nháp; bản nháp chỉ thành dữ l
 
 **Quy tắc nghiệp vụ.** BR-07-002; BR-07-003; BR-07-006; BR-07-010; BR-07-014; BR-07-040.
 
-**Màn hình, API.** UI-07-05; API-07-027, API-07-028, API-07-030, API-07-029.
+**Màn hình, API.** UI-07-05; API-07-027, API-07-028, API-07-030, API-07-029, API-07-077.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -2385,7 +2386,7 @@ Sơ đồ trình tự trên (trích D03-02-PH07 §5.5) cho thấy các thành ph
 
 **Kích hoạt.** HTTT nguồn hoặc người dùng gọi API-07-031 với lô bản ghi và `Idempotency-Key`.
 
-**Đầu vào.** Đầu vào của API-07-031 được mô tả trong bảng ngay sau khối đặc tả.
+**Đầu vào.** Đầu vào của API-07-031 được mô tả trong bảng ngay sau khối đặc tả. Mỗi thao tác có thể kèm `ifMatch` riêng (ETag của bản ghi, như API-07-028) để không ghi đè thay đổi của người khác (đã chốt 27/11/2026, Q07-72).
 
 **Luồng xử lý chính.**
 
@@ -2393,7 +2394,7 @@ Sơ đồ trình tự trên (trích D03-02-PH07 §5.5) cho thấy các thành ph
 2. Hệ thống kiểm tra số thao tác ≤ giới hạn, vượt trả `ERR-07-026`; kiểm tra quyền và nguồn của HTTT.
 3. Hệ thống khóa bản nháp (khóa tư vấn theo `version_id`) để tuần tự hóa các lô đồng thời của cùng bản nháp.
 4. Hệ thống áp tuần tự từng thao tác trong bộ nhớ trên tập bản ghi bị ảnh hưởng, kiểm tra mức bản ghi; sau đó chạy kiểm tra liên bản ghi trên tập hợp nhất.
-5. Nếu `atomic = true` và có lỗi, hệ thống không ghi gì và trả `422` với `ERR-07-009` (hoặc mã lỗi tương ứng) kèm `results`; nếu `atomic = false`, ghi các thao tác hợp lệ (loại thao tác phụ thuộc vào thao tác lỗi, ví dụ con của bản ghi lỗi).
+5. Nếu `atomic = true` và có lỗi, hệ thống không ghi gì và trả `422` với `ERR-07-009` (hoặc mã lỗi tương ứng) kèm `results`, riêng `ifMatch` lệch trả `412` với `ERR-07-018`; nếu `atomic = false`, ghi các thao tác hợp lệ (loại thao tác phụ thuộc vào thao tác lỗi, ví dụ con của bản ghi lỗi).
 6. Nếu `dryRun = true`, hệ thống dừng sau bước 5 mà không ghi.
 7. Hệ thống ghi trong một giao dịch, tăng `version` bản nháp, cập nhật `stats`, lưu kết quả theo `Idempotency-Key`, ghi kiểm toán.
 8. Lô 5.000 thao tác xử lý xong trong 10 giây.
@@ -2409,7 +2410,7 @@ Sơ đồ trình tự trên (trích D03-02-PH07 §5.5) cho thấy các thành ph
 - HTTT không phải nguồn của danh mục: HTTP 403.
 - ETag không khớp: ERR-07-018 (412). "Dữ liệu đã được người khác cập nhật trong lúc bạn đang sửa. Xem khác biệt rồi chọn "Ghi đè" hoặc "Tải lại"."
 
-**Đầu ra.** `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp; `207 Multi-Status` không dùng, kết quả từng thao tác nằm trong thân.
+**Đầu ra.** `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp; khi `atomic = false` và có thao tác `FAILED` (kể cả `ifMatch` lệch, ERR-07-018) trả `207 Multi-Status` kèm kết quả từng phần, thân vẫn là `results[]` như trên (đã chốt 27/11/2026, Q07-72).
 
 **Kết quả.** HTTT nguồn cập nhật danh mục tự động mà không cần người nhập tay; kết quả trả theo từng bản ghi.
 
@@ -4489,6 +4490,8 @@ Bảng sau là danh sách chính thức tham số của namespace `07.rdm` lưu 
 
 : Tham số PH-07
 
+Các cờ `07.rdm.feature.*` giữ dạng tham số kiểu Boolean của bảng này, không chuyển sang bảng cờ tính năng `ff.rdm.*` (đã chốt 27/11/2026); PH-18 nới mẫu tên khóa để nhận namespace `07.rdm` (Q18-52).
+
 ### 8.2. Yêu cầu phi chức năng riêng của PH-07
 
 Các yêu cầu phi chức năng chung (thời gian phản hồi giao diện, khả năng truy cập, bảo mật chung) ở D02-02 §5 (NFR-00) áp dụng cho PH-07. Bảng sau là các yêu cầu riêng, đo ở môi trường PERF với cấu hình ở D05-02-PH07 §1.3; ngưỡng thời gian là phân vị 95 đo tại gateway trừ khi ghi khác.
@@ -4578,7 +4581,7 @@ Bảng dưới đây gom API-07-001…076 theo FR để đội phát triển chi
 | Danh mục, nhóm | API-07-001…006; API-07-007…010 | FR-07-001…004, 008, 009; FR-07-010 |
 | Phiên bản | API-07-011…021 | FR-07-002, 011, 013…017 |
 | Thuộc tính | API-07-022…025 | FR-07-005, 006 |
-| Bản ghi quản trị | API-07-026…031 | FR-07-002, 012, 018, 019, 023 |
+| Bản ghi quản trị | API-07-026…031, 077 | FR-07-002, 012, 018, 019, 023 |
 | Nhập xuất | API-07-032…040 | FR-07-020…025 |
 | Khai thác, truy vấn | API-07-041…049 | FR-07-026…033 |
 | ĐVHC | API-07-050…054 | FR-07-045…047 |
@@ -4792,4 +4795,4 @@ PH-07 được nghiệm thu khi đạt đủ các tiêu chí dưới đây. Mỗ
 | 0.1 | 2026-11-22 | Nhóm phân hệ PH-07 | Bản đầu, đủ 53 FR |
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất token, route với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn kết hợp 17 mục cho mọi FR; thêm danh sách chức năng, mục tiêu đo được, vị trí kiến trúc, luồng chính, sơ đồ nhóm và trình tự, thông báo theo mã lỗi, giao diện tiêu biểu; sắp chương theo K-FRS |
-| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bỏ chữ giả định scope provision, dòng tích hợp PH-08 và PH-14 |
+| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bỏ chữ giả định scope provision, dòng tích hợp PH-08 và PH-14; Chốt câu hỏi mở đợt đồng bộ: Q421, Q442, Q443 |

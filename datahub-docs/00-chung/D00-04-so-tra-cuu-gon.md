@@ -195,7 +195,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | NFR | 19 | 32 | `NFR-19-001` | `NFR-19-032` | `NFR-19-033` |
 | NFR | 20 | 24 | `NFR-20-001` | `NFR-20-024` | `NFR-20-025` |
 | BR | 01 | 34 | `BR-01-001` | `BR-01-034` | `BR-01-035` |
-| BR | 02 | 40 | `BR-02-001` | `BR-02-040` | `BR-02-041` |
+| BR | 02 | 41 | `BR-02-001` | `BR-02-041` | `BR-02-042` |
 | BR | 03 | 30 | `BR-03-001` | `BR-03-030` | `BR-03-031` |
 | BR | 04 | 22 | `BR-04-001` | `BR-04-022` | `BR-04-023` |
 | BR | 05 | 30 | `BR-05-001` | `BR-05-030` | `BR-05-031` |
@@ -257,21 +257,21 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | US | 20 | 70 | `US-20-001` | `US-20-070` | `US-20-071` |
 | API | 01 | 88 | `API-01-001` | `API-01-088` | `API-01-089` |
 | API | 02 | 98 | `API-02-001` | `API-02-098` | `API-02-099` |
-| API | 03 | 96 | `API-03-001` | `API-03-096` | `API-03-097` |
-| API | 04 | 51 | `API-04-001` | `API-04-091` | `API-04-092` |
+| API | 03 | 98 | `API-03-001` | `API-03-098` | `API-03-099` |
+| API | 04 | 53 | `API-04-001` | `API-04-093` | `API-04-094` |
 | API | 05 | 93 | `API-05-001` | `API-05-093` | `API-05-094` |
-| API | 06 | 125 | `API-06-001` | `API-06-125` | `API-06-126` |
-| API | 07 | 75 | `API-07-001` | `API-07-075` | `API-07-076` |
+| API | 06 | 126 | `API-06-001` | `API-06-126` | `API-06-127` |
+| API | 07 | 76 | `API-07-001` | `API-07-077` | `API-07-078` |
 | API | 08 | 132 | `API-08-001` | `API-08-132` | `API-08-133` |
 | API | 09 | 245 | `API-09-001` | `API-09-245` | `API-09-246` |
 | API | 10 | 121 | `API-10-001` | `API-10-121` | `API-10-122` |
 | API | 11 | 137 | `API-11-001` | `API-11-137` | `API-11-138` |
-| API | 12 | 111 | `API-12-001` | `API-12-111` | `API-12-112` |
+| API | 12 | 113 | `API-12-001` | `API-12-113` | `API-12-114` |
 | API | 13 | 90 | `API-13-001` | `API-13-090` | `API-13-091` |
-| API | 14 | 92 | `API-14-001` | `API-14-092` | `API-14-093` |
+| API | 14 | 94 | `API-14-001` | `API-14-094` | `API-14-095` |
 | API | 15 | 142 | `API-15-001` | `API-15-142` | `API-15-143` |
 | API | 16 | 130 | `API-16-001` | `API-16-130` | `API-16-131` |
-| API | 17 | 193 | `API-17-001` | `API-17-193` | `API-17-194` |
+| API | 17 | 194 | `API-17-001` | `API-17-194` | `API-17-195` |
 | API | 18 | 188 | `API-18-001` | `API-18-188` | `API-18-189` |
 | API | 19 | 107 | `API-19-001` | `API-19-205` | `API-19-206` |
 | API | 20 | 171 | `API-20-001` | `API-20-171` | `API-20-172` |
@@ -407,7 +407,7 @@ Bảng sau tóm tắt D00-01 §6, §8 và D03-06-00 §2.4 ở mức đủ để 
 | Schema PostgreSQL | `ph{nn}_{tên ngắn}`; một phân hệ có thể có nhiều schema khi tách theo nhóm (PH-13 dùng `ph13_audit`, `ph13_obs`) | `ph07_rdm` (PH-04 đang dùng `ph04`, chờ đợt đồng bộ) |
 | Vai CSDL | Vai sở hữu `ph{nn}_owner` (không đăng nhập), vai ứng dụng `ph{nn}_app`, `ph{nn}_platform_app` khi có truy cập liên tenant, vai đọc `ph{nn}_ro`; vai kiểm thử dùng chung `dh_platform_app`, `dh_platform_ctl`, `dh_report_ro` (PH-20 đặt ở bài kiểm cách ly, khối `ELSE GRANT`) | `ph20_owner`, `ph20_app`, `ph20_platform_app`, `ph20_ro` |
 | Bảng, cột | `snake_case`, tiếng Anh, số ít; luôn có `id`, `tenant_id`, `created_*`, `updated_*`, `version` | `catalog_item` |
-| REST | `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}`, lỗi RFC 9457, phân trang `page`/`size`. Nhóm đang dùng: `onboarding`, `catalog`, `gateway`, `integration`, `adapter`, `mdm`, `rdm`, `dq`, `privacy`, `event`, `bpm`, `iam`, `observability`, `audit`, `national`, `portal`, `kpi`, `assist`, `ops`, `payment`, `platform`, `tenant`; đường nội bộ dạng `/ops/internal/v1`, `/internal/tenant/v1` | `/api/rdm/v1`, `/api/integration/v1`, `/api/gateway/v1`, `/api/ops/v1` |
+| REST | `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}`, lỗi RFC 9457, phân trang `page`/`size` (ngoại lệ: API nhật ký khối lượng lớn API-03-039, 074 dùng phân trang con trỏ `cursor`, `limit`, `approxTotal`, chốt Q441). Nhóm đang dùng: `onboarding`, `catalog`, `gateway`, `integration`, `adapter`, `mdm`, `rdm`, `dq`, `privacy`, `event`, `bpm`, `iam`, `observability`, `audit`, `national`, `portal`, `kpi`, `assist`, `ops`, `payment`, `platform`, `tenant`; đường nội bộ dạng `/ops/internal/v1`, `/internal/tenant/v1` | `/api/rdm/v1`, `/api/integration/v1`, `/api/gateway/v1`, `/api/ops/v1` |
 | Lỗi REST | RFC 9457, `type` = `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}` cho mọi phân hệ (không dùng `urn:dh:err:` hay `…/problems/{nhóm}/…`) | `https://datahub.gov.vn/errors/ERR-07-026` |
 | Lỗi nền ERR-00 | Khung lỗi chung mọi phân hệ, `code` trong thân RFC 9457, không cấp mã riêng cho cùng lỗi: `ERR-00-003` (`tenant_id` trong thân khác ngữ cảnh xác thực, FR-00-010, từ chối khi không bỏ qua), `ERR-00-401` (401, chưa xác thực hoặc token hết hạn, mọi operation), `ERR-00-403` (403, thiếu quyền chức năng `PERM-{PH}-*` hoặc scope máy; `403` do phạm vi dữ liệu hay nghiệp vụ dùng mã riêng của phân hệ), `ERR-00-412` (412, `If-Match` lệch `version`, chỉ khi hợp đồng phân hệ chưa có mã riêng, D04-01 CC-ERR-04), `ERR-00-422-IDEMPOTENCY` (422, cùng `Idempotency-Key` khác thân, D04-01 CC-TX-06), `ERR-00-428` (428, thiếu `If-Match` hoặc `Idempotency-Key` bắt buộc), `ERR-00-500` (500, lỗi không lường trước, D04-01 CC-ERR-03) | `https://datahub.gov.vn/errors/ERR-00-401` |
 | Hành động REST | `POST …/{ma}:{động-từ}` | `POST /workspaces/{workspaceCode}:archive` |

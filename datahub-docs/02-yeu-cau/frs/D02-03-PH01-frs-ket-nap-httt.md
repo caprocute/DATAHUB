@@ -203,7 +203,7 @@ Hình cho thấy PH-01 nằm hoàn toàn ở mặt phẳng điều khiển. `dh-
 
 ### 2.4. Kiến trúc thành phần và công nghệ
 
-PH-01 gồm sáu thành phần trong `dh-connect` (Java 21, Spring Boot 4, Spring Modulith, ADR-001). **Dịch vụ hồ sơ** quản lý HTTT thành viên, hồ sơ kỹ thuật, nhu cầu khai thác, đầu mối, tài liệu, lưu trong PostgreSQL với RLS theo tenant. **Máy trạng thái duyệt** hiện thực vòng đời HTTT bằng enum trạng thái và bảng chuyển khai báo trong mã, mỗi chuyển ghi một dòng lịch sử và một sự kiện outbox trong cùng giao dịch, theo cách của ADR-058 (không phụ thuộc PH-11 vì PH-11 thuộc Đợt 2; đề xuất chuyển sang Flowable nếu sau này cần quy trình nhiều cấp liên cơ quan, Q01-14). **Bộ điều phối saga cấp định danh** gọi PH-12, PH-03, OpenBao theo từng bước có thao tác bù trừ, trạng thái saga lưu trong hồ sơ. **Bộ bàn giao** tạo liên kết dùng một lần trên cơ chế bọc phản hồi (response wrapping) của OpenBao, chỉ giữ giá trị băm của liên kết. **Bộ rà soát quyền** tổng hợp mức sử dụng và hiệu lực căn cứ theo chu kỳ. **Bộ nhắc việc** chạy tác vụ định kỳ (khóa ShedLock để chỉ một bản sao chạy): hạn thẩm định, hạn định danh, sandbox quá hạn, đầu mối thiếu.
+PH-01 gồm sáu thành phần trong `dh-connect` (Java 21, Spring Boot 4, Spring Modulith, ADR-001). **Dịch vụ hồ sơ** quản lý HTTT thành viên, hồ sơ kỹ thuật, nhu cầu khai thác, đầu mối, tài liệu, lưu trong PostgreSQL với RLS theo tenant. **Máy trạng thái duyệt** hiện thực vòng đời HTTT bằng enum trạng thái và bảng chuyển khai báo trong mã, mỗi chuyển ghi một dòng lịch sử và một sự kiện outbox trong cùng giao dịch, theo cách của ADR-058 (không phụ thuộc PH-11 vì PH-11 thuộc Đợt 2; đã chốt 27/11/2026: PH-01 tự điều phối việc duyệt ở MVP, tích hợp quy trình `DUYET_KET_NAP_HTTT` của PH-11 ở Đợt 2, Q01-14). **Bộ điều phối saga cấp định danh** gọi PH-12, PH-03, OpenBao theo từng bước có thao tác bù trừ, trạng thái saga lưu trong hồ sơ. **Bộ bàn giao** tạo liên kết dùng một lần trên cơ chế bọc phản hồi (response wrapping) của OpenBao, chỉ giữ giá trị băm của liên kết. **Bộ rà soát quyền** tổng hợp mức sử dụng và hiệu lực căn cứ theo chu kỳ. **Bộ nhắc việc** chạy tác vụ định kỳ (khóa ShedLock để chỉ một bản sao chạy): hạn thẩm định, hạn định danh, sandbox quá hạn, đầu mối thiếu.
 
 Hình dưới mô tả trình tự kết nạp đầu cuối ở mức khái quát: đơn vị nộp hồ sơ, hai nhánh thẩm định, phê duyệt, saga cấp định danh, bàn giao. Điểm quan trọng: bí mật chỉ đi từ PH-12 vào OpenBao rồi từ OpenBao ra màn hình của đúng đầu mối, không đi qua cơ sở dữ liệu PH-01.
 
@@ -371,7 +371,7 @@ Bảng dưới liệt kê thực thể mức logic của PH-01 kèm thuộc tín
 | EN-01-07 | Bước thẩm định (`ReviewStep`) | `stepType`, `assigneeId`, `result`, `opinion`, `startedAt`, `dueAt`, `finishedAt`, `pausedMillis` | Giữ vĩnh viễn |
 | EN-01-08 | Định danh ứng dụng (`AppCredential`, DD-05) | `credentialId`, `environment`, `auth_method`, `client_id`, `secret_ref`, `cert_fingerprint`, `jwksRef`, `status`, `expires_at`, `last_used_at`, `rotationEndsAt` | Không lưu bí mật |
 | EN-01-09 | Bàn giao (`Handover`) | `handoverId`, `credentialId`, `linkHash`, `wrapAccessor`, `wrapTokenSealed`, `expiresAt`, `openedAt`, `openedBy`, `openedIp`, `failedAttempts`, `status` | Không lưu liên kết gốc; `wrapTokenSealed` là mã bọc OpenBao đã mã hóa bằng transit, chỉ tồn tại khi `PENDING` hoặc `OPENING`; `OPENING` là trạng thái kỹ thuật chiếm chỗ để hai người không mở đồng thời; giữ 3 năm |
-| EN-01-10 | Lần kiểm thử SANDBOX (`SandboxTest`) | `testId`, `source`, `authOk`, `apiOk`, `callCount`, `successCount`, `errorDetail`, `observedAt` | Nhận từ PH-03, PH-13; giữ 1 năm |
+| EN-01-10 | Lần kiểm thử SANDBOX (`SandboxTest`) | `testId`, `source`, `authOk`, `apiOk`, `callCount`, `successCount`, `errorDetail`, `observedAt` | Nhận từ PH-13 qua `sandboxActivity` (PH-03 chỉ bảo đảm nhãn consumer trong nhật ký lượt gọi; đã chốt 27/11/2026); giữ 1 năm |
 | EN-01-11 | Lịch sử trạng thái (`StateHistory`) | `fromStatus`, `toStatus`, `reason`, `actor`, `emergency`, `at`, `traceId` | Giữ vĩnh viễn |
 | EN-01-12 | Thao tác khẩn (`EmergencyAction`) | `actionType`, `reason`, `performedBy`, `performedAt`, `confirmBy`, `confirmedBy`, `confirmedAt`, `status` | `PENDING_CONFIRM`, `CONFIRMED`, `OVERDUE` |
 | EN-01-13 | Yêu cầu thay đổi (`ChangeRequest`) | `changeClass` (`TECHNICAL`, `OWNER_CHANGE`, `FULL`, `TERMINATE`), `diff`, `status`, `requestedBy`, `decidedBy` | Thay đổi mức `NONE` áp dụng ngay nên không tạo yêu cầu; mở rộng phạm vi là loại `FULL`; chấm dứt là loại `TERMINATE` |
@@ -1896,12 +1896,12 @@ Hình cho thấy bí mật chỉ tồn tại trong bộ nhớ của `dh-connect`
 
 **Kích hoạt.** HTTT gọi điểm cuối sandbox của Datahub; tác vụ thu thập kết quả chạy mỗi 5 phút; hoặc người dùng bấm "Làm mới kết quả" ở UI-01-10.
 
-**Đầu vào.** `systemCode`; từ nguồn nhật ký truy cập của PH-03, PH-13 theo định danh SANDBOX.
+**Đầu vào.** `systemCode`; từ PH-13 qua `sandboxActivity` theo định danh SANDBOX; PH-03 không cung cấp API nhật ký riêng cho PH-01, chỉ bảo đảm nhãn consumer trong nhật ký lượt gọi (đã chốt 27/11/2026).
 
 **Luồng xử lý chính.**
 
 1. HTTT gọi điểm cuối sandbox, lấy token bằng định danh SANDBOX rồi gọi các API mẫu với dữ liệu giả.
-2. Mỗi 5 phút, hệ thống lấy từ PH-13 (nguồn nhật ký của PH-03) số lượt xác thực thành công, số lượt gọi API thành công, mã lỗi nổi bật theo định danh SANDBOX, ghi một bản ghi EN-01-10.
+2. Mỗi 5 phút, hệ thống lấy từ PH-13 (nguồn nhật ký lượt gọi do PH-03 ghi nhãn consumer) số lượt xác thực thành công, số lượt gọi API thành công, mã lỗi nổi bật theo định danh SANDBOX, ghi một bản ghi EN-01-10.
 3. Hệ thống đánh giá tiêu chí: có ít nhất 1 lần xác thực thành công và ít nhất `sandbox.requiredSuccessfulCalls` (mặc định 3) lượt gọi API thành công trong 7 ngày gần nhất; với `MTLS` có thêm bắt tay chứng thư thành công.
 4. Hệ thống hiển thị kết quả cho cả hai bên: đơn vị (đầu mối) và quản trị tỉnh; mỗi lỗi kèm hướng dẫn khắc phục theo bảng dưới.
 5. Khi đạt đủ tiêu chí, hệ thống đặt `readyToActivate = true` và thông báo TA "HTTT {mã} đã kiểm thử đạt, chờ kích hoạt".
@@ -2729,7 +2729,7 @@ Hình cho thấy thứ tự quyền lực: cắt trước, hỏi sau, nhưng b�
 ::: dac-ta
 **Mục đích.** Cho phân hệ khác tra HTTT thành viên (đang `ACTIVE` không, cấp độ ATTT, vai trò, client OAuth, nhóm) qua API chỉ-đọc và sự kiện, thay cho việc mỗi phân hệ tự giữ danh sách HTTT. Đây là đường mà PH-10, PH-04, PH-05 xác minh bên phát, bên nhận, bên gọi.
 
-**Tác nhân, quyền.** PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 (scope `onboarding:internal-read`).
+**Tác nhân, quyền.** PH-02, PH-03, PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 (scope `onboarding:internal-read`). Đã chốt 27/11/2026: PH-01 cung cấp cho PH-15 thêm hai API đọc nội bộ cùng scope `onboarding:internal-read`, một trả lược đồ biểu mẫu kết nạp và một trả định danh môi trường production chỉ đọc (không bí mật). Mã API được cấp (số tiếp theo sau API-01-088) cùng đợt đó; hợp đồng OpenAPI, bảng §9.4, use case và test case được bổ sung cùng đợt triển khai PH-15 (Đợt 2).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -2951,7 +2951,7 @@ flowchart TB
 1. Người dùng xem mục kèm số liệu sử dụng, phản hồi của đơn vị, đề xuất của hệ thống.
 2. Người dùng chọn quyết định; hệ thống yêu cầu lý do (thiếu: ERR-01-033) và xác thực lại hai yếu tố cho `REVOKE_SCOPE` (ERR-01-035).
 3. Hệ thống kiểm tra quyết định hợp lệ: không thu hồi phạm vi đang có đăng ký sử dụng đang hoạt động mà chưa có thông báo (hệ thống liệt kê đăng ký bị ảnh hưởng và yêu cầu xác nhận, ERR-01-041 nếu thiếu).
-4. Với `REVOKE_SCOPE` hoặc `NARROW`, hệ thống cập nhật trần phạm vi (EN-01-04) và phát EVT-01-11; PH-02 hủy hoặc thu hẹp các đăng ký sử dụng vượt trần, PH-12 gỡ scope tương ứng khỏi client.
+4. Với `REVOKE_SCOPE` hoặc `NARROW`, hệ thống cập nhật trần phạm vi (EN-01-04) và phát EVT-01-11; PH-02 hủy hoặc thu hẹp các đăng ký sử dụng vượt trần rồi gọi API-12-068 để thay tập scope của client (PH-12 không nghe EVT-01-11; đã chốt 27/11/2026).
 5. Hệ thống ghi quyết định, thông báo đơn vị chủ quản; khi mọi mục đã có quyết định, kỳ chuyển `CLOSED`, cập nhật `lastReviewAt` cho từng HTTT.
 
 **Luồng thay thế.** Thu hồi hàng loạt: người dùng chọn nhiều mục "Không dùng quá 12 tháng" và thu hồi cùng lúc với một lý do chung; mỗi mục vẫn ghi quyết định riêng.
@@ -2998,7 +2998,7 @@ flowchart TB
 
 1. Tác vụ tìm các mục trần phạm vi `ACTIVE` có `validUntil` đã qua, hoặc căn cứ bị đánh dấu bãi bỏ.
 2. Hệ thống đặt mục `SUSPENDED` với lý do `LEGAL_EXPIRED`, đặt cờ `legalExpired` ở mục rà soát (nếu có kỳ mở).
-3. Hệ thống phát EVT-01-11 để PH-02 tạm ngừng đăng ký sử dụng thuộc mục đó; PH-12 gỡ scope tương ứng.
+3. Hệ thống phát EVT-01-11 để PH-02 tạm ngừng đăng ký sử dụng thuộc mục đó rồi gọi API-12-068 để thay tập scope của client.
 4. Hệ thống thông báo đơn vị và TA kèm hướng "Bổ sung căn cứ mới bằng Đề nghị mở rộng phạm vi".
 5. Khi đơn vị có căn cứ mới, thủ tục là FR-01-035 (thẩm định lại); mục khôi phục sau khi được duyệt.
 6. Trước hạn 30 ngày, hệ thống nhắc đơn vị "Căn cứ {văn bản} sắp hết hiệu lực".
@@ -3697,7 +3697,7 @@ Chủ đề theo quy ước D00-04 §4, miền `connect` của `dh-connect`; ph�
 | EVT-01-08 | `{tenant}.connect.credential.expiring.v1` | Còn 30, 14, 7 ngày tới hạn | PH-13, PH-18 |
 | EVT-01-09 | `{tenant}.connect.handover.opened.v1` | Đầu mối mở liên kết bàn giao thành công | PH-13 |
 | EVT-01-10 | `{tenant}.connect.handover.security-alert.v1` | Sai người mở liên kết, mở sai nhiều lần | PH-13, SO |
-| EVT-01-11 | `{tenant}.connect.scope-ceiling.changed.v1` | Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi | PH-02, PH-12, PH-13 |
+| EVT-01-11 | `{tenant}.connect.scope-ceiling.changed.v1` | Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi | PH-02, PH-13 |
 | EVT-01-12 | `{tenant}.connect.access-review.completed.v1` | Kỳ rà soát đóng | PH-13, PH-18 |
 | EVT-01-13 | `{tenant}.connect.contact.changed.v1` | Thêm, sửa, thay thế, vô hiệu đầu mối (không kèm dữ liệu liên hệ, chỉ mã HTTT, loại) | PH-18, PH-13 |
 | EVT-01-14 | `{tenant}.connect.directory.gap-detected.v1` | Phát hiện tổ chức thiếu đầu mối kỹ thuật | PH-13, PH-18 |
@@ -4008,7 +4008,7 @@ Bảng dưới liệt kê các ràng buộc pháp lý, kỹ thuật và dự án
 
 > **Câu hỏi mở Q01-01:** D02-08 không có vai trò pháp chế; bước thẩm định căn cứ pháp lý ở FR-01-014 đang giao cho TA hoặc người TA phân công. Tenant nhỏ chỉ có một TA thì bốn mắt (BR-01-017) khó đạt. Đề xuất: giữ ba bước IE, SO, TA như hiện tại, tenant thiếu người nhờ PH-12 cấp vai trò thẩm định tạm cho cán bộ của sở khác; cần chủ đầu tư xác nhận có thêm vai trò pháp chế vào danh mục vai trò không.
 
-> **Câu hỏi mở Q01-02:** Trần phạm vi (EN-01-04) có ràng buộc PH-02 hay không: PH-02 có từ chối đăng ký sử dụng vượt trần không, hay chỉ cảnh báo. Giả định của tập này: PH-02 chặn vượt trần và cho đường xin mở rộng (FR-01-035). Cần xác nhận khi viết tập PH-02, và nếu PH-02 không chặn thì BR-01-003 mất hiệu lực thực thi.
+> **Đã chốt 27/11/2026 (Q01-02):** trần phạm vi (EN-01-04) ràng buộc PH-02: PH-02 chặn đăng ký sử dụng vượt trần (`checkWithinCeiling`, EVT-01-11, BR-02-041) và cho đường xin mở rộng qua "Đề nghị mở rộng phạm vi" của PH-01 (UC-01-24, FR-01-035); đề xuất ban đầu ghi UC-01-21, mã đúng của đề nghị mở rộng là UC-01-24. Khi trần đổi, PH-02 hủy hoặc thu hẹp đăng ký rồi gọi API-12-068 thay tập scope, PH-12 không nghe EVT-01-11.
 
 > **Câu hỏi mở Q01-03:** Giao diện API nội bộ PH-01 gọi sang phân hệ khác chưa chốt: PH-12 (tạo, vô hiệu client, thu hồi token, đăng ký khóa, gỡ scope), PH-03 (consumer, hạn mức, danh sách chặn), PH-13 (mức dùng theo định danh và theo scope), PH-14 (hạn mức quốc gia còn lại), PH-02 (API, đăng ký, phụ thuộc), PH-04, PH-05, PH-10 (phụ thuộc). Tập này mô tả hành vi cần có; tên và lược đồ chốt ở D03-04 của từng phân hệ.
 
@@ -4032,7 +4032,7 @@ Bảng dưới liệt kê các ràng buộc pháp lý, kỹ thuật và dự án
 
 > **Câu hỏi mở Q01-13:** Tên topic `{tenant}.connect.system.state-changed.v1` và nội dung sự kiện EVT-01-03 cần xác nhận với PH-10 (đang giả định ở Q10-17, GĐ-10-05) và PH-04, PH-05, PH-02. Đề xuất: chốt đúng như EVT-01-03 của tập này.
 
-> **Câu hỏi mở Q01-14:** Máy trạng thái duyệt nội bộ (ADR-058) hay Flowable (ADR-007) cho quy trình kết nạp có nhiều bước và hạn xử lý. Tập này dùng máy trạng thái nội bộ vì PH-11 thuộc Đợt 2. Nếu tỉnh cần quy trình liên cơ quan có nhiều cấp, đề xuất ADR mở rộng ADR-058 với chế độ `approval_mode = BPMN`.
+> **Đã chốt 27/11/2026 (Q01-14):** MVP dùng máy trạng thái nội bộ (ADR-058). Việc duyệt kết nạp do PH-01 tự điều phối; không khởi tạo quy trình `DUYET_KET_NAP_HTTT` của PH-11 (API-11-049, EVT-11-05, 06) ở MVP. Tích hợp PH-11 và chế độ `approval_mode = BPMN` để Đợt 2, khi PH-11 chốt.
 
 > **Câu hỏi mở Q01-15:** Đợt 2 có PH-15 cổng nhà phát triển: có cho đầu mối nhà thầu tự lấy thông tin xác thực trên cổng (BP-01 trong D02-01) thay vì console không. Nếu có, trang bàn giao UI-01-09 dùng lại API-01-040 trên cổng và cần xem tài khoản nhà thầu thuộc realm nào (Q01-05).
 
@@ -4090,4 +4090,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo chuẩn trình bày kết hợp: tóm tắt cho hội đồng, giới thiệu sáu ý, 51 yêu cầu chức năng theo khối đặc tả 17 mục, 34 quy tắc nghiệp vụ, 22 yêu cầu phi chức năng, 50 mã lỗi, 15 sự kiện, 86 API, 17 màn hình, truy vết 4 mục LGC và 15 FR của SRS cũ, 16 câu hỏi mở và 16 đề nghị đồng bộ. Nguồn: D02-02 SRS, D03-01 SAD §4, D02-07 (DD-03…05), D02-08, D03-07, D00-03 phần A, `docs/07-srs/SRS-PH-01-onboarding.md` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo bảy tập: thêm API-01-087, 088 và ERR-01-051…054 (88 API, 54 mã lỗi); bổ sung 21 câu thông báo ở §9.2 cho khớp D03-06; FR-01-001, 020, 024, 034, 035, 044, 047, 050 cập nhật đầu ra và API theo D03-04 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EN-01-09, 10, 18 và FR-01-022 theo CSDL (wrapTokenSealed, OPENING, source, successCount, contentVersion), UI-01-11 và phát hành ở §10.1; chốt câu hỏi mở đợt đồng bộ: Q380 (PH-12 không nghe EVT-01-11), Q381 (nhật ký SANDBOX lấy từ PH-13), Q382 (Q01-02), Q389 (Q01-14); Q395 (hai API đọc nội bộ cho PH-15, mã dự trữ) |

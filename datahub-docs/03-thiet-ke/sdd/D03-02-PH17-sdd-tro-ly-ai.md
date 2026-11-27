@@ -2,7 +2,7 @@
 ma_tai_lieu: D03-02-PH17
 ten: Thiết kế chi tiết phần mềm phân hệ PH-17 Trợ lý AI và quản trị AI
 phien_ban: 0.2
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-assist, kỹ sư tích hợp PH-03 PH-04 PH-09 PH-12, ATTT, pháp chế, kiến trúc sư, hội đồng thẩm định
 phan_he: PH-17
@@ -71,7 +71,7 @@ Bảng dưới ghi từng tài liệu hoặc ADR và phần nội dung tập nà
 
 | Tài liệu hoặc ADR | Nội dung dùng ở tập này |
 |---|---|
-| D02-03-PH17 FRS | 62 FR, 87 BR, 28 NFR, ERR-17-001…087 và 101…118, EVT-17-01…28, API-17-001…193, EN-17-01…39, Phụ lục A enum |
+| D02-03-PH17 FRS | 62 FR, 87 BR, 28 NFR, ERR-17-001…087 và 101…118, EVT-17-01…28, API-17-001…194, EN-17-01…39, Phụ lục A enum |
 | D03-03-PH17 CSDL | Schema `ph17_assist` trên `pg-core`: bảng, RLS, vector 1024 chiều, outbox |
 | D03-04-PH17 API | Control plane `/api/assist/v1`, data plane `/assist/v1` |
 | D03-01 SAD | `dh-assist` Z3 `TPH-1` tắt được, 2 bản sao; mục 4 và mục 9 |
@@ -269,7 +269,7 @@ Module trong DU chỉ dùng nhau qua các giao diện dưới đây; PH khác d�
 | `QuotaApi` | `chat`, `mapping`, `explain`, `model.inference` | `reserve(user, capability, estTokens)`, `commit(reservation, usedTokens)` |
 | `AuditPort` | mọi module | `record(event)` (đồng bộ cho thao tác quản trị), `recordAsync(event)` |
 | Sự kiện `events/*` | `dh-console`, PH-03, PH-04, PH-11, PH-13 | EVT-17-01…28, phát qua outbox |
-| REST `/api/assist/v1`, `/assist/v1` | Người dùng, DU gọi | API-17-001…193 |
+| REST `/api/assist/v1`, `/assist/v1` | Người dùng, DU gọi | API-17-001…194 |
 
 : Giao diện công bố của PH-17
 
@@ -2032,9 +2032,15 @@ Mười hai câu hỏi dưới đánh số từ Q17-60 để không trùng Q17-0
 
 > **Câu hỏi mở Q17-71:** Quét mã độc tài liệu tải lên dùng dịch vụ dùng chung của nền tảng hay ClamAV chạy cạnh `dh-assist`; SAD chưa nêu thành phần quét tệp nên cần chốt chủ sở hữu, cập nhật mẫu virus trong môi trường air-gapped (ADR-036) và giới hạn kích thước.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-03 hỗ trợ plugin `ai-proxy` và `ai-proxy-multi` với dự phòng có thứ tự cùng danh sách egress đích mô hình, chỉ ở `apisix-int`, khai trong mẫu chính sách FR-03-048, không đệm luồng SSE (mục 4.9).
+- `svc-assist-index` dùng scope `catalog:read-meta` ở PH-02 (D02-08 mục 5); PH-04, PH-07, PH-10 đặt scope `*.read-meta` tương ứng.
+- Điểm cuối bản nháp của PH-04, PH-07 cho PH-17 dùng token đổi (RFC 8693) mang scope đọc bản nháp riêng; PH-17 chốt hợp đồng trước, PH-04 và PH-07 đặt tên scope và ghi vào D02-08 mục 5 theo hợp đồng đó.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc package `vn.datahub.assist.*` tám module, mô hình miền, 22 thành phần với khối đặc tả 10 mục, ánh xạ đủ 62 FR, cấu trúc prompt tách kênh chỉ dẫn và dữ liệu không tin cậy, truy hồi lai, chín sơ đồ trình tự, bảng trạng thái theo enum FRS, cầu dao và thử lại, cấu hình Spring AI, Valkey, giới hạn tần suất, chỉ số `assist_*`, triển khai Z3, ước lượng tỉnh vừa, năm ADR đề xuất 170 đến 174, đề nghị đồng bộ, câu hỏi mở Q17-60…71 |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nguồn mã lỗi PH-18 theo `error-guides:feed` và EVT-18-11, gọi API-18-061 với scope `ops:dlq-read`, ánh xạ SQLSTATE sang ERR-17 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nguồn mã lỗi PH-18 theo `error-guides:feed` và EVT-18-11, gọi API-18-061 với scope `ops:dlq-read`, ánh xạ SQLSTATE sang ERR-17; chốt Q398, Q399, Q427: PH-03 hỗ trợ ai-proxy chỉ ở apisix-int, scope catalog:read-meta, điểm cuối bản nháp PH-04, PH-07 dùng scope đọc bản nháp riêng |

@@ -280,7 +280,7 @@ PH-11 là phân hệ điều phối nên tham gia nhiều quy trình của D02-0
 
 | Quy trình | Bước có PH-11 |
 |---|---|
-| BP-01 Kết nạp HTTT và cấp quyền | PH-01 khởi tạo `DUYET_KET_NAP_HTTT`; PH-11 giao việc duyệt cấp phòng, cấp sở, tính hạn, trả kết quả cho PH-01 qua sự kiện |
+| BP-01 Kết nạp HTTT và cấp quyền | Từ Đợt 2, PH-01 khởi tạo `DUYET_KET_NAP_HTTT`; PH-11 giao việc duyệt cấp phòng, cấp sở, tính hạn, trả kết quả cho PH-01 qua sự kiện. Ở MVP PH-01 tự điều phối duyệt (đã chốt 27/11/2026, Q11-08) |
 | BP-02 Xây dựng và phát hành luồng tích hợp | Luồng PH-04 được ý định nghiệp vụ trỏ tới; PH-11 kiểm tra luồng đã phát hành trước khi phát hành mô hình |
 | BP-03 Phát hành và đồng bộ danh mục | PH-07 có thể khởi tạo quy trình duyệt nhiều cấp qua PH-11 (ADR-007) |
 | BP-06 Kết nối và khai thác dữ liệu quốc gia | Bước tự động gọi CSDL hộ tịch, cư trú, BHXH qua PH-04, PH-14 |
@@ -331,7 +331,7 @@ Tác nhân gồm người dùng có vai trò chuẩn, cán bộ được giao vi
 | Cán bộ xử lý (CB) | Người | Bất kỳ người dùng được giao việc theo người, nhóm, đơn vị của PH-12 | Nhận, xử lý, chuyển, trả về việc; ủy quyền khi vắng |
 | Quản trị, vận hành nền tảng (PA, PO) | Người | Đơn vị vận hành nền tảng | PA quản lý mẫu `COMMON`, trần tham số; PO xem sự cố engine liên tenant có lý do |
 | Cổng DVC tỉnh, HTTT một cửa | Hệ thống | Kênh tiếp nhận hồ sơ | Khởi tạo phiên (`bpm.instance.start`), tra tiến độ (`bpm.progress.read`), gửi bổ sung hồ sơ |
-| PH-01, PH-02, PH-07, PH-19 | Hệ thống | Phân hệ có luồng duyệt nhiều cấp | Khởi tạo quy trình duyệt qua API, nhận kết quả qua sự kiện |
+| PH-01, PH-02, PH-07, PH-19 | Hệ thống | Phân hệ có luồng duyệt nhiều cấp | Khởi tạo quy trình duyệt qua API, nhận kết quả qua sự kiện (PH-01 từ Đợt 2, Q11-08) |
 | PH-04 | Hệ thống | Lõi tích hợp | Nhận lệnh service task, trả kết quả (`bpm.service.worker`) |
 | PH-10 | Hệ thống | Sự kiện | Sự kiện khởi tạo phiên, thông điệp tương quan; phân phối sự kiện `bpm.*` |
 | PH-12, PH-13, PH-03, PH-17 | Hệ thống | Định danh; giám sát, kiểm toán; kênh ngoài; trợ lý AI | Người dùng, đơn vị, nhóm; chỉ số, vết; chuyển lượt gọi; gợi ý xử lý việc |
@@ -4789,7 +4789,7 @@ Các câu dưới cần chủ đầu tư hoặc phân hệ khác trả lời; c�
 | Q11-05 | Cổng DVC tỉnh nhận tiến độ bằng sự kiện (EVT-11-04) hay chỉ gọi API? | FR-11-055, 056 |
 | Q11-06 | Tên công khai của bước có cần theo bộ tên trạng thái hồ sơ chuẩn của Cổng DVC quốc gia không? | `displayStatus`, FR-11-055 |
 | Q11-07 | Kênh thông báo dùng chung của nền tảng do phân hệ nào sở hữu (PH-03 hay PH-15)? | EVT-11-20, FR-11-032 |
-| Q11-08 | PH-01, PH-07, PH-19 có chuyển luồng duyệt nhiều cấp sang PH-11 ngay đợt 2 không? | BP-01, BP-03 |
+| Q11-08 | PH-01, PH-07, PH-19 có chuyển luồng duyệt nhiều cấp sang PH-11 ngay đợt 2 không? Phần PH-01 đã chốt 27/11/2026: PH-01 tự điều phối duyệt kết nạp ở MVP, chỉ tích hợp quy trình `DUYET_KET_NAP_HTTT` (API-11-049, EVT-11-05, 06) ở Đợt 2 khi PH-11 chốt hợp đồng; phần PH-07, PH-19 vẫn mở | BP-01, BP-03 |
 
 : Câu hỏi mở của FRS PH-11
 
@@ -4801,7 +4801,7 @@ Phân hệ được nghiệm thu khi mọi điều kiện dưới đây đạt t
 |---|---|
 | 1 | 48/48 FR mức M cài đặt và có ca kiểm thử đạt; FR mức S có kế hoạch |
 | 2 | `LT_KHAI_SINH` chạy đầu cuối: nhánh thành công, nhánh BHYT lỗi có bù trừ, nhánh bù trừ thất bại chuyển thủ công |
-| 3 | `DUYET_KET_NAP_HTTT` do PH-01 khởi tạo, hai cấp duyệt, bốn mắt đúng |
+| 3 | `DUYET_KET_NAP_HTTT` do PH-01 khởi tạo, hai cấp duyệt, bốn mắt đúng (kiểm từ Đợt 2; ở MVP PH-01 tự điều phối duyệt, Q11-08) |
 | 4 | Chỉ tiêu NFR-11-001…024 đạt; thử tắt cứng một bản sao không mất phiên, không chạy trùng job |
 | 5 | Kiểm tra tĩnh chặn đủ lỗi ở bảng 6.2-c bằng bộ mô hình lỗi mẫu |
 | 6 | Bộ 200 ca lịch mẫu cho tính hạn không sai lệch |
@@ -4981,4 +4981,4 @@ Bản 0.2 hấp thụ đề nghị của sáu tập (UC, SDD, CSDL, API, MH, TC)
 |---|---|---|---|
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị đồng bộ của sáu tập: 10 API (128…137), ERR-11-051, 125, EVT-11-21, EN-11-28, bốn tham số, enum nội tuyến; chọn nguyên tử về hiệu ứng cho engine và `ph11_bpm`; Phụ lục C |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 66 FR đủ 17 mục chia mười nhóm, mở rộng từ 16 FR của SRS cũ; sáu máy trạng thái; 38 BR, 24 NFR, 32 tham số, 74 mã lỗi, 20 sự kiện, 127 API, 23 màn hình, 27 thực thể; Phụ lục A nguồn chuẩn enum; truy vết LGC gián tiếp và ánh xạ mã cũ |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: FR-11-066 gọi API-17-190 và báo quyết định qua API-17-191 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: FR-11-066 gọi API-17-190 và báo quyết định qua API-17-191; chốt câu hỏi mở đợt đồng bộ: Q389 |

@@ -63,7 +63,7 @@ NOTE = {
     "073": "Giá trị trường Nhạy cảm chỉ là băm; DO chỉ thấy lỗi của tổ chức mình (ERR-08-032). Tìm theo khóa cá nhân dùng API-08-129.",
     "075": "Có trường Nhạy cảm thì `status = PENDING_APPROVAL` đến khi DO chấp thuận (API-08-076).",
     "076": "Tệp chưa chấp thuận trả `409`, hết hạn tải `410` (ERR-08-041).",
-    "095": "Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API nội bộ, tạo mục hàng đợi lý do `DQ_FINDING`.",
+    "095": "Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API-06-126 (`POST /internal/stewardship/items:from-dq`, scope `mdm:steward-intake`), tạo mục hàng đợi lý do `DQ_FINDING`.",
     "091": "Chế độ `SCAN` tạo lần đo trigger `VERIFY`; DO không tự xác nhận (ERR-08-035).",
     "112": "Công bố phát EVT-08-11; người duyệt khác người gửi (ERR-08-005).",
     "115": "Chỉ đọc, không tạo báo cáo; trả danh sách đối tượng chưa đủ điều kiện (ERR-08-038).",

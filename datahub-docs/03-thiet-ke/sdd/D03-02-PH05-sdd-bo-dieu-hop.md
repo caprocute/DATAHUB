@@ -130,6 +130,7 @@ Sơ đồ cho thấy ba đường. Đường quản lý: giao diện gọi REST,
 |---|---|---|---|
 | Module `flow` (PH-04) cùng DU | PH-05 → `flow` | `FlowQueryApi` (Modulith, gọi trong tiến trình) | Kiểm tra không gian làm việc, luồng; nơi dùng |
 | Module `flow` (PH-04) | `flow` → PH-05 | `AdapterReferenceApi` (gói `adapter.api`) | VR-07, catalog Kamelet; API-05-031, 089 là bản REST của cùng giao diện cho hồ sơ triển khai tách DU |
+| PH-02 | PH-05 gọi | REST `/api/catalog/v1/apis/{apiCode}` (API-02-002), token dịch vụ | Kiểm `apiCode` tồn tại khi cấp kết nối phạm vi `API` cho backend `SYSTEM` (FR-05-009, Q383 đã chốt 27/11/2026); lỗi: ERR-05-033, ERR-05-029 |
 | PH-01 | PH-05 đọc | Bản sao `system_replica` qua EVT-01-* | HTTT `ACTIVE`, đầu mối |
 | PH-10 | PH-05 gọi | REST `/api/event/v1/topics` | Đăng ký topic CDC |
 | PH-18 | PH-05 đọc | `ParameterApi` có đệm 60 giây | Tham số `05.*` |
@@ -1205,4 +1206,4 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu (người đọc, tài liệu tham chiếu), bảng đặc tả 10 mục cho 12 thành phần ở chương 4, chú thích mọi bảng và hình |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: probe-jvm không ra đích quốc gia, thư viện dùng chung với PH-14 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: probe-jvm không ra đích quốc gia, thư viện dùng chung với PH-14; chốt câu hỏi mở đợt đồng bộ: Q383 |

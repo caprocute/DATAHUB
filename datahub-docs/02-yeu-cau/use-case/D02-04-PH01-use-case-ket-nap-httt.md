@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH01
 ten: Đặc tả use case phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, quản trị tỉnh, kỹ sư dh-connect, kiểm thử viên
 phan_he: PH-01
@@ -1767,7 +1767,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 
 **Tác nhân chính.** TA (Minh), SO (Dũng) mở kỳ và xem số liệu; `dh-connect` mở kỳ theo lịch và chạy kiểm tra hiệu lực hằng ngày lúc 05:30.
 
-**Tác nhân phụ.** PH-02 (danh mục dịch vụ, tạm ngừng đăng ký sử dụng), PH-13 (mức sử dụng), PH-12 (gỡ scope), PH-18 (thông báo).
+**Tác nhân phụ.** PH-02 (danh mục dịch vụ, tạm ngừng đăng ký sử dụng), PH-13 (mức sử dụng), PH-18 (thông báo).
 
 **Mức ưu tiên.** M · MVP.
 
@@ -1790,7 +1790,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 3. Hệ thống tổng hợp mức sử dụng (API-01-068): với mỗi mục, xác định các API và scope thuộc loại dữ liệu qua danh mục dịch vụ ở PH-02; lấy từ PH-13 số lượt gọi thành công theo định danh và theo API trong khoảng thời gian của kỳ; tính `usageInPeriod` và `unusedDays`.
 4. Hệ thống đặt cờ cho mục: `UNUSED_IN_PERIOD`, `UNUSED_OVER_12M` (không dùng quá `accessReview.unusedDays` = 365 ngày, đề xuất thu hồi), `CREDENTIAL_EXPIRING`, `LEGAL_EXPIRED`; hiển thị bảng "Phạm vi quyền" ở UI-01-12 và thông báo Minh, Dũng số HTTT, số mục, hạn dự kiến.
 5. Hằng ngày lúc 05:30, `dh-connect` tìm mục trần `ACTIVE` có `validUntil` đã qua hoặc căn cứ bị đánh dấu bãi bỏ (API-01-073); đặt mục `SUSPENDED` với lý do `LEGAL_EXPIRED` và đặt cờ `legalExpired` ở mục rà soát nếu có kỳ đang mở.
-6. Hệ thống phát EVT-01-11: PH-02 tạm ngừng đăng ký sử dụng thuộc mục đó, PH-12 gỡ scope tương ứng; thông báo đơn vị và Minh "Bổ sung căn cứ mới bằng Đề nghị mở rộng phạm vi".
+6. Hệ thống phát EVT-01-11: PH-02 tạm ngừng đăng ký sử dụng thuộc mục đó và gọi API-12-068 thay tập scope; thông báo đơn vị và Minh "Bổ sung căn cứ mới bằng Đề nghị mở rộng phạm vi".
 7. Trước hạn 30 ngày, hệ thống nhắc đơn vị "Căn cứ {văn bản} sắp hết hiệu lực".
 
 **Luồng thay thế.**
@@ -1872,7 +1872,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 
 **Tác nhân chính.** TA (Minh), SO (Dũng) xử lý; AU (Hoa), VW xem và xuất báo cáo.
 
-**Tác nhân phụ.** PH-02 (hủy hoặc thu hẹp đăng ký vượt trần), PH-12 (gỡ scope), PH-18, tác vụ xuất nền (FR-00-054).
+**Tác nhân phụ.** PH-02 (hủy hoặc thu hẹp đăng ký vượt trần, rồi gọi API-12-068 thay tập scope ở PH-12), PH-18, tác vụ xuất nền (FR-00-054).
 
 **Mức ưu tiên.** M · MVP (phần báo cáo FR-01-044 mức S, Đợt 2).
 
@@ -1893,7 +1893,7 @@ Hình trên là điểm duy nhất của Datahub hiển thị một bí mật. H
 1. Minh mở UI-01-12, kỳ `RS-2026-02`, lọc nhãn "Không dùng trong kỳ" và "Đơn vị chưa phản hồi"; xem từng mục kèm số liệu sử dụng, phản hồi và đề xuất của hệ thống.
 2. Minh chọn 3 mục "Không dùng quá 12 tháng" của `HT-DATDAI`, bấm "Thu hồi phạm vi" và nhập lý do chung "Không dùng quá 12 tháng, đơn vị chưa phản hồi". Hệ thống yêu cầu xác thực lại hai yếu tố (LP-01-01).
 3. Hệ thống gọi API-01-072: liệt kê các đăng ký sử dụng đang hoạt động bị ảnh hưởng và yêu cầu Minh xác nhận.
-4. Với `REVOKE_SCOPE` hoặc `NARROW`, hệ thống cập nhật trần phạm vi (EN-01-04), phát EVT-01-11; PH-02 hủy hoặc thu hẹp các đăng ký sử dụng vượt trần, PH-12 gỡ scope tương ứng khỏi client.
+4. Với `REVOKE_SCOPE` hoặc `NARROW`, hệ thống cập nhật trần phạm vi (EN-01-04), phát EVT-01-11; PH-02 hủy hoặc thu hẹp các đăng ký sử dụng vượt trần rồi gọi API-12-068 để thay tập scope của client.
 5. Hệ thống ghi quyết định riêng cho từng mục và thông báo đơn vị chủ quản. Khi mọi mục đã có quyết định, kỳ chuyển `CLOSED`, hệ thống cập nhật `lastReviewAt` từng HTTT và phát EVT-01-12.
 6. Hoa mở "Báo cáo" (API-01-074). Hệ thống tổng hợp số HTTT, số mục, số mục theo quyết định, tỷ lệ phản hồi theo tổ chức, danh sách thu hồi kèm lý do, thời gian xử lý; Hoa xuất PDF (API-01-075, báo cáo lớn chạy nền theo FR-00-054) và hệ thống ghi kiểm toán xuất.
 
@@ -2217,3 +2217,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác, n�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn trình bày K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước, tác nhân, năm sơ đồ use case, bốn bảng truy vết (UC với FR, UI và API, REQ, BP, LGC; độ phủ FR), 34 use case theo khối 15 mục kèm hai sơ đồ trình tự, 8 luồng phụ dùng chung, 5 câu hỏi mở và 8 đề nghị đồng bộ. Nguồn: D02-03-PH01 (bảng FR, API, UI, ERR, BR và các FR liên quan), D02-08, D02-01, D00-03 phần A |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: đồng bộ API-01-087, 088, 059 vào bảng UC với API, ghi bốn lỗi chung ERR-01-051…054 ở chương 7, thêm mục 1.4 Cấu trúc tài liệu và đoạn mở cho các mục thiếu |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q380 (PH-02 gọi API-12-068 thay tập scope) |

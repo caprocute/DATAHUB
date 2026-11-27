@@ -2262,7 +2262,7 @@ Các câu hỏi dưới đây theo dải Q18-50…54 của tập CSDL; mỗi câ
 |---|---|---|---|
 | Q18-50 | Khử trùng `dlqKey` trên bảng phân vùng: chấp nhận cửa sổ khử trùng qua `inbox_event` (7 ngày theo FRS, `18.dlq.dedup-window-days`) hay cần bảng khóa riêng không phân vùng để khử trùng vĩnh viễn | Cửa sổ 7 ngày đủ vì nguồn chỉ gửi lại trong vài giờ (PH-04 thử lại, PH-19 tối đa 5 lần); mục chưa đóng cùng `dlq_key` vẫn được khử trùng ngoài cửa sổ bằng cách tăng `occurrence_count` | Luồng PH-04, PH-19, DBA |
 | Q18-51 | Mục DLQ mở rất lâu giữ phân vùng cũ không dọn được: có cần hạn tối đa cho mục mở (tự chuyển `EXPIRED` sau N ngày có cảnh báo) không | Không có hạn; cảnh báo theo tuổi mục mở qua PH-13 | Chủ đầu tư, PO |
-| Q18-52 | Kho tham số: các PH chưa nói dùng DD-14 (`06.*`, `08.*`, `09.*`, `11.*`, `13.*`, `16.*`) có đăng ký vào `param_namespace` không, và PH-07 có bỏ hẳn tiền tố cờ `07.rdm.feature.*` sang `ff.rdm.*` không | Đã khởi tạo không gian tên cho mọi PH trừ `19`; cờ PH-07 giữ dạng tham số BOOLEAN cho tới khi PH-07 đồng bộ | Luồng PH-06, 08, 09, 11, 13, 16, 07 |
+| Q18-52 | Kho tham số: các PH chưa nói dùng DD-14 (`06.*`, `08.*`, `09.*`, `11.*`, `13.*`, `16.*`) có đăng ký vào `param_namespace` không, và PH-07 có bỏ hẳn tiền tố cờ `07.rdm.feature.*` sang `ff.rdm.*` không | Đã khởi tạo không gian tên cho mọi PH trừ `19`; cờ PH-07 giữ dạng tham số BOOLEAN theo FRS PH-07 mục 8.2 (đã chốt 27/11/2026, không đổi sang `ff.rdm.*`); PH-18 nới mẫu tên khóa để nhận `07.rdm.feature.*` | Luồng PH-06, 08, 09, 11, 13, 16, 07 |
 | Q18-53 | Hạn giữ dữ liệu di trú, khôi phục, sao lưu, sáp nhập sau cắt chuyển | Tối thiểu 5 năm sau cắt chuyển, chưa có tham số | Chủ đầu tư, pháp chế |
 | Q18-54 | `dh-tenant-restore` thay dữ liệu PH-18 của tenant: loại bảng nào khỏi phạm vi ngoài nhật ký (ví dụ `dlq_message` mở có nên giữ bản hiện tại thay vì quay về quá khứ) | Loại yêu cầu khôi phục, bước, nhật ký DLQ, mốc sự cố, sổ cắt chuyển; còn lại thay như mọi schema | Luồng PH-20, D03-09 (Q342) |
 
@@ -2331,6 +2331,6 @@ Bảng dưới gom các điểm cần tài liệu chung hoặc phân hệ khác 
 |---|---|---|---|
 | 0.3 | 2026-11-27 | Luồng CSDL PH-18 | Đồng bộ chéo cuối: `merge_transfer` thêm `transfer_mode`, `delta_since` cho lượt bù cuối, chỉ mục duy nhất theo chế độ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ nội bộ PH-18 theo FRS 0.2: 61 khóa `18.*` sinh từ FRS §8.2, `replay_mode`, bộ đếm lần gặp, enum và tên cột theo FRS và OpenAPI, mã phân hệ `PH-nn`, cửa sổ khử trùng 7 ngày, schema `ph18_batch` cho Spring Batch, FR phục vụ theo số FR-18; kiểm cô lập 525 khối PASS, changelog 15 tệp; đánh dấu mục đề nghị nội bộ đã hấp thụ |
-| 0.1 | 2026-11-27 | Luồng CSDL PH-18 | Bản đầu: 57 bảng (EN-18-01…55 và outbox, inbox), RLS FORCE, bốn vai, bốn bảng phân vùng tháng, dữ liệu `COMMON`, khung nhìn DD-13, DD-14, kiểm cô lập 520 khối PASS, changelog Liquibase 14 tệp |
+| 0.1 | 2026-11-27 | Luồng CSDL PH-18 | Bản đầu: 57 bảng (EN-18-01…55 và outbox, inbox), RLS FORCE, bốn vai, bốn bảng phân vùng tháng, dữ liệu `COMMON`, khung nhìn DD-13, DD-14, kiểm cô lập 520 khối PASS, changelog Liquibase 14 tệp; chốt Q421: cờ 07.rdm.feature.* giữ là tham số BOOLEAN theo FRS PH-07 mục 8.2, không đổi sang ff.rdm.* (Q18-52) |
 
 : Lịch sử phiên bản D03-03-PH18

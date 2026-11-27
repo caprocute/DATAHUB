@@ -2,7 +2,7 @@
 ma_tai_lieu: D03-02-PH14
 ten: Thiết kế chi tiết phần mềm phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.3
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, cán bộ ATTT, vận hành, hội đồng thẩm định
 phan_he: PH-14
@@ -2172,6 +2172,11 @@ Bảng dưới ghi các rủi ro riêng của PH-14 kèm mức và biện pháp 
 
 > **Câu hỏi mở Q14-27:** Khi Valkey không khả dụng, thao tác ghi ra quốc gia bị chặn vì mặt phẳng dữ liệu không có kho chống trùng bền (ERR-14-133, mã đã cấp ở D03-04-PH14, còn chờ chốt phương án). Có chấp nhận khả dụng thấp hơn này, hay chuyển chống trùng sang chủ đề Kafka nén theo khóa (đủ bền, chậm hơn) hoặc sang `dh-integration` qua PostgreSQL; và có cần mã lỗi 503 riêng ở D03-04-PH14?
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-02 có thêm loại API "dịch vụ quốc gia" nhận bản nháp từ PH-14 với `Idempotency-Key`, chỉ tạo `DRAFT` và không tự công bố; sự kiện đã công bố mang `apiCode`; PH-02 cung cấp cách lấy danh sách dịch vụ chia sẻ `PUBLISHED` theo tenant (mục 4.2, 4.15, 5.10).
+- PH-03 có tuyến `/inbound/v1/*` ở vùng biên (mTLS, giới hạn tần suất, WAF), bộ lọc vân tay chứng thư mTLS ở `apisix-ext` nạp từ EVT-14-13, và tuyến cung cấp lại viết sang API-14-075 kèm `X-DH-Service`, `X-DH-Operation` (mục 4.14, 4.2).
+
 ## Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -2204,6 +2209,6 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập SDD PH-14 theo khuôn K-SDD và chuẩn trình bày K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã hai đơn vị triển khai, mô hình miền và 18 thành phần (khối 10 mục), 10 sơ đồ trình tự, 12 máy trạng thái, nhất quán và suy giảm, bảo mật đối chiếu SEC, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, 10 rủi ro, 8 câu hỏi mở (Q14-20…27) và mục Đề nghị đồng bộ. Căn cứ: FRS và use case PH-14, SAD §4, ADR-057, D03-07, D03-10 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: LedgerConsumer upsert, PurposeGuard, khóa kết quả bất đồng bộ, NationalCatalogPort, 51 tham số; `type` lỗi RFC 9457 theo mẫu `https://datahub.gov.vn/errors/` |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã lỗi khi Valkey không khả dụng đổi từ ERR-14-127 tạm sang ERR-14-133 theo D03-04-PH14; chốt Q425, Q416: PH-02 nhận bản nháp dịch vụ quốc gia, PH-03 thêm tuyến /inbound/v1 và bộ lọc vân tay |
 
 

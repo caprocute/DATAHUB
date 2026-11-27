@@ -354,7 +354,7 @@ Các endpoint chia mười một nhóm theo việc người dùng làm, không t
 | API-01-056 | `GET /systems/{systemCode}/impact` | Phân tích tác động phụ thuộc | 033 | `PERM-01-read` |  | 200 |
 | API-01-057 | `POST /systems/{systemCode}/change-requests` | Đề nghị thay đổi hồ sơ HTTT đã kết nạp | 034 | `PERM-01-create` | có | 200/202 |
 | API-01-058 | `GET /systems/{systemCode}/change-requests` | Danh sách đề nghị thay đổi | 034 | `PERM-01-read` |  | 200 |
-| API-01-059 | `POST /change-requests/{changeRequestId}:decide` | Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt, mở rộng trần | 031, 034, 035 | `PERM-01-approve` |  | 200 |
+| API-01-059 | `POST /change-requests/{changeRequestId}:decide` | Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt | 031, 034 | `PERM-01-approve` |  | 200 |
 | API-01-060 | `POST /systems/{systemCode}/scope-expansions` | Đề nghị mở rộng trần phạm vi khai thác | 035 | `PERM-01-create` | có | 202 |
 
 : Danh mục endpoint, nhóm Vòng đời thành viên
@@ -2362,7 +2362,7 @@ Quy ước sự kiện:
 | EVT-01-08 | `{tenant}.connect.credential.expiring.v1` | Còn 30, 14, 7 ngày tới hạn (FR-01-027). | `systemCode` | 3, 7 ngày | PH-13, PH-18 |
 | EVT-01-09 | `{tenant}.connect.handover.opened.v1` | Đầu mối mở liên kết bàn giao thành công (FR-01-022). | `systemCode` | 3, 7 ngày | PH-13 |
 | EVT-01-10 | `{tenant}.connect.handover.security-alert.v1` | Sai người mở liên kết, mở sai nhiều lần, liên kết bị khóa (FR-01-022). | `systemCode` | 3, 7 ngày | PH-13, SO |
-| EVT-01-11 | `{tenant}.connect.scope-ceiling.changed.v1` | Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt trần. | `systemCode` | 3, 7 ngày | PH-02, PH-12, PH-13 |
+| EVT-01-11 | `{tenant}.connect.scope-ceiling.changed.v1` | Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-02 hủy đăng ký vượt trần rồi gọi API-12-068 thay tập scope. | `systemCode` | 3, 7 ngày | PH-02, PH-13 |
 | EVT-01-12 | `{tenant}.connect.access-review.completed.v1` | Kỳ rà soát quyền đóng (FR-01-042). | Mã kỳ `RS-…` | 3, 7 ngày | PH-13, PH-18 |
 | EVT-01-13 | `{tenant}.connect.contact.changed.v1` | Thêm, sửa, thay thế, vô hiệu đầu mối. **Không kèm dữ liệu liên hệ cá nhân**, chỉ mã HTTT, loại, mã đầu mối (FR-01-008). | `systemCode` | 3, 7 ngày | PH-18, PH-13 |
 | EVT-01-14 | `{tenant}.connect.directory.gap-detected.v1` | Phát hiện tổ chức thiếu đầu mối kỹ thuật (FR-01-046). | Mã tổ chức | 3, 7 ngày | PH-13, PH-18 |
@@ -2660,7 +2660,7 @@ Bảng nêu từng hệ PH-01 phụ thuộc, giao diện cần dùng, cách ch�
 
 | Hệ | Giao diện PH-01 cần | Lũy đẳng | Chờ, thử lại, ngắt mạch | Khi lỗi |
 |---|---|---|---|---|
-| PH-12 (Keycloak, OPA) | Tạo client (API-12-058; `clientId = {tenant}-{systemCode}-sbx` hoặc `-prd`), sửa client (API-12-059), vô hiệu, tiếp tục, thu hồi client (API-12-060, 061, 062), thu hồi token, đăng ký khóa mTLS (API-12-064), bắt đầu xoay bí mật, gỡ scope (API-12-068) | `Idempotency-Key = {sagaId}:{bước}` hoặc `{enforcementId}:{loại}` | 10 giây (tạo), 5 giây (vô hiệu, thu hồi); saga lùi 1, 2, 4, 8, 15 phút tới 24 giờ; ngắt mạch 50% trên 20 lượt, **không** ngắt đường cắt quyền | ERR-01-021 (503) giữ hồ sơ `APPROVED` và thử lại; client trùng ERR-01-022 (409) dừng saga, cảnh báo TA |
+| PH-12 (Keycloak, OPA) | Tạo client (API-12-058; `clientId = {tenant}-{systemCode}-sbx` hoặc `-prd`), sửa client (API-12-059), vô hiệu, tiếp tục, thu hồi client (API-12-060, 061, 062), thu hồi token, đăng ký khóa mTLS (API-12-064), bắt đầu xoay bí mật (PH-01 không gọi API-12-068: PH-02 nghe EVT-01-11 rồi thay tập scope) | `Idempotency-Key = {sagaId}:{bước}` hoặc `{enforcementId}:{loại}` | 10 giây (tạo), 5 giây (vô hiệu, thu hồi); saga lùi 1, 2, 4, 8, 15 phút tới 24 giờ; ngắt mạch 50% trên 20 lượt, **không** ngắt đường cắt quyền | ERR-01-021 (503) giữ hồ sơ `APPROVED` và thử lại; client trùng ERR-01-022 (409) dừng saga, cảnh báo TA |
 | PH-03 (APISIX) | Tạo, xóa, vô hiệu consumer; chặn client ≤ 60 giây; bỏ chặn; hạn mức; danh sách IP | Như trên | 10, 5, 5 giây; chặn luôn thử, không ngắt mạch | Bước saga `FAILED` tạm thời rồi thử lại; cắt quyền thử tới khi xong, cảnh báo sau 60 giây |
 | OpenBao | Bọc bí mật theo TTL, mở bọc (một lần), hủy phiên bản, ký CSR (`pki-clients`), transit mã hóa, giải mã | Bọc theo `secretRef`; mở bọc **không thử lại** | 2 giây, 2 lần (200 ms, 400 ms); mở bọc 5 giây; ngắt mạch 50% trên 10 lượt | ERR-01-023 (503), liên kết bàn giao chưa bị tiêu hao |
 | PH-13 | `sandboxActivity`, `usageByCredential`, `usageByScope` | Đọc | 3 giây, 1 lần; ngắt mạch thì kết quả `partial` | `partial = true` ở API-01-042, 068; không chặn |
@@ -2683,7 +2683,7 @@ Phân hệ khác gọi PH-01 qua hai đường: trong tiến trình khi cùng đ
 | Bên gọi | API | Scope | Mục đích | Tần suất (giả định) |
 |---|---|---|---|---|
 | PH-02, PH-03 (cùng DU `dh-connect`) | `MemberSystemQueryApi` trong tiến trình, cùng cấu trúc với API-01-063, 064; PH-02 còn `checkWithinCeiling` kiểm đăng ký sử dụng không vượt trần (Q01-02) | Không cần (cùng tiến trình) | Tra HTTT khi đăng ký sử dụng, khi tạo consumer | Theo lượt đăng ký, không đáng kể |
-| PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 | API-01-063, 064 | `onboarding:internal-read` | Khởi tạo và đối chiếu bản sao `external_system`; xác minh bên phát, bên nhận, bên gọi | Khởi tạo một lần, đối chiếu ≤ 1 lần mỗi giờ mỗi phân hệ; cơ sở: bản sao ≤ 1.000 HTTT, 2 trang 500 dòng |
+| PH-04, PH-05, PH-10, PH-13, PH-14, PH-15 | API-01-063, 064; PH-15 còn hai API đọc nội bộ về lược đồ biểu mẫu kết nạp và định danh production chỉ đọc (mã cấp số tiếp theo sau API-01-088, bổ sung hợp đồng ở Đợt 2 cùng PH-15; đã chốt 27/11/2026) | `onboarding:internal-read` | Khởi tạo và đối chiếu bản sao `external_system`; xác minh bên phát, bên nhận, bên gọi | Khởi tạo một lần, đối chiếu ≤ 1 lần mỗi giờ mỗi phân hệ; cơ sở: bản sao ≤ 1.000 HTTT, 2 trang 500 dòng |
 | PH-12, PH-03 | API-01-087 | `onboarding:provision-callback` | Trả kết quả bước saga khi chọn kiểu bất đồng bộ | Mỗi bước một lần, chờ tối đa 5 phút (giả định) |
 | Tác vụ đối chiếu, vận hành | API-01-062 | `onboarding:reconcile` | Phát ảnh chụp theo yêu cầu sau sự cố | Hiếm |
 
@@ -3017,7 +3017,7 @@ Năm câu hỏi dưới đây thuộc tập API (dải Q01-55…59); các câu h
 
 > **Câu hỏi mở Q01-56:** PH-12 và PH-03 trả kết quả saga đồng bộ hay bất đồng bộ (Q01-28 của SDD)? API-01-087 hỗ trợ kiểu bất đồng bộ nhưng cờ `onboarding.saga.async-callback` mặc định `false` nên bước saga chờ tối đa 10 giây rồi thử lại. Cần PH-12 và PH-03 xác nhận khi viết tập API của họ: nếu cả hai luôn đồng bộ thì bỏ API-01-087 và mã ERR-01-053 ở bản 0.2; nếu có bất đồng bộ thì chốt thời hạn chờ (giả định 5 phút) và cách xác thực lời gọi (token dịch vụ `azp` khớp tài khoản của phân hệ).
 
-> **Câu hỏi mở Q01-57:** API-01-088 tra tác vụ nền xuất tệp (danh sách HTTT, danh bạ, báo cáo rà soát) cần nơi lưu trạng thái và liên kết tải, nhưng CSDL của PH-01 (D03-03-PH01) chưa có bảng cho việc này. Đề xuất: thêm bảng `background_job` (id, `tenant_id`, `kind`, `status`, `requested_by`, `object_key`, `row_count`, `expires_at`) với tệp ở bucket `dh-{tenant}-onboarding` mã hóa SSE-C, giữ 7 ngày rồi xóa; liên kết tải ký 15 phút. Nếu không muốn thêm bảng thì giảm API-01-075, 079, 085 xuống chỉ trả tệp đồng bộ, giới hạn 20.000 dòng.
+> **Đã chốt 27/11/2026 (Q01-57):** ở MVP xuất tệp (API-01-075, 079, 085) trả tệp đồng bộ, giới hạn 20.000 dòng, vượt thì yêu cầu thu hẹp bộ lọc; chưa thêm bảng `background_job`. Đường `202` kèm tác vụ nền tra bằng API-01-088 là hợp đồng của Đợt 2, khi thêm bảng `background_job` (id, `tenant_id`, `kind`, `status`, `requested_by`, `object_key`, `row_count`, `expires_at`; tệp ở bucket `dh-{tenant}-onboarding` mã hóa SSE-C, giữ 7 ngày; liên kết tải ký 15 phút).
 
 > **Câu hỏi mở Q01-58:** Mã lỗi chung và mã riêng chồng nhau. D02-02 SRS và D04-01 nhắc `ERR-00-412` (lệch `If-Match`) và `ERR-00-500`, còn FRS PH-01 đã chốt `ERR-01-007` (412) cho cùng việc; thiếu quyền và xác thực dùng chung chưa có mã (tập này thêm ERR-01-052). Đề xuất: PH-01 giữ `ERR-01-007`, `ERR-01-052`; lỗi không lường trước dùng `ERR-00-500`. Cần D04-01 xác nhận có cho phép mã riêng của phân hệ thay mã chung hay buộc dùng `ERR-00-*`, để tập khác không tự đặt mã khác nhau cho cùng một lỗi.
 
@@ -5201,4 +5201,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc tập khác c�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 88 endpoint REST, 15 sự kiện Kafka, 54 mã lỗi ERR-01, ánh xạ từ hệ cũ, 5 câu hỏi mở, đề nghị đồng bộ; OpenAPI 3.1 và AsyncAPI 3.0 sinh bằng script, đã kiểm trong CI |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: API-01-059 thêm FR-01-035; ghi trạng thái đồng bộ các đề nghị 1 đến 5; thêm đề nghị 16 về bảy đề nghị bổ sung API của tập màn hình (OpenAPI cập nhật x-datahub-fr của API-01-059) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mã API-12-058…068 ở bảng giao tiếp PH-12; chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (EVT-01-11 không còn bên nghe PH-12); Q395 |

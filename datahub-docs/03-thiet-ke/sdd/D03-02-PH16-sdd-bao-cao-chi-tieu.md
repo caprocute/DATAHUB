@@ -2,7 +2,7 @@
 ma_tai_lieu: D03-02-PH16
 ten: Thiết kế chi tiết phần mềm phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
 phien_ban: 0.3
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-16
@@ -1270,10 +1270,14 @@ Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS P
 
 : Đề nghị đồng bộ của SDD PH-16
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-01 và PH-02 phát thêm các trường `componentCode`, loại, phiên bản, vòng đời, `dependsOn`, `contentHash` trong sự kiện của mình, và có API liệt kê để PH-16 đối chiếu khi tự đăng ký kiến trúc (mục 4.12). Danh sách trường cuối cùng do PH-16 chốt ở FR-16-048; PH-01, PH-02 ghi vào tập của mình sau đó.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: hai mô-đun `kpi` và `arch` với 14 thành phần có khối đặc tả 10 mục, bộ tính CEL, tiếp nhận quan sát idempotent, tổng hợp fail-soft, công bố bốn mắt ký số WORM, sổ kiến trúc tự đăng ký, gói quốc gia qua PH-14, bảy sơ đồ trình tự, thuật toán độ đầy đủ, trạng thái, điểm nhóm, ngân sách hiệu năng, năm ADR đề xuất 160…164, mười câu hỏi mở Q16-20…29 và phụ lục đề nghị đồng bộ các điểm lệch CSDL 0.1 với FRS |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2, CSDL 0.2: EVT-16-14 ở `PeriodCloser`; ERR-16-059 khi xác nhận số tay; ERR-16-061 và chuyển `APPROVED` → `CHANGES_REQUESTED` của báo cáo; API đẩy trả `202`, `207`, lô 1…500; xử lý lại ghi `REPROCESSED`; ghi kết quả hấp thụ ở §13.6 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095; chốt Q426: PH-01, PH-02 phát đủ trường tự đăng ký kiến trúc và có API liệt kê đối chiếu sau khi PH-16 chốt danh sách trường (FR-16-048) |

@@ -14,7 +14,7 @@ Tính năng: TS-12-30 · Ghi vết, nhật ký quyết định, cảnh báo và 
   Kịch bản: TC-12-098 Ghi vết quyết định: từ chối, mức Nhạy cảm, lấy mẫu
     # Truy vết: FR-12-057, 058 · UC-12-37, 38 · UI-12-14 · API-12-103, 104 · NFR-12-029, 030 · BR-12-013 · CMP-LAW-05
     Biết 1.000 quyết định hỗn hợp; U-T68-AU; AU của T01.
-    Khi chạy 1.000 quyết định; so số bản ghi với bộ đếm `iam_decisions_total`.
+    Khi chạy 1.000 quyết định; so số bản ghi với bộ đếm `iam_decisions_total` lấy bằng truy vấn Prometheus từ điểm cuối `/metrics` của OPA và `dh-platform` (không có API công bố riêng cho bộ đếm; đã chốt 27/11/2026).
     Và `GET /decisions?ket-qua=deny`; `GET /decisions/{id}`; AU T01 gọi id của T68.
     Thì 100 % từ chối và mức Hạn chế, Nhạy cảm có vết; cho phép mức thấp lấy mẫu ~10 %; sai lệch tới bộ đếm ≤ ngưỡng; AU T01 nhận 404-ẩn ERR-12-001; cấu hình lưu giữ đúng NFR-12-030 (log xác thực 12 tháng, kiểm toán 12 tháng và WORM 5 năm).
 

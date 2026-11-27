@@ -244,7 +244,7 @@ Hình cho thấy saga chỉ phát EVT-20-01 sau khi realm, bí mật và bucket 
 
 ### 2.5. Quy trình nghiệp vụ liên quan
 
-PH-20 là phân hệ chính của BP-08 "Khởi tạo tenant tỉnh mới" (D02-01). Tài liệu đề nghị bổ sung BP-12 "Sáp nhập tenant khi sắp xếp đơn vị hành chính" và BP-13 "Phát hành và nâng cấp sản phẩm cho các tỉnh" (Phụ lục B; BP-10, BP-11 đã được PH-08, PH-16 đề nghị).
+PH-20 là phân hệ chính của BP-08 "Khởi tạo tenant tỉnh mới" (D02-01). D02-01 mục 6.2 đã bổ sung (chốt 27/11/2026) BP-15 "Sáp nhập tenant khi sắp xếp đơn vị hành chính" và BP-16 "Phát hành và nâng cấp sản phẩm cho các tỉnh" (BP-10 đến BP-14 thuộc PH-06, 08, 09, 16, 17).
 
 | Quy trình | Bước có PH-20 |
 |---|---|
@@ -252,8 +252,8 @@ PH-20 là phân hệ chính của BP-08 "Khởi tạo tenant tỉnh mới" (D02-
 | BP-01 Kết nạp HTTT | Tổ chức chủ quản của HTTT lấy từ danh mục tổ chức (FR-20-057); tenant phải `ACTIVE` |
 | BP-03 Phát hành và đồng bộ danh mục | Gói danh mục nền nạp khi khởi tạo (`S11_SEED_RDM`); EVT-07-10 sắp xếp ĐVHC đề xuất đồng bộ tổ chức (FR-20-056) |
 | BP-07 Giám sát, xử lý sự cố, báo cáo | Cảnh báo hạn mức (FR-20-029), tạm ngừng do sự cố an ninh (FR-20-038), kiểm thử rò rỉ (FR-20-070) |
-| BP-12 (đề nghị) Sáp nhập tenant | Kế hoạch, ánh xạ, chạy thử, duyệt, chuyển dữ liệu, xung đột, chuyển định danh, cutover, chuyển tiếp, kết thúc (FR-20-045…052) |
-| BP-13 (đề nghị) Phát hành sản phẩm | Đăng ký phiên bản, `PREVIEW`, thí điểm 14 ngày, `STABLE`, kế hoạch sóng, nâng cấp trong cửa sổ, dừng, quay lui (FR-20-059…064) |
+| BP-15 Sáp nhập tenant | Kế hoạch, ánh xạ, chạy thử, duyệt, chuyển dữ liệu, xung đột, chuyển định danh, cutover, chuyển tiếp, kết thúc (FR-20-045…052) |
+| BP-16 Phát hành sản phẩm | Đăng ký phiên bản, `PREVIEW`, thí điểm 14 ngày, `STABLE`, kế hoạch sóng, nâng cấp trong cửa sổ, dừng, quay lui (FR-20-059…064) |
 
 : Quy trình nghiệp vụ có PH-20 tham gia
 
@@ -4955,7 +4955,7 @@ Nguồn chuẩn enum cho mọi tập PH-20; các liệt kê từ `ContractStatus
 | D03-06-00 | Thêm mục menu `/quan-tri/to-chuc`, `/nen-tang/sap-nhap`, `/nen-tang/phat-hanh`, `/nen-tang/tong-quan`, `/nen-tang/su-dung`, `/nen-tang/mau-khoi-tao` |
 | D03-10 | Thay 10 bước §5.2 bằng 17 bước của 4.4; thêm chuyển `MERGING → ACTIVE` (hủy trước cutover) và `FAILED → DECOMMISSIONED` (bù trừ khi khởi tạo lỗi) |
 | D00-02 | Ghi năm quyết định ADR 200…204 ở 12.3 |
-| D02-01 | Thêm BP-12 sáp nhập tenant, BP-13 phát hành và nâng cấp |
+| D02-01 | Thêm BP-15 sáp nhập tenant, BP-16 phát hành và nâng cấp |
 | PH-19 | Đổi tên topic nghe sang `platform.tenant.module-enabled.v1` |
 | PH-10 | Đổi tên topic trong kiểm thử `dh.platform.tenant.created.v1` sang `platform.tenant.created.v1` |
 | PH-16 | Q16-16 đã trả lời: PH-20 đẩy qua API-16-030, `metricCode` `thoi-gian-khoi-tao-tenant` |
@@ -4998,12 +4998,16 @@ Các lệch do sáu tập con nêu ở bản 0.1 đã xử lý ở bản 0.2.
 
 : Nhật ký hấp thụ đề nghị ở bản 0.2
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- API-20-137, 139 (SO, AU đọc) và API-20-161 (TA, AU) không thêm quyền `PERM-20-*` mới: ghi quyền là `PERM-20-settings` hoặc vai trò SO, AU, TA đọc trực tiếp; `PERM-20-read` không cấp cho SO.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ sáu tập con: 29 tham số, cửa sổ 2…6 giờ, quyết định 403 và 404, bổ sung Phụ lục A, Phụ lục C |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, tên trường theo CSDL, DECOMMISSIONED ở giai đoạn 1, BR-20-022, sự kiện lệnh xuất gói, bước saga D03-10, thêm liệt kê CSDL, đóng Q20-15, Q20-16 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, tên trường theo CSDL, DECOMMISSIONED ở giai đoạn 1, BR-20-022, sự kiện lệnh xuất gói, bước saga D03-10, thêm liệt kê CSDL, đóng Q20-15, Q20-16; chốt Q400, Q402: mã BP-15, BP-16 cho sáp nhập tenant và phát hành sản phẩm; không thêm quyền PERM-20 mới cho API-20-137, 139, 161 (dùng PERM-20-settings hoặc vai trò SO, AU, TA) |
 
 : Lịch sử phiên bản

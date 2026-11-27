@@ -5,11 +5,12 @@ Tính năng: TS-12-25 · Realm của tenant: khởi tạo, GitOps, vòng đời
 
   @TC-12-076 @P1 @Dương @Âm
   Kịch bản: TC-12-076 Khởi tạo realm T90 từ mẫu
-    # Truy vết: FR-12-041 · UC-12-29 · UI-12-19 · API-12-080, 081 · ERR-12-041 · NFR-12-010 · LGC-IAM-002 · SEC-20
+    # Truy vết: FR-12-041 · UC-12-29 · UI-12-19 · API-12-080, 081, 113 · ERR-12-041 · NFR-12-010 · LGC-IAM-002 · SEC-20
     Biết S-PH20; tenant T90 chưa có realm.
     Khi `POST /realms` cho T90; theo dõi đến `ACTIVE`; gọi lại lần hai cùng khóa.
     Và `POST /realms` cho tenant đã có realm hoặc tenant `SUSPENDED`.
-    Thì `ACTIVE` ≤ 5 phút; có vai trò chuẩn, client `dh-console`, chính sách mật khẩu `argon2id` hoặc `pbkdf2-sha512` ≥ 210.000 vòng; lần hai không tạo bản sao; bước 2 `409` ERR-12-041.
+    Và `GET /realms?driftStatus=DRIFTED` với `PERM-12-realm-admin`; gọi lại với người không có quyền.
+    Thì `ACTIVE` ≤ 5 phút; có vai trò chuẩn, client `dh-console`, chính sách mật khẩu `argon2id` hoặc `pbkdf2-sha512` ≥ 210.000 vòng; lần hai không tạo bản sao; bước 2 `409` ERR-12-041; bước 3 chỉ trả realm lệch cấu hình, phân trang chuẩn, người không có quyền nhận `403` ERR-12-007.
 
   @TC-12-077 @P1 @Dương @Âm @Bảo
   Kịch bản: TC-12-077 Phát hiện lệch cấu hình và áp lại, TA không sửa được cấu hình bảo mật

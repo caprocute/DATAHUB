@@ -1,0 +1,355 @@
+openapi: 3.1.0
+# Hợp đồng API nội bộ giữa sandbox (dh-runtime-sandbox) và dh-integration, chốt 27/11/2026 (Q410).
+# Viết tay (hai operation); tách khỏi openapi-integration.yaml vì không công bố qua apisix-int và chỉ trong cụm.
+info:
+  title: Datahub · PH-04 API nội bộ chạy thử (sandbox gọi dh-integration)
+  version: 1.0.0-draft
+  summary: Hai API nội bộ của chạy thử luồng, API-04-092 lấy gói chạy thử và API-04-093 gửi kết quả từng chặng.
+  description: 'Chỉ trong cụm, dưới `/internal/v1`; xác thực mTLS cùng token dịch vụ của sandbox, không qua `apisix-int`, không có tài khoản người dùng.
+    Sandbox chỉ gọi lần chạy do chính nó nhận từ Valkey Stream `dh:int:testrun:queue` (SDD D03-02-PH04 §8.2 bước 2 và 4).
+    Mã lỗi theo D03-04-PH04 §6 (ERR-04-xxx).'
+  contact:
+    name: Nhóm phát triển Datahub
+    email: datahub@example.vn
+  license:
+    name: Nội bộ
+servers:
+- url: https://dh-integration.dh-control.svc/internal/v1
+  description: Trong cụm, mTLS — giả lập
+security:
+- mtlsService: []
+paths:
+  /testruns/{id}/bundle:
+    get:
+      tags:
+      - Chạy thử nội bộ
+      operationId: getTestRunBundle
+      summary: Lấy gói chạy thử cho sandbox
+      x-datahub-id: API-04-092
+      x-datahub-fr:
+      - FR-04-030
+      - FR-04-031
+      x-datahub-permission:
+        serviceScope: integration:testrun-bundle
+      description: 'Trả YAML chuẩn hóa, các tệp `*.jq`, bản tin, ca kiểm thử, cấu hình mô phỏng và giá trị kết nối TEST (chỉ khi `mode = SANDBOX_LIVE`).
+        Chỉ trả khi lần chạy ở `QUEUED` hoặc `RUNNING`; không bao giờ trả bí mật PROD.'
+      parameters:
+      - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunBundle'
+              example:
+                runId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                mode: MOCK
+                definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                timeoutSeconds: 60
+                captureBodies: true
+                fromNodeId: null
+                definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: direct:dh-test-entry\n"
+                jqFiles:
+                - name: map-ho-tich.jq
+                  content: '{hoTen: .name}'
+                message:
+                  headers: {}
+                  body: '{"name": "Nguyễn Văn A"}'
+                testCase:
+                  name: Tra cứu hợp lệ
+                  assertions: []
+                mockConfig:
+                  samples: {}
+                connections: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /testruns/{id}/steps:
+    post:
+      tags:
+      - Chạy thử nội bộ
+      operationId: postTestRunSteps
+      summary: Gửi kết quả từng chặng của lần chạy thử
+      x-datahub-id: API-04-093
+      x-datahub-fr:
+      - FR-04-030
+      - FR-04-032
+      x-datahub-permission:
+        serviceScope: integration:testrun-steps
+      description: 'Sandbox gửi theo lô mỗi 200 ms; lô cuối mang `final` (kết quả khẳng định và trạng thái cuối). `dh-integration` ghi `test_run_step`,
+        cập nhật trạng thái, đẩy SSE (API-04-042) và phát EVT-04-10. Gửi lại lô cùng `batchSeq` thì bỏ qua (không ghi trùng).'
+      parameters:
+      - $ref: '#/components/parameters/RunId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestRunStepBatch'
+            example:
+              batchSeq: 1
+              steps:
+              - seqNo: 1
+                nodeId: n1
+                routeId: tra-cuu
+                stage: transform
+                status: OK
+                startOffsetMs: 0
+                durationMs: 12
+                headers: {}
+                bodyInPreview: '{"hoTen": "Nguyễn Văn A"}'
+                truncated: false
+              final:
+                status: PASSED
+                durationMs: 412
+                assertions:
+                - name: hoTen khác rỗng
+                  passed: true
+      responses:
+        '204':
+          description: Đã nhận.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          description: Thân chặng vượt 64 KiB mỗi lần hoặc lô vượt giới hạn (ERR-04-021).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://datahub.gov.vn/errors/ERR-04-021
+                title: Thân vượt giới hạn
+                status: 413
+                code: ERR-04-021
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+components:
+  securitySchemes:
+    mtlsService:
+      type: mutualTLS
+      description: mTLS giữa pod sandbox và dh-integration; tài khoản dịch vụ của sandbox, scope `integration:testrun-bundle`, `integration:testrun-steps`.
+  parameters:
+    RunId:
+      name: id
+      in: path
+      required: true
+      description: Mã lần chạy thử (UUID) do sandbox nhận từ hàng đợi.
+      schema:
+        type: string
+        format: uuid
+      example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+  responses:
+    BadRequest:
+      description: Thân sai (ERR-04-049).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/errors/ERR-04-049
+            title: Tham số hoặc thân sai
+            status: 400
+            code: ERR-04-049
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Unauthorized:
+      description: Thiếu hoặc sai chứng chỉ, token dịch vụ (ERR-04-044).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/errors/ERR-04-044
+            title: Thiếu hoặc hết hạn token
+            status: 401
+            code: ERR-04-044
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Forbidden:
+      description: Thiếu scope dịch vụ (ERR-04-045).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/errors/ERR-04-045
+            title: Thiếu quyền
+            status: 403
+            code: ERR-04-045
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    NotFound:
+      description: Không có lần chạy, hoặc lần chạy đã kết thúc (ERR-04-001).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/errors/ERR-04-001
+            title: Không tìm thấy
+            status: 404
+            code: ERR-04-001
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+          pattern: ^ERR-04-\d{3}$
+        traceId:
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - code
+    TestRunBundle:
+      type: object
+      properties:
+        runId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+          - MOCK
+          - SANDBOX_LIVE
+        definitionHash:
+          type: string
+        timeoutSeconds:
+          type: integer
+          maximum: 120
+        captureBodies:
+          type: boolean
+        fromNodeId:
+          type:
+          - string
+          - 'null'
+        definitionYaml:
+          type: string
+        jqFiles:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              content:
+                type: string
+            required:
+            - name
+            - content
+        message:
+          type: object
+          properties:
+            headers:
+              type: object
+              additionalProperties: true
+            body:
+              type: string
+        testCase:
+          type: object
+          additionalProperties: true
+        mockConfig:
+          type: object
+          additionalProperties: true
+        connections:
+          type: array
+          description: Giá trị kết nối TEST của PH-05; rỗng ở `MOCK`.
+          items:
+            type: object
+            additionalProperties: true
+      required:
+      - runId
+      - mode
+      - definitionHash
+      - timeoutSeconds
+      - definitionYaml
+    TestRunStepBatch:
+      type: object
+      properties:
+        batchSeq:
+          type: integer
+          minimum: 1
+        steps:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            properties:
+              seqNo:
+                type: integer
+              nodeId:
+                type: string
+                maxLength: 128
+              routeId:
+                type: string
+                maxLength: 128
+              stage:
+                type: string
+                maxLength: 16
+              status:
+                type: string
+                enum:
+                - OK
+                - FAILED
+                - SKIPPED
+                - HUNG
+              startOffsetMs:
+                type: integer
+              durationMs:
+                type: integer
+              headers:
+                type: object
+                additionalProperties: true
+              bodyInPreview:
+                type: string
+                maxLength: 65536
+              truncated:
+                type: boolean
+            required:
+            - seqNo
+            - nodeId
+            - status
+        final:
+          type: object
+          description: Chỉ có ở lô cuối.
+          properties:
+            status:
+              type: string
+              enum:
+              - PASSED
+              - FAILED
+              - TIMEOUT
+            durationMs:
+              type: integer
+            assertions:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  passed:
+                    type: boolean
+                required:
+                - name
+                - passed
+          required:
+          - status
+      required:
+      - batchSeq
+      - steps

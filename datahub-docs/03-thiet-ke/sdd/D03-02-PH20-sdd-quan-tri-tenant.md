@@ -2198,7 +2198,7 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | D03-09 | Thêm vai CSDL `ph20_owner`, `ph20_app`, `ph20_platform_app`, `ph20_ro`; cụm Valkey cho đệm registry; sao lưu `ph20_tenant` với RPO 5 phút |
 | D03-10 | Thay 10 bước ở mục 5.2 bằng 17 bước; thêm hai chuyển `FAILED → DECOMMISSIONED`, `MERGING → ACTIVE`; ghi năm chế độ RLS |
 | D02-08 | Thêm 10 quyền `PERM-20-*` và ba scope `tenant:registry-read`, `tenant:org-read`, `tenant:provision-report` |
-| D02-01 | Thêm BP-12 sáp nhập tenant, BP-13 phát hành và nâng cấp |
+| D02-01 | Thêm BP-15 sáp nhập tenant, BP-16 phát hành và nâng cấp |
 | D03-06-00 | Thêm menu `/quan-tri/to-chuc`, `/nen-tang/sap-nhap`, `/nen-tang/phat-hanh`, `/nen-tang/tong-quan`, `/nen-tang/su-dung`, `/nen-tang/mau-khoi-tao` |
 | D00-04 | Đăng ký mã lỗi `ERR-20-001…068`, `ERR-20-101…118` |
 | ADR 200…204 | Đã xử lý ở 0.4: tệp ADR-200 đến ADR-204 đã lập ở 00-chung/adr theo mục 13.6 |
@@ -2222,6 +2222,6 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 | 0.1 | 2026-11-27 | Kiến trúc sư phần mềm | Bản đầu: 19 thành phần, 15 sơ đồ, bảng lỗi, tham số, rủi ro, câu hỏi mở Q20-20…29, Phụ lục A |
 | 0.2 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ với FRS 0.2: 29 khóa `20.*`, miền `20.registry.cache-seconds`, cửa sổ bảo trì 2 đến 6 giờ, mã KPI-12; đánh dấu L-01, 02, 03, 05, 06, 07, 12, 13 đã xử lý |
 | 0.3 | 2026-11-27 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153, chờ API-12-080 tối đa 4 phút, `database` trong `tenant.yaml` |
-| 0.4 | 27/11/2026 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: mục 13.6 và Phụ lục A.2: tệp ADR-200 đến ADR-204 đã lập ở 00-chung/adr; mục ParameterGateway ghi nơi trả ERR-20-060 và hợp đồng đẩy thay đổi |
+| 0.4 | 27/11/2026 | Kiến trúc sư phần mềm | Đồng bộ chéo cuối: mục 13.6 và Phụ lục A.2: tệp ADR-200 đến ADR-204 đã lập ở 00-chung/adr; mục ParameterGateway ghi nơi trả ERR-20-060 và hợp đồng đẩy thay đổi; chốt Q430: mã BP-15, BP-16 cho sáp nhập tenant và phát hành sản phẩm |
 
 : Lịch sử phiên bản

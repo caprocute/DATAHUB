@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm tra hợp đồng PH-17: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 193 và không trùng,
+"""Kiểm tra hợp đồng PH-17: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 194 và không trùng,
 enum khớp Phụ lục A, AsyncAPI có đủ 28 sự kiện EVT-17 và không mang khóa nội dung hoặc bí mật.
 Chạy: python3 check_contracts.py (từ thư mục tools). Thoát 1 nếu có lỗi."""
 import json
@@ -47,8 +47,8 @@ for path, item in OA['paths'].items():
     for m, op in item.items():
         ids.append(op['x-datahub-id'])
         opids.append(op['operationId'])
-if len(ids) != 193 or len(set(ids)) != 193:
-    errs.append('mã API không đủ 193 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
+if len(ids) != 194 or len(set(ids)) != 194:
+    errs.append('mã API không đủ 194 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
 if len(set(opids)) != len(opids):
     errs.append('operationId trùng')
 frs_ids = set(re.findall(r'^\| (API-17-\d{3}) \|', FRS, re.M))

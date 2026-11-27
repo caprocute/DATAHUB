@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-03-PH14
 ten: Đặc tả yêu cầu chức năng phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.2
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-integration và dh-runtime, cán bộ ATTT, kiểm thử viên
 phan_he: PH-14
@@ -4326,7 +4326,7 @@ Chủ đề theo quy ước `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}
 
 ### 9.4. Danh mục API
 
-Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH14 xác nhận và định nghĩa đầy đủ (lược đồ, mã lỗi từng điểm cuối). Tiền tố mặt phẳng điều khiển `/api/national/v1`; mặt phẳng dữ liệu nội bộ `/internal/national/v1`; chiều vào `/inbound/v1` (không qua APISIX nội bộ mà qua vùng biên). Các thay đổi cần bốn mắt nhưng không có API duyệt riêng ở bảng (hạn mức, tham số, điểm cuối, công bố dữ liệu mở) dùng API duyệt dùng chung của hộp "Việc của tôi" (FR-00-070).
+Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH14 xác nhận và định nghĩa đầy đủ (lược đồ, mã lỗi từng điểm cuối). Tiền tố mặt phẳng điều khiển `/api/national/v1`; mặt phẳng dữ liệu nội bộ `/internal/national/v1`; chiều vào `/inbound/v1` (không qua APISIX nội bộ mà qua vùng biên). Các thay đổi cần bốn mắt nhưng không có API duyệt riêng ở bảng (hạn mức, tham số, điểm cuối, công bố dữ liệu mở) dùng API duyệt chung của PH-14 là API-14-093 (liệt kê yêu cầu chờ duyệt) và API-14-094 (duyệt hoặc từ chối), đã chốt ngày 27/11/2026, và hiện trong hộp "Việc của tôi" (FR-00-070).
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4422,6 +4422,8 @@ Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH
 | API-14-090 | `POST /inbound-endpoints/{endpointCode}:confirm` | 039 |
 | API-14-091 | `GET /internal/national/v1/runtime-config` | 010, 012, 033 |
 | API-14-092 | `DELETE /certificates/{certCode}` | 029 |
+| API-14-093 | `GET /approval-requests` | 003, 005, 013, 028, 030, 032, 039, 045 |
+| API-14-094 | `POST /approval-requests/{approvalId}:decide` | 005, 032, 039, 045 |
 
 : Danh mục API của PH-14
 
@@ -4644,6 +4646,10 @@ Phân hệ được coi là đạt khi thỏa các tiêu chí sau; mỗi tiêu c
 12. Chạy song song với hệ cũ cho ít nhất một dịch vụ đọc đạt tỷ lệ khớp theo `14.parallel.match-ratio`; khóa của hệ cũ đã được xác nhận thu hồi (FR-14-025, FR-14-055).
 13. Mọi mục `LGC` ở mục 11.1 có kết luận và ca UAT tương ứng ở D05-02-PH14, và mọi FR cũ ở mục 11.2 có chỗ đứng đã kiểm thử.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-02 có thêm loại API "dịch vụ quốc gia" nhận bản nháp từ PH-14 (kèm `Idempotency-Key`), chỉ tạo `DRAFT` và không tự công bố; sự kiện đã công bố mang `apiCode`; PH-02 cung cấp danh sách dịch vụ chia sẻ ở trạng thái `PUBLISHED` để PH-14 lấy đăng ký lên Bộ (FR-14-009, FR-14-043). PH-02 ghi vào FRS và API của mình khi PH-14 chốt hợp đồng.
+
 ## Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -4677,7 +4683,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-14: 57 chức năng chia chín nhóm, theo khuôn K-FRS và chuẩn trình bày K-TRINH-BAY (khối đặc tả 17 mục). Căn cứ: SRS cũ của repo (14 FR, ánh xạ ở mục 11.2), phụ lục NGSP ở D00-03 §4.7 (9 mục `LGC`), GĐ-02, ADR-057, SEC-16, 24, 33, 36, THR-51…53. Kiến trúc thay Vault bằng OpenBao (ADR-012), thay Camel chung bằng hồ sơ `national-gateway` của Camel Quarkus (ADR-002). Có 14 câu hỏi mở (Q14-01…14) và mục Đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117; chốt Q392, Q448: PH-02 thêm loại API dịch vụ quốc gia nhận bản nháp từ PH-14, chỉ tạo DRAFT, không tự công bố; thêm API-14-093, 094 (duyệt bốn mắt chung) vào §9.4 |
 
 
 

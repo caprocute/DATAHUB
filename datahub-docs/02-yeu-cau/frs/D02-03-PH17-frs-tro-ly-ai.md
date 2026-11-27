@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-03-PH17
 ten: Đặc tả yêu cầu chức năng phân hệ PH-17 Trợ lý AI và quản trị AI
 phien_ban: 0.3
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ ATTT, quản trị tỉnh, kỹ sư dh-assist, kiểm thử viên
 phan_he: PH-17
@@ -36,7 +36,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH17 Use case; D03-02-PH17 Thiết kế c
 | Quy tắc nghiệp vụ | 87 (BR-17-001…087) |
 | Yêu cầu phi chức năng | 28 (NFR-17-001…028) |
 | Màn hình | 20 (UI-17-01…20) |
-| API | 193 operation dự kiến (186 control plane, 7 data plane), 28 sự kiện phát (EVT-17-01…28) |
+| API | 194 operation dự kiến (187 control plane, 7 data plane), 28 sự kiện phát (EVT-17-01…28) |
 | Mã lỗi | 87 control (ERR-17-001…087), 18 data plane (ERR-17-101…118); lỗi `401`, `403` do thiếu quyền chức năng, `428` dùng mã nền ERR-00-401, 403, 428 |
 | Thực thể mức logic | 48 (EN-17-01…48) |
 | Tham số theo tenant | 49 khóa `17.*` (mục 8.2) |
@@ -282,7 +282,7 @@ Có ba điểm cần nhìn ở hình. Truy hồi chỉ lấy đoạn thuộc ten
 
 ### 2.5. Quy trình nghiệp vụ liên quan
 
-Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho trợ lý AI; tài liệu đề nghị bổ sung BP-12 "Quản trị và sử dụng trợ lý AI" (Phụ lục B). PH-17 tham gia các quy trình sẵn có như bảng dưới.
+Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho trợ lý AI; D02-01 mục 6.2 đã bổ sung (chốt 27/11/2026) BP-14 "Quản trị và sử dụng trợ lý AI" (Phụ lục B). PH-17 tham gia các quy trình sẵn có như bảng dưới.
 
 | Quy trình | Bước có PH-17 |
 |---|---|
@@ -291,7 +291,7 @@ Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho trợ l�
 | BP-07 Giám sát, xử lý sự cố, báo cáo | Giải thích lỗi, vết, DLQ; danh sách kiểm; tóm tắt sự cố (FR-17-036 đến 041) |
 | BP-08 Khởi tạo tenant | Tham số `17.*` mặc định tắt (FR-17-059); lập chỉ mục khi bật |
 | BP-01, BP-05 Kết nạp, tìm dịch vụ | Hỏi đáp tìm API, topic, danh mục (FR-17-023 đến 025) |
-| BP-12 (đề nghị) Quản trị trợ lý AI | Bật tắt, chọn mô hình, nguồn tri thức, đánh giá, ca đỏ, nhật ký, bằng chứng |
+| BP-14 Quản trị trợ lý AI | Bật tắt, chọn mô hình, nguồn tri thức, đánh giá, ca đỏ, nhật ký, bằng chứng |
 
 : Quy trình nghiệp vụ có PH-17 tham gia
 
@@ -1643,7 +1643,8 @@ Hình cho thấy kiểm mức phân loại đứng trước mọi bước đọc
 2. Với mỗi đoạn, hệ thống đặt `acl`: tổ chức sở hữu đối tượng, mức hiển thị (toàn tenant, theo tổ chức, theo nhóm), `class_level`, mã đối tượng; đoạn kế thừa quyền của đối tượng cha.
 3. Hệ thống nhúng theo lô qua mô hình nhúng mặc định (FR-17-010), lưu `KnowledgeChunk` với `tenant_id`, `source_id`, `document_id`, `embed_model_version`, `content_hash`, vector 1024 chiều và từ khóa không dấu cho tìm từ khóa.
 4. Hệ thống kiểm đoạn không chứa mẫu DLCN (quét mẫu như FR-17-041); phát hiện thì loại đoạn và đưa tài liệu vào `SKIPPED_CLASS` với lý do "có dấu hiệu DLCN" (ERR-17-046).
-5. Hệ thống bảo đảm RLS theo `tenant_id` trên bảng đoạn; mọi truy vấn chạy với `tenant_id` của người gọi (BR-17-086).
+5. Hệ thống quét mẫu tiêm lệnh gián tiếp ở từng đoạn (câu lệnh yêu cầu bỏ qua chỉ dẫn, đòi lộ chỉ dẫn hệ thống, đòi gọi công cụ). Đoạn nghi ngờ chỉ bị gắn cờ `injection_suspect` để SO và chủ phân hệ nguồn rà, không bị bỏ khỏi chỉ mục và vẫn được bọc như dữ liệu không tin cậy khi đưa vào lời nhắc (đã chốt 27/11/2026, Q17-26).
+6. Hệ thống bảo đảm RLS theo `tenant_id` trên bảng đoạn; mọi truy vấn chạy với `tenant_id` của người gọi (BR-17-086).
 
 **Luồng thay thế.** Tài liệu rất dài: cắt theo cửa sổ trượt và giới hạn số đoạn mỗi tài liệu 2.000; vượt thì tách lượt và cảnh báo.
 
@@ -3454,11 +3455,12 @@ Hình cho thấy cổng phát hành là phép **và**: điểm đánh giá đạ
 4. Người xử lý xem hội thoại liên quan qua nhật ký đã che (cần lý do truy cập, FR-17-056), phân loại (lỗi truy hồi, lỗi prompt, lỗi dữ liệu nguồn, sai mô hình, lạm dụng), giao việc, đóng kèm kết luận.
 5. "Không an toàn" đã xác nhận được đưa thành ca đỏ ứng viên (`:promote-to-redteam`, cần `PERM-17-eval`).
 
-**Luồng thay thế.** Người dùng đổi ý: sửa phản hồi trong 10 phút. Danh mục API 9.4 chưa có thao tác sửa phản hồi nên hiện chỉ gửi lại bị ERR-17-077; thêm API ghi ở Q17-88.
+**Luồng thay thế.** Người dùng đổi ý: sửa phản hồi của chính mình trong 10 phút kể từ lúc gửi, khi phản hồi còn `NEW`, bằng `PUT /feedback/{feedbackId}` kèm `If-Match` (API-17-194, đã chốt 27/11/2026); đổi loại hoặc ghi chú trên cùng bản ghi, không tạo phản hồi mới nên không bị ERR-17-077.
 
 **Luồng ngoại lệ.**
 
 - Phản hồi trùng: ERR-17-077 (409); "Bạn đã gửi phản hồi cho câu trả lời này."
+- Sửa quá 10 phút hoặc phản hồi đã được phân loại: ERR-17-006 (409); "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 - Ghi chú quá dài: ERR-17-003 (400); "Dữ liệu không hợp lệ: ghi chú tối đa 1.000 ký tự."
 - Không tìm thấy tin nhắn: ERR-17-001 (404); "Không tìm thấy câu trả lời {mã}."
 
@@ -4550,6 +4552,7 @@ Control plane ở `/api/assist/v1` qua APISIX, xác thực token người dùng 
 | API-17-191 | `POST /assist/v1/process-suggestions/{suggestionId}:record-decision` | 061 | scope assist:infer | PH-11 báo quyết định cuối của người |
 | API-17-192 | `GET /assist/v1/config/effective` | 060, 061 | scope assist:infer | Cấu hình hiệu lực của tenant (bật, năng lực, mô hình) cho DU gọi |
 | API-17-193 | `GET /assist/v1/health/ready` | 014, 060 | mTLS DU | Kiểm tra sẵn sàng của data plane |
+| API-17-194 | `PUT /feedback/{feedbackId}` | 052 | use | Sửa phản hồi của chính mình trong 10 phút (chốt 27/11/2026) |
 
 : Danh mục API của PH-17 (control plane và data plane)
 
@@ -4723,7 +4726,7 @@ SRS-PH-17-ai.md (repo, bản cũ) có 17 FR đặt trong khung cổng AI và MLO
 
 : Đối chiếu FR cũ và FR mới
 
-Mã API cũ (`/ai/v1/...`, `/api/admin/v1/ai/...`) được thay bằng API-17-001 đến 193 ở 9.4: control plane `/api/assist/v1` và data plane `/assist/v1`. Mọi tài liệu còn trích mã FR-17 hoặc API cũ phải cập nhật theo bảng trên (Phụ lục B).
+Mã API cũ (`/ai/v1/...`, `/api/admin/v1/ai/...`) được thay bằng API-17-001 đến 194 ở 9.4: control plane `/api/assist/v1` và data plane `/assist/v1`. Mọi tài liệu còn trích mã FR-17 hoặc API cũ phải cập nhật theo bảng trên (Phụ lục B).
 
 ## 12. Phụ thuộc, giả định và ràng buộc
 
@@ -4806,7 +4809,7 @@ Các câu hỏi dưới cần quyết định trước khi chốt FRS v1.0 hoặ
 | Q17-21 | Khi tắt trợ lý, chỉ mục giữ bao lâu | Giữ 90 ngày rồi xóa nếu không bật lại | SO | FR-17-001, 019 |
 | Q17-22 | Loại bước quy trình PH-11 nào hỗ trợ gợi ý của trợ lý | Bước duyệt và bước nhập liệu có biểu mẫu | PH-11 | FR-17-061 |
 | Q17-87 | Có thêm mã ERR riêng (cuối dải control) cho (a) nội dung truy hồi chứa tiêm lệnh gián tiếp, vì ERR-17-065 viết là "Câu hỏi bị từ chối"; (b) chọn hoặc gọi mô hình ngoài khi `17.model.external-allowed = false`, vì ERR-17-017 chỉ nói nhà cung cấp chưa trong danh sách trắng | Chưa thêm; giữ ERR-17-065 và ERR-17-017. Nếu nhận: hai mã kế tiếp cuối dải control, đồng thời thêm vào `x-datahub-errors` của `openapi-assist.yaml` và tập API | SO, chủ tập API | FR-17-010, 044, 045 |
-| Q17-88 | Có thêm API sửa phản hồi trong 10 phút (FR-17-052) không | Chưa có API; chỉ cho gửi lại bị ERR-17-077. Nếu nhận: thêm `PUT /feedback/{feedbackId}` có `If-Match` | PO, chủ tập API | FR-17-052, UC-17-30 |
+| Q17-88 (đã chốt 27/11/2026: có) | Có thêm API sửa phản hồi trong 10 phút (FR-17-052) không | Chưa có API; chỉ cho gửi lại bị ERR-17-077. Nếu nhận: thêm `PUT /feedback/{feedbackId}` có `If-Match` | PO, chủ tập API | FR-17-052, UC-17-30 |
 | Q17-89 | Mức nghiêm trọng của ca đỏ (Cao, Trung bình, Thấp) ở UI-17-11 có thành cột và enum của `RedteamCase` không | Chưa; màn hình chỉ hiển thị nhãn suy ra từ nhóm tấn công | SO, chủ tập CSDL | FR-17-050, 051, UI-17-11 |
 
 : Câu hỏi mở của PH-17
@@ -4922,7 +4925,7 @@ Tập này không sửa tài liệu của phân hệ khác. Các thay đổi dư
 | D03-06-00 (route) | Thêm nhóm `/quan-tri/tro-ly-ai/*` (UI-17-06 đến 18) và `/nen-tang/mo-hinh-ai` (UI-17-19, 20), mục menu "Quản trị trợ lý AI" | Chương 10 |
 | D00-04 (trạng thái tài liệu) | Ghi D02-03 PH-17 v0.2 | Theo dõi tập |
 | D00-02 (ADR) | Đăng ký ADR-170 (pgvector trên pg-core, vector 1024 chiều), ADR-171 (truy hồi lai vector và từ khóa không dấu, RRF), ADR-172 (công cụ chỉ đọc bằng token người dùng, ghi qua thẻ đề xuất), ADR-173 (chỉ dẫn hệ thống có phiên bản và cổng phát hành), ADR-174 (lập chỉ mục theo sự kiện và xóa lan truyền) | Các FR trích "đề xuất" |
-| D02-01 (quy trình) | Thêm BP-12 "Bật, vận hành, tắt trợ lý AI" gồm bốn mắt và tắt khẩn | Bao phủ nghiệp vụ |
+| D02-01 (quy trình) | Thêm BP-14 "Bật, vận hành, tắt trợ lý AI" gồm bốn mắt và tắt khẩn | Bao phủ nghiệp vụ |
 | PH-03 | Hỗ trợ `ai-proxy` hoặc `ai-proxy-multi`, đồng bộ tuyến egress mô hình, danh sách trắng đích | FR-17-011, 012 |
 | PH-13 | Danh mục sự kiện kiểm toán `assist.*`; tra cứu có lý do cho nhật ký hội thoại | FR-17-013, 055, 056 |
 | PH-18 | Đăng ký khóa tham số `17.*` ở DD-14; thêm ERR-17 vào ERR catalog; thêm mục hướng dẫn vận hành và DLQ | FR-17-036, 038, 059 |
@@ -4973,10 +4976,16 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, SDD, CSDL, API, MH và TC 
 
 : Nhật ký hấp thụ đề nghị
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-03 hỗ trợ plugin `ai-proxy` (và `ai-proxy-multi` cho thứ tự dự phòng) cùng danh sách trắng đích egress mô hình, chỉ ở `apisix-int`, khai trong mẫu chính sách FR-03-048 và không đệm luồng SSE (FR-17-011, 012).
+- Scope đọc siêu dữ liệu của `svc-assist-index` ở PH-02 là `catalog:read-meta`, chỉ trả siêu dữ liệu, đã thêm ở D02-08 mục 5; PH-04, PH-07, PH-10 đặt scope và API đọc cho công cụ chỉ đọc theo cùng mẫu `*.read-meta` và ghi vào D02-08 mục 5 (FR-17-015, 042).
+- Quét mẫu tiêm lệnh khi lập chỉ mục có hiệu lực ở FR-17-018 bước 5 (cờ `injection_suspect` ở bảng `knowledge_chunk`); API-17-194 sửa phản hồi trong 10 phút đã thêm vào mục 9.4.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người thực hiện | Thay đổi |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của FRS PH-17: 62 FR, 87 BR, 28 NFR, 20 màn hình, 193 API, 28 sự kiện; 22 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, SDD, CSDL, API, MH, TC (bảng ở Phụ lục C): sửa BR-17-009 và FR-17-006 cho tắt khẩn, 9 thực thể mới (EN-17-40 đến 48), 30 enum mới ở Phụ lục A, trạng thái `APPROVED`, ERR-17-021 đến 023 ở FR liên quan, gỡ tắt khẩn tenant qua `RESUME`, hằng 100 lượt mỗi hội thoại, 3 câu hỏi mở mới (Q17-87 đến 89) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nêu PH-18 phát EVT-18-11 cho sổ tay mã lỗi, lập chỉ mục theo sự kiện và theo lịch dự phòng |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nêu PH-18 phát EVT-18-11 cho sổ tay mã lỗi, lập chỉ mục theo sự kiện và theo lịch dự phòng; chốt Q397, Q398, Q399, Q405, Q406: mã BP-14 cho trợ lý AI; PH-03 hỗ trợ ai-proxy chỉ ở apisix-int; scope catalog:read-meta; quét tiêm lệnh gắn cờ ở FR-17-018; thêm API-17-194 sửa phản hồi 10 phút |

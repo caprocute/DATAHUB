@@ -479,7 +479,7 @@ Bảng nêu hợp đồng PH-08 gọi các phân hệ phụ thuộc và hợp đ
 |---|---|---|
 | PH-04 | Gọi PH-08 | Kamelet `dh-dq-check` gọi API-08-068, 069 (scope `dq.check`); tiêu đề luồng `dh-dq-verdict`, `dh-dq-violations`; lý do DLQ `DQ_FAIL` |
 | PH-06 | Gọi PH-08 | Cổng chất lượng đầu vào gọi API-08-068 với `caller = PH-06` (FR-08-035) |
-| PH-06 | PH-08 gọi | Đọc bản ghi vàng qua khung nhìn `ph06_mdm.v_dq_{domain}` chỉ đọc; chuyển lỗi bản ghi vàng sang hàng đợi steward qua API nội bộ (API-08-095); nhận EVT-06-01…04, 10 |
+| PH-06 | PH-08 gọi | Đọc bản ghi vàng qua khung nhìn `ph06_mdm.v_dq_{domain}` chỉ đọc; chuyển lỗi bản ghi vàng sang hàng đợi steward qua API-06-126 (scope `mdm:steward-intake`, gọi từ API-08-095); nhận EVT-06-01…04, 10 |
 | PH-07 | PH-08 gọi | Tra mã `IN_RDM` bằng ảnh chụp danh mục và tra lô; nhận EVT-07-03, 05, 10 |
 | PH-05 | Hai chiều | Kết nối chỉ đọc cho đối tượng `SOURCE_DATASET`, khám phá bảng (API-08-018); đẩy chỉ số hồ sơ vào API-08-024 (scope `dq.ingest`) |
 | PH-09 | PH-08 gọi | Tra phân loại trường cho CDE (API-08-015), che giá trị bản ghi lỗi |
@@ -4727,7 +4727,7 @@ ETag: W/"3"
 
 **Lỗi.** HTTP `400`, `404`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-08-051, ERR-08-105 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API nội bộ, tạo mục hàng đợi lý do `DQ_FINDING`.
+**Ghi chú.** Chỉ lỗi của bản ghi vàng (ERR-08-051); PH-06 nhận qua API-06-126 (`POST /internal/stewardship/items:from-dq`, scope `mdm:steward-intake`), tạo mục hàng đợi lý do `DQ_FINDING`.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
@@ -6095,7 +6095,7 @@ Bản 0.2 đã đồng bộ với FRS 0.2 (nhật ký hấp thụ mục 15): mã
 |---|---|
 | D02-08 §3.2, §4 | `PERM-08-export` cấp thêm cho DO (○) chỉ để chấp thuận xuất có trường Nhạy cảm (API-08-076); xác nhận cảnh báo (API-08-102, 103) dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; thêm scope máy `dq.ingest` cho PH-05 |
 | CSDL D03-03-PH08 | Tên logic khác cột: `isCde` là `cde`; `valueMode` là `value_mode`; `schedule.status` suy từ `enabled`; `degradedCount` là `fail_open_count` cộng `fail_closed_count`; `passThreshold`, `warnThreshold` là `pass_min`, `warn_min`; `content` của báo cáo là `summary`; nhật ký kiểm toán API-08-127 đọc từ kho kiểm toán chung, không có bảng riêng |
-| D03-04-PH06 | API nội bộ nhận mục hàng đợi lý do `DQ_FINDING` (API-08-095); khung nhìn hợp đồng `v_dq_{domain}`; gọi API-08-068 làm cổng đầu vào (Q08-08) |
+| D03-04-PH06 | API-06-126 nhận mục hàng đợi lý do `DQ_FINDING` (gọi từ API-08-095, scope `mdm:steward-intake`); khung nhìn hợp đồng `v_dq_{domain}`; gọi API-08-068 làm cổng đầu vào (Q08-08) |
 | D03-04-PH05, PH04, PH10 | PH-05: Kamelet `dh-dq-check`, API khám phá lược đồ, đẩy chỉ số vào API-08-024. PH-04: lý do DLQ `DQ_FAIL`, tiêu đề `dh-dq-verdict`. PH-10: đăng ký 14 topic `{tenant}.dq.*` theo FR-10-067 |
 | D03-04 khung lỗi chung | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-08 dẫn |
 
@@ -6109,4 +6109,4 @@ Trường chỉ có ở API (kết quả tính, gộp hoặc tham chiếu, khôn
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm PH-08 | Bản đầu: 129 operation, 14 sự kiện phát, 8 sự kiện nhận, bảng mã lỗi và thông báo, 5 câu hỏi mở Q08-55…59, phụ lục đề nghị đồng bộ |
 | 0.2 | 2026-11-26 | Nhóm PH-08 | Đồng bộ với FRS 0.2: 132 operation (thêm API-08-129 `POST /findings:search` theo FRS, API-08-130, 131 bật, tắt đo tăng dần, API-08-132 `POST /weight-configs:preview` xem trước điểm theo trọng số), ERR-08-056 không có lần đo trong kỳ, ERR-08-101 cho lô quá 100 bản ghi, `etaSeconds` ở lần đo, `facets` ở danh sách phiếu, `dimensionsPrev` ở bảng điều khiển, ERR-08-055 cho `Idempotency-Key` dùng lại với thân khác, enum theo Phụ lục A, `updatedAtField` và cấu hình trực tuyến ở đối tượng đo, `scanTrigger` chỉ `MANUAL`, `ANNUAL`, mã phiếu `DQ-`, mã báo cáo `BC-DQ-`, 43 tham số; chương 11 in ví dụ cho mọi endpoint; giới hạn tập 240 KB |
-| 0.3 | 2026-11-27 | Nhóm PH-08 | Đồng bộ chéo cuối: mẫu `type` lỗi RFC 9457 thành `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}`; EVT-08-14 có `snapshotId` |
+| 0.3 | 2026-11-27 | Nhóm PH-08 | Đồng bộ chéo cuối: mẫu `type` lỗi RFC 9457 thành `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}`; EVT-08-14 có `snapshotId`; Chốt câu hỏi mở đợt đồng bộ: Q411 |

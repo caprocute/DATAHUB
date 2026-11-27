@@ -1580,7 +1580,7 @@ Cô lập:
 
 **FR hiện thực.** FR-04-030, 031, 032; BR-04-004.
 
-**Giao diện vào.** API-04-040…044; API nội bộ `bundle`, `steps`.
+**Giao diện vào.** API-04-040…044; API nội bộ API-04-092 (`bundle`) và API-04-093 (`steps`), đặc tả ở `api/ph04/openapi-integration-internal.yaml` (đã chốt 27/11/2026, Q410).
 
 **Phụ thuộc ra.** Valkey; `ValidationEngine`; Ceph RGW.
 
@@ -2103,7 +2103,7 @@ Các điểm dưới cần tập khác đối chiếu; tài liệu này không s
 | Tập | Đề nghị | Trạng thái |
 |---|---|---|
 | D03-09 Hạ tầng | Bổ sung namespace `dh-sandbox` vùng Z4 và chính sách mạng riêng (Q04-20) | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
-| D03-04-PH04 API | Đối chiếu tên API nội bộ `GET /internal/v1/testruns/{id}/bundle`, `POST …/steps` (chưa có mã API vì không công bố) | Đã hấp thụ (0.2): API §5 nêu đúng hai đường dẫn nội bộ; mã API và tệp OpenAPI nội bộ còn là đề nghị 4 của API §11 |
+| D03-04-PH04 API | Đối chiếu tên API nội bộ `GET /internal/v1/testruns/{id}/bundle`, `POST …/steps` | Đã chốt 27/11/2026 (Q410): mã API-04-092, 093 và tệp OpenAPI nội bộ riêng; API §5.1 |
 | D05-02-PH04 Ca kiểm thử | Mỗi sơ đồ trình tự mới (phát hành, chạy thử, duyệt bốn mắt, dừng khẩn) nên có ít nhất một ca đầu cuối tương ứng | Đã hấp thụ (0.2): TC-04-192 (chạy thử), 193 (duyệt bốn mắt), 196 (phát hành), 197 (dừng khẩn) |
 
 : Đề nghị đồng bộ với tập khác
@@ -2114,4 +2114,4 @@ Các điểm dưới cần tập khác đối chiếu; tài liệu này không s
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu | Nhóm phân hệ PH-04 |
 | 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-SDD: chương Giới thiệu, danh sách và bảng đặc tả 10 mục cho 28 thành phần, bốn sơ đồ trình tự, chú thích bảng và hình, đề nghị đồng bộ; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |
-| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: mức phân loại Hạn chế, dh-data-classes | Nhóm viết tài liệu (Claude) |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: mức phân loại Hạn chế, dh-data-classes | Nhóm viết tài liệu (Claude); chốt câu hỏi mở đợt đồng bộ: Q410 |

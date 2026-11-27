@@ -1,7 +1,7 @@
 openapi: 3.1.0
 # D03-04-PH07 · Đặc tả OpenAPI phân hệ PH-07 Danh mục dùng chung (RDM)
 # Tài liệu văn xuôi đi kèm: ../D03-04-PH07-api-danh-muc.md
-# Hợp đồng mã: API-07-001…075 (API-07-076 chuyển sang PH-18, xem x-datahub-notes),
+# Hợp đồng mã: API-07-001…075 và API-07-077 (API-07-076 chuyển sang PH-18, xem x-datahub-notes),
 # ERR-07-001…037 (+ ERR-07-040…047 đề xuất bổ sung), EVT-07-01…10 (asyncapi-rdm.yaml).
 info:
   title: Datahub · PH-07 Danh mục dùng chung (RDM) API
@@ -1347,7 +1347,8 @@ paths:
         Đặt `status = DEPRECATED`, ghi `replacedBy` (mỗi mã phải tồn tại và ACTIVE trong cùng bản
         nháp) và `validTo` (mặc định bằng `effectiveFrom` của bản nháp). Bản ghi con còn ACTIVE
         làm thao tác thất bại 422 ERR-07-010 trừ khi `cascade = true` (ngừng dùng cả nhánh).
-        Gọi lại với `reactivate = true` để khôi phục ACTIVE trong cùng bản nháp.
+        Khôi phục bản ghi đã ngừng dùng về ACTIVE trong cùng bản nháp dùng thao tác riêng
+        `:restore` (API-07-077), không đi qua `PATCH` hay thao tác này.
       x-datahub-id: API-07-029
       x-datahub-fr: [FR-07-012, FR-07-019]
       x-datahub-permission:
@@ -1378,6 +1379,51 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '412': { $ref: '#/components/responses/PreconditionFailed' }
         '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:restore:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+      - $ref: '#/components/parameters/ItemCode'
+    post:
+      tags: [Bản ghi (quản trị)]
+      operationId: restoreDraftItem
+      summary: Khôi phục bản ghi đã ngừng dùng trong bản nháp
+      description: |
+        Đặt lại `status = ACTIVE` cho bản ghi đang `DEPRECATED` trong bản nháp, xóa `replacedBy`
+        và `validTo` đã ghi khi ngừng dùng; bắt buộc `reason`. Thao tác riêng vì `ItemUpdateRequest`
+        (API-07-028) không có trường `status`. Bản ghi con đã ngừng dùng theo `cascade` không tự
+        khôi phục: khôi phục từng bản ghi hoặc đặt `cascade = true` để khôi phục cả nhánh. Mã cha
+        phải đang ACTIVE, nếu không trả 422 ERR-07-010. Bản ghi không ở `DEPRECATED` trả 409
+        ERR-07-004; bản nháp không ở `DRAFT` trả 409 ERR-07-004.
+      x-datahub-id: API-07-077
+      x-datahub-fr: [FR-07-012]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemRestoreRequest' }
+            example: { reason: "Đơn vị chưa bị gộp, ngừng dùng nhầm", cascade: false }
+      responses:
+        '200':
+          description: Đã khôi phục.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
   /catalogs/{catalogCode}/versions/{versionRef}/items:batch:
     parameters:
       - $ref: '#/components/parameters/CatalogCode'
@@ -1392,7 +1438,10 @@ paths:
         `errors[].row` là chỉ số thao tác) hoặc từng phần (`atomic = false`: thao tác hợp lệ được
         ghi, trả 200 với `results[].status = FAILED` cho thao tác lỗi). `versionRef` thường là
         `draft`; nếu chưa có bản nháp và `createDraftIfMissing = true` thì máy chủ tạo bản nháp từ
-        phiên bản hiện hành trước. Bắt buộc `Idempotency-Key` để HTTT gửi lại an toàn khi mất kết
+        phiên bản hiện hành trước. Mỗi thao tác nhận `ifMatch` riêng (ETag của bản ghi); lệch thì
+        thao tác đó lỗi ERR-07-018 (`atomic = true`: không ghi gì và trả 412 kèm `results`; `atomic = false`:
+        các thao tác còn lại vẫn ghi). Khi `atomic = false` và có thao tác lỗi, phản hồi là 207
+        Multi-Status kèm kết quả từng phần; mọi thao tác đạt thì trả 200. Bắt buộc `Idempotency-Key` để HTTT gửi lại an toàn khi mất kết
         nối: cùng khóa và cùng băm thân trong 24 giờ trả lại đúng kết quả cũ với header
         `Idempotent-Replayed: true`; cùng khóa khác thân trả 409 ERR-07-022. Giới hạn 5.000 là
         tham số `07.rdm.batch-max-ops` (PH-18), vượt trả 400 ERR-07-026. Không yêu cầu `If-Match`
@@ -1420,7 +1469,7 @@ paths:
               honHop: { $ref: '#/components/examples/BatchItemsExample' }
       responses:
         '200':
-          description: Kết quả xử lý lô.
+          description: Kết quả xử lý lô, mọi thao tác đạt (hoặc `dryRun`).
           headers:
             ETag: { $ref: '#/components/headers/ETag' }
             Idempotent-Replayed: { $ref: '#/components/headers/IdempotentReplayed' }
@@ -1429,11 +1478,20 @@ paths:
               schema: { $ref: '#/components/schemas/BatchResult' }
               examples:
                 ketQua: { $ref: '#/components/examples/BatchResultExample' }
+        '207':
+          description: Xử lý từng phần (`atomic = false`), có thao tác `FAILED`; kết quả từng thao tác nằm ở `results[]`.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Idempotent-Replayed: { $ref: '#/components/headers/IdempotentReplayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BatchResult' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '422': { $ref: '#/components/responses/UnprocessableEntity' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -4296,7 +4354,12 @@ components:
         reason: { type: string, maxLength: 1000 }
         validTo: { $ref: '#/components/schemas/TDate' }
         cascade: { type: boolean, default: false }
-        reactivate: { type: boolean, default: false, description: '`true` để khôi phục ACTIVE bản ghi đã ngừng dùng trong cùng bản nháp.' }
+    ItemRestoreRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 10, maxLength: 1000 }
+        cascade: { type: boolean, default: false, description: '`true` để khôi phục cả các bản ghi con đã ngừng dùng theo nhánh.' }
     CatalogItemPage:
       type: object
       required: [items, page]
@@ -4337,6 +4400,7 @@ components:
           maxItems: 50
           items: { $ref: '#/components/schemas/ItemCodeValue' }
         reason: { type: string, maxLength: 1000 }
+        ifMatch: { type: string, maxLength: 128, description: 'ETag của bản ghi (như `ETag` của API-07-028), kiểm riêng cho từng thao tác `upsert` trên bản ghi đã có, `deprecate`, `delete`; lệch thì thao tác lỗi ERR-07-018.' }
       allOf:
         - if:
             properties: { op: { const: upsert } }

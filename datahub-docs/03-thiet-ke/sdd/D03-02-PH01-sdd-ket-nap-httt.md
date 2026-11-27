@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH01
 ten: Thiết kế chi tiết phần mềm phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
 phan_he: PH-01
@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D03-01 SAD; D02-03-PH01 FRS; D02-04-PH01 Use case; D03-03-PH
 
 Tài liệu mô tả cách hiện thực 51 FR của [D02-03-PH01](../../02-yeu-cau/frs/D02-03-PH01-frs-ket-nap-httt.md) và 34 use case của [D02-04-PH01](../../02-yeu-cau/use-case/D02-04-PH01-use-case-ket-nap-httt.md). PH-01 là module `onboarding` của đơn vị triển khai `dh-connect` (Java 21, Spring Boot 4, Spring Modulith), chạy ở mặt phẳng điều khiển, vùng Z3, lưu dữ liệu ở schema `ph01_onboarding` của cụm `pg-core`. Phân hệ không nằm trên đường dữ liệu: khi `dh-connect` ngừng, HTTT đã kết nạp vẫn gọi API bình thường vì định danh đã ở PH-12 và consumer đã ở APISIX (NFR-01-007). Thiết kế dựa trên năm quyết định:
 
-1. **Máy trạng thái trong mã, một bảng chuyển duy nhất.** Vòng đời HTTT (bảy trạng thái của DD-03), định danh, bàn giao, kỳ rà soát đều là enum cộng bảng chuyển khai báo một lần; mỗi chuyển ghi lịch sử, kiểm toán và sự kiện outbox trong cùng giao dịch (ADR-058, ADR-042, BR-01-031). MVP không phụ thuộc Flowable, nhưng bảng chuyển đặt sau một giao diện để nâng lên chế độ quy trình nhiều cấp mà không đổi dữ liệu lưu (Q01-14).
+1. **Máy trạng thái trong mã, một bảng chuyển duy nhất.** Vòng đời HTTT (bảy trạng thái của DD-03), định danh, bàn giao, kỳ rà soát đều là enum cộng bảng chuyển khai báo một lần; mỗi chuyển ghi lịch sử, kiểm toán và sự kiện outbox trong cùng giao dịch (ADR-058, ADR-042, BR-01-031). MVP không phụ thuộc Flowable, nhưng bảng chuyển đặt sau một giao diện để nâng lên chế độ quy trình nhiều cấp mà không đổi dữ liệu lưu; đã chốt 27/11/2026 (Q01-14): PH-01 tự điều phối việc duyệt ở MVP, tích hợp quy trình `DUYET_KET_NAP_HTTT` của PH-11 (API-11-049, EVT-11-05, 06) ở Đợt 2.
 2. **Bí mật không đi qua PH-01.** PH-12 ghi bí mật client vào OpenBao; chính sách của `dh-connect` chỉ cho đọc kèm bọc bắt buộc, nên mã của PH-01 không thể đọc giá trị bí mật ở dạng rõ ngoài lần mở bàn giao. CSDL chỉ có `secret_ref`, dấu vân tay và giá trị băm (BR-01-005, 006, 007; SEC-33).
 3. **Saga cấp định danh bền trong CSDL.** Trạng thái saga và từng bước nằm trong bảng của PH-01, bộ chạy lấy việc bằng `FOR UPDATE SKIP LOCKED`, mọi lệnh gọi PH-12 và PH-03 mang `sagaId` làm khóa lũy đẳng, bù trừ theo thứ tự ngược. `dh-connect` khởi động lại giữa chừng không làm mất tiến trình (FR-01-020, NFR-01-004).
 4. **Cắt quyền chặn ở cổng trước.** Tạm ngừng, thu hồi, thao tác khẩn đặt trạng thái và đẩy client vào danh sách chặn của APISIX trước, rồi mới gọi PH-12 vô hiệu client, thu hồi token, gọi PH-03 vô hiệu consumer; bước nào chưa xong thì thử lại tới khi xong và cảnh báo, không bao giờ hoàn tác trạng thái (BR-01-023, NFR-01-008).
@@ -262,7 +262,6 @@ public interface Ph12Port {
   void revokeTokens(TenantId t, String idempotencyKey, List<String> clientIds);
   void registerKey(TenantId t, String clientId, KeyMaterial publicKeyOrCert);
   RotationStarted startSecretRotation(TenantId t, String idempotencyKey, String clientId);
-  void removeScopes(TenantId t, String clientId, Set<String> scopes);
 }
 
 public interface Ph03Port {
@@ -470,7 +469,7 @@ Chi tiết thiết kế:
 
 *Đầu mối.* `ContactPolicy` thực thi ba quy tắc ở một nơi: miền thư thuộc `contact.allowedEmailDomains` (ERR-01-011); HTTT `ACTIVE` luôn còn ít nhất một đầu mối `TECHNICAL` hoạt động, kiểm trong cùng giao dịch khi xóa hoặc vô hiệu (ERR-01-050); thông tin liên hệ là dữ liệu cá nhân mức Hạn chế (CMP-LAW-05), chưa thuộc mức Nhạy cảm nên không mã hóa trường bằng envelope (SEC-31); được bảo vệ bằng RLS, mã hóa tầng khối (SEC-30), che trong log và vết (SEC-32) và giới hạn tốc độ tra cứu (mục 4.13). Tìm kiếm danh bạ dùng cột chuẩn hóa không dấu `search_text` với chỉ mục GIN `pg_trgm`, không dùng bản băm vì FR-01-045 tìm theo từ khóa một phần. Nếu hội đồng nâng đầu mối lên mức Nhạy cảm thì phải đổi sang tìm theo chỉ mục băm tiền tố và mã hóa trường (Q01-29).
 
-*Xuất danh sách.* `SystemExporter` chạy bất đồng bộ cho trên 1.000 dòng và trả `202` kèm tác vụ nền tra bằng API-01-088 (`GET /jobs/{jobId}`; nơi lưu trạng thái tác vụ chờ bảng `background_job`, Q01-57) (ADR-056 pha ghi, giới hạn như FR-00 xuất tệp), ghi kiểm toán xuất kèm bộ lọc; xuất toàn tenant chỉ TA, AU, PA (PERM-01-read, quy tắc OPA).
+*Xuất danh sách.* `SystemExporter` ở MVP xuất đồng bộ, giới hạn 20.000 dòng (đã chốt 27/11/2026, Q01-57); từ Đợt 2 chạy bất đồng bộ cho trên 1.000 dòng và trả `202` kèm tác vụ nền tra bằng API-01-088 (`GET /jobs/{jobId}`; nơi lưu trạng thái là bảng `background_job` thêm ở Đợt 2) (ADR-056 pha ghi, giới hạn như FR-00 xuất tệp), ghi kiểm toán xuất kèm bộ lọc; xuất toàn tenant chỉ TA, AU, PA (PERM-01-read, quy tắc OPA).
 
 ### 4.3. Tài liệu đính kèm
 
@@ -797,7 +796,7 @@ Dự toán độ trễ cho NFR-01-008 (giả định, đo ở D05-02-PH01): comm
 
 **FR hiện thực.** FR-01-037, 038.
 
-**Giao diện vào.** API-01-062 (đối chiếu), 063, 064 (đọc bản sao); `MemberSystemQueryApi` trong tiến trình.
+**Giao diện vào.** API-01-062 (đối chiếu), 063, 064 (đọc bản sao); `MemberSystemQueryApi` trong tiến trình. Đã chốt 27/11/2026: sau khi PH-16 chốt danh sách trường tự đăng ký kiến trúc (FR-16-048), PH-01 phát thêm `componentCode`, loại, phiên bản, vòng đời, `dependsOn`, `contentHash` ở sự kiện và có API liệt kê để đối chiếu.
 
 **Phụ thuộc ra.** Kafka (qua Debezium), Apicurio (lược đồ BACKWARD).
 
@@ -833,7 +832,7 @@ Chi tiết thiết kế:
 
 **Giao diện vào.** API-01-065…075; UI-01-12, UI-01-13; UC-01-27…29.
 
-**Phụ thuộc ra.** `Ph13Port.usageByCredential`, `Ph02Port.apisByDataType`, `NotifyPort`, `TaskInboxApi`, `ScopeCeilingService`, `Ph12Port.removeScopes` (qua EVT-01-11).
+**Phụ thuộc ra.** `Ph13Port.usageByCredential`, `Ph02Port.apisByDataType`, `NotifyPort`, `TaskInboxApi`, `ScopeCeilingService`.
 
 **Dữ liệu.** `access_review_cycle`, `access_review_item`, `review_confirmation` (chỉ lưu `link_hash`), `scope_ceiling`.
 
@@ -852,7 +851,7 @@ Chi tiết thiết kế:
 
 *Xác nhận của đơn vị.* `ConfirmationService.send` nhóm mục theo tổ chức, tạo một `review_confirmation` mỗi tổ chức với token 256 bit (chỉ lưu băm, hạn `accessReview.confirmLinkTtlDays`), gửi thư chỉ chứa liên kết và đưa việc vào hộp việc của OR; kỳ sang `WAITING`. Trang UI-01-13 yêu cầu đăng nhập và kiểm người mở thuộc tổ chức được hỏi (ERR-01-025), phản hồi `KEEP`, `REDUCE`, `RELEASE` lưu theo mục (`REDUCE` bắt buộc nêu phạm vi). `NoResponseJob` (hằng ngày) đặt đề xuất `REDUCE` và nhãn "Đơn vị chưa phản hồi" cho tổ chức quá `accessReview.noResponseDays`; nhắc lần hai sau 14 ngày; khi mọi tổ chức đã đáp hoặc hết hạn, kỳ sang `DECIDING`.
 
-*Quyết định.* `AccessReviewService.decide` kiểm lý do, xác thực lại hai yếu tố cho `REVOKE_SCOPE`, và không cho giữ mục có căn cứ hết hiệu lực (ERR-01-041); khi thu hồi hoặc thu hẹp phạm vi đang có đăng ký sử dụng hoạt động, hệ thống liệt kê đăng ký bị ảnh hưởng và yêu cầu xác nhận. Cập nhật `ScopeCeiling` và phát EVT-01-11 để PH-02 hủy hoặc thu hẹp đăng ký vượt trần và PH-12 gỡ scope khỏi client. Mục cuối cùng có quyết định thì kỳ `CLOSED`, ghi `last_review_at` cho từng HTTT, phát EVT-01-12; bằng chứng giữ 5 năm (NFR-01-022).
+*Quyết định.* `AccessReviewService.decide` kiểm lý do, xác thực lại hai yếu tố cho `REVOKE_SCOPE`, và không cho giữ mục có căn cứ hết hiệu lực (ERR-01-041); khi thu hồi hoặc thu hẹp phạm vi đang có đăng ký sử dụng hoạt động, hệ thống liệt kê đăng ký bị ảnh hưởng và yêu cầu xác nhận. Cập nhật `ScopeCeiling` và phát EVT-01-11 để PH-02 hủy hoặc thu hẹp đăng ký vượt trần rồi gọi API-12-068 thay tập scope của client (PH-12 không nghe EVT-01-11). Mục cuối cùng có quyết định thì kỳ `CLOSED`, ghi `last_review_at` cho từng HTTT, phát EVT-01-12; bằng chứng giữ 5 năm (NFR-01-022).
 
 *Căn cứ hết hiệu lực.* `LegalValidityChecker` chạy hằng ngày lúc 05:30 và khi mở kỳ: mục trần `ACTIVE` có `valid_until` đã qua hoặc bị TA, SO đánh dấu "văn bản bị bãi bỏ" (API-01-073, cần số hiệu và ngày) chuyển `SUSPENDED` với lý do `LEGAL_EXPIRED`, phát EVT-01-11 một lần (mục đã `SUSPENDED` bị bỏ qua), nhắc trước 30 ngày. Toàn bộ trần cùng hết hiệu lực thì đề nghị TA tạm ngừng HTTT thay vì từng mục (BR-01-015).
 
@@ -893,7 +892,7 @@ Chi tiết thiết kế: `DirectoryService` chỉ trả đầu mối `ACTIVE` c�
 
 **FR hiện thực.** FR-01-048.
 
-**Giao diện vào.** API-01-080 (tải, xem trước), 081 (trạng thái), 082 (xác nhận); UI-01-15; UC-01-32.
+**Giao diện vào.** API-01-080 (tải, xem trước), 081 (trạng thái), 082 (xác nhận); UI-01-15; UC-01-32. Đã chốt 27/11/2026: giữ API nhập riêng này; khi PH-18 chốt khung API nhập chung, API nhận thêm tiêu đề `X-Datahub-Migration: true` và khóa lũy đẳng `legacySystem:objectType:legacyKey`, PH-18 gọi qua API nhập riêng của PH-01.
 
 **Phụ thuộc ra.** `AttachmentService` (kiểm kiểu, quét), `Ph20Port` (ghép tổ chức), `TaskInboxApi`.
 
@@ -1242,7 +1241,7 @@ sequenceDiagram
   ARS->>K: EVT-01-12 khi đóng kỳ
 ```
 
-Kỳ rà soát đi một chiều từ `OPEN` đến `CLOSED`, mỗi bước chuyển ghi một dòng lịch sử. Tổng hợp mức dùng là bước duy nhất phụ thuộc hai phân hệ khác nên được giới hạn đồng thời và cho phép thiếu một phần; thiếu số liệu chỉ làm mục hiện "Chưa có số liệu", không bao giờ làm đề xuất thu hồi nhầm. Quyết định thu hồi chỉ thay đổi trần phạm vi và phát sự kiện: việc hủy đăng ký sử dụng và gỡ scope khỏi client do PH-02 và PH-12 làm khi nhận EVT-01-11, đúng ranh giới phạm vi.
+Kỳ rà soát đi một chiều từ `OPEN` đến `CLOSED`, mỗi bước chuyển ghi một dòng lịch sử. Tổng hợp mức dùng là bước duy nhất phụ thuộc hai phân hệ khác nên được giới hạn đồng thời và cho phép thiếu một phần; thiếu số liệu chỉ làm mục hiện "Chưa có số liệu", không bao giờ làm đề xuất thu hồi nhầm. Quyết định thu hồi chỉ thay đổi trần phạm vi và phát sự kiện: việc hủy đăng ký sử dụng và thay tập scope của client (API-12-068) do PH-02 làm khi nhận EVT-01-11, đúng ranh giới phạm vi.
 
 ## 6. Đa tenant trong mã nguồn
 
@@ -1433,7 +1432,7 @@ PH-01 chủ động chấp nhận nhất quán cuối cùng ở ranh giới vớ
 | Bước saga | Mỗi bước một giao dịch (ghi `RUNNING`, rồi kết quả) | Tạo client, consumer ở hệ ngoài | Bước `RUNNING` quá 60 giây gọi lại bằng cùng khóa |
 | Cắt quyền | Trạng thái, bốn việc, outbox | Chặn cổng, vô hiệu client, consumer | Thử lại tới khi xong, cảnh báo sau 60 giây |
 | Mở bàn giao | Chiếm chỗ `OPENING`, ghi `OPENED` | `unwrap` và `destroy` ở OpenBao | `HandoverRecoveryJob` xử lý `OPENING` treo (mục 4.7) |
-| Quyết định rà soát | Mục, trần, outbox | PH-02 hủy đăng ký, PH-12 gỡ scope | Ảnh chụp EVT-01-03 hằng giờ mang `ceilingDataTypes` để bên nhận phát hiện lệch |
+| Quyết định rà soát | Mục, trần, outbox | PH-02 hủy đăng ký rồi gọi API-12-068 thay tập scope | Ảnh chụp EVT-01-03 hằng giờ mang `ceilingDataTypes` để bên nhận phát hiện lệch |
 | Phát sự kiện | Dòng outbox | Kafka | Outbox giữ, phát bù khi Kafka trở lại; cảnh báo khi trễ quá 60 giây |
 
 : Ranh giới giao dịch và nhất quán
@@ -1721,3 +1720,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, vị trí kiến trúc và hiện trạng mã, cấu trúc gói `vn.datahub.connect.onboarding`, mô hình miền và 15 thành phần có bảng đặc tả 10 mục, 7 sơ đồ trình tự (kết nạp, saga, bàn giao, cắt quyền, kích hoạt, xoay vòng, rà soát), 11 máy trạng thái, xử lý lỗi và nhất quán, cấu hình và cờ tính năng, quan sát, hiệu năng và khả năng mở rộng, kiểm thử, lộ trình, 8 rủi ro, 10 câu hỏi mở (Q01-20…29), 11 đề nghị đồng bộ. Nguồn: D02-03-PH01, D02-04-PH01, D03-01 §4 và §7.3, D03-07, D03-10, ADR-001, 003, 006, 007, 012, 031, 032, 041, 042, 056, 058, 069, mã hiện trạng `apps/control` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: sửa lỗi lũy đẳng thành ERR-01-051, 054; callback saga là API-01-087 (ERR-01-053); xuất tệp nền API-01-088; mở bàn giao không dùng Idempotency-Key; số liệu 88 API, 54 mã lỗi; thêm đoạn mở các mục |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57), Q380 (PH-12 không nghe EVT-01-11), Q389, Q426, Q428 |

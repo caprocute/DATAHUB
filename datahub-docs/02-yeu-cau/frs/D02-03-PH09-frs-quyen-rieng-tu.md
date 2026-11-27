@@ -286,7 +286,7 @@ Chấp thuận chỉ có hiệu lực khi bundle đã được ký và nạp; t�
 
 ### 2.5. Quy trình nghiệp vụ liên quan
 
-Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho quyền riêng tư; tài liệu đề nghị bổ sung BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân" (Phụ lục B). PH-09 tham gia các quy trình sẵn có như bảng dưới.
+Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho quyền riêng tư; BP-12 "Quản lý quyền riêng tư và dữ liệu cá nhân" là quy trình đã chốt ngày 27/11/2026 và được bổ sung vào D02-01 mục 6.2 (Phụ lục B). PH-09 tham gia các quy trình sẵn có như bảng dưới.
 
 | Quy trình | Bước có PH-09 |
 |---|---|
@@ -296,7 +296,7 @@ Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho quyền 
 | BP-06 Khai thác dữ liệu quốc gia | Mục đích khai thác, hạn ngạch, cảnh báo tra cứu hàng loạt (FR-09-019, 020; THR-51) |
 | BP-07 Giám sát, xử lý sự cố, báo cáo | Vi phạm DLCN, đồng hồ 72 giờ (FR-09-058, 059) |
 | BP-08 Khởi tạo tenant | Nạp danh mục nền, tham số mặc định; xóa mật mã khi chấm dứt (FR-09-043) |
-| BP-11 (đề nghị) Quản lý quyền riêng tư | Phân loại, sổ xử lý, chấp thuận, che, quyền chủ thể, DPIA, vi phạm |
+| BP-12 Quản lý quyền riêng tư | Phân loại, sổ xử lý, chấp thuận, che, quyền chủ thể, DPIA, vi phạm |
 
 : Quy trình nghiệp vụ có PH-09 tham gia
 
@@ -4652,7 +4652,7 @@ PH-09 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từn
 | D02-08 §4, §5 | Thêm cặp loại trừ SO với `PERM-09-purpose-approve`, DS với DA; thêm scope `privacy:decide`, `apply`, `pseudonymize`, `register`, `consent` |
 | D00-02 | Mở ADR 090 (điểm quyết định mục đích tập trung PAP, PIP với PDP OPA), ADR 091 (giả danh hóa HMAC và token, không bảng ánh xạ), ADR 092 (ẩn danh hóa bằng ARX, k tối thiểu 10), ADR 093 (phát hiện DLCN bằng mẫu và kiểm tổng, không dùng ML) |
 | D02-07 | Thêm DD cho mục đích, chấp thuận, hoạt động xử lý, chính sách che; giá trị `NONE` của `personal_data_type`; enum Phụ lục A |
-| D02-01 | Thêm quy trình BP-11 "Bảo vệ dữ liệu cá nhân" (BP-10 đã đề nghị cho PH-06) |
+| D02-01 | Thêm quy trình BP-12 "Bảo vệ dữ liệu cá nhân" (BP-10 đã đề nghị cho PH-06) |
 | D00-04 | Chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận tập này |
 | D03-04 | Khung lỗi chung cấp ERR-00-401, 403, 428 mà PH-09 dẫn |
 | D02-03-PH04 | FR-04-067: tiêu đề `dh-data-classes` mang mức `DataClass`, đổi chữ "Cá nhân" thành bốn mức DD-08; gọi FR-09-027, 028 |
@@ -4731,4 +4731,4 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 64 FR đủ 17 mục chia 11 nhóm, mở rộng từ 11 FR của SRS cũ; 62 BR, 26 NFR, 82 + 13 mã lỗi, 32 sự kiện, 245 API dự kiến, 22 màn hình, 55 thực thể, 43 tham số |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của các tập UC, MH, SDD, CSDL, API, TC (bảng ở Phụ lục C): rank 1 đến 4, tên thư viện `dh-privacy-client`, 4 mã lỗi mới (ERR-09-079 đến 082), 8 API mới, 3 NFR mới, 7 tham số mới, 15 enum mới, 4 thực thể mới |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm PH-08 và PH-17 vào bên dùng phân loại (FR-09-003, EVT-09-01, EVT-09-03, NFR-09-002 tra phân loại p95 ≤ 100 ms), cho PH-18 gọi API-09-203 bằng scope `privacy:register` (FR-09-058) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm PH-08 và PH-17 vào bên dùng phân loại (FR-09-003, EVT-09-01, EVT-09-03, NFR-09-002 tra phân loại p95 ≤ 100 ms), cho PH-18 gọi API-09-203 bằng scope `privacy:register` (FR-09-058); chốt câu hỏi mở đợt đồng bộ: Q388 |

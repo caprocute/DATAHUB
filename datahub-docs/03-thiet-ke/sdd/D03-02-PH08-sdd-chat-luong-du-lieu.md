@@ -166,7 +166,7 @@ PH-08 gọi hoặc tiêu thụ sự kiện từ các phân hệ khác; bảng d�
 
 | Phân hệ, hệ thống | Chiều | Cách phụ thuộc | Khi không khả dụng |
 |---|---|---|---|
-| PH-06 Dữ liệu chủ | `dq` đọc, nghe, gọi | Khung nhìn `v_dq_{domain}`, EVT-06-01…04, 10; `StewardIntakeApi` (FR-08-046) | Lần đo `FAILED` (ERR-08-105), không bịa điểm |
+| PH-06 Dữ liệu chủ | `dq` đọc, nghe, gọi | Khung nhìn `v_dq_{domain}`, EVT-06-01…04, 10; `StewardIntakeApi` = API-06-126 (scope `mdm:steward-intake`, FR-08-046) | Lần đo `FAILED` (ERR-08-105), không bịa điểm |
 | PH-07 Danh mục | `dq` gọi | `RdmLookupApi` (module cùng DU), ảnh chụp ADR-053, bộ đệm Valkey | Quy tắc `SKIPPED` (ERR-08-108), trực tuyến theo `onDependencyFailure` |
 | PH-05 Kết nối | `dq` gọi | API nội bộ thuê kết nối chỉ đọc, khám phá lược đồ, nhận chỉ số hồ sơ API-08-024 | Lần đo `FAILED`, chạy thử báo ERR-08-105 |
 | PH-09 Quyền riêng tư | `dq` gọi | `ClassificationLookupApi` tra phân loại trường (PH-09 SDD §3.3), đệm thường tối đa 60 giây và xóa đệm khi nhận EVT-09-01; khi PH-09 không đáp ứng thì dùng bản đệm tối đa 5 phút | Coi trường chưa phân loại là `SENSITIVE` |
@@ -1231,4 +1231,4 @@ Các đề nghị của bản 0.1 về FRS và CSDL (HMAC, ví dụ 86,37, PH-18
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: module `dq` với 14 thành phần có khối đặc tả 10 mục, trình biên dịch SQL pushdown và CEL, điều phối đo phân mảnh với ShedLock, thuật toán chấm điểm, lấy mẫu có seed, dấu vân tay HMAC, năm sơ đồ trình tự, mô hình triển khai và dung lượng giả định, ma trận thành phần với FR, ADR đề xuất 085 đến 087, câu hỏi mở Q08-20…29, đề nghị đồng bộ |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2 và CSDL 0.2: 35 bảng, 43 tham số, 132 API (thêm API-08-129 tìm lỗi theo khóa, 130 và 131 bật, tắt đo tăng dần, 132 xem trước trọng số), ERR-08-055, ERR-08-056, scope `dq.ingest`, `value_mode`, mã phiếu và mã báo cáo, `scanTrigger` của `POST /scans`, `ADVISORY` trả `WARN` khi có vi phạm, lô tối đa 100 bản ghi, `VERIFY` do hệ thống tạo; Q08-20 đã chốt; §13.6 chỉ còn đề nghị dồn đợt cuối |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bucket báo cáo `dq-reports`; đổi tên giao diện gọi PH-09 thành `ClassificationLookupApi`, `MaskPlanApi`; đệm phân loại tối đa 60 giây |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bucket báo cáo `dq-reports`; đổi tên giao diện gọi PH-09 thành `ClassificationLookupApi`, `MaskPlanApi`; đệm phân loại tối đa 60 giây; chốt câu hỏi mở đợt đồng bộ: Q411, Q424 |
