@@ -4,6 +4,9 @@ Chạy: python3 build/tools/sinh_dac_ta_api.py <openapi.yaml> <tệp.md> [--vi-d
 Nội dung nằm giữa <!-- gen:dac-ta-api:start --> và <!-- gen:dac-ta-api:end -->;
 chưa có cặp đánh dấu thì chèn trước "## Lịch sử phiên bản" dưới tiêu đề chương mới.
 
+Cột "Quyền": ưu tiên chuỗi `x-datahub-permission.permission`; nếu thiếu thì đọc `anyOf` (nối bằng "hoặc")
+rồi `serviceScope` (in "Token dịch vụ, scope `…`"); không có cả ba thì in "Token dịch vụ".
+
 --vi-du: sau mỗi khối in "Ví dụ yêu cầu và phản hồi" (hai khối HTTP), dựng từ `example` của tham số,
 thân yêu cầu, thân và tiêu đề phản hồi thành công trong OpenAPI (không có cờ thì đầu ra như cũ).
 Dòng `Content-Type` chỉ in khi khác `application/json` (mặc định của API) để ví dụ gọn.
@@ -208,7 +211,15 @@ for tag, ops in nhom.items():
     for aid, m, path, op in sorted(ops, key=lambda x: x[:3]):
         ps, idem = tham_so(op.get('parameters'))
         ok, loi = resp(op.get('responses', {}))
-        quyen = (op.get('x-datahub-permission') or {}).get('permission', 'Token dịch vụ')
+        xdp = op.get('x-datahub-permission') or {}
+        if xdp.get('permission'):
+            quyen = xdp['permission']
+        elif xdp.get('anyOf'):
+            quyen = ' hoặc '.join(f'`{q}`' for q in xdp['anyOf'])
+        elif xdp.get('serviceScope'):
+            quyen = f"Token dịch vụ, scope `{xdp['serviceScope']}`"
+        else:
+            quyen = 'Token dịch vụ'
         fr = ', '.join(op.get('x-datahub-fr') or []) or 'Không'
         muc = op.get('summary', '')
         mota = (op.get('description') or '').strip().replace('\n', ' ')

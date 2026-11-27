@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-07
 ten: Từ điển dữ liệu dùng chung
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Phân tích nghiệp vụ, Kiến trúc sư, Đội phát triển, Kiểm thử
 mo_ta: Định nghĩa một lần duy nhất 14 thực thể dùng chung DD-01 đến DD-14 gồm chủ sở hữu, thuộc tính, ràng buộc, mức phân loại, sơ đồ quan hệ và ánh xạ từ dữ liệu hệ cũ.
@@ -145,8 +145,8 @@ Bảng dưới liệt kê 14 thực thể cùng tên bảng và phân hệ chủ
 | DD-08 | Mức phân loại dữ liệu | `ph09_privacy.data_class` | PH-09 | Bốn mức cố định, mở rộng được |
 | DD-09 | Phân loại trường dữ liệu | `ph09_privacy.field_classification` | PH-09 | Trong MVP do mã nguồn khai báo; PH-09 quản lý từ đợt 2 |
 | DD-10 | Bản ghi kiểm toán | `ph13_audit.audit_record` | PH-13 | Chỉ-thêm |
-| DD-11 | Sự kiện outbox | `ph{nn}_*.outbox` | Mỗi phân hệ | Cấu trúc thống nhất |
-| DD-12 | Tệp | `ph{nn}_*.file_object` | Mỗi phân hệ | Siêu dữ liệu; nội dung ở kho đối tượng |
+| DD-11 | Sự kiện outbox | `ph{nn}_*.outbox` | Mỗi phân hệ | Cấu trúc thống nhất; PH-02 đặt tên bảng `outbox_event` |
+| DD-12 | Tệp | `ph{nn}_*.file_object` | Mỗi phân hệ | Siêu dữ liệu; nội dung ở kho đối tượng; PH-01 đặt tên bảng `attachment` |
 | DD-13 | Thông báo | `ph18_ops.notification` | PH-18 | |
 | DD-14 | Tham số cấu hình | `ph18_ops.config_param` | PH-18 | Theo tenant, có phiên bản |
 
@@ -278,11 +278,20 @@ Hình cho thấy Tenant ở trung tâm: tám thực thể gắn trực tiếp v�
 | `status` | T-ENUM | Có | `PROVISIONING`, `ACTIVE`, `SUSPENDED`, `MERGING`, `MERGED`, `DECOMMISSIONED`, `FAILED` | NB | |
 | `isolation_mode` | T-ENUM | Có | `SHARED`, `DEDICATED_DB`, `DEDICATED_CLUSTER` | NB | D03-10 §2 |
 | `merged_into_id` | T-ID | Khi `MERGED` | FK DD-01 | NB | Tenant đích của sáp nhập |
-| `quota` | T-JSON | Có | Theo schema hạn mức D03-10 §5.3 | NB | |
+| `kind` | T-ENUM | Có | `PROVINCE`, `PLATFORM`, `COMMON`; bất biến | CK | Loại tenant (cột vật lý `kind`) |
+| `short_name` | T-NAME | Không | | CK | Tên ngắn hiển thị |
+| `scale_profile` | T-CODE | Không | `^QM-[A-Z0-9]{2,12}$` | NB | Hồ sơ quy mô (D03-09) |
+| `deployment_profile` | T-ENUM | Có | `HT-A`, `HT-B` | NB | Hồ sơ triển khai |
+| `template_id` | T-ID | Không | | NB | Khuôn mẫu khởi tạo đã dùng |
+| `config_path` | T-TEXT | Không | | NB | Đường dẫn cấu hình của tenant trong kho `dh-tenant-config` |
+| `declared_at` | T-TS | Không | | NB | Thời điểm khai báo |
 | `realm` | T-CODE | Có | `dh-{code thường}` | NB | Realm Keycloak |
 | `activated_at` | T-TS | Không | | NB | |
+| `suspended_at`, `merged_at`, `decommissioned_at` | T-TS | Không | | NB | Các mốc thời gian của trạng thái tương ứng |
 
 : Thuộc tính thực thể DD-01 Tenant
+
+Hạn mức không còn là thuộc tính `quota` dạng JSON của DD-01 mà nằm ở bảng riêng `ph20_tenant.tenant_quota` của PH-20 (theo schema hạn mức D03-10 §5.3), vì hạn mức có lịch sử đổi, đề nghị đổi và ghi đè tạm thời.
 
 ### DD-02 · Tổ chức
 
@@ -299,6 +308,8 @@ Cơ quan, đơn vị trong tỉnh: UBND tỉnh, sở, ban, ngành, UBND cấp x�
 | `is_data_owner` | T-BOOL | Có | Mặc định `false` | NB | Có là chủ quản dữ liệu (SH-08) |
 | `effective_from` / `effective_to` | T-DATE | `from` bắt buộc | `to` ≥ `from` | CK | Hiệu lực, phục vụ sắp xếp bộ máy |
 | `successor_id` | T-ID | Không | FK DD-02 | CK | Tổ chức kế thừa khi giải thể, sáp nhập |
+| `status` | T-ENUM | Có | `ACTIVE`, `INACTIVE`, `DISSOLVED`, `MERGED`; `DISSOLVED`, `MERGED` cần `effective_to`, `MERGED` cần `successor_id` | CK | Trạng thái của tổ chức |
+| `external_code` | T-CODE | Không | | CK | Mã định danh điện tử theo quy định hiện hành khi khác `code` |
 
 : Thuộc tính thực thể DD-02 Tổ chức
 
@@ -317,7 +328,14 @@ Một hệ thống thông tin được kết nạp vào Datahub. Đây là chủ
 | `security_approval_ref` | T-TEXT | Khi `L3` trở lên | | NB | Số quyết định phê duyệt cấp độ |
 | `system_type` | T-ENUM | Có | `PROVINCIAL`, `NATIONAL`, `MINISTRY`, `LEGACY`, `EXTERNAL` | CK | |
 | `roles` | T-ENUM[] | Có | ≥ 1 trong `CONSUMER`, `PROVIDER`, `PUBLISHER`, `SUBSCRIBER` | NB | |
-| `status` | T-ENUM | Có | `DRAFT`, `SUBMITTED`, `APPROVED`, `ACTIVE`, `SUSPENDED`, `TERMINATED`, `REJECTED` | NB | Chi tiết máy trạng thái ở FRS PH-01 |
+| `status` | T-ENUM | Có | `DRAFT`, `SUBMITTED`, `APPROVED`, `ACTIVE`, `SUSPENDED`, `TERMINATED`, `REJECTED` | NB | Máy trạng thái ở mục 4.3 của FRS PH-01 (D02-03-PH01) |
+| `review_stage` | T-ENUM | Khi `SUBMITTED` | `WAITING_ASSIGN`, `IN_REVIEW`, `CONSULTING`, `WAITING_APPROVAL`; rỗng ở trạng thái khác | NB | Giai đoạn thẩm định |
+| `provision_stage` | T-ENUM | Khi `APPROVED` | `PROVISIONING`, `AWAITING_KEY`, `SANDBOX_READY`, `PROVISION_FAILED`; rỗng ở trạng thái khác | NB | Giai đoạn cấp định danh sau phê duyệt |
+| `enforcement` | T-ENUM | Có | `NONE`, `PENDING`, `DONE` | NB | Tiến độ cắt quyền khi tạm ngừng hoặc chấm dứt |
+| `revision_no` | Số nguyên | Có | ≥ 0; nộp lại tăng 1 | NB | Số lần đã nộp hồ sơ |
+| `origin_tenant_id` | T-ID | Không | | NB | Tenant nguồn khi hồ sơ chuyển vào do sáp nhập tenant (D03-10 §5.4) |
+| `activated_at` | T-TS | Không | | NB | Thời điểm kích hoạt |
+| `last_access_review_at` | T-TS | Không | | NB | Lần rà soát quyền gần nhất |
 | `base_urls` | T-JSON | Không | Mảng T-URI, chỉ `https` | NB | Địa chỉ backend khi là `PROVIDER` hoặc nhận webhook |
 | `ip_allowlist` | T-JSON | Không | Mảng CIDR | HC | |
 | `legacy_ref` | T-TEXT | Không | | NB | Mã ở hệ cũ, phục vụ di trú |
@@ -335,7 +353,11 @@ Người của cơ quan chủ quản được liên hệ khi có việc về m�
 | `full_name` | T-NAME | Có | | HC | |
 | `email` | T-EMAIL | Có | | HC | |
 | `phone` | T-PHONE | Không | | HC | |
+| `job_title` | T-NAME | Có | | HC | Chức vụ (cột vật lý `job_title`) |
 | `user_account_id` | T-ID | Không | FK DD-06 | NB | Liên kết tài khoản nếu đầu mối có tài khoản |
+| `is_public` | T-BOOL | Có | Mặc định `true` | NB | Hiển thị đầu mối cho người dùng trong tenant |
+| `status` | T-ENUM | Có | `ACTIVE`, `INACTIVE` | NB | Đầu mối thôi liên hệ chuyển `INACTIVE` |
+| `last_confirmed_at` | T-TS | Không | | NB | Lần gần nhất đầu mối xác nhận thông tin còn đúng |
 
 : Thuộc tính thực thể DD-04 Đầu mối liên hệ
 
@@ -351,8 +373,11 @@ Thông tin xác thực mà HTTT dùng để gọi Datahub. Bí mật (client sec
 | `client_id` | T-CODE | Có | Duy nhất trong realm | NB | Client ID Keycloak hoặc consumer APISIX |
 | `secret_ref` | T-SECRET-REF | Khi có bí mật | | NB | Đường dẫn OpenBao |
 | `cert_fingerprint` | T-TEXT | Khi `MTLS` | SHA-256 | NB | |
-| `status` | T-ENUM | Có | `ACTIVE`, `ROTATING`, `REVOKED`, `EXPIRED` | NB | |
+| `jwks_ref` | T-TEXT | Khi `PRIVATE_KEY_JWT` | | NB | Tham chiếu tập khóa công khai |
+| `status` | T-ENUM | Có | `PENDING`, `ACTIVE`, `ROTATING`, `REVOKED`, `EXPIRED` | NB | `PENDING` là trạng thái kỹ thuật của bước `RECORD` trong saga cấp định danh |
 | `expires_at` | T-TS | Có | Tối đa 12 tháng từ khi cấp | NB | |
+| `rotation_ends_at` | T-TS | Khi `ROTATING` | | NB | Hết thời hạn cấp song song khi xoay vòng |
+| `revoked_at`, `revoked_reason` | T-TS, T-TEXT | Khi `REVOKED` | | NB | Thu hồi định danh, kèm lý do |
 | `last_used_at` | T-TS | Không | | NB | |
 
 : Thuộc tính thực thể DD-05 Định danh ứng dụng
@@ -417,7 +442,7 @@ Gán mức phân loại cho từng trường dữ liệu của thực thể, lư
 | `scope` | T-ENUM | Có | `INTERNAL_ENTITY`, `API_SCHEMA`, `EVENT_SCHEMA` | NB | |
 | `target` | T-TEXT | Có | Ví dụ `ph01_onboarding.contact.phone` hoặc JSON Pointer trong schema | NB | |
 | `data_class_id` | T-ID | Có | FK DD-08 | NB | |
-| `personal_data_type` | T-ENUM | Không | `BASIC`, `SENSITIVE` theo pháp luật về dữ liệu cá nhân | NB | |
+| `personal_data_type` | T-ENUM | Có | `NONE`, `BASIC`, `SENSITIVE` theo pháp luật về dữ liệu cá nhân; mặc định `NONE` (trường không chứa dữ liệu cá nhân) | NB | |
 | `mask_pattern` | T-TEXT | Không | Ví dụ `keep-last-3` | NB | |
 
 : Thuộc tính thực thể DD-09 Phân loại trường dữ liệu
@@ -431,16 +456,21 @@ Gán mức phân loại cho từng trường dữ liệu của thực thể, lư
 | `occurred_at` | T-TS | Có | | NB | |
 | `actor_type` | T-ENUM | Có | `USER`, `SYSTEM`, `MEMBER_SYSTEM` | NB | |
 | `actor_id` | T-ID | Có | | NB | |
-| `actor_display` | T-NAME | Có | | HC | Tên hiển thị tại thời điểm ghi |
-| `on_behalf_of_tenant` | T-TENANT | Không | | NB | Khi vai trò nền tảng truy cập liên tenant |
+| `actor_name` | T-NAME | Có | | HC | Tên hiển thị tại thời điểm ghi |
+| `actor_home_tenant` | T-TENANT | Không | | NB | Tenant gốc của người thao tác khi vai trò nền tảng truy cập liên tenant |
 | `source_ip` | T-TEXT | Không | | HC | |
+| `user_agent`, `session_hash` | T-TEXT | Không | `session_hash` là băm của mã phiên | HC | Ngữ cảnh thiết bị, phiên |
+| `source_du` | T-CODE | Có | | NB | Đơn vị triển khai sinh bản ghi |
 | `action` | T-CODE | Có | `{PH}.{đối tượng}.{động từ}`, ví dụ `07.category.publish` | NB | |
 | `object_type` | T-CODE | Có | | NB | |
 | `object_id` | T-TEXT | Có | | NB | |
+| `object_key_hmac` | T-TEXT | Không | HMAC theo khóa tenant | NB | Băm có khóa của số định danh chủ thể dữ liệu, không lưu số định danh (BR-13-005) |
 | `before` / `after` | T-JSON | Không | Đã che theo DD-09 | HC | |
-| `result` | T-ENUM | Có | `SUCCESS`, `DENIED`, `FAILED` | NB | |
+| `outcome` | T-ENUM | Có | `SUCCESS`, `DENIED`, `FAILED` | NB | Kết quả thao tác |
+| `purpose` | T-CODE | Không | | NB | Mục đích khai thác khi có |
 | `reason` | T-TEXT | Khi thao tác yêu cầu lý do | | NB | |
 | `trace_id` | T-TRACE | Có | | NB | |
+| `seq`, `recorded_at` | Số nguyên lớn, T-TS | Có | `seq` liên tục theo tenant; `recorded_at` do PH-13 gán | NB | Số thứ tự trong chuỗi và thời điểm ghi |
 | `prev_hash` / `hash` | T-TEXT | Có | SHA-256, hex | NB | |
 
 : Thuộc tính thực thể DD-10 Bản ghi kiểm toán
@@ -463,6 +493,8 @@ Cấu trúc thống nhất cho bảng outbox của mọi phân hệ (D03-01 §7.
 
 : Thuộc tính thực thể DD-11 Sự kiện outbox
 
+Các bảng hạ tầng `inbox`, `idempotency_record`, `shedlock` của từng phân hệ không phải thực thể dùng chung; mỗi phân hệ khai báo ở D03-03 của mình. Riêng bảng outbox của PH-02 đặt tên `outbox_event`.
+
 ### DD-12 · Tệp
 
 Siêu dữ liệu của tệp đính kèm hoặc tệp xuất; nội dung tệp nằm ở kho đối tượng.
@@ -480,6 +512,8 @@ Siêu dữ liệu của tệp đính kèm hoặc tệp xuất; nội dung tệp 
 
 : Thuộc tính thực thể DD-12 Tệp
 
+Ở bản vật lý, PH-20 đổi tên thuộc tính `object_key` thành `object_path` (tránh trùng tên với dạng cột bí mật mà công cụ quét hay báo nhầm) và PH-01 đặt tên bảng `attachment` thay `file_object`. Tên cột của các phân hệ khác theo D03-03 của phân hệ đó.
+
 ### DD-13 · Thông báo
 
 Thông báo gửi tới người dùng qua hộp thông báo và các kênh khác, dùng chung cho mọi phân hệ.
@@ -495,6 +529,8 @@ Thông báo gửi tới người dùng qua hộp thông báo và các kênh khá
 
 : Thuộc tính thực thể DD-13 Thông báo
 
+PH-18 hiện thực DD-13 bằng hai bảng `notification_message` và `notification_delivery`; khung nhìn `ph18_ops.notification` giữ tên cũ của DD-13, trong đó `channels_sent` là mảng các kênh đã gửi.
+
 ### DD-14 · Tham số cấu hình
 
 Tham số vận hành theo phiên bản, mặc định toàn nền tảng và có thể ghi đè theo tenant.
@@ -508,6 +544,8 @@ Tham số vận hành theo phiên bản, mặc định toàn nền tảng và c�
 | `effective_from` | T-TS | Có | |
 
 : Thuộc tính thực thể DD-14 Tham số cấu hình
+
+PH-18 hiện thực DD-14 bằng bốn bảng `param_definition`, `param_value`, `param_value_version`, `param_change_request` và khung nhìn `ph18_ops.config_param` giữ tên cũ; `scope` nhận `PLATFORM` hoặc `TENANT`, `schema` là `json_schema` của lược đồ khóa. Ví dụ khóa `00.session.idle-timeout-minutes` dùng không gian tên `00` do PH-00 (nền tảng chung) sở hữu, đã khởi tạo trong dữ liệu nền của PH-18.
 
 ## 5. Ánh xạ từ dữ liệu hệ cũ
 
@@ -531,3 +569,4 @@ Bảng dưới đây ánh xạ các bảng của hệ cũ sang thực thể dùn
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm tóm tắt cho hội đồng thẩm định, năm mục giới thiệu, sơ đồ ERD đầy đủ 14 thực thể kèm thuyết minh, đoạn mở cho các mục còn thiếu, chú thích bảng theo tên thực thể. Giữ nguyên toàn bộ thuộc tính và ràng buộc cũ |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: DD-01, DD-02, DD-03, DD-04, DD-05, DD-10 thêm hoặc đổi thuộc tính theo D03-03 của PH-01, PH-13, PH-20; DD-09 thêm giá trị `NONE`; ghi tên bảng vật lý khác chuẩn ở DD-11, DD-12, DD-13, DD-14 |

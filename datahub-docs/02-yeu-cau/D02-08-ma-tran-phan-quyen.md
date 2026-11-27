@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-08
 ten: Ma trận phân quyền
-phien_ban: 0.4
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Phân tích nghiệp vụ, Kiến trúc sư, Đội phát triển, Kiểm thử, ATTT
 mo_ta: Định nghĩa 22 vai trò, các quyền PERM theo phân hệ, ma trận gán quyền, cặp vai trò phải tách nhiệm vụ, scope của HTTT thành viên và ánh xạ từ quyền hệ cũ, làm căn cứ phân quyền và sinh ca kiểm thử.
@@ -28,8 +28,8 @@ tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D02-01 BRD; D02-02 SRS;
 | Vai trò chuẩn | 22 (ROLE-*) |
 | Họ quyền theo phân hệ | 20 phân hệ PH-01…PH-20 |
 | Quyền thanh toán PH-19 | 48 quyền theo khung PH-19 §13 |
-| Cặp vai trò tách nhiệm vụ | 7 cặp ở mục 4 |
-| Loại scope của máy | 6 nhóm scope ở mục 5 |
+| Cặp vai trò tách nhiệm vụ | 7 cặp ở mục 4, cộng bảng cặp loại trừ theo quyền trên cùng đối tượng |
+| Loại scope của máy | 6 nhóm scope dành cho HTTT cộng bảng scope nội bộ của 13 phân hệ ở mục 5 |
 
 : Con số chính của ma trận phân quyền
 
@@ -172,7 +172,7 @@ Bảng dưới đây liệt kê vai trò chuẩn được tạo tự động cho
 
 Quyền viết theo dạng `PERM-{PH}-{động từ}`. Các động từ chuẩn: `read` (xem), `create`, `update`, `delete`, `submit` (gửi duyệt), `approve` (duyệt hoặc từ chối), `publish` (phát hành, công bố), `operate` (kích hoạt, tạm dừng, xử lý lại), `export` (xuất dữ liệu), `admin` (cấu hình phân hệ). Quyền đặc thù được liệt kê riêng.
 
-Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi của vai trò; **○** chỉ với đối tượng thuộc tổ chức của mình; **—** không được phép. Cột vai trò viết tắt: PA = PLATFORM_ADMIN, PO = PLATFORM_OPERATOR, TA = TENANT_ADMIN, TO = TENANT_OPERATOR, SO = SECURITY_OFFICER, IE = INTEGRATION_ENGINEER, IA = INTEGRATION_APPROVER, SV = SERVICE_OWNER, CA = CATALOG_APPROVER, OR = ORG_REQUESTER, DS = DATA_STEWARD, DA = DATA_APPROVER, DO = DATA_OWNER, VW = VIEWER, AU = AUDITOR. Vai trò thanh toán và nhà phát triển có bảng riêng ở mục 3.3.
+Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi của vai trò; **○** chỉ với đối tượng thuộc tổ chức của mình; **—** không được phép. Cột vai trò viết tắt: PA = PLATFORM_ADMIN, PO = PLATFORM_OPERATOR, TA = TENANT_ADMIN, TO = TENANT_OPERATOR, SO = SECURITY_OFFICER, IE = INTEGRATION_ENGINEER, IA = INTEGRATION_APPROVER, SV = SERVICE_OWNER, CA = CATALOG_APPROVER, OR = ORG_REQUESTER, DS = DATA_STEWARD, DA = DATA_APPROVER, DO = DATA_OWNER, VW = VIEWER, AU = AUDITOR; PU = PLATFORM_AUDITOR (chỉ dùng ở các bảng liệt kê vai trò của mục 3.2 và đoạn bổ sung cuối mục 3.1). Vai trò thanh toán và nhà phát triển có bảng riêng ở mục 3.3.
 
 ### 3.1. Phân hệ MVP
 
@@ -181,18 +181,19 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | Quyền | Mô tả | PA | PO | TA | TO | SO | IE | IA | SV | CA | OR | DS | DA | DO | VW | AU |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | PERM-01-read | Xem hồ sơ HTTT | ● | ● | ● | ● | ● | ● | ● | ● | ● | ○ | — | — | ○ | ● | ● |
-| PERM-01-create | Tạo hồ sơ HTTT | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
+| PERM-01-create | Tạo hồ sơ nháp; khai kỹ thuật, nhu cầu, đầu mối, tài liệu; sửa hồ sơ, đầu mối của HTTT đã kết nạp; đề nghị thay đổi, đề nghị mở rộng phạm vi | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
 | PERM-01-submit | Gửi hồ sơ kết nạp | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
-| PERM-01-approve | Duyệt kết nạp | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-01-approve | Phê duyệt hoặc từ chối kết nạp; duyệt thay đổi và đề nghị chấm dứt; xác nhận thao tác khẩn, kích hoạt PRODUCTION; phân công người thẩm định (IE, SO ghi kết luận theo phân công do OPA kiểm, không cần quyền riêng) | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-01-credential | Cấp, xoay vòng định danh ứng dụng | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
-| PERM-01-suspend | Tạm ngừng, thu hồi HTTT | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-01-suspend | Tạm ngừng, khôi phục, chấm dứt HTTT; thu hồi khẩn; mở kỳ rà soát quyền, xử lý kết quả rà soát | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-02-read | Xem danh mục dịch vụ | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| PERM-02-create / update | Đăng ký, sửa API, gói | — | — | ● | — | — | — | — | ○ | — | — | — | — | — | — | — |
+| PERM-02-create / update | Đăng ký, sửa, xóa mềm API và gói (tổ chức mình với SV) | — | — | ● | — | — | — | — | ○ | — | — | — | — | — | — | — |
 | PERM-02-submit | Gửi duyệt công bố | — | — | ● | — | — | — | — | ○ | — | — | — | — | — | — | — |
-| PERM-02-publish | Duyệt và công bố API, gói | — | — | ● | — | — | — | — | — | ● | — | — | — | — | — | — |
+| PERM-02-publish | Duyệt và công bố API, gói; duyệt ngừng khuyến nghị, ngừng hẳn, nâng mức hiển thị, thay đổi backend | — | — | ● | — | — | — | — | — | ● | — | — | — | — | — | — |
 | PERM-02-subscribe | Đăng ký sử dụng API cho HTTT | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
-| PERM-02-approve-subscription | Duyệt đăng ký sử dụng | — | — | ● | — | — | — | — | ○ | ● | — | — | — | — | — | — |
+| PERM-02-approve-subscription | Duyệt đăng ký sử dụng (SV một mình chỉ đủ với dữ liệu dưới mức Hạn chế, BR-02-026) | — | — | ● | — | — | — | — | ○ | ● | — | — | — | — | — | — |
 | PERM-02-operate | Start/Stop API | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-02-admin | Quản trị phân hệ: tham số, bộ phân loại và thẻ, bộ luật kiểm tra, chuyển chủ quản, nhập từ APIM cũ | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-03-read | Xem cấu hình gateway, trạng thái nút | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-03-admin | Quản lý chính sách gateway | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-03-limit | Đặt hạn mức toàn tenant, ghi đè hạn mức theo route | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -204,10 +205,17 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-03-approve | Duyệt yêu cầu thay đổi gateway có bốn mắt (cửa ngoài, hạ hạn mức tenant, đổi chế độ WAF) | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-03-log-read | Xem nhật ký lượt gọi chi tiết (có định danh HTTT, đã che dữ liệu nhạy cảm), xuất nhật ký | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-04-read | Xem luồng | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | ● | ● |
-| PERM-04-create / update | Thiết kế luồng, chạy thử | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-04-create | Tạo, thiết kế luồng, chạy thử | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-04-update | Sửa luồng, chạy thử (trong không gian làm việc có mức EDIT trở lên) | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-04-submit | Gửi duyệt phát hành | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-04-publish | Duyệt phát hành, quay lui | — | — | — | — | — | — | ● | — | — | — | — | — | — | — | — |
 | PERM-04-operate | Kích hoạt, tạm dừng luồng, route | — | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — |
+| PERM-04-delete | Gỡ bỏ luồng, xóa bản nháp (IE chỉ với bản nháp của mình) | — | — | ● | — | — | ○ | — | — | — | — | — | — | — | — | — |
+| PERM-04-emergency-stop | Tạm dừng khẩn cấp bỏ qua GitOps (SO chỉ khi luồng gây sự cố ATTT hoặc quá tải hệ đích) | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-04-promote | Thăng cấp phiên bản đã duyệt lên môi trường cao hơn | — | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-04-admin | Quản lý không gian làm việc, thành viên, tham số PH-04 | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-04-catalog-admin | Quản lý danh mục thành phần được phép, khuôn mẫu, hồ sơ runtime (SO chỉ duyệt) | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-04-sample-data | Dùng dữ liệu thật làm bản tin mẫu khi chạy thử trên TEST (IE được TA cấp theo luồng) | — | — | — | — | — | ○ | — | — | — | — | — | — | — | — | — |
 | PERM-05-read | Xem Kamelet, kết nối | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
 | PERM-05-connection | Khai báo, sửa kết nối nguồn, giá trị và bí mật theo môi trường, cấp kết nối, yêu cầu tài khoản CSDL | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-05-kamelet-approve | Duyệt, thu hồi Kamelet (IA: Kamelet của tỉnh; PA: `COMMON` và Kamelet nền) | ● | — | — | — | — | — | ● | — | — | — | — | — | — | — | — |
@@ -220,11 +228,16 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-05-audit-read | Xem nhật ký truy cập CSDL của luồng, lịch sử xoay bí mật chi tiết | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-05-admin | Tham số PH-05, bật tắt loại kết nối | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-07-read | Xem danh mục dùng chung | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| PERM-07-create / update | Soạn, nhập danh mục | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
+| PERM-07-create | Soạn, nhập danh mục | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
+| PERM-07-update | Sửa danh mục, nhóm, lược đồ, bản ghi trên bản nháp; hủy bản nháp | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
 | PERM-07-submit | Gửi duyệt phát hành | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
 | PERM-07-publish | Duyệt phát hành phiên bản | ● (COMMON) | — | — | — | — | — | — | — | — | — | — | ● | — | — | — |
 | PERM-07-export | Xuất danh mục | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | PERM-07-sync | Chạy đồng bộ danh mục quốc gia | ● | — | ● | — | — | — | — | — | — | — | — | ● | — | — | — |
+| PERM-07-retire | Ngừng hiệu lực danh mục đã phát hành | ● (COMMON) | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-07-mapping | Quản lý hệ thống mã ngoài và bảng ánh xạ mã | ● | — | ● | — | — | ● | — | — | — | — | ● | — | — | — | — |
+| PERM-07-grant | Cấp, thu hồi quyền khai thác danh mục `RESTRICTED` cho HTTT | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-07-configure | Đọc, ghi tham số `07.rdm.*` của tenant qua PH-18 | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-10-read | Xem dự án, topic, sơ đồ kết nối | ● | ● | ● | ● | ● | ● | ● | ● | — | ○ | — | — | ○ | ● | ● |
 | PERM-10-create | Tạo dự án, topic, phiên bản lược đồ, bên phát, bên nhận; đề nghị publication; nhập khai báo; gửi duyệt | — | — | ● | — | — | ● | — | ○ | — | — | — | — | — | — | — |
 | PERM-10-update | Sửa dự án, topic (phần không cần duyệt), lược đồ nháp, bên phát, bên nhận; ngừng topic | — | — | ● | — | — | ● | — | ○ | — | — | — | — | — | — | — |
@@ -233,7 +246,7 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-10-operate | Tạm dừng, tiếp tục subscription, publication; xoay khóa ký; xử lý DLQ; đề nghị phát lại; xác nhận cảnh báo lag (SO chỉ tạm ngừng khi sự cố) | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-10-admin | Tham số `10.*`, danh mục kiểu giao tiếp và chế độ định tuyến, hạn mức, Kafka ngoài, di trú Pulsar, topic nền tảng `dh.` (chỉ PA) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-user-admin | Quản lý người dùng, gán vai trò | ● (PLATFORM) | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
-| PERM-12-read | Xem người dùng, quyền hiệu lực | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-12-read | Xem người dùng, vai trò, phiên (không xem yếu tố xác thực), quyền hiệu lực, client, chính sách | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-12-user-lock | Khóa, mở khóa, vô hiệu, kích hoạt lại tài khoản; buộc đăng xuất; thu hồi truy cập tức thời của người dùng hoặc client; tạm ngừng, tiếp tục client | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-mfa-reset | Đặt lại yếu tố thứ hai của người dùng cấp dưới (quản trị cấp trên) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-sod-exception | Đề nghị ngoại lệ tách nhiệm vụ có thời hạn | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -249,15 +262,15 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-12-admin | Tham số phân hệ `12.*` trong trần của nền tảng; khai báo liên kết LDAP/AD, SAML, VNeID của tenant | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-realm-admin | Xem trạng thái, đối chiếu, tạm ngừng, khôi phục realm của tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-dashboard | Xem bảng điều khiển giám sát | ● | ● | ● | ● | ● | ● | ● | ○ | — | — | — | — | — | ● | ● |
-| PERM-13-logs | Tra log, trace | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
-| PERM-13-audit-read | Xem nhật ký kiểm toán | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
-| PERM-13-audit-export | Xuất bằng chứng kiểm toán | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-13-logs | Tra log, trace, nhật ký truy cập API | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
+| PERM-13-audit-read | Xem nhật ký kiểm toán, báo cáo truy cập liên tenant; kiểm tra toàn vẹn | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-13-audit-export | Xuất bằng chứng kiểm toán; chạy kiểm tra toàn vẹn theo yêu cầu | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-alert-admin | Cấu hình cảnh báo | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-alert-ack | Xác nhận, đánh dấu đã xử lý, tạm ẩn cảnh báo | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-security | Xem và xử lý cảnh báo an ninh; tinh chỉnh ngưỡng luật phát hiện; lập báo cáo sự cố | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-admin | Tham số `13.*`, mục tiêu SIEM, bộ dashboard, hạn mức quan sát | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-read | Xem danh mục dịch vụ quốc gia | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | — | — | — | ● | ● |
-| PERM-14-admin | Cấu hình kết nối NDXP | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-admin | Khai báo nền tảng và kết nối, thông tin xác thực, điểm cuối chiều vào, tham số phân hệ | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-service | Khai báo, sửa dịch vụ, hợp đồng, đặc tả, cung cấp lại, đối chiếu danh mục dịch vụ | ● | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-14-route | Tạo, sửa luật định tuyến, gửi duyệt | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-14-approve | Duyệt bật nền tảng, luật định tuyến, hạn mức PROD, kích hoạt chứng thư | ● | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
@@ -296,6 +309,8 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 
 Khi khai thác dữ liệu Nhạy cảm, mọi vai trò cần thêm `PERM-09-unmask` (mục 3.2) để xem giá trị đầy đủ; nếu không, giá trị luôn bị che kể cả với vai trò có quyền `read`.
 
+`ROLE-PLATFORM_AUDITOR` (PU) không có cột riêng ở các bảng trên vì chỉ tồn tại ở tenant `PLATFORM` và chỉ đọc. Vai trò này được gán `PERM-13-audit-read`, `PERM-13-audit-export`, `PERM-13-dashboard`, `PERM-13-logs` (phạm vi toàn nền tảng; mọi truy cập vào tenant khác đi qua phiên liên tenant có lý do) và ở PH-16 được gán `PERM-16-read`, `PERM-16-compare`, `PERM-16-audit-read` (mục 3.2). Các quyền `PERM-{PH}-read` còn lại không cấp cho PU.
+
 ### 3.2. Phân hệ đợt 2 và đợt 3
 
 Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, theo dạng liệt kê vai trò được phép.
@@ -316,13 +331,13 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-06-audit-read | Xem nhật ký truy cập dữ liệu chủ | SO, AU |
 | PERM-08-read | Xem bảng điều khiển, thẻ điểm, đối tượng đo, quy tắc, lần đo, báo cáo chất lượng đã công bố | PA, TA, TO, SO, DS, DA, DO (○), VW (chỉ tổng hợp), AU |
 | PERM-08-asset | Khai báo miền chất lượng, đối tượng đo, phần tử dữ liệu trọng yếu, chạy hồ sơ dữ liệu | TA, DS |
-| PERM-08-rule-admin | Soạn quy tắc chất lượng, trọng số, ngưỡng, quy tắc cảnh báo, gửi duyệt | PA (mẫu `COMMON`), TA, DS |
+| PERM-08-rule-admin | Soạn quy tắc chất lượng, trọng số, ngưỡng, quy tắc cảnh báo, gửi duyệt; xác nhận, tắt tiếng cảnh báo cùng với `PERM-08-run` (API-08-102, 103) | PA (mẫu `COMMON`), TA, DS |
 | PERM-08-approve | Duyệt bộ quy tắc, trọng số và ngưỡng, ngoại lệ chấp nhận, công bố báo cáo chất lượng | DA |
 | PERM-08-run | Lập lịch, chạy, hủy, chạy lại lần đo chất lượng | TA, TO, DS |
 | PERM-08-finding-read | Xem chi tiết bản ghi lỗi chất lượng (giá trị đã che) | SO, DS, DA, DO (○, tổ chức mình) |
 | PERM-08-remediate | Nhận, xử lý, cập nhật phiếu khắc phục chất lượng | TA, DS, DO (○) |
 | PERM-08-report | Soạn, sinh, xuất báo cáo chất lượng | TA, DS |
-| PERM-08-export | Xuất bản ghi lỗi; có trường Nhạy cảm cần DO chấp thuận | DS, DA |
+| PERM-08-export | Xuất bản ghi lỗi; có trường Nhạy cảm cần DO chấp thuận | DS, DA, DO (○, chỉ để chấp thuận xuất có trường Nhạy cảm, API-08-076) |
 | PERM-08-config | Tham số chất lượng theo tenant, lưu giữ | PA (trần), TA |
 | PERM-08-audit-read | Xem nhật ký kiểm toán PH-08 | SO, AU |
 | PERM-09-read | Xem danh mục, sổ, chính sách, bundle, báo cáo (đã che) | PA, TA, TO, SO, DS, DA, DO (○), VW, AU |
@@ -357,12 +372,12 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-15-support | Xử lý hỏi đáp, phiếu hỗ trợ của dịch vụ trên cổng | TA, CA, SV (○) |
 | PERM-15-dev-approve | Duyệt, từ chối, khóa, mở khóa tài khoản `dh-dev` và ứng dụng sandbox | TA, SO, PA |
 | PERM-15-audit-read | Xem nhật ký truy cập, thử API và báo cáo sử dụng cổng | TA, SO, AU, PA |
-| PERM-16-read | Xem bảng điều khiển, chỉ tiêu, báo cáo chỉ tiêu đã công bố, sổ kiến trúc | PA, TA, TO, SO, DS, AU, VW, PU |
+| PERM-16-read | Xem bảng điều khiển, chỉ tiêu, báo cáo chỉ tiêu đã công bố, sổ kiến trúc | PA, PO, TA, TO, SO, DS, AU, VW, PU |
 | PERM-16-admin | Soạn định nghĩa chỉ tiêu, nhóm, mục tiêu, ngưỡng, mẫu báo cáo, gửi duyệt | PA (mẫu `COMMON`), TA |
 | PERM-16-approve | Duyệt định nghĩa chỉ tiêu và báo cáo, công bố, đính chính, rút (người lập không tự duyệt) | TA |
 | PERM-16-source | Đăng ký, sửa, tạm dừng nguồn số liệu và hợp đồng chỉ số | TA, TO |
 | PERM-16-manual | Nhập số liệu tay kèm bằng chứng, gửi xác nhận (người nhập không tự xác nhận) | TO, DS, SO |
-| PERM-16-run | Chạy tổng hợp, tính lại, chốt và mở lại kỳ | TA, TO |
+| PERM-16-run | Chạy tổng hợp, tính lại, chốt và mở lại kỳ (TO không chốt, không mở lại kỳ; PO chỉ hủy lần tổng hợp treo) | TA, TO (○), PO (○) |
 | PERM-16-report | Lập bản nháp báo cáo, viết thuyết minh, gửi duyệt | TA, TO |
 | PERM-16-export | Xuất PDF, XLSX, CSV, JSON; quản lý danh sách phân phối | TA, TO, AU |
 | PERM-16-arch | Sửa sổ kiến trúc: thành phần, phiên bản, phụ thuộc | PA, TA, TO |
@@ -443,7 +458,7 @@ Bốn mươi tám quyền và ma trận dưới đây lấy nguyên từ khung t
 
 ### 3.4. Nhà phát triển
 
-Vai trò nhà phát triển chỉ có hai quyền của cổng nhà phát triển PH-15, giới hạn trong ứng dụng được giao.
+Vai trò nhà phát triển chỉ có hai quyền của cổng nhà phát triển PH-15, giới hạn trong ứng dụng được giao. Vai trò này được tự gán cho cán bộ đăng nhập bằng SSO vào cổng; năm quyền quản trị nội dung, hỗ trợ và kiểm toán của cổng (`PERM-15-content-write`, `PERM-15-content-publish`, `PERM-15-support`, `PERM-15-dev-approve`, `PERM-15-audit-read`) thuộc mục 3.2, không thuộc vai trò này.
 
 | Quyền | Mô tả | DEVELOPER |
 |---|---|---|
@@ -464,11 +479,25 @@ Bảng dưới đây liệt kê các cặp vai trò không được gán cùng l
 | PAYMENT_ACCOUNTANT | PAYMENT_APPROVER | Người lập hoàn tiền, đề xuất xử lý chênh lệch không tự duyệt (tỉnh thiếu người được gán kèm cảnh báo, quy tắc động vẫn chặn, khung PH-19 §13.4) |
 | TENANT_ADMIN | AUDITOR | Người quản trị không tự kiểm toán mình |
 | PAYMENT_ADMIN | PAYMENT_APPROVER | Người cấu hình kênh không duyệt kích hoạt kênh (như dòng trên) |
-| AUDITOR | mọi vai trò có quyền ghi của PH-19 | Độc lập kiểm toán (khung PH-19 §13.4 quy tắc 7) |
+| AUDITOR | PAYMENT_ADMIN, PAYMENT_APPROVER, PAYMENT_ACCOUNTANT, PAYMENT_OPERATOR (mọi vai trò có quyền ghi của PH-19) | Độc lập kiểm toán (khung PH-19 §13.4 quy tắc 7); liệt kê tường minh để khớp bảng `sod_pair` ở dữ liệu khởi tạo của PH-12 |
 
 : Các cặp vai trò không được gán cùng một người
 
-Ngoài tách vai trò, nguyên tắc bốn mắt (FR-00-071) vẫn áp dụng cho từng đối tượng.
+Ngoài tách vai trò, nguyên tắc bốn mắt (FR-00-071) vẫn áp dụng cho từng đối tượng. Bảng dưới liệt kê các cặp loại trừ theo quyền, áp trên cùng một đối tượng và do từng phân hệ thực thi ở máy chủ, bổ sung cho bảy cặp vai trò ở trên.
+
+| Phân hệ | Cặp loại trừ theo quyền, áp trên cùng một đối tượng | Mã lỗi |
+|---|---|---|
+| PH-03 | Người đề nghị ngoại lệ WAF (`PERM-03-waf-request`) khác người duyệt (`PERM-03-waf-approve`); người đề nghị đổi chế độ WAF, đặt route ra cửa Internet, hạ hạn mức tenant khác người duyệt (`PERM-03-approve`) | ERR-03-008 |
+| PH-06, PH-09 | DS và DA là cặp loại trừ trong cùng tenant (đã có ở bảng vai trò); người soạn chính sách che (`PERM-09-policy`) không duyệt chính sách đó dù có `PERM-09-policy-approve` | ERR-09-005 |
+| PH-09 | SO không đồng thời giữ `PERM-09-purpose-approve`; khôi phục giá trị gốc cần ba người khác nhau: người đề nghị (`PERM-09-reidentify`), người duyệt cấp một (`PERM-09-purpose-approve`), người duyệt cấp hai (`PERM-09-policy-approve`) | ERR-09-005 |
+| PH-11 | IE và IA khác nhau trên cùng một phiên bản mô hình; người đề nghị và người duyệt một `instance_change` khác nhau | ERR-11-005 |
+| PH-13 | Người giữ `PERM-13-alert-admin` không giữ `PERM-13-audit-export`; không vai trò người nào có quyền ghi vào bảng kiểm toán | |
+| PH-16 | Người soạn, gửi duyệt định nghĩa chỉ tiêu khác người duyệt; người lập báo cáo khác người duyệt, công bố; người nhập số liệu tay khác người xác nhận; người lập đánh giá tuân thủ khác người xác nhận | ERR-16-005 |
+| PH-17 | Người duyệt phiên bản mô hình hoặc chỉ dẫn hệ thống khác người đề nghị; SO không giữ `PERM-17-model`; AU giữ `PERM-17-log-read` nhưng không giữ `PERM-17-admin` hay `PERM-17-eval`; người cấp phiếu mở nhật ký khác người mở nhật ký | ERR-17-005 |
+| PH-18 | Người tạo bản sửa payload khác người duyệt; người tạo yêu cầu khôi phục khác người duyệt; người tạo lần chạy di trú thật khác người duyệt; AU không giữ `PERM-18-dlq` hay `PERM-18-approve` | ERR-18-005 |
+| PH-20 | Người lập đề nghị chấm dứt, kế hoạch sáp nhập, đổi chế độ cách ly, hạ hạn mức khác người duyệt (`PERM-20-approve`); người duyệt chấm dứt khác người xác nhận bàn giao gói dữ liệu | ERR-20-007 |
+
+: Cặp loại trừ theo quyền trên cùng đối tượng
 
 Sơ đồ dưới vẽ bảy cặp xung đột thành các đường nối, để thấy vai trò nào không được cộng dồn với vai trò nào.
 
@@ -517,9 +546,69 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | `topic:{tên topic}:publish` / `:subscribe` | Phát hoặc nhận sự kiện | Publication / subscription được duyệt ở PH-10 |
 | `event:topic-register`, `event:permission-check`, `event:runtime-config`, `event:dlq-read`, `event:replay`, `event:metrics-read` | Scope máy nội bộ của PH-10, chỉ cấp cho tài khoản dịch vụ DU (PH-05, PH-04, `dh-runtime`, PH-18, PH-13), không cấp cho HTTT hay người | Cấp khi triển khai (FRS PH-10 §3.2) |
 | `rdm:read` | Tra cứu danh mục dùng chung | Mặc định cho mọi HTTT `ACTIVE` |
+| `catalog:read` | Đọc danh mục dịch vụ công khai trong tenant, tải đặc tả | Mặc định cho mọi HTTT `ACTIVE` (FRS PH-02 §3.2) |
+| `national.invoke.{nhóm}` (ví dụ `national.invoke.lltp`) | Gọi dịch vụ quốc gia đã cung cấp lại theo nhóm dịch vụ | PH-01 cấp theo đăng ký sử dụng đã duyệt ở PH-02; OPA kiểm thêm mục đích và mã hồ sơ (FRS PH-14 §3.3) |
+| `privacy:consent` | Ghi, tra bản ghi đồng ý của chủ thể dữ liệu | HTTT có tiện ích đồng ý (FRS PH-09 §3.3) |
+| `kpi.read` | Đọc số liệu chỉ tiêu đã công bố | PH-17, cổng thông tin tỉnh, HTTT được cấp (FRS PH-16 §3.3) |
+| `dq.read` | Đọc thẻ điểm chất lượng dữ liệu của chính HTTT | PH-16 và HTTT đọc dữ liệu của mình (FRS PH-08 §3.3) |
 | `payment:create` | Tạo yêu cầu thanh toán | HTTT được khai báo là đối tác ở PH-19 |
 
 : Scope OAuth của HTTT thành viên (máy) và điều kiện cấp
+
+Ngoài các scope dành cho HTTT ở bảng trên, các phân hệ gọi nhau bằng token dịch vụ có scope riêng. Những scope này cấp cho tài khoản dịch vụ của DU khi triển khai, không cấp cho người và không cấp cho HTTT khai thác; chúng không phải `PERM`, nhưng đi qua cùng OPA như mọi quyết định khác. Tên scope giữ đúng ký pháp mà phân hệ chủ viết trong FRS (dạng `ns:tên`, `ns.tên` hoặc `ns.nhóm.tên`); việc thống nhất một ký pháp duy nhất cho toàn bộ scope là việc của đợt rà soát hợp đồng, không đổi ở tài liệu này.
+
+| Phân hệ chủ | Scope | Bên giữ | Dùng cho |
+|---|---|---|---|
+| PH-02 | `catalog:gateway-read`, `catalog:gateway-ack` | PH-03 | Đọc dữ liệu công bố; xác nhận đã nạp cấu hình (tách riêng để token chỉ đọc không ghi được trạng thái công bố) |
+| PH-02 | `catalog:portal-read` | PH-15 | Đọc danh mục cho cổng nhà phát triển |
+| PH-02 | `catalog:flow-sync` | PH-04 | Đọc đặc tả đã gộp tham chiếu và gửi sự kiện luồng |
+| PH-02 | `catalog:metrics-read` | PH-13, PH-16 | Đọc số liệu tuân thủ danh mục |
+| PH-03 | `gateway:sync` | PH-01, PH-02 | Tạo, gỡ consumer, báo thay đổi gói |
+| PH-03 | `gateway:revoke` | PH-12 | Đẩy danh sách chặn token |
+| PH-03 | `gateway:read-state` | PH-13 | Đọc cấu hình, trạng thái nút |
+| PH-08 | `dq.check` | PH-04 (`dh-runtime`), PH-06 | Gọi kiểm tra chất lượng trực tuyến |
+| PH-08 | `dq.ingest` | PH-05 (`dh-integration`) | Đẩy chỉ số hồ sơ dữ liệu (chỉ gọi được API-08-024) |
+| PH-09 | `privacy:decide`, `privacy:apply` | PH-03, PH-04, PH-06, PH-14, PH-19 | Quyết định che và áp che bản tin |
+| PH-09 | `privacy:pseudonymize` | PH-04, PH-17 | Giả danh hóa |
+| PH-09 | `privacy:register` | Kênh công tiếp nhận yêu cầu của chủ thể dữ liệu; phân hệ đăng ký phần tử dữ liệu | Đăng ký phần tử, mức hợp đồng, tiếp nhận yêu cầu chủ thể |
+| PH-11 | `bpm.instance.start`, `bpm.instance.read`, `bpm.task.read`, `bpm.progress.read`, `bpm.service.worker` | Cổng dịch vụ công, HTTT một cửa, PH-01, PH-03, PH-04, PH-07, PH-13, PH-19 (theo bảng ở FRS PH-11 §3.3) | Khởi tạo, đọc phiên, việc, tiến độ; tiêu thụ lệnh dịch vụ |
+| PH-12 | `iam:client-provision` | PH-01 | Tạo, sửa scope, thu hồi client |
+| PH-12 | `iam:dev-client` | PH-15 | Cấp client sandbox |
+| PH-12 | `iam:realm-provision` | PH-20 | Tạo realm, tạm ngừng, chuyển định danh khi sáp nhập |
+| PH-12 | `iam:revocation-read` | APISIX, DU | Đọc danh sách chặn |
+| PH-12 | `iam:directory-read` | Mọi DU | Tra cứu danh bạ |
+| PH-12 | `iam:decide` | Bên gọi quyết định qua API thay vì OPA cục bộ | Quyết định phân quyền |
+| PH-12 | `iam:policy-data-read` | OPA ở chế độ kéo | Nạp dữ liệu vai trò, quyền |
+| PH-13 | `audit:write` | Mọi DU nguồn | Ghi bản ghi kiểm toán dự phòng qua API |
+| PH-13 | `audit:history-read` | BFF của các DU | Lấy lịch sử đối tượng cho tab "Lịch sử" |
+| PH-13 | `obs:metrics-read`, `obs:diagnostics-read`, `obs:health-read` | PH-16; PH-18; phân hệ cần biết sức khỏe thành phần | Đọc số liệu tổng hợp, ngữ cảnh chẩn đoán, sức khỏe |
+| PH-13 | `obs:tenant-provision` | PH-20 | Khởi tạo và đóng chuỗi kiểm toán theo tenant |
+| PH-14 | `national.runtime-config` | `dh-runtime` | Đọc cấu hình |
+| PH-14 | `national.health-read` | PH-13 | Đọc chỉ số kết nối |
+| PH-14 | `national.catalog.read`, `national.catalog.propose` | PH-07 | Gọi cổng tiếp hợp để đọc, đề xuất danh mục |
+| PH-14 | `national.sync.trigger` | PH-02, PH-06 | Kích hoạt đồng bộ |
+| PH-14 | `national.parallel-observe` | PH-04 | Gửi quan sát chạy song song (API-14-089; scope đề xuất, chờ chủ đầu tư xác nhận ở Q14-55) |
+| PH-15 | `metrics:portal-read` | PH-15 | Đọc chỉ số của đúng ứng dụng từ PH-13 |
+| PH-15 | `sandbox:call` | Client sandbox `sbx-*` ở realm `dh-dev` | Gọi API sandbox |
+| PH-16 | `kpi.ingest` | PH-05, PH-19, PH-20 | Đẩy quan sát chỉ tiêu |
+| PH-16 | `arch.register` | PH-01, PH-02, PH-04, PH-10, CI/GitOps | Đăng ký thành phần vào sổ kiến trúc |
+| PH-16 | `kpi.national-receipt` | PH-14 | Trả biên nhận gói báo cáo quốc gia |
+| PH-17 | `assist:infer` | PH-04, PH-11 | Gọi suy luận kèm `purpose` |
+| PH-17 | `assist:report` | PH-16 | Đọc báo cáo sử dụng (`GET /reports/usage:feed`) |
+| PH-18 | `ops:param-read`, `ops:param-register` | Mọi DU | Đọc lô tham số; đăng ký lược đồ không gian tên |
+| PH-18 | `ops:param-write` | PH-20 | Ghi mặc định khi khởi tạo tenant |
+| PH-18 | `ops:dlq-write`, `ops:dlq-read`, `ops:replay-callback` | PH-01, PH-06, PH-08, PH-19, `dh-runtime`; PH-17, PH-13; phân hệ nguồn | Ghi, đọc DLQ; báo kết quả phát lại |
+| PH-18 | `ops:notify`, `ops:task`, `ops:calendar-read`, `ops:incident-write`, `ops:migration-import` | Mọi DU; PH-01, 02, 04, 11, 15, 16; PH-01, 02, 04, 08; PH-13, PH-09; phân hệ đích | Thông báo, việc, lịch ngày làm việc, sự cố, nhận lô di trú |
+| PH-18 | `ops:backup-report` | Tác vụ thu thập, CronJob kiểm tra khôi phục | Báo bản sao lưu và kết quả kiểm tra khôi phục |
+| PH-18 | `ops:merge-transfer` | PH-20 | Yêu cầu, hủy chuyển dữ liệu khi sáp nhập tenant (API-18-150…153) |
+| PH-18 | `ops:shadow-ingest` | Bộ so sánh bóng | Gửi cặp phản hồi đã băm |
+| PH-20 | `tenant:registry-read` | Mọi DU, plugin APISIX của PH-03, PH-12 | Đọc sổ đăng ký tenant |
+| PH-20 | `tenant:org-read` | PH-01, PH-06, PH-07, PH-08, PH-12, PH-16 | Đọc danh mục tổ chức |
+| PH-20 | `tenant:provision-report` | Phân hệ tham gia saga khởi tạo, sáp nhập, bàn giao | Báo tiến độ saga |
+
+: Scope máy nội bộ giữa các phân hệ (không phải PERM)
+
+Riêng `ROLE-DEVELOPER` ở cổng nhà phát triển PH-15 được tự gán cho cán bộ đăng nhập bằng SSO (FRS PH-15 §3.3, PH-12): nhà thầu `dh-dev` không bao giờ giữ vai trò duyệt hay quản trị.
 
 ## 6. Ánh xạ từ quyền của hệ cũ
 
@@ -533,6 +622,24 @@ Bảng dưới nêu cách quyền ở từng khối hệ cũ được chuyển t
 
 : Ánh xạ quyền hệ cũ sang vai trò Datahub
 
+Khi nhập người dùng từ hệ cũ (FR-12-009), bảng ánh xạ mặc định dưới đây chuyển vai trò đặt tên trong repo sang vai trò chuẩn của mục 2; TA có thể sửa trong bảng ánh xạ của từng lần nhập. Nguồn chi tiết là FRS PH-12 mục 11.4.
+
+| Vai trò của repo | Vai trò chuẩn | Ghi chú |
+|---|---|---|
+| `PLATFORM_ADMIN` | ROLE-PLATFORM_ADMIN | Chỉ ở tenant `PLATFORM` |
+| `IAM_ADMIN` | ROLE-TENANT_ADMIN | Quản trị người dùng, vai trò, client của tỉnh |
+| `SECURITY_OFFICER` | ROLE-SECURITY_OFFICER | |
+| `INTEGRATION_DEV` | ROLE-INTEGRATION_ENGINEER | |
+| `INTEGRATION_REVIEWER`, `INTEGRATION_APPROVER` | ROLE-INTEGRATION_APPROVER | Cặp loại trừ với kỹ sư tích hợp |
+| `DATA_STEWARD` | ROLE-DATA_STEWARD | |
+| `OPERATOR` | ROLE-TENANT_OPERATOR | |
+| `VIEWER` | ROLE-VIEWER | |
+| `DATA_OWNER` | ROLE-DATA_OWNER | |
+| `DQ_ANALYST` | ROLE-DATA_STEWARD | Tạm thời tới khi PH-08 có vai trò riêng |
+| `LEGAL_REVIEWER`, `ARCHITECT`, `AI_GOVERNOR`, `LEADERSHIP` | Chưa có trong 22 vai trò chuẩn | Hồ sơ kết nạp do TA duyệt ở bản này; `AI_GOVERNOR` thuộc PH-17; `LEADERSHIP` tạm ánh xạ ROLE-VIEWER nếu người dùng chỉ xem |
+
+: Ánh xạ vai trò của repo sang vai trò chuẩn
+
 ## 7. Kiểm thử
 
 D05-01 sinh tự động từ ma trận mục 3 hai nhóm ca kiểm thử cho mỗi API: một ca dương với vai trò có ● hoặc ○, một ca âm với một vai trò có —. Ca ○ có thêm một ca âm với đối tượng của tổ chức khác. Kỳ vọng ca âm là `403` khi người dùng biết đối tượng tồn tại trong phạm vi của mình, và `404` khi đối tượng thuộc tổ chức hoặc tenant khác.
@@ -545,3 +652,4 @@ D05-01 sinh tự động từ ma trận mục 3 hai nhóm ca kiểm thử cho m�
 | 0.2 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.3 thay bằng 48 quyền và ma trận của khung PH-19 §13; vai trò thanh toán đổi `PAYMENT_OFFICER` thành `PAYMENT_ACCOUNTANT`, thêm `PAYMENT_OPERATOR`, `PARTNER_SYSTEM`; tách mục 3.4 cho nhà phát triển |
 | 0.3 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.1: thêm tám quyền PH-05 (`adapter`, `test`, `operate`, `approve`, `db-write-consent`, `kamelet-submit`, `audit-read`, `admin`), mở rộng mô tả `PERM-05-connection`, `PERM-05-kamelet-approve` thêm IA cho Kamelet của tỉnh (D02-03-PH05 §3.2) |
 | 0.4 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm tóm tắt cho hội đồng thẩm định, sáu mục giới thiệu (mục 1.1 đến 1.6), sơ đồ mô hình phân quyền, sơ đồ cặp vai trò xung đột và sơ đồ duyệt bốn mắt kèm thuyết minh, đoạn mở cho các mục còn thiếu, viết lại chú thích bảng. Giữ nguyên toàn bộ vai trò, quyền, ma trận |
+| 0.5 | 2026-11-27 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tách `PERM-04-create`, `PERM-04-update` và `PERM-07-create`, `PERM-07-update`; thêm sáu quyền PH-04 và bốn quyền PH-07; ghi PU và các quyền của ROLE-PLATFORM_AUDITOR; thêm bảng cặp loại trừ theo quyền, bảng scope máy nội bộ của 13 phân hệ, bảng ánh xạ vai trò của repo |

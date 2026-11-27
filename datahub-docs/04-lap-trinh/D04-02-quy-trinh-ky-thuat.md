@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D04-02
 ten: Quy trình kỹ thuật
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển, Trưởng nhóm kỹ thuật, Kiểm thử, Vận hành, Đội ATTT, Hội đồng thẩm định
@@ -371,6 +371,8 @@ Cổng chất lượng (quality gate) là bước kiểm tra tự động mà PR
 | CI-9 E2E, truy cập, hiệu năng giao diện | Playwright E2E luồng chính trên môi trường tạm (ephemeral) dựng bằng Testcontainers hoặc namespace riêng; axe-core trên mọi màn được chạm; Lighthouse CI | 0 lỗi axe mức A/AA (NFR-00-040); LCP ≤ 2,5 giây, INP ≤ 200 ms (NFR-00-005) | NFR-00-005, 040 | PR đụng giao diện (bắt buộc); hằng đêm trên `main` (toàn bộ) |
 
 : Chín cổng CI-1 đến CI-9, nội dung, ngưỡng chặn merge và thời điểm chạy
+
+Một số phân hệ có kiểm tra riêng được nối vào các cổng trên, không lập cổng mới. Tại CI-5, ngoài Spectral và oasdiff, mỗi phân hệ có công cụ hợp đồng riêng chạy khi tệp YAML đổi: `ph04/tools/check_contracts.py` và `ph12/tools/check_contracts.py` kiểm khớp giữa OpenAPI, AsyncAPI và tài liệu sinh (`gen_md.py`, `gen_openapi.py`, `gen_asyncapi.py`, chạy lại và so sánh); bộ luật Spectral kiểm khóa `x-datahub-acr`, `x-datahub-errors` và `x-datahub-permission` (bốn dạng `permission`, `anyOf`, `serviceScope`, `mtls`); Schemathesis chạy trên hợp đồng của nhà cung cấp và Pact ở phía tiêu dùng. Tại CI-3, PR chạm `csdl/ph13` dựng một PostgreSQL mới, nạp `ph13_audit.sql`, `ph13_obs.sql` rồi chạy `ph13_isolation_test.sql`, và chạy bộ phát hiện canary `DH-CANARY` trên log, vết, thân lỗi để bảo đảm không lộ giá trị bí mật; Semgrep cấm câu `UPDATE`, `DELETE`, `TRUNCATE` trên `ph13_audit.audit_event`, `audit_anchor` và quyền `AuditRestore` chỉ cấp cho vai trò khôi phục đã duyệt; luật R1 đến R8 của PH-13 (D03-02-PH13 §3.6) chạy cùng ArchUnit, `promtool check rules` kiểm tệp luật cảnh báo, và kiểm tra mỗi runbook có đủ năm mục. Mã Lua và Go của PH-03 chạy `luacheck`, `busted` và `Test::Nginx` tại CI-3 (kiểm thử chậm hơn như đồng hồ giả `faketime` chạy hằng đêm). Tại CI-8, ảnh APISIX tùy biến phải qua `Test::Nginx`, xuất schema plugin, ký bằng cosign và quét Trivy trước khi đẩy vào Harbor.
 
 Ngoài chín cổng chặn trên PR, các kiểm tra sau chạy định kỳ trên `main` hoặc môi trường kiểm thử và mở việc tự động khi thất bại, không chặn PR nhưng chặn phát hành (mục 9.3): quét DAST OWASP ZAP hằng đêm trên môi trường test; quét lại toàn bộ ảnh đang chạy và SBOM đã lưu với cơ sở dữ liệu lỗ hổng mới mỗi ngày; kiểm thử tải k6 theo NFR-00-001…008 hằng tuần và trước phát hành; bộ quét mẫu dữ liệu cá nhân trên log của môi trường test (NFR-00-029); kiểm thử hỗn loạn theo D05-01.
 
@@ -744,3 +746,4 @@ Các câu hỏi Q350–Q352, Q355, Q356, Q358, Q359 nằm ở D04-01.
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: mô hình nhánh, commit, review, cổng CI-1 đến CI-9, phụ thuộc, phát hành, ký ảnh và SBOM, sửa nóng, môi trường cục bộ, hợp đồng API, luồng Camel qua GitOps, truy vết |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước và mã cổng CI-1 đến CI-9: thêm metadata `mo_ta` và `tai_lieu_lien_quan`; thêm Tóm tắt cho hội đồng thẩm định kèm bảng con số chính; bổ sung chương 1 các mục 1.1 đến 1.4 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho 21 chương và mục con; đổi hai sơ đồ Mermaid nhiều nút từ ngang sang dọc (`flowchart TB`); viết lại 10 chú thích bảng cho cụ thể, bỏ phần nối tên cột trùng lặp |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bổ sung kiểm tra theo phân hệ vào CI-3, CI-5, CI-7, CI-8 (hợp đồng PH-04, PH-12, kiểm toán PH-13, ảnh APISIX, Lua, kiểm tra tàn dư thử) |

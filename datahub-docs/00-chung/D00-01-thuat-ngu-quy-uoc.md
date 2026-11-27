@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D00-01
 ten: Thuật ngữ và quy ước chung
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Tất cả
 mo_ta: Nguồn định nghĩa duy nhất về thuật ngữ, hệ mã truy vết, kiểu dữ liệu chuẩn, quy ước viết yêu cầu, đặt tên, trình bày và căn cứ pháp lý cho toàn bộ bộ tài liệu Datahub.
@@ -101,7 +101,10 @@ Bảng dưới giải thích các thuật ngữ nghiệp vụ và pháp lý mà 
 | Datahub | — | Tên sản phẩm. Nền tảng tích hợp, chia sẻ dữ liệu cấp tỉnh thế hệ mới, đóng gói triển khai cho nhiều tỉnh. Về chức năng, Datahub đóng vai trò LGSP theo NĐ 278/2025/NĐ-CP (thay NĐ 47/2020/NĐ-CP). |
 | LGSP | Local Government Service Platform | Nền tảng tích hợp, chia sẻ dữ liệu cấp bộ, cấp tỉnh. Trong bộ tài liệu này, "LGSP cũ" hoặc "hệ cũ" chỉ hệ thống do Viettel xây dựng năm 2021 được mô tả trong thư mục `lgsp_document`. |
 | NDXP | National Data Exchange Platform | Nền tảng tích hợp, chia sẻ dữ liệu quốc gia (trước đây gọi là NGSP). Datahub kết nối lên NDXP để khai thác CSDL quốc gia và dữ liệu của bộ, ngành. |
-| NDOP | National Data Open Platform | Nền tảng dữ liệu mở quốc gia, nơi công bố dữ liệu mở. |
+| NDOP | National Data Open Platform | Nền tảng dữ liệu mở quốc gia, nơi công bố dữ liệu mở (PH-14 kết nối để công bố, FR-14-045). Việc khai thác dữ liệu, đăng ký danh mục dịch vụ chia sẻ và điều phối dữ liệu đi qua NDXP, không qua NDOP; cách gọi này thống nhất cho toàn bộ tài liệu. |
+| Service-code | Service-code | Tiêu đề (header) HTTP mà nền tảng quốc gia dùng để phân biệt nghiệp vụ trên cùng một đường dẫn; hệ cũ rải mã này trong luồng, Datahub gom vào hợp đồng của bộ điều hợp PH-14 (D00-03 §4.7). |
+| Nhãn đối chiếu (dịch vụ quốc gia) | Reconciliation label | Nhãn PH-14 gán cho đặc tả một dịch vụ quốc gia sau mỗi lần đối chiếu với nền tảng: `Còn` (không đổi), `Đổi đặc tả`, `Ngừng`. |
+| Cung cấp lại (dịch vụ quốc gia) | Re-publish | Việc Datahub đăng ký dịch vụ quốc gia vào danh mục dịch vụ của PH-02 như một API của Datahub, để HTTT trong tỉnh dùng qua cổng mà không giữ thông tin xác thực quốc gia. |
 | NGSP | National Government Service Platform | Tên cũ của NDXP; vẫn xuất hiện trong tài liệu hệ cũ (phụ lục kết nối NGSP). |
 | HTTT | Information system | Hệ thống thông tin của một cơ quan, đơn vị. Là bên kết nối vào Datahub để cung cấp hoặc khai thác dữ liệu. |
 | HTTT thành viên | Member system | HTTT đã hoàn tất thủ tục kết nạp vào Datahub và được cấp định danh kỹ thuật. |
@@ -160,11 +163,13 @@ Bảng dưới liệt kê các từ viết tắt dùng trong bộ tài liệu c�
 | ATTT | An toàn thông tin |
 | BRD | Business Requirements Document — tài liệu yêu cầu nghiệp vụ |
 | BHXH | Bảo hiểm xã hội |
+| CK, NB, CN1, CN2, TC | Nhóm phân loại dữ liệu: công khai, nội bộ, dữ liệu cá nhân cơ bản, dữ liệu cá nhân nhạy cảm, tài chính (D02-06 chương 2); `TC` ở đây khác `TC-{PH}-{nnn}` là test case |
 | CP | Chính phủ |
 | CPĐT | Chính phủ điện tử |
 | DFD | Data Flow Diagram — sơ đồ luồng dữ liệu |
 | DMDC | Danh mục dùng chung |
 | DR | Disaster Recovery — khôi phục sau thảm họa |
+| DS | Data store — kho dữ liệu trong sơ đồ luồng dữ liệu (`DS-{nn}`, D02-06) |
 | ĐKKD | Đăng ký kinh doanh |
 | ĐVQHNS | Đơn vị có quan hệ với ngân sách |
 | FR / NFR | Functional / Non-functional Requirement |
@@ -201,7 +206,8 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `SH-{nn}` | Bên liên quan | D02-01 | `SH-02` |
 | `REQ-{nn}` | Yêu cầu nghiệp vụ cấp cao | D02-01 | `REQ-12` |
 | `UC-{PH}-{nn}` | Use case | D02-04 | `UC-19-04` |
-| `US-{PH}-{nnn}` | User story | D02-05 | `US-07-031` |
+| `EP-{PH}-{chữ}` | Epic: nhóm story cùng nhóm chức năng (Nhóm A, B…) của FRS; với `PH` = `00` chữ lấy từ số mục 4.n của SRS | D02-05 | `EP-07-C` |
+| `US-{PH}-{nnn}` | User story; `nnn` trùng số FR gốc (mỗi FR một story), story tách thêm khi làm rõ backlog lấy số từ 501 trong cùng phân hệ | D02-05 | `US-07-031` |
 | `FR-{PH}-{nnn}` | Yêu cầu chức năng | D02-03 | `FR-07-021` |
 | `NFR-{PH}-{nnn}` | Yêu cầu phi chức năng; `PH` = `00` cho cấp hệ thống | D02-02, D02-03 | `NFR-00-014` |
 | `BR-{PH}-{nnn}` | Quy tắc nghiệp vụ | D02-03 | `BR-19-006` |
@@ -213,6 +219,7 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `CMP-{TênThànhPhần}` | Thành phần giao diện trong design system | D03-05 | `CMP-DataTable` |
 | `TKN-{nhóm}-{tên}` | Design token | D03-05 | `TKN-color-primary` |
 | `PTN-{nn}` | Mẫu bố cục màn hình (screen pattern) | D03-06 | `PTN-03` |
+| `DS-{nn}` | Kho dữ liệu (data store) trong sơ đồ luồng dữ liệu và phân loại dữ liệu | D02-06 | `DS-03` |
 | `ROLE-{MÃ}` | Vai trò | D02-08 | `ROLE-TENANT_ADMIN` |
 | `PERM-{PH}-{động-từ}` | Quyền | D02-08 | `PERM-07-publish` |
 | `ERR-{PH}-{nnn}` | Mã lỗi nghiệp vụ | D03-04 | `ERR-19-004` |
@@ -234,7 +241,9 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `CI-1`…`CI-9` | Cổng chất lượng trong CI (khác cổng quản lý dự án G0–G5) | D04-02 | `CI-3` |
 | `RG-1`…`RG-5` / `CX-{nn}` | Cổng phát hành kiểm thử / tiêu chí xuất | D05-01 | `RG-2` |
 | `S1`…`S4` / `P1`…`P4` | Mức nghiêm trọng / mức ưu tiên của lỗi | D05-01 | `S2/P1` |
-| `T90`…`T99` | Mã tenant dành cho kiểm thử | D05-01 | `T91` |
+| `T90`…`T99` | Mã tenant dành cho kiểm thử, gồm kiểm thử rò rỉ chéo tenant (`testTenant = true`) | D05-01 | `T91` |
+| `T01`…`T34` | Mã tenant tổng hợp chỉ để đo hiệu năng quy mô 34 tỉnh (`testTenant = true`, NFR-20-005); không dùng cho kiểm thử rò rỉ | D05-01, D05-02-PH20 | `T17` |
+| `STD-{nn}` | Tiêu chuẩn kỹ thuật viện dẫn | D00-01 §7 | `STD-06` |
 
 : Họ mã truy vết, đối tượng, tài liệu định nghĩa và ví dụ
 
@@ -305,6 +314,7 @@ Các kiểu dưới đây áp dụng cho mọi đặc tả dữ liệu, API và 
 |---|---|---|---|---|
 | `T-ID` | Định danh nội bộ | `uuid` | `string`, `format: uuid` | UUID phiên bản 7 (có thứ tự thời gian), sinh ở tầng ứng dụng. |
 | `T-CODE` | Mã nghiệp vụ do người dùng đặt | `varchar(64)` | `string`, pattern `^[A-Z0-9][A-Z0-9_.-]{0,63}$` | Không phân biệt hoa thường khi so sánh; lưu dạng chữ hoa. |
+| `T-SLUG` | Mã chữ thường dùng làm thành phần đường dẫn công bố (mã API, mã gói, mã nhóm của PH-02) | `varchar(64)` | `string`, pattern `^[a-z][a-z0-9-]{2,62}$` | Chữ thường, so sánh phân biệt chữ; khác `T-CODE` vì là một phần của URL công bố. Chỉ dùng khi mã nằm trong đường dẫn. |
 | `T-NAME` | Tên hiển thị | `varchar(255)` | `string`, `maxLength: 255` | Unicode chuẩn hóa NFC. |
 | `T-TEXT` | Mô tả dài | `text` | `string`, `maxLength: 4000` | Giới hạn 4.000 ký tự ở tầng API. |
 | `T-TS` | Thời điểm | `timestamptz` | `string`, `format: date-time` | Lưu UTC; hiển thị theo giờ Việt Nam (UTC+7), định dạng `dd/MM/yyyy HH:mm:ss`. |
@@ -347,7 +357,9 @@ Bảng dưới quy định cách đặt tên cho từng loại đối tượng k
 | Schema PostgreSQL | `ph{nn}_{tên ngắn}` | `ph07_rdm`, `ph19_payment` |
 | Bảng, cột | `snake_case`, tiếng Anh, danh từ số ít | `catalog_item`, `paid_at` |
 | Đường dẫn REST | `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}` với `kebab-case` | `/api/rdm/v1/catalogs/{code}/items` |
-| Topic Kafka | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` | `t68.rdm.catalog.published.v1` |
+| Nhóm REST | Một nhóm cho mỗi phân hệ có API: `onboarding` (PH-01), `catalog` (02), `gateway` (03), `integration` (04), `adapter` (05), `mdm` (06), `rdm` (07), `dq` (08), `privacy` (09), `event` (10), `bpm` (11), `iam` (12), `observability` và `audit` (13), `national` (14), `portal` (15), `kpi` (16), `assist` (17), `ops` (18), `payment` và `payment-callback` (19), `platform` và `tenant` (20) | `/api/gateway/v1` |
+| Lỗi REST | RFC 9457, trường `type` có dạng `https://datahub.gov.vn/errors/ERR-{PH}-{nnn}` cho mọi phân hệ; mã lỗi do cổng trả cho bên gọi dùng dải `101…199` của phân hệ (ví dụ `ERR-03-101…199`) | `https://datahub.gov.vn/errors/ERR-07-026` |
+| Topic Kafka | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}`; topic cấp nền tảng không có tiền tố tenant mà dùng `platform` | `t68.rdm.catalog.published.v1`, `platform.tenant.created.v1` |
 | Package Java | `vn.datahub.{du}.{module}.{api|internal|events}` | `vn.datahub.data.rdm.api` |
 | Component React | `PascalCase`; hook `useCamelCase` | `CatalogTree`, `useCatalogItems` |
 | Design token | `--dh-{nhóm}-{vai trò}-{biến thể}` | `--dh-color-surface-glass-regular` |
@@ -387,6 +399,7 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | CMP-LAW-24 | Thông tư 41/2026/TT-BKHCN (hiệu lực 01/7/2026) | Khảo sát, triển khai, giám sát, kiểm thử, nghiệm thu dự án theo NĐ 224/2026 (D01-02 §3, §10, §13) | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
 | CMP-LAW-25 | Luật Đầu tư công số 58/2024/QH15, sửa đổi bởi Luật 90/2025/QH15 | Nhóm dự án, chủ trương đầu tư; khoản 2 Điều 47 là khung nội dung BCNCKT | Đã đối chiếu nguồn thứ cấp |
 | CMP-LAW-26 | Luật Đấu thầu số 22/2023/QH15, sửa đổi bởi Luật 57/2024/QH15 và Luật 90/2025/QH15 | Lựa chọn nhà thầu, gói EP (D01-01 §9.4, D01-02 §7.3) | Đã đối chiếu VBHN 74/VBHN-VPQH |
+| CMP-LAW-27 | Luật Bảo vệ bí mật nhà nước số 29/2018/QH14 (hiệu lực 01/7/2020) | Danh mục bí mật nhà nước; dữ liệu thuộc danh mục không được công bố qua Datahub (BR-02-007, ERR-02-016) | Cần xác minh số hiệu, hiệu lực và văn bản hướng dẫn hiện hành |
 | CMP-LAW-91 | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Nộp phí, lệ phí trực tuyến trong TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | CMP-LAW-92 | Nghị định 42/2022/NĐ-CP về cung cấp thông tin và dịch vụ công trực tuyến | Dịch vụ công trực tuyến toàn trình có thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | CMP-LAW-93 | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, sửa đổi bởi Nghị định 107/2021/NĐ-CP | Vai trò Cổng DVC quốc gia, HTTT giải quyết TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
@@ -399,6 +412,13 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | STD-03 | OWASP ASVS 5.0 (mức 2) | Yêu cầu kiểm chứng an toàn ứng dụng | — |
 | STD-04 | WCAG 2.2 | Khả năng truy cập giao diện, mức AA | — |
 | STD-05 | OpenAPI 3.1, AsyncAPI 3.0, RFC 9457 | Hợp đồng API, sự kiện, định dạng lỗi | — |
+| STD-06 | TCVN 14423:2026 | Căn cứ chính của thiết kế ATTT cấp độ 3 (xem CMP-LAW-08, D03-07 mục 2.3) | — |
+| STD-07 | OWASP API Security Top 10 2023; OWASP Top 10 2021 | Mô hình mối đe dọa API, kiểm thử (D03-07) | — |
+| STD-08 | CIS Kubernetes Benchmark; NSA/CISA Kubernetes Hardening Guidance | Biện pháp nền tảng `SEC-50…59` | — |
+| STD-09 | SLSA mức 3 | Chuỗi cung ứng phần mềm, ảnh do Datahub xây (`SEC-55…57`) | — |
+| STD-10 | RFC 9700, 8705, 7523, 7636, 9449 | OAuth 2.0 an toàn, mTLS, xác thực client bằng JWT, PKCE, DPoP (`SEC-20…29`) | — |
+| STD-11 | ISO/IEC 27001:2022 và 27002:2022 | Cấu trúc kiểm soát quản trị ATTT (`SEC-01…09`) | — |
+| STD-12 | NIST SP 800-63B | Định danh số và xác thực, tham khảo cho chính sách mật khẩu (`SEC-22`) | — |
 
 : Mã, văn bản, nội dung chi phối và trạng thái kiểm tra của căn cứ pháp lý và tiêu chuẩn
 
@@ -447,3 +467,4 @@ Nhánh nền chứa khung thư mục và D00-01 là `claude/project-thread-ru93e
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: thuật ngữ, hệ mã truy vết, quy ước viết yêu cầu, kiểu dữ liệu, đặt tên, căn cứ pháp lý, trình bày, tổ chức file |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 Người đọc, 1.2 Tài liệu tham chiếu, 1.3 Cấu trúc tài liệu; thêm đoạn mở cho các mục 2.1, 2.2, 2.3, 3.2, 4.1, 6, 8; viết lại chú thích bảng cho cụ thể. Mẫu đặc tả 17 mục (mục 4.3) giữ nguyên |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mã EP, DS, T01…T34, STD và quy ước story từ 501 ở §3.1; viết tắt nhóm dữ liệu CK, NB, CN1, CN2, TC; thuật ngữ Service-code, nhãn đối chiếu, cung cấp lại và vai trò NDOP; kiểu T-SLUG; nhóm REST, mẫu type RFC 9457 và topic nền tảng ở §6; CMP-LAW-27 và STD-06…12 ở §7 |

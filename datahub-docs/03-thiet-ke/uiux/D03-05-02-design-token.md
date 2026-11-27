@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05-02
 ten: Design token và ánh xạ sang Ant Design v6
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
 mo_ta: Đặc tả design token của Datahub gồm kiến trúc ba tầng, màu, vật liệu glass, bo góc, bóng, khoảng cách, chữ, chuyển động, ánh xạ sang Ant Design v6, đóng gói, kiểm tra tự động và giới hạn tùy biến theo tenant.
@@ -302,6 +302,18 @@ Hai nhóm token dưới đây được bổ sung ở bản 0.2 theo đề nghị
 
 : Màu khác biệt giữa hai phiên bản kèm ký hiệu đi kèm
 
+**Ánh xạ năm mức so sánh.** Màn so sánh bản ghi trùng (PH-06 UI-06-05, UI-06-13) có năm mức `ComparisonLevel`. Năm mức dùng lại bốn token trên cộng nền trung tính, không thêm token mới; mỗi ô luôn có chữ và ký hiệu riêng nên không dựa vào màu.
+
+| `ComparisonLevel` | Token | Chữ và ký hiệu |
+|---|---|---|
+| `EXACT` | `color-diff-added` | "＝", "Trùng" |
+| `FUZZY_HIGH` | `color-diff-changed` | "≈", "Gần giống cao" |
+| `FUZZY_LOW` | `color-diff-changed` | "≈", "Gần giống thấp" (phân biệt với mức cao bằng chữ, không bằng màu) |
+| `DIFFERENT` | `color-diff-removed` | "≠", "Khác" |
+| `MISSING` | `color-surface-solid-2` với chữ `color-text-secondary` | "—", "Thiếu" |
+
+: Ánh xạ mức so sánh sang token màu khác biệt
+
 Bốn token khác biệt dùng cùng giá trị với token trạng thái tương ứng ở mục 4.4 nhưng tách tên để có thể chỉnh riêng (ví dụ tăng độ đậm nền khác biệt trong lưới dày) mà không đổi nhãn trạng thái.
 
 | Token | `…-bg` (sáng / tối) | `…-text` (sáng / tối) | Tương phản (sáng / tối) | Nghĩa |
@@ -359,6 +371,7 @@ Các token phụ của vật liệu:
 | `saturate-glass` | `180%` | Tăng bão hòa giúp màu phông nền "sống" khi đi qua kính |
 | `saturate-glass-muted` | `160%` | Cho lớp nổi phía trên nội dung, tránh màu chói |
 | `opacity-disabled` | `0.4` | Không dùng cho chữ; chữ vô hiệu dùng `color-text-disabled` |
+| `opacity-dimmed` | `0.5` | Nội dung không được làm nổi trên canvas hoặc đồ thị (nút ngoài đường đi đang chọn, `CMP-FlowCanvas`, `CMP-DependencyGraph`); không mang nghĩa "vô hiệu", vẫn chọn và đọc được, nên không dùng `opacity-disabled` và không thấp hơn 0,5 để chữ nhãn còn đọc được |
 
 : Thang độ nhòe phông nền
 
@@ -499,6 +512,9 @@ Kích thước điều khiển có hai cột theo mật độ chuẩn và gọn,
 | `size-drawer-md` | 560px | 560px | Drawer chuẩn |
 | `size-drawer-lg` | 880px | 880px | Drawer chứa biểu mẫu hai cột hoặc so sánh |
 | `size-modal-sm` / `md` / `lg` | 416 / 560 / 800px | như chuẩn | |
+| `size-assistant-panel` | 400px | 400px | Bảng bên Trợ lý AI (`CMP-AssistantPanel`, D03-06-00 §2.12) và `CMP-NotificationCenter` |
+| `size-toc` | 240px | 240px | Mục lục dính của PTN-14 (`CMP-TocNav`) |
+| `size-reading-max` | 760px | 760px | Cột đọc tài liệu của PTN-14, dòng tối đa khoảng 80 ký tự |
 
 : Kích thước điều khiển ở mật độ chuẩn và gọn
 
@@ -805,15 +821,18 @@ Hai quyết định trong đoạn mã cần nêu rõ. Thứ nhất, `wave` bị 
 
 ## 14. Đóng gói token
 
-Nguồn sự thật duy nhất là tệp `packages/tokens/tokens.json` theo định dạng Design Tokens Community Group (DTCG), mỗi token có `$value` cho chế độ sáng và phần mở rộng `$extensions.dh.dark` cho chế độ tối, cùng `$description` ghi mã `TKN-*`. Công cụ Style Dictionary đọc tệp này và sinh ba đầu ra:
+Nguồn sự thật duy nhất là tệp `packages/tokens/tokens.json` theo định dạng Design Tokens Community Group (DTCG), mỗi token có `$value` cho chế độ sáng và phần mở rộng `$extensions.dh.dark` cho chế độ tối, cùng `$description` ghi mã `TKN-*`. Công cụ Style Dictionary đọc tệp này và sinh bốn đầu ra:
 
 | Đầu ra | Tệp | Người dùng |
 |---|---|---|
 | CSS variables | `dist/tokens.css` (khối `:root[data-theme="light"]` và `:root[data-theme="dark"]`) | Lớp glass, thành phần tự viết, mockup HTML |
 | Đối tượng TypeScript | `dist/tokens.ts` (xuất `tokens.light`, `tokens.dark` có kiểu chặt) | `buildAntdTheme`, biểu đồ ECharts |
 | Bảng tra cứu | `dist/tokens.md` | Tự chèn vào Storybook và kiểm tra lệch với tài liệu này |
+| Token cho theme Keycloak | `dist/tokens.keycloak.css` (tập con biến CSS tối thiểu: `color-canvas`, `color-surface-solid`, `color-text-primary`, `color-text-secondary`, `color-accent`, `color-text-on-accent`, `color-border-control`, `color-focus-ring`, `color-error-text`, `radius-lg`, `size-control-lg`, `font-family-sans`, cả hai chế độ sáng tối, không có biến glass) | Trang đăng nhập và xác thực của Keycloak (PH-12 UI-12-18), chạy ngoài `dh-console` nên không nạp `tokens.css` đầy đủ |
 
-: Ba đầu ra của công cụ đóng gói token
+: Bốn đầu ra của công cụ đóng gói token
+
+Theme Keycloak chỉ nhận tập con ở dòng cuối của bảng, sinh từ cùng `tokens.json` nên không lệch với giao diện chính; trang xác thực dùng nền đặc, không dùng kính (D03-05-01).
 
 Phông chữ Inter và JetBrains Mono (bản biến thiên, định dạng WOFF2, tập con Latin + Latin Extended + Vietnamese) nằm trong `packages/tokens/fonts/` và được khai báo `@font-face` với `font-display: swap` trong `tokens.css`.
 
@@ -868,3 +887,4 @@ Bảng dưới nối yêu cầu phi chức năng và quyết định kiến trú
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: kiến trúc ba tầng token, bảng màu, token màu ngữ nghĩa, vật liệu glass, bo góc, bóng, khoảng cách, chữ, chuyển động, ánh xạ antd v6, đóng gói, kiểm tra, tùy biến theo tenant, truy vết |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Thêm token màu khác biệt và màu nguồn dữ liệu (mục 4.6) theo đề nghị của D03-06-PH07 |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.1–1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 4.3, 6, 12.1, 12.2 và chương 17; viết lại 26 chú thích bảng cho cụ thể, bỏ chú thích trùng; thêm metadata mo_ta và tai_lieu_lien_quan |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm `opacity-dimmed`, `size-assistant-panel`, `size-toc`, `size-reading-max`, ánh xạ năm mức `ComparisonLevel` sang token màu khác biệt, đầu ra token cho theme Keycloak |

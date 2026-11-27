@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05
 ten: Design system Datahub (Liquid Glass trên Ant Design v6)
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, Kiến trúc sư, Hội đồng thẩm định, AI agent sinh mã
 mo_ta: Tài liệu tổng của design system Datahub, nêu nguyên tắc thiết kế, cấu trúc bộ bốn tập con, kiến trúc kỹ thuật, quy trình đóng góp và tiêu chí nghiệm thu để mọi màn hình của dh-console và dh-portal dùng chung một ngôn ngữ giao diện.
@@ -28,7 +28,7 @@ nguoi_lap: Luồng giao diện
 |---|---|
 | Nguyên tắc thiết kế | 6 (chương 2) |
 | Tập con của design system | 4 (D03-05-01 đến D03-05-04) |
-| Thành phần | 121: 44 nguyên tử, 75 phức hợp, 2 nền tảng (mục 3.1) |
+| Thành phần | 132: 46 nguyên tử, 84 phức hợp, 2 nền tảng (mục 3.1) |
 | Mã `CMP-` | 49 ở tầng nguyên tử, 77 ở tầng phức hợp, cộng hai mã nền tảng `CMP-GlassSurface` và `CMP-ThemeProvider` |
 | Mẫu màn hình chuẩn | 14 (PTN-01…14, ở D03-06-00) |
 | Tiêu chí nghiệm thu design system | 8 (chương 6) |
@@ -167,13 +167,13 @@ Bảng dưới cho biết quy mô của từng tập con ở bản 0.2, để h�
 | Tập | Nội dung | Số lượng |
 |---|---|---|
 | D03-05-02 | Token màu ngữ nghĩa, kính, bo góc, bóng, khoảng cách, chữ, chuyển động, lớp chồng, mật độ; bản 0.2 thêm màu khác biệt và màu nguồn dữ liệu (§4.6) | — |
-| D03-05-03 | Thành phần nguyên tử | 44 thành phần, 49 mã `CMP-` (tính cả biến thể có mã riêng) |
-| D03-05-04 | Thành phần phức hợp và tổ chức, gồm canvas thiết kế (§11), khung ứng dụng (§12), dữ liệu chuyên dụng (§13) | 75 thành phần, 77 mã `CMP-` |
+| D03-05-03 | Thành phần nguyên tử | 46 thành phần, 52 mã `CMP-` (tính cả biến thể có mã riêng) |
+| D03-05-04 | Thành phần phức hợp và tổ chức, gồm canvas thiết kế (§11), khung ứng dụng (§12), dữ liệu chuyên dụng (§13) | 84 thành phần, 86 mã `CMP-` |
 | D03-06-00 | Kiến trúc thông tin, quy tắc URL, khung bố cục, mẫu màn hình, vi văn bản, checklist nghiệm thu màn hình, danh sách màn hệ cũ được giữ | 14 mẫu PTN-01…14 |
 
 : Quy mô của bốn tập con ở bản 0.2
 
-Tổng cộng design system có 121 thành phần: 44 nguyên tử, 75 phức hợp và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`). Hai tập màn hình phân hệ đã đối chiếu với bản 0.2: D03-06-PH04 (bản 0.2) và D03-06-PH07 (bản 0.3); tên cũ của các tập này được ghi trong bảng bí danh ở D03-05-03 §9 và D03-05-04 §14.2.
+Tổng cộng design system có 132 thành phần: 46 nguyên tử, 84 phức hợp và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`). Hai tập màn hình phân hệ đã đối chiếu với bản 0.2: D03-06-PH04 (bản 0.2) và D03-06-PH07 (bản 0.3); tên cũ của các tập này được ghi trong bảng bí danh ở D03-05-03 §9 và D03-05-04 §14.2.
 
 Khi hai tập mâu thuẫn: **D03-05-02 thắng về giá trị thị giác** (màu, kích thước, độ mờ), **D03-05-01 thắng về chỗ đặt kính**, **D03-05-03/04 thắng về API và hành vi thành phần**, **D03-06-00 thắng về cách dùng trong màn hình** (mẫu bố cục, URL, vi văn bản). Tập màn hình phân hệ không được định nghĩa token hay thành phần dùng chung mới; nhu cầu mới ghi vào mục "Đề xuất bổ sung" của tập đó để Luồng giao diện đưa vào D03-05.
 
@@ -277,3 +277,4 @@ Bảng dưới nối yêu cầu và quyết định với mục của tài liệ
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: nguyên tắc thiết kế, cấu trúc bộ tài liệu, kiến trúc kỹ thuật, quy trình đóng góp, nghiệm thu |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Mở rộng quy mô: 44 thành phần nguyên tử, 75 thành phần phức hợp, màu khác biệt và màu nguồn dữ liệu, đối chiếu với D03-06-PH04 và D03-06-PH07 |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định tổng hợp cả bộ D03-05-01…04; bổ sung chương 1 các mục 1.1–1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 3.1, chương 4 và chương 8; viết lại chú thích bảng, bỏ chú thích trùng; thêm metadata mo_ta và tai_lieu_lien_quan |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: cập nhật quy mô sau khi D03-05-02, 03, 04 nhận các đề nghị bổ sung của tập màn phân hệ (46 nguyên tử, 84 phức hợp, 132 thành phần; thêm token độ mờ, kích thước bảng bên, mục lục, cột đọc) |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: ADR-072
 ten: Cấp phát topic, ACL và hạn mức Kafka bằng tài nguyên Strimzi trong kho GitOps của tenant
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Đề xuất
 nguoi_doc: Kiến trúc sư, đội dh-integration, đội vận hành nền tảng, PH-10, PH-20
 ---
@@ -25,6 +25,8 @@ PH-10 phải tạo topic, ACL theo tiền tố tenant và hạn mức cho princi
 
 Chọn **phương án B**. `dh-integration` chỉ có quyền ghi Git và đọc trạng thái CR; ngoại lệ duy nhất là Admin API để khởi tạo, đặt lại vị trí và xóa nhóm tiêu thụ (không là manifest). Hạn mức tenant được chia thành `quotas` của từng `KafkaUser` vì Kafka chỉ hỗ trợ hạn mức theo principal. Principal nội bộ của tenant và ACL tiền tố được tạo khi khởi tạo tenant (PH-20). Lệch giữa cụm và Git được báo, không sửa tay.
 
+Cơ chế này áp cho mọi topic của tenant, kể cả họ topic do DU nguồn phát vào các phân hệ khác: `{tenant}.obs.*` của PH-13 (kiểm toán, cảnh báo, siêu dữ liệu lượt gọi), `{tenant}.kpi.*` của PH-16 và `{tenant}.ops.*` của PH-18. Khi khởi tạo tenant, PH-20 và PH-10 cấp ACL tiền tố cho DU nguồn ghi vào `obs.audit.recorded` và cho APISIX ghi vào `obs.access.logged`. Số phân vùng và thời hạn giữ của từng topic do tập API của phân hệ phát khai báo (ví dụ PH-13 đề xuất `audit.recorded` 7 ngày, 6 phân vùng khóa `id`; `access.logged` 3 ngày, 6 phân vùng khóa `route`; các sự kiện an ninh và đứt chuỗi 30 ngày), PH-10 đăng ký chúng theo FR-10-067.
+
 ## Hệ quả
 
 - Tích cực: mọi thay đổi cụm có commit, có người duyệt trong PH-10; site DR dựng lại topic và ACL từ cùng kho; kiểm thử rò rỉ dựa trên chính sách Kyverno.
@@ -32,4 +34,4 @@ Chọn **phương án B**. `dh-integration` chỉ có quyền ghi Git và đọc
 
 ## Truy vết
 
-FR-10-009, 010, 031, 037, 062, 064, 066; BR-10-029, 036; NFR-10-008; ADR-009, ADR-059, ADR-068.
+FR-10-009, 010, 031, 037, 062, 064, 066, 067; FR-13-006, 010; BR-10-029, 036; NFR-10-008; ADR-009, ADR-059, ADR-068.

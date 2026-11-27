@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-01
 ten: Kế hoạch kiểm thử tổng thể (Master Test Plan)
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Quản lý dự án, Trưởng nhóm kiểm thử, Kiểm thử viên, Trưởng nhóm kỹ thuật, Kiến trúc sư, Vận hành, Chủ đầu tư, Hội đồng thẩm định
@@ -523,6 +523,8 @@ Kiểm thử hỗn loạn dùng **Chaos Mesh** (lựa chọn mặc định vì c
 
 : Tám thí nghiệm hỗn loạn CX-01 đến CX-08
 
+Ngoài tám thí nghiệm chung, PH-02 có các ca hỗn loạn riêng chạy trên STAGING theo cùng cách và cùng cổng RG-3: tắt `dh-connect` khi đang công bố dịch vụ (CX-01 áp dụng cho `dh-connect`, NFR-02-008; bản công bố dở dang phải hoàn tất hoặc hoàn tác đúng, không để dịch vụ ở trạng thái lửng); kill `worker` giữa saga công bố (saga tiếp tục từ bước đã ghi, không công bố hai lần); khôi phục DR làm lùi `source_version` (hệ thống phát hiện và đối soát lại, không phát sự kiện sai thứ tự); và PH-14 chặn kéo dài 8 ngày (dịch vụ liên quan chuyển trạng thái suy giảm đúng hạn, hàng đợi không tràn, phục hồi không mất bản ghi).
+
 #### 5.4.3. Kiểm thử phục hồi ở mức thành phần
 
 Ngoài thí nghiệm hỗn loạn, mỗi bản ứng viên phát hành chạy kiểm thử khôi phục: khôi phục CSDL tại một thời điểm (PITR) từ bản sao lưu Barman Cloud vào cụm mới và đối chiếu số dòng, tổng kiểm tra với nguồn ở thời điểm đó; khôi phục namespace bằng Velero; khôi phục bucket Garage. Đây cũng là kiểm chứng FR liên quan tới sao lưu ở PH-18.
@@ -734,6 +736,22 @@ Bảng dưới đây chốt tiêu chí vào, tiêu chí ra và người quyết 
 
 : Tiêu chí vào, tiêu chí ra và người quyết định của từng cổng phát hành
 
+Các nhóm ca bắt buộc đạt 100% do từng tập D05-02 nêu ở phần Tóm tắt được ghi vào cổng như bảng dưới đây; nhóm ghi ở cổng nào thì chặn cổng đó. Số hiệu kịch bản `TS-{PH}-{nn}` nằm ở tập D05-02 của phân hệ.
+
+| Phân hệ | Nhóm ca bắt buộc | Cổng |
+|---|---|---|
+| PH-01 | Sáu nhóm: không lộ bí mật (giá trị mồi `DH-CANARY`); cách ly tenant ở API, RLS, kho tệp; bốn mắt; liên kết bàn giao mở một lần; cắt quyền HTTT ≤ 60 giây; trần phạm vi và bí mật nhà nước bị từ chối | RG-3 |
+| PH-03 | TS-03-06, 08, 26, 27, 28 và số liệu ca ở Tóm tắt của tập | RG-3 |
+| PH-09 | Bộ ca golden của OPA (NFR-09-008) chạy trong CI (`opa test`); nhóm ca của PH-09 trong dải tenant kiểm thử | CI-2, RG-1 đến RG-3 |
+| PH-12 | Nhóm "fail-closed và cách ly tenant": từ chối an toàn khi không xác minh được, rò rỉ chéo tenant, hiệu lực đồng bộ ≤ 60 giây (mục 14 của FRS PH-12) | RG-3, điều kiện chặn |
+| PH-14 | Sáu nhóm: không lộ thông tin xác thực và khóa riêng; cách ly tenant; bốn mắt; mục đích khai thác bắt buộc; ký và xác minh chữ ký; không đệm dữ liệu `SENSITIVE` và không thử lại thao tác ghi khi chưa rõ kết quả. Kèm ca phối hợp: chiều vào, đệm và hạn mức, chạy song song với hệ cũ, dùng bộ giả `sim-ndxp` | RG-3 |
+| PH-16 | Báo cáo bất biến, kho WORM; gửi quốc gia qua PH-14 | RG-1 (WORM); RG-3 (gửi quốc gia) |
+| PH-17 | Bộ ca đỏ 66 ca và bộ đánh giá `ES-*` là cổng CI; tắt khẩn (kill switch) có hiệu lực ≤ 60 giây | CI; RG-3 |
+| PH-18 | "0 mục mất, 0 mục trùng" ở DLQ và phát lại; "bốn mắt không đường vòng" | RG-2 |
+| PH-20 | Rò rỉ chéo tenant theo nhóm API; saga từng bước và sáp nhập tỉnh đầu cuối | RG-1; RG-3 |
+
+: Nhóm ca bắt buộc theo phân hệ ghi vào cổng phát hành
+
 ### 6.3. Tiêu chí tạm dừng và tiếp tục
 
 Kiểm thử ở một mức hoặc trên một môi trường được tạm dừng khi xảy ra một trong các điều kiện: kiểm thử khói thất bại sau triển khai; có lỗi S1 chặn trên 30% số ca của đợt chạy; môi trường không ổn định khiến trên 10% số ca thất bại vì nguyên nhân hạ tầng; phát hiện dữ liệu cá nhân thật trên môi trường kiểm thử (dừng ngay, xử lý theo mục 8.3). Kiểm thử tiếp tục khi nguyên nhân đã được khắc phục, kiểm thử khói đạt lại và trưởng nhóm kiểm thử xác nhận; các ca đã chạy trên bản dựng lỗi được chạy lại.
@@ -753,6 +771,8 @@ Datahub dùng năm môi trường phi sản xuất. Bảng dưới đây mô t�
 | UAT | Kiểm thử chấp nhận, diễn tập di trú, đào tạo | Như STAGING một site | Tổng hợp có hình dạng tỉnh thí điểm; bản trích hệ cũ đã che khi được phép | Có duyệt, theo `RG-3` | Sandbox PayGov, môi trường thử NDXP, HTTT giả lập và HTTT thử của sở nếu có |
 
 : Năm môi trường kiểm thử theo mục đích, cấu hình, dữ liệu và cách triển khai
+
+Một số phân hệ cần cấu hình riêng trên các môi trường trên. PERF chạy hồ sơ 2.000 API cho NFR-02-001 đến 006 của PH-02 và dùng tenant `T90` cho PH-14; ngoài ra PERF chạy ca ghi kiểm toán 1.000 bản ghi mỗi giây toàn nền tảng trên 34 tenant (TS-13-38) và ca chịu lỗi 4 giờ của PH-13 (TS-13-09, 39). SIT của PH-03 và PH-15 cần hai vùng sẵn sàng và dải địa chỉ giả lập riêng cho từng vùng.
 
 PERF và STAGING có thể dùng chung cụm vật lý luân phiên theo lịch để tiết kiệm tài nguyên, với điều kiện khi chạy hiệu năng không có hoạt động nào khác trên cụm. Việc mỗi môi trường đặt ở TTDL tỉnh thí điểm hay ở hạ tầng của nhà thầu phụ thuộc thỏa thuận (Q366).
 
@@ -776,6 +796,8 @@ Bảng dưới đây liệt kê các dịch vụ ngoài được giả lập, c�
 
 : Công cụ và nguồn đặc tả để giả lập từng dịch vụ ngoài
 
+Bộ giả dùng chung cho SIT của các phân hệ gồm: `sim-ndxp` (WireMock có ký, cho PH-14 và mọi phân hệ gọi NDXP), Mailpit và bộ giả thư M-MAIL, bộ giả chủ đề Kafka M-TOPIC, WireMock cho PH-01, PH-02, PH-13, bản APISIX production giả lập và bộ đồng hồ giả lập cùng cờ đóng băng thời gian để kiểm các hạn và cửa sổ ký. Mọi bộ giả đóng gói như đoạn trên và nằm trong kho kiểm thử.
+
 ## 8. Dữ liệu kiểm thử và che dữ liệu
 
 ### 8.1. Nguyên tắc
@@ -787,6 +809,8 @@ Kế hoạch đặt một nguyên tắc cứng: **không dùng dữ liệu cá n
 Dữ liệu tổng hợp được sinh bằng một bộ sinh dữ liệu chung (`dh-testdata`, dựa trên Datafaker với bộ từ điển tiếng Việt và luật riêng) có hạt giống (seed) cố định để tái lập được. Bộ sinh tạo: tổ chức, HTTT, API từ OpenAPI mẫu, luồng, danh mục với thuộc tính động, người dùng mỗi vai trò, giao dịch thanh toán, sự kiện. Dữ liệu có dạng cá nhân dùng giá trị **rõ ràng là giả**: số định danh 12 chữ số trong dải mã tỉnh không tồn tại, số điện thoại trong dải dành cho kiểm thử, thư điện tử thuộc miền `example.gov.vn`, tên ghép ngẫu nhiên. Mã tenant kiểm thử dùng dải `T90`–`T99`, ngoài dải mã tỉnh thật. Danh mục đơn vị hành chính dùng bản công khai (dữ liệu `COMMON`), vì đây là dữ liệu công khai, kèm các trường hợp sáp nhập để kiểm thử lịch sử hiệu lực.
 
 Bộ dữ liệu được tổ chức thành ba cỡ: **nhỏ** (gieo cho từng ca kiểm thử, tạo và hủy trong ca), **chuẩn** (môi trường TEST, STAGING, UAT: khoảng 10 tenant, mỗi tenant 50 HTTT, 500 API) và **lớn** (PERF: hồ sơ "tỉnh vừa" và 34 tenant). Mỗi ca kiểm thử tự động tự tạo dữ liệu mình cần qua API hoặc bộ gieo, không phụ thuộc thứ tự chạy và không phụ thuộc dữ liệu do ca khác để lại.
+
+Quy ước dải tenant kiểm thử. Tenant kiểm thử chức năng dùng dải `T90` đến `T99`: `T90` là tenant chủ của dữ liệu, `T91` là tenant tấn công (hoặc tenant rỗng khi cần), `T92` thường là đích sáp nhập; từ `T93` đến `T99` mỗi tập D05-02 của phân hệ (PH-06, PH-08, PH-09, PH-10, PH-11, PH-16, PH-17, PH-18, PH-20 và các phân hệ khác) ghi vai trò dùng riêng trong tập của mình, và dùng lại giữa các phân hệ khi không chạy đồng thời. Tenant hiệu năng `T01` đến `T34` (cờ `testTenant = true`) nằm ngoài dải này, chỉ dùng ở PERF cho NFR-00-060 và NFR-20-005.
 
 ### 8.3. Che dữ liệu khi buộc dùng dữ liệu từ hệ cũ
 
@@ -1208,3 +1232,4 @@ Tài liệu đề xuất bổ sung vào D00-01 các mã và thuật ngữ sau; l
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: bối cảnh, chiến lược theo rủi ro, mức và loại kiểm thử, cổng phát hành RG-1 đến RG-5, môi trường, dữ liệu, tự động hóa, quản lý lỗi, chỉ số, tổ chức, lịch, công cụ, ma trận truy vết NFR |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung metadata `mo_ta` và `tai_lieu_lien_quan`; gộp mục 1.3 thành Căn cứ và tài liệu tham chiếu; thêm mục 1.6 Người đọc và phần cần đọc, mục 1.7 Cấu trúc tài liệu, đoạn chữ viết tắt ở mục 1.5; thêm đoạn mở cho mục 10.2; chuyển hai sơ đồ Mermaid (cổng phát hành, strangler) sang `flowchart TB`; viết lại 31 chú thích bảng và ba chú thích hình để cụ thể và không trùng |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: nhóm ca bắt buộc theo phân hệ vào RG-1, RG-2, RG-3; ca hỗn loạn riêng của PH-02; PERF cho PH-02, PH-13, PH-14; giả lập dùng chung (`sim-ndxp`, M-TOPIC, M-MAIL, đồng hồ giả); quy ước dải tenant `T90…T99` và `T01…T34` |
