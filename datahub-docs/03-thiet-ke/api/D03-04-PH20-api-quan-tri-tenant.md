@@ -5154,6 +5154,8 @@ Dải Q20-55…59 dành cho tập API; Q20-01…19 ở FRS không lặp lại.
 
 ## Phụ lục A. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập API không sửa tài liệu khác; các lệch và đề nghị dưới đây ghi để luồng chính xử lý.
 
 | Tài liệu | Đề nghị |

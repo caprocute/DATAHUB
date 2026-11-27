@@ -3660,6 +3660,8 @@ Script đọc khối `::: dac-ta` của SRS và FRS bằng `doc_frs.py`; FR vi�
 
 ## 9. Giả định, câu hỏi mở và đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 9.1. Giả định
 
 Theo quy ước của bộ tài liệu, thiếu số liệu thật thì dùng giả định có ghi cơ sở; bốn giả định dưới đây được thay bằng số đo thật sau ba sprint đầu W1.
@@ -3690,6 +3692,8 @@ Theo quy ước của bộ tài liệu, thiếu số liệu thật thì dùng gi
 : Câu hỏi mở của D02-05
 
 ### 9.3. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các điểm sau gom vào đợt đồng bộ cuối, không sửa tài liệu khác trong lần viết này:
 

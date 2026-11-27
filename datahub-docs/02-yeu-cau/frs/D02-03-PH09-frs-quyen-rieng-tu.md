@@ -4642,6 +4642,8 @@ Các enum từ `LogPolicy` đến `AuditOutcome` (trừ `AccessRequestKind`) l�
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-09 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị để hai bên khớp nhau. PH-09 không tự sửa các tài liệu dùng chung.
 
 | Tài liệu | Đề nghị |

@@ -6087,6 +6087,8 @@ ETag: W/"3"
 
 ## Phụ lục A. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bản 0.2 đã đồng bộ với FRS 0.2 (nhật ký hấp thụ mục 15): mã API-08-129…132, ERR-08-055, ERR-08-056, 43 tham số, enum Phụ lục A, `valueMode`, mã phiếu `DQ-yyyy-nnnnnn` và báo cáo `BC-DQ-yyyy-kỳ-Ttt`. Tập này không sửa tài liệu khác; các điểm còn lại cần chủ tài liệu hấp thụ ở đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |

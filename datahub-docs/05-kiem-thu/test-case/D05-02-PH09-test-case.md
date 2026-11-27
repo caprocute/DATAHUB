@@ -4749,6 +4749,8 @@ Bảng nối 13 tiêu chí ở FRS §14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị cho FRS
 
 FRS 0.2 đã hấp thụ các đề nghị của bản 0.1 (Phụ lục C của FRS); bảng nêu kết quả và cách ca đã chỉnh. Tập này không sửa FRS.
@@ -4768,6 +4770,8 @@ FRS 0.2 đã hấp thụ các đề nghị của bản 0.1 (Phụ lục C của 
 : Kết quả hấp thụ đề nghị của tập kiểm thử vào FRS 0.2
 
 ### 10.2. Đề nghị đồng bộ tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới thuộc tài liệu dùng chung hoặc tập của người khác; tập này không tự sửa.
 

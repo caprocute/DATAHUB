@@ -1722,6 +1722,8 @@ Mỗi lô là một `content_migration` (`id` là `migrationId`); mỗi trang, �
 
 ## 10. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Không sửa tài liệu ngoài tập PH-15; chủ tài liệu liên quan quyết định.
 
 | Tài liệu | Đề nghị | Lý do |

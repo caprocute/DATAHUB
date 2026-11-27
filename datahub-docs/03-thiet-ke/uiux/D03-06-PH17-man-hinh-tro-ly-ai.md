@@ -2589,6 +2589,8 @@ Thông báo hiển thị lấy nguyên văn từ FRS §9.1 (mã ERR-17-001 đế
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các mục dưới đây là chỗ tập màn khác với hoặc bổ sung cho tài liệu khác; không tạo mã mới ngoài UI-17.
 
 | Mã | Tài liệu | Đề nghị | Lý do |

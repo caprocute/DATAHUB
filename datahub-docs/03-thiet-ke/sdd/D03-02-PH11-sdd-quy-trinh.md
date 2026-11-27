@@ -1255,6 +1255,8 @@ Mười câu hỏi dưới cần chủ đầu tư, nhóm PH-04, CSDL hoặc ATTT
 
 ## Phụ lục A. Đề nghị đồng bộ FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa FRS, DDL hay OpenAPI. FRS 0.2 (Phụ lục C) đã xử lý các đề nghị của bản 0.1; cột Tình trạng ghi kết quả.
 
 | # | Nơi | Đề nghị | Tình trạng |

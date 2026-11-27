@@ -1770,6 +1770,8 @@ Kiểm thử viên đối chiếu từng màn với bảng trạng thái, hành 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Mục thiếu trong design system (mã `A-n`, tên không kèm `CMP`). Cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối; màn dùng tên chuẩn ở cột đó.
 
 | Mã | Đề nghị | Lý do | Tạm dùng | Kết quả |
@@ -1790,6 +1792,8 @@ Mục thiếu trong design system (mã `A-n`, tên không kèm `CMP`). Cột "K�
 
 ## Phụ lục B. Đề nghị bổ sung API
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Đề nghị gửi D03-04-PH11 (mã `B-n`); cột Tình trạng ghi kết quả hấp thụ ở FRS 0.2.
 
 | Mã | Đề nghị | Màn dùng | Tình trạng |
@@ -1804,6 +1808,8 @@ Mục thiếu trong design system (mã `A-n`, tên không kèm `CMP`). Cột "K�
 : Đề nghị bổ sung API của tập màn PH-11
 
 ## Phụ lục C. Đề nghị đồng bộ FRS
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Đề nghị gửi D02-03-PH11 (mã `C-n`); FRS 0.2 hấp thụ 11 trong 12 dòng, tập này đã sửa theo.
 

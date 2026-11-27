@@ -381,6 +381,8 @@ Tách nhiệm vụ: IE và IA là cặp loại trừ (D02-08 §4). TA có cả `
 
 ### 3.4. Đề nghị đồng bộ D02-08
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các quyền và scope dưới đây chưa có hoặc chưa đúng ở D02-08; tập này dùng như đề nghị cho tới khi D02-08 cập nhật.
 
 | Đề nghị | Nội dung |
@@ -5788,6 +5790,8 @@ Chương này nêu PH-10 dựa vào những thành phần nào và hành vi khi 
 5. Kích thước bản tin tối đa 1 MiB (cấu hình broker), trần topic theo `10.topic.max-message-bytes`.
 
 ### 12.4. Đề nghị đồng bộ cho tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này không sửa thay. Ba dòng cuối phát sinh ở bản 0.4.
 

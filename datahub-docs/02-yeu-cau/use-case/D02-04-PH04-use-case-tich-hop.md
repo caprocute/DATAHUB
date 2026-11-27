@@ -2044,6 +2044,8 @@ Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (
 
 ### 8.4. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Câu thông báo của mọi ngoại lệ lấy từ D02-03-PH04 §9.2 (nguồn chuẩn) và giống nguyên văn ở D03-06-PH04 §5.3 và D03-04-PH04 §6. Các câu dưới đây từng là đề nghị bổ sung vào D03-06-PH04 §5.3 vì giao diện khi đó hiện `title`; bản 0.2 của D03-06-PH04 đã có đủ, nên đề nghị đã hấp thụ. Riêng ERR-04-042, câu đề nghị cũ ("Phiên bản được soạn trên danh mục thành phần cũ…") được thay bằng câu của FRS §9.2.
 
 | Mã | HTTP | Câu thông báo (theo FRS §9.2) | Dùng ở | Trạng thái |

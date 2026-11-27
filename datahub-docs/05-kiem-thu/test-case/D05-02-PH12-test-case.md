@@ -2090,6 +2090,8 @@ Bảng sau nêu các lệnh sinh số ca, ma trận truy vết, kịch bản Ghe
 
 ## 10. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Danh sách sau gom các đề nghị với tài liệu chung và các tập khác để đợt đồng bộ cuối xử lý, vì tập này không sửa tài liệu chung.
 
 - D05-01: thêm nhóm "fail-closed và cách ly tenant của PH-12" vào cổng RG-3 như điều kiện chặn.

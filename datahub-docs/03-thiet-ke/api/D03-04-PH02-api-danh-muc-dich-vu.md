@@ -3355,6 +3355,8 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây nằm ngoài quyền sửa của tập này (tài liệu dùng chung hoặc tập khác của phân hệ); chuyển cho luồng hoặc đợt đồng bộ phụ trách.
 
 | Tài liệu | Đề nghị |

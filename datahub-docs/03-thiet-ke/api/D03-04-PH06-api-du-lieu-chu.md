@@ -702,6 +702,8 @@ Mỗi FR-06 có ít nhất một API hoặc ghi rõ nơi xử lý. Bảng sinh t
 
 ## 10. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Trường và enum chỉ có ở API
 
 Các tên dưới đây có ở OpenAPI hoặc AsyncAPI mà FRS chưa có; không tự thêm vào Phụ lục A mà đề nghị FRS hấp thụ.
@@ -712,6 +714,8 @@ Các tên dưới đây có ở OpenAPI hoặc AsyncAPI mà FRS chưa có; khôn
 Các trường phản hồi do màn hình yêu cầu (D03-06-PH06 Phụ lục B, mục B3 đến B6) đã được thêm vào OpenAPI ở bản đồng bộ chéo cuối, đều là trường tùy chọn: `thresholds`, `holdUntil`, `similarDecisions[]`, `nextItems[]` ở `StewardItemDetail` (API-06-046); `lineageHint` ở `GoldenRecord` (API-06-056, số giá trị khác nhau của từng thuộc tính); `criticalAlerts`, `queueByReason` và `bySource[]` có tỷ lệ định danh sai, trùng ở `DashboardMetrics` (API-06-085); `scoreDistribution[]` (100 khoảng điểm) ở `AccuracyReport` (API-06-040, kết quả của API-06-034 `:evaluate`); kết quả của `:dry-run` (API-06-033) chưa có lược đồ riêng nên phần phân bố điểm của chạy thử còn chờ chốt cùng SDD. FRS không cần hấp thụ các trường này (quyết định của FRS 0.2, Phụ lục C).
 
 ### 10.2. Đề nghị khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Ngoài trường và enum, tập này đề nghị FRS xử lý các điểm sau.
 

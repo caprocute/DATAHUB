@@ -4073,6 +4073,8 @@ HTTP/1.1 200 OK
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập khác hoặc cho bản hợp đồng sau. Tài liệu này không tự sửa tập khác; các đề nghị được gom một đợt cuối.
 
 | Số | Tập nhận | Đề nghị | Lý do | Trạng thái |

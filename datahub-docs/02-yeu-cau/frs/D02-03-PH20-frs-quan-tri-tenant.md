@@ -4946,6 +4946,8 @@ Nguồn chuẩn enum cho mọi tập PH-20; các liệt kê từ `ContractStatus
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 | Tài liệu | Đề nghị |
 |---|---|
 | D02-08 | Thêm 10 quyền: `PERM-20-provision`, `PERM-20-lifecycle`, `PERM-20-approve`, `PERM-20-quota`, `PERM-20-merge`, `PERM-20-release`, `PERM-20-settings`, `PERM-20-org`, `PERM-20-org-read`, `PERM-20-usage-read` theo 3.2; thêm scope dịch vụ `tenant:registry-read`, `tenant:provision-report`, `tenant:org-read` |

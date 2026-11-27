@@ -4330,6 +4330,8 @@ PH-15 được nghiệm thu khi mười tiêu chí dưới đây đạt trên m�
 
 ## 15. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 FRS này chỉ sửa tệp PH-15. Các thay đổi cần ở tài liệu dùng chung hoặc phân hệ khác được nêu thành đề nghị để chủ các tài liệu đó quyết định; PH-15 giữ nguyên bản FRS cho tới khi có phản hồi. Các đề nghị đến từ các tập thiết kế của chính PH-15 được hấp thụ ở bản 0.2 và ghi ở mục 15.3.
 
 ### 15.1. Đề nghị cho tài liệu dùng chung

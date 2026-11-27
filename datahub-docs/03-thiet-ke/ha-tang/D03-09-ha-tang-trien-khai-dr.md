@@ -1660,6 +1660,8 @@ Từ viết tắt mới: BCP (Business Continuity Plan), GSLB (Global Server Loa
 
 ### 16.3. Đề xuất sửa SAD, SRS và ADR khác (không tự sửa)
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Danh sách dưới ghi các chỗ tài liệu này lệch hoặc cần bổ sung so với SAD, SRS và ADR khác. Tài liệu không tự sửa các văn bản đó; luồng phụ trách từng văn bản xem xét và đồng bộ.
 
 1. **SAD §6 hàng "Biên"**: thay "Ingress NGINX hoặc Envoy Gateway, WAF ModSecurity/Coraza" bằng "APISIX ở biên, WAF Coraza với OWASP CRS chạy trong APISIX", ADR-033. *(Đã gộp 25/11/2026.)*

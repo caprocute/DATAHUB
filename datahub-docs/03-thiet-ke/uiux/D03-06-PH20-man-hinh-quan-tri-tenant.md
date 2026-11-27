@@ -2633,6 +2633,8 @@ Mỗi màn kiểm các điểm sau, bằng tay trước và bằng Playwright kh
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 | # | Đối tượng | Đề nghị |
 |---|---|---|
 | A-01 | `CMP-ReasonDialog` | Thêm biến thể `tenant-action`: trường mã phiếu, tối thiểu 20 ký tự cho lý do, bộ đếm còn thiếu |

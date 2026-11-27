@@ -2270,6 +2270,8 @@ Các câu hỏi dưới đây theo dải Q18-50…54 của tập CSDL; mỗi câ
 
 ## 10. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây lệch hoặc bổ sung so với brief, FRS và tài liệu chung; người điều phối quyết định đồng bộ ở đợt cuối.
 
 ### 10.1. Đồng bộ với brief và FRS PH-18

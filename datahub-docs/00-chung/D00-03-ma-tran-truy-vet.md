@@ -658,6 +658,8 @@ Bảng dưới nối từng chức năng hệ cũ (`LGC`) tới các đối tư�
 
 : Truy vết từ chức năng hệ cũ tới FR, US, UC, API, kịch bản kiểm thử và nghiệm thu
 
+Kết luận của đợt đồng bộ chéo cuối giữa các tập (đề nghị đồng bộ, quyết định đặt tên áp chung, câu hỏi mở Q380 trở đi) ghi ở phụ lục [D00-03-01 Sổ đồng bộ chéo cuối](D00-03-01-so-dong-bo-cuoi.md).
+
 ## 6. Câu hỏi mở
 
 > **Giả định GĐ-01 (thay Q01, 25/11/2026).** Phụ lục `PTYC_Toolings.xlsx` không có. Giả định 29 mục `LGC-TOOL` ở mục 4.2, lập từ tài liệu thiết kế chính của hệ cũ, đã phủ đủ chức năng của công cụ thiết kế. *Cơ sở:* tài liệu chính mô tả đủ các nhóm thao tác (kéo thả, cấu hình component, sinh luồng, triển khai). *Cách cập nhật:* chức năng nào người dùng hệ cũ chỉ ra trong khảo sát hoặc UAT mà chưa có mã thì thêm mục `LGC-TOOL` mới, gắn nhãn "phát hiện muộn", rồi chạy lại script đếm ở mục 5.
@@ -672,4 +674,4 @@ Bảng dưới nối từng chức năng hệ cũ (`LGC`) tới các đối tư�
 |---|---|---|---|
 | 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: nguồn kiểm kê, kiểm kê chức năng chín khối, tổng hợp độ phủ, mục loại bỏ, câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 đến 1.5 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 4.8 và 5.1; viết lại chú thích bảng cho cụ thể; sửa bảng tổng hợp độ phủ ở mục 5 cho khớp mục 4.6 (khối PAY 26 mục, nâng cấp 10; tổng 186 mục, nâng cấp 72) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mục 5.2 (phần B) truy vết LGC tới FR, US, UC, API, kịch bản kiểm thử và nghiệm thu, sinh bằng build/tools/sinh_ma_tran_lgc.py; thêm cột US cùng số với FR |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thêm mục 5.2 (phần B) truy vết LGC tới FR, US, UC, API, kịch bản kiểm thử và nghiệm thu, sinh bằng build/tools/sinh_ma_tran_lgc.py; thêm cột US cùng số với FR; dẫn tới phụ lục D00-03-01 Sổ đồng bộ chéo cuối |

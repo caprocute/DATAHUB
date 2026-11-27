@@ -1517,6 +1517,8 @@ Bản hi-fi minh họa bố cục, thứ bậc thông tin và nội dung tiếng
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Phụ lục này ghi các thành phần giao diện mà tập màn cần nhưng D03-05 chưa có; tập màn không tự đặt thành phần. Cột "Tạm dùng" ghi cách dựng hiện tại; cột cuối ghi kết quả xử lý ở đợt đồng bộ cuối.
 
 | Mã đề nghị | Thành phần | Lý do | Tạm dùng | Kết quả |
@@ -1529,6 +1531,8 @@ Phụ lục này ghi các thành phần giao diện mà tập màn cần nhưng 
 : Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Phụ lục này ghi các API mà màn hình cần và tình trạng của từng đề nghị ở D03-04-PH02.
 
@@ -1545,6 +1549,8 @@ Phụ lục này ghi các API mà màn hình cần và tình trạng của từn
 : Đề nghị bổ sung API
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc cần sửa ở tài liệu dùng chung, không sửa trong tập này.
 

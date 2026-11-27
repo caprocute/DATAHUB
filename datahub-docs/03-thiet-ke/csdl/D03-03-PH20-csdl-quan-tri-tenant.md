@@ -2522,6 +2522,8 @@ PH-20 là năng lực mới (REQ-20): hệ LGSP cũ không có phân hệ quản
 
 ## 11. Câu hỏi mở và đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Năm câu hỏi mở của CSDL nằm ở dải Q20-50…54; mỗi câu nêu giả định đang dùng để tiếp tục, người cần quyết định và hệ quả nếu đổi. Phần sau liệt kê các đề nghị đồng bộ với tài liệu chung và phân hệ khác, không tự sửa trong tập này.
 
 ### 11.1. Câu hỏi mở
@@ -2539,6 +2541,8 @@ Bảng dưới nêu năm câu hỏi chưa có đáp án chính thức, mỗi câ
 : Câu hỏi mở Q20-50…54 của tập CSDL
 
 ### 11.2. Phụ lục đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Bảng dưới liệt kê điều cần đồng bộ giữa tập CSDL PH-20 và tài liệu khác; luồng chính xử lý khi FRS PH-20 hoàn tất.
 

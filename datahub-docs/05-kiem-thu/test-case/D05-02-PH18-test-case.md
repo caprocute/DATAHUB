@@ -5539,6 +5539,8 @@ Bảng nối 13 tiêu chí AC-18-01…13 ở FRS §14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu khác. Các điểm dưới là chỗ ca phải giả định hoặc phát hiện lệch giữa các tập của PH-18, ghi để chủ tài liệu quyết định; FRS vẫn là nguồn chuẩn. Ở bản 0.2, tám đề nghị mục 10.1 đã được FRS 0.2 và D03-04-PH18 0.2 hấp thụ; mục 10.2 thuộc tài liệu dùng chung, giữ cho đợt đồng bộ liên phân hệ. Ca mới cho API-18-181…188: TC-18-165, TC-18-166, TC-18-167, TC-18-168, TC-18-169, TC-18-170, TC-18-171.
 
 ### 10.1. Đề nghị cho FRS và D03-04-PH18
@@ -5559,6 +5561,8 @@ Các điểm dưới cần FRS hoặc tập API chốt; cột "Cách ca đang x�
 : Điểm cần chốt ở FRS, API và cách ca xử lý
 
 ### 10.2. Đề nghị đồng bộ tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới thuộc tài liệu dùng chung hoặc tập của người khác; tập này không tự sửa.
 

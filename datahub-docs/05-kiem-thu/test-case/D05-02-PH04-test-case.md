@@ -5609,6 +5609,8 @@ Các script dùng chung `tc_parse.py`, đọc được cả khối đặc tả `
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở tập khác trong đợt gom cuối. Tập này đã viết ca theo phương án ở cột "Đề nghị".
 
 | Tập | Chỗ | Vấn đề | Đề nghị | Trạng thái |

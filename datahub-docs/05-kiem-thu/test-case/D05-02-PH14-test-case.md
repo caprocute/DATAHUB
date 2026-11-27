@@ -4145,6 +4145,8 @@ Các lệnh sau sinh ma trận truy vết, tệp Gherkin và bảng tính từ c
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc sau cần làm ở tài liệu khác để khớp với bộ test case PH-14.
 
 1. D00-04 §3.2: chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để thêm TS, TC của PH-14 vào dải đã dùng.

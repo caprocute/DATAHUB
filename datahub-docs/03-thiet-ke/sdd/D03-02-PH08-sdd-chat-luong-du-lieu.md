@@ -1210,6 +1210,8 @@ Chín câu hỏi sau chưa có trả lời; thiết kế dùng phương án nêu
 
 ### 13.6. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các đề nghị của bản 0.1 về FRS và CSDL (HMAC, ví dụ 86,37, PH-18 phụ thuộc mềm, cột và bảng mới, `failFast`, `Idempotency-Key`) đã được FRS 0.2 và CSDL 0.2 hấp thụ (FRS chương 15, ĐN-SDD-01…12). Bảng dưới là phần dồn đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị | Mục SDD |

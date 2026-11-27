@@ -1970,6 +1970,8 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 
 ### 9.2. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; bảng dưới ghi cách tập CSDL đã áp.
 
 | Số | Nội dung | Xử lý ở FRS 0.2 và CSDL 0.2 |

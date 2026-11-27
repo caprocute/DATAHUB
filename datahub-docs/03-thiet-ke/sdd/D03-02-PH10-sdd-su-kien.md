@@ -1687,6 +1687,8 @@ Bước 1–4 nằm trong W2–W4 của kế hoạch phát triển (song song PH
 
 ### 13.4. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §15); thân tập này đã dùng tên chốt.
 
 | Mục | Chỗ thiếu ở Phụ lục A | Thiết kế đang dùng | Đề nghị |

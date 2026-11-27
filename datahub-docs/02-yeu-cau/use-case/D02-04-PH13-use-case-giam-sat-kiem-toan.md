@@ -2619,6 +2619,8 @@ Tập này không tạo mã FR, NFR, BR, API, ERR, EVT hay UI mới; mọi mã d
 
 ## 10. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này không sửa thay và không tạo ADR mới.
 
 | Tài liệu | Đề nghị |

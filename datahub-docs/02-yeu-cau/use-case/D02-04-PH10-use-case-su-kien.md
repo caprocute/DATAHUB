@@ -2065,6 +2065,8 @@ Tập này không tạo mã FR, BR, API, ERR, EVT, UI, TS mới. Mã của tập
 
 ### 8.2. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §15); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
 
 Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tên chuẩn; tập này dùng đúng chữ trong thân FR và đề nghị đưa vào Phụ lục A để các tập sau (API, màn hình, ca kiểm thử) dùng thống nhất.
@@ -2084,6 +2086,8 @@ Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tê
 : Đề nghị bổ sung cho FRS đã được xử lý
 
 ### 8.3. Đề nghị đồng bộ cho tập màn hình và API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Câu thông báo dưới đây đã thống nhất với D02-03-PH10 FRS §9.2 trong đợt đồng bộ ngày 26/11/2026. D03-06-PH10 §5.3 giữ câu cho ERR-10-001…054 và nơi hiển thị cho người vận hành của mã data plane; bảng giữ lại để truy vết đề nghị đưa các câu này vào `detail` mẫu của D03-04-PH10.
 

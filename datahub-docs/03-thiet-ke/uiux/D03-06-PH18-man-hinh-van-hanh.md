@@ -2396,6 +2396,8 @@ Hai mươi sáu ảnh ở `ph18/hifi/`: một ảnh cho mỗi màn và hai ảnh
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Mục này liệt kê thành phần mà bản đầu của tập màn thấy thiếu ở D03-05-03, D03-05-04; cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Không có token mới; mọi màu, khoảng cách, bán kính dùng token sẵn có.
 
 | Mã | Tên dùng tạm | Mô tả | Dùng ở | Kết quả |
@@ -2407,6 +2409,8 @@ Mục này liệt kê thành phần mà bản đầu của tập màn thấy thi
 : Thành phần đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API cho D03-04-PH18
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Bản 0.1 ghi bảy thao tác giao diện mà khối FR mô tả nhưng chưa có API tương ứng. FRS 0.2 và D03-04-PH18 0.2 đã cấp mã cho cả bảy (cột "Trạng thái"); thao tác cắt chuyển dùng thân `action` của API-18-175.
 
@@ -2423,6 +2427,8 @@ Bản 0.1 ghi bảy thao tác giao diện mà khối FR mô tả nhưng chưa c�
 : Đề nghị bổ sung API cho PH-18
 
 ## Phụ lục C. Điểm lệch và đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Mục này ghi chỗ FRS, D03-06-00 và tập màn chưa khớp nhau. Tập màn theo FRS khi FRS rõ; khi FRS tự mâu thuẫn, tập màn chọn cách an toàn hơn và ghi lại để BA PH-18 sửa ở bản FRS sau. Ở bản 0.2, tám điểm lệch với FRS đã được hấp thụ; LC-01, LC-02, LC-06 và năm đề nghị ĐB-01…05 thuộc D03-06-00 nên giữ cho đợt đồng bộ liên phân hệ.
 
@@ -2447,6 +2453,8 @@ Bảng dưới liệt kê từng điểm lệch, cách tập màn đang xử lý
 : Điểm lệch giữa tập màn và FRS PH-18
 
 ### C.2. Đề nghị đồng bộ D03-06-00
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị dưới đây cần nhóm IA cập nhật vào D03-06-00 để menu và đường dẫn khớp với PH-18.
 

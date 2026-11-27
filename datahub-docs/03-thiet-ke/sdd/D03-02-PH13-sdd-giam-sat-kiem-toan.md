@@ -2418,6 +2418,8 @@ Các câu hỏi dưới đây phát sinh khi thiết kế (dải Q13-20…29 c�
 
 ### 13.4. Đề nghị đồng bộ cho tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dưới là danh sách việc cho các luồng khác. Các đề nghị của FRS §12.4 (quyền, SRS, D03-07 §7.3, D03-10, D03-06-00, D03-05, D00-04) vẫn có hiệu lực và không lặp lại.
 
 | Tài liệu | Đề nghị |

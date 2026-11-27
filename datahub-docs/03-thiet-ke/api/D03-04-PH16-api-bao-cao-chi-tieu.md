@@ -6101,6 +6101,8 @@ HTTP/1.1 200 OK
 
 ## Phụ lục A. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu khác; các điểm dưới cần chủ tài liệu hấp thụ ở đợt đồng bộ cuối. Dòng ghi "Đã hấp thụ" đã được FRS 0.2 hoặc CSDL 0.2 nhận ở đợt đồng bộ 26/11/2026.
 
 | Tài liệu | Đề nghị |

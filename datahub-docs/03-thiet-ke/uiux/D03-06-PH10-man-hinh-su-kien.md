@@ -2699,6 +2699,8 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Cột cuối ghi kết quả ở đợt đồng bộ cuối.
 
 | # | Đề nghị | Lý do | Tạm dùng | Kết quả |
@@ -2713,6 +2715,8 @@ Cột cuối ghi kết quả ở đợt đồng bộ cuối.
 : Phụ lục A. Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API (cho D03-04-PH10)
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Đã xử lý ở FRS bản 0.3 (D02-03-PH10 §14) theo cách D03-04-PH10 §10.3 nhận: tên chốt là `signingKeyPending` (thay `signingSecretPending`), `metricsCollectedAt` (thay `stats.collectedAt`), dashboard không có cờ `available` (chỉ `traffic` rỗng khi PH-13 lỗi), không có trạng thái worker riêng (tab Worker dùng API-10-055, 052), miễn xác minh làm sau khi tạo qua API-10-091.
 
@@ -2733,6 +2737,8 @@ Cột cuối ghi kết quả ở đợt đồng bộ cuối.
 
 ## Phụ lục C. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Đã xử lý ở FRS bản 0.3 (§14): C1 vào A.6; C2, C3, C5 vào bảng tham số FR-10-035; C4 vào quy ước đầu §5 (10…500 ký tự); C6 chấp nhận, mặc định `BLOCK` cho topic `orderingRequired` và đóng Q10-15. Phụ lục A được chép sang FRS §12.4 cho D03-05.
 
 | # | Mục FRS | Đề nghị |
@@ -2747,6 +2753,8 @@ Cột cuối ghi kết quả ở đợt đồng bộ cuối.
 : Phụ lục C. Đề nghị bổ sung cho FRS
 
 ## Phụ lục D. Đề nghị đồng bộ cho tập khác (bản 0.3)
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 | # | Tập | Đề nghị |
 |---|---|---|

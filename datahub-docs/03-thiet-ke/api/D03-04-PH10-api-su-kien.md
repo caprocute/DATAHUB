@@ -1154,6 +1154,8 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 
 ## 10. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Trường và enum chỉ có ở API
 
 Bảng dưới sinh bằng `gen_md.py`: tên trường, giá trị enum dùng trong OpenAPI, AsyncAPI mà không xuất hiện ở FRS. Bản 0.1 liệt kê 91 trường và 6 giá trị enum (trường cấu trúc phản hồi, trường sự kiện như `previousStatus`, `changedFields`, `configVersion`); đã xử lý ở FRS bản 0.3: FRS hấp thụ nguyên tên vào A.3 (bảng "Trường chỉ ở API") và A.2.15, nên bảng hiện trống. `doi_chieu_frs.py` báo lỗi nếu có trường mới mà bảng này chưa liệt kê.
@@ -1163,6 +1165,8 @@ Không còn trường, enum nào chỉ có ở API: FRS bản 0.3 đã hấp th�
 <!-- gen:proposals:end -->
 
 ### 10.2. Đề nghị khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS bản 0.3 (D02-03-PH10 §15); tập này đã sửa theo: ERR-10-053, 054 thay 101, 102 ở control plane; API-10-121 hủy tác vụ nhập; `legalBasis` 10…1.000 ký tự; miền `retryBackoff.multiplier` 1…5; mặc định `failurePolicy` theo `orderingRequired`. Mục 4 (loại bỏ DLQ theo bộ lọc) để Đợt sau, MVP giữ danh sách ≤ 1.000 mục.
 

@@ -5354,9 +5354,13 @@ test('đăng ký nhận đẩy có xác minh endpoint', async ({ page }) => {
 
 ## 10. Đề nghị bổ sung cho FRS và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Chương này ghi những chỗ tập kiểm thử cần mà nguồn chưa có, để nhóm FRS, API, màn hình đồng bộ ở bản kế tiếp, và các câu hỏi còn mở.
 
 ### 10.1. Đề nghị bổ sung cho FRS
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 | Đề nghị | Lý do |
 |---|---|
@@ -5368,6 +5372,8 @@ Chương này ghi những chỗ tập kiểm thử cần mà nguồn chưa có, 
 : Đề nghị bổ sung cho FRS
 
 ### 10.2. Đề nghị đồng bộ câu thông báo
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các câu dưới đây được dùng ở trường "Thông báo hiển thị" của tập này. Sau đợt đồng bộ ngày 26/11/2026, câu đã thống nhất với D02-03-PH10 FRS §9.2 (nguồn chuẩn câu mới) và D03-06-PH10 §5.3 đã nhận câu ERR-10-053, 054; bảng giữ lại để truy vết đề nghị.
 

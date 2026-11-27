@@ -4781,7 +4781,11 @@ Bảng nối tám tiêu chí ở FRS mục 14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Sáu đề nghị của bản 0.1 đã được FRS 0.2 xử lý (chương 15, ĐN-TC-01…06); ca kiểm thử nay bám đúng các quyết định đó. Còn một điểm chờ đợt đồng bộ cuối.
 

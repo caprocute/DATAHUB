@@ -2524,6 +2524,8 @@ Chương này nêu điểm kiểm thử giao diện riêng PH-16 và danh sách 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 (thành phần, token)
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-16 chỉ dùng `CMP-*` đã có; các mục dưới là đề nghị ban đầu, cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Ảnh hi-fi dùng giá trị hex tương đương token; khi sinh lại ảnh thì theo cột này.
 
 | Mã đề nghị | Nội dung | Dùng ở | Kết quả |
@@ -2540,6 +2542,8 @@ PH-16 chỉ dùng `CMP-*` đã có; các mục dưới là đề nghị ban đ�
 
 ## Phụ lục B. Đề nghị bổ sung API và trường cho D03-04-PH16
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các đề nghị dưới giúp màn dựng được mà không gọi thêm lần; chưa có ở FRS §9.4 nên cần xác nhận với chủ tập API. Đợt đồng bộ 26/11/2026 chưa hấp thụ B-01…B-07 (D03-04-PH16 0.2 giữ lược đồ phản hồi cũ); trường `documentNumber`, `recipientsNote` của báo cáo đã có ở API 0.2.
 
 | Mã | Đề nghị | Màn |
@@ -2553,6 +2557,8 @@ Các đề nghị dưới giúp màn dựng được mà không gọi thêm lầ
 : Đề nghị bổ sung API và trường từ PH-16
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS và tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập màn này không sửa tài liệu ngoài phạm vi; các điểm dưới cần chủ tài liệu tương ứng xác nhận và hấp thụ (FRS Phụ lục B nhận làm mục ĐN-MH). C-01…C-06 đã được FRS 0.2 hấp thụ (Phụ lục C của FRS, HT-28…33); C-07, C-08 còn chờ D03-06-00, D02-08.
 

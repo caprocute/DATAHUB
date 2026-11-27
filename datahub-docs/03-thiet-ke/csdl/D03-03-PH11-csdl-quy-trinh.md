@@ -1603,6 +1603,8 @@ Hệ cũ không có BPM (BRD ghi REQ-11 là năng lực mới) nên không có b
 
 ## 9. Câu hỏi mở và đề nghị đồng bộ cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 9.1. Câu hỏi mở
 
 Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
@@ -1618,6 +1620,8 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 : Câu hỏi mở của tập CSDL PH-11
 
 ### 9.2. Đề nghị đồng bộ FRS
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 FRS 0.2 (Phụ lục C) đã hấp thụ các đề nghị của bản 0.2: EN-11-28 `instance_step`, `OutboxStatus`, `InboxStatus`, dạng JSON, `failed_element`, `audit.recorded.v1` (nay `bpm.audit.recorded.v1`, EVT-11-21), `COMMON` ở FRS 8.2. Còn lại:
 

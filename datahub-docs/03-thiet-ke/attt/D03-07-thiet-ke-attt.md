@@ -1357,6 +1357,8 @@ Các mã và thuật ngữ dưới đây được tài liệu này dùng lần �
 
 ### 14.3. Điểm cần sửa ở SRS và SAD (không tự sửa)
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây là chênh lệch giữa tài liệu này và tài liệu khác; luồng lõi quyết định và cập nhật.
 
 | Tài liệu, vị trí | Hiện ghi | Đề xuất | Lý do |

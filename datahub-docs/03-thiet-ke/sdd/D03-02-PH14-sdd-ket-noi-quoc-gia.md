@@ -2174,6 +2174,8 @@ Bảng dưới ghi các rủi ro riêng của PH-14 kèm mức và biện pháp 
 
 ## Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài liệu của phân hệ khác; tập này không sửa trực tiếp vì các luồng viết chạy song song. Đề nghị thực hiện trong đợt đồng bộ cuối. Việc đã nêu ở mục "Đề nghị đồng bộ" của FRS (quyền `PERM-14-*`, scope máy, REQ-14, D00-01, D00-03 phần B, ba ADR đầu) không lặp lại ở đây.
 
 | Tài liệu | Nội dung đề nghị | Lý do |

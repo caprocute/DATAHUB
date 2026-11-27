@@ -2210,6 +2210,8 @@ Mọi FR có người dùng thao tác trực tiếp đều có màn; hai FR ch�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Không có thành phần mới bắt buộc. Ba biến thể dưới đây đã được thêm vào design system (D03-05-03 bản 0.4, D03-05-04 bản 0.4); bảng giữ lại để truy vết lý do.
 
 | Đề xuất | Dựa trên | Dùng ở | Lý do |
@@ -2221,6 +2223,8 @@ Không có thành phần mới bắt buộc. Ba biến thể dưới đây đã 
 : Phụ lục A. Thành phần đề xuất bổ sung cho design system
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Chênh lệch giữa giao diện và D03-04-PH01 hiện tại; mỗi dòng kèm cách giao diện xử lý tạm thời.
 
@@ -2239,6 +2243,8 @@ Chênh lệch giữa giao diện và D03-04-PH01 hiện tại; mỗi dòng kèm 
 Tình trạng ở bản 0.2: D03-04-PH01 đã nhận API-01-087, 088 và mã lỗi ERR-01-051…054 nhưng chưa xử lý bảy đề nghị trên; đã có `allowedActions`, `disabledReasons` (đề nghị 3) còn `waitingFor`, `dueAt`, `flags[]` cần xác nhận ở lược đồ. Giao diện giữ cách xử lý tạm thời của từng dòng cho tới khi tập API trả lời; việc này được ghi ở đề nghị đồng bộ số 16 của D03-04-PH01.
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khác, ngoài quyền sửa của tập này; ghi để đợt đồng bộ cuối thực hiện.
 

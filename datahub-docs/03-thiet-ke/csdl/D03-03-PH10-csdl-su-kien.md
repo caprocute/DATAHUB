@@ -1470,6 +1470,8 @@ Repo chưa có bảng PH-10 đang chạy; mô hình EN-10-01…05 của SRS repo
 
 ### 9.2. Đề nghị bổ sung cho FRS
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Trạng thái: chín điểm dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); DDL đã thêm `CHECK` cho `routing_mode.ordering`, `legacy_mapping.target_type`, giá trị `DELIVERY_BLOCKED`, `REJECTED`, cột `dlq_entry.bridge_code` và ba cột xác nhận cảnh báo ở `subscription`.
 
 | Số | Nội dung | CSDL đang làm |

@@ -1327,6 +1327,8 @@ Chưa tạo tệp ADR (theo quy ước dải). Bốn ADR đề xuất: **ADR 090
 
 ### 13.5. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì tập này không tự sửa các tài liệu đó.
 
 

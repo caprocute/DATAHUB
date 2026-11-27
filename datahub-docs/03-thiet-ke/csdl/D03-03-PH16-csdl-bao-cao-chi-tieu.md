@@ -1941,6 +1941,8 @@ Nhật ký kiểm toán (API-16-129) đọc từ kho kiểm toán của PH-13, P
 
 ## 9. Câu hỏi mở và đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 9.1. Câu hỏi mở
 
 Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
@@ -1956,6 +1958,8 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 : Câu hỏi mở của tập CSDL PH-16
 
 ### 9.2. Phụ lục đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập này không sửa tài liệu chung hay tập khác; các điểm sau cần chủ tài liệu tương ứng nhận.
 

@@ -2447,6 +2447,8 @@ Các câu hỏi phát sinh khi viết use case, đánh số Q20-45…49 theo d�
 
 ## Phụ lục A. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS hay tài liệu chung, các dòng dưới dồn vào Phụ lục B của FRS và các tài liệu chung ở bản kế tiếp. Dòng A-01 (đã xử lý ở 0.2), A-03, A-04, A-05 là lệch hoặc thiếu của FRS; A-02, A-06…A-09 là đề nghị cho tài liệu chung và phân hệ khác.
 
 | Mã | Vị trí | Đề nghị | Nơi nhận |

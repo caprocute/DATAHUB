@@ -4911,6 +4911,8 @@ Các giá trị dưới là chuẩn cho API, sự kiện và thiết kế dữ l
 
 ## Phụ lục B. Đề nghị đồng bộ sang tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu của phân hệ khác. Các thay đổi dưới là đề nghị để chủ tài liệu thực hiện; phần "PERM-17" đã được đồng bộ vào D02-08 §3.1 ở bản 0.2.
 
 | Tài liệu | Đề nghị | Lý do |

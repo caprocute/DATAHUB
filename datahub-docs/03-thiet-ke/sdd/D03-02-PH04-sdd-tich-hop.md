@@ -2096,6 +2096,8 @@ Các câu hỏi dưới đây đã có đề xuất tạm nên không chặn vi�
 
 ### 16.1. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
 
 | Tập | Đề nghị | Trạng thái |

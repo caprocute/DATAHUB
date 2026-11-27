@@ -5395,6 +5395,8 @@ Bảng nối 18 tiêu chí AC-17-01…18 ở FRS §14 với ca chứng minh.
 
 ## 10. Đề nghị đồng bộ và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị cho FRS
 
 Tập này không sửa FRS; các điểm dưới là chỗ ca phải giả định, cần FRS hoặc SDD chốt.
@@ -5410,6 +5412,8 @@ Tập này không sửa FRS; các điểm dưới là chỗ ca phải giả đ�
 : Điểm cần chốt ở FRS và cách ca xử lý
 
 ### 10.2. Đề nghị đồng bộ tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới thuộc tài liệu dùng chung hoặc tập của người khác; tập này không tự sửa.
 

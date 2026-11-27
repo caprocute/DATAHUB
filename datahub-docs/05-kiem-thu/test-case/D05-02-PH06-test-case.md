@@ -5115,7 +5115,11 @@ Bảng nối 12 tiêu chí ở FRS §14 với ca chứng minh.
 
 ## 10. Đề nghị bổ sung cho FRS và câu hỏi mở
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### 10.1. Đề nghị bổ sung cho FRS
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; bảng ghi cách tập kiểm thử đã áp.
 

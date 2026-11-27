@@ -1990,6 +1990,8 @@ Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp v�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập màn không tự đặt thành phần hay token. Bảy mục dưới đây là chỗ thiếu khi thiết kế cổng; cột "Kết quả" ghi xử lý ở đợt đồng bộ cuối. Thành phần dùng riêng ở PH-15 (A2, A4, A5) được dựng cục bộ trong `apps/portal`, không đưa vào `@datahub/ui`.
 
 | # | Đề nghị | Loại | Mô tả | Dùng ở | Kết quả |
@@ -2005,6 +2007,8 @@ Tập màn không tự đặt thành phần hay token. Bảy mục dưới đây
 : Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Ba API dưới đây giúp giao diện nhẹ và đúng hơn; đề nghị D03-04-PH15 xem xét.
 
@@ -2036,6 +2040,8 @@ Các câu hỏi dưới đây chưa có trả lời; tài liệu dùng giả đ�
 : Câu hỏi mở về giao diện PH-15
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới đây thuộc tài liệu chung hoặc tập khác của PH-15; tập này chỉ ghi, không sửa.
 

@@ -461,6 +461,8 @@ Chiều ngược lại, tài khoản của `dh-platform` giữ scope `event:metr
 
 ### 3.4. Đề nghị đồng bộ D02-08
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các quyền và scope dưới đây đã được thêm hoặc chỉnh ở D02-08 bản 0.5 (§3, §5 và ghi chú về `ROLE-PLATFORM_AUDITOR`); bảng giữ lại làm vết đối chiếu giữa hai tài liệu. Tập này không sửa D02-08.
 
 | Đề nghị | Nội dung |
@@ -4985,6 +4987,8 @@ Các ràng buộc thiết kế dưới đây cố định cho mọi lần hiện
 8. Không thêm DU mới: PH-13 nằm trong `dh-platform` (D03-01 §4.1).
 
 ### 12.4. Đề nghị đồng bộ cho tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này không sửa thay và không tạo ADR mới.
 

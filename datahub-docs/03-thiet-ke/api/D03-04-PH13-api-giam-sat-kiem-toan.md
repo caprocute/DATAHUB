@@ -3000,6 +3000,8 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 ## 11. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dưới là việc cho các luồng khác. Các đề nghị về quyền và scope (D02-08) đã ở FRS §3.4 và không lặp lại.
 
 | Tài liệu | Đề nghị |

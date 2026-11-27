@@ -4698,6 +4698,8 @@ Dải FR-04-031…040 của repo được tách từng mã dưới đây vì m�
 
 ## Phụ lục B. Đề nghị đồng bộ với tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cần sửa ở tài liệu khác trong đợt đồng bộ chung. Tài liệu này không sửa trực tiếp tài liệu khác.
 
 | # | Tài liệu | Đề nghị | Trạng thái |

@@ -1501,6 +1501,8 @@ python3 gen_hifi.py && node shot.js
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu dùng chung. Các mục dưới đây đề nghị đợt đồng bộ; trong lúc chờ, màn dùng thành phần chuẩn gần nhất ghi ở cột "Tạm dùng".
 
 ### A.1. Thành phần
@@ -1530,6 +1532,8 @@ Màn dùng `PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin` đang là đ
 Đề nghị D03-06-00 §4.9, §4.14 ghi rõ phím tắt ký tự đơn chỉ hoạt động khi focus ở vùng danh sách và có cài đặt tắt (WCAG 2.1.4), kèm bảng phím riêng cho cảnh báo (`A`, `S`, `X`).
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các API dưới đây chưa có trong D03-04-PH13; màn hình tạm dùng API hiện có như ghi ở cột Lý do, và đề nghị bổ sung ở lần cập nhật kế tiếp của tập API.
 

@@ -1392,6 +1392,8 @@ Dải ADR 080 đến 084 dành cho PH-06 (D00-04 §3.1). Tập này chỉ nêu n
 
 ### 13.5. Đề nghị bổ sung cho FRS và tài liệu khác
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần sửa; bảng dưới ghi từng đề nghị bổ sung kèm lý do để các tập khớp nhau.
 
 | Tài liệu | Đề nghị | Lý do |

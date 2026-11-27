@@ -1973,6 +1973,8 @@ Bộ 19 ảnh nằm ở `ph12/hifi/` (`ui-12-01.png`…`ui-12-19.png`), sinh b�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng sau tổng hợp các đề nghị bổ sung cho D03-05 và D03-06-00 mà việc thiết kế màn PH-12 phát hiện, kèm lý do, để đợt đồng bộ tài liệu chung xử lý.
 
 | Tài liệu | Đề nghị | Lý do |
@@ -1989,6 +1991,8 @@ Bảng sau tổng hợp các đề nghị bổ sung cho D03-05 và D03-06-00 mà
 
 ## Phụ lục B. Đề nghị bổ sung API
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng sau tổng hợp các API mà màn PH-12 cần nhưng D03-04-PH12 chưa có, kèm màn sử dụng, để đồng bộ với tập API.
 
 | API | Đề nghị | Màn dùng |
@@ -2003,6 +2007,8 @@ Bảng sau tổng hợp các API mà màn PH-12 cần nhưng D03-04-PH12 chưa c
 : Đề nghị bổ sung API
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu trách nhiệm; tập này chỉ ghi lại.
 

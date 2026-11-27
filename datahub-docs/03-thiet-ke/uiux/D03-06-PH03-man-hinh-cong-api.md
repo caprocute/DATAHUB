@@ -2015,6 +2015,8 @@ Ca kiểm thử chi tiết viết ở D05-02-PH03 (theo `number_tcs.py`); tập 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Không có thành phần mới bắt buộc: mọi màn dựng được bằng các `CMP-*` chuẩn. Bốn biến thể dưới đây đã có ở D03-05-04 bản 0.4 trở lên (cột "Đã có ở"), bảng giữ lại để truy vết:
 
 | Đề xuất | Dựa trên | Dùng ở | Lý do | Đã có ở |
@@ -2027,6 +2029,8 @@ Không có thành phần mới bắt buộc: mọi màn dựng được bằng c
 : Phụ lục A. Đề nghị bổ sung cho D03-05
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Các điểm dưới đây là chỗ giao diện cần dữ liệu mà D03-04-PH03 bản 0.1 chưa có hoặc chưa rõ; ghi để đợt đồng bộ API xử lý, tập này không sửa D03-04.
 
@@ -2062,6 +2066,8 @@ Các điểm dưới đây là chỗ giao diện cần dữ liệu mà D03-04-PH
 : Phụ lục C. Danh sách kiểm tra khi dựng màn
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập này không sửa tài liệu dùng chung; các việc dưới đây để đợt đồng bộ cuối thực hiện.
 

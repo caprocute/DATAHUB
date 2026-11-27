@@ -4907,6 +4907,8 @@ Mọi bảng có thêm `id`, `tenant_id`, `created_*`, `updated_*`, `version`; D
 
 ## Phụ lục B. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 PH-11 kéo theo thay đổi ở tài liệu khác; bảng ghi nội dung đề nghị để hai bên khớp nhau.
 
 | Tài liệu | Đề nghị |

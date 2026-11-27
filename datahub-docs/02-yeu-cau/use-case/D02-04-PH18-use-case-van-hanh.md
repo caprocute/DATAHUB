@@ -2701,6 +2701,8 @@ Bảng dưới cho thấy tập này dùng bao nhiêu mã của FRS. Mọi mã l
 
 ### 8.3. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Tập này không sửa tài liệu khác. Mười lăm đề nghị cho chủ tài liệu (FRS, D03-04-PH18, D03-06-PH18, D02-08, D05-02-PH18) nằm ở Phụ lục A; mười một đề nghị đầu là chỗ FRS 0.1 còn lệch, thiếu hoặc chưa rõ khi viết use case. Ở bản 0.2, mười hai đề nghị đã được hấp thụ (cột "Trạng thái"); ba đề nghị còn giữ cho đợt đồng bộ liên phân hệ.
 
 ## 9. Câu hỏi mở
@@ -2718,6 +2720,8 @@ Các câu hỏi Q18-01 đến Q18-19 nằm ở FRS mục 13. Dưới đây là n
 > **Câu hỏi mở Q18-49:** UC-18-21 nhánh 1c: tenant `SUSPENDED` chỉ nhận thông báo nhóm bắt buộc, mà khôi phục tenant (UC-18-31) đặt tenant `SUSPENDED` từ bước 4 đến bước 8. Thông báo tiến độ, kết quả khôi phục cho TA và PA có thuộc nhóm bắt buộc không? Đề xuất thêm nhóm "vận hành bắt buộc" gồm thông báo khôi phục, sự cố `SEV1` và bảo trì, không tắt được và không bị chặn khi tenant tạm ngừng; cần PH-20 và chủ sở hữu PH-18 xác nhận.
 
 ## Phụ lục A. Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Phụ lục ghi những điểm lệch, thiếu hoặc chưa rõ phát hiện khi viết use case, để chủ tài liệu quyết định. Đề nghị ĐN-UC-01 đến ĐN-UC-11 dành cho FRS 0.1 (và D03-04-PH18 khi API liên quan); ĐN-UC-12 đến ĐN-UC-15 dành cho tập khác. FRS vẫn là nguồn chuẩn cho tới khi chủ tài liệu nhận đề nghị. Cột "Trạng thái" ghi kết quả đợt đồng bộ nội bộ ở bản 0.2.
 

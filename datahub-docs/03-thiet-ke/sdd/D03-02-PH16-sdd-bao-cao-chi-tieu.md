@@ -1251,6 +1251,8 @@ Mười câu hỏi sau chưa có trả lời; thiết kế dùng phương án n�
 
 ### 13.6. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS Phụ lục A) và các đề nghị với tài liệu khác. Mỗi đề nghị do chủ tài liệu tương ứng nhận ở bản kế tiếp; SDD không tự sửa tài liệu ngoài phạm vi. Ba dòng đầu và dòng FRS đã được FRS 0.2, CSDL 0.2 xử lý ở đợt đồng bộ 26/11/2026 (FRS Phụ lục C, HT-13…18); kết quả ghi cuối ô đề nghị.
 
 | Tài liệu | Đề nghị | Mục SDD |

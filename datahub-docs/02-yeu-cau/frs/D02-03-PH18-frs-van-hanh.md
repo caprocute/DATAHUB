@@ -5559,6 +5559,8 @@ PH-18 chạy trong DU `dh-platform`, không có DU riêng; tác vụ nặng ch�
 
 ### 12.4. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng dưới ghi việc cần tài liệu chung và phân hệ khác làm; dòng nội bộ PH-18 đã hấp thụ ở 0.2 được đánh dấu. Bảng 12.5 ghi các đề nghị nội bộ mà tập khác của PH-18 gửi FRS và cách bản 0.2 đã hấp thụ.
 
 | Tài liệu, phân hệ | Đề nghị | Lý do |

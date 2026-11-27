@@ -1865,6 +1865,8 @@ Bảng dưới liệt kê ảnh hi-fi của từng màn và điểm nổi bật 
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng dưới ghi các thành phần giao diện mới mà PH-06 đề nghị bổ sung vào bộ chung D03-05, kèm lý do và nơi dùng.
 
 | # | Đề nghị | Lý do, nơi dùng |
@@ -1883,6 +1885,8 @@ Xử lý sau đồng bộ chéo cuối với D03-05 bản 0.4: A1 dùng `CMP-Sco
 
 ## Phụ lục B. Đề nghị bổ sung API
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 FRS 0.2 (§15) đã xử lý từng đề nghị; cột cuối ghi kết quả.
 
 | # | Đề nghị | Cho màn | Xử lý ở FRS 0.2 |
@@ -1900,6 +1904,8 @@ FRS 0.2 (§15) đã xử lý từng đề nghị; cột cuối ghi kết quả.
 : Đề nghị bổ sung API cho D03-04-PH06
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS D02-03-PH06
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 FRS 0.2 đã áp toàn bộ chín đề nghị; bảng giữ để truy vết.
 

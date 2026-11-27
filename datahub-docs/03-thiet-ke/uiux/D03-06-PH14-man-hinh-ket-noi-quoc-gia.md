@@ -1795,6 +1795,8 @@ Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp v�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằng thành phần và token hiện có. Các biến thể dưới đây đã có ở D03-05-03 bản 0.4 trở lên (ghi cuối từng dòng); mục menu đề nghị ghi vào D03-06-00.
 
 | Đề nghị | Dựa trên | Dùng ở | Lý do |
@@ -1808,6 +1810,8 @@ Không có `CMP-*` hay token mới bắt buộc: mọi màn dựng được bằ
 : Phụ lục A. Đề nghị bổ sung cho D03-05 và D03-06-00
 
 ## Phụ lục B. Đề nghị bổ sung API
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Giao diện cần một số dữ liệu mà API hiện có chưa trả; các đề nghị dưới đây ghi vào D03-04-PH14 ở đợt đồng bộ cuối.
 
@@ -1823,6 +1827,8 @@ Giao diện cần một số dữ liệu mà API hiện có chưa trả; các đ
 : Phụ lục B. Đề nghị bổ sung API
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Tập này không sửa tài liệu dùng chung; các việc dưới đây cần làm ở đợt đồng bộ cuối.
 

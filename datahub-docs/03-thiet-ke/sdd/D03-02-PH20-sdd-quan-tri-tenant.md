@@ -2164,6 +2164,8 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 
 ## Phụ lục A. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 ### A.1. Lệch giữa SDD với FRS, CSDL và brief
 
 | Mã | Điểm lệch | Phương án của SDD | Cần làm |
@@ -2187,6 +2189,8 @@ Các điểm phụ thuộc ngoài: M2 cần PH-12 (API-12-080) và PH-13 (API-13
 : Lệch giữa SDD và tài liệu nguồn
 
 ### A.2. Đề nghị đồng bộ với tài liệu khác
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 | Tài liệu | Đề nghị |
 |---|---|

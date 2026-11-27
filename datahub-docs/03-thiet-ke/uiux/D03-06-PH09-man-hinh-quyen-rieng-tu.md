@@ -1967,6 +1967,8 @@ Bảng liệt kê 13 ảnh PNG ở `ph09/hifi/` và điểm cần kiểm tra tr�
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng ghi các thành phần và token mới PH-09 đã đề nghị bổ sung vào bộ chung. Sau đợt đồng bộ chéo cuối, cột cuối ghi thành phần chuẩn của D03-05-03, D03-05-04 (§14.2 ánh xạ tên) mà tập này dùng; không còn thành phần tự dựng.
 
 | # | Đề nghị | Nơi dùng | Thành phần chuẩn |
@@ -1984,6 +1986,8 @@ Bảng ghi các thành phần và token mới PH-09 đã đề nghị bổ sung 
 
 ## Phụ lục B. Đề nghị bổ sung API
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Các trường phản hồi và API dưới đây giúp màn hiển thị đủ mà không phải gọi nhiều lần; việc định nghĩa chi tiết thuộc D03-04-PH09. Cột "Trạng thái" ghi kết quả sau khi FRS 0.2 và D03-04-PH09 bản 0.2 đã đồng bộ.
 
 | # | Đề nghị | Màn | Trạng thái |
@@ -2000,6 +2004,8 @@ Các trường phản hồi và API dưới đây giúp màn hiển thị đủ 
 : Đề nghị bổ sung API và trạng thái
 
 ## Đề nghị đồng bộ
+
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
 
 Phần này gom việc cần sửa ở FRS và tài liệu chung; tập màn không tự sửa các tài liệu đó.
 

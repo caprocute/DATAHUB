@@ -2346,6 +2346,8 @@ Ngoài mười điểm trên, `merge_transfer` cùng hướng chuyển sáp nh�
 
 ### 13.6. Đề nghị đồng bộ
 
+> **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
+
 Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì tập này không tự sửa các tài liệu đó. Bốn dòng đầu (D03-03-PH18, D02-03-PH18, D03-04-PH18, ADR-181) là đồng bộ nội bộ PH-18 và đã hấp thụ ở 0.2; các dòng còn lại liên phân hệ, giữ cho đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
