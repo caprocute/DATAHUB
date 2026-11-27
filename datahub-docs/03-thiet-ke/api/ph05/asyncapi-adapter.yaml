@@ -446,7 +446,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/adapterStateChanged'
-    title: dh-runtime, PH-04 nhận
+    title: dh-runtime, PH-04, PH-16 nhận
   sendKameletPublished:
     action: send
     channel:

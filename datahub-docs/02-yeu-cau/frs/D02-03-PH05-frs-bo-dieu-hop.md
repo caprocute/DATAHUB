@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH05
 ten: Đặc tả yêu cầu chức năng phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư tích hợp, kỹ sư dh-integration và dh-runtime, kiểm thử viên
 phan_he: PH-05
@@ -605,7 +605,7 @@ Ví dụ trong chương này dùng tenant `T68`, HTTT `HT-TUPHAP` (Sở Tư phá
 **Màn hình, API.** UI-05-03 bước 1; API-05-001, API-05-002.
 :::
 
-Danh mục loại kết nối ban đầu ở bản 0.1 gồm 24 loại dưới đây.
+Danh mục loại kết nối ban đầu gồm 25 loại dưới đây: 24 loại của bản 0.1 và loại `pulsar-bridge` bổ sung theo ADR-073.
 
 | `typeCode` | Nhóm | Tham số không bí mật chính | Khóa bí mật | Kamelet giao thức |
 |---|---|---|---|---|
@@ -625,12 +625,27 @@ Danh mục loại kết nối ban đầu ở bản 0.1 gồm 24 loại dưới �
 | `amqp-1` | MESSAGING | `remoteUri`, `username`, `containerId` | `password` | `dh-amqp-source`, `dh-amqp-sink` |
 | `mqtt-5` | MESSAGING | `brokerUrl`, `clientIdPrefix`, `qos` | `password` | `dh-mqtt-source`, `dh-mqtt-sink` |
 | `kafka-external` | MESSAGING | `bootstrapServers`, `securityProtocol`, `saslMechanism` | `saslPassword` | `dh-kafka-ext-source`, `dh-kafka-ext-sink` |
+| `pulsar-bridge` | MESSAGING | `serviceUrl`, `tenant`, `namespace`, `authMode`, `expiresAt` (hạn dùng của cầu nối) | `authToken` | Không có Kamelet giao thức riêng: chỉ luồng cầu nối di trú của PH-10 dùng thành phần Camel `pulsar` (ADR-073); chỉ PA bật, có hạn dùng, hết hạn tự tắt |
 | `smtp` | MAIL | `host`, `port`, `starttls`, `username`, `fromAddress` | `password` | `dh-mail-sink` |
 | `imap` | MAIL | `host`, `port`, `username`, `folder` | `password` | `dh-imap-source` |
 | `ldap` | DIRECTORY | `url`, `baseDn`, `bindDn` | `bindPassword` | `dh-ldap-action` |
 | `cdc-debezium` | DATABASE | như `db-flow`, cộng `logMode` | `username`, `password` (tài khoản quyền đọc nhật ký) | Connector Debezium (FR-05-048), không phải Kamelet |
 
-: Danh mục loại kết nối bản 0.1
+: Danh mục loại kết nối
+
+| Kamelet | Loại | Phân hệ yêu cầu | Hành vi và ràng buộc |
+|---|---|---|---|
+| `dh-kafka-source`, `dh-kafka-sink` | source, sink | PH-10 | Đọc và ghi topic Kafka nội bộ qua listener `internal` (mTLS, ACL theo tiền tố tenant); tên topic, khóa phân vùng, lược đồ và nhóm tiêu thụ lấy từ cấu hình topic của PH-10, không qua kết nối PH-05 (kết nối `kafka-external` chỉ dành cho cụm Kafka của bên thứ ba) |
+| `dh-mdm-ingest-sink` | sink | PH-06 | Gửi bản ghi ứng viên tới API nội bộ API-06-022 bằng token máy scope `mdm:ingest`, kèm `Idempotency-Key` là `exchangeId`; `429` thì giãn theo `Retry-After` (FR-06-011) |
+| `dh-mdm-resolve` | action | PH-06 | Gọi API-06-071 (`POST /domains/{domainCode}:resolve`, scope `mdm:resolve`) để làm giàu bản tin bằng định danh chủ; tiêu đề `X-Purpose` lấy từ mục đích khai ở chặng `authz` |
+| `dh-dq-check` | action | PH-08 | Gọi kiểm tra chất lượng trực tuyến của PH-08, đặt tiêu đề `dh-dq-verdict` và `dh-dq-violations` (chỉ mã quy tắc); `onFail` mặc định `STOP_TO_DLQ` với lý do `DQ_FAIL` (FR-08-033); gọi PH-08 bằng token máy scope `dq.check` |
+| `dh-national-invoke` | action | PH-14 | Gọi điểm gọi chung của PH-14 (API-14-075, scope `national.invoke`) kèm mục đích và mã hồ sơ; gửi `X-DH-Parallel-Run` và băm trường tới API-14-089 khi đang chạy song song; không tự thử lại, việc thử lại do `dh-default-config` quyết định (FR-14-010) |
+| `dh-assist-action` | action | PH-17 | Đợt 3. Gọi `POST /assist/v1/inference/classify` hoặc `extract` của PH-17 qua mTLS với token dịch vụ scope `assist:infer` (FR-17-060); người thiết kế khai `purpose` (mã mục đích PH-09), `dataClass` (bốn mức DD-08) và `task`; kết quả kèm `confidence` để luồng tự quyết định dùng hay không |
+| `dh-audit-sink` | sink | PH-13 | Ghi bản ghi kiểm toán của luồng qua `KafkaAuditSender` của `dh-audit`; khác `dh-audit-action` (nhật ký kết nối EVT-04-14 của PH-04) |
+
+: Kamelet nền nghiệp vụ của nền tảng, do phân hệ khác yêu cầu
+
+Các Kamelet trong bảng trên là Kamelet nền, ký cùng ảnh runtime và có trong `runtime-manifest.json` của hồ sơ runtime mặc định; PH-05 đăng ký chúng vào danh mục Kamelet (nhóm G) để API-05-089 trả cho trình thiết kế. Chúng không gắn với một `typeCode`, nên người thiết kế không phải chọn kết nối PH-05 cho các bước này.
 
 ### 6.3. Nhóm B · Kết nối nguồn và bí mật
 
@@ -1270,6 +1285,8 @@ flowchart LR
 7. Với PROD không cần duyệt lại vì tham số không đổi và đã kiểm tra đạt; kiểm toán ghi rõ điều này.
 
 **Luồng thay thế.** Lịch tự động: tham số `05.secret.max-age-days` (mặc định 90). 14 ngày trước hạn, hệ thống gửi việc cho chủ sở hữu kết nối; quá hạn thì kết nối có cảnh báo ở UI-05-01 và UI-05-07.
+
+Với loại `oauth2-client` ở chế độ `private_key_jwt` và loại `http-mtls`, phiên bản mới trong thời gian chuyển tiếp là giá trị chờ: bên dùng kết nối (luồng PH-04, và PH-14 ở FR-14-025) chọn phiên bản qua thư viện dùng chung `SecretVersionSelector`, dùng phiên bản mới sau khi kiểm tra đạt và quay lại phiên bản cũ khi đích từ chối, nên việc lấy token hoặc bắt tay mTLS không gián đoạn khi xoay.
 
 **Luồng ngoại lệ.**
 
@@ -4123,7 +4140,7 @@ Mỗi mã lỗi mà người dùng có thể gặp trên màn hình được chu
 | EVT-05-05 | `{tenant}.adapter.connection.grant-changed.v1` | Cấp, thu hồi | PH-04 |
 | EVT-05-06 | `{tenant}.adapter.health.changed.v1` | Mức sức khỏe đổi | PH-04, PH-13 |
 | EVT-05-07 | `{tenant}.adapter.adapter.version-approved.v1` | Phiên bản bộ điều hợp được duyệt | PH-04, `dh-runtime` |
-| EVT-05-08 | `{tenant}.adapter.adapter.state-changed.v1` | Tạm dừng, tiếp tục, ngừng dùng bộ điều hợp | `dh-runtime`, PH-04 |
+| EVT-05-08 | `{tenant}.adapter.adapter.state-changed.v1` | Tạm dừng, tiếp tục, ngừng dùng bộ điều hợp | `dh-runtime`, PH-04, PH-16 |
 | EVT-05-09 | `{tenant}.adapter.kamelet.published.v1` | Kamelet được duyệt (với `COMMON`: `common.adapter.kamelet.published.v1`) | PH-04 |
 | EVT-05-10 | `{tenant}.adapter.kamelet.lifecycle-changed.v1` | Ngừng khuyến nghị, thu hồi | PH-04, PH-13 |
 | EVT-05-11 | `{tenant}.adapter.cdc.schema-changed.v1` | Phát hiện thay đổi lược đồ | PH-10, PH-13 |
@@ -4245,7 +4262,7 @@ Các mục `LGC-BUS-006`, `LGC-BUS-009`, `LGC-BUS-010`, `LGC-BUS-012`, `LGC-BUS-
 | Phụ thuộc | Loại | Dùng cho | Khi không khả dụng |
 |---|---|---|---|
 | OpenBao (KV v2, database engine, PKI) | Cứng | Bí mật, tài khoản động, chứng thư mTLS | Không ghi được bí mật mới (ERR-05-028); runtime dùng đệm, hết đệm thì ERR-05-101 và `UNHEALTHY` |
-| PH-01 (bản sao HTTT) | Mềm | Kiểm tra HTTT khi tạo | Dùng bản sao gần nhất; quá 24 giờ thì chặn tạo mới |
+| PH-01 (bản sao HTTT) | Mềm | Kiểm tra HTTT khi tạo; bản sao khởi tạo và đối chiếu bằng API-01-063, API-01-064 (token dịch vụ `onboarding:internal-read`), cập nhật qua EVT-01-03, EVT-01-04 | Dùng bản sao gần nhất; quá 24 giờ thì chặn tạo mới |
 | PH-04 `dh-integration` | Mềm | Kiểm tra không gian, luồng; nơi dùng | Cấp kết nối trả ERR-05-029; nơi dùng trả `partial` |
 | PH-10, Apicurio | Cứng với CDC | Topic, lược đồ CDC | Không khai báo được CDC mới; CDC đang chạy không ảnh hưởng |
 | Kafka | Cứng với sự kiện, CDC | EVT-05-*, CDC | Outbox giữ sự kiện; CDC `PAUSED` |
@@ -4312,3 +4329,4 @@ Các mục `LGC-BUS-006`, `LGC-BUS-009`, `LGC-BUS-010`, `LGC-BUS-012`, `LGC-BUS-
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo quy tắc tối ưu token: sổ tra cứu D00-04, khuôn K-FRS, nguồn yêu cầu từ SRS-PH-05 của repo, Q359, ADR-067 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Nâng mức chi tiết theo khuôn trình bày mới: thêm chương Giới thiệu (thuật ngữ, tài liệu tham chiếu, cấu trúc), mục tiêu và kiến trúc thành phần, sơ đồ trình tự, danh sách chức năng, bảng đặc tả đầy đủ cho nhóm A, B (luồng chính, luồng thay thế, ngoại lệ kèm thông báo, kết quả, màn hình), bảng thông báo hiển thị, giao diện tiêu biểu. Nhóm C–H giữ nội dung 0.1, viết lại sau khi duyệt mẫu |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn đặc tả kết hợp 17 mục cho đủ 62 FR: giữ toàn bộ trường kỹ thuật của D00-01 §4.3 (đầu vào, đầu ra, mã lỗi theo bước, sự kiện, kiểm toán) và thêm các mục của mẫu thuyết minh (mục đích, kích hoạt, luồng thay thế, câu thông báo, kết quả, màn hình và API). Thêm bảng dữ liệu vào cho FR-05-023, 026, 031, 032, 036, 048; bảng ngưỡng sức khỏe, quy tắc kiểm tra tĩnh Kamelet; sơ đồ đánh giá sức khỏe, vòng đời tài khoản CSDL, bộ điều hợp, CDC, Kamelet; trình tự duyệt quyền ghi CSDL, lượt gọi bộ điều hợp, duyệt phiên bản, xử lý thay đổi lược đồ |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: loại pulsar-bridge, bảng Kamelet nền nghiệp vụ, khóa bí mật chờ kích hoạt, người nhận EVT-05-08 |

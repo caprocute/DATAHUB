@@ -17,7 +17,7 @@ Tính năng: TS-04-21 · Data plane bất đồng bộ, xử lý lỗi, chống 
     Biết một bản tin không phải JSON; một bản tin làm đích lỗi sau 3 lần thử.
     Khi gửi hai bản tin.
     Và đọc `t68.ops.dlq.v1`.
-    Thì hai bản tin trong DLQ có tiêu đề `dh-error-code` (ERR-04-101 và ERR-04-104), `dh-flow`, `dh-version`, `dh-attempts`, `traceparent`. Các bản tin sau đó vẫn được xử lý (không tắc phân vùng). Lỗi giải tuần tự vào DLQ ngay, không thử lại.
+    Thì hai bản tin trong DLQ có tiêu đề `dh-dlq-error-code` (ERR-04-101 và ERR-04-104), `dh-flow`, `dh-version`, `dh-dlq-attempts`, `traceparent`. Các bản tin sau đó vẫn được xử lý (không tắc phân vùng). Lỗi giải tuần tự vào DLQ ngay, không thử lại.
 
   @TC-04-133 @P1 @Dương @Âm
   Kịch bản: TC-04-133 Chống trùng bản tin
@@ -41,4 +41,4 @@ Tính năng: TS-04-21 · Data plane bất đồng bộ, xử lý lỗi, chống 
     Biết F-DD PROD; một bản tin có mã loại đất không có trong bảng ánh xạ PH-07 (cấu hình `FAIL`); một bản tin làm bộ chuẩn hóa CDM ném lỗi không phân loại.
     Khi gửi hai bản tin vào `t68.datdai.thua-dat.changed.v1`, tiếp theo 10 bản tin hợp lệ.
     Và đọc `t68.ops.dlq.v1` và chỉ số `dh_flow_failures_total`.
-    Thì hai bản tin vào DLQ với `dh-attempts = 1` (không thử lại): tiêu đề `dh-error-code` lần lượt ERR-04-108 và ERR-04-109, kèm `dh-flow`, `dh-version`, `traceparent`; trường nhạy cảm đã mã hóa. 10 bản tin hợp lệ vẫn ra `t68.cdm.thua-dat.v1` (không tắc phân vùng). ERR-04-109 sinh cảnh báo PH-13; người vận hành thấy cả hai ở màn DLQ của PH-18.
+    Thì hai bản tin vào DLQ với `dh-dlq-attempts = 1` (không thử lại): tiêu đề `dh-dlq-error-code` lần lượt ERR-04-108 và ERR-04-109, kèm `dh-flow`, `dh-version`, `traceparent`; trường nhạy cảm đã mã hóa. 10 bản tin hợp lệ vẫn ra `t68.cdm.thua-dat.v1` (không tắc phân vùng). ERR-04-109 sinh cảnh báo PH-13; người vận hành thấy cả hai ở màn DLQ của PH-18.

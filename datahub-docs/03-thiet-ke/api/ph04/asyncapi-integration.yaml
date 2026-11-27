@@ -947,6 +947,31 @@ components:
       required:
       - userId
       - type
+    RestOperation:
+      type: object
+      properties:
+        method:
+          type: string
+          enum:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+        path:
+          type: string
+        description:
+          type: string
+          maxLength: 1000
+        requestSchemaRef:
+          type: string
+          description: Mã lược đồ yêu cầu (Apicurio hoặc PH-06) của chặng `schema`, nếu có.
+        responseSchemaRef:
+          type: string
+          description: Mã lược đồ phản hồi, nếu có.
+      required:
+      - method
+      - path
     FlowCreated:
       allOf:
       - $ref: '#/components/schemas/FlowRef'
@@ -983,6 +1008,11 @@ components:
               type: string
           actor:
             $ref: '#/components/schemas/Actor'
+          restOperations:
+            type: array
+            description: Điểm vào REST của luồng (PH-02 dùng để đăng ký API nguồn `FLOW`, FR-02-013); chỉ có khi luồng có điểm vào `platform-http`.
+            items:
+              $ref: '#/components/schemas/RestOperation'
         required:
         - changedFields
     VersionEvent:
@@ -1010,6 +1040,11 @@ components:
             type: array
             items:
               type: string
+          restOperations:
+            type: array
+            description: Điểm vào REST của luồng (PH-02 dùng để đăng ký API nguồn `FLOW`, FR-02-013); chỉ có khi luồng có điểm vào `platform-http`.
+            items:
+              $ref: '#/components/schemas/RestOperation'
         required:
         - versionNo
         - contentHash
@@ -1073,6 +1108,17 @@ components:
             type: string
           errorCode:
             type: string
+          dependsOn:
+            type: array
+            description: Mã thành phần mà luồng phụ thuộc (kết nối PH-05, topic PH-10, API PH-02), lấy từ chỉ mục điểm kết nối; PH-16 ghi thành
+              phụ thuộc loại `AUTO`.
+            items:
+              type: string
+          restOperations:
+            type: array
+            description: Điểm vào REST của luồng (PH-02 dùng để đăng ký API nguồn `FLOW`, FR-02-013); chỉ có khi luồng có điểm vào `platform-http`.
+            items:
+              $ref: '#/components/schemas/RestOperation'
         required:
         - deploymentId
         - environment

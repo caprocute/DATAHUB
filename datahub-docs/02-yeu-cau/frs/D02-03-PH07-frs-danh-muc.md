@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH07
 ten: Đặc tả chức năng phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.3
-ngay: 2026-11-26
+phien_ban: 0.4
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Chủ đầu tư, nhóm phân tích nghiệp vụ, kiến trúc sư, đội phát triển dh-data, đội kiểm thử, đội di trú dữ liệu
 phan_he: PH-07
@@ -4114,7 +4114,7 @@ Nhóm H không thuộc một bước của vòng đời mà là điều kiện �
 ::: dac-ta
 **Mục đích.** Chức năng này là API nền tảng mà PH-20 gọi trong quy trình khởi tạo tenant (BP-08) để tỉnh mới có ngay danh mục địa phương khởi đầu và cấu hình PH-07 mặc định. Danh mục toàn quốc không cần nạp vì đã dùng được qua `COMMON`.
 
-**Tác nhân, quyền.** Client dịch vụ PH-20 (scope nền tảng `platform.tenant.provision`, giả định) hoặc PA; API ở tiền tố `/api/platform/rdm/v1` không mở ra cổng công khai.
+**Tác nhân, quyền.** Client dịch vụ PH-20 (scope máy `platform.tenant.provision`, đã cấp cho PH-20 gọi API-07-073) hoặc PA; API ở tiền tố `/api/platform/rdm/v1` không mở ra cổng công khai.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -4726,11 +4726,11 @@ PH-07 phụ thuộc và được phụ thuộc bởi các phân hệ sau. Mỗi 
 | PH-03 Gateway (APISIX) | PH-07 dùng | Xác thực token, scope, giới hạn tần suất, nhật ký truy cập | Toàn bộ API ngừng (ngoài phạm vi PH-07) |
 | PH-04 Luồng tích hợp, `dh-runtime` | Dùng PH-07 | Tra mã, chuyển mã từ ảnh chụp trong bộ nhớ (ADR-053) | — |
 | PH-06 Dữ liệu chủ | Dùng PH-07 | Danh mục làm miền giá trị, `admin_unit` cho địa chỉ | — |
-| PH-08 Chất lượng dữ liệu | Dùng PH-07 | Danh mục làm miền giá trị của quy tắc | — |
+| PH-08 Chất lượng dữ liệu | Dùng PH-07 | Danh mục làm miền giá trị của quy tắc: PH-08 dùng ảnh chụp danh mục (ADR-053, FR-07-028), tra lô (FR-07-027), tra theo thời điểm (FR-07-026), nghe EVT-07-05 để nhận phiên bản mới; danh mục `RESTRICTED` chỉ khai thác được khi PA cấp quyền cho tài khoản dịch vụ của PH-08 (FR-07-052) | — |
 | PH-10 Sự kiện | Dùng PH-07 | Đăng ký topic `*.rdm.*` cho HTTT | — |
 | PH-12 Quy trình, hộp "Việc của tôi" | Dùng sự kiện PH-07 | Tạo, đóng việc chờ duyệt, chờ xác nhận đồng bộ | Việc chưa được tạo; người dùng vẫn thấy trên UI-07-07, 09 |
 | PH-13 Kiểm toán | PH-07 dùng | Ghi qua outbox; đọc cho API-07-072 | Ghi vẫn tiếp tục (outbox giữ); đọc lịch sử trả một phần (ERR-07-047) |
-| PH-14 Kết nối quốc gia | PH-07 dùng | Cổng tiếp hợp `NDXP_DMDC` | Đồng bộ `FAILED`, thử lại lượt sau (ERR-07-028) |
+| PH-14 Kết nối quốc gia | PH-07 dùng; PH-14 đọc PH-07 | Cổng tiếp hợp `NDXP_DMDC` (bốn thao tác API-14-079…083, tham số `ifVersionNot` trả `304`); PH-14 đọc danh mục mục đích khai thác và danh mục thủ tục hành chính do PH-07 quản lý bằng API khai thác (API-07-042, 043; `CatalogLookupApi` nêu ở tập PH-14 tương ứng với API khai thác và `RdmLookupApi` của PH-07), mã danh mục chốt khi nạp gói nền (FR-07-049) | Đồng bộ `FAILED`, thử lại lượt sau (ERR-07-028) |
 | PH-18 Vận hành, tham số | PH-07 dùng | Kho tham số `07.rdm.*`, cảnh báo | Dùng giá trị đệm hoặc mặc định đóng gói |
 | PH-20 Quản lý tenant | Hai chiều | PH-20 gọi nạp gói nền; PH-07 cung cấp ĐVHC cho địa bàn tenant, tổ chức | — |
 
@@ -4792,3 +4792,4 @@ PH-07 được nghiệm thu khi đạt đủ các tiêu chí dưới đây. Mỗ
 | 0.1 | 2026-11-22 | Nhóm phân hệ PH-07 | Bản đầu, đủ 53 FR |
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất token, route với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn kết hợp 17 mục cho mọi FR; thêm danh sách chức năng, mục tiêu đo được, vị trí kiến trúc, luồng chính, sơ đồ nhóm và trình tự, thông báo theo mã lỗi, giao diện tiêu biểu; sắp chương theo K-FRS |
+| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bỏ chữ giả định scope provision, dòng tích hợp PH-08 và PH-14 |

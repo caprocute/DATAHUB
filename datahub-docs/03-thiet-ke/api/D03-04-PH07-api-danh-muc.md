@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH07
 ten: Đặc tả API và sự kiện phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kiến trúc sư, lập trình viên L-DATA, đội phát triển HTTT thành viên, kiểm thử viên
 phan_he: PH-07
@@ -267,9 +267,9 @@ Hai tệp hợp đồng được kiểm tra ở cổng CI của D04-02: lint Ope
 
 | Mã | Câu hỏi | Đề xuất tạm |
 |---|---|---|
-| Q07-100 | Tên miền chính thức cho `type` của ProblemDetails (`https://datahub.gov.vn/problems/rdm/…` là giả định) | Chốt cùng D03-09 |
+| Q07-100 | Tên miền chính thức cho `type` của ProblemDetails: mẫu `https://datahub.gov.vn/errors/ERR-07-nnn` đã áp dụng theo mẫu chung của mọi phân hệ | Tên miền chính thức chốt cùng D03-09 |
 | Q07-101 | Thời gian giữ topic 7 ngày có đủ cho HTTT ngừng dài ngày (ví dụ bảo trì cuối tuần dài) | Giữ 7 ngày, HTTT dùng delta khi chậm hơn |
-| Q07-102 | Hợp đồng chính thức của bốn thao tác PH-14 cho NDXP, nhất là có tham số phiên bản để bỏ qua khi không đổi (Q07-40 của SDD) | Chờ D03-04 của PH-14 |
+| Q07-102 | Hợp đồng chính thức của bốn thao tác PH-14 cho NDXP, nhất là có tham số phiên bản để bỏ qua khi không đổi (Q07-40 của SDD) | Đã có ở D03-04-PH14: API-14-079…083, `ifVersionNot` trả `304`; PH-07 ánh xạ lỗi sang ERR-07-028; còn chờ NDXP chính thức xác nhận |
 
 : Câu hỏi mở
 
@@ -292,7 +292,7 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 
 **FR hiện thực.** FR-07-001, FR-07-033.
 
-**Tham số.** `q` (query, string, tùy chọn); `groupId` (query, string, tùy chọn); `sourceType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `classification` (query, array, tùy chọn); `scope` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+**Tham số.** `q` (query, string, tùy chọn); `groupId` (query, string, tùy chọn); `sourceType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `classification` (query, array, tùy chọn); `scope` (query, string, tùy chọn); `ownerOrgId` (query, string, tùy chọn); `openVersionStatus` (query, string, tùy chọn); `updatedFrom` (query, string, tùy chọn); `updatedTo` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -900,7 +900,7 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 
 **FR hiện thực.** FR-07-002, FR-07-018.
 
-**Tham số.** `q` (query, string, tùy chọn); `status` (query, ItemStatus, tùy chọn); `parentCode` (query, string, tùy chọn); `changeState` (query, array, tùy chọn); `hasErrors` (query, boolean, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+**Tham số.** `q` (query, string, tùy chọn); `status` (query, ItemStatus, tùy chọn); `parentCode` (query, string, tùy chọn); `isLocalExtension` (query, boolean, tùy chọn); `changeState` (query, array, tùy chọn); `hasErrors` (query, boolean, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -2137,5 +2137,6 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: quy ước, xác thực, danh mục 76 endpoint, sự kiện, mã lỗi |
 | 0.2 | 2026-11-26 | Nâng theo chuẩn kết hợp: thêm Giới thiệu, chương 9 đặc tả từng endpoint 10 mục sinh từ OpenAPI, chú thích bảng |
+| 0.3 | 2026-11-27 | Đồng bộ chéo cuối: thêm tham số lọc API-07-001, xuất CSV XLSX, isLocalExtension, precision, allowedActions và disabledReasons |
 
 : Lịch sử phiên bản

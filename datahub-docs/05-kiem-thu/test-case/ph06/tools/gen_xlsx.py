@@ -25,11 +25,11 @@ wb = Workbook()
 ws = wb.active; ws.title = 'TestCase'
 rows = []
 for t in tcs:
-    fr = ', '.join(sorted(r for r in t['refs'] if r.startswith('FR-10')))
+    fr = ', '.join(sorted(r for r in t['refs'] if r.startswith('FR-06')))
     lgc = sorted(r for r in t['refs'] if r.startswith('LGC'))
     if not lgc:  # suy từ FR
         lgc = sorted({l for r in t['refs'] if r in frs for l in frs[r]['lgc'] if len(frs[r]['lgc']) < 5})
-    other = ', '.join(sorted(r for r in t['refs'] if not r.startswith(('FR-10', 'LGC'))))
+    other = ', '.join(sorted(r for r in t['refs'] if not r.startswith(('FR-06', 'LGC'))))
     rows.append([t['id'], f"{t['ts']} · {tsn.get(t['ts'], '')}", t['name'], t.get('purpose', ''), t['type'], t['prio'],
                  t['auto'], fr, ', '.join(lgc), other, t['data'], t['steps'], t['expect'], t.get('notice', ''),
                  t.get('post', ''), '', '', '', ''])

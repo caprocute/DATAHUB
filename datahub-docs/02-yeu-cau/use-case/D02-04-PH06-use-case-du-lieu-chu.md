@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH06
 ten: Đặc tả use case phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-06
@@ -1683,7 +1683,7 @@ CSDL quốc gia là chuẩn cho thuộc tính thẩm quyền (BR-06-003); Datahu
 
 **Tác nhân chính.** Hệ thống theo lịch; DS (Lan), DA (Hùng), TA (`PERM-06-sync`).
 
-**Tác nhân phụ.** PH-14, CSDL quốc gia (`QG-DANCU`, `QG-DKDN`), PH-13.
+**Tác nhân phụ.** PH-14 (use case đối ứng UC-14-30: PH-06 gọi cầu nối đồng bộ dữ liệu chủ), CSDL quốc gia (`QG-DANCU`, `QG-DKDN`), PH-13.
 
 **Mức ưu tiên.** M · Đợt 3.
 
@@ -1942,3 +1942,4 @@ D03-06-PH06 lấy câu thông báo từ chương 6 và thêm câu cho ERR-06-003
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 28 use case phủ 60 FR, năm sơ đồ use case, sơ đồ trình tự cho bốn mắt, tách, resolve, đồng bộ quốc gia, job Splink, sơ đồ hoạt động cho đối sánh và hoàn tác; ma trận truy vết FR cũ, REQ, LGC |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: đánh dấu ĐN-UC-01…07 đã áp; UC-06-09 dùng khóa tập nhãn (API-06-123), tự tắt tự hợp nhất, ERR-06-051; UC-06-11 `decision` (API-06-106); UC-06-12 nhận việc tiếp theo (API-06-124); UC-06-13 mở lại quyết định (API-06-121, ERR-06-053); UC-06-20 danh sách thao tác (API-06-122); UC-06-27 gỡ hạn chế (API-06-125) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: UC-06-25 trỏ UC-14-30 |

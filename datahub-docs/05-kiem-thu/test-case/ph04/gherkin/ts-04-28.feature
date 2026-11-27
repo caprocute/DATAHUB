@@ -22,9 +22,10 @@ Tính năng: TS-04-28 · Sự kiện, outbox và hợp đồng API
   Kịch bản: TC-04-158 Hợp đồng OpenAPI khớp máy chủ
     # Truy vết: API-04-001, 091.
     Biết `openapi-integration.yaml`; `dh-integration` trên Testcontainers.
-    Khi chạy Schemathesis (`--checks all`) trên toàn bộ operation với token IE1, IA1, TA.
+    Khi chạy `ph04/tools/check_contracts.py` (cổng CI-5): mọi ví dụ yêu cầu và phản hồi ở D03-04-PH04 chương 10 phải khớp lược đồ.
+    Và chạy Schemathesis (`--checks all`) trên toàn bộ operation với token IE1, IA1, TA, dùng chính các ví dụ ở chương 10 làm dữ liệu ca (pha ví dụ tường minh) trước khi sinh ca ngẫu nhiên.
     Và chạy `oasdiff breaking` so với `main`.
-    Thì không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
+    Thì bước 1 không có ví dụ nào lệch lược đồ. Không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
 
   @TC-04-202 @P1 @Dương @Biên
   Kịch bản: TC-04-202 Di trú dữ liệu W2 khi schema do tài khoản khác sở hữu

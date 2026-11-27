@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH05
 ten: Đặc tả API và sự kiện phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; ATTT; hội đồng thẩm định
 phan_he: PH-05
@@ -395,7 +395,7 @@ Kết quả (thất bại ở bước TLS):
 HTTP/1.1 403 Forbidden
 Content-Type: application/problem+json
 
-{"type": "https://datahub.gov.vn/problems/adapter/err-05-011", "title": "Vi phạm bốn mắt", "status": 403,
+{"type": "https://datahub.gov.vn/errors/ERR-05-011", "title": "Vi phạm bốn mắt", "status": 403,
  "code": "ERR-05-011", "detail": "Người duyệt bật PROD phải khác người xin bật và khác người ghi bí mật gần nhất (an.nv).",
  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}
 ```
@@ -403,7 +403,7 @@ Content-Type: application/problem+json
 **API-05-009 Ngừng dùng khi còn nơi dùng**
 
 ```json
-{"type": "https://datahub.gov.vn/problems/adapter/err-05-010", "title": "Còn nơi đang dùng", "status": 409, "code": "ERR-05-010",
+{"type": "https://datahub.gov.vn/errors/ERR-05-010", "title": "Còn nơi đang dùng", "status": 409, "code": "ERR-05-010",
  "usages": [{"kind": "FLOW_VERSION", "code": "ho-tich-tra-cuu", "version": 3, "env": "PROD", "deployed": true},
             {"kind": "ADAPTER_VERSION", "code": "ndxp-rest", "version": 1}],
  "traceId": "9a1c…"}
@@ -464,7 +464,7 @@ Topic theo `{tenant}.adapter.{thực-thể}.{sự-kiện}.v1` (D00-04 §4). Lư�
 | EVT-05-05 | `{tenant}.adapter.connection.grant-changed.v1` | outbox | `connectionCode` | 7 ngày | PH-04 |
 | EVT-05-06 | `{tenant}.adapter.health.changed.v1` | outbox | `{kind}:{code}` | 7 ngày | PH-04, PH-13 |
 | EVT-05-07 | `{tenant}.adapter.adapter.version-approved.v1` | outbox | `adapterCode` | 7 ngày | PH-04, `dh-runtime` |
-| EVT-05-08 | `{tenant}.adapter.adapter.state-changed.v1` | outbox | `adapterCode` | 7 ngày | `dh-runtime`, PH-04 |
+| EVT-05-08 | `{tenant}.adapter.adapter.state-changed.v1` | outbox | `adapterCode` | 7 ngày | `dh-runtime`, PH-04, PH-16 (sổ kiến trúc, thành phần `ADAPTER`) |
 | EVT-05-09 | `{tenant}.adapter.kamelet.published.v1`; `common.adapter.kamelet.published.v1` | outbox | `name` | 7 ngày | PH-04 |
 | EVT-05-10 | `{tenant}.adapter.kamelet.lifecycle-changed.v1` | outbox | `name` | 7 ngày | PH-04, PH-13 |
 | EVT-05-11 | `{tenant}.adapter.cdc.schema-changed.v1` | outbox | `adapterCode` | 30 ngày | PH-10, PH-13 |
@@ -1383,7 +1383,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `POST /internal/connection-references:verify`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `adapter:verify`.
 
 **FR hiện thực.** FR-05-014.
 
@@ -1407,7 +1407,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `GET /internal/runtime/connections`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `adapter:runtime-config`.
 
 **FR hiện thực.** FR-05-015.
 
@@ -1431,7 +1431,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `GET /internal/catalog/kamelets`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `adapter:runtime-config`.
 
 **FR hiện thực.** FR-05-047, FR-05-059.
 
@@ -1455,7 +1455,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `GET /internal/health/states`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** Token dịch vụ, scope `adapter:health-read`.
 
 **FR hiện thực.** FR-05-021.
 
@@ -1651,7 +1651,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phương thức, đường dẫn.** `POST /connections/{connectionCode}/flow-accounts/{accountId}:revoke`.
 
-**Quyền.** Token dịch vụ.
+**Quyền.** `PERM-05-connection` hoặc `PERM-05-operate`.
 
 **FR hiện thực.** FR-05-028.
 
@@ -2884,3 +2884,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API; OpenAPI, AsyncAPI sinh từ bảng mã, đã kiểm | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng |
+| 0.3 | 27/11/2026 | Đồng bộ chéo cuối: sinh lại cột Quyền, mẫu type ERR-05-nnn, người nhận EVT-05-08 | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng |

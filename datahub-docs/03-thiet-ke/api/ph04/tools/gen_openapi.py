@@ -299,7 +299,7 @@ ERR = {  # mô tả ngắn: in vào cột "Lỗi" của đặc tả từng endpo
   "ServiceUnavailable": (503, "ERR-04-047", "Phụ thuộc chưa sẵn sàng (ERR-04-047; sandbox ERR-04-019)."),
 }
 RESPONSES = {k: {"description": d, "content": {"application/problem+json": {"schema": R("ProblemDetails"),
-    "example": {"type": f"https://datahub.gov.vn/problems/integration/{c.lower()}", "title": d.split(";")[0].split("(")[0].strip().rstrip("."), "status": st,
+    "example": {"type": f"https://datahub.gov.vn/errors/{c}", "title": d.split(";")[0].split("(")[0].strip().rstrip("."), "status": st,
                 "code": c, "traceId": "4bf92f3577b34da6a3ce929d0e0e4736"}}}} for k, (st, c, d) in ERR.items()}
 RESPONSES["NotModified"] = {"description": "Không đổi (If-None-Match khớp)."}
 

@@ -33,7 +33,7 @@ Tính năng: TS-07-19 · Rò rỉ chéo tenant trên mọi nhóm API
     Khi chạy `SELECT count(*)` trên mọi bảng có `tenant_id` của `ph07_rdm`.
     Và chạy `UPDATE ph07_rdm.catalog SET name = 'x' WHERE tenant_id = 'T68'`.
     Và không đặt `app.tenant_id` rồi chạy `SELECT` bất kỳ.
-    Thì bước 1 chỉ đếm dòng của T01 và COMMON (bảng mẫu S, P). Bước 2 cập nhật 0 dòng. Bước 3 báo lỗi `unrecognized configuration parameter` (do `current_setting(..., false)`), không trả dữ liệu.
+    Thì bước 1 chỉ đếm dòng của T01 và COMMON (bảng mẫu S, P). Bước 2 cập nhật 0 dòng. Bước 3 không trả dữ liệu: coi cả hai dạng là thiếu tenant, hoặc báo lỗi `unrecognized configuration parameter` (kết nối chưa từng đặt biến), hoặc chuỗi rỗng từ `current_setting` (kết nối pool từng `SET LOCAL`, PostgreSQL 18) bị hàm lấy tenant của thư viện dùng chung từ chối (so khớp `tenant_id` không bao giờ đúng với chuỗi rỗng); kiểm thử không được dựa riêng vào dạng lỗi thứ nhất (D03-10, D04-01).
 
   @TC-07-224 @P1 @Bảo @mật
   Kịch bản: TC-07-224 Vai trò worker chỉ thấy cột hàng đợi

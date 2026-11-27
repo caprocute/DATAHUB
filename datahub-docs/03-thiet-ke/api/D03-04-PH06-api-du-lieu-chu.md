@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-04-PH06
 ten: Đặc tả API và sự kiện phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư tích hợp, kỹ sư dh-data, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-06
@@ -74,7 +74,7 @@ Các quy ước dưới đây áp dụng cho mọi operation, trừ khi bảng e
 | Khóa lạc quan | `GET` trả `ETag: W/"{version}"`; `PUT`, `PATCH` và hành động trên tài nguyên có phiên bản bắt buộc `If-Match`; lệch trả `409` ERR-06-004, thiếu trả `428`. Miễn: hành động không có tài nguyên cha có phiên bản (API-06-013, 054, 055, 060, 069…072, 082, 084, 118) |
 | Chống trùng | `POST` tạo, nạp, hợp nhất, tách, hoàn tác, xuất, chạy đồng bộ bắt buộc `Idempotency-Key` (UUID), giữ 24 giờ ở Valkey `dh:{tenant}:mdm:idem:{chủ thể}:{khóa}`; cùng khóa cùng thân trả lại phản hồi cũ, khác thân ERR-06-015 (BR-06-028) |
 | Phân trang | `page` (từ 0), `size` (1…100 mặc định 20; tìm kiếm tối đa 50); phản hồi `items`, `page`, `size`, `totalElements` (tìm kiếm giới hạn "trên 1.000") |
-| Lỗi | RFC 9457 `application/problem+json`, `type = https://datahub.example.vn/errors/{code}`, `code`, `traceId`, `errors[]` theo trường |
+| Lỗi | RFC 9457 `application/problem+json`, `type = https://datahub.gov.vn/errors/{code}`, `code`, `traceId`, `errors[]` theo trường |
 | Tác vụ dài | Job, nạp tệp, xuất, áp lại sống sót, đồng bộ trả `202` kèm `jobId`, `runId` hoặc `Location`; theo dõi bằng `GET` hoặc EVT-06-09 |
 | Hạn mức | Vượt hạn mức gọi `429` ERR-06-048, tiêu đề `Retry-After`; nạp theo `06.ingest.rate-per-source` |
 | Che dữ liệu | Mọi phản hồi có DLCN đi qua bộ che theo PH-09 và `X-Purpose`; `Cache-Control: private, max-age=0` ở tra cứu bản ghi vàng; mọi lượt đọc ghi nhật ký truy cập, không ghi được thì từ chối ERR-06-039 |
@@ -708,6 +708,8 @@ Các tên dưới đây có ở OpenAPI hoặc AsyncAPI mà FRS chưa có; khôn
 
 - **Enum**: `phase` của tệp lô (`UPLOADED`, `PREVIEWED`, `CONFIRMED`, `INGESTING`, `DONE`, `FAILED`, suy từ cột của `candidate_file`, `DONE`, `FAILED` dùng chung với mức nhật ký `INFO`, `WARN`, `ERROR` của `processing_log`); `reasonCode` của EVT-06-13 (`RATIO_EXCEEDED`, `RESUMED`) cùng `MANUAL`; trạng thái từng bản ghi nạp (`RECEIVED`, `DUPLICATE`, `SUPERSEDED`, `REJECTED`, có ở FR-06-010 nhưng không là enum `CandidateStatus`); `delivery` (`PUSH`, `PULL`); chế độ mẫu của chạy thử (FR-06-024).
 - **Trường phản hồi**: `accessedAt`, `acceptWarnings`, `adminUnitName`, `autoMerge`, `review`, `thresholds`, `basedOnVersion`, `byReason`, `byStatus`, `candidateIds`, `changedAt`, `changedBy`, `changedGolden`, `columnMapping`, `compatLevel`, `configVersion`, `confirmLarge`, `description`, `discrepancyId`, `discrepancyIds`, `downloadUrl`, `duplicate`, `received`, `rejected`, `effectiveFrom`, `estimatedTotal`, `evaluatedAt`, `expiresAt`, `expression`, `finishedAt`, `startedAt`, `keys`, `lastRunAt`, `linkedAt`, `loggedAt`, `matchMethod`, `matchOutcome`, `newDiscrepancies`, `nextRunAt`, `note`, `oldestOpenDays`, `organizationName`, `yearOfBirth`, `origin`, `pairCount`, `pauseReason`, `phase`, `reasonCode`, `recordedAt`, `reportId`, `reportUrl`, `requestedAt`, `requestedBy`, `requiresApproval`, `applyDiscrepancies`, `lockedAt`, `lockedBy`, `undoable`, `undoDeadline`, `resultSummary`, `rowCount`, `rowErrors`, `ruleType`, `sourceCount`, `state`, `submittedBy`, `totalCapped`, `unmasked`, `xrefIds`. Phần lớn là trường kỹ thuật của danh sách, tiến độ, ngày giờ; đề nghị FRS bổ sung vào bảng dữ liệu ra của FR tương ứng.
+
+Các trường phản hồi do màn hình yêu cầu (D03-06-PH06 Phụ lục B, mục B3 đến B6) đã được thêm vào OpenAPI ở bản đồng bộ chéo cuối, đều là trường tùy chọn: `thresholds`, `holdUntil`, `similarDecisions[]`, `nextItems[]` ở `StewardItemDetail` (API-06-046); `lineageHint` ở `GoldenRecord` (API-06-056, số giá trị khác nhau của từng thuộc tính); `criticalAlerts`, `queueByReason` và `bySource[]` có tỷ lệ định danh sai, trùng ở `DashboardMetrics` (API-06-085); `scoreDistribution[]` (100 khoảng điểm) ở `AccuracyReport` (API-06-040, kết quả của API-06-034 `:evaluate`); kết quả của `:dry-run` (API-06-033) chưa có lược đồ riêng nên phần phân bố điểm của chạy thử còn chờ chốt cùng SDD. FRS không cần hấp thụ các trường này (quyết định của FRS 0.2, Phụ lục C).
 
 ### 10.2. Đề nghị khác
 
@@ -3780,3 +3782,4 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-API và K-TRINH-BAY: 120 operation (96 mã FRS, 24 mã tách), 15 sự kiện, OpenAPI và AsyncAPI sinh từ một nguồn, kiểm hợp đồng 217 ví dụ; năm câu hỏi mở Q06-55…59 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thêm API-06-121…125 (125 operation, 225 ví dụ kiểm); `decision` ở API-06-106, `cause` ở API-06-118, `partition` ở API-06-045; định nghĩa ERR-06-051…053; khung lỗi nền ERR-00-401, 403, 428 ở mục 6; đánh dấu các đề nghị mục 10.2 đã áp |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: mẫu type ERR-06-nnn, trường phản hồi mới của màn hình bàn làm việc |

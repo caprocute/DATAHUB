@@ -278,7 +278,7 @@ ID = ("id!", "uuid")
 AUD = [("createdAt", "ts"), ("updatedAt", "ts"), ("version", "int", 3)]
 
 obj("FieldError", "Lỗi theo trường.", ("field!", "str", "attributes.fullName"), ("message!", "str", "Giá trị không hợp lệ."))
-obj("Problem", "Lỗi theo RFC 9457.", ("type!", "str", "https://datahub.example.vn/errors/ERR-06-003"), ("title!", "str", "Dữ liệu không hợp lệ"),
+obj("Problem", "Lỗi theo RFC 9457.", ("type!", "str", "https://datahub.gov.vn/errors/ERR-06-003"), ("title!", "str", "Dữ liệu không hợp lệ"),
     ("status!", "int", 400), ("detail", "str", "Trường sourceKey bắt buộc."), ("instance", "str", "/api/mdm/v1/domains"),
     ("code!", "str", "ERR-06-003"), ("traceId!", "str", "4bf92f3577b34da6a3ce929d0e0e4736"), ("errors", "[$FieldError]"))
 obj("CommentBody", "Ý kiến kèm hành động.", ("comment", "str", "Đồng ý theo biên bản họp ngày 20/11/2026.", {"maxLength": 2000}))
@@ -362,7 +362,7 @@ obj("RuleSetUpdate", "Sửa bộ quy tắc nháp.", ("rules!", "[$MatchRule]"), 
 obj("DryRunRequest", "Chạy thử trên mẫu (FR-06-024).", ("sampleSize", "int", 20000, {"minimum": 1000, "maximum": 100000}), ("sampleMode", "str", "RANDOM", {"enum": ["RANDOM", "RECENT_CANDIDATES", "QUEUE_HISTORY"]}), ("compareWith", "int", 1))
 obj("EvaluateRequest", "Đo precision, recall (FR-06-026).", ("labelSetCode!", "code", "nhan-2026-q4"))
 obj("AccuracyReport", "Báo cáo độ chính xác.", ("reportId!", "uuid"), ("ruleSetVersion!", "int", 2), ("labelSetCode!", "code", "nhan-2026-q4"), ("precision!", "num", 0.9993), ("recall!", "num", 0.985),
-    ("reviewRate", "num", 0.04), ("confusion", "obj", {"TP": 980, "FP": 1, "TN": 9000, "FN": 15, "REVIEW": 400}), ("pairCount!", "int", 1200), ("verdict!", "E:EvaluationVerdict", "PASSED"), ("evaluatedAt", "ts"))
+    ("reviewRate", "num", 0.04), ("confusion", "obj", {"TP": 980, "FP": 1, "TN": 9000, "FN": 15, "REVIEW": 400}), ("scoreDistribution", "[int]", [0, 1, 3, 8, 21, 40]), ("pairCount!", "int", 1200), ("verdict!", "E:EvaluationVerdict", "PASSED"), ("evaluatedAt", "ts"))
 page("AccuracyReportPage", "AccuracyReport")
 obj("BlockingStats", "Hiệu quả khóa gom nhóm (FR-06-019).", ("keys!", "[$BlockingKeyStat]"))
 obj("BlockingKeyStat", "Thống kê một khóa.", ("expression!", "str", "adminUnitCode+year(dateOfBirth)"), ("avgBlockSize", "num", 12.4), ("p99BlockSize", "int", 310), ("oversizedBlocks", "int", 2), ("pairCoverage", "num", 0.97))
@@ -388,7 +388,9 @@ obj("StewardItem", "Mục hàng đợi.", ("itemId!", "uuid"), ("domainCode!", "
 page("StewardItemPage", "StewardItem")
 obj("AttributeComparison", "So sánh một thuộc tính.", ("name!", "acode", "fullName"), ("leftValue", "str", "Nguyễn Văn A"), ("rightValue", "str", "Nguyen Van A"), ("score", "num", 0.96), ("level!", "E:ComparisonLevel", "FUZZY_HIGH"))
 obj("StewardItemDetail", "Hai bản ghi cạnh nhau; giá trị SENSITIVE che.", ("item!", "$StewardItem"), ("left!", "obj", {"ref": "gold:0193"}), ("right!", "obj", {"ref": "cand:0193"}),
-    ("attributes!", "[$AttributeComparison]"), ("context", "obj", {}), ("mergeAllowed!", "bool", True), ("queueRemaining", "int", 12))
+    ("attributes!", "[$AttributeComparison]"), ("context", "obj", {}), ("mergeAllowed!", "bool", True), ("queueRemaining", "int", 12),
+    ("thresholds", "$Thresholds"), ("holdUntil", "ts"), ("similarDecisions", "[obj]", [{"itemId": "0193b6a0-0000-7000-8000-000000000001", "decision": "MATCH", "score": 0.88, "decidedAt": "2026-11-20T09:00:00+07:00"}]),
+    ("nextItems", "[$StewardItem]"))
 obj("AssignRequest", "Phân công mục.", ("assigneeId!", "str", "ds.pham"))
 obj("DecideRequest", "Quyết định của người quản lý (FR-06-030).", ("decision!", "E:StewardDecision", "MATCH"), ("reason!", "str", "Cùng số CCCD và cùng ngày sinh, hai bản ghi là một người.", R20),
     ("survivorId", "uuid"), ("deferUntil", "ts"), ("addToLabelSet", "bool", True))
@@ -404,7 +406,8 @@ obj("ReapplyRequest", "Áp lại sống sót hàng loạt.", ("configVersion!", 
 obj("GoldenAttributeValue", "Thuộc tính vàng.", ("name!", "acode", "fullName"), ("value", "any", "Nguyễn Văn A"), ("masked!", "bool", False), ("dataClass!", "E:DataClass", "RESTRICTED"),
     ("sourceCode", "scode"), ("strategy", "E:SurvivorshipStrategy", "SOURCE_PRIORITY"), ("updatedAt", "ts"))
 obj("GoldenRecord", "Bản ghi vàng đã che theo phân loại và mục đích.", ("goldenId!", "uuid"), ("domainCode!", "dcode"), ("status!", "E:GoldenStatus", "ACTIVE"), ("displayName", "str", "Nguyễn Văn A"),
-    ("attributes!", "[$GoldenAttributeValue]"), ("confidence", "num", 0.97), ("sourceCount", "int", 3), ("mergedInto", "uuid"), ("version!", "int", 5), ("updatedAt", "ts"))
+    ("attributes!", "[$GoldenAttributeValue]"), ("confidence", "num", 0.97), ("sourceCount", "int", 3), ("mergedInto", "uuid"), ("version!", "int", 5), ("updatedAt", "ts"),
+    ("lineageHint", "obj", {"phone": 2, "permanentAddress": 1}))
 obj("AttributePatchRequest", "Sửa tay thuộc tính (FR-06-036).", ("attribute!", "acode", "phone"), ("value!", "any", "0901234567"), ("reason!", "str", "Công dân xuất trình giấy xác nhận số điện thoại mới.", R20),
     ("evidenceRef!", "str", "BB-2026-114"), ("validUntil", "ts"))
 obj("GoldenOperationResult", "Kết quả thao tác trên bản ghi vàng.", ("operationId!", "uuid"), ("changeType!", "E:GoldenChangeType", "MERGE"), ("status!", "E:OperationStatus", "APPLIED"), ("riskLevel", "E:RiskLevel", "LOW"),
@@ -461,7 +464,8 @@ obj("DiscrepancyResolveRequest", "Xử lý lệch (FR-06-054).", ("discrepancyId
 obj("DiscrepancyResolveResult", "Kết quả xử lý lệch.", ("processed!", "int", 3), ("skipped", "[$SkippedItem]"))
 # --- vận hành
 obj("DashboardMetrics", "Chỉ số dữ liệu chủ (FR-06-055).", ("metrics!", "obj", {"goldenCount": 1200000, "autoRate30d": 0.88, "queueOpen": 120, "queueOverdue": 4, "precision": 0.9993, "recall": 0.985}),
-    ("series", "[obj]", [{"at": "2026-11-20T00:00:00+07:00", "autoRate": 0.88}]), ("bySource", "[obj]", [{"sourceCode": "HT-YTE", "candidates": 1000}]))
+    ("series", "[obj]", [{"at": "2026-11-20T00:00:00+07:00", "autoRate": 0.88}]), ("bySource", "[obj]", [{"sourceCode": "HT-YTE", "candidates": 1000, "invalidIdentifierRate": 0.012, "duplicateRate": 0.03}]),
+    ("criticalAlerts", "obj", {"duplicateIdentifierGoldens": 0, "syncPaused": False}), ("queueByReason", "obj", {"POSSIBLE_MATCH": 10, "MULTIPLE_CANDIDATES": 4}))
 obj("JobSchedule", "Lịch job.", ("jobType!", "E:JobType", "BATCH_MATCH"), ("cron!", "str", "0 2 * * *"), ("enabled!", "bool", True), ("params", "obj", {}), ("maxDuration", "str", "PT4H"), ("nextRunAt", "ts"), *AUD)
 page("JobSchedulePage", "JobSchedule")
 obj("JobSchedulePut", "Sửa lịch job.", ("cron!", "str", "0 2 * * *"), ("enabled!", "bool", True), ("params", "obj", {}), ("maxDuration", "str", "PT4H"))
