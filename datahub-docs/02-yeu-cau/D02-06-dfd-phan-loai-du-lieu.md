@@ -91,7 +91,7 @@ Sơ đồ và phân loại dựa trên các tài liệu sau; khi lệch, tài li
 | D03-07 | Thiết kế ATTT | Tài sản AS-01…AS-20, vùng Z0…Z7, quy tắc xử lý theo mức, SEC-30…39 |
 | D03-03-PH01…PH20 | CSDL phân hệ | Schema, bucket, khóa mã hóa |
 | D02-03-PH09 | FRS Quyền riêng tư | Enum `DataClass`, `PersonalDataType`, `PersonalDataCategory` |
-| ADR-032, 041, 047, 053, 057, 073, 181, 182, 183 | Quyết định kiến trúc | Mã hóa trường, lũy đẳng, phân vùng, ảnh chụp danh mục, đồng bộ quốc gia, cầu nối Pulsar, DLQ, phát lại, di trú |
+| ADR-032, 041, 047, 048, 053, 057, 073, 170…174, 181, 182, 183 | Quyết định kiến trúc | Mã hóa trường, lũy đẳng, phân vùng, mã hóa thanh toán, ảnh chụp danh mục, đồng bộ quốc gia, cầu nối Pulsar, trợ lý AI, DLQ, phát lại, di trú |
 
 : Tài liệu tham chiếu của D02-06
 
@@ -149,7 +149,7 @@ Mỗi nhóm có một mức bảo vệ tối thiểu. Chủ quản dữ liệu �
 
 Ba điểm cần giải thích. Thứ nhất, nhóm TC chồng một phần lên CN2: thông tin tài khoản ngân hàng của cá nhân vừa là dữ liệu tài chính vừa là DLCN nhạy cảm (`FINANCIAL_ACCOUNT` trong Phụ lục A của FRS PH-09); khi chồng, áp cả hai bộ quy tắc. Thứ hai, số định danh cá nhân về pháp lý là DLCN cơ bản, nhưng thiết kế ATTT xếp vào mức Nhạy cảm (D03-01 §8.2) vì nó là khóa liên kết mọi CSDL quốc gia; tài liệu này giữ quyết định đó. Thứ ba, dữ liệu thuộc danh mục bí mật nhà nước không phải là nhóm thứ sáu mà là **nhãn chặn** `STATE_SECRET`: Datahub từ chối công bố API hay topic mang nhãn này (FR-02-007, FR-09-007), nên không có luồng nào trên sơ đồ được phép mang nó.
 
-Ngoài năm nhóm nghiệp vụ, vật liệu khóa và bí mật (khóa ký, khóa mã hóa, mật khẩu kết nối, thông tin xác thực của HTTT) mang nhãn kỹ thuật **BM** ("tối mật kỹ thuật" ở D03-07 §3.1). Nhãn BM chỉ xuất hiện ở OpenBao (DS-14) và ở chặng bàn giao thông tin xác thực một lần của luồng kết nạp (mục 6.7).
+Ngoài năm nhóm nghiệp vụ, vật liệu khóa và bí mật (khóa ký, khóa mã hóa, mật khẩu kết nối, thông tin xác thực của HTTT) mang nhãn kỹ thuật **BM** ("tối mật kỹ thuật" ở D03-07 §3.1). Nhãn BM chỉ xuất hiện ở bốn nơi: OpenBao (DS-14); gói bàn giao thông tin xác thực một lần của luồng kết nạp ở kho đối tượng (DS-11, mục 6.7); luồng DF-02 khi nhà phát triển tự lấy khóa ứng dụng ở cổng PH-15; và nguồn hệ cũ ở chặng 6.8-a trước khi bị loại. Băm mật khẩu và bí mật TOTP trong Keycloak (DS-07) xếp mức Hạn chế theo AS-10, không mang nhãn BM.
 
 ### 2.2. Căn cứ pháp lý của từng nhóm
 
@@ -190,6 +190,8 @@ flowchart TB
 
 Hình cho thấy câu hỏi đầu tiên luôn là "có phải dữ liệu của người không", vì nhóm CN1, CN2 kéo theo nghĩa vụ pháp lý nặng nhất. Mọi nhãn đều đi qua trạng thái `PROPOSED` rồi mới `CONFIRMED` (FR-09-004), nên một trường mới chưa được xác nhận được xử lý như mức Hạn chế cho tới khi có kết luận (quy tắc an toàn mặc định, đề xuất bổ sung ở Q375).
 
+PH-09 chủ yếu thuộc Đợt 2. Trong MVP chưa có PH-09, nhãn được khai báo ngay trong mã và lược đồ (`@Classified` ở thực thể, `x-dh-classification` ở OpenAPI và lược đồ sự kiện, theo DD-09), đúng cách D03-07 §3.2 gắn nhãn ở mức trường; thư viện log dùng chung đọc `@Classified` để che (SEC-32). Khi bật PH-09, các khai báo này được nhập một lần thành phần tử dữ liệu ở trạng thái `CONFIRMED` (FR-09-003).
+
 ### 2.4. Quy tắc xử lý bổ sung theo nhóm
 
 Bảng quy tắc theo bốn mức của D03-07 §3.2 (lưu trữ, truyền, log, kiểm toán, hiển thị, xuất tệp, bộ nhớ đệm, môi trường thử, gửi AI, thư, sao lưu, thời hạn) áp dụng nguyên vẹn. Bảng dưới chỉ ghi những quy tắc **thêm** mà nhóm nội dung đòi hỏi, không lặp lại bảng đó.
@@ -207,7 +209,7 @@ Bảng quy tắc theo bốn mức của D03-07 §3.2 (lưu trữ, truyền, log,
 
 ## 3. DFD mức 0, ngữ cảnh
 
-Sơ đồ ngữ cảnh coi Datahub là một tiến trình duy nhất và chỉ vẽ dữ liệu trao đổi với chín giao diện ngoài của SRS cùng ba nhóm người dùng. Mỗi luồng mang nhãn nhóm dữ liệu cao nhất có thể đi trên nó.
+Sơ đồ ngữ cảnh coi Datahub là một tiến trình duy nhất và chỉ vẽ dữ liệu trao đổi với chín giao diện ngoài của SRS cùng hai nhóm người dùng. Mỗi luồng mang nhãn nhóm dữ liệu cao nhất có thể đi trên nó.
 
 ```{.mermaid caption="DFD mức 0: Datahub và các thực thể ngoài, có nhãn nhóm dữ liệu trên luồng"}
 flowchart TB
@@ -236,7 +238,7 @@ flowchart TB
   DH -->|"DF-11 liên kết thông báo · NB"| IF09
 ```
 
-Người đọc cần thấy ba điều ở hình. Thứ nhất, chỉ bốn luồng (DF-01, DF-05, DF-07, DF-09) chắc chắn mang dữ liệu cá nhân hoặc tài chính do Datahub chủ động xử lý; hai luồng DF-03, DF-04 mang dữ liệu "theo hợp đồng", tức Datahub chỉ chuyển tiếp và áp biện pháp theo mức của hợp đồng. Thứ hai, luồng ra IF-08 và IF-09 chỉ mang dữ liệu nội bộ: nhật ký an ninh đã che và thư chỉ chứa liên kết (FR-00-062). Thứ ba, DF-02 là luồng duy nhất ra ngoài mang nhãn BM, vì nhà phát triển tự lấy thông tin xác thực của ứng dụng ở cổng PH-15; chặng này có bảo vệ riêng ở mục 6.7.
+Người đọc cần thấy ba điều ở hình. Thứ nhất, chỉ năm luồng (DF-01, DF-05, DF-07, DF-08, DF-09) chắc chắn mang dữ liệu cá nhân hoặc tài chính do Datahub chủ động xử lý; hai luồng DF-03, DF-04 mang dữ liệu "theo hợp đồng", tức Datahub chỉ chuyển tiếp và áp biện pháp theo mức của hợp đồng. Thứ hai, luồng ra IF-08 và IF-09 chỉ mang dữ liệu nội bộ: nhật ký an ninh đã che và thư chỉ chứa liên kết (FR-00-062). Thứ ba, DF-02 là luồng duy nhất ra ngoài mang nhãn BM, vì nhà phát triển tự lấy thông tin xác thực của ứng dụng ở cổng PH-15; chặng này có bảo vệ riêng ở mục 6.7.
 
 | Mã | Từ → đến | Dữ liệu | Nhóm cao nhất | Kênh, bảo vệ |
 |---|---|---|---|---|
@@ -260,7 +262,7 @@ Mức 1 tách Datahub thành sáu tiến trình theo miền, trùng với cách 
 
 ### 4.1. Tổng thể sáu miền
 
-Sơ đồ chỉ vẽ luồng giữa miền với nhau và với kho; luồng ra thực thể ngoài đã có ở mức 0.
+Sơ đồ chỉ vẽ luồng giữa miền với nhau và với kho; luồng với thực thể ngoài, kể cả IF-07 (di trú, mục 6.8), IF-08 (nhật ký an ninh) và IF-09 (thư, SMS), đã có ở mức 0 và được gộp vào nút "Thực thể ngoài". Một số cạnh nối tiến trình với kho trong các sơ đồ mức 1, mức 2 không ghi nhãn khi nhóm dữ liệu trùng với luồng vào tiến trình đó.
 
 ```{.mermaid caption="DFD mức 1 tổng thể: sáu miền, kho dùng chung và nhóm dữ liệu trên luồng"}
 flowchart TB
@@ -282,6 +284,7 @@ flowchart TB
   P2 -->|"bản tin lỗi · đến CN2, mã hóa"| D
   P3 -->|"sự kiện danh mục, dữ liệu chủ · CK, CN1"| K
   P5 -->|"sự kiện giao dịch · TC"| K
+  P5 -->|"bản tin lỗi · đến TC"| D
   P2 -->|"tra cứu danh mục · CK"| P3
   P3 -->|"chính sách che, mục đích · NB"| P2
   P4 -->|"vai trò, chính sách · NB"| P1
@@ -291,7 +294,7 @@ flowchart TB
   K -->|"sự kiện thay đổi đã che · CK, NB"| P6
 ```
 
-Hình làm rõ ba điều. Thứ nhất, Kafka (DS-09) là trục nối các miền, nên mức của topic quyết định mức của mọi miền tiêu thụ nó. Thứ hai, chỉ miền 2.0 và 4.0 chạm vào DLQ, là kho duy nhất có thể chứa bản sao dữ liệu đi qua. Thứ ba, mọi miền gửi bản ghi kiểm toán và sự kiện thay đổi qua Kafka, nên PH-13 (trong 4.0) và trợ lý AI (6.0) chỉ nhận dữ liệu từ topic; mũi tên vào 6.0 chỉ mang CK hoặc NB vì bộ lập chỉ mục theo sự kiện (ADR-174) chỉ nhận mô tả dịch vụ, tài liệu và nhật ký đã che (SEC-49).
+Hình làm rõ ba điều. Thứ nhất, Kafka (DS-09) là trục nối các miền, nên mức của topic quyết định mức của mọi miền tiêu thụ nó. Thứ hai, miền 2.0, 4.0 và 5.0 gửi bản tin lỗi vào DLQ; DLQ là kho chung duy nhất giữ bản sao dữ liệu đi qua của mọi luồng, bên cạnh các bản lưu có chủ đích và có thời hạn khác (thời hạn giữ topic Kafka, nội dung giao dịch quốc gia của PH-14, tệp nhập tạm) được nêu ở chương 5. Thứ ba, mọi miền gửi bản ghi kiểm toán và sự kiện thay đổi qua Kafka, nên PH-13 (trong 4.0) và trợ lý AI (6.0) chỉ nhận dữ liệu từ topic; mũi tên vào 6.0 chỉ mang CK hoặc NB vì bộ lập chỉ mục theo sự kiện (ADR-174) chỉ nhận mô tả dịch vụ, tài liệu và nhật ký đã che theo quy tắc SEC-49.
 
 ### 4.2. Miền 1.0 Kết nối và API
 
@@ -340,7 +343,7 @@ flowchart TB
   DS09[("DS-09 Kafka")]
   DS10[("DS-10 Apicurio")]
   DS13[("DS-13 Valkey")]
-  DS11[("DS-11 Garage<br/>nat-evidence")]
+  DS11[("DS-11 kho đối tượng<br/>dh-nat-payload")]
   DS19[("DS-19 DLQ")]
   SRC <-->|"bản ghi, tệp · theo hợp đồng"| P22
   P22 <-->|"bản tin chuẩn · theo hợp đồng"| P21
@@ -350,12 +353,12 @@ flowchart TB
   P21 <-->|"yêu cầu, kết quả · CN2"| P24
   P24 <-->|"bản tin ký số · CN2"| QG
   P24 -->|"đệm kết quả · đến CN1, mã hóa"| DS13
-  P24 -->|"bằng chứng giao dịch · CN2, mã hóa"| DS11
+  P24 -->|"nội dung giao dịch · CN2, mã hóa"| DS11
   P21 & P22 & P24 -->|"cấu hình, siêu dữ liệu · NB"| DS02
   P21 & P23 -->|"bản tin lỗi · theo hợp đồng"| DS19
 ```
 
-Hai chặng đáng chú ý. PH-14 chỉ đệm phản hồi đến mức Hạn chế và mã hóa giá trị bằng khóa tenant trước khi vào Valkey; phản hồi mức Nhạy cảm không bao giờ vào đệm (FR-14-035). Bằng chứng giao dịch quốc gia (FR-14-051) là bản tin đã ký, được lưu mã hóa ở bucket `dh-{tenant}-nat-evidence` để phục vụ đối soát và khiếu nại; xem nội dung đầy đủ cần lý do và ghi kiểm toán (FR-14-050).
+Hai chặng đáng chú ý. PH-14 chỉ đệm phản hồi đến mức Hạn chế và mã hóa giá trị bằng khóa tenant trước khi vào Valkey; phản hồi mức Nhạy cảm không bao giờ vào đệm (FR-14-035). Nội dung yêu cầu và phản hồi của giao dịch quốc gia được lưu mã hóa AES-256-GCM bằng DEK của tenant (khóa transit `dh-{tenant}-pii`) ở bucket `dh-nat-payload`, khóa đối tượng `{tenant}/{yyyy}/{MM}/{mã giao dịch}.{req,res}.enc`, thời hạn theo tham số `14.txn.payload-retention-days` (mặc định 30 ngày, tối đa 180, bằng 0 thì không ghi). Xem nội dung đầy đủ cần lý do và ghi kiểm toán (FR-14-050); xuất gói bằng chứng ký bằng khóa transit `dh-{tenant}-nat-evidence` là tính năng Đợt 2 (FR-14-051).
 
 ### 4.4. Miền 3.0 Dữ liệu dùng chung
 
@@ -370,10 +373,10 @@ flowchart TB
   P33(["3.3 Chất lượng dữ liệu<br/>PH-08"])
   P34(["3.4 Quyền riêng tư<br/>PH-09"])
   DS03[("DS-03 pg-core<br/>ph06, ph07, ph08, ph09")]
-  DS11[("DS-11 Garage<br/>rdm, mdm-pii, dq")]
+  DS11[("DS-11 Garage<br/>ảnh chụp danh mục, tệp nhập")]
   DS13[("DS-13 Valkey<br/>đệm danh mục")]
   DS14[("DS-14 OpenBao<br/>khóa pii, hmac")]
-  QG -->|"danh mục · CK"| P31
+  QG -->|"danh mục qua PH-14 · CK"| P31
   P31 --> DS03
   P31 -->|"ảnh chụp · CK"| DS11
   P31 -->|"đệm hai tầng · CK"| DS13
@@ -386,7 +389,7 @@ flowchart TB
   P34 -->|"sổ xử lý, yêu cầu chủ thể · CN1"| DS03
 ```
 
-PH-08 đọc dữ liệu mẫu để đo chất lượng nhưng chỉ lưu kết quả đã che và băm có khóa (bucket `dh-{tenant}-dq-hmac`), không lưu giá trị gốc. PH-09 không lưu dữ liệu nghiệp vụ của chủ thể; nó lưu siêu dữ liệu phân loại và hồ sơ yêu cầu của chủ thể (CN1: thông tin liên hệ của người yêu cầu).
+PH-08 đọc dữ liệu mẫu để đo chất lượng nhưng chỉ lưu kết quả đã che và băm có khóa trong `ph08_dq`, không lưu giá trị gốc. Bản ghi vàng của PH-06 mã hóa trường bằng khóa transit `dh-{tenant}-mdm-pii` và băm tìm kiếm bằng `dh-{tenant}-mdm-hmac` của OpenBao (DS-14); đó là khóa, không phải bucket. PH-09 không lưu dữ liệu nghiệp vụ của chủ thể; nó lưu siêu dữ liệu phân loại và hồ sơ yêu cầu của chủ thể (CN1: thông tin liên hệ của người yêu cầu).
 
 ### 4.5. Miền 4.0 Nền tảng và vận hành
 
@@ -422,7 +425,7 @@ flowchart TB
   DS07 ~~~ P45
 ```
 
-PH-11 là nơi dữ liệu hồ sơ thủ tục có thể vào biến quy trình; các biến gắn nhãn Nhạy cảm được mã hóa trường và lưu ở bucket `dh-{tenant}-bpm-pii` khi lớn. PH-12 không giữ mật khẩu ngoài Keycloak (DS-07). PH-13 chỉ ghi băm có khóa của khóa nghiệp vụ nhạy cảm (`object_key_hmac`), không ghi giá trị (D03-07 §7).
+PH-11 là nơi dữ liệu hồ sơ thủ tục có thể vào biến quy trình; các biến gắn nhãn Nhạy cảm và `result_enc` được mã hóa envelope bằng khóa transit `dh-{tenant}-bpm-pii` rồi lưu trong `ph11_bpm` (DS-04); cách giữ biến lớn còn mở ở Q11-50. PH-12 không giữ mật khẩu ngoài Keycloak (DS-07). PH-13 chỉ ghi băm có khóa của khóa nghiệp vụ nhạy cảm (`object_key_hmac`), không ghi giá trị (D03-07 §7).
 
 ### 4.6. Miền 5.0 Thanh toán
 
@@ -476,7 +479,7 @@ flowchart TB
   P62 -->|"trả lời có nguồn · CK, NB"| ND
 ```
 
-Hai lớp chặn: (1) bộ lập chỉ mục từ chối nguồn mang nhãn Hạn chế trở lên trừ khi tenant bật và mô hình chạy nội bộ (ADR-170, ADR-171); (2) câu hỏi của người dùng đi qua bộ lọc phát hiện mẫu số định danh, số điện thoại, số thẻ trước khi gửi mô hình (ADR-173). Công cụ đọc dữ liệu thật của trợ lý dùng token của chính người dùng, chỉ đọc (ADR-172), nên không vượt quyền của người hỏi.
+Hai lớp chặn: (1) bộ lập chỉ mục từ chối nguồn mang nhãn Hạn chế trở lên trừ khi tenant bật và mô hình chạy nội bộ (SEC-49; mô hình nội bộ theo ADR-170, ADR-171); (2) câu hỏi của người dùng đi qua bộ lọc phát hiện mẫu số định danh, số điện thoại, số thẻ trước khi gửi mô hình (ADR-173). Công cụ đọc dữ liệu thật của trợ lý dùng token của chính người dùng, chỉ đọc (ADR-172), nên không vượt quyền của người hỏi.
 
 ## 5. Danh mục kho dữ liệu và phân loại
 
@@ -485,16 +488,16 @@ Bảng dưới là danh mục 19 kho dữ liệu, mỗi kho gắn tài sản ở
 | Mã | Kho | Tài sản | Phân hệ | Nhóm chứa | Mức cao nhất | CN2 giải mã được | Biện pháp chính |
 |---|---|---|---|---|---|---|---|
 | DS-01 | pg-core: `ph01_onboarding`, `ph02_catalog`, `ph03_gateway`, `ph15_portal` | AS-06 | PH-01, 02, 03, 15 | CK, NB, CN1 | Hạn chế | Không | Mã hóa volume, RLS tenant |
-| DS-02 | pg-core: `ph04`, `ph05_adapter`, `ph10_event`, `ph14_national` | AS-06 | PH-04, 05, 10, 14 | NB, CN1 (siêu dữ liệu giao dịch quốc gia) | Hạn chế | Không | Mã hóa volume, RLS; không lưu thân bản tin |
+| DS-02 | pg-core: `ph04`, `ph05_adapter`, `ph10_event`, `ph14_national` | AS-06 | PH-04, 05, 10, 14 | NB, CN1 (định danh người gọi trong siêu dữ liệu giao dịch quốc gia; tham số định danh chỉ ở dạng băm) | Hạn chế | Không | Mã hóa volume, RLS; không lưu thân bản tin |
 | DS-03 | pg-core: `ph06_mdm`, `ph07_rdm`, `ph08_dq`, `ph09_privacy` | AS-06 | PH-06, 07, 08, 09 | CK, NB, CN1, CN2 | Nhạy cảm | Có (bản ghi vàng PH-06) | Mã hóa trường ADR-032, HMAC tìm kiếm, RLS |
 | DS-04 | pg-core: `ph11_bpm`, `ph12_iam`, `ph16_kpi`, `ph18_ops`, `ph20_tenant` | AS-06 | PH-11, 12, 16, 18, 20 | NB, CN1, CN2 (biến quy trình) | Nhạy cảm | Có (biến quy trình PH-11) | Mã hóa trường, RLS |
 | DS-05 | pg-core: `ph13_audit.audit_event` | AS-16 | PH-13 | NB, băm CN | Hạn chế | Không | Chuỗi băm, không ghi giá trị Nhạy cảm |
 | DS-06 | pg-payment: `ph19_payment` | AS-02 | PH-19 | TC, CN1, CN2 (tài khoản hoàn tiền) | Nhạy cảm | Có | Mã hóa trường ADR-048, phân vùng tháng ADR-047, cụm riêng TPH-0 |
-| DS-07 | pg-iam: realm Keycloak | AS-10 | PH-12 | CN1 (tài khoản cán bộ), BM (băm mật khẩu, bí mật TOTP) | Hạn chế | Không | Cụm riêng TPH-0, Z6 |
+| DS-07 | pg-iam: realm Keycloak | AS-10 | PH-12 | CN1 (tài khoản cán bộ), băm mật khẩu và bí mật TOTP xếp mức Hạn chế theo AS-10 | Hạn chế | Không | Cụm riêng TPH-0, Z6 |
 | DS-08 | pg-core: `ph17_assist` (pgvector) | AS-03 | PH-17 | CK, NB | Nội bộ, trần Hạn chế | Không | RLS theo tenant, cấm nguồn Nhạy cảm |
 | DS-09 | Kafka: topic `{tenant}.*` | AS-04 | PH-10 và mọi DU | Theo hợp đồng, tới CN2 | Nhạy cảm | Có (thân bản tin topic Nhạy cảm, mã hóa ở tầng ứng dụng) | ACL theo topic, mã hóa thân bản tin topic Nhạy cảm, thời hạn giữ theo topic |
 | DS-10 | Apicurio (pg-infra) | AS-04 | PH-10 | NB | Nội bộ | Không | Lược đồ, không dữ liệu |
-| DS-11 | Garage: bucket `dh-{tenant}-*` | AS-07 | Mọi phân hệ có tệp | CK, CN1, CN2, TC | Nhạy cảm | Có (tệp nhập tạm, mdm-pii, bpm-pii, nat-evidence) | SSE-C với khóa từ OpenBao cho bucket ≥ Hạn chế; tệp nhập tạm ≤ 24 giờ |
+| DS-11 | Kho đối tượng: bucket `dh-{tenant}-*` (Garage) và `dh-nat-payload` của PH-14 | AS-07 | Mọi phân hệ có tệp | CK, CN1, CN2, TC, BM (gói bàn giao thông tin xác thực PH-01) | Nhạy cảm | Có (tệp nhập tạm, nội dung giao dịch quốc gia) | SSE-C với khóa từ OpenBao cho bucket ≥ Hạn chế; tệp nhập tạm ≤ 24 giờ |
 | DS-12 | Ceph RGW: bucket WORM (kiểm toán, `payment-worm`) | AS-08 | PH-13, PH-19 | NB, TC | Hạn chế | Không | Object Lock 5 năm, tách bucket với sao lưu |
 | DS-13 | Valkey | AS-09 | PH-03, 07, 14, BFF | CK, NB, CN1 (đã mã hóa) | Hạn chế | Không | Khóa có tiền tố tenant, TTL ≤ 15 phút cho Hạn chế; không giá trị Nhạy cảm rõ |
 | DS-14 | OpenBao | AS-11 | Mọi DU | BM | Tối mật kỹ thuật | Không (là nơi giữ khóa) | Z6, transit không cho xuất khóa |
@@ -569,7 +572,7 @@ flowchart TB
     P5(["6.2.5 Xác minh chữ ký,<br/>chuẩn hóa lỗi"])
     C[("DS-13 Valkey<br/>đệm đã mã hóa")]
     Q[("DS-02 ph14_national<br/>hạn mức, giao dịch")]
-    E[("DS-11 nat-evidence")]
+    E[("DS-11 dh-nat-payload")]
     B[("DS-14 OpenBao<br/>khóa ký, token")]
   end
   HT -->|"6.2-a yêu cầu, mục đích · CN2"| P1
@@ -581,7 +584,7 @@ flowchart TB
   P4 <-->|"6.2-d khóa ký, token · BM"| B
   P4 <-->|"6.2-e bản tin ký số · CN2"| NDXP
   P4 --> P5
-  P5 -->|"6.2-f bằng chứng · CN2, mã hóa"| E
+  P5 -->|"6.2-f nội dung giao dịch · CN2, mã hóa"| E
   P5 -->|"6.2-g siêu dữ liệu giao dịch · NB"| Q
   P5 -->|"6.2-h kết quả · CN2"| HT
 ```
@@ -595,7 +598,7 @@ Hình cho thấy kiểm mục đích (6.2.2) đứng **trước** tra đệm (6.
 | 6.2-c | Kết quả đệm của dịch vụ `cacheable` | Đến CN1 | Mã hóa giá trị bằng khóa tenant; khóa đệm là băm tham số; không đệm dịch vụ Nhạy cảm |
 | 6.2-d | Khóa ký số, token OAuth của nền tảng | BM | OpenBao transit, không xuất khóa |
 | 6.2-e | Yêu cầu và phản hồi đã ký | CN2 | TLS, ký và xác minh chữ ký; egress chỉ tới địa chỉ NDXP |
-| 6.2-f | Bản tin đã ký làm bằng chứng | CN2 | SSE-C, quyền xem đầy đủ có lý do (FR-14-050), thời hạn theo sổ xử lý PH-09 |
+| 6.2-f | Nội dung yêu cầu, phản hồi đã ký | CN2 | Mã hóa bằng DEK tenant, quyền xem đầy đủ có lý do (FR-14-050), giữ mặc định 30 ngày, tối đa 180 |
 | 6.2-g | Mã giao dịch, thời điểm, kết quả, `fromCache` | NB | Không ghi tham số định danh rõ, chỉ băm có khóa |
 | 6.2-h | Kết quả tra cứu | CN2 | Như 6.2-a |
 
@@ -747,7 +750,7 @@ Chặng 6.5-d nằm **ngoài** ranh giới Datahub: người nộp nhập thẻ 
 
 ### 6.6. Xử lý bản tin lỗi
 
-Bản tin không xử lý được ở luồng tích hợp, cổng sự kiện hoặc phân hệ nghiệp vụ vào hàng đợi lỗi hợp nhất của PH-18; người vận hành xem, sửa, phát lại qua lối vào của nguồn. Đây là nơi duy nhất dữ liệu đi qua được lưu lại.
+Bản tin không xử lý được ở luồng tích hợp, cổng sự kiện hoặc phân hệ nghiệp vụ vào hàng đợi lỗi hợp nhất của PH-18; người vận hành xem, sửa, phát lại qua lối vào của nguồn. Đây là nơi chung duy nhất giữ bản sao dữ liệu đi qua của mọi luồng; các bản lưu có thời hạn khác do từng phân hệ tự quản (chương 5).
 
 ```{.mermaid caption="DFD mức 2 luồng xử lý bản tin lỗi PH-18"}
 flowchart TB
@@ -856,7 +859,7 @@ flowchart TB
     P3(["6.8.3 Ghi qua API nhập<br/>phân hệ đích"])
     P4(["6.8.4 Đối chiếu,<br/>báo cáo"])
     P5(["6.8.5 Cầu nối<br/>Pulsar–Kafka"])
-    DST[("DS-01, 03, 06<br/>phân hệ đích")]
+    DST[("DS-01, 02, 03, 06<br/>phân hệ đích")]
     OPS[("DS-04 ph18_ops<br/>lần chạy, báo cáo")]
     K[("DS-09 Kafka")]
   end
@@ -909,7 +912,7 @@ Ký hiệu: **L** phân hệ lưu lại nhóm dữ liệu đó; **Q** chỉ cho 
 | PH-11 Quy trình liên thông | — | L | L | L | — |
 | PH-12 Định danh, phân quyền | — | L | L (tài khoản cán bộ) | — | — |
 | PH-13 Giám sát, kiểm toán | — | L | L (định danh người thao tác) | Băm | — |
-| PH-14 Kết nối quốc gia | — | L | L (đệm, mã hóa) | L (bằng chứng, mã hóa) | — |
+| PH-14 Kết nối quốc gia | — | L | L (đệm, mã hóa) | L (nội dung giao dịch, mã hóa, ≤ 180 ngày) | — |
 | PH-15 Cổng nhà phát triển | L | L | L (tài khoản nhà phát triển) | — | — |
 | PH-16 Báo cáo chỉ tiêu | L | L | — | — | — |
 | PH-17 Trợ lý AI | L | L | — | — | — |
@@ -931,10 +934,10 @@ Ma trận dưới dùng tám vùng tin cậy của D03-07 §3.3; ô "—" nghĩa
 | Z1 → Z2 (vào cổng) | Có | Có | Có | Có | Có | Token, mTLS theo mức hợp đồng |
 | Z2 → Z3, Z4 | Có | Có | Có | Có | Có | mTLS mesh, OPA |
 | Z3, Z4 → Z5 (vào kho) | Có | Có | Có | Mã hóa trường | Có | Service account được liệt kê, RLS |
-| Z3, Z4 → Z6 | — | Có | — | — | — | Chỉ khóa và yêu cầu ký, không dữ liệu nghiệp vụ |
-| Z4 → Z0 (egress) | Có | — | Có | Có (NDXP) | Có (NCC) | Egress gateway, danh sách đích; cấm đích ngoài lãnh thổ |
+| Z3, Z4 → Z6 | — | Có | — | — | Có (WORM) | Yêu cầu khóa, ký; ghi bản ghi kiểm toán và sổ giao dịch vào WORM; không dữ liệu nghiệp vụ khác |
+| Z4 → Z0 (egress) | Có | Có (nhật ký an ninh, thư) | Có | Có (NDXP) | Có (NCC) | Egress gateway, danh sách đích; cấm đích ngoài lãnh thổ |
 | Z5 → site DR, sao lưu ngoài site | Có | Có | Có | Mã hóa | Có | Mã hóa trước khi rời site |
-| Z3 → mô hình AI | Có | Có | Chỉ khi mô hình nội bộ | — | — | APISIX ai-proxy, bộ lọc lời nhắc |
+| Z3 → mô hình AI | Có | Có | Chỉ khi tenant bật và mô hình nội bộ | — | — | APISIX ai-proxy, bộ lọc lời nhắc |
 
 : Nhóm dữ liệu được phép đi qua từng ranh giới vùng mạng
 
@@ -981,14 +984,14 @@ Thiếu số liệu thật về khối lượng và loại dữ liệu của t�
 
 > **Câu hỏi mở Q377:** Số định danh cá nhân là DLCN cơ bản về pháp lý nhưng được xếp mức Nhạy cảm về kỹ thuật. Có cần ghi rõ quyết định này vào sổ xử lý PH-09 để giải trình khi kiểm tra không?
 
-> **Câu hỏi mở Q378:** Thời hạn giữ bằng chứng giao dịch quốc gia (bucket `nat-evidence`) là bao lâu? Tài liệu PH-14 để theo sổ xử lý; cần chủ quản quyết định một con số.
+> **Câu hỏi mở Q378:** Thời hạn giữ nội dung giao dịch quốc gia (`dh-nat-payload`) nên đặt bao nhiêu ngày cho từng loại dịch vụ? PH-14 cho mặc định 30 ngày, tối đa 180; cần chủ quản dữ liệu chốt con số và ghi vào sổ xử lý PH-09.
 
 | Mã | Câu hỏi | Người trả lời |
 |---|---|---|
 | Q375 | Xử lý mặc định trường chưa xác nhận nhãn | Kiến trúc sư ATTT, nhóm PH-09 |
 | Q376 | Miễn trừ DPIA theo NĐ 356/2025 | Pháp chế |
 | Q377 | Ghi quyết định mức của số định danh | Cán bộ ATTT, chủ quản dữ liệu |
-| Q378 | Thời hạn giữ bằng chứng quốc gia | Chủ quản dữ liệu |
+| Q378 | Thời hạn giữ nội dung giao dịch quốc gia | Chủ quản dữ liệu |
 
 : Câu hỏi mở của D02-06
 
