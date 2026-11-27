@@ -22,7 +22,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-07 Từ điển dữ liệu; D03-01 SAD; D03
 **Những điểm hội đồng cần lưu ý.**
 
 1. **Hai trục, không mâu thuẫn.** Dàn ý yêu cầu năm nhóm theo nội dung; SAD và thiết kế ATTT dùng bốn mức bảo vệ (Công khai, Nội bộ, Hạn chế, Nhạy cảm). Tài liệu giữ cả hai: nhóm nói dữ liệu *là gì* (để áp luật), mức nói phải *bảo vệ thế nào* (để kỹ sư cài đặt). Bảng 2.1 quy đổi một chiều từ nhóm sang mức tối thiểu.
-2. **Datahub chủ yếu là đường ống.** Phần lớn dữ liệu cá nhân chỉ **đi qua** (tra cứu, sự kiện) và không được lưu, trừ hàng đợi lỗi có mã hóa, giữ tối đa 7 ngày. Dữ liệu cá nhân **lưu lại** tập trung ở năm nơi: dữ liệu chủ PH-06, quyền riêng tư PH-09, quy trình PH-11, thanh toán PH-19 và nhật ký kiểm toán (chỉ dạng băm).
+2. **Datahub chủ yếu là đường ống.** Phần lớn dữ liệu cá nhân chỉ **đi qua** (tra cứu, sự kiện) và không được lưu, trừ hàng đợi lỗi có mã hóa, giữ tối đa 7 ngày. Dữ liệu cá nhân nhạy cảm **lưu lại** ở dạng giải mã được chỉ có ở năm phân hệ: dữ liệu chủ PH-06, quy trình PH-11, bằng chứng tra cứu quốc gia PH-14, hàng đợi lỗi PH-18 (tối đa 7 ngày) và thanh toán PH-19; nhật ký kiểm toán PH-13 chỉ giữ dạng băm.
 3. **Không có luồng dữ liệu cá nhân nhạy cảm nào tới trợ lý AI** và không có dữ liệu nào ra khỏi lãnh thổ; hai điều này được kiểm bằng chính sách OPA và quy tắc egress, không chỉ bằng quy định.
 4. Một số chi tiết của Nghị định 356/2025 (mẫu hồ sơ, miễn trừ cho cơ quan nhà nước) chưa đối chiếu toàn văn; tài liệu ghi thành câu hỏi mở thay vì giả định.
 
@@ -80,6 +80,8 @@ Thuật ngữ riêng của tài liệu; thuật ngữ chung ở D00-01.
 : Thuật ngữ dùng trong DFD và phân loại dữ liệu
 
 ### Tài liệu tham chiếu
+
+Sơ đồ và phân loại dựa trên các tài liệu sau; khi lệch, tài liệu gốc đúng và điểm lệch được ghi vào đề nghị đồng bộ.
 
 | Mã | Tài liệu | Dùng cho |
 |---|---|---|
@@ -150,6 +152,8 @@ Ba điểm cần giải thích. Thứ nhất, nhóm TC chồng một phần lên
 Ngoài năm nhóm nghiệp vụ, vật liệu khóa và bí mật (khóa ký, khóa mã hóa, mật khẩu kết nối, thông tin xác thực của HTTT) mang nhãn kỹ thuật **BM** ("tối mật kỹ thuật" ở D03-07 §3.1). Nhãn BM chỉ xuất hiện ở OpenBao (DS-14) và ở chặng bàn giao thông tin xác thực một lần của luồng kết nạp (mục 6.7).
 
 ### 2.2. Căn cứ pháp lý của từng nhóm
+
+Mỗi nhóm kéo theo nghĩa vụ pháp lý khác nhau; bảng dưới gắn nghĩa vụ với phân hệ chịu trách nhiệm thực hiện.
 
 | Nhóm | Căn cứ chính | Nghĩa vụ chính phát sinh | Phân hệ thực hiện |
 |---|---|---|---|
@@ -500,6 +504,499 @@ Bảng dưới là danh mục 19 kho dữ liệu, mỗi kho gắn tài sản ở
 : Mười chín kho dữ liệu, nhóm dữ liệu chứa và biện pháp chính
 
 Bảy kho có CN2 giải mã được là DS-03, DS-04, DS-06, DS-09, DS-11, DS-18, DS-19; trong đó DS-09 và DS-19 chỉ giữ dữ liệu đi qua trong thời hạn ngắn. Đây là phạm vi tối thiểu của hồ sơ DPIA và của kịch bản ứng phó lộ lọt dữ liệu cá nhân trong D03-07.
+
+## 6. DFD mức 2 cho tám luồng trọng yếu
+
+Tám luồng dưới đây là những luồng dàn ý yêu cầu vẽ chi tiết, vì chúng mang dữ liệu cá nhân hoặc tài chính, hoặc là nơi dữ liệu được nhân bản. Mỗi mục có sơ đồ, thuyết minh, bảng chặng (đánh số theo mục, ví dụ `6.1-a`) và các điểm kiểm soát dùng làm đầu vào cho kiểm thử bảo mật D05-04.
+
+### 6.1. Tra cứu đồng bộ giữa hai HTTT
+
+Một HTTT của sở gọi API do HTTT khác công bố, qua cổng APISIX; có thể đi qua một luồng chuyển đổi trong `dh-runtime`. Đây là luồng lưu lượng lớn nhất; nội dung không được lưu.
+
+```{.mermaid caption="DFD mức 2 luồng tra cứu đồng bộ giữa hai HTTT"}
+flowchart TB
+  HG["HTTT gọi"]
+  HC["HTTT cung cấp"]
+  subgraph DH[Datahub]
+    P1(["6.1.1 Xác thực,<br/>kiểm đăng ký"])
+    P2(["6.1.2 Hạn mức,<br/>ủy quyền OPA"])
+    P3(["6.1.3 Chuyển đổi<br/>luồng PH-04"])
+    P4(["6.1.4 Ghi siêu dữ liệu"])
+    V[("DS-13 Valkey<br/>bộ đếm")]
+    O[("DS-17 dh-olap")]
+    L[("DS-16 LGTM")]
+  end
+  HG -->|"6.1-a yêu cầu, token · theo hợp đồng"| P1
+  P1 --> P2
+  P2 <-->|"6.1-b bộ đếm · NB"| V
+  P2 -->|"6.1-c yêu cầu · theo hợp đồng"| P3
+  P3 <-->|"6.1-d gọi, phản hồi · theo hợp đồng"| HC
+  P3 -->|"6.1-e phản hồi · theo hợp đồng"| HG
+  P1 & P3 -->|"6.1-f siêu dữ liệu · NB"| P4
+  P4 --> O
+  P4 --> L
+```
+
+Điều người đọc cần thấy: nội dung (6.1-a, c, d, e) chỉ ở trong bộ nhớ của APISIX và `dh-runtime`; mọi thứ đi vào kho (6.1-b, f) là nội bộ. Khi luồng không cần chuyển đổi, 6.1.3 bị bỏ và APISIX chuyển thẳng tới HTTT cung cấp.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.1-a | Yêu cầu, token máy, `traceparent` | Theo hợp đồng | TLS 1.3; OAuth 2.1, mTLS bắt buộc với hợp đồng Nhạy cảm (SEC-24) |
+| 6.1-b | Bộ đếm hạn mức theo consumer, tenant | NB | Khóa có tiền tố tenant |
+| 6.1-c, d, e | Thân yêu cầu và phản hồi | Theo hợp đồng | mTLS mesh trong cụm; egress tới HTTT cung cấp theo danh sách |
+| 6.1-f | Ai gọi, gọi gì, khi nào, kết quả, kích thước | NB | Không ghi thân, không ghi tham số truy vấn chứa định danh; che theo mẫu ở OTel Collector |
+
+: Chặng của luồng tra cứu đồng bộ
+
+Điểm kiểm soát: (1) `X-DH-Tenant` do APISIX đặt, không tin header của client (SEC-80); (2) OPA từ chối hợp đồng có trường Nhạy cảm nếu `purpose` không được chấp thuận cho HTTT gọi (SEC-37); (3) bước `log` trong luồng PH-04 bị lint cấm ghi thân bản tin hợp đồng Nhạy cảm (SEC-46); (4) lỗi chuyển đổi đưa bản tin vào DLQ theo mục 6.6, không ghi vào log.
+
+### 6.2. Tra cứu CSDL quốc gia
+
+HTTT của tỉnh tra cứu dữ liệu dân cư, lý lịch tư pháp, hộ tịch, BHXH hoặc đăng ký doanh nghiệp qua điểm gọi chung của PH-14, tới NDXP. Đây là luồng mang CN2 với khối lượng lớn nhất, và là lý do chính khiến Datahub ở cấp độ 3.
+
+```{.mermaid caption="DFD mức 2 luồng tra cứu CSDL quốc gia qua PH-14"}
+flowchart TB
+  HT["HTTT tỉnh"]
+  NDXP["IF-03 NDXP, CSDL quốc gia"]
+  subgraph DH[Datahub]
+    P1(["6.2.1 Cổng API<br/>xác thực"])
+    P2(["6.2.2 Kiểm mục đích,<br/>hạn mức"])
+    P3(["6.2.3 Tra đệm"])
+    P4(["6.2.4 Chuyển đổi,<br/>ký số, gọi"])
+    P5(["6.2.5 Xác minh chữ ký,<br/>chuẩn hóa lỗi"])
+    C[("DS-13 Valkey<br/>đệm đã mã hóa")]
+    Q[("DS-02 ph14_national<br/>hạn mức, giao dịch")]
+    E[("DS-11 nat-evidence")]
+    B[("DS-14 OpenBao<br/>khóa ký, token")]
+  end
+  HT -->|"6.2-a yêu cầu, mục đích · CN2"| P1
+  P1 --> P2
+  P2 <-->|"6.2-b hạn mức, chấp thuận · NB"| Q
+  P2 --> P3
+  P3 <-->|"6.2-c kết quả đệm · đến CN1, mã hóa"| C
+  P3 -->|"không trúng đệm"| P4
+  P4 <-->|"6.2-d khóa ký, token · BM"| B
+  P4 <-->|"6.2-e bản tin ký số · CN2"| NDXP
+  P4 --> P5
+  P5 -->|"6.2-f bằng chứng · CN2, mã hóa"| E
+  P5 -->|"6.2-g siêu dữ liệu giao dịch · NB"| Q
+  P5 -->|"6.2-h kết quả · CN2"| HT
+```
+
+Hình cho thấy kiểm mục đích (6.2.2) đứng **trước** tra đệm (6.2.3): một HTTT không được chấp thuận không thể đọc được kết quả mà HTTT khác đã làm nóng đệm (BR-14-015). Phản hồi mức Nhạy cảm bỏ qua đệm hoàn toàn.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.2-a | Tham số tra cứu (số định danh, họ tên), mã mục đích | CN2 | mTLS bắt buộc; `purpose` trong token |
+| 6.2-b | Hạn mức, chấp thuận mục đích | NB | RLS tenant |
+| 6.2-c | Kết quả đệm của dịch vụ `cacheable` | Đến CN1 | Mã hóa giá trị bằng khóa tenant; khóa đệm là băm tham số; không đệm dịch vụ Nhạy cảm |
+| 6.2-d | Khóa ký số, token OAuth của nền tảng | BM | OpenBao transit, không xuất khóa |
+| 6.2-e | Yêu cầu và phản hồi đã ký | CN2 | TLS, ký và xác minh chữ ký; egress chỉ tới địa chỉ NDXP |
+| 6.2-f | Bản tin đã ký làm bằng chứng | CN2 | SSE-C, quyền xem đầy đủ có lý do (FR-14-050), thời hạn theo sổ xử lý PH-09 |
+| 6.2-g | Mã giao dịch, thời điểm, kết quả, `fromCache` | NB | Không ghi tham số định danh rõ, chỉ băm có khóa |
+| 6.2-h | Kết quả tra cứu | CN2 | Như 6.2-a |
+
+: Chặng của luồng tra cứu CSDL quốc gia
+
+Điểm kiểm soát: (1) mọi lượt gọi có `purpose` thuộc danh sách chủ quản chấp thuận (FR-14-011); (2) cảnh báo khai thác bất thường theo HTTT (FR-14-053, UC-SEC ở D03-07); (3) không có kết quả Nhạy cảm trong Valkey (kiểm bằng quét mẫu); (4) chữ ký phản hồi không hợp lệ được xử lý như sự cố an ninh (FR-14-031).
+
+### 6.3. Phát và nhận sự kiện
+
+HTTT phát sự kiện vào topic qua cổng sự kiện của PH-10; HTTT nhận qua đẩy webhook hoặc kéo. Sự kiện được Kafka giữ theo thời hạn của topic, nên đây là dữ liệu đi qua có thời gian nằm lại.
+
+```{.mermaid caption="DFD mức 2 luồng phát và nhận sự kiện qua PH-10"}
+flowchart TB
+  HP["HTTT phát"]
+  HN["HTTT nhận"]
+  subgraph DH[Datahub]
+    P1(["6.3.1 Cổng API<br/>scope publish"])
+    P2(["6.3.2 Kiểm phong bì,<br/>lược đồ, chống trùng"])
+    P3(["6.3.3 Phân phối<br/>đẩy, kéo"])
+    R[("DS-10 Apicurio")]
+    K[("DS-09 Kafka<br/>topic tenant")]
+    D[("DS-19 DLQ")]
+  end
+  HP -->|"6.3-a sự kiện CloudEvents · theo hợp đồng"| P1
+  P1 --> P2
+  P2 <-->|"6.3-b lược đồ · NB"| R
+  P2 -->|"6.3-c sự kiện hợp lệ · theo hợp đồng"| K
+  K -->|"6.3-d sự kiện · theo hợp đồng"| P3
+  P3 -->|"6.3-e webhook có ký, hoặc kéo · theo hợp đồng"| HN
+  P3 -->|"6.3-f gửi hỏng quá số lần · theo hợp đồng"| D
+```
+
+Mức hợp đồng của topic được PH-09 xác nhận khi tạo topic; topic Nhạy cảm có thân bản tin mã hóa ở tầng ứng dụng trước khi vào Kafka và thời hạn giữ ngắn hơn mặc định.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.3-a | Phong bì CloudEvents và dữ liệu | Theo hợp đồng | OAuth 2.1 hoặc mTLS, scope publish theo topic |
+| 6.3-b | Lược đồ JSON hoặc Avro | NB | Kiểm tương thích (ADR-070) |
+| 6.3-c, d | Sự kiện đã kiểm | Theo hợp đồng | ACL topic theo service account (ADR-072); mã hóa thân topic Nhạy cảm |
+| 6.3-e | Sự kiện tới bên nhận | Theo hợp đồng | Webhook ký HMAC; bên nhận phải có subscription được duyệt |
+| 6.3-f | Sự kiện gửi hỏng | Theo hợp đồng | Theo mục 6.6 |
+
+: Chặng của luồng phát và nhận sự kiện
+
+Điểm kiểm soát: (1) subscription tới topic có trường Nhạy cảm cần chấp thuận của chủ quản qua PH-09; (2) topic luôn có tiền tố tenant, không có topic dùng chung giữa tenant trừ `COMMON` chỉ đọc; (3) cầu nối Pulsar–Kafka giai đoạn chuyển đổi đi qua cùng 6.3.2 (ADR-073).
+
+### 6.4. Đồng bộ danh mục
+
+PH-07 đồng bộ danh mục quốc gia qua PH-14 theo lịch, phát hành phiên bản mới, sinh ảnh chụp và phân phối tới mọi nơi dùng. Đây là luồng dữ liệu công khai, nhưng tính toàn vẹn quan trọng vì sai danh mục làm sai mọi hồ sơ dùng nó.
+
+```{.mermaid caption="DFD mức 2 luồng đồng bộ và phân phối danh mục dùng chung"}
+flowchart TB
+  QG["IF-04 Danh mục quốc gia"]
+  DS["Cán bộ quản lý dữ liệu"]
+  HT["HTTT, luồng tích hợp"]
+  subgraph DH[Datahub]
+    P1(["6.4.1 Lấy dữ liệu<br/>qua PH-14"])
+    P2(["6.4.2 So khác biệt,<br/>quyết định áp dụng"])
+    P3(["6.4.3 Phát hành<br/>phiên bản"])
+    P4(["6.4.4 Sinh ảnh chụp,<br/>phân phối"])
+    DB[("DS-03 ph07_rdm")]
+    S3[("DS-11 rdm<br/>ảnh chụp")]
+    VK[("DS-13 Valkey L2")]
+    K[("DS-09 Kafka")]
+  end
+  QG -->|"6.4-a cấu trúc, dữ liệu · CK"| P1
+  P1 --> P2
+  P2 <-->|"6.4-b phiên bản hiện hành · CK"| DB
+  P2 -->|"có phá vỡ: chờ xác nhận"| DS
+  DS -->|"6.4-c xác nhận · NB"| P3
+  P2 -->|"không phá vỡ, tự áp dụng"| P3
+  P3 --> DB
+  P3 --> P4
+  P4 -->|"6.4-d ảnh chụp, SHA-256 · CK"| S3
+  P4 -->|"6.4-e sự kiện phát hành · CK"| K
+  P4 -->|"6.4-f đệm hai tầng · CK"| VK
+  VK -->|"6.4-g tra cứu · CK"| HT
+```
+
+Hình cho thấy hai nhánh của ADR-057: thay đổi không phá vỡ được tự áp dụng, thay đổi phá vỡ chờ cán bộ xác nhận. Ảnh chụp có tổng kiểm tra để `dh-runtime` từ chối ảnh hỏng.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.4-a | Danh mục quốc gia | CK | Qua PH-14, token NDXP; thời gian chờ 60 giây, thử lại 3 lần |
+| 6.4-b | Phiên bản hiện hành | CK | Khóa tư vấn theo nguồn, không chạy song song |
+| 6.4-c | Quyết định xác nhận | NB | Bốn mắt khi phá vỡ, ghi kiểm toán |
+| 6.4-d | Tệp JSON, CSV nén | CK | SHA-256 trong `catalog_version`; bucket chỉ đọc cho runtime |
+| 6.4-e, f, g | Sự kiện, mục đệm, kết quả tra cứu | CK | Khóa đệm theo `version_id`, không bao giờ cũ |
+
+: Chặng của luồng đồng bộ danh mục
+
+Điểm kiểm soát: (1) cảnh báo khi lần đồng bộ thành công cuối quá 26 giờ; (2) danh mục đơn vị hành chính sau sáp nhập giữ lịch sử kế thừa (ADR-055); (3) danh mục có thuộc tính động gắn nhãn Hạn chế (ví dụ danh bạ cán bộ) không được phân phối qua đệm công khai mà qua API có xác thực.
+
+### 6.5. Thanh toán và đối soát
+
+HTTT dịch vụ công tạo giao dịch thu phí, lệ phí; người nộp thanh toán trên trang của nhà cung cấp; Datahub nhận kết quả, báo cho HTTT và đối soát hằng ngày với tệp của nhà cung cấp.
+
+```{.mermaid caption="DFD mức 2 luồng thanh toán và đối soát PH-19"}
+flowchart TB
+  DT["HTTT đối tác"]
+  NN["Người nộp"]
+  NCC["IF-05 PayGov, NCC"]
+  KT["Kế toán đối soát"]
+  subgraph DH[Datahub]
+    P1(["6.5.1 Tạo giao dịch,<br/>lũy đẳng"])
+    P2(["6.5.2 Khởi tạo tại NCC"])
+    P3(["6.5.3 Nhận IPN<br/>đúng một lần"])
+    P4(["6.5.4 Báo kết quả<br/>webhook"])
+    P5(["6.5.5 Thu thập,<br/>so khớp"])
+    P6(["6.5.6 Xử lý chênh lệch,<br/>chốt phiên"])
+    DB[("DS-06 pg-payment")]
+    F[("DS-11 payment")]
+    W[("DS-12 payment-worm")]
+  end
+  DT -->|"6.5-a yêu cầu, thông tin người nộp · TC, CN1"| P1
+  P1 -->|"6.5-b giao dịch CREATED · TC, CN1 mã hóa"| DB
+  P1 --> P2
+  P2 <-->|"6.5-c khởi tạo, URL thanh toán · TC"| NCC
+  NN -->|"6.5-d thẻ, tài khoản · nhập ở trang NCC"| NCC
+  NCC -->|"6.5-e IPN có ký · TC"| P3
+  P3 -->|"6.5-f lịch sử trạng thái · TC"| DB
+  P3 --> P4
+  P4 -->|"6.5-g kết quả có ký · TC"| DT
+  NCC -->|"6.5-h tệp đối soát · TC"| P5
+  KT -->|"6.5-i tệp tải lên · TC"| P5
+  P5 -->|"6.5-j tệp gốc, SHA-256 · TC"| F
+  P5 --> P6
+  KT -->|"6.5-k đề xuất, phê duyệt · TC"| P6
+  P6 -->|"6.5-l chênh lệch, phiên · TC"| DB
+  P6 -->|"6.5-m biên bản đã chốt · TC"| W
+```
+
+Chặng 6.5-d nằm **ngoài** ranh giới Datahub: người nộp nhập thẻ hoặc tài khoản trên trang của nhà cung cấp, Datahub không bao giờ nhận số thẻ. Lượt người nộp quay về trang dịch vụ không làm đổi trạng thái giao dịch; chỉ IPN có ký, truy vấn chủ động hoặc xử lý chênh lệch có phê duyệt mới đổi (ADR-043).
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.5-a | Mã hồ sơ, số tiền, họ tên người nộp, `Idempotency-Key` | TC, CN1 | Xác thực đối tác (ROLE-PARTNER_SYSTEM), mTLS, chống trùng (ADR-041) |
+| 6.5-b, f | Giao dịch, lịch sử trạng thái | TC, CN1 | Mã hóa trường người nộp (ADR-048); lịch sử chỉ thêm; phân vùng tháng (ADR-047) |
+| 6.5-c | Yêu cầu khởi tạo, URL | TC | Ký theo đặc tả NCC; egress tới NCC |
+| 6.5-e | IPN | TC | Xác minh chữ ký, chống phát lại bằng nonce, cách ly IPN bất thường (FR-19-031) |
+| 6.5-g | Kết quả tới đối tác | TC | Webhook ký HMAC (ADR-044), gửi lại có giới hạn |
+| 6.5-h, i, j | Tệp đối soát | TC | Lưu tệp gốc trước khi phân tích, SHA-256, không nạp lại tệp trùng |
+| 6.5-k, l | Đề xuất xử lý chênh lệch | TC | Phê duyệt bốn mắt (ADR-046), MFA cho `ROLE-PAYMENT_ACCOUNTANT` |
+| 6.5-m | Biên bản đối soát | TC | Object Lock 5 năm |
+
+: Chặng của luồng thanh toán và đối soát
+
+Điểm kiểm soát: (1) tổng tiền theo ngày của Datahub khớp tệp NCC tới từng đồng, chênh lệch có bản ghi; (2) không có số thẻ, số tài khoản cá nhân dạng rõ ở mọi kho (quét mẫu Luhn ở DS-06, DS-16); (3) hoàn tiền vào tài khoản cá nhân là CN2, chỉ vai trò thanh toán có MFA xem được.
+
+### 6.6. Xử lý bản tin lỗi
+
+Bản tin không xử lý được ở luồng tích hợp, cổng sự kiện hoặc phân hệ nghiệp vụ vào hàng đợi lỗi hợp nhất của PH-18; người vận hành xem, sửa, phát lại qua lối vào của nguồn. Đây là nơi duy nhất dữ liệu đi qua được lưu lại.
+
+```{.mermaid caption="DFD mức 2 luồng xử lý bản tin lỗi PH-18"}
+flowchart TB
+  SRC["Nguồn lỗi<br/>PH-04, PH-10, PH-19…"]
+  VH["Vận hành tỉnh"]
+  DY["Người duyệt"]
+  subgraph DH[Datahub]
+    P1(["6.6.1 Nhận mục lỗi,<br/>khử trùng"])
+    P2(["6.6.2 Phân loại,<br/>chỉ mục"])
+    P3(["6.6.3 Xem có lý do"])
+    P4(["6.6.4 Phát lại<br/>qua nguồn"])
+    P5(["6.6.5 Dọn theo hạn"])
+    K[("DS-19 topic DLQ")]
+    IX[("DS-04 ph18_ops<br/>chỉ mục")]
+    A[("DS-05 kiểm toán")]
+  end
+  SRC -->|"6.6-a bản tin, ngữ cảnh lỗi · theo hợp đồng, mã hóa"| K
+  K --> P1
+  P1 -->|"6.6-b siêu dữ liệu lỗi · NB"| P2
+  P2 --> IX
+  VH -->|"6.6-c yêu cầu xem, lý do · NB"| P3
+  P3 <-->|"6.6-d payload · theo hợp đồng, che"| K
+  P3 -->|"6.6-e lượt xem · NB"| A
+  VH -->|"6.6-f lệnh phát lại · NB"| P4
+  DY -->|"6.6-g duyệt loạt lớn · NB"| P4
+  P4 -->|"6.6-h bản tin phát lại · theo hợp đồng"| SRC
+  P5 -->|"xóa quá hạn"| K
+```
+
+Payload trong DLQ đã được nguồn mã hóa trước khi gửi, nên chỉ mục ở `ph18_ops` chỉ chứa siêu dữ liệu (lý do, công đoạn, mã lỗi, luồng, `traceparent`). Xem payload là thao tác riêng, cần quyền, lý do và sinh bản ghi kiểm toán.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.6-a | Bản tin lỗi kèm ngữ cảnh chuẩn | Theo hợp đồng | Mã hóa bằng khóa tenant; thiếu trường bắt buộc thì `POISON` (BR-18-013) |
+| 6.6-b | Lý do, số lần thử, mã lỗi | NB | Không chứa giá trị của thân |
+| 6.6-c, e | Lý do xem, lượt xem | NB | Ghi kiểm toán bắt buộc |
+| 6.6-d | Payload | Theo hợp đồng | Che theo chính sách PH-09; trường Nhạy cảm hiện tối đa 60 giây khi có `PERM-09-unmask` |
+| 6.6-f, g | Lệnh phát lại | NB | Vượt ngưỡng `18.dlq.replay.approval-threshold` cần người thứ hai (ADR-182) |
+| 6.6-h | Bản tin phát lại | Theo hợp đồng | Đi lại đúng lối vào của nguồn, qua đủ kiểm tra như lần đầu |
+
+: Chặng của luồng xử lý bản tin lỗi
+
+Điểm kiểm soát: (1) mục DLQ của hợp đồng Nhạy cảm tự xóa sau tối đa 7 ngày; (2) không có đường phát lại nào bỏ qua kiểm tra của nguồn; (3) xuất payload hàng loạt bị cấm, chỉ xem từng mục.
+
+### 6.7. Kết nạp HTTT
+
+Đơn vị đề nghị kết nạp HTTT; quản trị tỉnh thẩm định, phê duyệt; Datahub cấp định danh ứng dụng và bàn giao thông tin xác thực một lần cho đầu mối kỹ thuật.
+
+```{.mermaid caption="DFD mức 2 luồng kết nạp HTTT PH-01"}
+flowchart TB
+  OR["Cán bộ đầu mối"]
+  TA["Quản trị tỉnh,<br/>người thẩm định"]
+  KT["Đầu mối kỹ thuật"]
+  subgraph DH[Datahub]
+    P1(["6.7.1 Lập, nộp hồ sơ"])
+    P2(["6.7.2 Kiểm tra,<br/>thẩm định, duyệt"])
+    P3(["6.7.3 Cấp định danh<br/>ứng dụng"])
+    P4(["6.7.4 Bàn giao<br/>một lần"])
+    DB[("DS-01 ph01_onboarding")]
+    F[("DS-11 onboarding,<br/>handover")]
+    KC[("DS-07 pg-iam<br/>client")]
+    B[("DS-14 OpenBao<br/>PKI, bí mật")]
+    K[("DS-09 Kafka")]
+  end
+  OR -->|"6.7-a hồ sơ, đầu mối · CN1"| P1
+  OR -->|"6.7-b tài liệu đính kèm · CN1"| F
+  P1 --> DB
+  TA -->|"6.7-c ý kiến, quyết định · NB"| P2
+  P2 --> DB
+  P2 --> P3
+  P3 -->|"6.7-d client · NB"| KC
+  P3 -->|"6.7-e chứng thư, bí mật · BM"| B
+  P3 -->|"6.7-f HTTT ACTIVE · NB"| K
+  P3 --> P4
+  P4 -->|"6.7-g gói bàn giao mã hóa · BM"| F
+  P4 -->|"6.7-h liên kết tải một lần · BM"| KT
+```
+
+Thông tin xác thực chỉ tồn tại rõ ở hai nơi: OpenBao và gói bàn giao mã hóa tải một lần. Sau khi tải, gói bị xóa và không còn bản sao nào đọc lại được (FR-01-022).
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.7-a | Thông tin HTTT, đầu mối (họ tên, chức vụ, thư, điện thoại) | CN1 | Che một phần trong log; RLS theo tổ chức |
+| 6.7-b | Công văn, quyết định, sơ đồ hệ thống | CN1 | Quét mã độc, SSE-C, hạn giữ theo hồ sơ |
+| 6.7-c | Ý kiến thẩm định | NB | Bốn mắt, ý kiến bắt buộc (FR-00-072) |
+| 6.7-d | Client Keycloak | NB | Tạo qua API quản trị trong Z6 |
+| 6.7-e | Chứng thư client, bí mật | BM | PKI OpenBao, khóa riêng không rời HTTT khi HTTT tự sinh CSR |
+| 6.7-f | Sự kiện trạng thái HTTT | NB | Topic tenant |
+| 6.7-g, h | Gói bàn giao | BM | Mã hóa, liên kết một lần, hạn 72 giờ, gửi qua kênh khác với mật khẩu giải mã |
+
+: Chặng của luồng kết nạp HTTT
+
+Điểm kiểm soát: (1) không gửi bí mật qua thư (FR-00-062); (2) đầu mối là DLCN của cán bộ, có cơ sở pháp lý là thực hiện nhiệm vụ, ghi trong sổ xử lý PH-09; (3) rà soát quyền định kỳ thu hồi định danh không dùng (PH-01 nhóm E).
+
+### 6.8. Di trú từ hệ cũ
+
+Công cụ `dh-migrate` đọc dữ liệu hệ LGSP cũ bằng kết nối chỉ đọc, chuyển đổi và ghi vào phân hệ đích qua API nhập của chính phân hệ đó. Giai đoạn chạy song song có thêm cầu nối Pulsar–Kafka.
+
+```{.mermaid caption="DFD mức 2 luồng di trú từ hệ LGSP cũ"}
+flowchart TB
+  CU["IF-07 LGSP cũ<br/>CSDL Aita, APIM, PayGov, Pulsar"]
+  VH["Vận hành, người duyệt"]
+  subgraph DH[Datahub]
+    P1(["6.8.1 Đọc nguồn<br/>chỉ đọc"])
+    P2(["6.8.2 Chuyển đổi,<br/>loại thông tin xác thực"])
+    P3(["6.8.3 Ghi qua API nhập<br/>phân hệ đích"])
+    P4(["6.8.4 Đối chiếu,<br/>báo cáo"])
+    P5(["6.8.5 Cầu nối<br/>Pulsar–Kafka"])
+    DST[("DS-01, 03, 06<br/>phân hệ đích")]
+    OPS[("DS-04 ph18_ops<br/>lần chạy, báo cáo")]
+    K[("DS-09 Kafka")]
+  end
+  CU -->|"6.8-a bản ghi cũ · CN1, TC, BM"| P1
+  P1 --> P2
+  P2 -->|"6.8-b bản ghi chuẩn · CN1, TC"| P3
+  VH -->|"6.8-c duyệt chạy thật · NB"| P3
+  P3 -->|"6.8-d nhập lũy đẳng · CN1, TC"| DST
+  P3 --> P4
+  P4 -->|"6.8-e số lượng, tổng kiểm tra · NB"| OPS
+  CU -->|"6.8-f sự kiện cũ · theo hợp đồng"| P5
+  P5 -->|"6.8-g CloudEvents · theo hợp đồng"| K
+```
+
+Thông tin xác thực cũ (mật khẩu, API key, khóa của HTTT) có trong nguồn ở chặng 6.8-a nhưng bị loại ở 6.8.2 và đánh dấu "cấp lại", không bao giờ vào kho của Datahub (ADR-183). Mọi lần chạy thật cần bốn mắt; chạy thử không ghi.
+
+| Chặng | Dữ liệu | Nhóm | Bảo vệ |
+|---|---|---|---|
+| 6.8-a | Danh mục, HTTT, API, plan, subscription, topic, luồng XML, giao dịch lịch sử | CN1, TC, BM | Tài khoản JDBC chỉ đọc (IF-07), kết nối TLS nếu nguồn hỗ trợ, trong mạng quản trị |
+| 6.8-b | Bản ghi đã chuẩn hóa | CN1, TC | Trong bộ nhớ Job; không ghi tệp trung gian chứa CN ra đĩa không mã hóa |
+| 6.8-c | Quyết định chạy thật | NB | Bốn mắt, ghi kiểm toán |
+| 6.8-d | Bản ghi nhập vào đích | CN1, TC | Qua API nhập (scope `ops:migration-import`), áp RLS và kiểm tra nghiệp vụ của đích |
+| 6.8-e | Báo cáo đối chiếu | NB | Không chứa giá trị, chỉ số lượng và tổng kiểm tra |
+| 6.8-f, g | Sự kiện giai đoạn song song | Theo hợp đồng | Subscription Failover riêng, chống trùng theo `id` |
+
+: Chặng của luồng di trú từ hệ cũ
+
+Điểm kiểm soát: (1) quét kết quả di trú không có trường thông tin xác thực; (2) báo cáo đối chiếu số lượng và tổng kiểm tra từng loại đạt trước cắt chuyển; (3) giao dịch thanh toán lịch sử mang nguồn chuyển `MIGRATION` và không phát webhook lại cho đối tác.
+
+## 7. Ma trận nhóm dữ liệu
+
+Hai ma trận dưới giúp trả lời nhanh hai câu hỏi thường gặp khi thẩm định: phân hệ nào xử lý nhóm dữ liệu nào, và nhóm nào đi qua ranh giới vùng mạng nào.
+
+### 7.1. Phân hệ và nhóm dữ liệu
+
+Ký hiệu: **L** phân hệ lưu lại nhóm dữ liệu đó; **Q** chỉ cho đi qua hoặc xử lý trong bộ nhớ; **—** không xử lý.
+
+| PH | CK | NB | CN1 | CN2 | TC |
+|---|---|---|---|---|---|
+| PH-01 Kết nạp HTTT | — | L | L | — | — |
+| PH-02 Danh mục dịch vụ | L | L | L (đầu mối dịch vụ) | — | — |
+| PH-03 Cổng API | — | L | Q | Q | Q |
+| PH-04 Lõi tích hợp | — | L | Q | Q | Q |
+| PH-05 Bộ điều hợp | — | L | Q | Q | Q |
+| PH-06 Dữ liệu chủ | — | L | L | L | — |
+| PH-07 Danh mục dùng chung | L | L | L (danh mục có thuộc tính cá nhân) | — | — |
+| PH-08 Chất lượng dữ liệu | — | L | Q (lưu đã che) | Q (lưu băm) | — |
+| PH-09 Quyền riêng tư | — | L | L (yêu cầu chủ thể) | Q | — |
+| PH-10 Sự kiện | — | L | Q | Q | Q |
+| PH-11 Quy trình liên thông | — | L | L | L | — |
+| PH-12 Định danh, phân quyền | — | L | L (tài khoản cán bộ) | — | — |
+| PH-13 Giám sát, kiểm toán | — | L | L (định danh người thao tác) | Băm | — |
+| PH-14 Kết nối quốc gia | — | L | L (đệm, mã hóa) | L (bằng chứng, mã hóa) | — |
+| PH-15 Cổng nhà phát triển | L | L | L (tài khoản nhà phát triển) | — | — |
+| PH-16 Báo cáo chỉ tiêu | L | L | — | — | — |
+| PH-17 Trợ lý AI | L | L | — | — | — |
+| PH-18 Vận hành, xử lý lỗi | — | L | L (DLQ) | L (DLQ, ≤ 7 ngày) | L (DLQ) |
+| PH-19 Thanh toán | — | L | L | L (tài khoản hoàn tiền) | L |
+| PH-20 Quản trị tenant | — | L | L (đầu mối tỉnh) | — | — |
+
+: Phân hệ và nhóm dữ liệu được lưu lại hoặc chỉ đi qua
+
+Ma trận cho thấy năm phân hệ lưu CN2 ở dạng giải mã được (PH-06, PH-11, PH-14, PH-18, PH-19) cộng PH-13 lưu băm; đây là các phân hệ cần DPIA riêng và cần bộ ca kiểm thử che dữ liệu đầy đủ ở D05-02.
+
+### 7.2. Nhóm dữ liệu qua ranh giới vùng mạng
+
+Ma trận dưới dùng tám vùng tin cậy của D03-07 §3.3; ô "—" nghĩa là nhóm đó không được phép đi qua ranh giới.
+
+| Ranh giới | CK | NB | CN1 | CN2 | TC | Kiểm soát |
+|---|---|---|---|---|---|---|
+| Z0 → Z1 (vào biên) | Có | Có | Có | Có | Có | WAF, TLS 1.3 |
+| Z1 → Z2 (vào cổng) | Có | Có | Có | Có | Có | Token, mTLS theo mức hợp đồng |
+| Z2 → Z3, Z4 | Có | Có | Có | Có | Có | mTLS mesh, OPA |
+| Z3, Z4 → Z5 (vào kho) | Có | Có | Có | Mã hóa trường | Có | Service account được liệt kê, RLS |
+| Z3, Z4 → Z6 | — | Có | — | — | — | Chỉ khóa và yêu cầu ký, không dữ liệu nghiệp vụ |
+| Z4 → Z0 (egress) | Có | — | Có | Có (NDXP) | Có (NCC) | Egress gateway, danh sách đích; cấm đích ngoài lãnh thổ |
+| Z5 → site DR, sao lưu ngoài site | Có | Có | Có | Mã hóa | Có | Mã hóa trước khi rời site |
+| Z3 → mô hình AI | Có | Có | Chỉ khi mô hình nội bộ | — | — | APISIX ai-proxy, bộ lọc lời nhắc |
+
+: Nhóm dữ liệu được phép đi qua từng ranh giới vùng mạng
+
+## 8. Thực thi và kiểm chứng phân loại
+
+Phân loại chỉ có giá trị khi được thực thi bằng máy và kiểm chứng định kỳ. Bảng dưới nêu nơi thực thi và cách kiểm chứng cho từng khâu; tiêu chí đo lấy từ D03-07 và các FRS.
+
+| Khâu | Thực thi | Kiểm chứng | Tiêu chí |
+|---|---|---|---|
+| Khai báo trường | `@Classified` trên thực thể, `x-dh-classification` trong OpenAPI, JSON Schema | CI lint: trường không có nhãn làm đỏ cổng | 100% trường của API công bố có nhãn |
+| Xác nhận nhãn | PH-09 `PROPOSED` → `CONFIRMED` | Báo cáo trường chưa xác nhận hằng tuần | 0 trường `PROPOSED` quá 14 ngày ở hợp đồng `ACTIVE` |
+| Mã hóa trường CN2 | Thư viện `dh-crypto`, ADR-032 | Quét CSDL tìm mẫu số định danh rõ | 0 kết quả (SEC-31) |
+| Log, trace | Che ba lớp SEC-32 | Quét mẫu hằng ngày trên Loki | 0 giá trị Nhạy cảm (NFR-00-029) |
+| Đệm | PH-14 chặn đệm Nhạy cảm; khóa có tiền tố tenant | Quét mẫu Valkey theo lịch | 0 giá trị Nhạy cảm rõ |
+| Ủy quyền theo mục đích | OPA kiểm `purpose` | Ca kiểm thử âm ở D05-02 PH-09, PH-14 | 100% hợp đồng Nhạy cảm có chấp thuận trước khi kích hoạt (SEC-37) |
+| DLQ | Mã hóa, hạn 7 ngày | Tác vụ dọn báo cáo hằng ngày | 0 mục Nhạy cảm quá 7 ngày |
+| Trợ lý AI | Bộ lập chỉ mục chặn nguồn ≥ Hạn chế; bộ lọc lời nhắc | Ca kiểm thử tiêm lệnh, rò rỉ ở D05-02 PH-17 | 0 đoạn chỉ mục từ nguồn Nhạy cảm |
+| Egress | Danh sách đích ở egress gateway | Hubble ghi luồng bị chặn | 0 kết nối ra đích ngoài danh sách |
+| Môi trường DEV, TEST | Chỉ dữ liệu sinh với CN2 | Quét mẫu cơ sở dữ liệu TEST | 0 số định danh hợp lệ thật |
+
+: Nơi thực thi và cách kiểm chứng phân loại theo khâu
+
+DFD trong tài liệu này phải được rà lại khi thêm phân hệ, thêm giao diện ngoài hoặc thêm kho; mỗi lần đổi, cập nhật chương 5 và ma trận chương 7 trước khi đổi thiết kế ATTT.
+
+## 9. Giả định, câu hỏi mở và đề nghị đồng bộ
+
+### 9.1. Giả định
+
+Thiếu số liệu thật về khối lượng và loại dữ liệu của tỉnh thí điểm, tài liệu dùng các giả định sau.
+
+| Mã | Giả định | Cơ sở |
+|---|---|---|
+| GĐ-DFD-01 | Tỉnh thí điểm T01 xử lý DLCN của trên 100.000 chủ thể cơ bản và trên 10.000 chủ thể nhạy cảm, nên áp ngưỡng cấp độ 3 của NĐ 331/2026 | Quy mô tỉnh vừa (GĐ-01…07 ở D02-01), tra cứu dân cư và lý lịch tư pháp phục vụ TTHC |
+| GĐ-DFD-02 | Datahub không nhận số thẻ hoặc thông tin đăng nhập ngân hàng của người nộp | Mô hình chuyển hướng tới trang NCC của PH-19 |
+| GĐ-DFD-03 | HTTT của tỉnh khai mức hợp đồng trung thực; PH-09 quét gợi ý để phát hiện khai thiếu | FR-09-005, FR-09-006 |
+
+: Giả định của DFD và phân loại dữ liệu
+
+### 9.2. Câu hỏi mở
+
+> **Câu hỏi mở Q375:** Trường mới chưa được xác nhận nhãn (`PROPOSED`) có nên được xử lý như mức Hạn chế theo mặc định không? Đề xuất: có, để an toàn mặc định; cần PH-09 bổ sung quy tắc.
+
+> **Câu hỏi mở Q376:** Nghị định 356/2025 có miễn trừ hoặc đơn giản hóa hồ sơ DPIA cho cơ quan nhà nước xử lý DLCN khi thực hiện nhiệm vụ theo luật không? Chưa đối chiếu toàn văn.
+
+> **Câu hỏi mở Q377:** Số định danh cá nhân là DLCN cơ bản về pháp lý nhưng được xếp mức Nhạy cảm về kỹ thuật. Có cần ghi rõ quyết định này vào sổ xử lý PH-09 để giải trình khi kiểm tra không?
+
+> **Câu hỏi mở Q378:** Thời hạn giữ bằng chứng giao dịch quốc gia (bucket `nat-evidence`) là bao lâu? Tài liệu PH-14 để theo sổ xử lý; cần chủ quản quyết định một con số.
+
+| Mã | Câu hỏi | Người trả lời |
+|---|---|---|
+| Q375 | Xử lý mặc định trường chưa xác nhận nhãn | Kiến trúc sư ATTT, nhóm PH-09 |
+| Q376 | Miễn trừ DPIA theo NĐ 356/2025 | Pháp chế |
+| Q377 | Ghi quyết định mức của số định danh | Cán bộ ATTT, chủ quản dữ liệu |
+| Q378 | Thời hạn giữ bằng chứng quốc gia | Chủ quản dữ liệu |
+
+: Câu hỏi mở của D02-06
+
+### 9.3. Đề nghị đồng bộ
+
+Các điểm sau gom vào đợt đồng bộ cuối:
+
+1. D03-01 §8.2 và D03-07 §3.2: thêm dẫn chiếu tới bảng 2.1 (năm nhóm sang bốn mức) để hai trục phân loại nhất quán.
+2. D00-01 §3.1: thêm mã `DS-nn` (kho dữ liệu) với tài liệu gốc D02-06; thêm viết tắt nhóm CK, NB, CN1, CN2, TC.
+3. D00-04 §3.1: dải câu hỏi mở Q375–Q379 cho D02-06; giả định GĐ-DFD-01…03.
+4. D03-07 §3.1: AS-03 ghi "Hạn chế (tối đa)" cho DU AI; khớp với DS-08 ở đây là "Nội bộ, trần Hạn chế" vì chỉ mục chỉ nhận CK, NB khi tenant chưa bật mô hình nội bộ.
 
 ## Lịch sử phiên bản
 
