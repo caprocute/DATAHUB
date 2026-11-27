@@ -271,6 +271,14 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-18-dlq | Xem, xử lý lại, bỏ bản tin lỗi | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-18-config | Sửa tham số cấu hình | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-18-migration | Chạy công cụ di trú | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-read | Xem màn vận hành: DLQ (siêu dữ liệu), tham số, sao lưu, di trú, sự cố, nhật ký gửi thông báo | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | ● |
+| PERM-18-dlq-payload | Xem nội dung payload bản tin lỗi, có lý do; trường nhạy cảm vẫn che | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-approve | Duyệt bốn mắt của PH-18: phát lại loạt lớn, sửa payload, tham số bảo mật, khôi phục tenant, chạy di trú thật | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-template | Soạn, gửi duyệt, ngừng mẫu thông báo và quy tắc thông báo | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-incident | Tạo, xử lý, đóng hồ sơ sự cố vận hành | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-backup | Xem sao lưu, kiểm tra khôi phục; tạo yêu cầu khôi phục và xuất dữ liệu tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-calendar | Quản lý lịch ngày làm việc, ngày lễ, cửa sổ bảo trì, đóng băng thay đổi | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-admin | Tham số `18.*` của phân hệ vận hành | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-admin | Khởi tạo, cấu hình, tạm ngừng, sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-read | Xem thông tin, hạn mức tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | ● |
 

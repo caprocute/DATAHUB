@@ -1,0 +1,46 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_data_migrator (thành viên ph18_owner), defaultSchemaName=ph18_ops.
+# Context: bootstrap (vai trò, schema), seed (dữ liệu COMMON 18-0095-seed.sql). Khởi tạo tenant bằng thủ tục p_seed_tenant (18-0095-seed.sql). Không cần extension.
+databaseChangeLog:
+  - include:
+      file: changes/18-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0010-core.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0020-param.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0030-dlq.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0040-notify.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0050-task.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0060-incident.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0070-backup.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0080-migration.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0090-report.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0091-views.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0095-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-0900-grants.sql
+      relativeToChangelogFile: true
