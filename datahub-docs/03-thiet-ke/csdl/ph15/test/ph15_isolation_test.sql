@@ -8,6 +8,8 @@
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dh_portal_app') THEN
     CREATE ROLE dh_portal_app LOGIN NOBYPASSRLS IN ROLE ph15_app;
+  ELSE
+    GRANT ph15_app TO dh_portal_app;
   END IF;
 END $$;
 SET ROLE dh_portal_app;

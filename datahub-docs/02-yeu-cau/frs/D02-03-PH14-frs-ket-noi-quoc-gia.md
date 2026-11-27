@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH14
 ten: Đặc tả yêu cầu chức năng phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-integration và dh-runtime, cán bộ ATTT, kiểm thử viên
@@ -420,7 +420,7 @@ Bảng dưới liệt kê các thực thể mức logic của PH-14. Thiết k�
 | EN-14-07 | Phân bổ hạn mức (`quota_allocation`) | `systemCode`, `serviceCode`, `period`, `limit`, `shareOfReserve` | Tổng phân bổ không vượt hạn mức (ERR-14-018) |
 | EN-14-08 | Giao dịch quốc gia (`national_transaction`) | `transactionCode`, `direction` (`OUTBOUND`, `INBOUND`), `serviceCode`, `systemCode`, `purposeCode`, `procedureCode`, `state`, `fromCache`, `stale`, `durationMs`, `certCode`, `traceId`, `payloadRef`, `payloadHash` | `payloadRef` trỏ tới nội dung mã hóa (BR-14-021) |
 | EN-14-09 | Điểm cuối chiều vào (`inbound_endpoint`) và nguồn được phép (`allowed_sender`) | `endpointCode`, `path`, `platformCode`, `clientCertFingerprint`, `state`; `senderCode`, `serviceCodes` | Tenant xác định từ điểm cuối (BR-14-027) |
-| EN-14-10 | Phiên đồng bộ (`sync_run`) | `runId`, `kind` (`SERVICE_CATALOG`, `MASTER_DATA`, `OPEN_DATA`, `SERVICE_RECONCILE`), `trigger`, `state`, `sent`, `accepted`, `rejected`, `error` | Giữ 3 năm |
+| EN-14-10 | Phiên đồng bộ (`sync_run`) | `runId`, `kind` (`SERVICE_CATALOG`, `MASTER_DATA`, `OPEN_DATA`), `trigger`, `state`, `sent`, `accepted`, `rejected`, `error` | Giữ 3 năm; lần đối chiếu dịch vụ (`SERVICE_RECONCILE`) lưu ở bảng riêng `reconcile_run` |
 | EN-14-11 | Cung cấp lại (`service_exposure`) | `serviceCode`, `apiCode` (PH-02), `path`, `contractVersion`, `state` | Một dịch vụ có tối đa một cung cấp lại ở mỗi tenant |
 | EN-14-12 | Sự cố chữ ký (`signature_incident`) | `incidentId`, `kind`, `transactionCode`, `state` (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`), `assignee` | Giữ 5 năm |
 | EN-14-13 | Yêu cầu bất đồng bộ (`async_request`) | `requestId`, `serviceCode`, `systemCode`, `state`, `attempts`, `idempotencyKey`, `resultRef` | Dùng cho FR-14-016 |
@@ -428,6 +428,8 @@ Bảng dưới liệt kê các thực thể mức logic của PH-14. Thiết k�
 | EN-14-15 | Phiên chạy song song (`parallel_run`) | `runId`, `serviceCode`, `sampleRatio`, `samples`, `matchRatio`, `state`, `readyForCutover` | Giữ mẫu 90 ngày; dùng cho FR-14-055 |
 
 : Thực thể logic của PH-14
+
+Ngoài các thực thể trên, thiết kế dữ liệu (D03-03-PH14) có sáu thực thể hỗ trợ không thuộc nghiệp vụ độc lập: yêu cầu duyệt bốn mắt (`approval_request`), lệnh gửi cho vai trò `worker` (`worker_command`), tuyến chiều vào (`inbound_route`), khóa chặn truy cập (`access_block`), lần xoay thông tin xác thực (`credential_rotation`) và neo tin cậy (`trust_anchor`).
 
 ### 4.3. Máy trạng thái nền tảng quốc gia
 
@@ -895,7 +897,7 @@ Hình cho thấy việc bật nền tảng đi qua hai người: người đề 
 - Mã đã dùng: ERR-14-002 (409); "Mã dịch vụ {mã} đã được dùng (kể cả dịch vụ đã ngừng). Chọn mã khác."
 - Cấu hình tự mâu thuẫn: ERR-14-038 (422); "Dịch vụ mức Nhạy cảm hoặc dịch vụ ghi không được bật đệm."
 - Thời hạn đệm vượt trần: ERR-14-036 (422); "Thời hạn đệm vượt mức tối đa {trần} giây của tỉnh."
-- Hai người sửa cùng lúc: ERR-14-004 (409) theo FR-00-052; "Dịch vụ đã được người khác sửa. Xem khác biệt và chọn ghi đè hoặc tải lại."
+- Hai người sửa cùng lúc (`If-Match` lệch `ETag`): ERR-14-004 (412) theo FR-00-052 và D04-01; "Dịch vụ đã được người khác sửa. Xem khác biệt và chọn ghi đè hoặc tải lại."
 
 **Đầu ra.** `201` khi tạo, `200` khi sửa; chi tiết dịch vụ; `Location`, `ETag`.
 
@@ -1547,7 +1549,7 @@ Ghi chú: chuyển đổi của PH-14 là chuyển đổi **kỹ thuật** (giao
 **Luồng xử lý chính.**
 
 1. HTTT gửi yêu cầu kèm `Idempotency-Key`; cổng kiểm tra quyền, mục đích và lược đồ như FR-14-010 (không đạt: lỗi tương ứng ngay, không vào hàng chờ).
-2. Cổng kiểm tra hàng chờ còn chỗ (đầy: ERR-14-118) rồi ghi `async_request` ở `QUEUED` và đặt bản tin đã mã hóa vào hàng chờ trong cùng một giao dịch (outbox).
+2. Cổng kiểm tra hàng chờ còn chỗ (đầy: ERR-14-118) rồi đặt bản tin đã mã hóa vào hàng chờ Kafka, là nguồn chấp nhận yêu cầu; `async_request` ở `QUEUED` là bản dẫn xuất của trạng thái, được ghi từ chủ đề trạng thái.
 3. Cổng trả `202` kèm `requestId` và đường dẫn tra kết quả.
 4. Bộ xử lý lấy yêu cầu theo thứ tự ưu tiên của dịch vụ (`ESSENTIAL` trước), chạy đúng đường của FR-14-010 từ bước 5, và cập nhật trạng thái `SENDING`, rồi `SUCCEEDED` hoặc `FAILED`.
 5. Với thao tác `READ` hoặc ghi có `idempotent = true`, bộ xử lý thử lại theo FR-14-038. Với thao tác ghi không idempotent mà quá hạn chờ, trạng thái chuyển `UNKNOWN_RESULT` và bộ xử lý gọi thao tác tra trạng thái của bộ điều hợp để đối soát trước khi quyết định gửi lại (BR-14-030).
@@ -2350,7 +2352,7 @@ Hình cho thấy hai nửa đối xứng: chiều đi chỉ gửi băm vào Open
 
 1. SO tải tệp chứng thư (PEM, CER, P7B), chọn mục đích và nhập `keyRef`.
 2. Hệ thống kiểm tra định dạng, chuỗi chứng thư tới một neo tin cậy đã cấu hình, khoảng hiệu lực và mục đích sử dụng khóa (`digitalSignature`) (sai: ERR-14-019; chưa tới hạn hiệu lực hoặc đã hết: ERR-14-021).
-3. Hệ thống kiểm tra khớp khóa: ký thử một giá trị băm ngẫu nhiên qua `transit/sign` rồi xác minh bằng khóa công khai trong chứng thư (không khớp: ERR-14-020).
+3. Hệ thống kiểm tra khớp khóa theo hai lớp: đối chiếu băm khóa công khai đọc từ `transit/keys/{keyRef}` với chứng thư, rồi cổng của đúng tenant ký thử một giá trị băm ngẫu nhiên qua `transit/sign` và xác minh bằng khóa công khai trong chứng thư (không khớp: ERR-14-020). Chỉ cổng của tenant được gọi `sign` (BR-14-004).
 4. Hệ thống lưu chứng thư ở `UPLOADED`, ghi kiểm toán, phát EVT-14-04.
 5. SO bấm "Yêu cầu kích hoạt" (xác thực nhiều yếu tố); chứng thư chuyển `PENDING_ACTIVATION` và tạo việc cho người có `PERM-14-approve`.
 6. Người duyệt khác SO duyệt (ERR-14-007 nếu trùng người); chứng thư thành `ACTIVE`, chứng thư cũ cùng mục đích chuyển `SUPERSEDED` sau thời gian chuyển tiếp `14.cert.overlap-hours` (mặc định 72 giờ); cổng nạp trong 30 giây.
@@ -3301,6 +3303,8 @@ Hình cho thấy bộ đồng bộ chỉ gửi phần thay đổi của các d�
 5. Bộ đồng bộ nhận kết quả, đối soát từng bản ghi và báo cáo bản ghi lệch cho PH-06.
 6. Bộ đồng bộ ghi `sync_run` với `kind = MASTER_DATA`.
 
+Mỗi lô gửi lên hoặc kéo xuống có tối đa 10.000 khóa; PH-06 đặt kích thước lô bằng `06.sync.reconcile-batch-size` (mặc định 1.000, miền 100…10.000), lô vượt trần bị từ chối với ERR-14-003.
+
 **Luồng thay thế.** Bản ghi lệch được gửi lại theo yêu cầu của PH-06 sau khi sửa; mỗi lần gửi lại mang `batchRef` mới có liên kết tới lô gốc.
 
 **Luồng ngoại lệ.**
@@ -4156,6 +4160,11 @@ Khóa có dấu ★ là tham số bảo mật: thay đổi cần người thứ 
 | `14.parallel.match-ratio` | 0,99 | 0,9…1 | Tỷ lệ khớp tối thiểu để sẵn sàng cắt chuyển |
 | `14.parallel.min-days` | 7 | 1…60 | Số ngày liên tục đạt tỷ lệ khớp |
 | `14.parallel.min-samples` | 1.000 | 100…100.000 | Số mẫu tối thiểu |
+| `14.dispatch.max-in-flight` | 256 | 8…2.048 | Số lượt đang bay tối đa tới mỗi nền tảng ở mỗi bản sao cổng; vượt thì chờ tối đa 200 ms rồi trả ERR-14-103 |
+| `14.spool.max-mb` | 512 | 128…4.096 | Kích thước tối đa của tệp nhật ký ghi trước ở đĩa tạm của cổng; đầy thì cổng ngừng nhận lượt gọi ra mới (ERR-14-127) |
+| `14.config.poll-seconds` | 15 | 5…60 | Chu kỳ cổng kéo ảnh chụp cấu hình khi kênh sự kiện chậm, để giữ NFR-14-026 |
+| `14.inbound.max-body-mb` | 5 | 1…20 | Kích thước tối đa thân bản tin chiều vào; vượt thì ERR-14-121 |
+| `14.cache.max-entry-kb` | 512 | 64…2.048 | Kích thước tối đa một mục đệm; mục lớn hơn không được đệm |
 
 : Tham số theo tenant của PH-14
 
@@ -4170,7 +4179,7 @@ Khóa có dấu ★ là tham số bảo mật: thay đổi cần người thứ 
 | ERR-14-001 | 404 | Không tìm thấy đối tượng, hoặc đối tượng thuộc tenant khác (cùng thân với không tồn tại) |
 | ERR-14-002 | 409 | Mã đã tồn tại, kể cả đối tượng đã ngừng dùng |
 | ERR-14-003 | 400 | Tham số sai kiểu, sai miền, thiếu trường bắt buộc, khoảng thời gian quá rộng, thiếu lý do |
-| ERR-14-004 | 409 | Trạng thái hiện tại không cho phép thao tác; `ETag` lệch; vượt số lần thử lại; thiếu điều kiện đóng |
+| ERR-14-004 | 409, 412 | Trạng thái hiện tại không cho phép thao tác, vượt số lần thử lại, thiếu điều kiện đóng (409); `If-Match` lệch `ETag` hiện tại (412) |
 | ERR-14-005 | 422 | Kết nối PH-05 không tồn tại hoặc loại không phù hợp với cách xác thực |
 | ERR-14-006 | 409 | Đã có yêu cầu kích hoạt đang chờ duyệt |
 | ERR-14-007 | 403 | Người duyệt trùng người đề nghị hoặc người sửa gần nhất (bốn mắt) |
@@ -4222,7 +4231,7 @@ Khóa có dấu ★ là tham số bảo mật: thay đổi cần người thứ 
 | ERR-14-114 | 502 | Nền tảng từ chối thông tin xác thực của tỉnh |
 | ERR-14-115 | 504 | Quá hạn chờ phản hồi của nền tảng |
 | ERR-14-116 | 409 | Trùng `Idempotency-Key` nhưng khác nội dung |
-| ERR-14-117 | 503 | Dịch vụ hoặc nền tảng đã ngừng hoặc đang tạm ngừng, không nhận lượt mới |
+| ERR-14-117 | 503 | Dịch vụ hoặc nền tảng đã ngừng hoặc đang tạm ngừng, không nhận lượt mới; nền tảng ở `SECURITY_HOLD` trả mã này kèm `reason = SECURITY_HOLD` |
 | ERR-14-118 | 503 | Hàng chờ gửi quốc gia đầy |
 | ERR-14-119 | 403 | Nguồn chiều vào không được phép với dịch vụ |
 | ERR-14-120 | 401 | Chứng thư mTLS của nguồn chiều vào không hợp lệ |
@@ -4446,7 +4455,7 @@ PH-14 có 17 màn hình chia bốn nhóm: giám sát (UI-14-01, 12, 13, 14), c�
 
 ### 10.2. Giao diện tiêu biểu
 
-Phần dưới giới thiệu hai màn hình tiêu biểu, dựng bằng bộ token Liquid Glass đề xuất của D03-05. Dữ liệu trên hình là dữ liệu minh họa của tỉnh giả lập `T68`, không phải dữ liệu thật.
+Phần dưới giới thiệu hai màn hình tiêu biểu, dựng bằng bộ token Liquid Glass đề xuất của D03-05; tập màn hình D03-06-PH14 có đủ 17 ảnh hi-fi (UI-14-01 đến UI-14-17) ở `03-thiet-ke/uiux/ph14/hifi/`. Dữ liệu trên hình là dữ liệu minh họa của tỉnh giả lập `T68`, không phải dữ liệu thật.
 
 Màn tổng quan kết nối quốc gia (UI-14-01) là nơi vận hành và Cán bộ ATTT bắt đầu mỗi ngày. Ba thẻ ở đầu trang cho biết ngay tình trạng ba đích: NDXP khỏe, NDOP đang dùng đặc tả tạm thời nên mang nhãn riêng, hệ thống đăng ký danh mục dịch vụ vừa đồng bộ lúc 02:00. Hàng chỉ số 24 giờ nêu tổng số lượt gọi, tỷ lệ thành công, độ trễ p95 của lượt gọi thật và tỷ lệ trúng đệm; tỷ lệ trúng đệm là chỉ số quyết định tỉnh có chạm hạn mức hay không. Hai biểu ngữ vàng đưa việc cần làm lên đầu: chứng thư ký số còn 24 ngày và hạn mức tra cứu bảo hiểm xã hội dự báo cạn lúc 21:40. Bảng hạn mức bên dưới dùng thanh tiến trình đổi màu theo ngưỡng 70%, 85%, 95% (BR-14-013), mỗi dòng có cột dự báo cạn. Nếu có sự cố chữ ký chưa xác nhận, một biểu ngữ đỏ không ẩn được sẽ nằm trên cùng.
 
@@ -4543,6 +4552,8 @@ Bảng dưới liệt kê các thành phần mà PH-14 phụ thuộc, mức ph�
 | PH-06 | Mềm | Cầu nối dữ liệu chủ (Đợt 3) | FR-14-044 không chạy |
 | PH-12, Keycloak | Cứng | Đăng nhập, xác thực nhiều yếu tố | Không vào được giao diện; cổng quốc gia chạy tiếp |
 | PH-13 | Mềm | Chỉ số, cảnh báo, SIEM | Đệm telemetry cục bộ; cảnh báo vẫn hiện ở UI-14-01 |
+| PH-01 | Mềm (phía PH-01 đọc PH-14) | PH-01 đọc mức dùng hạn mức còn lại (API-14-043) để hiện `remainingQuota` theo dịch vụ quốc gia | PH-01 hiện `partial = true`; PH-14 không bị ảnh hưởng |
+| PH-16 | Mềm (phía PH-16 giao gói cho PH-14) | Nhận gói báo cáo chỉ tiêu và gói sổ kiến trúc từ PH-16, gửi tới nền tảng quốc gia, trả biên nhận | Gói ở trạng thái `FAILED` và được PH-16 thử lại; các luồng khác của PH-14 không bị ảnh hưởng |
 | PH-18 | Mềm | Tham số `14.*` | Bản đệm 60 giây rồi giá trị mặc định |
 | Egress gateway, mạng tới trung ương | Cứng | Mọi lưu lượng ra | Nền tảng `UNHEALTHY`; đệm quá hạn có cờ |
 | NTP | Cứng với kiểm tra thời điểm ký | FR-14-027, FR-14-040 | Cảnh báo lệch giờ; từ chối bản tin nghi phát lại (SEC-17) |
@@ -4664,6 +4675,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-14: 57 chức năng chia chín nhóm, theo khuôn K-FRS và chuẩn trình bày K-TRINH-BAY (khối đặc tả 17 mục). Căn cứ: SRS cũ của repo (14 FR, ánh xạ ở mục 11.2), phụ lục NGSP ở D00-03 §4.7 (9 mục `LGC`), GĐ-02, ADR-057, SEC-16, 24, 33, 36, THR-51…53. Kiến trúc thay Vault bằng OpenBao (ADR-012), thay Camel chung bằng hồ sơ `national-gateway` của Camel Quarkus (ADR-002). Có 14 câu hỏi mở (Q14-01…14) và mục Đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117 |
 
 
 

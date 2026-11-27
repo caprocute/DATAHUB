@@ -58,3 +58,12 @@ Tính năng: TS-14-36 · Chịu lỗi và phục hồi
     Và gửi lại từng yêu cầu bằng cùng `Idempotency-Key`.
     Và đếm số bản đăng ký thực sự có ở `sim-ndxp`.
     Thì bước 1 mọi giao dịch `UNKNOWN_RESULT`, không thử lại tự động. Bước 2 giao dịch được đối soát bằng `getDossierStatus` theo `caseCode` rồi chuyển `SUCCEEDED`. Bước 3 trả kết quả lần đầu, không gửi lại. Bước 4 đúng 20 bản đăng ký, không có bản nào trùng.
+
+  @TC-14-157 @P1 @Chịu @lỗi @Dữ
+  Kịch bản: TC-14-157 Kafka giao lại thông điệp giao dịch: không đếm trùng, hạng không lùi
+    # Truy vết: FR-14-016, 049, 052 · NFR-14-011, 021 · API-14-061, 065.
+    Biết S-HT-MC; V-HT-DK; `T90`; 100 giao dịch `SUCCEEDED` đã ghi ở `national_transaction` và tổng hợp ở `usage_hourly`.
+    Khi đặt lại điểm đọc (offset) của `LedgerConsumer` về trước 100 giao dịch rồi cho tiêu thụ lại.
+    Và gửi lại sự kiện EVT-14-11 hạng thấp (`RECEIVED`) của 10 giao dịch trong số đó, sau khi chúng đã `SUCCEEDED`.
+    Và tra `national_transaction` bằng API-14-061 và `usage_hourly` bằng API-14-065.
+    Thì bước 1 không có dòng nào bị ghi lại, `usage_hourly` không tăng. Bước 2 mười giao dịch vẫn `SUCCEEDED`, bản ghi hạng thấp bị bỏ. Bước 3 tổng số lượt khớp đúng 100 giao dịch, không có dòng trùng theo `transactionCode`.

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH14
 ten: Đặc tả API và sự kiện phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, APISIX; đơn vị kết nối (PH-02, PH-04, PH-07); ATTT; hội đồng thẩm định
@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D02-03-PH14 FRS; D02-04-PH14 Use case; D03-02-PH14 SDD; D03-
 
 **Mục tiêu.** PH-14 là cổng duy nhất để HTTT của tỉnh gọi các dịch vụ do nền tảng cấp quốc gia (NDXP, NDOP, hệ thống đăng ký danh mục dịch vụ) cung cấp và để trung ương gọi vào tỉnh. Tài liệu này chốt hợp đồng giao diện của phân hệ: 92 operation REST (API-14-001…092), 17 sự kiện Kafka (EVT-14-01…17) cùng ba chủ đề nội bộ giữa hai mặt phẳng, và 72 mã lỗi (ERR-14-001…039, 101…133). Hợp đồng máy đọc được nằm ở hai tệp:
 
-- [`ph14/openapi-national.yaml`](ph14/openapi-national.yaml): OpenAPI 3.1, 144 lược đồ, 24 ví dụ đã kiểm khớp lược đồ bằng [`check_contracts.py`](ph14/tools/check_contracts.py), đã qua `openapi-spec-validator` và Spectral `spectral:oas` (0 lỗi, 0 cảnh báo).
+- [`ph14/openapi-national.yaml`](ph14/openapi-national.yaml): OpenAPI 3.1, 145 lược đồ, 25 ví dụ đã kiểm khớp lược đồ bằng [`check_contracts.py`](ph14/tools/check_contracts.py), đã qua `openapi-spec-validator` và Spectral `spectral:oas` (0 lỗi, 0 cảnh báo).
 - [`ph14/asyncapi-national.yaml`](ph14/asyncapi-national.yaml): AsyncAPI 3.0, 20 kênh (17 sự kiện công bố, 3 nội bộ), 4 ví dụ đã kiểm, đã qua `@asyncapi/cli validate` (0 lỗi, 0 cảnh báo).
 
 Cả hai sinh từ bảng mã [`ph14/tools/spec.py`](ph14/tools/spec.py); các bảng ở chương 3, 4, 6, 11 sinh bằng `gen_md.py` và chương 10 bằng `build/tools/sinh_dac_ta_api.py`, nên tài liệu không lệch hợp đồng.
@@ -31,7 +31,7 @@ Cả hai sinh từ bảng mã [`ph14/tools/spec.py`](ph14/tools/spec.py); các b
 2. **Kiểm soát mục đích đứng trước đệm và hạn mức.** Mỗi lượt gọi dữ liệu cá nhân phải kèm mục đích và mã hồ sơ (ERR-14-106, 107); không đạt thì từ chối an toàn và vẫn ghi giao dịch (ERR-14-132 khi không kiểm tra được).
 3. **Bốn mắt ở tám loại thay đổi nhạy cảm** (bật nền tảng, luật định tuyến, hạn mức môi trường thật, chứng thư, điểm cuối chiều vào, công bố dữ liệu mở lần đầu, giảm kiểm soát dịch vụ, tham số bảo mật), cùng xác thực nhiều yếu tố khi nạp, kích hoạt chứng thư và xem nội dung bản tin đầy đủ.
 4. **Lỗi chữ ký là sự cố an ninh**, không phải lỗi nghiệp vụ: ERR-14-109…111 mở sự cố, báo Cán bộ ATTT và có thể đưa nền tảng vào `SECURITY_HOLD`.
-5. **Có điểm cần xác nhận với đơn vị bên ngoài hoặc phân hệ khác** (chương 9 và Đề nghị đồng bộ), đáng kể nhất là định dạng thân và chữ ký của chiều vào (Q14-58) và quy ước 409 hay 412 khi `If-Match` lệch (Q14-56).
+5. **Có điểm cần xác nhận với đơn vị bên ngoài hoặc phân hệ khác** (chương 9 và Đề nghị đồng bộ), đáng kể nhất là định dạng thân và chữ ký của chiều vào (Q14-58) và quy ước `type` của RFC 9457 (Q14-56, đã chốt: `If-Match` lệch trả 412).
 
 **Con số chính.**
 
@@ -41,7 +41,7 @@ Cả hai sinh từ bảng mã [`ph14/tools/spec.py`](ph14/tools/spec.py); các b
 | Phủ FR | 57/57 FR có API hoặc ghi rõ cách hiện thực (chương 11) |
 | Sự kiện công bố, nội bộ | 17, 3 |
 | Mã lỗi | 72 (39 điều khiển, 33 dữ liệu) |
-| Lược đồ OpenAPI, ví dụ đã kiểm | 144, 24 |
+| Lược đồ OpenAPI, ví dụ đã kiểm | 145, 25 |
 | Câu hỏi mở mới | 5 (Q14-55…Q14-59) |
 
 : Con số chính của tập API PH-14
@@ -114,9 +114,9 @@ Chương này gom các quy ước áp cho cả 92 endpoint để chương 3 và 
 | Phiên bản | `v1` trong đường dẫn; thay đổi phá vỡ sang `v2`, chạy song song ≥ 6 tháng; oasdiff ở CI-5 chặn thay đổi phá vỡ trong `v1` |
 | Tenant | Điều khiển và dữ liệu: lấy từ token (claim `tenant`), không bao giờ từ đường dẫn hay thân; tenant `COMMON` chỉ PA ghi. Chiều vào: lấy từ điểm cuối đã đăng ký (BR-14-027); APISIX gắn `X-DH-Tenant`, lệch claim thì 403 và sự kiện an ninh |
 | Hành động | Hậu tố `:{hành-động}` trên tài nguyên (`:suspend`, `:approve-activation`, `:reveal`) theo quy ước D00-04 §4 |
-| Khóa lạc quan | `GET` đối tượng trả `ETag: W/"{version}"`; `PUT`, `PATCH`, `DELETE` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả **ERR-14-004 (409)** kèm `currentEtag` theo FRS §9.1 (Q14-56) |
+| Khóa lạc quan | `GET` đối tượng trả `ETag: W/"{version}"`; `PUT`, `PATCH`, `DELETE` và hành động đổi trạng thái bắt buộc `If-Match`; lệch trả **ERR-14-004 với HTTP 412** kèm `currentEtag` (ERR-14-004 vẫn là 409 khi lỗi do trạng thái không cho phép), theo FRS §9.1 và D04-01 |
 | Chống trùng | `POST` tạo, chạy nền, xuất, nhập bắt buộc `Idempotency-Key` (16…128 ký tự, 24 giờ); cùng khóa cùng thân trả lại phản hồi cũ; khác thân ERR-14-116. API-14-075 chỉ bắt buộc với dịch vụ `WRITE` (thiếu: ERR-14-003) |
-| Phân trang | `page` (từ 1), `size` (mặc định 25, tối đa 100; vượt: ERR-14-003 kèm `max`); phản hồi `page: {number, size, totalItems, totalPages}`; giao dịch và nhật ký khai thác giới hạn khoảng thời gian ≤ 31 ngày (Q14-59) |
+| Phân trang | `page` (từ 1), `size` (mặc định 25, tối đa 100; vượt: ERR-14-003 kèm `max`); phản hồi `page: {number, size, totalItems, totalPages}`; giao dịch và nhật ký khai thác giới hạn khoảng thời gian ≤ 31 ngày; API-14-061 thêm phân trang keyset tùy chọn qua `after` theo (`started_at`, `transaction_code`) và trả `nextCursor` (Q14-59); lỗi lưu trữ của máy chủ ánh xạ sang mã ERR-14 theo bảng ở D03-03-PH14 §1.5; `ETag` của đối tượng là `version` |
 | Lọc, tìm | Tham số lặp dạng `state=ACTIVE,SUSPENDED`; tìm `q` không dấu, tối thiểu 2 ký tự |
 | Lỗi | RFC 9457 `application/problem+json`; `type` = `https://datahub.gov.vn/errors/ERR-14-nnn`, `code`, `title`, `status`, `detail` (câu tiếng Việt hiển thị được), `traceId` (32 ký tự hex, khớp `traceparent`); lỗi mặt phẳng dữ liệu thêm `transactionCode`; trường riêng theo mã (`errors[]`, `currentEtag`, `scope`, `reason`, `resetAt`, `cache.available`, `retryAfterSeconds`). `detail` không chứa nội dung kỹ thuật của trung ương, cấu hình nội bộ hay bí mật |
 | Lỗi chung | 401, 403 do APISIX, Keycloak, OPA sinh, có thể không có `code` (theo FR-00); sai tenant là ERR-00-003; lỗi không lường trước ERR-14-127 (500) |
@@ -145,7 +145,7 @@ Ba mặt phẳng dùng ba cách xác thực. Bảng dưới liệt kê bên gọ
 | PH-07 | `client_credentials` | `national.catalog.read` (079…081, 083), `national.catalog.propose` (082, 083); chỉ PH-07 (BR-14-036) | API-14-079…083 |
 | `dh-runtime` của tenant | `client_credentials` + `private_key_jwt`, client `dh-runtime-{tenant}` | `national.runtime-config`; token gắn tenant, gọi tenant khác trả 404 | API-14-091 |
 | PH-02, PH-06 | `client_credentials` | `national.sync.trigger` | API-14-054, 056 |
-| PH-13 | `client_credentials` | `national.health-read` | API-14-058, 060, 073 |
+| PH-13, PH-01 | `client_credentials` | `national.health-read` | API-14-058, 060, 073 (PH-13); API-14-043 (PH-01 đọc `remainingQuota`) |
 | Nền tảng quốc gia (NDXP, NDOP) | mTLS chấm dứt ở APISIX vùng biên; vân tay chứng thư khớp nguồn được phép | Nguồn được phép theo dịch vụ (ERR-14-119); chữ ký bản tin xác minh ở cổng | API-14-084, 085 |
 
 : Xác thực và phân quyền theo bên gọi
@@ -238,7 +238,7 @@ Mỗi operation một mã `API-14-nnn`. Mã 001…090 do FRS §9.4 đề xuất;
 |---|---|---|---|---|---|---|
 | API-14-041 | `GET /quotas` | Liệt kê hạn mức | 032, 033 | `PERM-14-read` |  | 200 |
 | API-14-042 | `POST /quotas` | Khai báo hạn mức do trung ương áp | 032 | `PERM-14-quota` | bắt buộc | 201 |
-| API-14-043 | `GET /quotas/usage` | Mức dùng hạn mức hiện tại | 033 | `PERM-14-read` |  | 200 |
+| API-14-043 | `GET /quotas/usage` | Mức dùng hạn mức hiện tại | 033 | `PERM-14-read` hoặc `national.health-read` (dịch vụ) |  | 200 |
 | API-14-044 | `GET /quota-allocations` | Liệt kê phân bổ hạn mức theo HTTT | 034 | `PERM-14-read` |  | 200 |
 | API-14-045 | `PUT /quota-allocations/{systemCode}` | Đặt phân bổ hạn mức cho một HTTT | 034 | `PERM-14-quota` |  | 200 |
 | API-14-046 | `GET /cache/stats` | Thống kê đệm | 035 | `PERM-14-read` |  | 200 |
@@ -516,9 +516,11 @@ Bảng liệt kê từng cặp bên gọi và bên được gọi cùng hợp đ
 | PH-05 | PH-14 đọc, ghi | Kết nối loại `oauth2-client`, `mtls-client` có `private_key_jwt`; ghi bí mật một chiều API-05-012, 020; thư viện `SecretVersionSelector` dùng chung | ERR-14-005 khi kết nối không phù hợp; ERR-14-034 khi chưa có bí mật ở môi trường |
 | PH-06 | PH-06 → PH-14 | API-14-056 (đồng bộ dữ liệu chủ), scope `national.sync.trigger` | Đợt 3; ERR-14-125 thiếu ánh xạ |
 | PH-07 | PH-07 → PH-14 | API-14-079…083 (cổng tiếp hợp `NDXP_DMDC`, ADR-057); `ifVersionNot` trả `304` | PH-07 ánh xạ lỗi sang ERR-07-028; PH-14 → PH-07 gọi `CatalogLookupApi` cho danh mục mục đích và thủ tục (giả định) |
-| PH-09 | PH-14 → PH-09 | Kiểm tra mục đích trong sổ hoạt động xử lý; kiểm lô trước khi gửi hoặc công bố; thời hạn 200 ms | Giả định (Q14-26 của SDD); ERR-14-126, ERR-14-132 |
+| PH-09 | PH-14 → PH-09 | Kiểm tra mục đích trong sổ hoạt động xử lý; kiểm lô trước khi gửi hoặc công bố; thời hạn 200 ms; thư viện `dh-privacy-client` với `FailMode = PUBLIC_ONLY`; báo lượt khai thác theo lô ≤ 1.000 sự kiện qua API-09-237 (scope `privacy:decide`) | Giả định (Q14-26 của SDD); ERR-14-126, ERR-14-132; PH-14 xóa đệm quyết định theo EVT-09-07, 08, 12 |
 | PH-12 | PH-14 → PH-12 | Bó OPA `national/*`; claim `acr`, `auth_time`; loại duyệt bốn mắt | Giả định |
 | PH-13 | PH-14 → PH-13 | 17 sự kiện EVT-14; chỉ số `national_*`; API-14-058, 060, 073 (đọc bằng `national.health-read`) | Bản WORM 5 năm của giao dịch ở PH-13 |
+| PH-01 | PH-01 → PH-14 | API-14-043 (`GET /quotas/usage`, `platformCode` tùy chọn), scope `national.health-read`, đọc một lần mỗi 3 giây cho một lượt hiển thị `remainingQuota` | PH-01 hiện `partial = true` ở API-01-026 khi PH-14 không trả lời |
+| PH-16 | PH-16 → PH-14 → PH-16 | PH-14 nhận lệnh giao gói qua outbox của PH-16 (mang `submissionId`, `contentHash`, tệp gói, không mang thông tin xác thực), gửi qua nền tảng loại `REGISTRY` đã khai báo cho `channelRef` của mẫu gói (đích tạm là hệ giả lập khi trung ương chưa ban hành đặc tả), ký và giữ thông tin xác thực ở OpenBao; trả trạng thái gửi và biên nhận vào API-16-124 (`ReceiptIn`) cùng sự kiện EVT-16-12 | Gói không đổi nội dung giữa các lần gửi lại (`contentHash`); PH-14 không lưu nội dung gói quá `14.txn.payload-retention-days` |
 | PH-18 | PH-14 đọc | Tham số `14.*` (đệm 30 giây), cờ bảo mật ★ | Lưu theo tenant |
 | OpenBao | PH-14 đọc, ký | KV v2 (thông tin xác thực), `transit` (ký, kiểm khớp khóa), PKI mTLS nội bộ | Không qua API này; ERR-14-035 khi không khả dụng |
 | Valkey | Cổng đọc, ghi | Đệm, bộ đếm hạn mức, khóa chống trùng, `SingleFlight` | ERR-14-133 khi không có kho chống trùng |
@@ -544,7 +546,7 @@ Bảng dưới liệt kê các mã lỗi của mặt phẳng điều khiển, t�
 | ERR-14-001 | 404 | Không tìm thấy đối tượng, hoặc đối tượng thuộc tenant khác (cùng thân với không tồn tại) | 003, 004, 005, 006, 007, 008, 009, 012 và 36 API khác |
 | ERR-14-002 | 409 | Mã đã tồn tại, kể cả đối tượng đã ngừng dùng | 002, 011, 030 |
 | ERR-14-003 | 400 | Tham số sai kiểu, sai miền, thiếu trường bắt buộc, khoảng thời gian quá rộng, thiếu lý do | 001, 002, 004, 005, 006, 007, 008, 009 và 64 API khác |
-| ERR-14-004 | 409 | Trạng thái hiện tại không cho phép thao tác; `ETag` lệch; vượt số lần thử lại; thiếu điều kiện đóng | 004, 005, 006, 007, 008, 009, 013, 016 và 24 API khác |
+| ERR-14-004 | 409, 412 | Trạng thái hiện tại không cho phép thao tác, vượt số lần thử lại, thiếu điều kiện đóng (409); `If-Match` lệch `ETag` hiện tại (412) | 004, 005, 006, 007, 008, 009, 013, 016 và 24 API khác |
 | ERR-14-005 | 422 | Kết nối PH-05 không tồn tại hoặc loại không phù hợp với cách xác thực | 002, 004 |
 | ERR-14-006 | 409 | Đã có yêu cầu kích hoạt đang chờ duyệt | 008, 032 |
 | ERR-14-007 | 403 | Người duyệt trùng người đề nghị hoặc người sửa gần nhất (bốn mắt) | 009, 027, 033, 090 |
@@ -606,7 +608,7 @@ Trả cho HTTT, luồng PH-04, PH-07 qua API-14-075…083 và cho nền tảng q
 | ERR-14-114 | 502 | Nền tảng từ chối thông tin xác thực của tỉnh | Tạm thời, cảnh báo SO | 075 |
 | ERR-14-115 | 504 | Quá hạn chờ phản hồi của nền tảng | Tạm thời, thử lại thao tác đọc | 075 |
 | ERR-14-116 | 409 | Trùng `Idempotency-Key` nhưng khác nội dung | Nghiệp vụ | 075, 076, 082 |
-| ERR-14-117 | 503 | Dịch vụ hoặc nền tảng đã ngừng hoặc đang tạm ngừng, không nhận lượt mới | Nghiệp vụ | 075 |
+| ERR-14-117 | 503 | Dịch vụ hoặc nền tảng đã ngừng hoặc đang tạm ngừng, không nhận lượt mới; nền tảng ở `SECURITY_HOLD` trả mã này kèm `reason = SECURITY_HOLD` | Nghiệp vụ | 075 |
 | ERR-14-118 | 503 | Hàng chờ gửi quốc gia đầy | Tạm thời | 076 |
 | ERR-14-119 | 403 | Nguồn chiều vào không được phép với dịch vụ | An ninh, cảnh báo SO | 084, 085 |
 | ERR-14-120 | 401 | Chứng thư mTLS của nguồn chiều vào không hợp lệ | An ninh | 084, 085 |
@@ -648,7 +650,7 @@ Câu hiển thị cho các mã 002…039 ở FRS §9.2 (nguồn chuẩn, nhập 
 | ERR-14-114 | "Nền tảng quốc gia từ chối thông tin xác thực của tỉnh. Kiểm tra với đơn vị quản lý nền tảng." | |
 | ERR-14-115 | "Nền tảng quốc gia không trả lời trong {n} giây." | `transactionCode` |
 | ERR-14-116 | "Khóa chống trùng đã dùng cho yêu cầu khác nội dung." | |
-| ERR-14-117 | "Dịch vụ hoặc nền tảng đang ngừng hoặc tạm ngừng, chưa nhận lượt gọi mới." | |
+| ERR-14-117 | "Dịch vụ hoặc nền tảng đang ngừng hoặc tạm ngừng, chưa nhận lượt gọi mới." Khi nền tảng ở `SECURITY_HOLD`: "Nền tảng đang được giữ an ninh sau sự cố chữ ký nên chưa nhận lượt gọi mới. Liên hệ cán bộ an toàn thông tin của tỉnh." | `reason` (`SECURITY_HOLD` khi giữ an ninh) |
 | ERR-14-118 | "Hàng chờ gửi quốc gia đang đầy. Thử lại sau ít phút." | `retryAfterSeconds` |
 | ERR-14-119 | "Nguồn gọi không được phép với dịch vụ này." | cảnh báo SO |
 | ERR-14-120 | "Chứng thư của nguồn gọi không hợp lệ." | |
@@ -720,7 +722,7 @@ Câu hỏi của tập API theo dải Q14-55…59. Câu hỏi của FRS (Q14-01�
 
 > **Câu hỏi mở Q14-55:** API-14-089 cần một scope riêng cho luồng cắt chuyển của PH-04 gửi quan sát chạy song song. Tập này đề xuất `national.parallel-observe`; D02-08 §5 chưa có scope này, cũng chưa có dạng `national.invoke.{nhóm}` theo từng nhóm ở OpenAPI (OpenAPI dùng `national.invoke` làm khai báo chung). Cần PH-12 và PH-01 xác nhận tên và nơi cấp.
 
-> **Câu hỏi mở Q14-56:** FRS §9.1 quy `ETag` lệch thành ERR-14-004 (409), trong khi D00-04 và D04-01 dùng ERR-00-412 (412) và PH-05 dùng 412. Đồng thời SDD §4.4 ghi `type` của RFC 9457 là `urn:dh:err:ERR-14-nnn` còn K-API và PH-04, PH-05, PH-10 dùng `https://datahub.gov.vn/errors/ERR-nn-nnn`. Tập này giữ ERR-14-004 (409) theo FRS và dùng `type` dạng URL; cần chốt chung cho toàn hệ thống ở D04-01 trước khi viết mã.
+> **Câu hỏi mở Q14-56 (đã chốt ở đợt đồng bộ cuối):** `If-Match` lệch `ETag` trả HTTP 412 theo D00-04 và D04-01, giữ mã riêng ERR-14-004; ERR-14-004 vẫn trả 409 khi lỗi do trạng thái hiện tại không cho phép thao tác. `type` của RFC 9457 là `https://datahub.gov.vn/errors/ERR-14-nnn` cho mọi phân hệ.
 
 > **Câu hỏi mở Q14-57:** API cung cấp lại do PH-02 công bố cho HTTT có hợp đồng riêng từng dịch vụ (sinh từ `contract.inputSchema`) hay dùng khung chung của API-14-075? Đề xuất tạm: hợp đồng riêng từng dịch vụ để HTTT thấy đúng tham số và trường trả về, APISIX viết lại sang khung chung kèm `X-DH-Service` và `X-DH-Operation`; cần PH-02, PH-03 xác nhận khả năng sinh và viết lại.
 
@@ -827,7 +829,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-005 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-005 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Nền tảng `ACTIVE` đổi kết nối thì quay về `TESTED` và phải kiểm tra lại.
 :::
@@ -851,7 +853,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Cổng từ chối lượt mới trong 30 giây, lượt đang chạy kết thúc (BR-14-032); phát EVT-14-01.
 :::
@@ -875,7 +877,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Phát EVT-14-01.
 :::
@@ -899,7 +901,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Trạng thái cuối, mã không dùng lại. Còn dịch vụ `ACTIVE` trả ERR-14-004.
 :::
@@ -923,7 +925,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-006, ERR-14-008, ERR-14-037 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-006, ERR-14-008, ERR-14-037 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Yêu cầu có kiểm tra kết nối đạt trong 24 giờ (ERR-14-008) và, nếu nền tảng có dịch vụ cần ký, có chứng thư đang dùng đúng mục đích (ERR-14-037). Môi trường thật tạo việc cho người duyệt.
 :::
@@ -947,7 +949,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `PlatformDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Bốn mắt: người duyệt khác người đề nghị và người sửa gần nhất (ERR-14-007). Duyệt thì `ACTIVE`, phát EVT-14-01.
 :::
@@ -971,7 +973,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `RotationStatus`; trường bắt buộc: `rotationId`, `state`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-034, ERR-14-035 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-034, ERR-14-035 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Điều phối chuyển tiếp ở cổng; bí mật mới ghi ở PH-05. Kiểm tra token bằng thông tin mới trước khi chuyển; thất bại thì hủy (FR-14-025).
 :::
@@ -995,7 +997,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `TokenTestResult`; trường bắt buộc: `ok`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `429`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-029, ERR-14-034, ERR-14-035 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `429`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-029, ERR-14-034, ERR-14-035 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lấy token ở `worker`, không lưu. Tối đa `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).
 :::
@@ -1093,7 +1095,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `ServiceDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-009, ERR-14-016, ERR-14-036, ERR-14-038 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-009, ERR-14-016, ERR-14-036, ERR-14-038 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Giảm kiểm soát (bỏ mục đích, tăng thời hạn đệm, bật đệm) cần `basis` và người duyệt (ERR-14-016, BR-14-022). Phát EVT-14-02.
 :::
@@ -1165,7 +1167,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `ReconcileRun`; trường bắt buộc: `runId`, `state`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-012 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-012 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Áp nhãn, tạo bản nháp đặc tả. Thay đổi phá vỡ chưa `acknowledgeBreaking` trả ERR-14-012. Phát EVT-14-02.
 :::
@@ -1189,7 +1191,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `ServiceDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đặt nhãn bằng tay khi đối chiếu tự động không dùng được; ghi lý do và kiểm toán. Nhãn `DISCONTINUED` chuyển dịch vụ sang `RETIRED` sau duyệt.
 :::
@@ -1261,7 +1263,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `ServiceSpec`; trường bắt buộc: `serviceCode`, `specVersion`, `kind`, `state`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-012 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-012 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Phiên bản `ACTIVE` bất biến; phiên bản trước thành `SUPERSEDED`. Thay đổi phá vỡ cần `acknowledgeBreaking` và tăng số chính hợp đồng.
 :::
@@ -1309,7 +1311,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `Exposure`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-025 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-025 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chỉ dịch vụ `ACTIVE`, hướng `OUTBOUND`, đường dẫn không xung đột (ERR-14-025). Mỗi dịch vụ tối đa một cung cấp lại.
 :::
@@ -1333,7 +1335,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `JobAccepted`; trường bắt buộc: `jobId`, `state`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `422`, `500`, `502`; mã lỗi của thao tác: ERR-14-001, ERR-14-004, ERR-14-025, ERR-14-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `500`, `502`; mã lỗi của thao tác: ERR-14-001, ERR-14-004, ERR-14-025, ERR-14-027 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Lưu `requestId` rồi tạo API nháp ở PH-02 với chính `requestId` làm khóa chống trùng; PH-02 lỗi để lại `FAILED_CREATE`. Phát EVT-14-14.
 :::
@@ -1407,7 +1409,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `RoutingRule`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-013, ERR-14-015, ERR-14-016 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-013, ERR-14-015, ERR-14-016 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Sửa luật `ACTIVE` tạo bản chờ duyệt, luật cũ vẫn chạy tới khi duyệt.
 :::
@@ -1431,7 +1433,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `RoutingRule`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Duyệt thì `ACTIVE`, phát EVT-14-03; cổng nạp trong 30 giây.
 :::
@@ -1553,7 +1555,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `CertificateDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-006, ERR-14-021 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-006, ERR-14-021 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Cần xác thực nhiều yếu tố. Chuyển `PENDING_ACTIVATION` và tạo việc cho người duyệt.
 :::
@@ -1577,7 +1579,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `CertificateDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007, ERR-14-021 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007, ERR-14-021 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Bốn mắt và xác thực nhiều yếu tố. Duyệt thì `ACTIVE`; chứng thư cũ cùng mục đích sang `SUPERSEDED` sau `14.cert.overlap-hours`. Phát EVT-14-04.
 :::
@@ -1601,7 +1603,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `CertificateDetail`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chứng thư `REVOKED` không ký được; hết chứng thư cùng mục đích thì nền tảng bị chặn ký (ERR-14-113). Phát EVT-14-04.
 :::
@@ -1695,9 +1697,9 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `SignatureIncident`; trường bắt buộc: `incidentId`, `kind`, `state`, `openedAt`.
+**Phản hồi thành công.** `200` thành công, `SignatureIncident`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** `RELEASE_HOLD` giải trừ `securityHold` của nền tảng; chỉ SO (`PERM-14-operate` và vai trò SO).
 :::
@@ -1721,7 +1723,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `204` không có nội dung.
 
-**Lỗi.** HTTP `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-004, ERR-14-022 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-004, ERR-14-022 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chỉ xóa chứng thư `UPLOADED` chưa từng `ACTIVE`; còn giao dịch trong thời hạn lưu cần xác minh trả ERR-14-022. Chứng thư đã dùng chỉ thu hồi (API-14-034), không xóa (BR-14-019).
 :::
@@ -1739,7 +1741,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **FR hiện thực.** FR-14-032, FR-14-033.
 
-**Tham số.** `platformCode` (query, PlatformCode, tùy chọn); `serviceCode` (query, ServiceCode, tùy chọn).
+**Tham số.** `platformCode` (query, PlatformCode, tùy chọn); `serviceCode` (query, ServiceCode, tùy chọn); `history` (query, boolean, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -1749,7 +1751,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `500`; mã lỗi của thao tác: ERR-14-003 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Chỉ trả dữ liệu của tenant trong token; danh sách phân trang theo `page`, `size` (tối đa 100).
+**Ghi chú.** Tham số tùy chọn `history = true` trả thêm các phiên bản hạn mức đã bị thay thế, xếp theo `effectiveFrom` giảm dần, cho tab Lịch sử hạn mức của UI-14-09 (`CMP-VersionTimeline`).
 :::
 
 #### API-14-042 · Khai báo hạn mức do trung ương áp
@@ -1769,7 +1771,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `201` đã tạo, `Quota`; trường bắt buộc: `quotaId`, `platformCode`, `period`, `limit`, `basisDocument`, `effectiveFrom`; tiêu đề `Location`, `ETag`.
+**Phản hồi thành công.** `201` đã tạo, `Quota`; tiêu đề `Location`, `ETag`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `422`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-016, ERR-14-017 (ý nghĩa ở chương mã lỗi).
 
@@ -1843,7 +1845,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `Allocation`; trường bắt buộc: `systemCode`, `period`, `limit`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-017, ERR-14-018 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-017, ERR-14-018 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Tổng phân bổ cho mọi HTTT không vượt hạn mức (ERR-14-018). Dịch vụ `ESSENTIAL` được vượt trần HTTT nếu không vượt hạn mức toàn cục (Q14-24).
 :::
@@ -1891,7 +1893,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `CacheInvalidateResult`; trường bắt buộc: `invalidated`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Phát EVT-14-09. Có `subjectKeyHash` chỉ vô hiệu một đối tượng.
 :::
@@ -1965,7 +1967,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `InboundEndpoint`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-039 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-039 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Đổi ánh xạ luồng hoặc tắt; phát EVT-14-13.
 :::
@@ -2013,7 +2015,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `AllowedSenderList`; trường bắt buộc: `items`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-024 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-024 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Thay toàn bộ danh sách; nguồn mới ở `PENDING_CONFIRM` tới khi SO xác nhận vân tay (API-14-090). Phát EVT-14-13.
 :::
@@ -2037,7 +2039,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `InboundEndpoint`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007, ERR-14-024 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-007, ERR-14-024 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** SO xác nhận vân tay chứng thư của nguồn; điểm cuối chuyển `ACTIVE` sau duyệt bốn mắt (BR-14-022). Phát EVT-14-13 để PH-03 nạp tuyến.
 :::
@@ -2085,7 +2087,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; trường bắt buộc: `runId`, `kind`, `state`; tiêu đề `Location`.
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; tiêu đề `Location`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `500`, `502`; mã lỗi của thao tác: ERR-14-003, ERR-14-026, ERR-14-027, ERR-14-028 (ý nghĩa ở chương mã lỗi).
 
@@ -2133,7 +2135,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; trường bắt buộc: `runId`, `kind`, `state`; tiêu đề `Location`.
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; tiêu đề `Location`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `500`, `502`; mã lỗi của thao tác: ERR-14-003, ERR-14-026, ERR-14-027, ERR-14-125, ERR-14-126 (ý nghĩa ở chương mã lỗi).
 
@@ -2157,9 +2159,9 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; trường bắt buộc: `runId`, `kind`, `state`; tiêu đề `Location`.
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-026 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-026 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chỉ bản ghi `ERROR` hoặc `REJECTED`; tối đa `14.sync.max-retries` lần mỗi bản ghi (ERR-14-004).
 :::
@@ -2181,7 +2183,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; trường bắt buộc: `runId`, `kind`, `state`; tiêu đề `Location`.
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; tiêu đề `Location`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `500`, `502`; mã lỗi của thao tác: ERR-14-003, ERR-14-026, ERR-14-027, ERR-14-126 (ý nghĩa ở chương mã lỗi).
 
@@ -2205,9 +2207,9 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; trường bắt buộc: `runId`, `kind`, `state`; tiêu đề `Location`.
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `SyncRun`; tiêu đề `Location`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`, `502`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`, `502`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-027 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Gỡ tập đã công bố trên NDOP.
 :::
@@ -2257,7 +2259,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `ProbeResult`; trường bắt buộc: `ok`, `steps`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `429`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-029, ERR-14-035 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `429`, `500`, `503`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004, ERR-14-029, ERR-14-035 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Chạy ở `worker`: DNS, TLS, token, gọi thăm dò, chữ ký. Không quá `14.test.max-per-hour` lần mỗi giờ (ERR-14-029).
 :::
@@ -2297,7 +2299,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **FR hiện thực.** FR-14-049.
 
-**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `serviceCode` (query, ServiceCode, tùy chọn); `state` (query, array, tùy chọn); `direction` (query, Direction, tùy chọn); `caseCode` (query, string, tùy chọn); `transactionCode` (query, string, tùy chọn); `fromCache` (query, boolean, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
+**Tham số.** `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `serviceCode` (query, ServiceCode, tùy chọn); `state` (query, array, tùy chọn); `direction` (query, Direction, tùy chọn); `caseCode` (query, string, tùy chọn); `transactionCode` (query, string, tùy chọn); `fromCache` (query, boolean, tùy chọn); `stale` (query, boolean, tùy chọn); `asyncState` (query, array, tùy chọn); `after` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -2307,7 +2309,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`, `500`; mã lỗi của thao tác: ERR-14-003 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che.
+**Ghi chú.** Khoảng thời gian tối đa 31 ngày (ERR-14-003). Nội dung bản tin đã che. Tham số tùy chọn `after` là con trỏ keyset theo (`started_at`, `transaction_code`): khi có `after`, `page` bị bỏ qua và phản hồi trả `nextCursor`, dùng cho khoảng thời gian lớn (Q14-59). `asyncState` lọc theo trạng thái yêu cầu bất đồng bộ (hàng chờ ở UI-14-12), `stale` lọc lượt trả dữ liệu đệm quá hạn.
 :::
 
 #### API-14-062 · Chi tiết giao dịch (nội dung đã che)
@@ -2471,9 +2473,9 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `AnomalyAlert`; trường bắt buộc: `alertId`, `rule`, `state`, `detectedAt`.
+**Phản hồi thành công.** `200` thành công, `AnomalyAlert`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Quyết định gồm xác nhận hợp lệ, đề nghị thu hồi quyền gọi, hoặc tạm dừng dịch vụ cho HTTT (FR-14-053); ghi quyết định và kiểm toán.
 :::
@@ -2521,7 +2523,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `BreakerState`; trường bắt buộc: `platformCode`, `breaker`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `500`; mã lỗi của thao tác: ERR-14-001, ERR-14-003, ERR-14-004 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ép đóng hoặc mở tay, tự hết hạn; phát EVT-14-10.
 :::
@@ -2571,7 +2573,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `Settings`; trường bắt buộc: `items`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-004, ERR-14-036 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `412`, `422`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-004, ERR-14-036 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Ngoài miền hoặc vượt trần ERR-14-036. Tham số bảo mật (★) tạo yêu cầu duyệt bốn mắt (BR-14-022). Cổng làm mới trong 30 giây.
 :::
@@ -2593,7 +2595,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Có, tiêu đề `Idempotency-Key`.
 
-**Phản hồi thành công.** `201` đã tạo, `ParallelRun`; trường bắt buộc: `runId`, `serviceCode`, `state`; tiêu đề `Location`, `ETag`.
+**Phản hồi thành công.** `201` đã tạo, `ParallelRun`; tiêu đề `Location`, `ETag`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `409`, `500`; mã lỗi của thao tác: ERR-14-003, ERR-14-033 (ý nghĩa ở chương mã lỗi).
 
@@ -2617,7 +2619,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `ParallelRun`; trường bắt buộc: `runId`, `serviceCode`, `state`; tiêu đề `ETag`.
+**Phản hồi thành công.** `200` thành công, `ParallelRun`; tiêu đề `ETag`.
 
 **Lỗi.** HTTP `401`, `404`, `500`; mã lỗi của thao tác: ERR-14-001 (ý nghĩa ở chương mã lỗi).
 
@@ -3062,3 +3064,4 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập API PH-14: 92 operation ở ba mặt phẳng, 17 sự kiện và ba chủ đề nội bộ, 72 mã lỗi, theo khuôn K-API và chuẩn trình bày K-TRINH-BAY. Giữ nguyên 90 mã API-14-001…090 do FRS đề xuất, thêm API-14-091 (cấu hình runtime, SDD) và API-14-092 (xóa chứng thư), thêm ERR-14-133. OpenAPI 3.1 và AsyncAPI 3.0 sinh từ `ph14/tools`. Có 5 câu hỏi mở (Q14-55…59) và mục Đề nghị đồng bộ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag 412, cổng PH-09, PH-01, PH-16, phân trang keyset, trường bảng điều khiển, sinh lại từ OpenAPI |

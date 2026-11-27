@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH15
 ten: Đặc tả yêu cầu chức năng phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-portal và dh-connect, kiểm thử viên, chủ dịch vụ, quản trị tỉnh
@@ -1493,6 +1493,7 @@ Sơ đồ cho thấy kiểm tra bốn mắt diễn ra ở bước 5, lúc duyệ
 4. Ảnh đính kèm phục vụ qua API-15-138 bằng đường dẫn có chữ ký, hết hạn 15 phút; tệp trả với `Content-Type` đúng và `X-Content-Type-Options: nosniff`.
 5. Với `ANNOUNCEMENT`, chỉ hiện trong khoảng `validFrom` đến `validTo`; với `TERMS`, hiện kèm nút chấp nhận (FR-15-023).
 6. Trang có ô "Trang này có hữu ích không" (FR-15-053).
+7. Khi có cửa sổ bảo trì đang hiệu lực hoặc sắp tới (EVT-18-16) ảnh hưởng môi trường của API gắn với trang, hệ thống hiện biểu ngữ báo khoảng thời gian bảo trì phía trên nội dung.
 
 **Luồng thay thế.** Chưa có bản `en`: hiện bản `vi` kèm ghi chú.
 
@@ -3971,6 +3972,8 @@ PH-15 phát mười bốn sự kiện nghiệp vụ lên Kafka qua outbox, theo 
 
 Cổng tiêu thụ các sự kiện do PH-02 phát để cập nhật bản sao danh mục và thông báo cho người theo dõi: EVT-02-01, EVT-02-02, EVT-02-03, EVT-02-05, EVT-02-06, EVT-02-08, EVT-02-10, EVT-02-11, EVT-02-12. Cổng cũng nhận EVT-02-09 (đăng ký sử dụng đổi trạng thái) để cập nhật đăng ký của người dùng; theo BR-15-014, cổng không phát lại sự kiện này.
 
+Cổng còn nghe hai sự kiện của phân hệ khác để hiển thị tình trạng vận hành. EVT-16-10 (`{tenant}.kpi.arch-component.changed.v1`, PH-16 phát) cho biết `opsStatus` của một thành phần kiến trúc, để trang chi tiết dịch vụ (FR-15-005) hiện nhãn tình trạng vận hành. EVT-18-16 (`{tenant}.ops.maintenance-window.changed.v1`, PH-18 phát; `windowId`, `kind`, `envs`, `start`, `end`, `state`) cho biết cửa sổ bảo trì để FR-15-017 hiện biểu ngữ. Cả hai chỉ cập nhật bản sao hiển thị, cổng không phát lại.
+
 ### 9.3. Tóm lược API
 
 Mọi đường dẫn dưới đây có tiền tố `/api/portal/v1`, trừ API-15-082 có đường dẫn gốc `/internal/v1/sandbox/authorize` (cổng 8081, mTLS mesh, không qua BFF, không có tiền tố này); phần `/public` là ẩn danh, `/try` là thử, `/admin` là quản trị, `/internal/v1` là đường nội bộ giữa gateway sandbox và cổng. Đặc tả đầy đủ (lược đồ, mã trả về) sinh từ OpenAPI của module `portal` ở D03-06-00 §4.17.
@@ -4260,7 +4263,7 @@ Giả định dùng để đặt chỉ tiêu; nếu sai thì chỉ tiêu ở m�
 | RB-15-01 | Ràng buộc | Cổng không giữ bí mật sandbox, không giữ thông tin xác thực production | SEC-24, BR-15-015 |
 | RB-15-02 | Ràng buộc | Token và phiên chỉ ở BFF, trình duyệt chỉ giữ cookie `__Host-dh-sid` | SEC-21 |
 | RB-15-03 | Ràng buộc | Module `portal` chạy trong DU `dh-connect` (Z3), BFF nhẹ ở Z2 | D03-01 |
-| RB-15-04 | Ràng buộc | Không dùng Backstage; giao diện tự xây trên `@datahub/ui` | đề xuất ADR số 075; ADR-020 |
+| RB-15-04 | Ràng buộc | Không dùng Backstage; giao diện tự xây trên `@datahub/ui` | đề xuất ADR số 095; ADR-020 |
 
 : Giả định và ràng buộc của PH-15
 
@@ -4337,7 +4340,7 @@ Bảng dưới liệt kê đề nghị cho D02-08, ADR, D03-06-00 và D00-04. C�
 |---|---|---|
 | D02-08 | Đã xử lý: năm quyền `PERM-15-content-write`, `PERM-15-content-publish`, `PERM-15-support`, `PERM-15-dev-approve`, `PERM-15-audit-read` đã được thêm vào D02-08 (TA, CA, SV ○, SO, AU, PA theo từng quyền); mục 3.2 đã khớp | Tách soạn, duyệt, hỗ trợ, duyệt tài khoản, xem nhật ký |
 | D02-08 | Thêm scope máy `metrics:portal-read`, `sandbox:call`; cho `ROLE-DEVELOPER` tự gán với cán bộ đăng nhập SSO | Cổng đọc chỉ số và `forward-auth` kiểm quyền |
-| ADR | Đề xuất ADR số 075: Cổng nhà phát triển tự xây trên `@datahub/ui` thay Backstage; dành dải 075 đến 079 cho PH-15. Không nhầm với ADR cũ về Backstage ở repo cũ | Quyết định công nghệ cổng |
+| ADR | Đề xuất ADR số 095: Cổng nhà phát triển tự xây trên `@datahub/ui` thay Backstage; dải 095 đến 099 của D00-02 dành cho PH-15 (dải 075 đến 079 thuộc PH-14). Không nhầm với ADR cũ về Backstage ở repo cũ | Quyết định công nghệ cổng |
 | D03-06-00 §2.14, §2.3 | Đổi route `/api` thành `/dich-vu`, bỏ `/sandbox`, và chốt vị trí giao diện quản trị theo Q15-16 | Khớp Phụ lục A.4 |
 | D00-04 | Ghi nhận dải mã `ERR-15-001…040`, `101…123`, `API-15-001…142`, `UI-15-01…28`, `EVT-15-01…14` | Tránh trùng mã |
 | D03-05 | Không cần thành phần giao diện mới ngoài `@datahub/ui` | Giữ nhất quán |
@@ -4567,5 +4570,6 @@ Mục này ghi các lần sửa tài liệu để hội đồng thẩm định t
 | 0.1 | 26/11/2026 | Nhóm yêu cầu PH-15 | Bản đầu: 62 FR, 34 BR, 22 NFR, 63 ERR, 14 EVT, 137 API, 28 UI, 19 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm yêu cầu PH-15 | Hấp thụ đề nghị đồng bộ từ tập use case, thiết kế chi tiết, CSDL, màn hình và API (chi tiết ở mục 15.3): thêm API-15-138…142 (142 API); sửa tham chiếu phụ lục, câu thông báo theo §9.1, enum và thực thể theo CSDL, kiến trúc theo SDD; thêm Phụ lục A.9; năm quyền PERM-15 đã có ở D02-08 |
 | 0.3 | 26/11/2026 | Nhóm yêu cầu PH-15 | Rà chéo bộ PH-15: chốt mã lỗi cho Q15-40…44 của tập test case (FR-15-008, 020, 043, Phụ lục A.7), không đổi số mã |
+| 0.4 | 27/11/2026 | Nhóm yêu cầu PH-15 | Đồng bộ chéo cuối: ADR 095, nghe EVT-16-10 và EVT-18-16, biểu ngữ bảo trì ở FR-15-017 |
 
 : Lịch sử phiên bản D02-03-PH15

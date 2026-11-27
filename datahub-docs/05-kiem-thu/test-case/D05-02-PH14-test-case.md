@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH14
 ten: Kịch bản và test case phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
@@ -20,7 +20,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH14 F
 - Không mất chức năng kết nối quốc gia của hệ cũ: tư pháp, hộ tịch, bảo hiểm xã hội, hồ sơ cấp mã ĐVQHNS, đăng ký doanh nghiệp, văn bản quy phạm pháp luật, danh mục dùng chung và lấy token (LGC-NGSP-001…008, LGC-DMDC-019).
 - Không có đường nào để thông tin xác thực với nền tảng quốc gia, khóa riêng chữ ký số hay dữ liệu cá nhân lộ ra ngoài; không có lượt gọi nào ra quốc gia mà thiếu mục đích, nhật ký khai thác và chữ ký khi dịch vụ yêu cầu.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->38<!--/gen--> kịch bản (TS-14-01…38) với <!--gen:so-tc-->156 (TC-14-001…156; 111 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API, màn hình, use case và mã lỗi của phân hệ có ít nhất một ca. Ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph14/tools/gen_matrix.py`. Nền tảng quốc gia được thay bằng bộ giả lập (WireMock REST và SOAP có ký, có trễ, có ngắt mạch); kiểm thử với NDXP thật chỉ làm ở UAT khi trung ương cấp môi trường thử (Q14-40).
+**Phạm vi.** Gồm <!--gen:so-ts-->38<!--/gen--> kịch bản (TS-14-01…38) với <!--gen:so-tc-->157 (TC-14-001…157; 112 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M có ít nhất một ca dương và một ca âm; mọi API, màn hình, use case và mã lỗi của phân hệ có ít nhất một ca. Ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph14/tools/gen_matrix.py`. Nền tảng quốc gia được thay bằng bộ giả lập (WireMock REST và SOAP có ký, có trễ, có ngắt mạch); kiểm thử với NDXP thật chỉ làm ở UAT khi trung ương cấp môi trường thử (Q14-40).
 
 **Căn cứ.** Tài liệu cùng bộ PH-14 (FRS D02-03-PH14, use case D02-04-PH14, SDD D03-02-PH14, CSDL D03-03-PH14, API D03-04-PH14, màn hình D03-06-PH14); ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01; cổng CI D04-02; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP, TCVN 14423:2026; kết nối chia sẻ dữ liệu theo Nghị định 278/2025/NĐ-CP (CMP-LAW-03, CMP-LAW-19); bảo vệ dữ liệu cá nhân theo Luật 91/2025 (CMP-LAW-05).
 
@@ -275,10 +275,10 @@ Mỗi kịch bản nhóm các ca cùng mục tiêu. Bảng dưới sinh tự đ�
 | TS-14-33 | Cách ly tenant và RLS | Xác nhận 0 rò rỉ chéo tenant ở API, CSDL, đệm, hạn mức, OpenBao, Kafka | — | 5 |
 | TS-14-34 | Phân quyền và tách nhiệm | Xác nhận ma trận quyền PERM-14 đúng ở API và giao diện, tài khoản máy chỉ có scope gọi | — | 2 |
 | TS-14-35 | Hiệu năng, tải và quy mô | Xác nhận ngưỡng hiệu năng trên hồ sơ tỉnh vừa (GĐ-07); đo ở PERF với tenant `T90` | — | 10 |
-| TS-14-36 | Chịu lỗi và phục hồi | Xác nhận phục hồi khi quốc gia, OpenBao hay một bản sao sự cố, không mất bản tin | — | 6 |
+| TS-14-36 | Chịu lỗi và phục hồi | Xác nhận phục hồi khi quốc gia, OpenBao hay một bản sao sự cố, không mất bản tin | — | 7 |
 | TS-14-37 | Truy cập, giao diện, truy vết, hợp đồng API | Xác nhận 17 màn đạt WCAG 2.2 AA, mọi giao dịch truy vết được, hợp đồng API tương thích | — | 2 |
 | TS-14-38 | Kiểm toán và bảo vệ bằng chứng | Xác nhận mọi thay đổi và mọi lượt gọi, kể cả bị từ chối, để lại bằng chứng không sửa được, không chứa bí mật, đủ cho thanh tra | — | 4 |
-| **Tổng** | | | | **156** (111 ca P1) |
+| **Tổng** | | | | **157** (112 ca P1) |
 
 : Danh sách kịch bản kiểm thử
 <!--/gen-->
@@ -603,7 +603,7 @@ Bảng sau nêu máy trạng thái của từng đối tượng và kịch bản
 4. `POST /services` mã trùng; thiếu nhóm.
 5. Chuyển `ACTIVE` dịch vụ `tc-chua-dac-ta`; `PATCH` với `If-Match` cũ.
 
-**Kết quả mong đợi.** Bước 1, 2 `422` ERR-14-038; bước 3 `422` ERR-14-036; bước 4 `409` ERR-14-002 và `400` ERR-14-003; bước 5 `422` ERR-14-009 và `409` ERR-14-004.
+**Kết quả mong đợi.** Bước 1, 2 `422` ERR-14-038; bước 3 `422` ERR-14-036; bước 4 `409` ERR-14-002 và `400` ERR-14-003; bước 5 `422` ERR-14-009 và `412` ERR-14-004 (`If-Match` cũ).
 :::
 
 #### TC-14-014 · Dịch vụ của tenant khác và `COMMON` <!--k:svc-isolation-->
@@ -3643,6 +3643,28 @@ Sáu kịch bản dưới đây kiểm các yêu cầu cắt ngang mọi chức 
 **Kết quả mong đợi.** Bước 1 mọi giao dịch `UNKNOWN_RESULT`, không thử lại tự động. Bước 2 giao dịch được đối soát bằng `getDossierStatus` theo `caseCode` rồi chuyển `SUCCEEDED`. Bước 3 trả kết quả lần đầu, không gửi lại. Bước 4 đúng 20 bản đăng ký, không có bản nào trùng.
 :::
 
+#### TC-14-157 · Kafka giao lại thông điệp giao dịch: không đếm trùng, hạng không lùi <!--k:chaos-kafka-redelivery-->
+
+::: dac-ta
+**Loại.** Chịu lỗi, Dữ liệu.
+
+**Ưu tiên.** P1.
+
+**Tự động.** Chaos, API.
+
+**Truy vết.** FR-14-016, 049, 052 · NFR-14-011, 021 · API-14-061, 065.
+
+**Tiền điều kiện, dữ liệu.** S-HT-MC; V-HT-DK; `T90`; 100 giao dịch `SUCCEEDED` đã ghi ở `national_transaction` và tổng hợp ở `usage_hourly`.
+
+**Các bước.**
+
+1. Đặt lại điểm đọc (offset) của `LedgerConsumer` về trước 100 giao dịch rồi cho tiêu thụ lại.
+2. Gửi lại sự kiện EVT-14-11 hạng thấp (`RECEIVED`) của 10 giao dịch trong số đó, sau khi chúng đã `SUCCEEDED`.
+3. Tra `national_transaction` bằng API-14-061 và `usage_hourly` bằng API-14-065.
+
+**Kết quả mong đợi.** Bước 1 không có dòng nào bị ghi lại, `usage_hourly` không tăng. Bước 2 mười giao dịch vẫn `SUCCEEDED`, bản ghi hạng thấp bị bỏ. Bước 3 tổng số lượt khớp đúng 100 giao dịch, không có dòng trùng theo `transactionCode`.
+:::
+
 ### TS-14-37 · Truy cập, giao diện, truy vết, hợp đồng API
 
 **Mục tiêu.** Xác nhận 17 màn đạt WCAG 2.2 AA, mọi giao dịch truy vết được, hợp đồng API tương thích.
@@ -3854,7 +3876,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-14. FR mức
 | FR-14-013 | Quản lý bảng định tuyến | M | mới | 021, 098, 151 | 022, 086, 099 | 092 | Có |
 | FR-14-014 | Chuyển đổi bản tin theo hợp đồng dịch vụ | M | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 023, 103 | 026, 104 | — | Có |
 | FR-14-015 | Phân loại và chuẩn hóa lỗi từ quốc gia | M | mới | 027 | 024, 102, 140 | — | Có |
-| FR-14-016 | Gọi bất đồng bộ qua hàng chờ | M | LGC-NGSP-001, LGC-NGSP-002 | 030 | 031, 095, 148, 150 | 093 | Có |
+| FR-14-016 | Gọi bất đồng bộ qua hàng chờ | M | LGC-NGSP-001, LGC-NGSP-002 | 030 | 031, 095, 148, 150 | 093, 157 | Có |
 | FR-14-017 | Bộ điều hợp tư pháp: lý lịch tư pháp | M | LGC-NGSP-001 | 032 | 026, 105 | — | Có |
 | FR-14-018 | Bộ điều hợp tư pháp: hộ tịch | M | LGC-NGSP-002 | 033, 106 | 033, 107, 150 | — | Có |
 | FR-14-019 | Bộ điều hợp bảo hiểm xã hội | M | LGC-NGSP-003 | 034 | 026, 035, 108 | — | Có |
@@ -3887,10 +3909,10 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-14. FR mức
 | FR-14-046 | Theo dõi trạng thái đồng bộ, xử lý lỗi và lệch | M | mới | 065 | 066 | — | Có |
 | FR-14-047 | Kiểm tra kết nối chủ động | M | mới | 005, 069 | 070 | — | Có |
 | FR-14-048 | Tổng quan kết nối quốc gia | M | mới | 069, 130 | 070 | — | Có |
-| FR-14-049 | Tra cứu và đối soát giao dịch | M | mới | 071, 097 | 071, 131 | — | Có |
+| FR-14-049 | Tra cứu và đối soát giao dịch | M | mới | 071, 097 | 071, 131 | 157 | Có |
 | FR-14-050 | Xem nội dung bản tin đầy đủ có lý do | M | mới | 072, 156 | 072, 086, 132, 154 | 081, 082 | Có |
 | FR-14-051 | Xuất bằng chứng giao dịch | S | mới | 073 | 073, 133 | — | Có |
-| FR-14-052 | Nhật ký khai thác theo HTTT và báo cáo sử dụng | M | mới | 028, 074, 097 | 074, 134, 152 | — | Có |
+| FR-14-052 | Nhật ký khai thác theo HTTT và báo cáo sử dụng | M | mới | 028, 074, 097 | 074, 134, 152 | 157 | Có |
 | FR-14-053 | Cảnh báo bất thường khai thác | S | mới | 075 | 135 | — | Có |
 | FR-14-054 | Tham số phân hệ theo tenant | M | mới | 077, 151 | 078 | — | Có |
 | FR-14-055 | Chạy song song với kết nối NGSP cũ và đối chiếu | S | LGC-NGSP-001, LGC-NGSP-002, LGC-NGSP-003… | 080 | 080, 137 | — | Có |
@@ -4064,7 +4086,7 @@ Mỗi yêu cầu phi chức năng của FRS D02-03-PH14 được truy tới các
 | NFR-14-008 | 094, 149 |
 | NFR-14-009 | 024, 057, 058, 102, 124, 125, 126, 145 |
 | NFR-14-010 | 045, 094, 148 |
-| NFR-14-011 | 031, 093, 150 |
+| NFR-14-011 | 031, 093, 150, 157 |
 | NFR-14-012 | 094, 144, 149 |
 | NFR-14-013 | 023, 043, 103, 114, 115, 148 |
 | NFR-14-014 | 085, 143 |
@@ -4074,7 +4096,7 @@ Mỗi yêu cầu phi chức năng của FRS D02-03-PH14 được truy tới các
 | NFR-14-018 | 044, 048, 055, 069, 112, 116, 118, 119, 121, 130 (+2) |
 | NFR-14-019 | 092, 144 |
 | NFR-14-020 | 023, 074, 097, 100, 151, 152 |
-| NFR-14-021 | 072, 082, 097, 154, 156 |
+| NFR-14-021 | 072, 082, 097, 154, 156, 157 |
 | NFR-14-022 | 097, 153 |
 | NFR-14-023 | 096 |
 | NFR-14-024 | 004, 029, 056, 083, 084, 120, 122, 123, 141, 142 (+2) |
@@ -4145,3 +4167,4 @@ Các việc sau cần làm ở tài liệu khác để khớp với bộ test ca
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 37 kịch bản, test case theo ma trận FR, BR, ERR, NFR; 10 kịch bản nghiệm thu UAT; công cụ sinh ma trận, Gherkin, bảng tính tại `ph14/tools/` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bổ sung ca dương, âm riêng cho mọi FR mức M, phi chức năng (hiệu năng, chịu lỗi, bảo mật, cách ly tenant, kiểm toán): thêm 56 ca, kịch bản TS-14-38; cập nhật ma trận, Gherkin, bảng tính |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm TC-14-157 (157 ca) |

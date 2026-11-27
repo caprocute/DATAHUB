@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH15
 ten: Thiết kế chi tiết phần mềm phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect và dh-portal, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
@@ -57,7 +57,7 @@ Mục đích của tài liệu là cho kỹ sư đủ thông tin để lập tr�
 | ADR-020 | Liquid Glass trên antd v6 |
 | ADR-041, ADR-042 | Idempotency, inbox và outbox trong DU |
 | ADR-046 | Bốn mắt (dùng lại cách tiếp cận, không dùng bảng của PH-19) |
-| ADR số 075 (đề xuất) | Cổng tự xây trên `@datahub/ui`, thay Backstage (ghi ở Đề nghị đồng bộ của FRS) |
+| ADR số 095 (đề xuất) | Cổng tự xây trên `@datahub/ui`, thay Backstage (ghi ở Đề nghị đồng bộ của FRS) |
 
 : ADR áp dụng cho PH-15
 
@@ -190,6 +190,8 @@ PH-15 đọc từ PH-02, ủy thác cho PH-01, PH-02 và dựa vào PH-12, PH-13
 | PH-02 | ủy thác | REST giữ danh tính người dùng (FR-02-046, đăng ký API) | Đăng ký sử dụng, công bố API |
 | PH-01 | ủy thác, đọc | REST biểu mẫu kết nạp, định danh production chỉ đọc | FR-15-032, 046 |
 | PH-12 | gọi | Keycloak Admin API (client `portal-dev`), token exchange (client `portal-try`) | Tài khoản, client sandbox, token ngắn hạn |
+| PH-12 | gọi | API-12-063 (cấp, xoay bí mật client sandbox); nhận `wrappingToken` do PH-12 đẩy, mở bí mật bọc (`sys/wrapping/unwrap`) ở BFF, hiển thị một lần, không lưu `wrappingToken`; BFF thêm độ trễ ngẫu nhiên khi làm mới token | Cấp và xoay thông tin xác thực |
+| PH-01 | gọi | API-01-063, 064 bằng token `onboarding:internal-read` khi khởi tạo và đối chiếu; nghe EVT-01-03, 04, 11 | Định danh production chỉ đọc |
 | PH-03 | được gọi | `forward-auth` tới API-15-082 qua mTLS mesh | Kiểm tra ứng dụng, hạn mức |
 | PH-13 | gọi, nghe | Ghi kiểm toán qua `dh-audit` (outbox, đồng bộ khi cần), đọc chỉ số `metrics:portal-read` | FR-15-048…050, 060 |
 | PH-10 | gọi | REST `/api/event/v1/topics` (chỉ đọc danh mục), định tuyến thông báo | FR-15-007, 051 |
@@ -1305,7 +1307,7 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 | dev | `dev_team_invitation` | 07 | `(team_id, invitee)` | `PENDING`, hạn |
 | dev | `app` | 08 | `(tenant_id, app_code)` (không dùng lại) | `owner_type`, `quota_override` |
 | dev | `app_member` | 08 | `(app_id, user_id)` | `OWNER`, `DEVELOPER`, `VIEWER` |
-| dev | `app_credential` | 09 | `(client_id)`; `(key_prefix)` | `provisioning_state`, `key_hash`, không có cột bí mật |
+| dev | `app_credential` | 09 | `(client_id)`; `(key_prefix)` | `provisioning_state` (`PENDING`, `PROVISIONED`, `FAILED`, `DEPROVISIONING`), `key_hash` (HMAC-SHA256 có pepper), không có cột bí mật |
 | dev | `prod_credential_ref` | 10 | `(tenant_id, system_code, client_id)` | Bản sao đọc từ PH-01, TTL |
 | try | `try_run` | 11 | `(tryId)`; `(app_id, created_at)` | Phân vùng tháng, giữ 30 ngày, không thân |
 | try | `try_collection`, `try_collection_item` | 12 | `(user_id, name)` | ≤ 50 bộ, ≤ 100 yêu cầu |
@@ -1340,7 +1342,7 @@ Các đề nghị dưới đây không sửa tài liệu ngoài tập PH-15; ch�
 | D02-03-PH15 §2.4 | Thêm module `delegate`, `insight`, `admin` bên cạnh sáu thành phần đã nêu | Khớp cấu trúc mã mục 3.2 |
 | D03-04-PH15 (API) | API-15-082 thêm tiêu đề phản hồi `X-DH-Sandbox-Mode`, `X-DH-Profile-Ver`, `X-DH-App`, `X-DH-Tenant`, `X-RateLimit-*`; cổng nội bộ 8081 | Hợp đồng `forward-auth` (mục 4.10) |
 | D03-03-PH15 (CSDL) | Dùng tên bảng ở Phụ lục A; thêm `provisioning_state` ở `app_credential`, `key_prefix`, `key_hash` | Khớp saga cấp thông tin xác thực |
-| ADR (dải 075 đến 079) | Đề xuất ADR số 075 cổng tự xây trên `@datahub/ui`; có thể thêm ADR số 076 "Sandbox chạy ở vai trò riêng, `forward-auth` đóng khi lỗi" | Quyết định kiến trúc QĐ-15-01, 02 |
+| ADR (dải 095 đến 099) | Đề xuất ADR số 095 cổng tự xây trên `@datahub/ui`; có thể thêm ADR số 096 "Sandbox chạy ở vai trò riêng, `forward-auth` đóng khi lỗi" | Quyết định kiến trúc QĐ-15-01, 02 |
 | D03-01 SAD §4.1 | Thêm vai trò triển khai `portal-sandbox` và `worker` của `dh-connect` cho PH-15; tuyến `apisix-int` cho khu quản trị | QĐ-15-05, QĐ-15-06 |
 | PH-03 | Tuyến tĩnh sandbox kèm `forward-auth` (`allow_degradation: false`, 300 ms), `jwt-auth`, mẫu route; `apisix-int` có `/quan-tri-cong` | QĐ-15-02, BR-15-031 |
 | PH-12 | Client `portal-bff`, `portal-dev`, `portal-try`; trình xác thực `tenantGrants` cho `dh-dev` (Q15-21); token exchange (Q15-20) | QĐ-15-03, QĐ-15-07 |
@@ -1354,3 +1356,4 @@ Các đề nghị dưới đây không sửa tài liệu ngoài tập PH-15; ch�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD: 14 thành phần, 8 sơ đồ tuần tự, 16 quyết định thiết kế, bảng CSDL dự kiến, câu hỏi mở Q15-20…29 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bộ PH-15: ghi chú tên bảng cuối cùng theo DDL ở Phụ lục A, `try_run` phân vùng tháng, enum `PENDING` thay `PROVISIONING`, mã ERR-15-102 ở hình thu hồi thông tin xác thực |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, API-12-063 và wrappingToken, API-01-063, 064, giá trị provisioning_state |

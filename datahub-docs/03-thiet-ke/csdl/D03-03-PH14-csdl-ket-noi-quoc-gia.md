@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH14
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, DBA, cán bộ ATTT, hội đồng thẩm định
@@ -2164,7 +2164,7 @@ Dữ liệu khởi tạo ít vì PH-14 không có danh mục cố định trong 
 | Số phiên bản cấu hình của tenant tỉnh | Mỗi tenant | 3 dòng (`TEST`, `STAGING`, `PROD`) do `ConfigRevisionService` tạo khi tenant được cấp phát (D03-10 §5.2), không seed ở DDL | SDD §4.3 |
 | Bộ mẫu phát triển, kiểm thử | `T90` | `context:demo`: 1 nền tảng `ndxp-t90` (`PROVISIONAL`) và 7 dịch vụ đại diện bảy nhóm với chính sách mặc định ở bảng dưới; 2 dòng `config_revision` | SDD §4.6 |
 | Chính sách mặc định theo nhóm dịch vụ | Không lưu | Đóng trong mã của `dh-integration` cùng bộ điều hợp (như loại kết nối ở PH-05); dùng khi nhập hệ cũ (FR-14-056) và khi mở form dịch vụ mới; tenant đổi bằng cách sửa dịch vụ | SDD §4.6, §4.19 |
-| Tham số `14.*` | PH-18 | 46 tham số mặc định theo FRS §8.2; giá trị bảo mật (★) đổi qua `approval_request` loại `SECURITY_PARAM_CHANGE` | FR-14-054 |
+| Tham số `14.*` | PH-18 | 51 tham số mặc định theo FRS §8.2; giá trị bảo mật (★) đổi qua `approval_request` loại `SECURITY_PARAM_CHANGE` | FR-14-054 |
 | Chuỗi tin cậy gốc của trung ương | Không seed | Nạp bằng FR-14-030, thay đổi neo cần bốn mắt (BR-14-018) | FR-14-030 |
 
 : Dữ liệu khởi tạo
@@ -2443,6 +2443,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập CSDL PH-14 theo khuôn K-CSDL và chuẩn trình bày K-TRINH-BAY: chiến lược lưu trữ, 36 bảng (khối 10 mục sinh từ DDL), bốn sơ đồ thực thể, DDL sáu tệp 47 changeset, 85 khối kiểm cô lập đạt, kho ngoài PostgreSQL, lưu giữ và dung lượng, ánh xạ hệ cũ, 5 câu hỏi mở (Q14-50…54) và mục Đề nghị đồng bộ. Căn cứ: FRS, use case, SDD PH-14, SAD §4, ADR-003, 046, 047, 057, D03-10 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Số tham số 51 |
 
 
 

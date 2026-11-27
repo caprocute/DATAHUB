@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH14
 ten: Thiết kế giao diện màn hình phân hệ PH-14 Kết nối quốc gia
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, kỹ sư tích hợp, cán bộ ATTT, hội đồng thẩm định
@@ -365,7 +365,12 @@ Nguồn chuẩn của câu hiển thị là bảng ở D02-03-PH14 §9.2 (đã c
 | ERR-14-029 | "Đã kiểm tra quá {n} lần trong một giờ. Thử lại sau {phút} phút." | Nút "Kiểm tra kết nối" khóa, đếm ngược |
 | ERR-14-030 | "Cần xác thực lại bằng yếu tố thứ hai để xem nội dung đầy đủ." | Hộp xác thực lại |
 | ERR-14-031 | "Nội dung bản tin đã quá thời hạn lưu hoặc tỉnh không bật lưu nội dung." | `CMP-Alert` trong chi tiết giao dịch |
-| ERR-14-101…132 | Lỗi cổng quốc gia hiển thị cho cán bộ HTTT bằng trường `detail`; cho vận hành ở cột "Lỗi" và dòng thời gian của UI-14-12 kèm mã và mã truy vết | Cột Lỗi, `CMP-AuditTimeline` |
+| ERR-14-003 (lý do) | "Giá trị lý do không hợp lệ: cần từ 10 đến 500 ký tự." | Dưới trường lý do |
+| ERR-14-003 (phạm vi vô hiệu đệm) | "Giá trị phạm vi không hợp lệ: chọn một dịch vụ hoặc một nền tảng." | Dưới trường phạm vi |
+| Lỗi 403 theo FR-00 | "Chỉ quản trị nền tảng được khai báo nền tảng dùng chung toàn quốc." (khai báo `COMMON`); "Nền tảng đang bị tạm ngừng bởi cán bộ ATTT, chỉ quản trị tỉnh được tiếp tục." (tiếp tục nền tảng bị ATTT tạm ngừng) | `CMP-Alert` đầu trang |
+| ERR-14-117 (`reason = SECURITY_HOLD`) | "Nền tảng đang được giữ an ninh sau sự cố chữ ký nên chưa nhận lượt gọi mới. Liên hệ cán bộ an toàn thông tin của tỉnh." | Cột Lỗi và `CMP-AuditTimeline` ở UI-14-12 |
+| ERR-14-133 | "Kho chống trùng tạm thời không khả dụng nên không nhận thao tác ghi. Thử lại sau ít phút." | Cột Lỗi, `CMP-AuditTimeline` |
+| ERR-14-101…133 | Lỗi cổng quốc gia hiển thị cho cán bộ HTTT bằng trường `detail` (bảng thông điệp ở D03-04-PH14 §6.3); cho vận hành ở cột "Lỗi" và dòng thời gian của UI-14-12 kèm mã và mã truy vết | Cột Lỗi, `CMP-AuditTimeline` |
 | Khác | Theo FR-00-080: câu tiếng Việt từ `detail`, kèm mã lỗi và nút "Sao chép mã truy vết" (`CMP-CopyButton`) | `CMP-Alert` |
 
 : Thông điệp lỗi ERR-14 sang câu hiển thị
@@ -1839,3 +1844,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây cần
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-14-01…17 với bảng đặc tả, wireframe, thành phần, trạng thái, thông báo, phím tắt, truy cập; ảnh hi-fi từng màn; ma trận vai trò, truy vết FR, kiểm thử giao diện, phụ lục đề nghị bổ sung |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Bổ sung dòng lỗi ERR-14-003, 117, 133 ở mục 5.2 |

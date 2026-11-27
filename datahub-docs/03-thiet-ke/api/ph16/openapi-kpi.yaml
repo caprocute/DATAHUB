@@ -4122,6 +4122,10 @@ paths:
                     indicatorComputed: 22
                     noData: 2
                   errorCode: ERR-16-110
+                  stages:
+                  - stage: COLLECT
+                    state: SUCCEEDED
+                    durationMs: 1200
                 page: 0
                 size: 20
                 totalElements: 1
@@ -4194,6 +4198,10 @@ paths:
                   indicatorComputed: 22
                   noData: 2
                 errorCode: ERR-16-110
+                stages:
+                - stage: COLLECT
+                  state: SUCCEEDED
+                  durationMs: 1200
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -4249,6 +4257,10 @@ paths:
                   indicatorComputed: 22
                   noData: 2
                 errorCode: ERR-16-110
+                stages:
+                - stage: COLLECT
+                  state: SUCCEEDED
+                  durationMs: 1200
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -4309,6 +4321,10 @@ paths:
                   indicatorComputed: 22
                   noData: 2
                 errorCode: ERR-16-110
+                stages:
+                - stage: COLLECT
+                  state: SUCCEEDED
+                  durationMs: 1200
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -4517,6 +4533,10 @@ paths:
                   indicatorComputed: 22
                   noData: 2
                 errorCode: ERR-16-110
+                stages:
+                - stage: COLLECT
+                  state: SUCCEEDED
+                  durationMs: 1200
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -5333,6 +5353,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -5425,6 +5450,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -5524,6 +5554,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -5675,6 +5710,10 @@ paths:
                   indicatorComputed: 22
                   noData: 2
                 errorCode: ERR-16-110
+                stages:
+                - stage: COLLECT
+                  state: SUCCEEDED
+                  durationMs: 1200
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -5809,6 +5848,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -5913,6 +5957,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -6017,6 +6066,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -6122,6 +6176,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -6230,6 +6289,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -6339,6 +6403,11 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                newerRunId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+                submitChecks:
+                - check: completeness
+                  passed: true
+                  message: Đủ giải trình cho chỉ tiêu bắt buộc.
                 documentNumber: 125/BC-STTTT
                 recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
@@ -6479,9 +6548,14 @@ paths:
                   submittedAt: '2026-11-26T08:00:00+07:00'
                   periodCode: M-2026-10
                   link: /giam-sat/chi-tieu/duyet
+                  ownedByMe: false
                 page: 0
                 size: 20
                 totalElements: 1
+                facets:
+                  INDICATOR_VERSION: 2
+                  MANUAL_VALUE: 5
+                  REPORT: 1
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -7323,6 +7397,18 @@ paths:
                   statusA: AT_RISK
                   statusB: AT_RISK
                   definitionChanged: false
+                periodState: COMPUTED
+                staleSources:
+                - ph08-dq-kpi
+                yoy:
+                - indicatorCode: httt-ket-noi-ty-le
+                  valueA: 82.5
+                  valueB: 78.0
+                  delta: 4.5
+                  deltaPct: 5.8
+                  statusA: AT_RISK
+                  statusB: AT_RISK
+                  definitionChanged: false
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -7507,6 +7593,8 @@ paths:
                   value: 68
                   status: AT_RISK
                 tenantCount: 5
+                rank: 2
+                peerCount: 4
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -7579,6 +7667,10 @@ paths:
                     indicatorComputed: 22
                     noData: 2
                   errorCode: ERR-16-110
+                  stages:
+                  - stage: COLLECT
+                    state: SUCCEEDED
+                    durationMs: 1200
                 exports:
                   running: 0
                   failed24h: 0
@@ -9968,7 +10060,8 @@ paths:
       - oauth2Machine:
         - kpi.national-receipt
       x-datahub-internal: true
-      description: Chỉ qua `/internal` trong mạng nội bộ, scope `kpi.national-receipt` của PH-14. Mã băm không khớp ghi ERR-16-124.
+      description: 'Chỉ qua `/internal` trong mạng nội bộ, scope `kpi.national-receipt` của PH-14. Mã băm không khớp ghi ERR-16-124. Biên nhận trùng `channelMessageId`
+        của cùng gói là lũy đẳng: trả `204`, không ghi thêm dòng nhật ký.'
       parameters:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -12180,6 +12273,21 @@ components:
       required:
       - indicatorTotal
       - indicatorComputed
+    RunStage:
+      type: object
+      description: Một bước của lần tổng hợp (sáu bước), dùng cho lưới tác vụ.
+      properties:
+        stage:
+          type: string
+          maxLength: 32
+        state:
+          type: string
+          maxLength: 16
+        durationMs:
+          type: integer
+      required:
+      - stage
+      - state
     Run:
       type: object
       description: Lần tổng hợp (kpi_aggregation_run).
@@ -12217,6 +12325,10 @@ components:
         errorCode:
           type: string
           pattern: ^ERR-16-[0-9]{3}$
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunStage'
       required:
       - runId
       - periodCode
@@ -12674,6 +12786,20 @@ components:
       required:
       - signer
       - signedAt
+    SubmitCheck:
+      type: object
+      description: Một điều kiện gửi duyệt của báo cáo.
+      properties:
+        check:
+          type: string
+          maxLength: 32
+        passed:
+          type: boolean
+        message:
+          type: string
+      required:
+      - check
+      - passed
     Report:
       type: object
       description: Báo cáo (kpi_report và phiên bản hiện hành).
@@ -12744,6 +12870,13 @@ components:
           $ref: '#/components/schemas/Signature'
         wormRef:
           type: string
+        newerRunId:
+          type: string
+          format: uuid
+        submitChecks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmitCheck'
         documentNumber:
           type: string
           maxLength: 64
@@ -13020,13 +13153,25 @@ components:
           pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
         link:
           type: string
+        ownedByMe:
+          type: boolean
       required:
       - itemType
       - ref
       - title
+    ReviewFacets:
+      type: object
+      description: Số việc chờ theo loại.
+      properties:
+        INDICATOR_VERSION:
+          type: integer
+        MANUAL_VALUE:
+          type: integer
+        REPORT:
+          type: integer
     ReviewQueuePage:
       type: object
-      description: Trang kết quả.
+      description: Trang việc chờ duyệt; `facets` đếm theo loại việc, `ownedByMe` khóa nút bốn mắt ngay ở danh sách.
       properties:
         items:
           type: array
@@ -13038,6 +13183,8 @@ components:
           type: integer
         totalElements:
           type: integer
+        facets:
+          $ref: '#/components/schemas/ReviewFacets'
       required:
       - items
       - page
@@ -13587,6 +13734,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CompareItem'
+        periodState:
+          $ref: '#/components/schemas/PeriodState'
+        staleSources:
+          type: array
+          items:
+            type: string
+            pattern: ^[a-z][a-z0-9-]{2,62}$
+        yoy:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompareItem'
       required:
       - periodCode
       - view
@@ -13658,6 +13816,10 @@ components:
           items:
             $ref: '#/components/schemas/ComparisonTenant'
         tenantCount:
+          type: integer
+        rank:
+          type: integer
+        peerCount:
           type: integer
       required:
       - indicatorCode
