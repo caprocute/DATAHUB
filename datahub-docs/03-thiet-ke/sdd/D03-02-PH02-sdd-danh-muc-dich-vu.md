@@ -190,18 +190,20 @@ Bảng dưới liệt kê từng bên gọi hoặc được gọi, hướng gọ
 | Bên | Hướng | Cách | Dùng cho |
 |---|---|---|---|
 | Module `onboarding` (PH-01) cùng DU | PH-02 đọc | `SystemDirectoryApi` (Modulith, trong tiến trình) | HTTT `ACTIVE`, đơn vị chủ quản, đầu mối kỹ thuật, định danh máy (FR-02-004, 046, 048) |
-| Module `onboarding` | PH-01 → PH-02 | Sự kiện PH-01 (tạm ngừng, thu hồi HTTT, cấp xong định danh máy) | FR-02-051, 048 |
+| Module `onboarding` | PH-01 → PH-02 | Sự kiện PH-01: EVT-01-03 (tạm ngừng, thu hồi HTTT), EVT-01-11 (trần phạm vi đổi), cấp xong định danh máy; `checkWithinCeiling` kiểm đăng ký không vượt trần (BR-02-041, đã chốt 27/11/2026) | FR-02-051, 048, 046, 047 |
 | Module `gateway` (PH-03) cùng DU | PH-02 → PH-03 | Cổng `catalog.spi.GatewayApplyPort` do `gateway` cài đặt | Yêu cầu nạp cấu hình, hỏi trạng thái đối soát (FR-02-036, 048, 060) |
 | Module `gateway` | PH-03 → PH-02 | `catalog.api.PublishedConfigApi` (phạm vi `catalog:gateway-read`), `GatewayAckApi` (phạm vi `catalog:gateway-ack`) (API-02-080, 082) | Lấy dữ liệu công bố, xác nhận đã nạp |
 | Module `portal` (PH-15) cùng DU | PH-15 → PH-02 | `catalog.api.CatalogQueryApi` (API-02-081) và EVT-02-* | Hiển thị danh mục, đặc tả đã gộp |
 | PH-04 | hai chiều | REST `/api/integration/v1` và EVT-04-02, 04, 07 | Sinh khung luồng, đọc đặc tả luồng, nhận sự kiện phát hành luồng (FR-02-013, 026) |
 | PH-05 | PH-02 đọc | REST `/api/adapter/v1` (API-05-031, 089) | Kiểm tra kết nối cho backend `SYSTEM` (FR-02-022) |
 | PH-10 | PH-02 đọc | REST `/api/event/v1/topics` và EVT-10-01, 03, 04 | Dịch vụ sự kiện (FR-02-009) |
-| PH-12 | PH-02 gọi | REST, token dịch vụ | Gắn, gỡ phạm vi `api:*` ở client Keycloak, cập nhật chính sách OPA (FR-02-048) |
+| PH-12 | PH-02 gọi | REST, token dịch vụ | Gắn, gỡ phạm vi `api:*` ở client Keycloak, cập nhật chính sách OPA (FR-02-048); khi nhận EVT-01-11 thì PH-02 gọi API-12-068 thay tập scope (PH-12 không nghe EVT-01-11) |
 | PH-13 | PH-02 đọc | Truy vấn Mimir theo tenant (`X-Scope-OrgID`) | SLA thực tế, sức khỏe backend, thống kê (FR-02-025, 056, 058) |
 | PH-14 | PH-02 gọi | REST nội bộ, `Idempotency-Key` | Gửi, rút danh mục quốc gia (FR-02-053) |
 | PH-18 | PH-02 đọc, gửi | `ParameterApi` có đệm 60 giây; `TaskInboxApi`, `NotificationApi`; trạng thái đóng băng qua API-18-122 (`freeze-status`, scope `ops:calendar-read`) | Tham số `02.*`, việc duyệt, thông báo; PH-02 không giữ cửa sổ đóng băng riêng, đang đóng băng thì chặn thay đổi môi trường thật bằng ERR-02-039 |
-| PH-16 | PH-16 đọc | `catalog:metrics-read` (FR-02-059) | Chỉ số tuân thủ |
+| PH-14 | PH-14 → PH-02 | API nhận bản nháp "API dịch vụ quốc gia" (`origin = NATIONAL`, `Idempotency-Key`, chỉ tạo `DRAFT`, không tự công bố); EVT-02-05 mang `apiCode`; danh sách dịch vụ chia sẻ là API `PUBLISHED` mức `NATIONAL`, `PUBLIC` (đã chốt 27/11/2026, mã API cấp khi PH-14 chốt hợp đồng) | FR-02-053 |
+| PH-16 | PH-16 đọc | `catalog:metrics-read` (FR-02-059) | Chỉ số tuân thủ; sau khi PH-16 chốt danh sách trường (FR-16-048), PH-02 phát thêm `componentCode`, loại, phiên bản, vòng đời, `dependsOn`, `contentHash` ở sự kiện và có API liệt kê để đối chiếu (đã chốt 27/11/2026) |
+| PH-17 | `svc-assist-index` đọc | `catalog:read-meta` trên API-02-004, 005 (đã chốt 27/11/2026) | Chỉ siêu dữ liệu danh mục cho công cụ chỉ đọc của trợ lý AI; không trả đặc tả, gói, backend |
 | DD-12 (quét mã độc) | PH-02 gọi | ClamAV qua cổng chung | Tệp đặc tả, gói nhập (SEC-45) |
 
 : Phụ thuộc với module và phân hệ khác
@@ -687,7 +689,7 @@ Kết quả lưu ở `lint_finding` theo `(version_id, rule_id, fingerprint)`: l
 
 Chi tiết thiết kế:
 
-Backend không có trường URL tự do. `Backend.kind = SYSTEM` mang `targetRef = {connectionCode, basePath}` trỏ tới kết nối loại HTTP đã được duyệt ở PH-05 và được cấp cho tenant; `kind = FLOW` mang `{flowCode, environment}` của luồng PH-04 cùng tenant. Cách này làm cho BR-02-023 (đích nằm trong danh sách cho phép, TLS ≥ 1.2, không địa chỉ nội bộ) đúng **theo cấu trúc**: kiểm tra địa chỉ do PH-05 làm lúc duyệt kết nối (SEC-16), PH-02 chỉ xác minh kết nối còn hiệu lực và đúng loại, và từ chối tên máy chủ chứa địa chỉ IP, `localhost`, hậu tố nội bộ làm lớp phòng thủ thứ hai. Việc cho phép "cấp kết nối cho API của PH-02" ở PH-05 là điều kiện cần (ghi ở "Đề nghị đồng bộ"). `TargetPolicy` còn kiểm trọng số 0…100 và tổng lớn hơn 0 (BR-02-024), `timeoutMs` ≤ `02.backend.max-timeout-ms`, thử lại chỉ cho phương thức an toàn hoặc thao tác khai `x-dh-idempotent: true`, số backend ≤ `02.backend.max-per-version`.
+Backend không có trường URL tự do. `Backend.kind = SYSTEM` mang `targetRef = {connectionCode, basePath}` trỏ tới kết nối loại HTTP đã được duyệt ở PH-05 và được cấp cho API qua phạm vi cấp `API` (đã chốt 27/11/2026, ngoài `WORKSPACE` và `FLOW`; PH-05 kiểm tra `apiCode` tồn tại ở PH-02, môi trường tương ứng và loại kết nối `http-*`); `kind = FLOW` mang `{flowCode, environment}` của luồng PH-04 cùng tenant. Cách này làm cho BR-02-023 (đích nằm trong danh sách cho phép, TLS ≥ 1.2, không địa chỉ nội bộ) đúng **theo cấu trúc**: kiểm tra địa chỉ do PH-05 làm lúc duyệt kết nối (SEC-16), PH-02 chỉ xác minh kết nối còn hiệu lực và đúng loại, và từ chối tên máy chủ chứa địa chỉ IP, `localhost`, hậu tố nội bộ làm lớp phòng thủ thứ hai. Việc cho phép "cấp kết nối cho API của PH-02" ở PH-05 là điều kiện cần (ghi ở "Đề nghị đồng bộ"). `TargetPolicy` còn kiểm trọng số 0…100 và tổng lớn hơn 0 (BR-02-024), `timeoutMs` ≤ `02.backend.max-timeout-ms`, thử lại chỉ cho phương thức an toàn hoặc thao tác khai `x-dh-idempotent: true`, số backend ≤ `02.backend.max-per-version`.
 
 Cấu hình cân bằng tải và kiểm tra sức khỏe lưu thành dữ liệu (kiểu `roundrobin` có trọng số; kiểm tra chủ động theo đường dẫn, chu kỳ, ngưỡng lần đạt và lần hỏng; ngưỡng ngắt thụ động) và đi tới gateway qua dữ liệu công bố (mục 4.10); PH-03 mới là nơi dịch sang cấu hình APISIX. `HealthReader` đọc trạng thái thật từ `MetricsReadPort.backendHealth`, đệm 30 giây, trả `UP`, `DEGRADED`, `DOWN` hoặc `UNKNOWN` (FR-02-025).
 
@@ -970,7 +972,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-02-061; BR-02-015, 016, 036; LGC-APIM-001…021 (phần được di trú).
 
-**Giao diện vào.** API-02-085…087.
+**Giao diện vào.** API-02-085…087. Đã chốt 27/11/2026: giữ API nhập riêng của PH-02; khi PH-18 chốt khung API nhập chung, API này nhận thêm tiêu đề `X-Datahub-Migration: true` và khóa lũy đẳng `legacySystem:objectType:legacyKey`, PH-18 gọi qua API nhập riêng này.
 
 **Phụ thuộc ra.** ClamAV, Garage (`legacy/`), `SpecIngestService`, `SecretScanner`, `PlanService`, `SubscriptionService`, PH-01 (`applicationMap`).
 
@@ -1793,7 +1795,7 @@ Bảng dưới liệt kê rủi ro kỹ thuật của PH-02, mức độ và cá
 | Số phạm vi trong token quá lớn với HTTT có nhiều đăng ký (Q02-24) | Trung bình | Trần 50 phạm vi mỗi đăng ký, gom theo API; phương án dùng dữ liệu OPA thay cho phạm vi |
 | Lùi `source_version` sau DR | Trung bình | `EpochGuard` nhảy tiến và dựng lại (mục 11); kiểm thử hỗn loạn |
 | Đặc tả độc hại làm hết bộ nhớ pod `api` | Trung bình | Giới hạn đồng thời và hạn thời gian, `lint-worker` cô lập ở hồ sơ lớn, kiểm thử bộ đặc tả độc hại |
-| PH-05 không cho "cấp kết nối cho API" (đề nghị ở FRS) | Trung bình | Phương án dự phòng: backend `SYSTEM` chỉ qua luồng PH-04; ghi vào Q02-06 |
+| PH-05 chưa xác nhận phạm vi cấp kết nối `API` (đã chốt 27/11/2026, cần chủ PH-05 và PH-02 xác nhận vì đổi enum ở OpenAPI, DDL, giao diện) | Trung bình | Phương án dự phòng: backend `SYSTEM` chỉ qua luồng PH-04; ghi vào Q02-06 |
 | Tìm kiếm PostgreSQL không đạt p95 ở hồ sơ lớn | Thấp | `SearchEngine` thay được bằng OpenSearch, đã có giao diện (Q02-21) |
 | Điểm tuần tự ở `config_epoch` khi nhiều thay đổi dồn | Thấp | Chỉ giữ ở cuối giao dịch; đo ở bước 3; nếu cần thì bump theo lô |
 
@@ -1853,4 +1855,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: vị trí trong kiến trúc, cấu trúc mã `vn.datahub.connect.catalog`, 14 thành phần với bảng đặc tả 10 mục, 8 biểu đồ tuần tự, bảng chuyển trạng thái, xử lý lỗi và saga, cấu hình, khả năng mở rộng, bảo mật theo SEC, 10 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: số API 98; phạm vi `catalog:gateway-read` và `catalog:gateway-ack`; luồng ndjson của API-02-080; sửa backend sau công bố qua `BACKEND_CHANGE`; ghi giao diện vào của API-02-092…098; Giới thiệu theo khuôn; câu mở các mục; bỏ các đề nghị đồng bộ đã thực hiện |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: khớp DDL (api_owner_transfer, adjust_policy, auth_rank, khóa duy nhất từng phần, tác vụ dọn dữ liệu) và đọc đóng băng qua PH-18 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: khớp DDL (api_owner_transfer, adjust_policy, auth_rank, khóa duy nhất từng phần, tác vụ dọn dữ liệu) và đọc đóng băng qua PH-18; chốt câu hỏi mở đợt đồng bộ: Q422 (phạm vi cấp kết nối PH-05 cho API); Q399, Q425, Q426, Q428 (scope catalog:read-meta, API nhận bản nháp quốc gia, trường tự đăng ký kiến trúc, khung API nhập) |

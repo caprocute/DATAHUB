@@ -509,7 +509,7 @@ PH-13 phát 14 sự kiện (EVT-13-01…14) và nhận hai topic vào không đ�
 | EVT-13-01 | `{tenant}.obs.alert.fired.v1` | Cảnh báo sang `FIRING` (FR-13-044). | `alertId` | 7 ngày | PH-18, trung tâm thông báo |
 | EVT-13-02 | `{tenant}.obs.alert.resolved.v1` | Cảnh báo sang `RESOLVED`, tự động hoặc thủ công (FR-13-044, 047). | `alertId` | 7 ngày | PH-18, trung tâm thông báo |
 | EVT-13-03 | `{tenant}.obs.alert.escalated.v1` | Cảnh báo leo thang lên cấp mới hoặc hết cấp (FR-13-046). | `alertId` | 7 ngày | PH-18 |
-| EVT-13-04 | `{tenant}.obs.security-alert.raised.v1` | Cảnh báo an ninh phát hiện, hoặc đề xuất tạm ngừng HTTT (FR-13-052, 053). | `alertId` | 30 ngày | PH-01 (đề xuất), PH-18, bộ xuất SIEM |
+| EVT-13-04 | `{tenant}.obs.security-alert.raised.v1` | Cảnh báo an ninh phát hiện (FR-13-052); đề xuất tạm ngừng HTTT đi bằng API-01-089 của PH-01, không qua topic này (FR-13-053). | `alertId` | 30 ngày | PH-18, bộ xuất SIEM |
 | EVT-13-05 | `{tenant}.obs.audit.chain-broken.v1` | Phát hiện đứt chuỗi kiểm toán hoặc neo không khớp (FR-13-015). | `tenantId` | 30 ngày | PH-18, bộ xuất SIEM |
 | EVT-13-06 | `{tenant}.obs.audit.anchor-created.v1` | Neo băm mới được ký (FR-13-012). | `anchorId` | 7 ngày | Bộ xuất SIEM |
 | EVT-13-07 | `{tenant}.obs.audit.verification-completed.v1` | Kiểm tra toàn vẹn xong (FR-13-014). | `verificationId` | 7 ngày | PH-18, UI-13-14 |
@@ -604,7 +604,7 @@ PH-13 vừa là bên cung cấp (số liệu, sức khỏe, lịch sử, ngữ c
 |---|---|---|---|
 | DU nguồn | DU → PH-13 | Topic `audit.recorded` (chữ ký `dh-mac`); dự phòng API-13-089 (scope `audit:write`) | Bộ đếm `dh_audit_emitted_total` để đối chiếu hằng ngày (FR-13-017); DU không có quyền ghi vào bảng |
 | DU nguồn | PH-13 → DU | EVT-13-09 (đối chiếu lệch); API-13-076 cho tab Lịch sử (DU gọi, tự kiểm quyền `read` của đối tượng trước) | Tab Lịch sử của màn chi tiết thuộc phân hệ chủ, không phải màn của PH-13 (FR-13-022) |
-| PH-01 | PH-13 → PH-01 | EVT-13-04 (đề xuất tạm ngừng HTTT) | PH-13 chỉ đề xuất; quyết định tạm ngừng ở PH-01 |
+| PH-01 | PH-13 → PH-01 | API-01-089 (`POST /api/onboarding/v1/internal/suspension-proposals`, scope `onboarding:suspension-proposal`, tài khoản dịch vụ của `dh-platform`) | PH-13 chỉ đề xuất; PH-01 tạo việc khẩn cho SO, SO quyết định bằng thao tác khẩn FR-01-032; PH-01 không khả dụng thì API-13-060 trả ERR-13-014 (đã chốt 27/11/2026, Q13-12) |
 | PH-03 (APISIX) | APISIX → PH-13 | Topic `access.logged`; route công bố `/api/observability/v1` và `/api/audit/v1` cho BFF | `/api/platform/v1` và `/internal/*` chỉ ở `apisix-int`, không ra biên |
 | PH-04, PH-05, PH-10, PH-19 | Nguồn chỉ số, log, trace | Chỉ số theo nhãn chuẩn (FRS §4.8), OTLP; PH-05 phát EVT-05-06, 10, 11, 14; PH-10 cấp topic và ACL cho `{tenant}.obs.*` | PH-13 đọc chỉ số trục sự kiện bằng scope `event:metrics-read` của PH-10 (FR-10-059) |
 | PH-12 | PH-13 → PH-12 | `PermissionApi` (kiểm `PERM-13-*`), `StepUpApi` (xác thực lại phiên), `recordCrossTenant` (ghi hai chuỗi) | Quyết định từ chối và đăng nhập của PH-12 là nguồn kiểm toán và an ninh |
@@ -645,7 +645,7 @@ Bảng dưới là 44 mã người gọi API có thể nhận; cột cuối cho 
 | ERR-13-011 | 429 | Quá nhiều truy vấn đồng thời | 019, 020, 021, 022, 023, 025, 067, 074 |
 | ERR-13-012 | 422 | Thiếu lý do truy vấn kiểm toán | 074, 082 |
 | ERR-13-013 | 422 | Phạm vi truy vấn hoặc xuất quá rộng | 074, 082 |
-| ERR-13-014 | 503 | Phụ thuộc không khả dụng (Mimir, Loki, Tempo, ClickHouse, OpenBao, WORM, Alertmanager, PH-01…) | 36 API (chung) |
+| ERR-13-014 | 503 | Phụ thuộc không khả dụng (Mimir, Loki, Tempo, ClickHouse, OpenBao, WORM, Alertmanager, PH-01…) | 37 API (chung) |
 | ERR-13-015 | 504 | Truy vấn quá thời gian chờ | 019, 020, 022, 023, 025, 039, 067, 074 |
 | ERR-13-016 | 423 | Tenant đang tạm ngừng, chỉ đọc | 24 API (chung) |
 | ERR-13-017 | 422 | Luật thiếu runbook hoặc runbook thiếu mục | 036, 038, 043, 044 |
@@ -2255,9 +2255,9 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Phản hồi thành công.** `200` thành công, `SecurityAlert`.
 
-**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-13-001, ERR-13-003, ERR-13-007, ERR-13-008, ERR-13-009, ERR-13-010, ERR-13-016, ERR-13-020, ERR-13-028 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`, `503`; mã lỗi của thao tác: ERR-13-001, ERR-13-003, ERR-13-007, ERR-13-008, ERR-13-009, ERR-13-010, ERR-13-014, ERR-13-016, ERR-13-020, ERR-13-028 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Chỉ đề xuất; quyết định ở PH-01 (EVT-13-04).
+**Ghi chú.** Chỉ đề xuất: PH-13 gọi API-01-089 của PH-01 bằng token dịch vụ (scope `onboarding:suspension-proposal`) để PH-01 tạo việc khẩn cho SO; SO quyết định bằng thao tác khẩn FR-01-032 ở PH-01 (đã chốt 27/11/2026, Q13-12). PH-01 không khả dụng trả ERR-13-014, đề xuất chưa gửi.
 :::
 
 #### API-13-061 · Danh sách mục tiêu SIEM
@@ -3025,4 +3025,4 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, quy ước chung, xác thực, danh mục 90 endpoint, 14 sự kiện và hai topic vào, hợp đồng với phân hệ khác, bảng mã lỗi, kiểm tra hợp đồng, ánh xạ hệ cũ, 5 câu hỏi mở (Q13-55…59), chương đặc tả từng endpoint sinh từ OpenAPI, đề nghị đồng bộ |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tiêu đề X-DH-Grant-Id thay claim xt_session, ETag và ánh xạ lỗi CSDL, sessionId, spansTotal, quarantineCount |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ghi rõ không có API xác nhận hàng loạt, bên gọi của API-13-072, 073, 089; thêm ví dụ `AuditRecordPage`, `AuditRecordDetail` vào OpenAPI |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ghi rõ không có API xác nhận hàng loạt, bên gọi của API-13-072, 073, 089; thêm ví dụ `AuditRecordPage`, `AuditRecordDetail` vào OpenAPI; chốt câu hỏi mở đợt đồng bộ: Q390 |

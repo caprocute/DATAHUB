@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH13
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, kiểm toán viên, hội đồng thẩm định
@@ -2126,16 +2126,16 @@ Hai schema nằm trên `pg-core`, chịu chính sách sao lưu chung của cụm
 
 ### 7.2. Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
 
-Khôi phục là đường ngoại lệ so với BR-13-033 (PH-13 không có chức năng nối lại chuỗi): đây là thủ tục của đội vận hành, có biên bản, không có màn hình hay API, và chỉ thêm lại các bản ghi vốn đã tồn tại và kiểm chứng được bằng neo. Trigger `tg_audit_chain_guard` vẫn áp dụng nên không thể dựng chuỗi sai.
+Khôi phục là đường ngoại lệ so với BR-13-033 (PH-13 không có chức năng nối lại chuỗi), đã có FR-13-062 và UC-13-43 (mức C, Đợt sau; chủ đầu tư chốt 27/11/2026): đây là thủ tục của đội vận hành, có biên bản, không có màn hình hay API, và chỉ thêm lại các bản ghi vốn đã tồn tại và kiểm chứng được bằng neo. Trigger `tg_audit_chain_guard` vẫn áp dụng nên không thể dựng chuỗi sai.
 
 1. Khôi phục PostgreSQL tới điểm gần nhất (PITR hoặc chuyển sang bản sao DR) và mở ở chế độ chỉ-đọc; chưa cho `ingest` ghi.
 2. So `audit_chain.head_seq` và `head_hash` của từng tenant với lô WORM mới nhất (`audit_worm_batch` của bản khôi phục và danh sách đối tượng thực ở WORM) và với neo gần nhất.
 3. Nếu bảng đứng sau WORM (mất tối đa khoảng 5 phút), công cụ `AuditRestore` chạy dưới vai trò di trú trong cửa sổ bảo trì: đọc lô từ WORM, kiểm băm lô và băm từng bản ghi, chèn nguyên văn (giữ `seq`, `recorded_at`, `prev_hash`, `hash`) theo thứ tự rồi nhích đầu chuỗi; `tg_audit_chain_guard` kiểm liền kề và nối đúng. Phân vùng của các tháng liên quan phải có sẵn (`p_ensure_month_partitions`).
 4. Mở cho `ingest` ghi lại. Bản ghi chưa kịp lên WORM được DU gửi lại từ hộp thư đi hoặc Kafka (giữ 7 ngày); khử trùng theo `id` bỏ bản đã nạp từ WORM, bản còn lại nhận `seq` mới nối tiếp.
 5. Chạy lượt xác minh `ON_DEMAND` toàn chuỗi cho từng tenant; chỉ khi đạt mới coi là xong. Bản ghi `AUDIT.CHAIN.RESTORE` (lý do, số tenant, khoảng `seq` nạp lại) được ghi vào chuỗi `PLATFORM` và gửi SIEM.
-6. Biên bản ký bởi cán bộ ATTT và quản trị nền tảng, lưu ở `dh-evidence`.
+6. Biên bản do SO và TA cùng ký (BR-13-033, FR-13-062), lưu ở `dh-evidence`.
 
-Quy trình này chưa có FR, UC hay SDD nên được ghi ở mục đề nghị đồng bộ; thiết kế CSDL đã hỗ trợ (chèn nguyên văn qua đường kiểm liền kề) nhưng cần xác nhận quyền chạy `AuditRestore` dưới `ph13_owner` ở D04-02.
+Quy trình này đã có FR-13-062 và UC-13-43; SDD chưa mô tả công cụ vì thuộc Đợt sau. Thiết kế CSDL đã hỗ trợ (chèn nguyên văn qua đường kiểm liền kề) nhưng cần xác nhận quyền chạy `AuditRestore` dưới `ph13_owner` ở D04-02.
 
 ### 7.3. Mã hóa và bảo vệ dữ liệu
 
@@ -2310,5 +2310,6 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; các thay 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: hai schema `ph13_audit`, `ph13_obs` (33 bảng, 22 thực thể), chuỗi băm chỉ-thêm theo tenant, RLS, trigger bất biến, thủ tục lưu trữ phân vùng; DDL đã chạy thử trên PostgreSQL 16; bài kiểm cô lập và bất biến 171 khối đạt; đo thử tốc độ ghi chuỗi; kho ngoài PostgreSQL; sao lưu, khôi phục, ánh xạ dữ liệu hệ cũ; 5 câu hỏi mở Q13-50…54 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: thêm đoạn mở cho các mục 0.2, 0.5, 7.5, 8.1, 8.4 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q419 |
 
 

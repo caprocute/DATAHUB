@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-03-PH16
 ten: Đặc tả yêu cầu chức năng phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
 phien_ban: 0.3
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, lãnh đạo UBND và sở ngành, quản trị tỉnh, cán bộ tổng hợp, kỹ sư dh-platform, kiểm thử viên
 phan_he: PH-16
@@ -259,7 +259,7 @@ Hình cho thấy ba điểm tách: thu thập không biết công thức, tính 
 
 ### 2.5. Quy trình nghiệp vụ liên quan
 
-Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho báo cáo chỉ tiêu; BP-07 "Giám sát, xử lý sự cố, báo cáo" chỉ nhắc báo cáo vận hành. Tài liệu đề nghị bổ sung BP-11 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" (Phụ lục B; BP-10 đã được PH-08 đề nghị).
+Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho báo cáo chỉ tiêu; BP-07 "Giám sát, xử lý sự cố, báo cáo" chỉ nhắc báo cáo vận hành. D02-01 mục 6.2 đã bổ sung (chốt 27/11/2026) BP-13 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" (BP-11 thuộc PH-08).
 
 | Quy trình | Bước có PH-16 |
 |---|---|
@@ -269,7 +269,7 @@ Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho báo cá
 | BP-05 Thanh toán và đối soát | Tỷ lệ đối soát khớp (KPI-13), thời gian phát hiện lệch (KPI-14) |
 | BP-07 Giám sát, xử lý sự cố, báo cáo | Sẵn sàng, độ trễ, MTTD, MTTR (KPI-03, 04, 15, 16); trạng thái vận hành của thành phần (FR-16-046) |
 | BP-08 Khởi tạo tenant | Thời gian khởi tạo tenant (KPI-12); tenant mới kế thừa bộ chỉ tiêu `COMMON` (FR-16-008) |
-| BP-11 (đề nghị) Tổng hợp và báo cáo chỉ tiêu | Mở kỳ, thu thập, nhập tay, tính, chốt, lập báo cáo, duyệt, công bố, phân phối, gửi quốc gia |
+| BP-13 Tổng hợp và báo cáo chỉ tiêu | Mở kỳ, thu thập, nhập tay, tính, chốt, lập báo cáo, duyệt, công bố, phân phối, gửi quốc gia |
 
 : Quy trình nghiệp vụ có PH-16 tham gia
 
@@ -4572,7 +4572,7 @@ PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 | D02-08 §3.2, §4 | Giữ `PERM-16-read`, `PERM-16-admin` và mở rộng vai trò theo ma trận 3.2 (read thêm PA, TO, SO, DS, PO, PU; admin thêm PA ở `COMMON`); thêm mười hai quyền `PERM-16-approve`, `PERM-16-source`, `PERM-16-manual`, `PERM-16-run`, `PERM-16-report`, `PERM-16-export`, `PERM-16-arch`, `PERM-16-arch-assess`, `PERM-16-national`, `PERM-16-compare`, `PERM-16-config`, `PERM-16-audit-read` (brief ghi "11 quyền"; đếm theo bảng là 12, gồm cả `PERM-16-audit-read`); cặp loại trừ ở 3.3; scope máy `kpi.read` (PH-17, cổng tỉnh, HTTT được cấp), `kpi.ingest` (phân hệ đẩy quan sát), `arch.register` (PH-01, 02, 04, 10, CI/GitOps), `kpi.national-receipt` (PH-14 trả biên nhận, API-16-124); cân nhắc vai trò người duyệt lãnh đạo (Q16-04) |
 | D00-04 §2, §3.1, §3.2, D00-02 | Dòng PH-16: tên "Báo cáo chỉ tiêu và sổ kiến trúc", tình trạng theo tập đã nộp; mở dải ADR 160–164 (đề xuất, chưa có tệp, nội dung ở 12.3); tiền tố tham số `16.`; topic `{tenant}.kpi.*`; chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận đủ bảy tập |
 | D00-03 | Ghi chú "PH-16 dùng gián tiếp, Nâng cấp (gián tiếp)" cho LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004, LGC-BUS-027, LGC-NGSP-004 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-16 làm chính |
-| D02-01, D02-02 §5 | D02-01: thêm BP-11 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" (mục 2.5); ghi KPI-01…18 được tính ở PH-16. D02-02 §5: dòng PH-16 có 58 FR, tham chiếu D02-03-PH16 |
+| D02-01, D02-02 §5 | D02-01: thêm BP-13 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" (mục 6.2); ghi KPI-01…18 được tính ở PH-16. D02-02 §5: dòng PH-16 có 58 FR, tham chiếu D02-03-PH16 |
 | D02-03-PH14, D03-02-PH14, D03-04-PH14 | Thêm loại nền tảng quốc gia mới cho gửi báo cáo chỉ tiêu và gửi sổ kiến trúc (đích tạm thời là hệ giả lập khi chưa có đặc tả, Q16-02, Q16-03); nhận gói từ outbox PH-16 kèm `contentHash`, trả trạng thái gửi và biên nhận về API-16-124 hoặc sự kiện; giữ thông tin xác thực quốc gia ở OpenBao |
 | D02-03-PH01, PH05, PH07, PH19 | Cung cấp API chỉ số theo kỳ (scope đọc chỉ số cấp cho PH-16): PH-01 số HTTT theo trạng thái, thời gian kết nạp (KPI-01, 05); PH-05 xác nhận API-05-092 cho PH-16; PH-07 số danh mục quản lý tập trung, độ trễ đồng bộ (KPI-10, 11); PH-19 tỷ lệ đối soát khớp, thời gian phát hiện lệch (KPI-13, 14), lọc `isTest`; API liệt kê đối tượng phục vụ đối chiếu sổ kiến trúc (FR-16-048) |
 | PH-13 (khi viết) | Sự kiện hoặc API chỉ số sẵn sàng tháng, độ trễ gateway p95, MTTD, MTTR mức 1, tỷ lệ nhật ký khai thác đủ (KPI-03, 04, 07, 15, 16); sự kiện trạng thái sức khỏe đối tượng giám sát cho FR-16-046; tiêu thụ EVT-16-03, 05, 06, 08…12, 14; nhận kiểm toán PH-16; kênh thư công vụ cho phân phối |
@@ -4635,6 +4635,6 @@ Phụ lục ghi các đề nghị dành cho FRS từ tập UC, SDD, CSDL, API, M
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 58 FR (M 37, S 17, C 4) đủ 17 mục chia chín nhóm, phủ 22 FR của SRS cũ; bộ 24 chỉ tiêu mẫu `COMMON` ứng với KPI-01…18; bảy máy trạng thái; 39 thực thể; 35 BR, 22 NFR, 24 tham số; 57 mã lỗi control và 25 mã thu thập, tính toán, gửi kèm câu thông báo; 13 sự kiện phát; 130 API dự kiến; 20 màn hình; 19 câu hỏi mở; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; đề xuất ADR 160–164; bỏ Backstage và NAS Connector riêng của SRS cũ |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với UC, SDD, CSDL, API, MH 0.1 (Phụ lục C, 27 đề nghị nhận, 6 không nhận): mỗi mã lỗi một câu chuẩn có tham số, FR ghi giá trị biến; mã mới ERR-16-058 (`Idempotency-Key` dùng lại), ERR-16-059 (không thuộc vai trò xác nhận), ERR-16-060 (khoảng thời gian vượt tối đa), ERR-16-061 (thiếu số ký hiệu, nơi nhận); sự kiện EVT-16-14 kỳ `CLOSED`, `REOPENED`; báo cáo `APPROVED` trả về soạn; tham số `16.overview.pinned-indicators`; scope `kpi.national-receipt`; 19 enum bổ sung, thêm `DRAFT` vào `report_template.state` ở Phụ lục A; tiền tố chỉ số `dh_kpi_`, `dh_arch_`; §10.2 trỏ ảnh hi-fi đã có |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, quy tắc bí danh và quyền so sánh ở FR-16-041, biên nhận trùng ở FR-16-053, tham số 16.* và API-13-067, 068 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ADR 095, quy tắc bí danh và quyền so sánh ở FR-16-041, biên nhận trùng ở FR-16-053, tham số 16.* và API-13-067, 068; chốt Q396: mã BP-13 cho quy trình tổng hợp và báo cáo chỉ tiêu |
 
 : Lịch sử phiên bản

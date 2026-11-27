@@ -26,7 +26,7 @@ CREATE TABLE ph02_catalog.async_operation (
   version          integer       NOT NULL DEFAULT 0,
   CONSTRAINT pk_async_operation PRIMARY KEY (id),
   CONSTRAINT ck_async_operation_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
-  CONSTRAINT ck_async_operation_kind CHECK (kind IN ('ROUTE_SKELETON', 'DIFF', 'LEGACY_IMPORT_COMMIT', 'SPEC_REFRESH', 'IMPACT_ANALYSIS')),
+  CONSTRAINT ck_async_operation_kind CHECK (kind IN ('ROUTE_SKELETON', 'DIFF', 'LEGACY_IMPORT_COMMIT', 'SPEC_REFRESH', 'IMPACT_ANALYSIS', 'NATIONAL_SYNC_RUN', 'GATEWAY_RECONCILE')),
   CONSTRAINT ck_async_operation_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_async_operation_progress CHECK (progress BETWEEN 0 AND 100),
   CONSTRAINT ck_async_operation_finished CHECK ((status IN ('SUCCEEDED', 'FAILED', 'CANCELLED')) = (finished_at IS NOT NULL)),

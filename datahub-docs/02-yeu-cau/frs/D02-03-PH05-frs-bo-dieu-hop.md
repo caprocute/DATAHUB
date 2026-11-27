@@ -338,7 +338,7 @@ Các phân hệ gọi nhau bằng token dịch vụ, không dùng tài khoản n
 | EN-05-01 | Loại kết nối (`ConnectionType`) | `typeCode`, nhóm giao thức, lược đồ tham số (JSON Schema), danh sách khóa bí mật, Kamelet giao thức, bước kiểm tra, mức hỗ trợ | Do nền tảng định nghĩa; tenant chỉ bật tắt và đặt trần (FR-05-061) |
 | EN-05-02 | Kết nối nguồn (`Connection`) | `connectionCode`, tên, `typeCode`, HTTT chủ quản (`systemCode` ở PH-01), mục đích (`READ`, `READ_WRITE`), trạng thái, chủ sở hữu, nhãn, phiên bản cấu hình | Mã bất biến |
 | EN-05-03 | Giá trị môi trường (`ConnectionEnvironment`) | `env`, tham số không bí mật, đường dẫn bí mật, phiên bản bí mật, trạng thái, lần kiểm tra đạt gần nhất | Một kết nối có tối đa ba giá trị |
-| EN-05-04 | Cấp kết nối (`ConnectionGrant`) | Kết nối, phạm vi (`WORKSPACE` hoặc `FLOW`), mã không gian hoặc mã luồng, môi trường được phép, thời hạn | |
+| EN-05-04 | Cấp kết nối (`ConnectionGrant`) | Kết nối, phạm vi (`WORKSPACE`, `FLOW` hoặc `API`), mã không gian, mã luồng hoặc mã API của PH-02, môi trường được phép, thời hạn | |
 | EN-05-05 | Lần kiểm tra kết nối (`ConnectionTest`) | Môi trường, kết quả từng bước, thời gian, người chạy, hướng dẫn khắc phục | Giữ 1 năm |
 | EN-05-06 | Mẫu sức khỏe (`HealthSample`) và trạng thái sức khỏe (`HealthState`) | Mức `HEALTHY`, `DEGRADED`, `UNHEALTHY`, `UNKNOWN`, lý do, độ trễ, tỷ lệ lỗi | Mẫu giữ 90 ngày |
 | EN-05-07 | Lần xoay bí mật (`SecretRotation`) | Môi trường, phiên bản cũ, mới, trạng thái, thời điểm kết thúc chuyển tiếp | |
@@ -1085,16 +1085,16 @@ sequenceDiagram
 
 **Truy vết.** REQ-05; LGC-BUS-032 (phân quyền theo nhóm của Bus).
 
-**Tiền điều kiện.** Kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04.
+**Tiền điều kiện.** Kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04; với phạm vi `API`, API tồn tại ở PH-02 (đã chốt 27/11/2026, Q383).
 
 **Kích hoạt.** Người dùng bấm "+ Cấp" ở tab Cấp sử dụng của UI-05-02, hoặc ở bước 5 của trình hướng dẫn tạo kết nối.
 
-**Đầu vào.** `scope` (`WORKSPACE`, `FLOW`), `workspaceCode` hoặc `flowCode`, `environments[]` (mặc định cả ba), `validUntil` (tùy chọn), `Idempotency-Key`. Thu hồi: `grantId`.
+**Đầu vào.** `scope` (`WORKSPACE`, `FLOW`, `API`), `workspaceCode`, `flowCode` hoặc `apiCode`, `environments[]` (mặc định cả ba), `validUntil` (tùy chọn), `Idempotency-Key`. Thu hồi: `grantId`.
 
 **Luồng xử lý chính.**
 
 1. Người dùng chọn phạm vi (không gian làm việc hoặc luồng), chọn mã không gian hoặc luồng, chọn các môi trường được phép (mặc định cả ba) và thời hạn (tùy chọn).
-2. Hệ thống kiểm tra không gian hoặc luồng tồn tại ở PH-04 (ERR-05-033; PH-04 không trả lời: ERR-05-029).
+2. Hệ thống kiểm tra không gian hoặc luồng tồn tại ở PH-04 (ERR-05-033; PH-04 không trả lời: ERR-05-029). Với phạm vi `API` (để backend `SYSTEM` của PH-02 dùng kết nối), hệ thống gọi API-02-002 của PH-02 bằng token dịch vụ để kiểm `apiCode` tồn tại (ERR-05-033; PH-02 không trả lời: ERR-05-029), kiểm môi trường được cấp trùng môi trường của API và loại kết nối thuộc nhóm `http-*` (sai: ERR-05-003).
 3. Với kết nối loại CSDL cho luồng (`db-flow`), hệ thống chỉ cho cấp theo luồng, trừ khi TA đã bật tham số `05.dbflow.allow-workspace-scope`.
 4. Hệ thống tạo cấp sử dụng; nếu đã có cấp giống hệt thì trả cấp cũ, không tạo trùng.
 5. Hệ thống phát EVT-05-05; trình thiết kế của không gian thấy kết nối trong ô chọn kết nối.
@@ -1104,7 +1104,7 @@ sequenceDiagram
 **Luồng ngoại lệ.**
 
 - Không gian hoặc luồng không tồn tại: ERR-05-033 (422).
-- Phạm vi không hợp lệ với loại kết nối: ERR-05-003 (400); "Kết nối CSDL cho luồng chỉ cấp được cho từng luồng."
+- Phạm vi không hợp lệ với loại kết nối: ERR-05-003 (400); "Kết nối CSDL cho luồng chỉ cấp được cho từng luồng." Phạm vi `API` với loại kết nối không phải `http-*`: ERR-05-003; "Chỉ kết nối HTTP cấp được cho API."
 - PH-04 không khả dụng: ERR-05-029 (503); "Chưa kiểm tra được không gian làm việc. Thử lại sau."
 
 **Đầu ra.** `201` cấp mới hoặc `200` cấp sẵn có; thu hồi `204`, kèm danh sách luồng bị ảnh hưởng.
@@ -4329,4 +4329,4 @@ Các mục `LGC-BUS-006`, `LGC-BUS-009`, `LGC-BUS-010`, `LGC-BUS-012`, `LGC-BUS-
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo quy tắc tối ưu token: sổ tra cứu D00-04, khuôn K-FRS, nguồn yêu cầu từ SRS-PH-05 của repo, Q359, ADR-067 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Nâng mức chi tiết theo khuôn trình bày mới: thêm chương Giới thiệu (thuật ngữ, tài liệu tham chiếu, cấu trúc), mục tiêu và kiến trúc thành phần, sơ đồ trình tự, danh sách chức năng, bảng đặc tả đầy đủ cho nhóm A, B (luồng chính, luồng thay thế, ngoại lệ kèm thông báo, kết quả, màn hình), bảng thông báo hiển thị, giao diện tiêu biểu. Nhóm C–H giữ nội dung 0.1, viết lại sau khi duyệt mẫu |
 | 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn đặc tả kết hợp 17 mục cho đủ 62 FR: giữ toàn bộ trường kỹ thuật của D00-01 §4.3 (đầu vào, đầu ra, mã lỗi theo bước, sự kiện, kiểm toán) và thêm các mục của mẫu thuyết minh (mục đích, kích hoạt, luồng thay thế, câu thông báo, kết quả, màn hình và API). Thêm bảng dữ liệu vào cho FR-05-023, 026, 031, 032, 036, 048; bảng ngưỡng sức khỏe, quy tắc kiểm tra tĩnh Kamelet; sơ đồ đánh giá sức khỏe, vòng đời tài khoản CSDL, bộ điều hợp, CDC, Kamelet; trình tự duyệt quyền ghi CSDL, lượt gọi bộ điều hợp, duyệt phiên bản, xử lý thay đổi lược đồ |
-| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: loại pulsar-bridge, bảng Kamelet nền nghiệp vụ, khóa bí mật chờ kích hoạt, người nhận EVT-05-08 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: loại pulsar-bridge, bảng Kamelet nền nghiệp vụ, khóa bí mật chờ kích hoạt, người nhận EVT-05-08; chốt câu hỏi mở đợt đồng bộ: Q383 |

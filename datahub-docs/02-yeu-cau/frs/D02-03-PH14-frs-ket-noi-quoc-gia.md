@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-03-PH14
 ten: Đặc tả yêu cầu chức năng phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.2
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-integration và dh-runtime, cán bộ ATTT, kiểm thử viên
 phan_he: PH-14
@@ -1283,7 +1283,7 @@ Ghi chú: `systemCode` (mã HTTT gọi) không do bên gọi khai mà lấy từ
 
 1. Cổng ghép các đầu vào và gọi OPA cục bộ với bó chính sách của tenant (SEC-26).
 2. OPA kiểm tra đăng ký sử dụng còn hiệu lực của HTTT với dịch vụ, `purposeCode` nằm trong tập mục đích HTTT đã đăng ký, và giờ gọi nằm trong khung cho phép nếu tenant đặt khung giờ.
-3. Với dịch vụ có `sensitivity` từ `RESTRICTED` trở lên, cổng gọi PH-09 kiểm tra mục đích có trong sổ hoạt động xử lý DLCN của HTTT và có cơ sở pháp lý hoặc chấp thuận của chủ quản dữ liệu.
+3. Với dịch vụ có `sensitivity` từ `RESTRICTED` trở lên, cổng gọi `purpose:decide` của PH-09 (API-09-227) để kiểm tra mục đích có trong sổ hoạt động xử lý DLCN của HTTT và có cơ sở pháp lý hoặc chấp thuận của chủ quản dữ liệu; phản hồi mang `ropaActivityId` của hoạt động xử lý tương ứng, vắng thì coi là mục đích chưa có trong sổ và từ chối (chủ đầu tư chốt 27/11/2026, p95 ≤ 200 ms theo NFR-09-027 của PH-09).
 4. Với dịch vụ `procedureCodeRequired`, cổng kiểm tra `procedureCode` đúng mẫu, thuộc danh mục TTHC và `caseCode` đúng định dạng (thiếu: ERR-14-107).
 5. Cổng ghi quyết định (cho phép hoặc từ chối, lý do) vào giao dịch; từ chối thì trả ERR-14-106 và không chạm đệm hay nền tảng.
 
@@ -3298,7 +3298,7 @@ Hình cho thấy bộ đồng bộ chỉ gửi phần thay đổi của các d�
 
 1. Với chiều xuống, bộ đồng bộ kéo cập nhật từ CSDL tổng hợp qua cổng, xác minh chữ ký và chuyển lô cho PH-06 (EVT-14-12 mang tham chiếu lô).
 2. Với chiều lên, bộ đồng bộ nhận lô từ PH-06 và kiểm tra mọi trường đã có ánh xạ ở PH-07 (thiếu: ERR-14-125, không gửi, báo PH-06 cần bổ sung ánh xạ).
-3. Bộ đồng bộ gọi PH-09 kiểm tra lô không chứa trường bị cấm gửi ra ngoài tỉnh (bị chặn: ERR-14-126, không gửi).
+3. Bộ đồng bộ gọi `classification:check` của PH-09 (API-09-231) với `egressScope` là `OUT_OF_PROVINCE` để kiểm tra lô không chứa trường có cờ `noEgress` (bị chặn: ERR-14-126, không gửi, kèm danh sách trường lấy từ `egressBlockedFields`); lời gọi bắt buộc trước mỗi lần gửi ra ngoài tỉnh, p95 ≤ 200 ms theo NFR-09-027, PH-09 không trả lời thì không gửi (ERR-14-132). Chủ đầu tư chốt 27/11/2026.
 4. Bộ đồng bộ ký và gửi lô qua đường ghi có chống trùng theo `batchRef`.
 5. Bộ đồng bộ nhận kết quả, đối soát từng bản ghi và báo cáo bản ghi lệch cho PH-06.
 6. Bộ đồng bộ ghi `sync_run` với `kind = MASTER_DATA`.
@@ -3348,7 +3348,7 @@ Mỗi lô gửi lên hoặc kéo xuống có tối đa 10.000 khóa; PH-06 đặ
 **Luồng xử lý chính.**
 
 1. TA chọn nguồn (danh mục công khai ở PH-07 hoặc tệp đã qua kiểm tra) và khai siêu dữ liệu.
-2. Hệ thống gọi PH-09 xác nhận nguồn không chứa trường dữ liệu cá nhân hay trường mức Hạn chế trở lên (không đạt: ERR-14-126).
+2. Hệ thống gọi PH-09 xác nhận nguồn không chứa trường dữ liệu cá nhân hay trường mức Hạn chế trở lên, và gọi `classification:check` với `egressScope` là `OUT_OF_PROVINCE` để kiểm cờ `noEgress` (không đạt: ERR-14-126).
 3. Hệ thống kiểm tra siêu dữ liệu đủ trường theo đặc tả NDOP đang dùng và hiện nhãn "đặc tả tạm thời" nếu `PROVISIONAL`.
 4. Với lần công bố đầu, hệ thống tạo việc duyệt; người duyệt khác người đề nghị duyệt (ERR-14-007 nếu trùng).
 5. Bộ đồng bộ chuyển tập dữ liệu sang định dạng NDOP (CSV hoặc JSON), gửi theo lô qua cổng với chống trùng theo (mã tập, phiên bản).
@@ -4099,7 +4099,7 @@ Các chỉ tiêu hiệu năng đo trên hồ sơ "tỉnh vừa" (GĐ-07 của D0
 | NFR-14-018 | Cảnh báo kịp thời | Chữ ký sai ≤ 1 phút; hạn mức 70%, 85%, 95% ≤ 2 phút; chứng thư 60, 30, 7 ngày; mất kết nối quá 5 phút ≤ 1 phút sau mốc | Từ lúc sự kiện xảy ra tới lúc thông báo |
 | NFR-14-019 | Quy mô mỗi tenant | 10 nền tảng, 300 dịch vụ, 1.000 luật định tuyến, 20 chứng thư, 50 điểm cuối chiều vào; toàn cụm 34 tenant | Kiểm thử dung lượng |
 | NFR-14-020 | Truy vết | 100% giao dịch có `transactionCode`, `traceId` nối với PH-04, PH-13, và nhật ký khai thác đủ HTTT, mục đích, mã hồ sơ | Đối chiếu giao dịch với vết (KPI-07) |
-| NFR-14-021 | Lưu giữ | Siêu dữ liệu giao dịch 5 năm (12 tháng trực tuyến, phần còn lại ở kho WORM); nội dung mã hóa mặc định 30 ngày; mức dùng hạn mức 2 năm; mẫu sức khỏe 90 ngày; phiên đồng bộ 3 năm; sự cố chữ ký 5 năm | SEC-62, mục 4.2 |
+| NFR-14-021 | Lưu giữ | Siêu dữ liệu giao dịch 5 năm (12 tháng trực tuyến, phần còn lại ở kho WORM); nội dung mã hóa mặc định 30 ngày; mức dùng hạn mức 2 năm; thống kê dùng theo giờ (`usage_hourly`) 24 tháng; thống kê đệm (`cache_stats`) 13 tháng; yêu cầu bất đồng bộ (`async_request`) 90 ngày sau khi kết thúc (ba thời hạn này do chủ đầu tư chốt 27/11/2026); mẫu sức khỏe 90 ngày; phiên đồng bộ 3 năm; sự cố chữ ký 5 năm | SEC-62, mục 4.2 |
 | NFR-14-022 | Tương thích hợp đồng | API `v1` chỉ thêm trường tùy chọn; sự kiện theo chế độ BACKWARD ở Apicurio | CI-5 |
 | NFR-14-023 | Khả năng truy cập | Màn UI-14-* đạt WCAG 2.2 AA theo D03-05 | Kiểm thử trợ năng |
 | NFR-14-024 | Cô lập tenant | 0 rò rỉ chéo tenant; khóa đệm, bộ đếm, đường dẫn bí mật, chủ đề Kafka đều có tiền tố tenant | Bộ kiểm thử rò rỉ chéo tenant ở CI (SEC-87) |
@@ -4326,7 +4326,7 @@ Chủ đề theo quy ước `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}
 
 ### 9.4. Danh mục API
 
-Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH14 xác nhận và định nghĩa đầy đủ (lược đồ, mã lỗi từng điểm cuối). Tiền tố mặt phẳng điều khiển `/api/national/v1`; mặt phẳng dữ liệu nội bộ `/internal/national/v1`; chiều vào `/inbound/v1` (không qua APISIX nội bộ mà qua vùng biên). Các thay đổi cần bốn mắt nhưng không có API duyệt riêng ở bảng (hạn mức, tham số, điểm cuối, công bố dữ liệu mở) dùng API duyệt dùng chung của hộp "Việc của tôi" (FR-00-070).
+Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH14 xác nhận và định nghĩa đầy đủ (lược đồ, mã lỗi từng điểm cuối). Tiền tố mặt phẳng điều khiển `/api/national/v1`; mặt phẳng dữ liệu nội bộ `/internal/national/v1`; chiều vào `/inbound/v1` (không qua APISIX nội bộ mà qua vùng biên). Các thay đổi cần bốn mắt nhưng không có API duyệt riêng ở bảng (hạn mức, tham số, điểm cuối, công bố dữ liệu mở) dùng API duyệt chung của PH-14 là API-14-093 (liệt kê yêu cầu chờ duyệt) và API-14-094 (duyệt hoặc từ chối), đã chốt ngày 27/11/2026, và hiện trong hộp "Việc của tôi" (FR-00-070).
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4422,6 +4422,8 @@ Mã API do tập này đề xuất theo thứ tự nhóm chức năng; D03-04-PH
 | API-14-090 | `POST /inbound-endpoints/{endpointCode}:confirm` | 039 |
 | API-14-091 | `GET /internal/national/v1/runtime-config` | 010, 012, 033 |
 | API-14-092 | `DELETE /certificates/{certCode}` | 029 |
+| API-14-093 | `GET /approval-requests` | 003, 005, 013, 028, 030, 032, 039, 045 |
+| API-14-094 | `POST /approval-requests/{approvalId}:decide` | 005, 032, 039, 045 |
 
 : Danh mục API của PH-14
 
@@ -4644,6 +4646,10 @@ Phân hệ được coi là đạt khi thỏa các tiêu chí sau; mỗi tiêu c
 12. Chạy song song với hệ cũ cho ít nhất một dịch vụ đọc đạt tỷ lệ khớp theo `14.parallel.match-ratio`; khóa của hệ cũ đã được xác nhận thu hồi (FR-14-025, FR-14-055).
 13. Mọi mục `LGC` ở mục 11.1 có kết luận và ca UAT tương ứng ở D05-02-PH14, và mọi FR cũ ở mục 11.2 có chỗ đứng đã kiểm thử.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-02 có thêm loại API "dịch vụ quốc gia" nhận bản nháp từ PH-14 (kèm `Idempotency-Key`), chỉ tạo `DRAFT` và không tự công bố; sự kiện đã công bố mang `apiCode`; PH-02 cung cấp danh sách dịch vụ chia sẻ ở trạng thái `PUBLISHED` để PH-14 lấy đăng ký lên Bộ (FR-14-009, FR-14-043). PH-02 ghi vào FRS và API của mình khi PH-14 chốt hợp đồng.
+
 ## Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -4677,7 +4683,7 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập FRS PH-14: 57 chức năng chia chín nhóm, theo khuôn K-FRS và chuẩn trình bày K-TRINH-BAY (khối đặc tả 17 mục). Căn cứ: SRS cũ của repo (14 FR, ánh xạ ở mục 11.2), phụ lục NGSP ở D00-03 §4.7 (9 mục `LGC`), GĐ-02, ADR-057, SEC-16, 24, 33, 36, THR-51…53. Kiến trúc thay Vault bằng OpenBao (ADR-012), thay Camel chung bằng hồ sơ `national-gateway` của Camel Quarkus (ADR-002). Có 14 câu hỏi mở (Q14-01…14) và mục Đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412, thêm tham số 14.* ở §8.2, làm rõ FR-14-016, 028, 044, EN-14-10, §12.1 và ERR-14-117; chốt Q392, Q448: PH-02 thêm loại API dịch vụ quốc gia nhận bản nháp từ PH-14, chỉ tạo DRAFT, không tự công bố; thêm API-14-093, 094 (duyệt bốn mắt chung) vào §9.4; chốt câu hỏi mở đợt đồng bộ: Q420, Q393 |
 
 
 

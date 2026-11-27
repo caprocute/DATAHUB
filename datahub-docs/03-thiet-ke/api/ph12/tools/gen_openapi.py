@@ -276,6 +276,7 @@ SCHEMAS = {
   "Policy": ent({"policyCode": CODE(63), "scope": R("PolicyScope"), "description": STR(500), "tags": arr(STR(32)), "publishedVersion": {"type": ["integer", "null"]},
                  "latestVersion": INT(), "isRoot": BOOL}, req=["policyCode", "scope"]),
   "PolicyPage": items("Policy"),
+  "RealmPage": items("Realm"),
   "PolicyCreate": obj({"policyCode": CODE(63), "scope": R("PolicyScope"), "description": STR(500, minLength=10), "tags": arr(STR(32), maxItems=10),
                        "content": STR(204800, description="Rego, qua `opa check` và `opa fmt`, ≤ 200 KiB."), "tests": arr(R("PolicyTestCase"), minItems=2)},
                       req=["policyCode", "scope", "description", "content", "tests"]),
@@ -368,11 +369,12 @@ LISTQ = {  # tham số lọc riêng từng danh sách
   "089": [Q("scope", R("PolicyScope")), Q("tag", STR(32))],
   "101": [Q("scope", R("PolicyScope")), Q("state", enum("BUILDING", "SIGNED", "PUBLISHED", "SUPERSEDED", "FAILED"))],
   "103": [Q("from", TS, "Từ thời điểm."), Q("to", TS), Q("subjectId", STR(128)), Q("allow", BOOL), Q("reason", R("DecisionReason")), Q("permission", STR(64)), Q("resourceId", STR(128)), Q("classification", CLS)],
+  "113": [Q("driftStatus", enum("IN_SYNC", "DRIFTED", "HELD", "UNKNOWN")), Q("state", R("RealmState"))],
   "105": [Q("from", TS), Q("to", TS), Q("type", STR(48)), Q("userId", STR(64)), Q("clientId", STR(64)), Q("result", enum("SUCCESS", "FAILURE")), Q("errorCode", STR(16))],
   "106": [Q("severity", enum("LOW", "MEDIUM", "HIGH", "CRITICAL")), Q("state", enum("OPEN", "ACKNOWLEDGED")), Q("ruleCode", STR(8))],
   "108": [Q("date", DATE), Q("orgCode", STR(64)), Q("days", INT(minimum=1, maximum=365))], "109": [Q("date", DATE), Q("orgCode", STR(64))],
 }
-PAGED = {"001", "014", "019", "025", "032", "037", "056", "089", "101", "103", "105", "106"}
+PAGED = {"001", "014", "019", "025", "032", "037", "056", "089", "101", "103", "105", "106", "113"}
 
 # mã: (operationId, body, resp, [ERR số], mô tả)
 X = {
@@ -487,6 +489,8 @@ X = {
  "109": ("getMfaCoverageReport", None, "MfaCoverageReport", [], ""),
  "110": ("getSettings", None, "Settings", [], ""),
  "111": ("putSettings", "SettingsUpdate", "Settings", [43], "Tham số bảo mật của realm được áp bằng GitOps (FR-12-042)."),
+ "112": ("putPolicyVersionDraft", "PolicyVersionCreate", "PolicyVersion", [24, 27, 28, 43], "Tự lưu bản nháp: chỉ phiên bản `DRAFT` của chính người soạn, kèm `If-Match`; phiên bản đã gửi duyệt hoặc đã phát hành trả ERR-12-027. Mỗi lần ghi đè xóa kết quả kiểm thử và chạy khô đã có (gắn với `contentHash` cũ)."),
+ "113": ("listRealms", None, "RealmPage", [], "Danh sách realm cho màn hình Realm của tenant; lọc `driftStatus=DRIFTED` để xem các realm lệch cấu hình so với mẫu. Phân trang chuẩn."),
 }
 STEPUP_EXCLUDE = {"091", "092", "094", "095", "096", "102", "107", "043", "054"}
 ACR3 = {"097", "098", "099", "100", "083", "084", "085", "070", "071", "038", "039", "040", "062"}
@@ -508,7 +512,7 @@ SCHEMAS.update({
 })
 # 4 lược đồ phát hành trong EXAMPLES bổ sung
 IFM = {"004", "005", "006", "007", "008", "023", "024", "027", "030", "031", "034", "035", "038", "039", "040", "048", "053", "055", "059", "060", "061", "062",
-       "064", "065", "068", "084", "085", "097", "098", "099", "111"}
+       "064", "065", "068", "084", "085", "097", "098", "099", "111", "112"}
 NOIDEM = {"074", "076", "077", "086", "087", "088", "094", "049", "054", "043", "045", "107", "044", "042"}
 FORMBODY = {"074", "076", "077"}
 PUBLIC = {"072", "073", "075"}

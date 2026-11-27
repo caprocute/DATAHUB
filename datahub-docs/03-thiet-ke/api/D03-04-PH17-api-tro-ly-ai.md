@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D03-04-PH17
 ten: Đặc tả API và sự kiện phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, kiểm thử viên, tích hợp viên, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-17
-mo_ta: Hợp đồng 193 operation OpenAPI 3.1 gồm 186 control plane và 7 data plane, 28 sự kiện AsyncAPI 3.0, quy ước RFC 9457, phân trang, khóa lạc quan, chống trùng và phát trực tuyến SSE của trợ lý AI, kèm bảng mã lỗi, ví dụ JSON và kiểm tra hợp đồng trong CI.
+mo_ta: Hợp đồng 194 operation OpenAPI 3.1 gồm 187 control plane và 7 data plane, 28 sự kiện AsyncAPI 3.0, quy ước RFC 9457, phân trang, khóa lạc quan, chống trùng và phát trực tuyến SSE của trợ lý AI, kèm bảng mã lỗi, ví dụ JSON và kiểm tra hợp đồng trong CI.
 tai_lieu_lien_quan: D02-03-PH17 FRS; D03-02-PH17 SDD; D03-03-PH17 CSDL; D03-06-PH17 Màn hình; D05-02-PH17 Test case
 ---
 
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D02-03-PH17 FRS; D03-02-PH17 SDD; D03-03-PH17 CSDL; D03-06-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Hợp đồng API của PH-17 gồm hai tệp sinh từ [D02-03-PH17](../../02-yeu-cau/frs/D02-03-PH17-frs-tro-ly-ai.md) §9: [`ph17/openapi-assist.yaml`](ph17/openapi-assist.yaml) (OpenAPI 3.1, 193 operation) và [`ph17/asyncapi-assist.yaml`](ph17/asyncapi-assist.yaml) (AsyncAPI 3.0, 28 kênh). Control plane `/api/assist/v1` (186 operation) phục vụ người dùng qua BFF của cổng; data plane `/assist/v1` (7 operation) chỉ trong cụm cho PH-04 và PH-11, xác thực mTLS với danh tính SPIFFE và scope `assist:infer`.
+Hợp đồng API của PH-17 gồm hai tệp sinh từ [D02-03-PH17](../../02-yeu-cau/frs/D02-03-PH17-frs-tro-ly-ai.md) §9: [`ph17/openapi-assist.yaml`](ph17/openapi-assist.yaml) (OpenAPI 3.1, 194 operation) và [`ph17/asyncapi-assist.yaml`](ph17/asyncapi-assist.yaml) (AsyncAPI 3.0, 28 kênh). Control plane `/api/assist/v1` (187 operation) phục vụ người dùng qua BFF của cổng; data plane `/assist/v1` (7 operation) chỉ trong cụm cho PH-04 và PH-11, xác thực mTLS với danh tính SPIFFE và scope `assist:infer`.
 
 Năm điểm hội đồng cần lưu ý.
 
@@ -28,7 +28,7 @@ Năm điểm hội đồng cần lưu ý.
 
 | Chỉ số | Giá trị |
 |---|---|
-| Operation | 193 (186 control plane, 7 data plane), 162 đường dẫn |
+| Operation | 194 (187 control plane, 7 data plane), 162 đường dẫn |
 | Phương thức | 83 `GET`, 86 `POST`, 10 `PUT`, 8 `PATCH`, 6 `DELETE` |
 | Có `If-Match` | 51 operation |
 | Bắt buộc `Idempotency-Key` | 76 operation |
@@ -65,7 +65,7 @@ Ngoài phạm vi: hợp đồng với nhà cung cấp mô hình (ở APISIX `ai-
 
 | Tài liệu | Nội dung dùng |
 |---|---|
-| D02-03-PH17 FRS §6, §8.2, §9, Phụ lục A | FR-17-001…062, 49 khóa `17.*`, ERR, EVT, API-17-001…193, enum |
+| D02-03-PH17 FRS §6, §8.2, §9, Phụ lục A | FR-17-001…062, 49 khóa `17.*`, ERR, EVT, API-17-001…194, enum |
 | D03-03-PH17 CSDL | Cột snake_case ứng với trường camelCase; ràng buộc chốt ở CSDL |
 | D03-04 khung chung | Quy ước đường dẫn, RFC 9457, phân trang, `Idempotency-Key` |
 | D03-07 ATTT; SEC-15, 16, 38, 49 | Xác thực, đường ra mô hình, che dữ liệu, tắt mặc định |
@@ -112,7 +112,7 @@ Các quy ước dưới đây áp dụng cho mọi operation, trừ khi bảng �
 | Đường gốc | `/api/assist/v1` | `/assist/v1` |
 | Bên gọi | Cán bộ qua BFF; PH-16 lấy số liệu bằng token dịch vụ (`assist:report`) | PH-04 (bước luồng), PH-11 (bước quy trình) |
 | Xác thực | OIDC và PKCE ở BFF (quyền `PERM-17-*`); `client_credentials` cho PH-16 | `client_credentials`, mTLS và danh tính SPIFFE; scope `assist:infer` |
-| Operation | 186 (API-17-001…186) | 7 (API-17-187…193) |
+| Operation | 187 (API-17-001…186, 194) | 7 (API-17-187…193) |
 | Hiệu năng | Đọc p95 ≤ 500 ms; token đầu tiên p95 ≤ 3 s (NFR-17-002) | Chờ mô hình tối đa `17.model.timeout-seconds` (60 giây, ERR-17-111); không ghi được vết thì từ chối (ERR-17-118) |
 | Khi không khả dụng | Giao diện ẩn trợ lý, không ảnh hưởng chức năng khác (SEC-49) | DU gọi nhận `503` và quay về xử lý không AI |
 
@@ -154,7 +154,7 @@ Mỗi operation ghi quyền `PERM-17-*` ở `x-datahub-permission`; dấu `/` l�
 | `mTLS DU` | 1 | 193 |
 | `model` | 41 | 011, 022…061 |
 | `tool` | 11 | 120…130 |
-| `use` | 33 | 001, 015…017, 090…100, 103…119, 155 |
+| `use` | 34 | 001, 015…017, 090…100, 103…119, 155, 194 |
 | `scope assist:infer` | 6 | 187…192 |
 | `scope assist:report` | 1 | 179 |
 
@@ -388,7 +388,7 @@ Công cụ chỉ đọc, nhật ký gọi công cụ, giới hạn, quy tắc l�
 
 ### 3.8. Quản trị AI
 
-Chỉ dẫn hệ thống, bộ đánh giá, ca đỏ, cổng phát hành, phản hồi, chất lượng, sổ hệ thống AI, tập ẩn danh (FR-17-049…054, 062). Nhóm có 40 operation.
+Chỉ dẫn hệ thống, bộ đánh giá, ca đỏ, cổng phát hành, phản hồi, chất lượng, sổ hệ thống AI, tập ẩn danh (FR-17-049…054, 062). Nhóm có 41 operation.
 
 | Mã | Thao tác | Mục đích | FR | Quyền, scope | TC | Lỗi riêng |
 |---|---|---|---|---|---|---|
@@ -432,6 +432,7 @@ Chỉ dẫn hệ thống, bộ đánh giá, ca đỏ, cổng phát hành, phản
 | API-17-184 | `GET /eval-datasets` | Tập ẩn danh PH-09 đã gắn cho đánh giá | 062 | eval | 200 | 085 |
 | API-17-185 | `POST /eval-datasets` | Gắn tập ẩn danh đã phát hành vào bộ đánh giá | 062 | eval | 201 | 003, 085, 086 |
 | API-17-186 | `DELETE /eval-datasets/{linkId}` | Gỡ tập khỏi bộ đánh giá và xóa kết quả liên quan | 062 | eval | 204 | 003, 085, 086 |
+| API-17-194 | `PUT /feedback/{feedbackId}` | Sửa phản hồi của chính mình trong 10 phút (chốt 27/11/2026) | 052 | use | 200 | 001, 003, 077 |
 
 : Danh mục API nhóm Quản trị AI
 
@@ -626,7 +627,7 @@ Mọi mã có ở FRS §9.1; cột "Dùng ở API" nêu operation mà mã này l
 | ERR-17-074 | 422 | Bộ đánh giá cần tối thiểu {n} ca. | 139…144 … |
 | ERR-17-075 | 422 | Bộ ca đỏ cần tối thiểu 50 ca đang hoạt động. | 149…154 … |
 | ERR-17-076 | 409 | Đang có lượt đánh giá chạy cho đối tượng này. | 140, 142…145, 150 … |
-| ERR-17-077 | 409 | Bạn đã gửi phản hồi cho câu trả lời này. | 155, 158…160 |
+| ERR-17-077 | 409 | Bạn đã gửi phản hồi cho câu trả lời này. | 155, 158…160, 194 |
 | ERR-17-078 | 422 | Hồ sơ hệ thống AI thiếu mục: {mục}. | 164…167 |
 | ERR-17-079 | 422 | Chọn khoảng thời gian tối đa {n} ngày. | 056…058, 064, 072, 073 … |
 | ERR-17-080 | 403 | Chưa có phiếu truy cập nhật ký còn hiệu lực. Khai báo lý do để xem. | 168…171 |
@@ -697,7 +698,7 @@ Mọi mã có ở FRS §9.1; cột "Dùng ở API" nêu operation mà mã này l
 |---|---|---|
 | Cú pháp, khóa trùng, khóa rỗng | `build/tools/kiem_tra_yaml.py` | 0 lỗi |
 | OpenAPI 3.1 và AsyncAPI 3.0 hợp lệ | Spectral 6.17.1 với `build/tools/spectral.yaml`, `--fail-severity=error` | 0 lỗi |
-| Hợp đồng PH-17 | [`ph17/tools/check_contracts.py`](ph17/tools/check_contracts.py) | `$ref` đủ đích; mã API đúng 193, không trùng và khớp FRS; ví dụ khớp lược đồ; enum khớp Phụ lục A; đủ 28 kênh đúng địa chỉ; không khóa nội dung hay bí mật ở sự kiện |
+| Hợp đồng PH-17 | [`ph17/tools/check_contracts.py`](ph17/tools/check_contracts.py) | `$ref` đủ đích; mã API đúng 194, không trùng và khớp FRS; ví dụ khớp lược đồ; enum khớp Phụ lục A; đủ 28 kênh đúng địa chỉ; không khóa nội dung hay bí mật ở sự kiện |
 | Mã trong tài liệu | `build/tools/kiem_tra_ma.py` | Không trùng mã; cảnh báo `PERM-17-*` còn cho tới khi D02-08 đồng bộ |
 | Thay đổi phá vỡ | `oasdiff breaking` với nhánh chính (CI) | Không có thay đổi phá vỡ trong `v1` |
 | Cô lập tenant | `TenantIsolationIT` cho mọi API đọc (D05-02-PH17) | 0 truy vấn đọc được dữ liệu tenant khác (NFR-17-007) |
@@ -751,7 +752,7 @@ Hệ cũ không có năng lực AI (REQ-17 là năng lực mới) nên không c�
 | FR-17-018 | 076…078 | FR-17-049 | 131…138, 154 |
 | FR-17-019 | 068, 079, 080 | FR-17-050 | 139…148 |
 | FR-17-020 | 081…087 | FR-17-051 | 149…154, 160 |
-| FR-17-021 | 064, 072, 073, 076, 088, 089 | FR-17-052 | 155…160 |
+| FR-17-021 | 064, 072, 073, 076, 088, 089 | FR-17-052 | 155…160, 194 |
 | FR-17-022 | 001, 015, 090, 092, 098, 103 | FR-17-053 | 161…163 |
 | FR-17-023 | 095, 096, 099 | FR-17-054 | 164…167 |
 | FR-17-024 | 095, 099 | FR-17-055 | 168, 172 |
@@ -786,7 +787,7 @@ Tập này không sửa FRS; các điểm sau là đề nghị cho chủ tài li
 
 ### 10.2. Với tài liệu chung
 
-Người điều phối chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để D00-04 có API-17-001…193, EVT-17-01…28 và Q17-72…75 của tập này. D02-08 bổ sung `PERM-17-*` và scope `assist:report` (FRS Phụ lục B). D03-06-00 ghi nhóm route `/quan-tri/tro-ly-ai/*`. D03-09 ghi data plane `/assist/v1` là Deployment riêng (vai `ph17_infer`).
+Người điều phối chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để D00-04 có API-17-001…194, EVT-17-01…28 và Q17-72…75 của tập này. D02-08 bổ sung `PERM-17-*` và scope `assist:report` (FRS Phụ lục B). D03-06-00 ghi nhóm route `/quan-tri/tro-ly-ai/*`. D03-09 ghi data plane `/assist/v1` là Deployment riêng (vai `ph17_infer`).
 
 ## 11. Câu hỏi mở
 
@@ -1854,5 +1855,6 @@ Suy luận nội bộ cho PH-04, gợi ý bước quy trình cho PH-11, cấu h�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 193 operation OpenAPI 3.1, 28 sự kiện AsyncAPI 3.0, quy ước RFC 9457, SSE, bốn mắt, cổng phát hành; đối chiếu FRS §9.4 đủ mã, sạch Spectral và `check_contracts.py` |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q406: thêm API-17-194 (PUT /feedback/{feedbackId}, sửa phản hồi trong 10 phút, If-Match), 194 operation (187 control plane, 7 data plane); sinh lại OpenAPI từ FRS mục 9.4 |
 
 : Lịch sử phiên bản

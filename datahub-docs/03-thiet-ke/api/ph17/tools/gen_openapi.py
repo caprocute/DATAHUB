@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh ../openapi-assist.yaml (OpenAPI 3.1) cho PH-17 từ FRS D02-03-PH17: §9.4 (API-17-001…193), §9.1 (ERR), Phụ lục A (enum),
+"""Sinh ../openapi-assist.yaml (OpenAPI 3.1) cho PH-17 từ FRS D02-03-PH17: §9.4 (API-17-001…194), §9.1 (ERR), Phụ lục A (enum),
 các khối FR §6 (mã lỗi riêng theo FR). Control plane `/api/assist/v1` (đường dẫn tương đối), data plane `/assist/v1`
 (đường dẫn đầy đủ, máy chủ riêng). Lược đồ viết ở schemas17.py. Chạy từ thư mục tools: python3 gen_openapi.py
 Không sửa tay tệp YAML; sửa FRS hoặc các tệp này rồi sinh lại."""
@@ -22,7 +22,7 @@ SEC6 = FRS[FRS.index('## 6. Đặc tả chi tiết'):FRS.index('## 7. Quy tắc'
 
 ROWS = re.findall(r'^\| API-17-(\d{3}) \| `(GET|POST|PUT|PATCH|DELETE) ([^`]+)` \| ([^|]+) \| ([^|]+) \| (.+) \|$', SEC94, re.M)
 ERRS = {c: (int(h.split(',')[0]), [int(x) for x in h.split(',')], t.strip().strip('"')) for c, h, t in re.findall(r'^\| (ERR-17-\d{3}) \| ([0-9, ]+) \| (.+) \|$', SEC91, re.M)}
-assert len(ROWS) == 193, len(ROWS)
+assert len(ROWS) == 194, len(ROWS)
 assert len(ERRS) == 105, len(ERRS)
 
 # mã lỗi riêng theo FR, lấy từ khối đặc tả §6
@@ -132,6 +132,7 @@ OV = {
     184: (None, 200, 'EvalDatasetLinkPage'), 185: ('EvalDatasetLinkInput', 201, 'EvalDatasetLink'), 186: (None, 204, None),
     187: ('ClassifyInput', 200, 'ClassifyResult'), 188: ('ExtractInput', 200, 'ExtractResult'), 189: (None, 200, 'InferenceTaskList'), 190: ('ProcessSuggestionInput', 201, 'ProcessSuggestionResult'),
     191: ('DecisionInput', 200, 'ProcessSuggestionResult'), 192: (None, 200, 'EffectiveConfig'), 193: (None, 200, 'ReadyStatus'),
+    194: ('FeedbackUpdateInput', 200, 'Feedback'),
 }
 # thao tác chỉ đọc dùng POST: không cần Idempotency-Key
 SAFE_POST = {70, 99, 103, 105, 119, 128, 187, 188}
@@ -189,6 +190,7 @@ KEY_NOTE = {
     182: 'Giá trị ngoài sàn, trần thì ERR-17-018 hoặc ERR-17-082; hạn lưu nhật ký dưới 90 ngày thì ERR-17-083; khóa nhạy cảm cần đề nghị bốn mắt (`SENSITIVE_PARAM`).',
     187: 'Data plane: danh tính DU qua mTLS, scope `assist:infer`; thiếu mục đích hoặc mức dữ liệu thì ERR-17-102; dữ liệu mức cao không gửi tới mô hình ngoài (ERR-17-107).',
     190: 'Gợi ý bước quy trình luôn cần người quyết định (ERR-17-114).',
+    194: 'Chỉ người đã gửi phản hồi được sửa, trong 10 phút kể từ lúc gửi và khi phản hồi còn `NEW`; quá hạn hoặc đã được phân loại thì trả ERR-17-006. Bắt buộc `If-Match`. Đổi loại hoặc ghi chú trên cùng bản ghi, không tạo phản hồi mới nên không bị ERR-17-077; ghi chú vẫn được che DLCN.',
 }
 CLS = {'conversations': 'RESTRICTED', 'logs/conversations': 'RESTRICTED', 'feedback': 'INTERNAL', 'knowledge/documents': 'INTERNAL'}
 HTTP_NAME = {400: 'BadRequest', 401: 'Unauthorized', 403: 'Forbidden', 404: 'NotFound', 409: 'Conflict', 410: 'Gone', 422: 'Unprocessable', 428: 'PreconditionRequired',

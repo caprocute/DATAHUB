@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-04-PH14
 ten: Đặc tả use case phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.2
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-14
@@ -1087,7 +1087,7 @@ Hình nhấn mạnh hai điều: HTTT nhận `202` ngay nên không bị chặn,
 **Luồng chính.**
 
 1. `HT-DVC` gọi `findInsuranceNo` với `fullName = Nguyễn Văn A`, `birthDate = 1980-05-12`, `idNumber`, kèm `purposeCode = GIAI_QUYET_TTHC`, `procedureCode = 1.002345`, `caseCode = HS-2026-11-007788`.
-2. Hệ thống chạy UC-14-09 bước 2 đến 5; PH-09 xác nhận mục đích có trong sổ hoạt động xử lý DLCN của `HT-DVC` và có cơ sở pháp lý.
+2. Hệ thống chạy UC-14-09 bước 2 đến 5; PH-09 xác nhận mục đích có trong sổ hoạt động xử lý DLCN của `HT-DVC` (trả `ropaActivityId`) và có cơ sở pháp lý.
 3. Bộ điều hợp `BHXH` kiểm tra có ít nhất hai tiêu chí định danh (đủ ba), gửi, xác minh, chuyển đổi và trả `items[]` gồm mã số BHXH và họ tên.
 4. `HT-DVC` gọi `getHouseholdByInsuranceNo` với mã số vừa tìm được. Hệ thống tra đệm: khóa gồm tenant, dịch vụ, tham số chuẩn hóa; ủy quyền mục đích được kiểm trước khi đọc đệm (BR-14-015); MISS nên gọi thật.
 5. Bộ điều hợp lọc trường theo `responseFields` của hợp đồng cung cấp lại, chỉ giữ trường mục đích cần, và trả `item` (hộ, thành viên).
@@ -2123,7 +2123,7 @@ Hình cho thấy bộ đồng bộ chỉ gửi phần thay đổi của các d�
 
 1. PH-06 gọi API-14-056 với `direction = UP`, `entity = ORGANIZATION`, `batchRef = PH06-20261126-004` (lô 420 bản ghi).
 2. Bộ đồng bộ nhận lô và kiểm tra mọi trường đã có ánh xạ ở PH-07.
-3. Bộ đồng bộ gọi PH-09 kiểm tra lô không chứa trường bị cấm gửi ra ngoài tỉnh.
+3. Bộ đồng bộ gọi PH-09 (`classification:check` với `egressScope` là `OUT_OF_PROVINCE`) kiểm tra lô không chứa trường bị cấm gửi ra ngoài tỉnh (cờ `noEgress`).
 4. Bộ đồng bộ ký và gửi lô qua đường ghi có chống trùng theo `batchRef`.
 5. CSDL tổng hợp trả kết quả; bộ đồng bộ đối soát từng bản ghi (415 nhận, 5 lệch) và báo bản ghi lệch cho PH-06 qua EVT-14-12 kèm tham chiếu lô.
 6. Bộ đồng bộ ghi `sync_run` với `kind = MASTER_DATA`; Chi xem ở UI-14-11.
@@ -2616,6 +2616,11 @@ Các câu hỏi dưới đây phát sinh khi đặc tả use case và chưa có 
 
 > **Câu hỏi mở Q14-49:** UC-14-13 và UC-14-23: từ mức dùng hạn mức 70% dịch vụ `BACKGROUND` (đồng bộ hồ sơ ĐVQHNS) bị hoãn; nếu mức dùng ở trên 70% cả ngày thì hồ sơ không được đồng bộ trong ngày. Cần chủ quản dịch vụ (Sở Tài chính) xác nhận độ trễ đồng bộ tối đa chấp nhận được (giả định 24 giờ, cơ sở: đồng bộ chạy hằng đêm) và có cho phép dịch vụ nền dùng phần hạn mức chưa phân bổ khi dịch vụ thiết yếu không cần hay không.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- UC-14-07: PH-02 có loại API "dịch vụ quốc gia" nhận bản nháp từ PH-14 và phát sự kiện đã công bố; PH-14 chỉ tạo bản nháp, không tự công bố.
+- UC-14-26: PH-03 có tuyến chiều vào `/inbound/v1/*` ở vùng biên với mTLS, giới hạn tần suất, WAF và bộ lọc vân tay nạp từ EVT-14-13. PH-02 và PH-03 ghi vào FRS của mình khi PH-14 chốt hợp đồng.
+
 ## Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -2638,4 +2643,4 @@ Các việc dưới đây cần sửa ở tài liệu dùng chung hoặc tài li
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 38 use case, sáu sơ đồ use case, ba bảng truy vết, sáu luồng phụ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412 ở các luồng ngoại lệ |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: ETag lệch trả 412 ở các luồng ngoại lệ; chốt Q404: PH-02 thêm loại API dịch vụ quốc gia nhận bản nháp, PH-03 thêm tuyến chiều vào /inbound/v1 (mTLS, giới hạn tần suất, WAF); chốt câu hỏi mở đợt đồng bộ: Q393 |

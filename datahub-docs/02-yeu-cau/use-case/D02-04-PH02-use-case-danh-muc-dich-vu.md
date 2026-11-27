@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH02
 ten: Đặc tả use case phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, chủ dịch vụ và người duyệt dịch vụ, kỹ sư giao diện và dh-connect, kiểm thử viên
 phan_he: PH-02
@@ -551,7 +551,7 @@ Chương này đặc tả 38 UC cho kỹ sư và kiểm thử viên. UC đi theo
 ::: dac-ta
 **Mục tiêu.** HTTT khai thác và cổng nhà phát triển PH-15 đọc danh mục API kèm đặc tả và điều kiện sử dụng theo đúng mức hiển thị, để nghĩa vụ công khai thông tin dịch vụ chia sẻ được thực hiện mà không lộ backend hay danh sách bên đăng ký.
 
-**Tác nhân chính.** HTTT khai thác `HT-MOTCUA` (máy, scope `catalog:read`); PH-15 (scope `catalog:portal-read`).
+**Tác nhân chính.** HTTT khai thác `HT-MOTCUA` (máy, scope `catalog:read`); PH-15 (scope `catalog:portal-read`); PH-17 `svc-assist-index` (scope `catalog:read-meta`, chỉ siêu dữ liệu).
 
 **Tác nhân phụ.** PH-03 (giới hạn tần suất, gateway).
 
@@ -2617,3 +2617,4 @@ Các việc ngoài quyền sửa của tập này (các đề nghị với D02-0
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 38 use case (7 UC máy) phủ 62 FR của D02-03-PH02, mỗi UC một khối đặc tả 15 mục với dữ liệu minh họa tenant `T68`; bốn sơ đồ use case tổng; bốn bảng truy vết (UC ↔ FR, UC ↔ màn hình ↔ API, UC ↔ REQ ↔ quy trình ↔ hệ cũ, FR → UC); hai sơ đồ trình tự (duyệt bốn mắt và công bố, cấp phạm vi truy cập); bảy luồng phụ dùng chung; năm câu hỏi mở Q02-45…49 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: gắn API-02-092…098 vào 11 use case; thống nhất xưng hô "Bạn" trong câu thông báo; sửa route UI-02-14, UI-02-16 cho khớp tập màn hình; ghi chú câu thông báo biến thể theo ngữ cảnh; thêm câu mở cho các mục chỉ có bảng |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q399 (scope catalog:read-meta) |

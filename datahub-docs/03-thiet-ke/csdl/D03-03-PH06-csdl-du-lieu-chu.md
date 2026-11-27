@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH06
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
 phan_he: PH-06
@@ -605,10 +605,11 @@ Cột khác: `domain_code` v(32); `source_code` v(32); `source_key` v(120); `las
 | `block_keys` | `varchar(72)[], NULL` | Khóa gom nhóm dạng HMAC có tiền tố tên khóa (FR-06-019). |
 | `golden_id` | `uuid, NULL` | Bản ghi vàng liên kết; không khóa ngoại để giữ khi bảng vàng đổi. |
 | `match_outcome` | `varchar(16), NULL` | Giá trị: `MATCH`, `POSSIBLE_MATCH`, `NO_MATCH`, `CONFLICT`. |
+| `reject_code` | `varchar(16), NULL` | Mã ERR-06-0nn, hoặc DQ_GATE khi cổng chất lượng PH-08 từ chối (FR-06-010, FR-08-035). |
 
 : Cột của bảng `candidate_record`
 
-Cột khác: `id` uuid; `tenant_id` v(16); `received_at` tstz; `domain_code` v(32); `source_code` v(32); `source_key` v(120); `source_version` bigint; `source_updated_at` tstz; `model_version` int; `raw_kid` v(64); `attrs_norm` jsonb; `birth_year` smallint; `admin_unit_code` v(16); `warnings` v(24)[]; `attribute_count` smallint; `file_id` uuid; `flow_code` v(63); `exchange_id` v(64); `idempotency_key` v(128); `reject_code` v(16); `reject_detail` v(2000); `processed_at` tstz, phân vùng `RANGE (received_at)`.
+Cột khác: `id` uuid; `tenant_id` v(16); `received_at` tstz; `domain_code` v(32); `source_code` v(32); `source_key` v(120); `source_version` bigint; `source_updated_at` tstz; `model_version` int; `raw_kid` v(64); `attrs_norm` jsonb; `birth_year` smallint; `admin_unit_code` v(16); `warnings` v(24)[]; `attribute_count` smallint; `file_id` uuid; `flow_code` v(63); `exchange_id` v(64); `idempotency_key` v(128); `reject_detail` v(2000); `processed_at` tstz, phân vùng `RANGE (received_at)`.
 
 ### 3.11. `evaluation_report`
 
@@ -916,11 +917,11 @@ Cột khác: `label_set_id` uuid; `left_id` uuid; `right_id` uuid; `labeled_by` 
 
 **Khóa chính.** (id).
 
-**Duy nhất.** `uq_steward_item_tid` (tenant_id, id), `uq_steward_item_open_pair` (tenant_id, domain_code, COALESCE(left_candidate_id, left_golden_id), right_golden_id) có điều kiện.
+**Duy nhất.** `uq_steward_item_tid` (tenant_id, id), `uq_steward_item_open_pair` (tenant_id, domain_code, COALESCE(left_candidate_id, left_golden_id), right_golden_id) có điều kiện, `uq_steward_item_open_dq` (tenant_id, domain_code, left_golden_id) có điều kiện.
 
 **Khóa ngoại.** (tenant_id, domain_code) → `mdm_domain`.
 
-**Ràng buộc CHECK.** `ck_steward_item_` + `tenant`, `reason`, `status`, `risk`, `decision`, `approval`, `priority`, `left`, `reason20`, `four_eyes`, `pending`, `resolved`, `assigned`, `defer`.
+**Ràng buộc CHECK.** `ck_steward_item_` + `tenant`, `reason`, `status`, `risk`, `decision`, `approval`, `priority`, `left`, `reason20`, `four_eyes`, `pending`, `resolved`, `assigned`, `defer`, `dq`, `dqctx`.
 
 **Chỉ mục.** `ix_steward_item_queue`, `ix_steward_item_assignee`, `ix_steward_item_nomatch`.
 
@@ -933,13 +934,14 @@ Cột khác: `label_set_id` uuid; `left_id` uuid; `right_id` uuid; `labeled_by` 
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `reason` | `varchar(24)` | Giá trị: `POSSIBLE_MATCH`, `MULTIPLE_CANDIDATES`, `INSUFFICIENT_ATTRIBUTES`, `CRITICAL_CONFLICT`, `IDENTIFIER_CONFLICT`, `ORPHANED`, `TIMEOUT`. |
+| `reason` | `varchar(24)` | Giá trị: `POSSIBLE_MATCH`, `MULTIPLE_CANDIDATES`, `INSUFFICIENT_ATTRIBUTES`, `CRITICAL_CONFLICT`, `IDENTIFIER_CONFLICT`, `ORPHANED`, `TIMEOUT`, `DQ_FINDING`. |
 | `status` | `varchar(20), mặc định 'OPEN'` | Giá trị: `OPEN`, `ASSIGNED`, `DEFERRED`, `PENDING_APPROVAL`, `RESOLVED`, `CANCELLED`. |
 | `risk_level` | `varchar(4), mặc định 'LOW'` | Giá trị: `LOW`, `HIGH`. |
-| `left_golden_id` | `uuid, NULL` | Cặp NO_MATCH đã RESOLVED là liên kết âm (BR-06-023): không đề xuất lại; chỉ mục ix_steward_item_nomatch. |
+| `left_golden_id` | `uuid, NULL` | Cặp NO_MATCH đã RESOLVED là liên kết âm (BR-06-023): không đề xuất lại; chỉ mục ix_steward_item_nomatch. Mục DQ_FINDING chỉ có left_golden_id. |
 | `hold_until` | `timestamptz, NULL` | Hết hạn giữ 30 phút (06.queue.hold-minutes) thì trả OPEN. |
 | `decision` | `varchar(8), NULL` | Giá trị: `MATCH`, `NO_MATCH`, `DEFER`. |
 | `approval_decision` | `varchar(8), NULL` | Giá trị: `APPROVE`, `REJECT`. |
+| `dq_context` | `jsonb, NULL` | Chỉ cho lý do DQ_FINDING (PH-08, API-06-126): ruleCodes, suggestedAction, findingIds, note; mỗi goldenId một mục mở (uq_steward_item_open_dq). |
 
 : Cột của bảng `steward_item`
 
@@ -1994,3 +1996,4 @@ FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; b
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-CSDL và K-TRINH-BAY: 43 bảng, DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 90 khối PASS, đối chiếu Phụ lục A sạch; ERD bốn nhóm; mã hóa envelope và HMAC; ánh xạ EN, FR sang bảng; năm câu hỏi mở Q06-50…54 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: ánh xạ EN-06-22…34 cho 13 bảng bổ sung; thêm `golden_record.block_keys` cộng GIN và `restricted`, khóa ở `label_set`, mở lại ở `steward_item`, gỡ hạn chế ở `subject_request`; vai `ph06_splink`; chín tham số mới vào `tenant_setting` và `p_seed_tenant`; kiểm cô lập 95 khối PASS trên PostgreSQL 16.15; mục 9.2 ghi các đề nghị đã áp |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q387 |

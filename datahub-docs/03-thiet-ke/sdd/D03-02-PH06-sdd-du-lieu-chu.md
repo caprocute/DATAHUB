@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH06
 ten: Thiết kế chi tiết phần mềm phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư dữ liệu và học máy, kiến trúc sư, ATTT, hội đồng thẩm định
 phan_he: PH-06
@@ -183,7 +183,8 @@ Module nằm ở `apps/data/src/main/java/vn/datahub/data/mdm`, theo `CC-MOD-01�
 ```text
 vn/datahub/data/mdm/
 |-- package-info.java          @ApplicationModule(allowedDependencies = {"rdm::api","privacy::api","shared"})
-|-- api/                       MdmResolveApi, MdmGoldenLookupApi, dto/ (GoldenView, ResolveResult, ...)
+|-- api/                       MdmResolveApi, MdmGoldenLookupApi, StewardIntakeApi, QualityGatePort,
+|                              dto/ (GoldenView, ResolveResult, ...)
 |-- events/                    GoldenCreated, GoldenUpdated, GoldenMerged, GoldenSplit, GoldenRetired,
 |                              GoldenRestored, XrefChanged, JobFinished, ... (EVT-06-01…15)
 |-- internal/
@@ -228,8 +229,10 @@ Các module khác của `dh-data` chỉ được dùng PH-06 qua các giao diệ
 |---|---|---|
 | `MdmResolveApi` | Module khác trong `dh-data` (PH-08) | `resolve(domain, attrs, mode, purpose)`, `goldenOf(domain, sourceCode, sourceKey)` |
 | `MdmGoldenLookupApi` | PH-08, PH-09 | `get(domain, goldenId, purpose)`, `exists(domain, goldenId)` |
+| `StewardIntakeApi` | PH-08 (`dq`) | `openFromDq(domain, goldenId, ruleCodes, suggestedAction, findingIds)`: tạo mục hàng đợi lý do `DQ_FINDING`; hiện thực API-06-126 (đã chốt 27/11/2026) |
+| `QualityGatePort` | PH-06 gọi, PH-08 hiện thực | `evaluate(domain, sourceCode, attrs)` trả `PASS`, `WARN`, `FAIL`; interface do `mdm::api` định nghĩa và `dq::internal.inline` hiện thực để không có chu trình phụ thuộc; `FAIL` thì ứng viên `REJECTED` với `reject_code = DQ_GATE` |
 | Sự kiện miền `events/*` | PH-08, PH-13 | Phát qua `ApplicationEventPublisher` (Modulith) và outbox |
-| REST `/api/mdm/v1`, `/internal` | HTTT, PH-04, PH-14 | API-06-001…096 |
+| REST `/api/mdm/v1`, `/internal` | HTTT, PH-04, PH-14, PH-08 | API-06-001…126 (API-06-126 chỉ cho PH-08, scope `mdm:steward-intake`) |
 
 : Giao diện công bố của module mdm
 
@@ -349,7 +352,7 @@ Hình cho thấy mọi thay đổi bản ghi vàng đi qua `GoldenOperation`; m�
 
 **FR hiện thực.** FR-06-001…007; BR-06-001, 016, 017.
 
-**Giao diện vào.** REST API-06-001…013 (`DomainController`); `MdmResolveApi` đọc mô hình đang `ACTIVE`.
+**Giao diện vào.** REST API-06-001…013 (`DomainController`); `MdmResolveApi` đọc mô hình đang `ACTIVE`. Khi domain chuyển `ACTIVE`, `SchemaCompiler` tạo hoặc cập nhật khung nhìn hợp đồng `ph06_mdm.v_dq_{domain}` (chỉ thuộc tính chuẩn hóa của bản ghi vàng đang hoạt động) và cấp `SELECT` cho vai trò `dq_reader`; khung nhìn đổi tương thích với phiên bản mô hình, bên đọc là PH-08 (đã chốt 27/11/2026, Q08-08).
 
 **Phụ thuộc ra.** PH-09 (`PrivacyPolicyApi.classify`), PH-01 (trạng thái HTTT), `pg-core`.
 
@@ -381,7 +384,7 @@ Chi tiết thiết kế:
 
 **Giao diện vào.** API-06-014…029; `POST /internal/domains/{d}/candidates` (API-06-022); Kafka (inbox, nhóm `mdm-source-events`); tệp ở Garage.
 
-**Phụ thuộc ra.** `normalize` (nội bộ), Valkey (khóa idempotency), Garage, PH-01.
+**Phụ thuộc ra.** `normalize` (nội bộ), Valkey (khóa idempotency), Garage, PH-01, `QualityGatePort` (PH-08, sau bước kiểm lược đồ; `FAIL` thì `REJECTED` lý do `DQ_GATE`).
 
 **Dữ liệu.** `mdm_source`, `source_priority`, `source_priority_proposal`, `candidate_file`, `candidate_record`, `source_record_head`, `inbox_event`.
 
@@ -588,7 +591,7 @@ Khối quá lớn (> 5.000 bản ghi) bị Splink bỏ và `manifest` ghi `overs
 
 **FR hiện thực.** FR-06-027…032; BR-06-002, 008, 019, 023.
 
-**Giao diện vào.** `QueueItemFactory.openFor(matchResult)` từ `matching`; API-06-045…050; "Việc của tôi" (FR-00-070).
+**Giao diện vào.** `QueueItemFactory.openFor(matchResult)` từ `matching`; `StewardIntakeApi.openFromDq(...)` từ PH-08 qua API-06-126 (lý do `DQ_FINDING`: điểm cơ sở 35, hạn theo `06.queue.sla-days`, người nhận là DS của miền, mỗi `goldenId` một mục mở); API-06-045…050; "Việc của tôi" (FR-00-070).
 
 **Phụ thuộc ra.** `golden` (`MergeService`, `GoldenWriter`), PH-12 (việc), PH-13 (cảnh báo).
 
@@ -603,7 +606,7 @@ Khối quá lớn (> 5.000 bản ghi) bị Splink bỏ và `manifest` ghi `overs
 
 Chi tiết thiết kế:
 
-`PriorityCalculator` tính `priority = base(reason) + min(10, số liên kết nguồn của bản ghi vàng liên quan) + round(10 × độ gần ngưỡng tự hợp nhất)` với `base` theo FR-06-027 (`IDENTIFIER_CONFLICT` 90 đến `ORPHANED` 20), cắt ở 100. `RiskClassifier` hiện thực BR-06-019 thành năm điều kiện độc lập, thỏa một là `HIGH`: hợp nhất hai bản ghi vàng cùng có ≥ 3 liên kết; có thuộc tính quan trọng khác nhau; điểm < 0,95 với hợp nhất vàng–vàng; hợp nhất thủ công ≥ 3 bản ghi; tách bản ghi có ≥ 3 liên kết.
+`PriorityCalculator` tính `priority = base(reason) + min(10, số liên kết nguồn của bản ghi vàng liên quan) + round(10 × độ gần ngưỡng tự hợp nhất)` với `base` theo FR-06-027 (`IDENTIFIER_CONFLICT` 90 đến `ORPHANED` 20, gồm `DQ_FINDING` 35), cắt ở 100. `RiskClassifier` hiện thực BR-06-019 thành năm điều kiện độc lập, thỏa một là `HIGH`: hợp nhất hai bản ghi vàng cùng có ≥ 3 liên kết; có thuộc tính quan trọng khác nhau; điểm < 0,95 với hợp nhất vàng–vàng; hợp nhất thủ công ≥ 3 bản ghi; tách bản ghi có ≥ 3 liên kết.
 
 `ClaimService.claim` là một câu `UPDATE steward_item SET status='ASSIGNED', assignee=:u, hold_until=now()+interval '30 min' WHERE id=:id AND status='OPEN'`; số dòng bằng 0 nghĩa là người khác nhanh hơn (ERR-06-027). Phạm vi tổ chức kiểm bằng OPA trước khi gọi (ERR-06-028). `DecisionService.decide` chạy trong một giao dịch: kiểm lý do ≥ 20 ký tự (BR-06-008), kiểm `version` của hai bản ghi (đã đổi thì `CANCELLED` lý do `STALE`, ERR-06-030), rồi theo quyết định: `NO_MATCH` ghi `negativeLink` và `RESOLVED`; `MATCH` rủi ro thấp gọi `MergeService.merge` ngay; `MATCH` rủi ro cao tạo `golden_operation` `PENDING_APPROVAL`, mục sang `PENDING_APPROVAL`, khóa bản ghi `LOCKED`; `DEFER` đặt `defer_until`. `ApprovalService.approve` so `requested_by` với người duyệt (ERR-06-005), kiểm lại `version`, rồi gọi đúng thao tác trong giao dịch của việc duyệt (§5.3); từ chối trả mục về `ASSIGNED` cho người đề nghị và mở khóa. Nhắc DA sau 2 ngày làm việc, giao DA khác sau 5 ngày.
 
@@ -1276,7 +1279,7 @@ spec:
 
 : Hồ sơ tài nguyên của Job mdm-splink
 
-`NetworkPolicy` của Job: từ chối mặc định (SEC-14), chỉ ra tới PgBouncer của `pg-core` (`dh-db`, cổng 6432) và Garage (`dh-s3`); `dh-data` cần quyền `create`, `get`, `list`, `watch`, `delete` trên `jobs` và `get`, `list` trên `pods` chỉ trong `dh-control`, qua `Role` riêng của `ServiceAccount` `dh-data` (ngoại lệ có chủ đích so với SEC-53, cần ATTT duyệt, Q06-24).
+`NetworkPolicy` của Job: từ chối mặc định (SEC-14), chỉ ra tới PgBouncer của `pg-core` (`dh-db`, cổng 6432) và Garage (`dh-s3`); `dh-data` cần quyền `create`, `get`, `list`, `watch`, `delete` trên `jobs` và `get`, `list` trên `pods` chỉ trong `dh-control`, qua `Role` riêng của `ServiceAccount` `dh-data`, giới hạn trong namespace `dh-control` và chỉ tài nguyên `jobs`, `pods` như trên (ngoại lệ có ghi của SEC-53 ở D03-07 mục 5.7, kiến trúc sư ATTT duyệt manifest; chủ đầu tư chốt 27/11/2026, Q06-24; RBAC của `dh-control` ghi ở D03-09 mục 4.2).
 
 ## 10. Quan sát
 
@@ -1405,7 +1408,7 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 | FRS 8.2 | Thêm `06.sync.reconcile-batch-size` (1.000) và `06.match.timeout-ms` (800) | Hai hằng số của thiết kế |
 | D03-03-PH06 CSDL | (a) Thêm `block_keys varchar(72)[]` cộng GIN cho `golden_record`; (b) vai `ph06_splink` chỉ `SELECT match_staging` và `INSERT match_result`; (c) FRS ghi bảng `stg_match_{jobId}` nhưng DDL dùng `match_staging` có `job_id`, FRS cần sửa theo DDL | Đối sánh trực tuyến B4 và nhất quán hai đường; quyền tối thiểu của Job |
 | D03-09 | `ResourceQuota` và `PriorityClass dh-batch-low` cho Job ở `dh-control`; cân nhắc pool `batch` | Job 8 vCPU, 32 GB cạnh API (Q06-25) |
-| D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 | Q06-24 |
+| D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 | Q06-24 (đã ghi ở D03-07 mục 5.7, chốt 27/11/2026) |
 | PH-10 | Đăng ký 15 topic `{tenant}.mdm.*`; Debezium Outbox Event Router cho `ph06_mdm.outbox_event` | Phát sự kiện |
 | PH-09 | Danh mục phân loại trường `ph06_mdm.*`, API chính sách che có độ trễ ≤ 50 ms | Ngân sách resolve |
 
@@ -1421,7 +1424,7 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 
 > **Câu hỏi mở Q06-23:** Kiểu đặt dấu thanh chuẩn của tên trên CCCD (`hòa` hay `hoà`) để `canonicalTone` mặc định `OLD` hay `NEW` đúng với dữ liệu quốc gia.
 
-> **Câu hỏi mở Q06-24:** `dh-data` có được cấp `Role` tạo, xem, xóa `Job` ở `dh-control` (ngoại lệ so với SEC-53), hay Job nên do một bộ điều phối riêng (ví dụ Argo Workflows) tạo.
+> **Q06-24 (đã chốt 27/11/2026):** `dh-data` được giữ `Role` chỉ tạo, đọc, xóa `Job` (và đọc `pods`) trong namespace `dh-control`, là ngoại lệ có ghi của SEC-53 (D03-07 mục 5.7, D03-09 mục 4.2); kiến trúc sư ATTT duyệt manifest; không dùng bộ điều phối riêng. *Câu hỏi gốc:* `dh-data` có được cấp `Role` tạo, xem, xóa `Job` ở `dh-control` (ngoại lệ so với SEC-53), hay Job nên do một bộ điều phối riêng (ví dụ Argo Workflows) tạo.
 
 > **Câu hỏi mở Q06-25:** Job Splink có cần node pool riêng (`batch`) thay vì `control`, nếu đo thấy tranh chấp tài nguyên với API trực tuyến.
 
@@ -1438,3 +1441,4 @@ Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc module `mdm`, mô hình miền, 11 thành phần với khối đặc tả 10 mục, thuật toán chuẩn hóa tên, blocking, Fellegi–Sunter, sống sót, đồng thời, mã hóa và băm, bảy sơ đồ trình tự, ánh xạ ERR-06, chỉ số `datahub_mdm_*`, cấu hình Job K8s, năm ADR đề xuất số 080 đến 084, câu hỏi mở Q06-20…29 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q387, Q424, Q385, Q423 |

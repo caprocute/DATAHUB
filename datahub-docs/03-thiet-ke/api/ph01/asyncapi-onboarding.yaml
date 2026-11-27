@@ -221,8 +221,8 @@ channels:
   scopeCeilingChanged:
     address: '{tenant}.connect.scope-ceiling.changed.v1'
     title: EVT-01-11
-    description: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt
-      trần.
+    description: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-02 hủy đăng ký vượt trần rồi gọi API-12-068
+      thay tập scope.
     messages:
       scopeCeilingChanged:
         $ref: '#/components/messages/scopeCeilingChanged'
@@ -446,7 +446,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/scopeCeilingChanged'
-    title: PH-02, PH-12, PH-13 nhận
+    title: PH-02, PH-13 nhận
   sendAccessReviewCompleted:
     action: send
     channel:
@@ -811,8 +811,8 @@ components:
     scopeCeilingChanged:
       name: scopeCeilingChanged
       title: EVT-01-11
-      summary: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt
-        trần.
+      summary: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-02 hủy đăng ký vượt trần rồi gọi API-12-068
+        thay tập scope.
       payload:
         $ref: '#/components/schemas/ScopeCeilingChanged'
       headers: *id001

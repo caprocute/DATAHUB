@@ -5178,12 +5178,16 @@ Tập API không sửa tài liệu khác; các lệch và đề nghị dưới �
 
 Giả định chính của tập: (1) tenant mẫu `T68` quy mô vừa với 200 HTTT (GĐ-01…07); (2) giới hạn tốc độ ở mục 2.9; (3) Kafka 3 phân vùng, lưu giữ 7 ngày như PH-05, PH-10; (4) liên kết tải gói bàn giao tối đa 72 giờ theo FR-20-041; (5) API `/internal` không có phân trang nâng cao ngoài `page`, `size`.
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- API-20-137, 139 (SO, AU đọc) và API-20-161 (TA, AU) không thêm quyền `PERM-20-*` mới: quyền là `PERM-20-settings` hoặc vai trò SO, AU, TA đọc trực tiếp theo FRS PH-20; `PERM-20-read` không cấp cho SO.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 171 operation, 16 sự kiện phát, 6 sự kiện tiêu thụ, bảng mã lỗi, ba sơ đồ trình tự, ca rò rỉ chéo tenant |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2: quyết định 403 cho nhóm nền tảng và 404 cho tài nguyên tenant khác, phân vai API-20-136 và 160 cho cửa sổ bảo trì, thông báo lỗi trong ví dụ khớp FRS 9.2, `changeKind` của EVT-20-09, cột FR của API-20-005, 085, 164, 166, 167 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153 (`apisix-int`, `ops:merge-transfer`), bên nhận sự kiện, mã kế hoạch `SN-yyyy-nnn`, `maxItems` của `sourceTenants` |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: merge-transfers theo API-18-150…153 (`apisix-int`, `ops:merge-transfer`), bên nhận sự kiện, mã kế hoạch `SN-yyyy-nnn`, `maxItems` của `sourceTenants`; chốt Q417: không thêm quyền PERM-20 mới cho API-20-137, 139, 161 |
 
 : Lịch sử phiên bản

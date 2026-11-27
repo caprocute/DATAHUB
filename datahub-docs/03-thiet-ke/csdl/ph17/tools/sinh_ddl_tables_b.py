@@ -60,7 +60,7 @@ G_KNOW.append(T("knowledge_chunk",
     "EN-17-18 Đoạn tri thức đã nhúng (FR-17-018, 019, 023, 024; BR-17-016, 026, 027, 034). Mỗi đoạn có tenant_id, nguồn, phạm vi quyền đọc acl, class_level chỉ PUBLIC hoặc INTERNAL, embed_model_version_id, content_hash. embedding là vector(1024) khi có pgvector (ADR-170); trên CI chỉ real[]. Đoạn COMMON chỉ đọc với tenant.",
     ["source_id uuid NOT NULL", "document_id uuid NOT NULL", "chunk_no integer NOT NULL", "content text NOT NULL", "content_norm text NOT NULL",
      f"content_tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', content_norm)) STORED", "embedding real[] NOT NULL", "embed_version_id uuid NOT NULL",
-     "class_level varchar(16) NOT NULL", "acl jsonb NOT NULL", "content_hash char(64) NOT NULL", "token_count integer NOT NULL", "object_ref varchar(512)"],
+     "class_level varchar(16) NOT NULL", "acl jsonb NOT NULL", "content_hash char(64) NOT NULL", "token_count integer NOT NULL", "object_ref varchar(512)", "injection_suspect boolean NOT NULL DEFAULT false"],
     [fk("knowledge_chunk", "document_id", "knowledge_document", cascade=True), fk("knowledge_chunk", "source_id", "knowledge_source"),
      fk1("knowledge_chunk", "embed_version_id", "model_version"),
      ("uq_knowledge_chunk_no", "UNIQUE (tenant_id, document_id, chunk_no, embed_version_id)"),
@@ -78,7 +78,8 @@ G_KNOW.append(T("knowledge_chunk",
     ccomment={"embedding": "vector(1024) khi có pgvector (đổi kiểu và chỉ mục HNSW vector_cosine_ops ở bước 17-0031-pgvector); real[] chỉ để CI trên postgres:16 không có pgvector.",
               "content_norm": "Nội dung không dấu, chữ thường, dùng cho tìm từ khóa (tsvector cấu hình simple).",
               "acl": "Phạm vi quyền đọc: visibility TENANT, ORG (orgIds) hoặc ROLE (roles); truy hồi lọc theo acl rồi xác minh quyền người hỏi (BR-17-035).",
-              "embed_version_id": "Phiên bản mô hình nhúng; không trộn vector của hai phiên bản trong một truy hồi (BR-17-016)."}))
+              "embed_version_id": "Phiên bản mô hình nhúng; không trộn vector của hai phiên bản trong một truy hồi (BR-17-016).",
+              "injection_suspect": "Đoạn bị quét mẫu tiêm lệnh gián tiếp khi lập chỉ mục gắn cờ nghi ngờ (chốt 27/11/2026); đoạn vẫn được giữ và vẫn bọc như dữ liệu không tin cậy khi dùng, cờ chỉ để SO và chủ phân hệ nguồn rà (FR-17-018)."}))
 
 G_KNOW.append(T("index_job",
     "EN-17-19 Lượt lập chỉ mục: theo sự kiện (EVENT), toàn bộ (FULL), xóa (DELETE) (FR-17-017, 021; BR-17-028). Lỗi thử lại ba lần có lùi mũ rồi FAILED, không chặn nguồn khác. Một nguồn chỉ một lượt FULL đang chạy (ERR-17-044).",

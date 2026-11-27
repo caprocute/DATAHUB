@@ -26,6 +26,7 @@ PARAMS = {
   "RuleIdPath": {"name": "ruleId", "in": "path", "required": True, "schema": UUID},
   "IncidentIdPath": {"name": "incidentId", "in": "path", "required": True, "schema": UUID},
   "AlertIdPath": {"name": "alertId", "in": "path", "required": True, "schema": UUID},
+  "ApprovalIdPath": {"name": "approvalId", "in": "path", "required": True, "schema": UUID},
   "RequestIdPath": {"name": "requestId", "in": "path", "required": True, "schema": UUID},
   "ProposalIdPath": {"name": "proposalId", "in": "path", "required": True, "schema": UUID},
   "SpecVersionPath": {"name": "specVersion", "in": "path", "required": True, "schema": STR(16, pattern="^[0-9]+\\.[0-9]+(\\.[0-9]+)?$")},
@@ -50,7 +51,7 @@ PARAMS = {
 }
 PATH_PARAM = {"platformCode": "PlatformCodePath", "serviceCode": "ServiceCodePath", "certCode": "CertCodePath", "endpointCode": "EndpointCodePath",
     "systemCode": "SystemCodePath", "runId": "RunIdPath", "ruleId": "RuleIdPath", "incidentId": "IncidentIdPath", "alertId": "AlertIdPath",
-    "requestId": "RequestIdPath", "proposalId": "ProposalIdPath", "specVersion": "SpecVersionPath", "transactionCode": "TransactionCodePath",
+    "requestId": "RequestIdPath", "approvalId": "ApprovalIdPath", "proposalId": "ProposalIdPath", "specVersion": "SpecVersionPath", "transactionCode": "TransactionCodePath",
     "datasetCode": "DatasetCodePath", "remoteCode": "RemoteCodePath"}
 
 HTTP_RESP = {  # HTTP → (tên response dùng chung, mô tả)
@@ -74,7 +75,7 @@ RESPONSES["Unauthorized"]["content"]["application/problem+json"]["example"] = {"
 RESPONSES["NotModified"] = {"description": "Không đổi (If-None-Match khớp)."}
 ERR_HTTP = {c: [x.strip() for x in h.split(",")] for c, h, _ in spec.ERRS}
 
-IFM = {"004", "005", "006", "007", "008", "009", "013", "016", "017", "020", "022", "026", "027", "032", "033", "034", "038", "045", "050", "052", "068", "071", "090", "092"}
+IFM = {"004", "005", "006", "007", "008", "009", "013", "016", "017", "020", "022", "026", "027", "032", "033", "034", "038", "045", "050", "052", "068", "071", "090", "092", "094"}
 SVC_ALSO = {"054": "national.sync.trigger", "056": "national.sync.trigger", "058": "national.health-read", "060": "national.health-read", "073": "national.health-read", "043": "national.health-read"}
 SCOPES = {"national.invoke": "Gọi dịch vụ quốc gia; thực tế dùng `national.invoke.{nhóm}` (vd `national.invoke.lltp`)",
           "national.runtime-config": "Đọc ảnh chụp cấu hình không bí mật (`dh-runtime`)",
@@ -180,6 +181,9 @@ X = {
   "082": ("submitNationalCatalogProposal", "ProposalRequest", "ProposalStatus", ["102", "116"], "Bắt buộc `Idempotency-Key`; trả `202` kèm `proposalId`.", []),
   "083": ("getNationalCatalogProposal", None, "ProposalStatus", [], None, []),
   "091": ("getRuntimeConfig", None, "RuntimeConfig", [], "`dh-runtime` của tenant gọi (hoặc nhận qua EVT-14-01, 02, 03, 04, 08, 13 rồi gọi). Có `ETag`; `If-None-Match` khớp trả `304`. Không chứa bí mật; chữ ký ảnh chụp do `dh-integration` ký.", ["IfNoneMatch", Q("sinceVersion", INT(minimum=0))]),
+  "093": ("listApprovalRequests", None, "ApprovalRequestList", [], "Hộp \"Việc của tôi\" của UI-14-17 cho năm loại `ph14.quota-prod`, `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first`; chỉ trả yêu cầu của tenant trong token. Ba loại còn lại có API duyệt riêng (API-14-009, 027, 033).",
+          [QA("type", enum("ph14.quota-prod", "ph14.inbound-activate", "ph14.setting-security", "ph14.service-relax", "ph14.open-data-first")), QA("state", enum("PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED")), *PG]),
+  "094": ("decideApprovalRequest", "ApprovalDecision", "ApprovalRequest", ["004", "007"], "Bốn mắt: người duyệt khác người đề nghị và người sửa gần nhất (ERR-14-007, BR-14-022). Duyệt thì áp thay đổi (hạn mức, điểm cuối chiều vào, tham số bảo mật, giảm kiểm soát dịch vụ, lần công bố dữ liệu mở đầu tiên) và phát sự kiện tương ứng; từ chối giữ cấu hình cũ. Kích hoạt điểm cuối chiều vào còn cần xác nhận vân tay (API-14-090).", []),
   "084": ("receiveInboundRequest", "InboundEnvelope", "InboundResponse", ["119", "120", "121", "122", "123", "124", "109", "110", "111"], "Biên chấm dứt mTLS, kiểm vân tay, giới hạn tần suất; cổng xác minh chữ ký và chống phát lại trong `14.inbound.replay-window-seconds`; chuyển luồng PH-04 và trả phản hồi có ký. Cùng `messageId` gửi lại thì trả kết quả đã có.", ["TenantHeader", "ServiceCodeHeader"]),
   "085": ("receiveInboundNotification", "NotificationRequest", "NotificationAccepted", ["119", "120", "121", "122", "123"], "Đợt 2. Ghi nhận và phát EVT-14-17; không chạy luồng.", ["TenantHeader"]),
 }

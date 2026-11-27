@@ -1152,7 +1152,7 @@ Bảng sau nêu cách màn liên kết định danh hiển thị ở từng tr�
 
 **Quyền.** `PERM-12-read` (xem); `PERM-12-policy-edit` (soạn, kiểm thử, chạy khô, gửi duyệt); `PERM-12-policy-approve` (thu hồi, quay lui).
 
-**API.** API-12-089…094, 099, 100, 101, 102.
+**API.** API-12-089…094, 099, 100, 101, 102, 112.
 
 **Vật liệu, token.** Khung tiêu đề `glass-chrome`; ba cột nội dung đặc `color-surface-solid`, khung mã `color-surface-solid-2`; dòng lỗi nền `color-error` nhạt; viền focus `color-focus-ring`; phông mã `font-mono`.
 :::
@@ -1278,7 +1278,7 @@ Dòng:cột, số lỗi và cảnh báo (bấm nhảy tới lỗi kế), "Đã l
 
 Tự lưu nháp sau 3 giây không gõ và khi bấm `Ctrl+S`. Lưu kèm `If-Match` của phiên bản; nếu người soạn khác (cùng chính sách) đã lưu trước, API trả ERR-12-044 và màn hiện `CMP-ConflictDialog` (ST-13) với `CMP-DiffViewer` bản của bạn và bản mới, ba lựa chọn: "Giữ bản của tôi", "Lấy bản mới", "Gộp thủ công". Sửa nội dung làm mất hiệu lực mọi kết quả kiểm thử và chạy khô đã có (nhãn "Chạy khô đã cũ"). Không có khóa độc quyền; khi có người khác đang mở cùng phiên bản, thanh tiêu đề hiện "Nguyễn T. Mai cũng đang mở" (`CMP-AvatarGroup`).
 
-Việc tự lưu cần API ghi đè nháp mà API hiện chưa có; xem Q12-30 ở mục Câu hỏi mở và Phụ lục B.
+Tự lưu gọi API-12-112 (`PUT /policies/{policyCode}/versions/{versionNo}`, `If-Match`), chỉ ghi đè phiên bản `DRAFT` của chính người soạn; mỗi lần ghi đè xóa kết quả kiểm thử và chạy khô đã có nên khung kiểm thử hiện "Cần chạy lại" (đã chốt 27/11/2026, Q12-30).
 
 ### 18.12. Gửi duyệt, thu hồi, quay lui
 
@@ -1437,11 +1437,11 @@ Bảng sau liệt kê các thành phần của màn nhật ký quyết định, 
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Ghi chú |
 |---|---|---|---|---|
-| 1 | Thanh lọc | `CMP-FilterBar`, `CMP-SearchField`, `CMP-DateRangePicker` | Tìm `traceId`, người dùng, bên gọi; khoảng thời gian (`khoang`, `tu`, `den`); quyết định; lý do; mức phân loại | Tối đa 7 ngày mỗi truy vấn, lâu hơn qua xuất (giả định) |
+| 1 | Thanh lọc | `CMP-FilterBar`, `CMP-SearchField`, `CMP-DateRangePicker` | Tìm `traceId`, người dùng, bên gọi; khoảng thời gian (`khoang`, `tu`, `den`); quyết định; lý do; mức phân loại | Tối đa 7 ngày mỗi truy vấn bằng `from`, `to` (đã chốt 27/11/2026); lâu hơn thì xuất bằng tác vụ nền có lý do, API-12-103 không trả CSV trực tiếp |
 | 2 | Biểu đồ | `CMP-Chart` | Cột chồng cho phép/từ chối theo giờ; có nút "Xem dạng bảng" | Màu kèm hoa văn hoặc nhãn, theo D03-05 |
 | 3 | Bảng quyết định | `CMP-DataTable` | Cột mục 20.2; dòng mới nhất trước | Phân trang bằng con trỏ |
 | 4 | Chi tiết | `CMP-Drawer`, `CMP-JsonViewer`, `CMP-MaskedValue` | Toàn bộ yêu cầu, chính sách khớp, `reason`, vết; trường nhạy cảm che | Xem đầy đủ được ghi vết lượt xem |
-| 5 | Xuất | `CMP-Button` | CSV theo bộ lọc, đã che | Giới hạn 100.000 dòng; ghi vết xuất |
+| 5 | Xuất | `CMP-Button` | Tạo tác vụ nền xuất có lý do, xong thì tải CSV theo bộ lọc, đã che; API-12-103 không trả CSV trực tiếp (đã chốt 27/11/2026) | Giới hạn 100.000 dòng; ghi vết xuất |
 | 6 | Dải lấy mẫu | `CMP-Alert` thông tin | "Quyết định cho phép mức Công khai, Nội bộ chỉ lấy mẫu 10%. Mức Hạn chế, Nhạy cảm ghi 100%." | FR-12-057, Q12-12 |
 
 : UI-12-14 · Thành phần
@@ -1740,7 +1740,7 @@ Bảng sau nêu cách màn trang xác thực của Keycloak hiển thị ở t�
 
 **Quyền.** `PERM-12-realm-admin`.
 
-**API.** API-12-045, 046, 075, 080…085.
+**API.** API-12-045, 046, 075, 080…085, 113.
 
 **Vật liệu, token.** Khung tiêu đề `glass-chrome`; bảng khác biệt đặc; ô giá trị thực tế lệch màu `color-diff-changed` kèm chữ.
 :::
@@ -1759,6 +1759,8 @@ Bảng sau mô tả các tab của màn realm của tenant, mỗi tab nêu nội
 | Vòng đời | Tạm ngừng, khôi phục, chuyển chỉ-đọc theo tenant; kế hoạch chuyển định danh khi sáp nhập | `CMP-Steps`, `CMP-ConfirmDialog` | API-12-084, 085, 045, 046 |
 
 : UI-12-19 · Các tab
+
+Danh sách realm ở đường dẫn `/nen-tang/realm` gọi API-12-113 (`GET /realms`, quyền `PERM-12-realm-admin`, phân trang chuẩn); bộ lọc `lech` trên URL ánh xạ thành `driftStatus=DRIFTED` (đã chốt 27/11/2026).
 
 ### 25.2. Hành vi
 
@@ -1998,11 +2000,11 @@ Bảng sau tổng hợp các API mà màn PH-12 cần nhưng D03-04-PH12 chưa c
 | API | Đề nghị | Màn dùng |
 |---|---|---|
 | API-12-001 | Trả `facets` (đếm theo trạng thái, nhóm bắt buộc chưa có MFA, sắp bị vô hiệu) và nhận `mfaStatus`; trả `Accept: text/csv` cho xuất | UI-12-01 |
-| API-12-103 | Hỗ trợ `Accept: text/csv`, tham số `khoang` tối đa 7 ngày | UI-12-14 |
-| API-12-092 | Thêm `PUT /policies/{policyCode}/versions/{versionNo}` ghi đè nội dung nháp, `If-Match` (Q12-30) | UI-12-12 tự lưu |
+| API-12-103 | Đã chốt 27/11/2026: không trả CSV trực tiếp; xuất bằng tác vụ nền có lý do. Giữ giới hạn khoảng tra tối đa 7 ngày bằng tham số `from`, `to` | UI-12-14 |
+| API-12-112 | Đã chốt 27/11/2026 và đã thêm: `PUT /policies/{policyCode}/versions/{versionNo}` ghi đè nội dung nháp, `If-Match`, chỉ phiên bản `DRAFT` của chính người soạn, mỗi lần ghi đè xóa kết quả kiểm thử đã có (Q12-30) | UI-12-12 tự lưu |
 | API-12-037 | Trả `expiresAt` và `remainingSeconds` để giao diện đếm ngược không phụ thuộc đồng hồ máy | UI-12-08 |
 | API-12-104 | Ghi vết lượt xem dữ liệu đã che vào PH-13 và trả `maskedFields` (Q12-35) | UI-12-14 |
-| API-12-081 | Trả danh sách realm có lọc `lech=true` | UI-12-19 danh sách |
+| API-12-113 | Đã chốt 27/11/2026 và đã thêm: `GET /realms`, quyền `PERM-12-realm-admin`, phân trang chuẩn, lọc `driftStatus=DRIFTED` | UI-12-19 danh sách |
 
 : Đề nghị bổ sung API
 
@@ -2025,7 +2027,7 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 
 ## Câu hỏi mở
 
-> **Câu hỏi mở Q12-30:** Chưa có API ghi đè nội dung nháp chính sách; tự lưu theo mô hình tạo phiên bản mới sinh nhiều phiên bản rác (mục 18.11). Đề xuất bổ sung `PUT …/versions/{versionNo}` (Phụ lục B). Cần tập API xác nhận.
+> **Q12-30 (đã chốt 27/11/2026):** Thêm API-12-112 `PUT …/versions/{versionNo}` ghi đè nội dung nháp để tự lưu, không tạo phiên bản mới mỗi lần lưu (mục 18.11, Phụ lục B). *Câu hỏi gốc:* Chưa có API ghi đè nội dung nháp chính sách; tự lưu theo mô hình tạo phiên bản mới sinh nhiều phiên bản rác.
 
 > **Câu hỏi mở Q12-31:** Ngưỡng độ phủ luật ≥ 80% ở ngăn kéo duyệt (mục 19.2) là giả định của tập màn, chưa có trong FRS. Cần quyết định có là điều kiện chặn hay chỉ cảnh báo, và có thành tham số `12.*` không.
 
@@ -2046,4 +2048,4 @@ Các việc dưới đây ở tài liệu dùng chung do luồng khác chịu tr
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu của tập màn hình PH-12: 19 màn UI-12-01…19 theo mẫu PH-05 |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: thông báo ERR-12-002 theo FRS |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi đã có công tắc phím tắt một ký tự (D03-05-04 §12.9, PTN-12) |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi đã có công tắc phím tắt một ký tự (D03-05-04 §12.9, PTN-12); chốt câu hỏi mở đợt đồng bộ: Q444, Q445, Q446 |

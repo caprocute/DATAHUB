@@ -144,6 +144,7 @@ PH-02 có ba loại bên gọi: người dùng console (người của đơn v�
 | PH-15 (cổng nhà phát triển) | `client_credentials` + mTLS mesh; `catalog:portal-read` | API-02-081 |
 | PH-04 (lõi tích hợp) | Gọi trong tiến trình khi cùng DU, khi tách DU dùng `client_credentials` + mTLS, `catalog:flow-sync` | API-02-017, 007 |
 | PH-13, PH-16 | `client_credentials`, `catalog:metrics-read` | API-02-079, API-02-097 |
+| PH-17 (`svc-assist-index`) | `client_credentials` + mTLS mesh; `catalog:read-meta` (chỉ siêu dữ liệu; thêm vào D02-08 §5, đã chốt 27/11/2026) | API-02-004, 005 |
 
 : Xác thực và phân quyền theo bên gọi
 
@@ -169,8 +170,8 @@ Chương này liệt kê toàn bộ operation của PH-02, ví dụ các lời g
 | API-02-001 | `GET /apis` | Danh sách API trong danh mục | 001 | `PERM-02-read` |  | 200 |
 | API-02-002 | `GET /apis/{apiCode}` | Chi tiết một API | 002 | `PERM-02-read` |  | 200 |
 | API-02-003 | `GET /search/apis` | Tìm kiếm toàn văn danh mục | 003 | `PERM-02-read` |  | 200 |
-| API-02-004 | `GET /catalog/apis` | Danh mục cho HTTT khai thác và cổng nhà phát triển | 004 | `PERM-02-read`; hoặc token máy `catalog:read` |  | 200/304 |
-| API-02-005 | `GET /catalog/apis/{apiCode}` | Một API trong danh mục cho HTTT khai thác | 004 | `PERM-02-read`; hoặc token máy `catalog:read` |  | 200/304 |
+| API-02-004 | `GET /catalog/apis` | Danh mục cho HTTT khai thác và cổng nhà phát triển | 004 | `PERM-02-read`; hoặc token máy `catalog:read, catalog:read-meta` |  | 200/304 |
+| API-02-005 | `GET /catalog/apis/{apiCode}` | Một API trong danh mục cho HTTT khai thác | 004 | `PERM-02-read`; hoặc token máy `catalog:read, catalog:read-meta` |  | 200/304 |
 | API-02-006 | `GET /apis/{apiCode}/versions/{versionNo}/usage-guide` | Đường dẫn sử dụng và mẫu gọi API | 005 | `PERM-02-read` |  | 200 |
 | API-02-007 | `GET /apis/{apiCode}/versions/{versionNo}/spec` | Tải đặc tả OpenAPI đã công bố | 006, 059 | `PERM-02-read`; hoặc token máy `catalog:read, catalog:flow-sync` |  | 200 |
 | API-02-090 | `GET /apis/{apiCode}/versions` | Danh sách phiên bản của API | 002 | `PERM-02-read` |  | 200 |
@@ -310,7 +311,7 @@ Chương này liệt kê toàn bộ operation của PH-02, ví dụ các lời g
 | API-02-073 | `PUT /apis/{apiCode}/versions/{versionNo}/sla` | Khai báo cam kết chất lượng dịch vụ (SLA) | 055 | `PERM-02-create` |  | 200 |
 | API-02-074 | `GET /apis/{apiCode}/versions/{versionNo}/sla` | Cam kết SLA hiện hành và đang chờ hiệu lực | 055, 056 | `PERM-02-read` |  | 200 |
 | API-02-075 | `GET /apis/{apiCode}/versions/{versionNo}/sla/periods` | Đối chiếu SLA thực tế theo kỳ | 056 | `PERM-02-read` |  | 200 |
-| API-02-097 | `GET /sla/summary` | Tổng hợp tuân thủ SLA toàn tenant | 056 | `PERM-02-read`; hoặc token máy `catalog:metrics-read` |  | 200 |
+| API-02-097 | `GET /sla/summary` | Tổng hợp tuân thủ SLA toàn tenant | 056 | `PERM-02-read` |  | 200 |
 | API-02-076 | `POST /apis/{apiCode}/change-notices` | Gửi thông báo thay đổi cho bên khai thác | 057 | `PERM-02-create` | có | 202 |
 | API-02-077 | `GET /change-notices` | Lịch sử thông báo thay đổi và bên nhận | 057 | `PERM-02-read` |  | 200 |
 | API-02-078 | `GET /apis/{apiCode}/versions/{versionNo}/usage-stats` | Thống kê sử dụng theo phiên bản (Đợt 2) | 058 | `PERM-02-read` |  | 200 |
@@ -747,7 +748,7 @@ Bảng dưới liệt kê các sự kiện của phân hệ khác mà PH-02 tiê
 
 : Sự kiện PH-02 nhận
 
-PH-02 cũng nhận sự kiện tạm ngừng, thu hồi HTTT của PH-01 (FR-02-051) và sự kiện đổi tham số `02.*` của PH-18; mã theo D03-04-PH01, D03-04-PH18 khi hai tập đó được viết, nên chưa nằm trong AsyncAPI này.
+PH-02 cũng nhận EVT-01-03 (tạm ngừng, thu hồi HTTT, FR-02-051) và EVT-01-11 (trần phạm vi đổi, BR-02-041) của PH-01, sau đó gọi API-12-068 để thay tập scope của client (PH-12 không nghe EVT-01-11, đã chốt 27/11/2026) và sự kiện đổi tham số `02.*` của PH-18; mã theo D03-04-PH01, D03-04-PH18 khi hai tập đó được viết, nên chưa nằm trong AsyncAPI này.
 
 ## 5. Hợp đồng với phân hệ khác và bên ngoài
 
@@ -755,7 +756,8 @@ PH-02 là phân hệ nằm giữa PH-01 (HTTT), PH-03 (gateway), PH-12 (định 
 
 | Bên | Hướng | Hợp đồng | Khi bên kia lỗi |
 |---|---|---|---|
-| PH-01 | PH-02 đọc | `SystemDirectoryApi`: HTTT `ACTIVE`, đơn vị chủ quản, đầu mối kỹ thuật, kiểu định danh máy; sự kiện tạm ngừng, thu hồi HTTT | Thao tác cần HTTT trả ERR-02-034; đọc danh mục vẫn được |
+| PH-01 | PH-02 đọc | `SystemDirectoryApi`: HTTT `ACTIVE`, đơn vị chủ quản, đầu mối kỹ thuật, kiểu định danh máy; `checkWithinCeiling` kiểm đăng ký sử dụng không vượt trần phạm vi (BR-02-041, ERR-02-028); sự kiện EVT-01-03 (tạm ngừng, thu hồi HTTT), EVT-01-11 (trần phạm vi đổi) | Thao tác cần HTTT trả ERR-02-034; đọc danh mục vẫn được |
+| PH-01 | PH-01 → PH-02 | Đường xin mở rộng trần là "Đề nghị mở rộng phạm vi" của PH-01 (API-01-060, UC-01-24); duyệt xong PH-01 phát EVT-01-11, PH-02 không tự mở rộng trần | Đăng ký vượt trần vẫn bị chặn tới khi trần mở rộng |
 | PH-03 | PH-03 → PH-02 | API-02-080 (dữ liệu công bố, ndjson, `ETag`, `sinceConfigVersion`), API-02-082 (xác nhận nạp) | PH-03 tự giữ cấu hình đã nạp; PH-02 thử lại công bố 5 lần trong 15 phút |
 | PH-03 | PH-02 → PH-03 | `GatewayApplyPort.requestApply`, `status`, `describe`, `rebuild` (đối soát, đẩy lại) | Phiên bản không đổi trạng thái, ERR-02-033; không chặn đọc |
 | PH-03 | PH-02 nghe | EVT-03-01 (ảnh chụp đã phát), EVT-03-03 (route đổi trạng thái), EVT-03-07 (sắp chạm hạn mức), EVT-03-12 (ảnh chụp bị từ chối, kèm danh sách lỗi) để đối soát trạng thái áp dụng và báo người phát hành | Thiếu sự kiện thì đối soát định kỳ bằng `GatewayApplyPort.status` bù lại |
@@ -766,6 +768,7 @@ PH-02 là phân hệ nằm giữa PH-01 (HTTT), PH-03 (gateway), PH-12 (định 
 | PH-12 | PH-02 → PH-12 | `ScopeGrantPort.attach`, `detach` (gắn, gỡ phạm vi `api:{apiCode}:{planCode}` lên client, lũy đẳng theo `Idempotency-Key`) | Đăng ký `ACTIVE` nhưng `grantStatus = FAILED`; chạy lại bằng API-02-068 |
 | PH-13 | PH-02 đọc | `MetricsReadPort`: p99 theo kỳ, số lượt theo nhóm mã trạng thái, ngày có dữ liệu, sức khỏe backend | Kỳ SLA `INSUFFICIENT_DATA`, thống kê trả ERR-02-034 |
 | PH-13 | PH-02 → PH-13 | Kiểm toán qua outbox; EVT-02-01…16 | Outbox giữ tới khi gửi được |
+| PH-14 | PH-14 → PH-02 | API nhận bản nháp "API dịch vụ quốc gia" (`origin = NATIONAL`, chỉ tạo `DRAFT`, `Idempotency-Key`); sự kiện đã công bố EVT-02-05 mang `apiCode`; danh sách dịch vụ chia sẻ là API `PUBLISHED` mức `NATIONAL`, `PUBLIC` (đã chốt 27/11/2026; mã API cấp khi PH-14 chốt hợp đồng) | PH-14 thử lại theo `Idempotency-Key`; PH-02 không bị ảnh hưởng |
 | PH-14 | PH-02 → PH-14 | `NationalCatalogPort.upsert`, `withdraw` lũy đẳng theo `payloadHash`; kết quả `ACKED`, `REJECTED` kèm lý do, `NOT_CONFIGURED` | Bản ghi `FAILED`, thử lại; không chặn vòng đời; cảnh báo sau `02.sync.overdue-days` (ADR-057) |
 | PH-15 | PH-15 → PH-02 | API-02-081 (danh mục `portalPublished`), EVT-02-01, 02, 03, 05, 06, 08, 10, 12 | PH-15 giữ bản đã tải |
 | PH-16 | PH-16 → PH-02 | API-02-079 và EVT-02-05, 13 (chỉ số tuân thủ) | Không ảnh hưởng PH-02 |
@@ -811,7 +814,7 @@ PH-02 là phân hệ mặt phẳng điều khiển nên toàn bộ 45 mã nằm 
 | ERR-02-025 | 409 | Gói hoặc phiên bản không nhận đăng ký mới | 058 |
 | ERR-02-026 | 422 | HTTT khai thác không tồn tại, không `ACTIVE` hoặc không thuộc tổ chức của người gửi | 058 |
 | ERR-02-027 | 409 | HTTT đã có đăng ký hiệu lực cho phiên bản này | 058 |
-| ERR-02-028 | 422 | HTTT không thuộc đối tượng được dùng gói | 058 |
+| ERR-02-028 | 422 | HTTT không thuộc đối tượng được dùng gói, hoặc API vượt trần phạm vi khai thác của HTTT (BR-02-041) | 058 |
 | ERR-02-029 | 422 | Thiếu mục đích, khối lượng dự kiến hoặc căn cứ pháp lý | 058, 065 |
 | ERR-02-030 | 409 | Còn đăng ký hoặc phiên bản đang phục vụ, không ngừng hẳn hoặc xóa được | 051, 052 |
 | ERR-02-031 | 422 | Hạn chuyển đổi ngắn hơn tối thiểu | 038, 050 |
@@ -956,7 +959,7 @@ Các câu hỏi dưới đây chưa chốt được khi viết tập API; mỗi 
 | Q02-57 | `Cache-Control: private, max-age=300` ở API-02-004 làm HTTT khai thác vẫn thấy API đã `SUSPENDED` tới 5 phút | Giảm còn `max-age=60` cho mục không `PUBLISHED`, giữ 300 cho mục `PUBLISHED`; kết hợp `ETag` để `304` rẻ. Cần PH-15 xác nhận chu kỳ nạp |
 | Q02-58 | API-02-007 cho HTTT có `catalog:read` tải đặc tả mọi API trong phạm vi mức hiển thị; đặc tả mức `RESTRICTED`, `SENSITIVE` mô tả cấu trúc dữ liệu nhạy cảm | Đặc tả mức `PUBLIC`, `INTERNAL` tải tự do trong tenant; mức `RESTRICTED` trở lên chỉ tải khi có đăng ký `ACTIVE` hoặc người gọi thuộc tổ chức chủ quản. Cần ATTT xác nhận |
 | Q02-59 | API cần hai quyết định duyệt (API `SENSITIVE`, `requiredApprovals = 2`) mà `If-Match` của API-02-045 dùng `etag` của yêu cầu duyệt: quyết định đầu làm `etag` đổi, người duyệt thứ hai phải tải lại | Chấp nhận, vì danh sách API-02-044 trả `etag` mới; giao diện tự tải lại và báo "đã có một quyết định, cần quyết định của anh/chị". Không bỏ `If-Match` ở lệnh duyệt |
-| Q02-60 | Màn UI-02-01, 08, 12 cần xuất danh sách ra CSV hoặc Excel (Phụ lục B-2 của D03-06-PH02); FR-00-030 quy định xuất chung nhưng chưa có hợp đồng API cho PH-02: dùng `Accept: text/csv` trên API-02-001, 059, 072 hay một operation xuất riêng | Dùng `Accept: text/csv` cùng bộ lọc với danh sách, trả `Content-Disposition`, không chứa bí mật và áp đúng quyền xem; chưa thêm operation. Cần PH-18 xác nhận cơ chế xuất tệp lớn (bất đồng bộ qua `operationId`). Cho tới khi chốt, nút "Xuất" ở màn hình dùng đề xuất tạm này |
+| Q02-60 | Màn UI-02-01, 08, 12 cần xuất danh sách ra CSV hoặc Excel (Phụ lục B-2 của D03-06-PH02); FR-00-030 quy định xuất chung nhưng chưa có hợp đồng API cho PH-02: dùng `Accept: text/csv` trên API-02-001, 059, 072 hay một operation xuất riêng | Đã chốt 27/11/2026: dùng `Accept: text/csv` cùng bộ lọc với danh sách, trả `Content-Disposition`, không chứa bí mật và áp đúng quyền xem; chưa thêm operation, đặc tả `text/csv` vào API-02-001, 059, 072 ở bản sau của tập này. Cần PH-18 xác nhận cơ chế xuất tệp lớn (bất đồng bộ qua `operationId`) |
 
 : Câu hỏi mở của tập API PH-02
 
@@ -3377,4 +3380,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và quy chuẩn K-TRINH-BAY: 95 operation REST, 16 sự kiện phát và 6 sự kiện nhận, 45 mã lỗi, sơ đồ trình tự, ánh xạ hệ cũ, 5 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: thêm API-02-096 (danh sách gói), 097 (tổng hợp SLA), 098 (chi tiết yêu cầu duyệt), nâng lên 98 operation; `Finding` có `line`, `column`; `OperationStatus` thêm `CANCELLED` và nêu loại tác vụ; thêm Q02-60, cập nhật Q02-55; sinh lại OpenAPI và các khối bảng |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-02 nghe EVT-03, API-18-122 đóng băng, API-02-081 giữ SUSPENDED, API-02-097 thêm catalog:metrics-read |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: PH-02 nghe EVT-03, API-18-122 đóng băng, API-02-081 giữ SUSPENDED, API-02-097 thêm catalog:metrics-read; chốt câu hỏi mở đợt đồng bộ: Q382, Q392, Q399, Q415, Q425 (EVT-01-11, bản nháp quốc gia, scope catalog:read-meta), Q437 (Q02-60 chốt Accept text/csv) |

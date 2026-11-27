@@ -314,6 +314,7 @@ def main():
                                       "catalog:gateway-read": "PH-03 đọc dữ liệu công bố",
                                       "catalog:gateway-ack": "PH-03 xác nhận đã nạp cấu hình (đề nghị bổ sung ở FRS §3.3)",
                                       "catalog:portal-read": "PH-15 đọc danh mục cho cổng nhà phát triển",
+                                      "catalog:read-meta": "PH-17 (svc-assist-index) đọc siêu dữ liệu danh mục, không đặc tả, gói, backend",
                                       "catalog:flow-sync": "PH-04 đăng ký API từ luồng và đọc đặc tả đã gộp",
                                       "catalog:metrics-read": "PH-13, PH-16 đọc số liệu tuân thủ và thống kê"}}}},
             },

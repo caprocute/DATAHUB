@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH02
 ten: Đặc tả yêu cầu chức năng phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, chủ quản dữ liệu và dịch vụ, kỹ sư dh-connect, kỹ sư tích hợp, kiểm thử viên
 phan_he: PH-02
@@ -27,7 +27,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH02 Use case; D03-02-PH02 Thiết kế c
 | Chỉ số | Giá trị |
 |---|---|
 | Yêu cầu chức năng | 62 (M: 50, S: 11, C: 1) |
-| Quy tắc nghiệp vụ | 40 (BR-02-001…040) |
+| Quy tắc nghiệp vụ | 41 (BR-02-001…041) |
 | Yêu cầu phi chức năng | 20 (NFR-02-001…020) |
 | Màn hình | 17 (UI-02-01…17) |
 | API | 98 operation (API-02-001…098), 16 sự kiện (EVT-02-01…16), 45 mã lỗi (ERR-02-001…045) |
@@ -345,7 +345,7 @@ Ma trận dưới đây dùng ký hiệu của D02-08 §3 (● có quyền, ○ 
 
 SV và CA đã là cặp loại trừ ở D02-08 §4: một người không được giữ cả hai vai trò trong cùng tenant, nên chủ dịch vụ không tự duyệt công bố. Ngoài ra nguyên tắc bốn mắt (FR-00-071) áp dụng cho từng đối tượng: người gửi duyệt, người sửa gần nhất đặc tả hoặc gói, và người duyệt phải là ba người khác nhau khi đối tượng được duyệt là API, gói hoặc đăng ký mức Hạn chế trở lên (BR-02-008, BR-02-026). `PERM-02-operate` của SO chỉ dùng khi có sự cố: tạm ngừng API (FR-02-037), tạm ngừng đăng ký (FR-02-051); không dùng cho công bố hay sửa nội dung.
 
-Các phân hệ gọi nhau bằng token dịch vụ, không dùng tài khoản người. PH-03 đọc dữ liệu công bố bằng scope `catalog:gateway-read` (chỉ đọc) và xác nhận đã nạp cấu hình bằng scope `catalog:gateway-ack` (API-02-082, tách riêng để token chỉ đọc không ghi được trạng thái công bố); PH-15 đọc danh mục bằng `catalog:portal-read`; PH-04 đọc đặc tả và gửi sự kiện luồng bằng `catalog:flow-sync`; PH-13 và PH-16 đọc số liệu tuân thủ bằng `catalog:metrics-read`. Các scope này cấp cho tài khoản dịch vụ khi triển khai, không cấp cho người hay cho HTTT khai thác. HTTT khai thác chỉ có scope `catalog:read` (đọc danh mục công khai trong tenant) và các scope `api:{mã API}:{mã gói}` do đăng ký đã duyệt sinh ra (D02-08 §5).
+Các phân hệ gọi nhau bằng token dịch vụ, không dùng tài khoản người. PH-03 đọc dữ liệu công bố bằng scope `catalog:gateway-read` (chỉ đọc) và xác nhận đã nạp cấu hình bằng scope `catalog:gateway-ack` (API-02-082, tách riêng để token chỉ đọc không ghi được trạng thái công bố); PH-15 đọc danh mục bằng `catalog:portal-read`; PH-04 đọc đặc tả và gửi sự kiện luồng bằng `catalog:flow-sync`; PH-13 và PH-16 đọc số liệu tuân thủ bằng `catalog:metrics-read`; `svc-assist-index` của PH-17 đọc siêu dữ liệu danh mục bằng `catalog:read-meta` (chỉ siêu dữ liệu: mã, tên, mô tả, phân loại, thẻ, trạng thái, mức hiển thị; không trả đặc tả, gói, backend; đã chốt 27/11/2026, dùng API-02-004, 005 làm API đọc cho công cụ chỉ đọc). Các scope này cấp cho tài khoản dịch vụ khi triển khai, không cấp cho người hay cho HTTT khai thác. HTTT khai thác chỉ có scope `catalog:read` (đọc danh mục công khai trong tenant) và các scope `api:{mã API}:{mã gói}` do đăng ký đã duyệt sinh ra (D02-08 §5).
 
 ## 4. Khái niệm và mô hình nghiệp vụ
 
@@ -745,7 +745,7 @@ Hình trên cho thấy danh sách và tìm kiếm cùng dẫn tới chi tiết A
 ::: dac-ta
 **Mục đích.** Cho HTTT khai thác và cổng nhà phát triển (PH-15) tự động đọc danh mục các API đang cung cấp, kèm đặc tả và điều kiện sử dụng, đúng với nghĩa vụ công khai thông tin dịch vụ chia sẻ dữ liệu; bên ngoài tenant chỉ thấy những gì được phép công khai.
 
-**Tác nhân, quyền.** HTTT khai thác (scope `catalog:read`); PH-15 (scope `catalog:portal-read`); mọi vai trò có `PERM-02-read`.
+**Tác nhân, quyền.** HTTT khai thác (scope `catalog:read`); PH-15 (scope `catalog:portal-read`); PH-17 `svc-assist-index` (scope `catalog:read-meta`, chỉ siêu dữ liệu); mọi vai trò có `PERM-02-read`.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -1723,7 +1723,7 @@ Hình trên cho thấy backend gắn vào phiên bản theo hai loại (kết n�
 
 **Truy vết.** REQ-02; LGC-APIM-018; LGC-APIM-002; SRS cũ.
 
-**Tiền điều kiện.** Phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API; với loại `FLOW`, luồng đã có điểm vào REST ở PH-04.
+**Tiền điều kiện.** Phiên bản `DRAFT`; với loại `SYSTEM`, kết nối PH-05 đã được cấp cho API (phạm vi cấp `API` ngoài `WORKSPACE`, `FLOW`; đã chốt 27/11/2026, xem lưu ý cuối mục này); với loại `FLOW`, luồng đã có điểm vào REST ở PH-04.
 
 **Kích hoạt.** Người dùng bấm "+ Thêm backend" ở tab Backend của UI-02-02, hoặc ở bước 4 của UI-02-03.
 
@@ -3089,7 +3089,7 @@ Hình trên cho thấy đăng ký đi một chiều từ gửi, duyệt, cấp p
 **Luồng xử lý chính.**
 
 1. Người dùng chọn API, phiên bản, gói và HTTT khai thác của đơn vị mình; hệ thống hiển thị điều khoản của gói và SLA cam kết.
-2. Hệ thống kiểm tra HTTT khai thác `ACTIVE` và thuộc tổ chức của người dùng (ERR-02-026), gói `PUBLISHED` (ERR-02-025), HTTT nằm trong đối tượng của gói (ERR-02-028) và chưa có đăng ký `PENDING`, `ACTIVE`, `SUSPENDED` cho cùng phiên bản (ERR-02-027).
+2. Hệ thống kiểm tra HTTT khai thác `ACTIVE` và thuộc tổ chức của người dùng (ERR-02-026), gói `PUBLISHED` (ERR-02-025), HTTT nằm trong đối tượng của gói và dữ liệu của API nằm trong trần phạm vi của HTTT ở PH-01 (ERR-02-028, BR-02-041) và chưa có đăng ký `PENDING`, `ACTIVE`, `SUSPENDED` cho cùng phiên bản (ERR-02-027).
 3. Người dùng nhập mục đích sử dụng (không dưới 20 ký tự), khối lượng dự kiến (lượt mỗi ngày), thao tác cần dùng (mặc định mọi thao tác của gói), và căn cứ pháp lý khi API chứa dữ liệu cá nhân hoặc ở mức từ Hạn chế (ERR-02-029).
 4. Hệ thống đối chiếu khối lượng dự kiến với hạn mức của gói và hạn mức giờ cam kết SLA; vượt thì cảnh báo, người dùng tiếp tục được nhưng người duyệt thấy cảnh báo.
 5. Người dùng xác nhận đã đọc điều khoản; hệ thống tạo đăng ký `PENDING`.
@@ -3102,6 +3102,7 @@ Hình trên cho thấy đăng ký đi một chiều từ gửi, duyệt, cấp p
 - HTTT chưa kết nối hoặc không hoạt động: ERR-02-026 (422); "HTTT {mã} chưa được kết nạp hoặc không hoạt động. Hoàn tất kết nạp ở mục Hệ thống thành viên trước."
 - Gói không nhận đăng ký: ERR-02-025 (409); "Gói {mã} không nhận đăng ký mới. Chọn gói khác."
 - HTTT ngoài đối tượng của gói: ERR-02-028 (422); "HTTT của bạn không thuộc nhóm được dùng gói này."
+- API vượt trần phạm vi của HTTT: ERR-02-028 (422); "API này vượt phạm vi khai thác đã được duyệt cho HTTT. Gửi Đề nghị mở rộng phạm vi ở mục Hệ thống thành viên."
 - Đã có đăng ký: ERR-02-027 (409); "HTTT đã có đăng ký {trạng thái} cho phiên bản này."
 - Thiếu mục đích hoặc khối lượng: ERR-02-029 (422); "Cần nêu mục đích và khối lượng dự kiến."
 - Người dùng không thuộc tổ chức của HTTT: ERR-02-014 (403); "Bạn không phải đầu mối của đơn vị này."
@@ -3116,7 +3117,7 @@ Hình trên cho thấy đăng ký đi một chiều từ gửi, duyệt, cấp p
 
 **Kiểm toán.** Có: HTTT, gói, mục đích, khối lượng, căn cứ pháp lý, người gửi.
 
-**Quy tắc nghiệp vụ.** BR-02-011; BR-02-012; BR-02-026; BR-02-027.
+**Quy tắc nghiệp vụ.** BR-02-011; BR-02-012; BR-02-026; BR-02-027; BR-02-041.
 
 **Màn hình, API.** UI-02-09; API-02-058.
 :::
@@ -3553,6 +3554,8 @@ sequenceDiagram
 ```
 
 Hình trên cho thấy PH-02 không giữ khóa hay chứng thư quốc gia; mọi giao tiếp với nền tảng đi qua PH-14, và trạng thái luôn ghi lại để theo dõi và thử lại.
+
+> **Đã chốt 27/11/2026 (API nhận bản nháp dịch vụ quốc gia từ PH-14):** PH-02 sẽ có loại API "dịch vụ quốc gia" (`origin = NATIONAL`) do PH-14 tạo qua API nội bộ bằng token máy, có `Idempotency-Key`. API này chỉ tạo phiên bản `DRAFT`, không tự công bố: công bố vẫn theo vòng đời và bốn mắt của PH-02 (BR-02-008). Sự kiện đã công bố là EVT-02-05 (đã mang `apiCode`). Danh sách dịch vụ chia sẻ để PH-14 đăng ký lên Bộ là các API `PUBLISHED` có mức hiển thị `NATIONAL`, `PUBLIC` (lọc theo `visibility` ở API-02-001 hoặc đọc bằng API-02-004). Mã API (số tiếp theo sau API-02-098) và hợp đồng chi tiết được cấp khi PH-14 chốt hợp đồng, không đổi hành vi đã chốt ở đây.
 
 #### FR-02-054 · Theo dõi trạng thái đồng bộ, thử lại, cảnh báo quá hạn
 
@@ -4094,7 +4097,7 @@ Hình trên cho thấy PH-02 chỉ làm nguồn dữ liệu cho PH-03, PH-04, PH
 
 ## 7. Quy tắc nghiệp vụ
 
-Bảng dưới gom 40 quy tắc nghiệp vụ của PH-02. Quy tắc đánh số `BR-02-001…015` kế thừa số và ý của bảng quy tắc ở SRS cũ (mục 11.2), phần còn lại bổ sung theo yêu cầu của hệ mới. Cột "FR áp dụng" ghi số thứ tự của FR-02-nnn.
+Bảng dưới gom 41 quy tắc nghiệp vụ của PH-02. Quy tắc đánh số `BR-02-001…015` kế thừa số và ý của bảng quy tắc ở SRS cũ (mục 11.2), phần còn lại bổ sung theo yêu cầu của hệ mới. Cột "FR áp dụng" ghi số thứ tự của FR-02-nnn.
 
 | Mã | Quy tắc | FR áp dụng |
 |---|---|---|
@@ -4138,6 +4141,7 @@ Bảng dưới gom 40 quy tắc nghiệp vụ của PH-02. Quy tắc đánh số
 | BR-02-038 | Dịch vụ sự kiện (topic) chỉ hiển thị trong danh mục; mọi thao tác đăng ký, duyệt, vòng đời thực hiện ở PH-10 | 009 |
 | BR-02-039 | Phiên bản `DRAFT`, `PENDING` chỉ hiển thị cho tổ chức chủ quản, TA, CA, PA; người khác chỉ thấy phiên bản từ `PUBLISHED` trở đi | 001, 002, 003, 006 |
 | BR-02-040 | Đơn giá của gói chỉ là thông tin hiển thị; chia sẻ dữ liệu giữa cơ quan nhà nước không thu phí qua PH-02, mọi việc thu phí (nếu có) thuộc PH-19 | 027 |
+| BR-02-041 | Đăng ký sử dụng không được vượt trần phạm vi khai thác đã được TA duyệt cho HTTT ở PH-01 (EN-01-04): PH-02 nhận EVT-01-03, EVT-01-11, đối chiếu loại dữ liệu của API với trần (`checkWithinCeiling`) khi gửi và khi duyệt đăng ký, và khi trần thu hẹp, tạm ngừng hoặc thu hồi thì tạm ngừng hoặc hủy đăng ký vượt trần rồi gọi API-12-068 thay tập scope của client. Đường xin mở rộng trần là "Đề nghị mở rộng phạm vi" của PH-01 (UC-01-24, FR-01-035) | 046, 047, 051 |
 
 : Quy tắc nghiệp vụ của PH-02
 
@@ -4248,7 +4252,7 @@ Chương này liệt kê mã lỗi, câu thông báo hiển thị cho người d
 | ERR-02-025 | 409 | Gói hoặc phiên bản không nhận đăng ký mới |
 | ERR-02-026 | 422 | HTTT khai thác không tồn tại, không `ACTIVE` hoặc không thuộc tổ chức của người gửi |
 | ERR-02-027 | 409 | HTTT đã có đăng ký hiệu lực cho phiên bản này |
-| ERR-02-028 | 422 | HTTT không thuộc đối tượng được dùng gói |
+| ERR-02-028 | 422 | HTTT không thuộc đối tượng được dùng gói, hoặc API vượt trần phạm vi khai thác của HTTT (BR-02-041) |
 | ERR-02-029 | 422 | Thiếu mục đích, khối lượng dự kiến hoặc căn cứ pháp lý |
 | ERR-02-030 | 409 | Còn đăng ký hoặc phiên bản đang phục vụ, không ngừng hẳn hoặc xóa được |
 | ERR-02-031 | 422 | Hạn chuyển đổi ngắn hơn tối thiểu |
@@ -4302,7 +4306,7 @@ Mỗi mã lỗi mà người dùng có thể gặp trên màn hình được chu
 | ERR-02-025 | "Gói {mã} không nhận đăng ký mới. Chọn gói khác." | Dưới trường gói ở UI-02-09 |
 | ERR-02-026 | "HTTT {mã} chưa được kết nạp hoặc không hoạt động." | Dưới trường HTTT |
 | ERR-02-027 | "HTTT đã có đăng ký {trạng thái} cho phiên bản này." | Hộp cảnh báo đầu bước |
-| ERR-02-028 | "HTTT của bạn không thuộc nhóm được dùng gói này." | Dưới trường HTTT ở UI-02-09 |
+| ERR-02-028 | "HTTT của bạn không thuộc nhóm được dùng gói này." hoặc "API này vượt phạm vi khai thác đã được duyệt cho HTTT. Gửi Đề nghị mở rộng phạm vi ở mục Hệ thống thành viên." | Dưới trường HTTT ở UI-02-09 |
 | ERR-02-029 | "Cần nêu mục đích và khối lượng dự kiến." | Dưới trường mục đích ở UI-02-09 |
 | ERR-02-030 | "Còn {n} bên đang dùng hoặc phiên bản đang phục vụ. Ngừng dùng có báo trước trước khi ngừng hẳn hoặc xóa." | Hộp thoại |
 | ERR-02-031 | "Hạn chuyển đổi tối thiểu {n} ngày. Chọn ngày muộn hơn {ngày}." | Dưới trường hạn |
@@ -4475,7 +4479,7 @@ Các mã khác của SRS cũ được ánh xạ như sau.
 
 | Mã cũ | Mã mới | Ghi chú |
 |---|---|---|
-| BR-02-001…015 | BR-02-001…015 | Giữ số và ý; BR-02-008 mở rộng (ba người khác nhau, dữ liệu Nhạy cảm thêm TA); BR-02-016…040 là quy tắc mới |
+| BR-02-001…015 | BR-02-001…015 | Giữ số và ý; BR-02-008 mở rộng (ba người khác nhau, dữ liệu Nhạy cảm thêm TA); BR-02-016…041 là quy tắc mới |
 | NFR-02-001 (tra cứu p99 ≤ 500 ms, 1.000 dịch vụ) | NFR-02-001 | Siết p95 ≤ 300 ms, quy mô 2.000 API |
 | NFR-02-002 (kiểm tra ≤ 5 giây) | NFR-02-003 | Thêm ngưỡng 10 MiB |
 | NFR-02-003 (khác biệt ≤ 3 giây) | NFR-02-004 | Giữ |
@@ -4698,6 +4702,8 @@ Bảng dưới liệt kê các ràng buộc pháp lý, kỹ thuật và vận h�
 
 > **Câu hỏi mở Q02-06:** Có cho API trỏ thẳng HTTT (backend `SYSTEM`) hay bắt buộc mọi API đi qua luồng PH-04 để thỏa "mọi yêu cầu ra vào qua bộ điều hợp" (CMP-LAW-09). Đề xuất: cho phép với HTTT đã có REST, qua kết nối PH-05 loại HTTP; bắt buộc luồng với SOAP, CSDL, tệp. Cần ý kiến đơn vị thẩm định kiến trúc.
 
+> **Đã chốt 27/11/2026 (cấp kết nối PH-05 cho API của PH-02):** PH-05 mở thêm phạm vi cấp kết nối `API` bên cạnh `WORKSPACE` và `FLOW` (FR-05-009) để backend `SYSTEM` dùng được kết nối. Khi cấp theo phạm vi `API`, PH-05 kiểm tra qua API đọc của PH-02 rằng `apiCode` tồn tại trong tenant, môi trường cấp khớp môi trường của phiên bản, và loại kết nối thuộc nhóm `http-*`. Việc đổi enum phạm vi cấp ở OpenAPI, DDL và giao diện PH-05 do luồng PH-05 thực hiện và chủ PH-05, PH-02 xác nhận; nếu chưa xác nhận kịp thì áp dụng phương án dự phòng: backend `SYSTEM` chỉ qua luồng PH-04.
+
 > **Câu hỏi mở Q02-07:** Khi sáp nhập tỉnh hoặc đơn vị (REQ-20), chuyển chủ quản API (FR-02-045) có cần văn bản giao nhận ký số lưu ở Datahub không, hay chỉ ghi số, ngày văn bản. Đề xuất: chỉ ghi số, ngày văn bản ở bản 0.1.
 
 > **Câu hỏi mở Q02-08:** Định dạng và giao thức đăng ký danh mục dịch vụ lên Nền tảng quốc gia (mã dịch vụ quốc gia, trường bắt buộc, cách rút danh mục, cách nhận xác nhận) chưa có đặc tả chính thức. Cần Cục/Bộ cung cấp hoặc PH-14 xác minh khi khảo sát; ảnh hưởng nội dung gói ở FR-02-053.
@@ -4764,3 +4770,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 62 FR theo chuẩn kết hợp 17 mục chia mười nhóm, 40 quy tắc nghiệp vụ, 20 yêu cầu phi chức năng, 17 màn hình, 91 API, 16 sự kiện, 45 mã lỗi; ma trận truy vết 15 mục `LGC` của PH-02 và bảng ánh xạ mã cũ của SRS cũ (14 FR, 22 NFR, 15 BR, 32 kịch bản chấp nhận) sang mã mới; hai ảnh giao diện tiêu biểu; 14 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo bảy tập: thêm API-02-092…098 vào §9.4 và các FR liên quan; bảng thông báo §9.2 đủ 45 mã và khớp tập màn hình; thêm §11.4 FR → use case; thêm cạnh `PUBLISHED → RETIRED` và trạng thái `activating` ở §4.3; phạm vi `catalog:gateway-ack`; loại yêu cầu duyệt `PLAN_CLOSE`, `SUBSCRIPTION_RENEW`; quyền của FR-02-018; làm rõ BR-02-031; thống nhất route màn hình; xưng hô "Bạn" trong câu thông báo |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q383 (phạm vi cấp kết nối PH-05 cho API), Q382 (BR-02-041 trần phạm vi), Q392, Q404, Q415, Q425 (API nhận bản nháp quốc gia), Q399 (scope catalog:read-meta) |

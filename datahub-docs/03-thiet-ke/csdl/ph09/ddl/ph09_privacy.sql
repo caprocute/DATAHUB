@@ -385,6 +385,7 @@ CREATE TABLE ph09_privacy.element_classification (
   identifiability    varchar(16) NOT NULL DEFAULT 'NONE',
   mask_pattern       varchar(24),
   never_reveal       boolean NOT NULL DEFAULT false,
+  no_egress          boolean NOT NULL DEFAULT false,
   basis              varchar(255),
   status             varchar(12) NOT NULL DEFAULT 'PROPOSED',
   source             varchar(16) NOT NULL,
@@ -419,6 +420,7 @@ CREATE TRIGGER tg_element_classification_immutable BEFORE UPDATE ON ph09_privacy
 CALL ph09_privacy.p_enable_rls('ph09_privacy.element_classification');
 COMMENT ON TABLE ph09_privacy.element_classification IS 'EN-09-05 Phân loại hiện hành của phần tử, một dòng mỗi phần tử (DD-09, FR-09-004). Chưa CONFIRMED thì xử lý như SENSITIVE (BR-09-001). Loại DLCN khác NONE phải có categoryCode; SENSITIVE kéo theo mức SENSITIVE. Đổi qua classification_change.';
 COMMENT ON COLUMN ph09_privacy.element_classification.never_reveal IS 'Trường không có đường xem đầy đủ (BR-09-026).';
+COMMENT ON COLUMN ph09_privacy.element_classification.no_egress IS 'Trường không được gửi ra ngoài tỉnh (BR-09-063, chủ đầu tư chốt 27/11/2026); bản chưa CONFIRMED xử lý như bật.';
 COMMENT ON COLUMN ph09_privacy.element_classification.mask_pattern IS 'Mẫu che mặc định của trường (MaskPatternKind).';
 COMMENT ON COLUMN ph09_privacy.element_classification.basis IS 'Số văn bản căn cứ của phân loại.';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.element_classification CASCADE;
@@ -469,7 +471,7 @@ CREATE TRIGGER tg_classification_change_touch BEFORE UPDATE ON ph09_privacy.clas
 CREATE TRIGGER tg_classification_change_immutable BEFORE UPDATE ON ph09_privacy.classification_change FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_immutable('element_id', 'from_class', 'to_class', 'proposed', 'proposed_by');
 CALL ph09_privacy.p_enable_rls('ph09_privacy.classification_change');
 COMMENT ON TABLE ph09_privacy.classification_change IS 'EN-09-06 Đề xuất, thay đổi phân loại (FR-09-004, 005, BR-09-002, 003, 007). Người xác nhận khác người đề xuất. Hạ mức hoặc hạ loại DLCN từ SENSITIVE cần số văn bản căn cứ và người xác nhận thứ hai khác hai người kia. Lịch sử tuyến tính, không sửa sau khi chốt.';
-COMMENT ON COLUMN ph09_privacy.classification_change.proposed IS 'Trạng thái phân loại đề xuất (dataClass, personalDataType, categoryCode, identifiability, maskPattern, neverReveal).';
+COMMENT ON COLUMN ph09_privacy.classification_change.proposed IS 'Trạng thái phân loại đề xuất (dataClass, personalDataType, categoryCode, identifiability, maskPattern, neverReveal, noEgress).';
 COMMENT ON COLUMN ph09_privacy.classification_change.confirmed_by_2 IS 'Người xác nhận thứ hai khi hạ mức (BR-09-002).';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.classification_change CASCADE;
 

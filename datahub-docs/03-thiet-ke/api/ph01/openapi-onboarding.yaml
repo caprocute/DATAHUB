@@ -812,10 +812,29 @@ paths:
       - FR-01-005
       x-datahub-permission:
         permission: PERM-01-read
-      description: 'Tệp nhị phân (`Content-Disposition: attachment`), hoặc `302` tới liên kết ký 5 phút của kho tệp. Ghi kiểm toán lượt tải.'
+      description: 'Tệp nhị phân (`Content-Disposition: attachment` mặc định), hoặc `302` tới liên kết ký 5 phút của kho tệp. Đã chốt 27/11/2026
+        (Q408): có `disposition=inline` để xem trước PDF trong khung cô lập (phản hồi kèm `Content-Security-Policy: sandbox`, `X-Content-Type-Options:
+        nosniff`) và hỗ trợ `Range` (một khoảng byte, trả `206` kèm `Content-Range`, luôn có `Accept-Ranges: bytes`). `Range` sai cú pháp trả
+        ERR-01-003; ngoài kích thước tệp trả `416` kèm `Content-Range: bytes */{size}`. Chỉ tệp đã quét sạch (`scanStatus = CLEAN`) mới trả `inline`.
+        Ghi kiểm toán lượt tải, không ghi từng lượt `Range`.'
       parameters:
       - $ref: '#/components/parameters/SystemCodePath'
       - $ref: '#/components/parameters/AttachmentIdPath'
+      - name: disposition
+        in: query
+        schema:
+          type: string
+          enum:
+          - attachment
+          - inline
+        description: Mặc định `attachment`.
+      - name: Range
+        in: header
+        schema:
+          type: string
+          maxLength: 64
+          pattern: ^bytes=[0-9]*-[0-9]*$
+        description: Một khoảng byte, ví dụ `bytes=0-1048575`; không hỗ trợ nhiều khoảng.
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
@@ -825,6 +844,26 @@ paths:
       responses:
         '200':
           description: Thành công.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                contentEncoding: binary
+          headers:
+            Accept-Ranges:
+              schema:
+                type: string
+              description: '`bytes`.'
+        '206':
+          description: Một khoảng byte của tệp (có `Range`).
+          headers:
+            Content-Range:
+              schema:
+                type: string
+              description: '`bytes {đầu}-{cuối}/{cỡ}`.'
+            Accept-Ranges:
+              schema:
+                type: string
           content:
             application/octet-stream:
               schema:
@@ -844,6 +883,12 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '416':
+          description: 'Khoảng byte nằm ngoài kích thước tệp; kèm `Content-Range: bytes */{cỡ}`.'
+          headers:
+            Content-Range:
+              schema:
+                type: string
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /systems/{systemCode}/attachments/{attachmentId}:
@@ -1827,7 +1872,10 @@ paths:
       x-datahub-fr:
       - FR-01-016
       x-datahub-permission:
-        permission: PERM-01-approve
+        permission: '`PERM-01-approve` hoặc `PERM-01-review-claim`'
+        anyOf:
+        - PERM-01-approve
+        - PERM-01-review-claim
       description: TA phân công; người được phân công không được là người lập hoặc nộp (ERR-01-017). Phát EVT-01-02.
       parameters:
       - $ref: '#/components/parameters/SystemCodePath'
@@ -4216,6 +4264,72 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+  /internal/suspension-proposals:
+    post:
+      tags:
+      - Nội bộ (phân hệ khác)
+      operationId: receiveSuspensionProposal
+      summary: Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO
+      x-datahub-id: API-01-089
+      x-datahub-fr:
+      - FR-01-053
+      x-datahub-permission:
+        permission: Token dịch vụ, scope `onboarding:suspension-proposal`
+        serviceScope: onboarding:suspension-proposal
+      security:
+      - oauth2Service:
+        - onboarding:suspension-proposal
+      description: PH-13 gửi đề xuất tạm ngừng HTTT từ cảnh báo an ninh (FR-13-053, API-13-060); PH-01 không đổi trạng thái HTTT. Kiểm token dịch
+        vụ và tenant của token; HTTT phải `ACTIVE` (đang `SUSPENDED` trả ERR-01-048, trạng thái khác ERR-01-005). Tạo một việc khẩn trong hộp
+        việc cho mọi SO của tenant (loại `ph01.review-suspension-proposal`, mức khẩn, liên kết tới UI-01-11 hành động khẩn) qua `notify_outbox`;
+        lũy đẳng theo `(systemCode, alertId)` (lặp trả `duplicate = true`, không tạo việc thứ hai). SO quyết định bằng thao tác khẩn API-01-054
+        (FR-01-032) với `incidentRef` của đề xuất, hoặc đóng việc không tạm ngừng; thao tác khẩn vẫn do SO tự quyết, không có đường tự động.
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspensionProposal'
+            example:
+              systemCode: HT-QLVB
+              alertId: 0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80
+              severity: HIGH
+              reason: Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ
+              incidentRef: SEC-ALERT-2026-0142
+      x-datahub-errors:
+      - ERR-01-003
+      - ERR-01-005
+      - ERR-01-048
+      - ERR-01-052
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuspensionProposalAck'
+              example:
+                systemCode: HT-QLVB
+                alertId: 0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80
+                taskId: 0194f2d1-0b32-7d44-8a55-6c7d8e9fa0b1
+                accepted: true
+                duplicate: false
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên vừa tạo hoặc nơi theo dõi tiến trình.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /access-reviews:
     post:
       tags:
@@ -5338,6 +5452,7 @@ paths:
                   min: 1
                   max: 10
                   platformCeiling: null
+                  securityRelated: false
                   description: Hạn mỗi bước thẩm định (ngày làm việc)
                   version: 3
                   updatedAt: '2026-10-01T00:00:00Z'
@@ -5394,6 +5509,7 @@ paths:
                 min: 1
                 max: 10
                 platformCeiling: null
+                securityRelated: false
                 description: Hạn mỗi bước thẩm định (ngày làm việc)
                 version: 4
                 updatedAt: '2026-12-03T03:00:00Z'
@@ -5614,6 +5730,7 @@ components:
             onboarding:internal-read: Đọc bản sao HTTT (PH-02, 03, 04, 05, 10, 13, 14, 15)
             onboarding:provision-callback: Trả kết quả bất đồng bộ của saga (PH-12, PH-03)
             onboarding:reconcile: Chạy đối chiếu trạng thái
+            onboarding:suspension-proposal: PH-13 gửi đề xuất tạm ngừng HTTT (SO quyết định)
   parameters:
     SystemCodePath:
       name: systemCode
@@ -7710,10 +7827,11 @@ components:
         assigneeId:
           type: string
           maxLength: 64
+          description: 'Người được giao. Bỏ trống: người gọi tự nhận bước (cần `PERM-01-review-claim` và đúng vai trò của bước); giao cho người
+            khác cần `PERM-01-approve`.'
       additionalProperties: false
       required:
       - stepType
-      - assigneeId
       examples:
       - stepType: TECHNICAL
         assigneeId: ie.tranb
@@ -8929,6 +9047,66 @@ components:
         step: CREATE_CLIENT
         accepted: true
         duplicate: false
+    SuspensionProposal:
+      type: object
+      properties:
+        systemCode:
+          $ref: '#/components/schemas/SystemCode'
+        alertId: *id003
+        severity:
+          type: string
+          enum:
+          - HIGH
+          - CRITICAL
+        reason:
+          type: string
+          maxLength: 1000
+          minLength: 10
+        evidenceUrl:
+          type: string
+          maxLength: 2048
+          format: uri
+        incidentRef:
+          type: string
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - systemCode
+      - alertId
+      - reason
+      description: Đề xuất của PH-13 từ cảnh báo an ninh (`alertId`); `incidentRef` chuyển thành `incidentRef` của FR-01-032 khi SO quyết định.
+        PH-13 chỉ đề xuất, không tạm ngừng.
+      examples:
+      - systemCode: HT-QLVB
+        alertId: 0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80
+        severity: HIGH
+        reason: Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ
+        incidentRef: SEC-ALERT-2026-0142
+    SuspensionProposalAck:
+      type: object
+      properties:
+        systemCode:
+          $ref: '#/components/schemas/SystemCode'
+        alertId: *id003
+        taskId:
+          oneOf:
+          - *id003
+          - type: 'null'
+        accepted: *id001
+        duplicate: *id001
+      additionalProperties: false
+      required:
+      - systemCode
+      - alertId
+      - accepted
+      - duplicate
+      description: '`duplicate = true` khi đã nhận đề xuất cùng `alertId` cho HTTT này (không tạo việc thứ hai).'
+      examples:
+      - systemCode: HT-QLVB
+        alertId: 0194f2d0-6a10-7c11-9e22-3b4c5d6e7f80
+        taskId: 0194f2d1-0b32-7d44-8a55-6c7d8e9fa0b1
+        accepted: true
+        duplicate: false
     AccessReviewCreate:
       type: object
       properties:
@@ -9787,6 +9965,9 @@ components:
         min: {}
         max: {}
         platformCeiling: {}
+        securityRelated:
+          type: boolean
+          description: Tham số liên quan an toàn thông tin (FRS §8.2); giao diện nhắc người sửa và ghi kiểm toán mức cao.
         description:
           type: string
           maxLength: 500
@@ -9812,6 +9993,7 @@ components:
         min: 1
         max: 10
         platformCeiling: null
+        securityRelated: false
         description: Hạn mỗi bước thẩm định (ngày làm việc)
         version: 4
         updatedAt: '2026-12-03T03:00:00Z'
@@ -9834,6 +10016,7 @@ components:
           min: 1
           max: 10
           platformCeiling: null
+          securityRelated: false
           description: Hạn mỗi bước thẩm định (ngày làm việc)
           version: 3
           updatedAt: '2026-10-01T00:00:00Z'

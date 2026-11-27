@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH05
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
 phan_he: PH-05
@@ -305,7 +305,7 @@ Phần dưới sinh bằng [`ph05/tools/gen_tables_md.py`](ph05/tools/gen_tables
 | `tenant_id` | `varchar(16)` | x |  | Mã tenant `T{nn}` (hoặc `COMMON` ở bảng dùng chung); khóa RLS. |
 | `connection_id` | `uuid` | x |  |  |
 | `scope` | `varchar(10)` | x |  |  |
-| `target_code` | `varchar(63)` | x |  | Mã không gian (scope WORKSPACE) hoặc mã luồng (scope FLOW) ở schema ph04; kiểm qua FlowQueryApi. |
+| `target_code` | `varchar(63)` | x |  | Mã không gian (scope WORKSPACE) hoặc mã luồng (scope FLOW) ở schema ph04, kiểm qua FlowQueryApi; mã API (scope API) ở PH-02, kiểm qua REST API-02-002 (Q383). |
 | `environments` | `varchar(8)[]` | x |  |  |
 | `valid_until` | `date` |  |  |  |
 | `reason` | `varchar(1000)` |  |  |  |
@@ -1358,3 +1358,4 @@ Changeset đặt `system_code = 'CHUA-GAN'` và `status = 'DRAFT'`; IE gán HTTT
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-CSDL; DDL chạy thử, kiểm cô lập 23/23 | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, bảng đặc tả 10 mục cho 23 bảng trích từ DDL, chú thích mọi bảng và hình |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q383 |

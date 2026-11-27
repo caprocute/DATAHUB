@@ -5,19 +5,19 @@ Tính năng: TS-06-12 · Hàng đợi người quản lý dữ liệu
 
   @TC-06-057 @P1 @Dương
   Kịch bản: TC-06-057 Tạo mục hàng đợi, ưu tiên và SLA
-    # Truy vết: FR-06-027 · BR-06-002, 019 · EVT-06-08 · API-06-045
+    # Truy vết: FR-06-027 · BR-06-002, 019 · EVT-06-08 · API-06-045, 126
     # Mục đích: Chứng minh công thức ưu tiên 0…100, hạn SLA và không tạo trùng cặp, theo FR-06-027.
-    Biết bảy lý do `QueueReason`; mặc định `06.queue.sla-days = 7`.
-    Khi tạo mục cho từng `QueueReason`.
-    Và tạo mục lần hai cho cùng một cặp, đổi thứ tự hai bản ghi.
-    Thì điểm cơ sở `IDENTIFIER_CONFLICT` 90, `CRITICAL_CONFLICT` 70, `MULTIPLE_CANDIDATES` 50, `POSSIBLE_MATCH` 40, `INSUFFICIENT_ATTRIBUTES` 30, `ORPHANED` 20, cộng tối đa 10 + 10 theo số liên kết và độ gần ngưỡng, trần 100. SLA 7 ngày, riêng `IDENTIFIER_CONFLICT` 1 ngày. Cặp trùng chỉ cập nhật điểm, không mục mới. Mỗi mục mới một EVT-06-08.
-    # Hậu điều kiện: Bảy mục `OPEN`.
+    Biết tám lý do `QueueReason` (kể cả `DQ_FINDING` tạo bằng API-06-126 với scope `mdm:steward-intake`); mặc định `06.queue.sla-days = 7`.
+    Khi tạo mục cho từng `QueueReason`; với `DQ_FINDING` gọi API-06-126 cho một `goldenId`.
+    Và tạo mục lần hai cho cùng một cặp, đổi thứ tự hai bản ghi; gọi lại API-06-126 cho cùng `goldenId`.
+    Thì điểm cơ sở `IDENTIFIER_CONFLICT` 90, `CRITICAL_CONFLICT` 70, `MULTIPLE_CANDIDATES` 50, `POSSIBLE_MATCH` 40, `DQ_FINDING` 35, `INSUFFICIENT_ATTRIBUTES` 30, `ORPHANED` 20, cộng tối đa 10 + 10 theo số liên kết và độ gần ngưỡng, trần 100. SLA 7 ngày, riêng `IDENTIFIER_CONFLICT` 1 ngày. Cặp trùng chỉ cập nhật điểm, không mục mới; gọi lại API-06-126 cùng `goldenId` trả `200` và gắn thêm mã quy tắc; scope khác `mdm:steward-intake` bị từ chối. Mỗi mục mới một EVT-06-08.
+    # Hậu điều kiện: Tám mục `OPEN`.
 
   @TC-06-058 @P1 @Dương
   Kịch bản: TC-06-058 Liệt kê, nhận việc, phân công, nhả
     # Truy vết: FR-06-028 · API-06-045, 047, 107, 108 · UI-06-04 · PERM-06-steward
     # Mục đích: Chứng minh lọc, sắp theo ưu tiên, nhận việc, giữ 30 phút, phân công bởi DA, theo FR-06-028.
-    Biết bảy mục của q-create; DS1, DS2, DA1.
+    Biết tám mục của q-create; DS1, DS2, DA1.
     Khi DS1 `GET /stewardship/items?status=OPEN&sort=priority,desc`.
     Và DS1 `:claim` mục đầu; đợi quá `06.queue.hold-minutes`.
     Và DA1 `:assign` mục khác cho DS2; DS2 `:release`.
@@ -49,7 +49,7 @@ Tính năng: TS-06-12 · Hàng đợi người quản lý dữ liệu
   Kịch bản: TC-06-154 Nhận việc tiếp theo
     # Truy vết: FR-06-028 · API-06-124, 045 · UI-06-04 · ERR-06-027, 028 · PERM-06-steward
     # Mục đích: Chứng minh "Nhận việc tiếp theo" nhận nguyên tử mục ưu tiên cao nhất và trả `204` khi hết việc, theo FR-06-028 (API-06-124).
-    Biết bảy mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
+    Biết tám mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
     Khi DS1 và DS2 đồng thời `POST /stewardship/items:claim-next`.
     Và DS1 `claim-next` kèm bộ lọc `riskLevel = HIGH`.
     Và nhận hết mục, rồi DS1 `claim-next` lần nữa.

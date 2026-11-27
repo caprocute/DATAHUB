@@ -38,7 +38,7 @@ Thiết kế thêm một bộ mở rộng Keycloak nhỏ (hai điểm mở rộn
 | Mục thiết kế chi tiết | Mô hình miền và 14 thành phần (mục 4.1…4.15) |
 | Biểu đồ tuần tự | 14 (mục 5.1…5.14) |
 | Máy trạng thái | 10 đối tượng (mục 8.1) |
-| API, sự kiện, lỗi | 111 API (API-12-001…111), 16 sự kiện (EVT-12-01…16), 66 mã lỗi (ERR-12) |
+| API, sự kiện, lỗi | 113 API (API-12-001…113), 16 sự kiện (EVT-12-01…16), 66 mã lỗi (ERR-12) |
 | Biện pháp ATTT tham chiếu | 32 mã SEC dẫn đích danh, 11 mối đe dọa THR |
 | Câu hỏi mở của tập | 10 (Q12-20…Q12-29) |
 
@@ -85,7 +85,7 @@ Tài liệu có bốn nhóm người đọc với nhu cầu khác nhau; bảng �
 
 | Tài liệu tham chiếu | Dùng ở đây |
 |---|---|
-| [D02-03-PH12](../../02-yeu-cau/frs/D02-03-PH12-frs-dinh-danh-phan-quyen.md) FRS | 62 FR, 45 BR, 33 NFR, 66 mã ERR, 16 EVT, 111 API, tham số `12.*`, máy trạng thái |
+| [D02-03-PH12](../../02-yeu-cau/frs/D02-03-PH12-frs-dinh-danh-phan-quyen.md) FRS | 62 FR, 45 BR, 33 NFR, 66 mã ERR, 16 EVT, 113 API, tham số `12.*`, máy trạng thái |
 | [D02-04-PH12](../../02-yeu-cau/use-case/D02-04-PH12-use-case-dinh-danh-phan-quyen.md) Use case | 42 use case làm đầu vào cho các luồng ở chương 5 |
 | [D02-08](../../02-yeu-cau/D02-08-ma-tran-phan-quyen.md) Ma trận phân quyền | 22 vai trò, quyền `PERM-*`, bảy cặp xung đột, scope của máy; nguồn của `roles.json` và `permissions.json` |
 | [D03-01 SAD](../D03-01-sad.md) §4 | DU `keycloak`, `opa`, `dh-platform` và vùng mạng |
@@ -871,7 +871,7 @@ Chi tiết thiết kế:
 
 `RevocationService.revoke` đặt danh sách chặn **trước** khi chạm Keycloak. Giao dịch: kiểm lý do (ERR-12-014) và chủ thể không là người thao tác (ERR-12-013), chèn `revocation_entry(kind, value, not_before = now, block_all = true, expires_at = null)`, tăng `revocation_feed_version`, ghi outbox EVT-12-05, commit. Cờ `block_all` nghĩa là bên thực thi từ chối **mọi** token của chủ thể bất kể `iat`; nó cần vì khi Keycloak chưa xác nhận vô hiệu thì chủ thể vẫn xin được token mới, mà token mới có `iat` sau mốc nên một mục chỉ dựa trên `notBefore` không chặn được. Khi Keycloak xác nhận (người dùng đã `enabled=false`, client đã tạm ngừng), `RevocationService` hạ `block_all = false` và đặt `expires_at = now + 330 giây`: từ đó mục chỉ còn chặn token cấp trước mốc, và hạn 330 giây là token truy cập sống tối đa 300 giây cộng dung sai 30 giây, sau hạn đó mọi token cũ đã hết hạn nên không cần giữ. Sau commit mới gọi Keycloak: vô hiệu người dùng hoặc tạm ngừng client, hủy mọi phiên, thu hồi refresh token. Thứ tự này có chủ đích: nếu Keycloak lỗi hoặc ngắt mạch, cổng vẫn chặn được ngay và lệnh Keycloak được thử lại từ `sync_task`. Mục thu hồi dùng khóa `kind` là `SUB` (người dùng, mọi token có `iat < notBefore`), `CLIENT` (theo `azp`) hoặc `JTI` (một token, RFC 7009).
 
-Hai đường phân phối cho hai loại bên nhận, cộng một đường đẩy sang PH-03: ngay khi ghi mục, `RevocationService` gọi API-03-053 (`POST /revocations`, scope `gateway:revoke`, `Idempotency-Key` theo `revocationId`) để `dh-connect` ghi vào Valkey, còn đường kéo bên dưới là đường đối chiếu. APISIX và `dh-runtime` kéo `GET /api/iam/v1/revocations` (API-12-079) mỗi 10 giây với `If-None-Match`; phản hồi là `{version, entries[{kind, value, notBefore, blockAll}], serverTime}`, ETag là `version`, trả `304` khi không đổi, nên chi phí thường trực rất thấp và danh sách luôn nhỏ (mục chỉ sống 330 giây). Các DU Spring Boot nhận EVT-12-05 qua Kafka vào `BlocklistCache` (bản đồ trong bộ nhớ theo `sub`, `azp`, `jti`) và vẫn kéo API mỗi 30 giây làm đường dự phòng khi Kafka chậm. Nhờ vậy thu hồi không phụ thuộc một đường duy nhất; ngay cả khi Kafka ngừng, 10 giây kéo của cổng cộng thời gian lan nằm trong 60 giây của NFR-12-005.
+Hai đường phân phối cho hai loại bên nhận, cộng một đường đẩy sang PH-03: ngay khi ghi mục, `RevocationService` gọi API-03-053 (`POST /revocations`, scope `gateway:revoke`, `Idempotency-Key` theo `revocationId`) để `dh-connect` ghi vào Valkey, còn đường kéo bên dưới là đường bù khi mất đẩy, đồng thời là đường đối chiếu (đã chốt 27/11/2026). APISIX và `dh-runtime` kéo `GET /api/iam/v1/revocations` (API-12-079) mỗi 10 giây với `If-None-Match`; phản hồi là `{version, entries[{kind, value, notBefore, blockAll}], serverTime}`, ETag là `version`, trả `304` khi không đổi, nên chi phí thường trực rất thấp và danh sách luôn nhỏ (mục chỉ sống 330 giây). Các DU Spring Boot nhận EVT-12-05 qua Kafka vào `BlocklistCache` (bản đồ trong bộ nhớ theo `sub`, `azp`, `jti`) và vẫn kéo API mỗi 30 giây làm đường dự phòng khi Kafka chậm. Nhờ vậy thu hồi không phụ thuộc một đường duy nhất; ngay cả khi Kafka ngừng, 10 giây kéo của cổng cộng thời gian lan nằm trong 60 giây của NFR-12-005.
 
 Bên thực thi áp mục sau khi xác minh chữ ký và `exp`: token bị từ chối ERR-12-116 (`401`) nếu một mục `SUB` hoặc `CLIENT` khớp có `blockAll`, hoặc có `iat < notBefore`, hoặc nếu `jti` nằm trong danh sách. Mỗi nút gửi kèm tiêu đề `X-DH-Applied-Version` ở lần kéo kế tiếp; `AppliedNodeTracker` ghi phiên bản đã áp theo nút (nhận diện bằng danh tính mTLS) và tính `iam_revocation_applied_nodes`, cho giao diện câu "Đã áp dụng ở n/m nút cổng". Nút im lặng quá 60 giây kể từ khi có phiên bản mới thì phát cảnh báo nghiêm trọng cho SO; token còn hiệu lực tối đa 5 phút như FRS ghi nhận.
 
@@ -888,7 +888,7 @@ Khóa ký (FR-12-039): `KeyRotationMonitor` đo `iam_key_age_days` từ siêu d�
 
 **FR hiện thực.** FR-12-041, 042, 043, 019.
 
-**Giao diện vào.** API-12-045, 046, 080…085.
+**Giao diện vào.** API-12-045, 046, 080…085, 113 (danh sách realm, lọc `driftStatus=DRIFTED`, chỉ đọc trên bản chiếu `realm`).
 
 **Phụ thuộc ra.** `ConfigCliJobRunner`; kho cấu hình Git; OpenBao; PH-20 (saga); PH-18.
 
@@ -1059,7 +1059,7 @@ Kích thước: giả định tỉnh vừa 3.000 người dùng, mỗi người 
 
 **FR hiện thực.** FR-12-052…055.
 
-**Giao diện vào.** API-12-089…102.
+**Giao diện vào.** API-12-089…102, 112 (ghi đè bản nháp để tự lưu, chỉ phiên bản `DRAFT` của chính người soạn, kèm `If-Match`).
 
 **Phụ thuộc ra.** `policy-runner`; Loki (mẫu cho chạy khô); `BundleBuilder`; hộp việc chung; kho Git `dh-policies`.
 
@@ -1742,6 +1742,7 @@ Mỗi đối tượng có vòng đời ở FRS mục 4.3…4.7 hoặc ở thiế
 | PolicyVersion | PUBLISHED | hệ thống | SUPERSEDED | Phiên bản mới cùng mã được phát hành |
 | PolicyVersion | PUBLISHED | thu hồi, quay lui | REVOKED | Không phải chính sách gốc (ERR-12-027) |
 | PolicyVersion | DRAFT | bỏ | DISCARDED | Chỉ người soạn hoặc đóng góp |
+| PolicyVersion | DRAFT | tự lưu (API-12-112) | DRAFT | Chỉ người soạn, kèm `If-Match`; kết quả kiểm thử và chạy khô cũ mất hiệu lực; phiên bản không ở `DRAFT` trả ERR-12-027 |
 | PrivilegedGrant | (mới) | đề nghị | REQUESTED | Tối đa 4 giờ, mã phiếu (ERR-12-030) |
 | PrivilegedGrant | REQUESTED | duyệt | ACTIVE | Khác người đề nghị, xác thực mức 3 (ERR-12-008) |
 | PrivilegedGrant | REQUESTED | từ chối, rút, quá hạn chờ | REJECTED, CANCELLED | Quá 4 giờ chờ duyệt (giả định, bằng thời hạn tối đa của quyền) |
@@ -2049,4 +2050,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu; vị trí trong kiến trúc và hiện trạng mã; cấu trúc mã (module `iam`, thư viện PEP, bộ mở rộng Keycloak, kho `dh-policies`) và hợp đồng quyết định; mô hình miền và 14 thành phần với bảng đặc tả 10 mục; 14 biểu đồ tuần tự; đa tenant; bảo mật dẫn SEC và THR; bảng chuyển trạng thái 10 đối tượng; chịu lỗi và nhất quán; cấu hình và cờ; quan sát; hiệu năng và vận hành; kiểm thử; lộ trình, rủi ro; 10 câu hỏi mở (Q12-20…Q12-29); đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: giao diện PermissionApi, StepUpApi, đường đẩy API-03-053, đối chiếu CSDL, bước S03_REALM |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: giao diện PermissionApi, StepUpApi, đường đẩy API-03-053, đối chiếu CSDL, bước S03_REALM; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446 |

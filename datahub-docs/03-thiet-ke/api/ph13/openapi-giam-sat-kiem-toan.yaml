@@ -2849,10 +2849,13 @@ paths:
       - ERR-13-008
       - ERR-13-009
       - ERR-13-010
+      - ERR-13-014
       - ERR-13-016
       - ERR-13-020
       - ERR-13-028
-      description: Chỉ đề xuất; quyết định ở PH-01 (EVT-13-04).
+      description: 'Chỉ đề xuất: PH-13 gọi API-01-089 của PH-01 bằng token dịch vụ (scope `onboarding:suspension-proposal`) để PH-01 tạo việc
+        khẩn cho SO; SO quyết định bằng thao tác khẩn FR-01-032 ở PH-01 (đã chốt 27/11/2026, Q13-12). PH-01 không khả dụng trả ERR-13-014, đề
+        xuất chưa gửi.'
       requestBody:
         required: true
         content:
@@ -2880,6 +2883,8 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '423':
           $ref: '#/components/responses/Locked'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /api/observability/v1/siem-targets:
     get:
       tags:

@@ -6,7 +6,7 @@ ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, đội vận hành nền tảng, cán bộ an toàn thông tin, kiểm toán viên, kiểm thử viên
 phan_he: PH-13
-mo_ta: Đặc tả 61 yêu cầu chức năng, 35 quy tắc nghiệp vụ và 31 yêu cầu phi chức năng của phân hệ giám sát xuyên suốt và nhật ký kiểm toán chỉ-thêm có chuỗi băm PH-13, kèm truy vết mã hệ cũ, dùng làm căn cứ thiết kế, lập trình, kiểm thử và thẩm định
+mo_ta: Đặc tả 62 yêu cầu chức năng, 35 quy tắc nghiệp vụ và 31 yêu cầu phi chức năng của phân hệ giám sát xuyên suốt và nhật ký kiểm toán chỉ-thêm có chuỗi băm PH-13, kèm truy vết mã hệ cũ, dùng làm căn cứ thiết kế, lập trình, kiểm thử và thẩm định
 tai_lieu_lien_quan: D02-02 SRS; D02-08 ma trận phân quyền; D02-04-PH13; D03-02-PH13; D03-03-PH13; D03-04-PH13; D03-06-PH13; D05-02-PH13; ADR-011; ADR-031
 ---
 
@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-08 ma trận phân quyền; D02-04-PH13; D03
 
 **Mục tiêu.** PH-13 là phân hệ xuyên suốt của Datahub, trả lời hai loại câu hỏi khác nhau về bản chất mà hệ LGSP cũ không phân biệt được. Loại thứ nhất là quan sát vận hành: hệ thống có khỏe không, chậm ở chặng nào, vì sao lỗi, ai cần được gọi dậy lúc nửa đêm. Loại thứ hai là kiểm toán: ai đã làm gì, với đối tượng nào, khi nào, kết quả ra sao, và dấu vết đó có bị ai sửa không. Hệ cũ đọc số liệu qua JMX/Jolokia, ghi log một dòng phân tách bằng dấu `|`, có ba màn giám sát riêng cho Bus, Hub, APIM và một bảng "audit" chỉ là bảng thường trong cơ sở dữ liệu. PH-13 thay toàn bộ bằng một nền quan sát chuẩn mở (OpenTelemetry, Mimir, Loki, Tempo, ClickHouse, Grafana) có mã truy vết xuyên suốt, và một nhật ký kiểm toán chỉ-thêm có chuỗi băm theo tenant, neo ký hằng giờ và sao sang kho WORM, đứng vững cả trước nội gián có quyền quản trị cơ sở dữ liệu.
 
-**Phạm vi.** 61 yêu cầu chức năng chia tám nhóm: thu thập dữ liệu quan sát; ghi vết kiểm toán; tra cứu kiểm toán và bằng chứng; tra log, truy vết và liên kết; bảng điều khiển; cảnh báo; phát hiện bất thường an ninh; cung cấp dữ liệu cho phân hệ khác và vòng đời theo tenant. PH-13 chạy trong DU `dh-platform` (package `vn.datahub.platform.observability` và `vn.datahub.platform.audit`) cùng bộ hạ tầng quan sát ở vùng Z7 và bảng chỉ-thêm `ph13_audit` trên `pg-core`. Phân hệ không sinh dữ liệu quan sát (mỗi DU tự phát), không sinh bản ghi kiểm toán (thư viện `dh-audit` trong mỗi DU), không xử lý bản tin lỗi (PH-18) và không tính chỉ tiêu (PH-16).
+**Phạm vi.** 62 yêu cầu chức năng chia tám nhóm: thu thập dữ liệu quan sát; ghi vết kiểm toán; tra cứu kiểm toán và bằng chứng; tra log, truy vết và liên kết; bảng điều khiển; cảnh báo; phát hiện bất thường an ninh; cung cấp dữ liệu cho phân hệ khác và vòng đời theo tenant. PH-13 chạy trong DU `dh-platform` (package `vn.datahub.platform.observability` và `vn.datahub.platform.audit`) cùng bộ hạ tầng quan sát ở vùng Z7 và bảng chỉ-thêm `ph13_audit` trên `pg-core`. Phân hệ không sinh dữ liệu quan sát (mỗi DU tự phát), không sinh bản ghi kiểm toán (thư viện `dh-audit` trong mỗi DU), không xử lý bản tin lỗi (PH-18) và không tính chỉ tiêu (PH-16).
 
 **Căn cứ pháp lý.** CMP-LAW-09 (Công văn 631/THH-THHT: giám sát, thống kê, phân tích nghiệp vụ theo thời gian thực); CMP-LAW-16 (Luật An ninh mạng 116/2025: nhật ký hệ thống, lưu trữ trong nước); CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026, TCVN 14423:2026 cấp độ 3: nhật ký, giám sát, toàn vẹn nhật ký); CMP-LAW-01 (Luật Dữ liệu 60/2024: ghi vết khai thác dữ liệu); CMP-LAW-05 và CMP-LAW-04 (Luật BVDLCN 91/2025, NĐ 356/2025: không để dữ liệu cá nhân trong log, thông báo vi phạm 72 giờ); CMP-LAW-03 (NĐ 278/2025: nhật ký khai thác dữ liệu kết nối quốc gia).
 
@@ -33,7 +33,7 @@ tai_lieu_lien_quan: D02-02 SRS; D02-08 ma trận phân quyền; D02-04-PH13; D03
 
 | Chỉ số | Giá trị |
 |---|---|
-| Yêu cầu chức năng | 61 (M: 52, S: 8, C: 1); MVP: 59, Đợt sau: 2 (FR-13-055, 060) |
+| Yêu cầu chức năng | 62 (M: 52, S: 8, C: 2); MVP: 59, Đợt sau: 3 (FR-13-055, 060, 062) |
 | Quy tắc nghiệp vụ | 35 (BR-13-001…035) |
 | Yêu cầu phi chức năng | 31 (NFR-13-001…031) |
 | Màn hình | 18 (UI-13-01…18) |
@@ -61,7 +61,7 @@ PH-13 chịu trách nhiệm toàn bộ việc thu thập, lưu, truy vấn dữ 
 | # | Trách nhiệm | Nhóm FR |
 |---|---|---|
 | 1 | **Thu thập** chỉ số, log, trace, siêu dữ liệu lượt gọi API và chỉ số hạ tầng; gắn tenant, che dữ liệu Nhạy cảm, lấy mẫu trace theo kết quả, kiểm tra tổng hợp mỗi phút, cách ly theo tenant | A (001…009) |
-| 2 | **Ghi vết kiểm toán**: tiếp nhận bản ghi từ `dh-audit`, ghi chỉ-thêm và nối chuỗi băm theo tenant, neo ký hằng giờ, sao WORM, kiểm tra toàn vẹn, xử lý đứt chuỗi, chịu lỗi, đối chiếu số lượng, vòng đời lưu giữ, tự kiểm toán | B (010…019) |
+| 2 | **Ghi vết kiểm toán**: tiếp nhận bản ghi từ `dh-audit`, ghi chỉ-thêm và nối chuỗi băm theo tenant, neo ký hằng giờ, sao WORM, kiểm tra toàn vẹn, xử lý đứt chuỗi, chịu lỗi, đối chiếu số lượng, vòng đời lưu giữ, tự kiểm toán | B (010…019, 062) |
 | 3 | **Tra cứu kiểm toán và bằng chứng**: tra cứu có lý do, xem chi tiết và xác minh băm, tab Lịch sử của đối tượng, tra theo đối tượng bị tra cứu, xuất bằng chứng ký số, báo cáo truy cập liên tenant | C (020…025) |
 | 4 | **Tra log, truy vết và liên kết**: tra log tập trung, chi tiết dòng log và theo dõi trực tiếp, tìm trace và biểu đồ thác nước, liên kết chỉ số, trace, log, kiểm toán bằng `trace_id`, tra nhật ký truy cập API | D (026…030) |
 | 5 | **Bảng điều khiển**: tổng quan nền tảng, đơn vị triển khai, luồng và route, endpoint, API và HTTT, nút gateway, cụm Kafka, hoạt động nghiệp vụ, an ninh, bộ dashboard theo tenant | E (031…041) |
@@ -159,7 +159,7 @@ Căn cứ pháp lý được đánh mã `CMP-LAW-*` theo D00-01 §7; tài liệu
 
 ### 1.6. Cấu trúc tài liệu
 
-Chương 2 là tổng quan cho hội đồng; chương 3 tác nhân và quyền; chương 4 khái niệm, thực thể, máy trạng thái; chương 5 danh sách 61 chức năng; chương 6 đặc tả 17 mục theo nhóm A…H; chương 7 và 8 quy tắc nghiệp vụ, phi chức năng và tham số; chương 9 mã lỗi, thông báo, sự kiện và API; chương 10 giao diện; chương 11 truy vết; chương 12 phụ thuộc, giả định, ràng buộc và đề nghị đồng bộ; chương 13 và 14 câu hỏi mở và tiêu chí chấp nhận.
+Chương 2 là tổng quan cho hội đồng; chương 3 tác nhân và quyền; chương 4 khái niệm, thực thể, máy trạng thái; chương 5 danh sách 62 chức năng; chương 6 đặc tả 17 mục theo nhóm A…H; chương 7 và 8 quy tắc nghiệp vụ, phi chức năng và tham số; chương 9 mã lỗi, thông báo, sự kiện và API; chương 10 giao diện; chương 11 truy vết; chương 12 phụ thuộc, giả định, ràng buộc và đề nghị đồng bộ; chương 13 và 14 câu hỏi mở và tiêu chí chấp nhận.
 
 ## 2. Tổng quan phân hệ
 
@@ -722,14 +722,14 @@ SLO mặc định của data plane mỗi tenant (tham số `13.slo.*`): tỷ l�
 
 ## 5. Danh sách chức năng
 
-Bảng sau liệt kê 61 chức năng của PH-13 theo thứ tự đặc tả ở chương 6: nhóm A là FR-13-001…009, B 010…019, C 020…025, D 026…030, E 031…041, F 042…050, G 051…055, H 056…061. Cột "Mức" theo MoSCoW rút gọn (M bắt buộc, S nên có, C có thể có); cột "Đợt" là MVP hoặc Đợt sau. Cột UI lấy từ mục 10.1, cột API từ mục 9.4 (liệt kê đủ mọi operation của chức năng), cột UC từ D02-04-PH13 mục 5.1; "—" là chức năng chạy nền hoặc tiêu thụ dữ liệu không có màn hay API riêng. Tập use case D02-04-PH13 gắn UC vào từng FR theo nhóm này; chiều ngược lại ở trường "Truy vết" của từng FR.
+Bảng sau liệt kê 62 chức năng của PH-13 theo thứ tự đặc tả ở chương 6: nhóm A là FR-13-001…009, B 010…019 và 062, C 020…025, D 026…030, E 031…041, F 042…050, G 051…055, H 056…061. Cột "Mức" theo MoSCoW rút gọn (M bắt buộc, S nên có, C có thể có); cột "Đợt" là MVP hoặc Đợt sau. Cột UI lấy từ mục 10.1, cột API từ mục 9.4 (liệt kê đủ mọi operation của chức năng), cột UC từ D02-04-PH13 mục 5.1; "—" là chức năng chạy nền hoặc tiêu thụ dữ liệu không có màn hay API riêng. Tập use case D02-04-PH13 gắn UC vào từng FR theo nhóm này; chiều ngược lại ở trường "Truy vết" của từng FR.
 
 ```{.mermaid caption="Tám nhóm chức năng của PH-13 và dòng dữ liệu giữa các nhóm"}
 flowchart TB
   A["A. Thu thập dữ liệu quan sát<br/>FR 001…009"] --> D["D. Tra log, truy vết<br/>FR 026…030"]
   A --> E["E. Bảng điều khiển<br/>FR 031…041"]
   A --> F["F. Cảnh báo<br/>FR 042…050"]
-  B["B. Ghi vết kiểm toán<br/>FR 010…019"] --> C["C. Tra cứu kiểm toán, bằng chứng<br/>FR 020…025"]
+  B["B. Ghi vết kiểm toán<br/>FR 010…019, 062"] --> C["C. Tra cứu kiểm toán, bằng chứng<br/>FR 020…025"]
   B --> G["G. Phát hiện bất thường an ninh<br/>FR 051…055"]
   F --> G
   G --> F
@@ -803,6 +803,7 @@ Sơ đồ cho thấy nhóm A và B là hai nguồn dữ liệu độc lập; nh�
 | FR-13-059 | H | Khởi tạo quan sát và chuỗi kiểm toán cho tenant mới | M | MVP | — | API-13-072 | UC-13-40 |
 | FR-13-060 | H | Đóng chuỗi kiểm toán khi tenant ngừng hoặc sáp nhập | S | Đợt sau | UI-13-17 | API-13-073 | UC-13-41 |
 | FR-13-061 | H | Tham số và hạn mức quan sát theo tenant | S | MVP | UI-13-17 | API-13-070, 071 | UC-13-42 |
+| FR-13-062 | B | Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu (đường ngoại lệ có biên bản) | C | Đợt sau | — | — | UC-13-43 |
 
 : Danh sách chức năng của PH-13
 
@@ -1915,6 +1916,7 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 | `AUDIT.EXPORT.REQUEST`, `AUDIT.EXPORT.DOWNLOAD` | Xuất và tải bằng chứng (FR-13-024) | Có |
 | `AUDIT.CROSS_TENANT.OPEN`, `AUDIT.CROSS_TENANT.CLOSE` | Mở, đóng phiên liên tenant (FR-13-025) | Có |
 | `AUDIT.CHAIN.BREAK_DETECTED`, `AUDIT.PARTITION.ARCHIVE` | Đứt chuỗi, lưu trữ phân vùng (FR-13-015, 018) | Không (hệ thống) |
+| `AUDIT.CHAIN.RESTORE` | Khôi phục chuỗi sau sự cố mất dữ liệu, ghi vào chuỗi `PLATFORM` (FR-13-062) | Có (biên bản ký) |
 | `ALERT.RULE.CREATE`, `ALERT.RULE.UPDATE`, `ALERT.RULE.DISABLE`, `ALERT.RULE.RETIRE` | Quản lý luật cảnh báo (FR-13-042) | Có với tắt, ngừng dùng |
 | `ALERT.ACK`, `ALERT.RESOLVE`, `ALERT.SILENCE` | Xử lý cảnh báo (FR-13-047) | Có với đóng, tạm ẩn |
 | `SECURITY.ALERT.ACK`, `SECURITY.ALERT.CLOSE`, `SECURITY.RULE.TUNE` | Xử lý cảnh báo an ninh, tinh chỉnh ngưỡng (FR-13-051, 053) | Có |
@@ -1925,6 +1927,56 @@ Hình cho thấy bộ kiểm tra chỉ đọc (từ bản sao cơ sở dữ li�
 | `ONCALL.UPDATE`, `CHANNEL.UPDATE`, `SIEM.TARGET.UPDATE`, `DASHBOARDSET.SYNC`, `SETTINGS.UPDATE`, `CHAIN.CLOSE`, `PROBE.UPDATE` | Cấu hình PH-13 (FR-13-008, 041, 048, 054, 060, 061) | Có với đóng chuỗi |
 
 : Thao tác của PH-13 phải ghi kiểm toán
+
+#### FR-13-062 · Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
+
+::: dac-ta
+**Mục đích.** Khi cơ sở dữ liệu kiểm toán mất dữ liệu (phải khôi phục về điểm gần nhất hoặc chuyển sang bản sao DR), nạp lại nguyên văn những bản ghi đã nằm ở kho WORM để chuỗi băm liền lại, mà không cho phép sửa hay dựng lại chuỗi. Đây là đường ngoại lệ duy nhất của BR-13-033: thủ tục của đội vận hành, có biên bản, không có màn hình hay API, và chỉ thêm lại bản ghi vốn đã tồn tại và kiểm chứng được bằng neo.
+
+**Tác nhân, quyền.** Công cụ `AuditRestore` do đội vận hành chạy dưới vai trò di trú trong cửa sổ bảo trì; SO và TA cùng ký biên bản (đã chốt 27/11/2026, Q419). Không có quyền `PERM-13-*` nào cho thao tác này.
+
+**Mức ưu tiên, đợt.** C · Đợt sau.
+
+**Truy vết.** REQ-13; FR-13-011, 012, 013, 014, 015; BR-13-002, BR-13-033; UC-13-43; D03-03-PH13 §7.2; D03-07 §8.
+
+**Tiền điều kiện.** Sự cố mất dữ liệu đã được xác nhận theo quy trình ứng cứu; PostgreSQL đã khôi phục (PITR hoặc bản sao DR) và mở ở chế độ chỉ đọc; bộ tiếp nhận `ingest` chưa cho ghi; biên bản mở và cửa sổ bảo trì được SO và TA duyệt.
+
+**Kích hoạt.** SO yêu cầu đội vận hành chạy thủ tục sau khi sự cố mất dữ liệu được xác nhận.
+
+**Đầu vào.** Danh sách tenant bị ảnh hưởng; mã sự cố; lý do; điểm khôi phục.
+
+**Luồng xử lý chính.**
+
+1. Đội vận hành so `head_seq`, `head_hash` của chuỗi từng tenant với lô WORM mới nhất (`audit_worm_batch` và danh sách đối tượng thực ở WORM) và với neo gần nhất.
+2. Nếu bảng đứng sau WORM (mất tối đa khoảng 5 phút), `AuditRestore` đọc lô từ WORM, kiểm băm lô và băm từng bản ghi, rồi chèn nguyên văn (giữ `seq`, `recorded_at`, `prev_hash`, `hash`) theo thứ tự; `tg_audit_chain_guard` kiểm liền kề và nối đúng, nên không dựng được chuỗi sai.
+3. Đội vận hành mở lại `ingest`; bản ghi chưa kịp lên WORM được DU gửi lại từ hộp thư đi hoặc Kafka (giữ 7 ngày), khử trùng theo `id`, bản còn lại nhận `seq` mới nối tiếp.
+4. Hệ thống chạy lượt xác minh `ON_DEMAND` toàn chuỗi cho từng tenant (FR-13-014); chỉ khi đạt mới coi là xong.
+5. Hệ thống ghi `AUDIT.CHAIN.RESTORE` (lý do, số tenant, khoảng `seq` nạp lại) vào chuỗi `PLATFORM` và gửi SIEM.
+6. SO và TA cùng ký biên bản, lưu ở `dh-evidence`.
+
+**Luồng thay thế.** Bảng không đứng sau WORM (không mất bản ghi đã sao): bỏ bước 2, chỉ xác minh và lập biên bản. Mất dữ liệu ở nhiều tenant: chạy lần lượt từng tenant, mỗi tenant xác minh riêng trước khi mở `ingest` cho tenant đó.
+
+**Luồng ngoại lệ.**
+
+- Băm lô hoặc băm bản ghi không khớp neo: dừng ngay, không chèn thêm, xử lý như đứt chuỗi theo FR-13-015 và quy trình ứng cứu sự cố.
+- Trigger `tg_audit_chain_guard` từ chối bản ghi không liền kề: dừng, không có đường vượt qua trigger.
+- Thiếu chữ ký của SO hoặc TA: không mở cửa sổ bảo trì, không chạy `AuditRestore`.
+- Xác minh toàn chuỗi không đạt sau khi nạp: chuỗi giữ trạng thái đứt, mở sự cố theo FR-13-015.
+
+**Đầu ra.** Biên bản khôi phục có chữ ký; báo cáo xác minh toàn chuỗi; bản ghi `AUDIT.CHAIN.RESTORE`.
+
+**Kết quả.** Chuỗi kiểm toán liền lại bằng đúng các bản ghi gốc đã kiểm chứng; không bản ghi nào bị sửa hay dựng mới.
+
+**Hậu điều kiện.** Chuỗi của tenant `OPEN` và xác minh đạt; biên bản lưu ở `dh-evidence`.
+
+**Sự kiện phát ra.** Không (bản ghi kiểm toán gửi SIEM qua FR-13-054).
+
+**Kiểm toán.** Có: `AUDIT.CHAIN.RESTORE` ở chuỗi `PLATFORM`, kèm biên bản có chữ ký SO và TA.
+
+**Quy tắc nghiệp vụ.** BR-13-002; BR-13-033 (ngoại lệ có biên bản).
+
+**Màn hình, API.** Không có màn hình hay API; thủ tục vận hành ghi ở sổ tay vận hành của PH-18.
+:::
 
 ### 6.4. Nhóm C · Tra cứu kiểm toán và bằng chứng
 
@@ -3866,8 +3918,8 @@ Sơ đồ cho thấy hai nguồn phát hiện (luật trên log, chỉ số và 
 
 1. SO mở cảnh báo; giao diện hiện luật, nguồn, chủ thể, bằng chứng (liên kết tới bản ghi kiểm toán và log), mức, thời điểm phát hiện, runbook điều tra.
 2. SO bấm "Tiếp nhận"; hệ thống chuyển `ACKNOWLEDGED`, ghi người xử lý, dừng leo thang tới TA.
-3. SO điều tra qua các liên kết (FR-13-020, 026, 028) và có thể bấm "Đề xuất tạm ngừng HTTT"; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do và gửi đề nghị sang PH-01 (EVT-13-04 kèm `proposedAction = SUSPEND_SYSTEM`), mở sẵn màn tạm ngừng của PH-01.
-4. Việc tạm ngừng do người có `PERM-01-suspend` thực hiện ở PH-01 và được kiểm toán ở PH-01; PH-13 chỉ ghi liên kết và kết quả.
+3. SO điều tra qua các liên kết (FR-13-020, 026, 028) và có thể bấm "Đề xuất tạm ngừng HTTT"; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do và gửi đề xuất sang PH-01 bằng API-01-089 (token dịch vụ, scope `onboarding:suspension-proposal`); PH-01 tạo việc khẩn cho SO của tenant, kèm liên kết sâu về cảnh báo này.
+4. PH-13 chỉ đề xuất. SO ở PH-01 (`PERM-01-suspend`) quyết định bằng thao tác khẩn FR-01-032 (hoặc đóng việc không tạm ngừng) và được kiểm toán ở PH-01; PH-13 chỉ ghi liên kết và nhận kết quả qua EVT-01-03, EVT-01-15 (đã chốt 27/11/2026, Q13-12).
 5. SO đóng cảnh báo bằng kết luận `CONFIRMED_INCIDENT`, `FALSE_POSITIVE` hoặc `ACCEPTED_RISK` kèm ghi chú; thiếu kết luận thì từ chối (ERR-13-023).
 6. Kết luận `CONFIRMED_INCIDENT` mở hồ sơ sự cố theo quy trình ứng cứu (D03-07 §8) và gợi ý lập báo cáo (FR-13-055).
 
@@ -3886,7 +3938,7 @@ Sơ đồ cho thấy hai nguồn phát hiện (luật trên log, chỉ số và 
 
 **Hậu điều kiện.** Cảnh báo `CLOSED` có kết luận; đề xuất tạm ngừng ghi vết.
 
-**Sự kiện phát ra.** EVT-13-04 khi đề xuất tạm ngừng.
+**Sự kiện phát ra.** EVT-13-04 khi cảnh báo được phát hiện (đề xuất tạm ngừng không phát sự kiện mà gọi API-01-089).
 
 **Kiểm toán.** Có: `SECURITY.ALERT.ACK`, `SECURITY.ALERT.CLOSE` kèm kết luận.
 
@@ -4390,7 +4442,7 @@ Chương này liệt kê 35 quy tắc nghiệp vụ áp dụng xuyên suốt cá
 | BR-13-030 | Người dùng tenant chỉ thấy dữ liệu quan sát của tenant mình; số liệu tổng hợp toàn nền tảng và chỉ số hạ tầng chung xem được không cần lý do, còn chi tiết một tenant cần phiên liên tenant có lý do (FR-00-012) | 009, 020, 022, 026, 027, 028, 029, 030, 031, 032, 033, 034, 035, 038, 039, 040, 056, 057 |
 | BR-13-031 | Mã luật, runbook, kênh, lịch trực, mục tiêu SIEM bất biến và không dùng lại sau khi ngừng dùng; mỗi tenant tối đa 500 luật cảnh báo | 042, 048, 061 |
 | BR-13-032 | Luật chuẩn nền tảng, bộ dashboard chuẩn và bộ luật UC-SEC mặc định do nền tảng phát hành; tenant không tắt, không sửa, chỉ nhân bản thành luật riêng hoặc tinh chỉnh ngưỡng trong biên (BR-13-025) | 041, 042, 043 |
-| BR-13-033 | Kiểm tra toàn vẹn chỉ đọc; PH-13 không có chức năng sửa, nối lại hay dựng lại chuỗi; xử lý đứt chuỗi theo quy trình ứng cứu sự cố | 014, 015 |
+| BR-13-033 | Kiểm tra toàn vẹn chỉ đọc; PH-13 không có chức năng sửa, nối lại hay dựng lại chuỗi; xử lý đứt chuỗi theo quy trình ứng cứu sự cố. Ngoại lệ duy nhất (đã chốt 27/11/2026, Q419): đường khôi phục sau sự cố mất dữ liệu ở FR-13-062, chỉ nạp lại nguyên văn bản ghi đã có ở kho WORM, do đội vận hành chạy có biên bản, SO và TA cùng ký, không qua màn hình hay API | 014, 015, 062 |
 | BR-13-034 | Dữ liệu đẩy sang SIEM, SOC, cơ quan chuyên trách phải loại dữ liệu cá nhân và nội dung Nhạy cảm, ánh xạ ECS hoặc OCSF; điểm xuất cho cơ quan chuyên trách tắt mặc định, bật theo tenant khi có văn bản yêu cầu | 054 |
 | BR-13-035 | Giá trị trước, sau và lý do trong bản ghi kiểm toán không bao giờ chứa bí mật hay giá trị Nhạy cảm chưa che; bản ghi vi phạm bị cách ly, không vào chuỗi, và cảnh báo nguồn | 005, 010 |
 
@@ -4594,7 +4646,7 @@ Sự kiện của PH-13 phát qua outbox của `dh-platform`, CloudEvents 1.0, t
 | EVT-13-01 | `{tenant}.obs.alert.fired.v1` | Cảnh báo sang `FIRING` | `alertId` | PH-18, trung tâm thông báo |
 | EVT-13-02 | `{tenant}.obs.alert.resolved.v1` | Cảnh báo sang `RESOLVED` | `alertId` | PH-18, trung tâm thông báo |
 | EVT-13-03 | `{tenant}.obs.alert.escalated.v1` | Cảnh báo leo thang lên cấp mới | `alertId` | PH-18 |
-| EVT-13-04 | `{tenant}.obs.security-alert.raised.v1` | Cảnh báo an ninh phát hiện, hoặc đề xuất tạm ngừng HTTT | `alertId` | PH-01 (đề xuất), PH-18, bộ xuất SIEM |
+| EVT-13-04 | `{tenant}.obs.security-alert.raised.v1` | Cảnh báo an ninh phát hiện (đề xuất tạm ngừng HTTT đi bằng API-01-089 của PH-01, không qua topic này) | `alertId` | PH-18, bộ xuất SIEM |
 | EVT-13-05 | `{tenant}.obs.audit.chain-broken.v1` | Phát hiện đứt chuỗi hoặc neo không khớp | `tenant` | PH-18, bộ xuất SIEM |
 | EVT-13-06 | `{tenant}.obs.audit.anchor-created.v1` | Neo mới được tạo | `anchorId` | Bộ xuất SIEM |
 | EVT-13-07 | `{tenant}.obs.audit.verification-completed.v1` | Kiểm tra toàn vẹn xong | `verificationId` | PH-18, UI-13-14 |
@@ -4977,7 +5029,7 @@ Thiếu số liệu thật thì dùng giả định có ghi cơ sở; cách cậ
 
 Các ràng buộc thiết kế dưới đây cố định cho mọi lần hiện thực và không bàn lại trong các tập sau.
 
-1. Không có chức năng, API hay vai trò nào sửa, xóa, nối lại hoặc dựng lại chuỗi kiểm toán (BR-13-002, BR-13-033).
+1. Không có chức năng, API hay vai trò nào sửa, xóa, nối lại hoặc dựng lại chuỗi kiểm toán (BR-13-002, BR-13-033), trừ đường ngoại lệ có biên bản của FR-13-062 (chỉ nạp lại nguyên văn bản ghi đã có ở kho WORM, không có màn hình hay API).
 2. Mọi bản ghi kiểm toán đi qua hộp thư đi của DU, Kafka và bộ tiếp nhận; không DU nào ghi thẳng vào bảng kiểm toán (BR-13-019).
 3. Kho WORM là hệ lưu trữ riêng (Ceph RGW, Q306, Q347), tách bucket, khóa, tài khoản quản trị khỏi kho sao lưu và khỏi Garage (BR-13-013).
 4. Nhãn chỉ số chỉ lấy từ danh sách cho phép ở mục 4.8; `trace_id`, `user_id`, `client_ip` không làm nhãn (BR-13-026).
@@ -5040,7 +5092,7 @@ Các câu hỏi dưới đây chưa có trả lời chốt; tập này dùng gi�
 
 > **Câu hỏi mở Q13-11:** Giờ hành chính và ngày nghỉ lễ theo từng tỉnh (ảnh hưởng luật "ngoài giờ" và gửi cảnh báo mức Cảnh báo). Giả định: 07:30 đến 17:00 thứ Hai đến thứ Sáu, chưa tính ngày lễ; chỉnh theo tenant.
 
-> **Câu hỏi mở Q13-12:** Hợp đồng với PH-01 cho đề xuất tạm ngừng HTTT: PH-01 có trạng thái "Đề nghị" hay chỉ nhận liên kết sâu tới màn tạm ngừng. Giả định: PH-13 phát EVT-13-04 kèm `proposedAction` và liên kết sâu; PH-01 quyết định.
+> **Q13-12 (đã chốt 27/11/2026):** PH-13 chỉ đề xuất tạm ngừng HTTT; PH-13 gọi API-01-089 của PH-01 (scope `onboarding:suspension-proposal`) để PH-01 tạo việc khẩn trong hộp việc của SO (FR-01-053); SO quyết định bằng thao tác khẩn FR-01-032. *Câu hỏi gốc:* Hợp đồng với PH-01 cho đề xuất tạm ngừng HTTT: PH-01 có trạng thái "Đề nghị" hay chỉ nhận liên kết sâu tới màn tạm ngừng. Giả định: PH-13 phát EVT-13-04 kèm `proposedAction` và liên kết sâu; PH-01 quyết định.
 
 > **Câu hỏi mở Q13-13:** Khóa ký neo và gói bằng chứng: dùng một khóa nền tảng hay khóa theo tenant; và gói bằng chứng nộp cơ quan có cần ký bằng chứng thư số do tổ chức cung cấp dịch vụ chứng thực công cộng (có giá trị pháp lý theo Luật Giao dịch điện tử) thay cho khóa của Datahub không. Giả định: một khóa nền tảng `dh-audit-sign` xoay 12 tháng, giữ khóa công khai các phiên bản cũ; bản ký chứng thư số là bổ sung ở Đợt sau.
 
@@ -5077,5 +5129,5 @@ PH-13 được nghiệm thu khi đạt đủ mười tiêu chí dưới đây tr
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 61 yêu cầu chức năng theo tám nhóm viết ở dạng khối đặc tả 17 mục; 35 quy tắc nghiệp vụ; 31 yêu cầu phi chức năng; 25 tham số `13.*`; 70 mã lỗi, 14 sự kiện, 90 API; 18 màn hình; truy vết 20 hàng `LGC` của D00-03 cùng 2 hàng `LGC-NFR` và ánh xạ mã SRS repo; 19 câu hỏi mở Q13-01…19; đề nghị đồng bộ D02-08, D02-02, D03-07, D03-09, D03-10, D03-06-00, D03-05 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: cột UI, API, UC của mục 5 khớp mục 9.4, 10.1 và D02-04; thêm UC vào trường "Truy vết" của 61 FR; FR-13-005, 006 gắn UI-13-06, 09; FR-13-040 thống nhất quyền với D03-04 và D03-06; ghi đề nghị đồng bộ danh sách ngoại lệ kiểm tra mã |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, bước S08_OBSERVABILITY, quyền theo D02-08 0.5, khớp DDL mục 4.2 và 4.7, nhãn kỹ thuật, giới hạn xác nhận hàng loạt 50 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: bảng điểm giao tiếp tiếp nhận, bước S08_OBSERVABILITY, quyền theo D02-08 0.5, khớp DDL mục 4.2 và 4.7, nhãn kỹ thuật, giới hạn xác nhận hàng loạt 50; chốt câu hỏi mở đợt đồng bộ: Q390, Q419 |
 

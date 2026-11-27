@@ -9925,6 +9925,76 @@ paths:
       - ERR-17-001
       x-datahub-domain-errors:
       - ERR-17-001
+    put:
+      tags:
+      - Quản trị AI
+      operationId: assist194
+      summary: Sửa phản hồi của chính mình trong 10 phút (chốt 27/11/2026)
+      x-datahub-id: API-17-194
+      x-datahub-fr:
+      - FR-17-052
+      x-datahub-permission:
+        permission: PERM-17-use
+      description: Chỉ người đã gửi phản hồi được sửa, trong 10 phút kể từ lúc gửi và khi phản hồi còn `NEW`; quá hạn hoặc đã được phân loại thì trả ERR-17-006. Bắt
+        buộc `If-Match`. Đổi loại hoặc ghi chú trên cùng bản ghi, không tạo phản hồi mới nên không bị ERR-17-077; ghi chú vẫn được che DLCN.
+      security:
+      - oauth2User: []
+      x-dh-classification: INTERNAL
+      parameters:
+      - name: feedbackId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackUpdateInput'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-17-001
+      - ERR-17-003
+      - ERR-17-004
+      - ERR-17-010
+      - ERR-17-077
+      x-datahub-domain-errors:
+      - ERR-17-001
+      - ERR-17-003
+      - ERR-17-077
   /feedback/{feedbackId}:triage:
     post:
       tags:
@@ -16669,6 +16739,15 @@ components:
           type: string
       required:
       - messageId
+      - feedbackKind
+    FeedbackUpdateInput:
+      type: object
+      properties:
+        feedbackKind:
+          $ref: '#/components/schemas/FeedbackKind'
+        comment:
+          type: string
+      required:
       - feedbackKind
     FeedbackTriageInput:
       type: object

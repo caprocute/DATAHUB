@@ -58,7 +58,7 @@ for m in re.finditer(r"^\| API-06-(\d{3}) \| `([A-Z]+) ([^`]+)` \| ([^|]+) \|", 
     else:
         ROWS.append((code, meth, path, None, frs_, code))
 ROWS.sort(key=lambda r: r[0])
-assert len(ROWS) == 125, len(ROWS)
+assert len(ROWS) == 126, len(ROWS)
 SPLIT = [(r[5], r[0]) for r in ROWS if r[0] > "096"]
 
 # ---------------------------------------------------------------- bảng operation
@@ -190,6 +190,7 @@ OPS_TXT = """
 123|Khóa tập nhãn kiểm chứng|Quy tắc đối sánh|steward|-|LabelSet|200|-|
 124|Nhận mục hàng đợi tiếp theo|Hàng đợi người quản lý|steward|ClaimNextRequest|StewardItem|200|-|noifm also:204
 125|Gỡ hạn chế xử lý dữ liệu|Chủ thể dữ liệu và lưu giữ|dsr|ReasonBody|Dsr|200|-|
+126|Tạo mục hàng đợi từ phát hiện chất lượng (PH-08)|Hàng đợi người quản lý|-|StewardIntakeRequest|StewardIntakeResult|201|-|idem only:mdm:steward-intake also:200
 """
 OPS = {}
 for ln in OPS_TXT.strip().splitlines():
@@ -380,6 +381,10 @@ page("MatchJobPage", "MatchJob")
 obj("MatchJobCreate", "Tạo job đối sánh lô (FR-06-022).", ("domainCode!", "dcode"), ("scope!", "E:BatchScope", "CANDIDATES_SINCE"), ("since", "ts"), ("trainOnly", "bool", False), ("dryRun", "bool", False), ("ruleSetVersion", "int", 2))
 obj("JobConfirmRequest", "Quyết định của người duyệt với job vượt ngưỡng an toàn (FR-06-022 bước 5).", ("decision!", "E:ApprovalDecision", "APPROVE"), ("comment", "str", "Đồng ý áp kết quả theo biên bản họp ngày 20/11/2026.", {"maxLength": 2000}))
 obj("SyncResumeRequest", "Tiếp tục đồng bộ quốc gia sau tạm dừng (FR-06-053).", ("cause!", "str", "Đã điều tra, lệch do đợt cập nhật danh mục ngày 20/11, áp bản quốc gia.", R20), ("applyDiscrepancies", "bool", True))
+obj("StewardIntakeRequest", "PH-08 chuyển lỗi chất lượng của bản ghi vàng sang hàng đợi (FR-06-027, FR-08-046); mục lý do `DQ_FINDING`.", ("domainCode!", "dcode"), ("goldenId!", "uuid"),
+    ("ruleCodes!", "[str]", ["DQ-NAME-001"], {"minItems": 1, "maxItems": 50}), ("suggestedAction!", "str", "REVIEW_DUPLICATE", {"enum": ["REVIEW_DUPLICATE", "REVIEW_SURVIVORSHIP", "REVIEW_VALUE"]}),
+    ("findingIds", "[uuid]"), ("note", "str", "Hai bản ghi vàng cùng họ tên, ngày sinh và địa chỉ.", {"maxLength": 500}))
+obj("StewardIntakeResult", "Mục hàng đợi đã tạo hoặc đã có (gắn thêm lý do).", ("itemId!", "uuid"), ("created!", "bool", True), ("reason!", "E:QueueReason", "DQ_FINDING"), ("priority!", "int", 35), ("dueAt!", "ts"))
 obj("ClaimNextRequest", "Bộ lọc khi nhận mục tiếp theo (FR-06-028); thân rỗng nghĩa là không lọc.", ("domainCode", "dcode"), ("reason", "[E:QueueReason]", ["POSSIBLE_MATCH"]), ("riskLevel", "E:RiskLevel", "LOW"), ("sourceCode", "[scode]"))
 obj("RerunRequest", "Chạy lại job từ bước.", ("fromStep!", "str", "APPLYING", {"enum": ["PREPARING", "APPLYING"]}), ("reason!", "str", "Chạy lại sau khi khắc phục lỗi đọc staging.", R20))
 # --- hàng đợi

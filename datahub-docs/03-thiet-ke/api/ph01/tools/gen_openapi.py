@@ -26,7 +26,7 @@ EXAMPLES.update({
         "certFingerprint": None, "status": "ACTIVE", "disabled": False, "disabledReason": None, "expiresAt": "2027-11-26T00:00:00Z", "lastUsedAt": None,
         "rotationEndsAt": None, "secretAgeDays": 0, "keyRegistered": True, "createdAt": "2026-11-27T04:00:20Z", "allowedActions": ["rotate", "revoke"],
         "disabledReasons": {}}]},
-    "Setting": {"key": "onboarding.review.slaWorkingDays", "value": 3, "default": 2, "min": 1, "max": 10, "platformCeiling": None,
+    "Setting": {"key": "onboarding.review.slaWorkingDays", "value": 3, "default": 2, "min": 1, "max": 10, "platformCeiling": None, "securityRelated": False,
         "description": "Hạn mỗi bước thẩm định (ngày làm việc)", "version": 4, "updatedAt": "2026-12-03T03:00:00Z", "updatedBy": "ta.lethi"},
     "ReplicaSystem": EXAMPLES["ReplicaPage"]["items"][0],
     "ChangeRequest": EXAMPLES["ChangeRequestOutcome"]["changeRequest"],
@@ -132,7 +132,10 @@ X = {
   "006": ("listAttachments", None, "AttachmentList", [], "Mọi tài liệu của hồ sơ, kèm trạng thái quét mã độc (`scanStatus`).", []),
   "007": ("uploadAttachment", "AttachmentUpload", "Attachment", ["005", "012", "013", "014", "046"],
           "Kiểm kiểu theo nội dung (Tika), cỡ ≤ `onboarding.attachment.maxSizeMb`, quét mã độc đồng bộ ≤ 20 giây (quá hạn: `scanStatus = PENDING`, không nộp được tới khi sạch). Mã hóa SSE-C, bucket theo tenant.", []),
-  "008": ("downloadAttachment", None, None, ["046"], "Tệp nhị phân (`Content-Disposition: attachment`), hoặc `302` tới liên kết ký 5 phút của kho tệp. Ghi kiểm toán lượt tải.", []),
+  "008": ("downloadAttachment", None, None, ["046"],
+          "Tệp nhị phân (`Content-Disposition: attachment` mặc định), hoặc `302` tới liên kết ký 5 phút của kho tệp. Đã chốt 27/11/2026 (Q408): có `disposition=inline` để xem trước PDF trong khung cô lập (phản hồi kèm `Content-Security-Policy: sandbox`, `X-Content-Type-Options: nosniff`) và hỗ trợ `Range` (một khoảng byte, trả `206` kèm `Content-Range`, luôn có `Accept-Ranges: bytes`). `Range` sai cú pháp trả ERR-01-003; ngoài kích thước tệp trả `416` kèm `Content-Range: bytes */{size}`. Chỉ tệp đã quét sạch (`scanStatus = CLEAN`) mới trả `inline`. Ghi kiểm toán lượt tải, không ghi từng lượt `Range`.",
+          [Q("disposition", enum("attachment", "inline"), "Mặc định `attachment`."),
+           {"name": "Range", "in": "header", "schema": STR(64, pattern="^bytes=[0-9]*-[0-9]*$"), "description": "Một khoảng byte, ví dụ `bytes=0-1048575`; không hỗ trợ nhiều khoảng."}]),
   "009": ("deleteAttachment", None, None, ["005"], "Chỉ khi `DRAFT`; tệp đang được dùng làm căn cứ pháp lý của nhu cầu thì gỡ liên kết trước (ERR-01-015 ở lần kiểm tra kế tiếp).", []),
   "020": ("listTemplates", None, "TemplateList", [], "Mẫu của tenant và mẫu mặc định ở `COMMON`; mọi người dùng đã đăng nhập thuộc tenant.", []),
   "021": ("downloadTemplate", None, None, [], "Tệp mẫu (DOCX, PDF).", []),
@@ -208,6 +211,8 @@ X = {
   "063": ("listReplicaSystems", None, "ReplicaPage", ["003"], "Đồng bộ gia tăng bằng `updatedSince`; dùng khi khởi tạo bản sao và đối chiếu, còn lại nghe EVT-01-03. Không có liên hệ cá nhân, bí mật.",
           [Q("updatedSince", TS), QA("status", R("SystemStatus")), Q("systemCode", R("SystemCode")), "Page", "ReplicaSize"]),
   "064": ("getReplicaSystem", None, "ReplicaSystem", [], "Tra một HTTT (cùng trường rút gọn với API-01-063).", []),
+  "089": ("receiveSuspensionProposal", "SuspensionProposal", "SuspensionProposalAck", ["005", "048"],
+          "PH-13 gửi đề xuất tạm ngừng HTTT từ cảnh báo an ninh (FR-13-053, API-13-060); PH-01 không đổi trạng thái HTTT. Kiểm token dịch vụ và tenant của token; HTTT phải `ACTIVE` (đang `SUSPENDED` trả ERR-01-048, trạng thái khác ERR-01-005). Tạo một việc khẩn trong hộp việc cho mọi SO của tenant (loại `ph01.review-suspension-proposal`, mức khẩn, liên kết tới UI-01-11 hành động khẩn) qua `notify_outbox`; lũy đẳng theo `(systemCode, alertId)` (lặp trả `duplicate = true`, không tạo việc thứ hai). SO quyết định bằng thao tác khẩn API-01-054 (FR-01-032) với `incidentRef` của đề xuất, hoặc đóng việc không tạm ngừng; thao tác khẩn vẫn do SO tự quyết, không có đường tự động.", []),
   "087": ("receiveProvisioningCallback", "ProvisioningCallback", "CallbackAck", ["053"],
           "PH-12, PH-03 trả kết quả bước saga ở trạng thái `ACCEPTED` khi `onboarding.saga.async-callback = true` (SDD §4.6). Kiểm token dịch vụ, `sagaId` và tenant của token; lũy đẳng theo `(sagaId, step)` (lặp trả `duplicate = true`). Quá 5 phút không có callback thì bước coi như thất bại.", []),
   "065": ("openAccessReview", "AccessReviewCreate", "AccessReviewCycle", ["003", "039", "044"], "Chụp danh sách mục (cặp HTTT, phạm vi) của HTTT `ACTIVE`; kỳ định kỳ cập nhật mốc rà soát toàn tenant. Chỉ một kỳ mở một lúc (ERR-01-039).", []),
@@ -345,6 +350,10 @@ def build():
             alt["content"] = {"application/json": {"schema": R(alt_schema)}}
             resps["202"] = alt
         if code == "008":
+            okr.setdefault("headers", {})["Accept-Ranges"] = {"schema": STR(), "description": "`bytes`."}
+            resps["206"] = {"description": "Một khoảng byte của tệp (có `Range`).", "headers": {"Content-Range": {"schema": STR(), "description": "`bytes {đầu}-{cuối}/{cỡ}`."}, "Accept-Ranges": {"schema": STR()}},
+                            "content": {"application/octet-stream": {"schema": {"type": "string", "contentEncoding": "binary"}}}}
+            resps["416"] = {"description": "Khoảng byte nằm ngoài kích thước tệp; kèm `Content-Range: bytes */{cỡ}`.", "headers": {"Content-Range": {"schema": STR()}}}
             resps["302"] = {"description": "Chuyển tới liên kết ký 5 phút của kho tệp.", "headers": {"Location": {"schema": STR(2048, format="uri")}}}
         codes = err_set(code, method, path, bool(body), params, idem, errs)
         # `ProblemDetails` theo mã HTTP của từng mã lỗi
@@ -391,7 +400,8 @@ def build():
             "flows": {"clientCredentials": {"tokenUrl": "https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token",
                 "scopes": {"onboarding:internal-read": "Đọc bản sao HTTT (PH-02, 03, 04, 05, 10, 13, 14, 15)",
                            "onboarding:provision-callback": "Trả kết quả bất đồng bộ của saga (PH-12, PH-03)",
-                           "onboarding:reconcile": "Chạy đối chiếu trạng thái"}}}}},
+                           "onboarding:reconcile": "Chạy đối chiếu trạng thái",
+                           "onboarding:suspension-proposal": "PH-13 gửi đề xuất tạm ngừng HTTT (SO quyết định)"}}}}},
         "parameters": PARAMS, "responses": RESPONSES, "schemas": SCHEMAS}}
 
 

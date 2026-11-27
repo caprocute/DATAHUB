@@ -233,7 +233,7 @@ PH-13 vừa nhận dữ liệu từ mọi DU vừa cung cấp dịch vụ cho v�
 | PH-20 (`dh-platform`) | PH-20 → PH-13 | `TenantObservabilityApi` (gói `observability.api`); REST API-13-072, 073 cho hồ sơ tách DU | Khởi tạo, đóng chuỗi (FR-13-059, 060) |
 | PH-18 (`dh-platform`) | hai chiều | `NotificationApi` của PH-18 (PH-13 gọi); `DiagnosticsApi` của PH-13 (PH-18 gọi) | Gửi thư, SMS; ngữ cảnh DLQ (FR-13-057) |
 | PH-16 (`dh-platform`) | PH-16 → PH-13 | `MetricsSummaryApi` | Số liệu thô chỉ tiêu (FR-13-056) |
-| PH-01 (`dh-connect`) | PH-13 → PH-01 | EVT-13-04 kèm `proposedAction`, liên kết sâu | Đề xuất tạm ngừng HTTT (Q13-12) |
+| PH-01 (`dh-connect`) | PH-13 → PH-01 | API-01-089 (scope `onboarding:suspension-proposal`), tài khoản dịch vụ của `dh-platform` | Đề xuất tạm ngừng HTTT; PH-01 tạo việc khẩn cho SO (Q13-12, đã chốt 27/11/2026) |
 | PH-10 | PH-13 → PH-10 | Cấp phát GitOps (ADR-072); đọc chỉ số lag qua Mimir | Topic `{tenant}.obs.*`, bảng sự kiện |
 | PH-03 | PH-03 → PH-13 | Cấu hình plugin `kafka-logger`; chỉ số `dh_connect_config_revision` | Siêu dữ liệu lượt gọi, bảng nút gateway |
 | PH-14, PH-19, PH-09 | → PH-13 | `dh-audit` (hành động `PII.REVEAL`, hoàn tiền, tra cứu có mục đích) | Nguồn của luật phát hiện UC-SEC-10, 11, 14 |
@@ -1362,7 +1362,7 @@ Chi tiết thiết kế:
 
 **Giao diện vào.** Lịch mỗi phút; API-13-054…060, 065, 066; UI-13-15.
 
-**Phụ thuộc ra.** `AuditDetectionQueryApi` (§3.4), Alertmanager API v2 (`POST /api/v2/alerts`), Mimir Ruler (luật theo chỉ số và log), PH-01 (qua EVT-13-04).
+**Phụ thuộc ra.** `AuditDetectionQueryApi` (§3.4), Alertmanager API v2 (`POST /api/v2/alerts`), Mimir Ruler (luật theo chỉ số và log), PH-01 (qua API-01-089).
 
 **Dữ liệu.** `detection_rule`, `security_alert`, `detect_cursor`, `incident_report`.
 
@@ -1389,7 +1389,7 @@ Chi tiết thiết kế:
 
 **Tinh chỉnh ngưỡng (FR-13-051).** `PATCH /detection-rules/{ruleCode}` cần `PERM-13-security`, xác thực lại phiên, lý do; ngưỡng mới phải nằm trong `threshold_limit` (nới tối đa 2 lần mặc định, siết tự do, BR-13-025); luật `can_disable = false` (mức Nghiêm trọng kiểu "mọi sự kiện") không tắt, không đổi ngưỡng (ERR-13-024). Thay đổi ghi `SECURITY.RULE.TUNE` với giá trị trước, sau và phát EVT-13-10; luật theo chỉ số đến Ruler trong 60 giây.
 
-**Xử lý cảnh báo an ninh (FR-13-053).** `SecurityAlertService` thực thi máy trạng thái §8.1: `acknowledge` ghi `assignee`; `close` bắt buộc `verdict` ∈ `CONFIRMED_INCIDENT`, `FALSE_POSITIVE`, `ACCEPTED_RISK` (có ghi chú, ERR-13-023). `SuspensionProposer` kiểm HTTT thuộc tenant, ghi lý do và phát EVT-13-04 với `proposedAction = SUSPEND_SYSTEM`, `systemCode` và liên kết sâu tới màn tạm ngừng của PH-01; PH-13 chỉ đề xuất, PH-01 quyết định (Q13-12). Kết luận "sự cố thật" gắn `incidentRef` của quy trình ứng cứu (D03-07 §8). `SECURITY.ALERT.PROPOSE_SUSPENSION` được thêm vào bảng hành động phải ghi kiểm toán (đề nghị đồng bộ FR-13-019).
+**Xử lý cảnh báo an ninh (FR-13-053).** `SecurityAlertService` thực thi máy trạng thái §8.1: `acknowledge` ghi `assignee`; `close` bắt buộc `verdict` ∈ `CONFIRMED_INCIDENT`, `FALSE_POSITIVE`, `ACCEPTED_RISK` (có ghi chú, ERR-13-023). `SuspensionProposer` kiểm HTTT thuộc tenant, ghi lý do rồi gọi API-01-089 của PH-01 (thời gian chờ 3 giây, lỗi thì ERR-13-014 và đề xuất chưa gửi, SO thử lại; lũy đẳng theo `alertId` nên thử lại không tạo việc thứ hai); PH-13 chỉ đề xuất, SO ở PH-01 quyết định bằng thao tác khẩn FR-01-032 (Q13-12, đã chốt 27/11/2026). Kết luận "sự cố thật" gắn `incidentRef` của quy trình ứng cứu (D03-07 §8). `SECURITY.ALERT.PROPOSE_SUSPENSION` được thêm vào bảng hành động phải ghi kiểm toán (đề nghị đồng bộ FR-13-019).
 
 **Báo cáo sự cố (FR-13-055, Đợt sau).** `IncidentReportGenerator` dựng bản nháp từ mẫu và bằng chứng của cảnh báo, đếm ngược 72 giờ từ `detected_at` cho `DLCN_BREACH` và nhắc ở 24, 48, 60 giờ qua `NotificationService`; việc gửi cho cơ quan do chủ quản thực hiện ngoài hệ thống (Q13-10). Cờ `obs.incident-report.enabled` tắt ở MVP.
 
@@ -1831,7 +1831,7 @@ sequenceDiagram
   SA->>SA: Phát EVT-13-04
   SO->>SA: Tiếp nhận cảnh báo
   SO->>SA: Đề xuất tạm ngừng HTTT kèm systemCode, lý do
-  SA->>P01: EVT-13-04 proposedAction SUSPEND_SYSTEM, liên kết sâu
+  SA->>P01: POST API-01-089 đề xuất tạm ngừng (systemCode, alertId, lý do)
   SO->>SA: Đóng với kết luận CONFIRMED_INCIDENT
   SA->>PG: CLOSED và SECURITY.ALERT.CLOSE
 ```
@@ -2442,5 +2442,5 @@ Tập này không sửa tài liệu dùng chung và không tạo ADR; bảng dư
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn K-TRINH-BAY: tóm tắt cho hội đồng, giới thiệu, vị trí trong kiến trúc, cấu trúc mã hai module và thư viện `dh-audit`, 21 thành phần với bảng đặc tả 10 mục, mười sơ đồ trình tự, đa tenant, bảo mật, máy trạng thái và lỗi, cấu hình, quan sát, hiệu năng, kiểm thử, lộ trình, rủi ro, 8 câu hỏi mở (Q13-20…27), đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: p_archive_partition thay DETACH CONCURRENTLY, quyền INSERT theo cột của ph13_app, trigger tg_audit_chain_guard và tg_audit_event_covered |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: p_archive_partition thay DETACH CONCURRENTLY, quyền INSERT theo cột của ph13_app, trigger tg_audit_chain_guard và tg_audit_event_covered; chốt câu hỏi mở đợt đồng bộ: Q390 |
 

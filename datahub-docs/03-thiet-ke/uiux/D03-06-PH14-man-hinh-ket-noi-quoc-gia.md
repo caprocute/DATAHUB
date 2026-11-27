@@ -2,7 +2,7 @@
 ma_tai_lieu: D03-06-PH14
 ten: Thiết kế giao diện màn hình phân hệ PH-14 Kết nối quốc gia
 phien_ban: 0.3
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, kỹ sư tích hợp, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-14
@@ -70,7 +70,7 @@ Bảng dưới liệt kê tài liệu mà tập màn hình dựa vào và phần
 | D03-06-00 | Cây menu và quy tắc URL (§2.3, §2.4), mẫu màn `PTN-01…14` (§4), trạng thái chuẩn `ST-01…15` (§4.2) |
 | D02-03-PH14 | 57 FR, 37 BR, trạng thái (§4.3…4.6), thông báo (§9.2), tham số `14.*` (§8.2) |
 | D02-04-PH14 | 38 use case; luồng người dùng của chương 28 |
-| D03-04-PH14 | `API-14-001…092` và `allowedActions`, `disabledReasons` |
+| D03-04-PH14 | `API-14-001…094` và `allowedActions`, `disabledReasons` |
 | D03-02-PH14 | Kiến trúc `national` (module `dh-integration`) và hồ sơ `national-gateway` (`dh-runtime`) |
 | D02-08 | Vai trò `ROLE-*`, quyền `PERM-14-*` |
 | D03-07 | `SEC-*` (SEC-23 xác thực nhiều yếu tố, SEC-16 egress theo FQDN) |
@@ -1550,7 +1550,7 @@ Phím tắt: `Ctrl+S` lưu hoặc gửi duyệt, `Tab` sang ô sau, `Esc` hoàn 
 
 **Quyền.** `PERM-14-approve` (xem bảng loại bên dưới).
 
-**API.** API-14-009, 027, 033; duyệt hạn mức, điểm cuối, tham số, giảm kiểm soát dùng API duyệt chung của yêu cầu (Phụ lục B).
+**API.** API-14-009, 027, 033; duyệt hạn mức, điểm cuối, tham số, giảm kiểm soát và lần công bố dữ liệu mở đầu tiên dùng API duyệt chung API-14-093 (liệt kê yêu cầu chờ duyệt) và API-14-094 (duyệt hoặc từ chối), đã chốt ngày 27/11/2026.
 :::
 
 ![UI-14-17 Duyệt bật nền tảng (ảnh hi-fi)](ph14/hifi/ui-14-17.png)
@@ -1560,8 +1560,8 @@ Phím tắt: `Ctrl+S` lưu hoặc gửi duyệt, `Tab` sang ô sau, `Esc` hoàn 
 | `ph14.platform-activate` | IA, TA (`PERM-14-approve`) | Nền tảng, môi trường, lần kiểm tra đạt gần nhất (giờ, độ trễ), nhãn đặc tả (nhãn Tạm thời nổi bật), dịch vụ phụ thuộc | Duyệt (API-14-009), Từ chối có lý do |
 | `ph14.routing-rule` | IA, TA | Điều kiện, đích chính, dự phòng, căn cứ, kết quả mô phỏng | Duyệt (API-14-027), Từ chối |
 | `ph14.cert-activate` | IA, TA, PA (không phải người nạp), xác thực nhiều yếu tố | Chứng thư, mục đích, hiệu lực, vân tay, `keyRef`, chứng thư sẽ bị thay | Duyệt (API-14-033), Từ chối |
-| `ph14.quota-prod` | IA, TA | Hạn mức mới so với hiện hành (`CMP-DiffTable`), căn cứ văn bản | Duyệt, Từ chối |
-| `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first` | IA, TA, PA (khác người đề nghị) | Khác biệt, lý do, người đề nghị | Duyệt, Từ chối |
+| `ph14.quota-prod` | IA, TA | Hạn mức mới so với hiện hành (`CMP-DiffTable`), căn cứ văn bản | Duyệt (API-14-094), Từ chối |
+| `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first` | IA, TA, PA (khác người đề nghị) | Khác biệt, lý do, người đề nghị | Duyệt (API-14-094), Từ chối |
 
 : UI-14-17 · Các loại yêu cầu
 
@@ -1666,7 +1666,7 @@ Các yêu cầu dưới đây áp dụng cho cả 17 màn, được kiểm tự 
 
 : Yêu cầu khả năng truy cập A11Y-14 và cách kiểm
 
-Kiểm thử giao diện dùng kịch bản Playwright của D05-02-PH14; mỗi màn có ít nhất một ca đường chính, một ca trạng thái lỗi và một ca không có quyền. Mã ca kiểm thử cấp ở tập test, tập này không cấp.
+Kiểm thử giao diện dùng kịch bản Playwright của D05-02-PH14; mỗi màn có ít nhất một ca đường chính, một ca trạng thái lỗi và một ca không có quyền. Đã chốt 27/11/2026: các yêu cầu A11Y-14-01…14 nằm trong cổng CI của PH-14, không đạt thì không hợp nhất mã. Mã ca kiểm thử cấp ở tập test, tập này không cấp.
 
 ## 27. Kiến trúc mã giao diện
 
@@ -1820,7 +1820,7 @@ Giao diện cần một số dữ liệu mà API hiện có chưa trả; các đ
 | API-14-060 (`dashboard`) bổ sung `p95Ms24h` (độ trễ p95 của lượt gọi thật), `series24h` (số lượt theo giờ: gọi thật, đệm, từ chối) và số `stale` | UI-14-01 | Hiện chỉ có `calls24h`, `errorRate24h`, `cacheHitRatio24h`; thẻ p95 và biểu đồ cần thêm |
 | API-14-061 bổ sung tham số `asyncState`, `stale`, và API quản trị xem, hủy yêu cầu bất đồng bộ cho người dùng (hiện API-14-077, 078 chỉ có scope dịch vụ) | UI-14-12 | Nút "Hàng chờ bất đồng bộ" và lọc "Dữ liệu cũ" |
 | `allowedActions` và `disabledReasons` cho mọi tài nguyên danh sách và chi tiết (hiện chỉ có ở một số lược đồ) | Mọi màn | Nguyên tắc ẩn, vô hiệu hành động theo mục 2.4 |
-| API duyệt chung cho yêu cầu loại `ph14.quota-prod`, `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first` (hiện có duyệt riêng cho nền tảng, luật định tuyến, chứng thư) | UI-14-17 | Bốn mắt cho đủ tám loại thay đổi (BR-14-022) |
+| Đã chốt 27/11/2026: API duyệt chung API-14-093, 094 cho yêu cầu loại `ph14.quota-prod`, `ph14.inbound-activate`, `ph14.setting-security`, `ph14.service-relax`, `ph14.open-data-first` (hiện có duyệt riêng cho nền tảng, luật định tuyến, chứng thư) | UI-14-17 | Bốn mắt cho đủ tám loại thay đổi (BR-14-022) |
 | API tải lịch sử thay đổi hạn mức theo phiên bản | UI-14-09 tab Lịch sử hạn mức | `CMP-VersionTimeline` cần danh sách phiên bản |
 | API đếm huy hiệu menu gọn (một lần gọi cho 13 mục) | Menu | Tránh 13 lần gọi mỗi 60 giây; có thể lấy từ `dashboard` |
 
@@ -1851,4 +1851,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây cần
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 17 màn UI-14-01…17 với bảng đặc tả, wireframe, thành phần, trạng thái, thông báo, phím tắt, truy cập; ảnh hi-fi từng màn; ma trận vai trò, truy vết FR, kiểm thử giao diện, phụ lục đề nghị bổ sung |
 | 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Bổ sung dòng lỗi ERR-14-003, 117, 133 ở mục 5.2 |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi `milestone` của `CMP-ProgressBar` và `countdown` của `CMP-StatusTag` đã có ở D03-05-03 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi `milestone` của `CMP-ProgressBar` và `countdown` của `CMP-StatusTag` đã có ở D03-05-03; chốt Q448, Q449: UI-14-17 dùng API-14-093, 094 (duyệt chung năm loại yêu cầu), A11Y-14-01…14 vào cổng CI |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH08
 ten: Đặc tả use case phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-08
@@ -290,25 +290,25 @@ Bảng này là ma trận use case với màn hình (UI) và API. UC-08-11 đế
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-BP-10 "Đánh giá và cải thiện chất lượng dữ liệu" là quy trình do FRS đề nghị bổ sung (Phụ lục B của FRS); BP-02, 03, 07 đã có ở D02-01.
+BP-11 "Đánh giá và cải thiện chất lượng dữ liệu" là quy trình đã chốt ngày 27/11/2026, bổ sung vào D02-01 mục 6.2 (Phụ lục B của FRS); BP-02, 03, 07 đã có ở D02-01.
 
 | UC | REQ | BP | LGC |
 |---|---|---|---|
-| UC-08-01, 03, 04 | REQ-08 (04 thêm REQ-05) | BP-10 | — |
-| UC-08-02 | REQ-08, REQ-06, REQ-07, REQ-05, REQ-09 | BP-10 | LGC-DMDC-006, 007, 008 (gián tiếp) |
-| UC-08-05, 06, 07, 08, 09 | REQ-08 | BP-10 | LGC-NGSP-003, 005 (nguồn đối chiếu của 05, 06) |
-| UC-08-10, 12, 13 | REQ-08 | BP-10 | — |
-| UC-08-11 | REQ-08, REQ-07 | BP-10 | LGC-DMDC-006, 007, 008 (gián tiếp) |
-| UC-08-14 | REQ-08, REQ-06, REQ-07 | BP-03, BP-10 | LGC-DMDC-006, 007, 008 (gián tiếp) |
+| UC-08-01, 03, 04 | REQ-08 (04 thêm REQ-05) | BP-11 | — |
+| UC-08-02 | REQ-08, REQ-06, REQ-07, REQ-05, REQ-09 | BP-11 | LGC-DMDC-006, 007, 008 (gián tiếp) |
+| UC-08-05, 06, 07, 08, 09 | REQ-08 | BP-11 | LGC-NGSP-003, 005 (nguồn đối chiếu của 05, 06) |
+| UC-08-10, 12, 13 | REQ-08 | BP-11 | — |
+| UC-08-11 | REQ-08, REQ-07 | BP-11 | LGC-DMDC-006, 007, 008 (gián tiếp) |
+| UC-08-14 | REQ-08, REQ-06, REQ-07 | BP-03, BP-11 | LGC-DMDC-006, 007, 008 (gián tiếp) |
 | UC-08-15 | REQ-08, REQ-04 | BP-02 | — |
 | UC-08-16 | REQ-08, REQ-06, REQ-13 | BP-02, BP-07 | LGC-BUS-027 (gián tiếp) |
-| UC-08-17, 18 | REQ-08, REQ-09 | BP-10 | — |
-| UC-08-19…22 | REQ-08 (22 thêm REQ-06) | BP-10 | — |
+| UC-08-17, 18 | REQ-08, REQ-09 | BP-11 | — |
+| UC-08-19…22 | REQ-08 (22 thêm REQ-06) | BP-11 | — |
 | UC-08-23 | REQ-08, REQ-13 | BP-07 | — |
-| UC-08-24 | REQ-08, REQ-20 | BP-10 | — |
-| UC-08-25 | REQ-08 | BP-10 | — |
-| UC-08-26 | REQ-08, REQ-13, REQ-16 | BP-07, BP-10 | — |
-| UC-08-27 | REQ-08 | BP-10 | — |
+| UC-08-24 | REQ-08, REQ-20 | BP-11 | — |
+| UC-08-25 | REQ-08 | BP-11 | — |
+| UC-08-26 | REQ-08, REQ-13, REQ-16 | BP-07, BP-11 | — |
+| UC-08-27 | REQ-08 | BP-11 | — |
 
 : Use case, REQ, quy trình và LGC
 
@@ -395,7 +395,7 @@ Miền chất lượng là tầng giao trách nhiệm: mỗi miền có một t�
 
 **FR hiện thực.** FR-08-001.
 
-**Truy vết.** REQ-08; BP-10 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-08; BP-11 (đề nghị); hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Mai có `PERM-08-asset`; tổ chức chủ quản `ACTIVE` ở PH-01; Lan có vai DS.
 
@@ -456,7 +456,7 @@ Hình cho thấy việc kiểm tổ chức và người dùng diễn ra ở PH-0
 
 **FR hiện thực.** FR-08-002, FR-08-003, FR-08-004, FR-08-005.
 
-**Truy vết.** REQ-08, REQ-06, REQ-07, REQ-05, REQ-09; BP-10; LGC-DMDC-006…008 (gián tiếp).
+**Truy vết.** REQ-08, REQ-06, REQ-07, REQ-05, REQ-09; BP-11; LGC-DMDC-006…008 (gián tiếp).
 
 **Tiền điều kiện.** Có `PERM-08-asset`; miền đã khai báo (UC-08-01); với `MDM_DOMAIN`, domain `ACTIVE` và đã có khung nhìn `ph06_mdm.v_dq_{domain}` (Q08-08).
 
@@ -524,7 +524,7 @@ Hình cho thấy PH-08 chỉ đọc lược đồ qua khung nhìn hợp đồng 
 
 **FR hiện thực.** FR-08-006, FR-08-007.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-read`; để ngừng hoặc khôi phục cần `PERM-08-asset`.
 
@@ -586,7 +586,7 @@ Hồ sơ dữ liệu giúp DS biết cột nào hay trống, trùng, lệch trư
 
 **FR hiện thực.** FR-08-008, FR-08-009, FR-08-010, FR-08-011.
 
-**Truy vết.** REQ-08, REQ-05; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08, REQ-05; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-asset`; đối tượng loại `MDM_DOMAIN`, `RDM_CATALOG` hoặc `SOURCE_DATASET`.
 
@@ -651,7 +651,7 @@ Mỗi quy tắc thuộc đúng một trong sáu chiều và dùng một toán t�
 
 **FR hiện thực.** FR-08-012, FR-08-013, FR-08-022.
 
-**Truy vết.** REQ-08; BP-10; LGC-NGSP-003, 005 (nguồn đối chiếu, gián tiếp).
+**Truy vết.** REQ-08; BP-11; LGC-NGSP-003, 005 (nguồn đối chiếu, gián tiếp).
 
 **Tiền điều kiện.** Có `PERM-08-rule-admin`; đối tượng `MDM-CITIZEN` `DRAFT` hoặc `ACTIVE`.
 
@@ -718,7 +718,7 @@ Hình cho thấy danh mục của chiều hợp lệ được kiểm ngay lúc s
 
 **FR hiện thực.** FR-08-014, FR-08-015, FR-08-016.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có nháp (UC-08-05); `08.rule.sql-predicate-enabled` bật nếu dùng `SQL_PREDICATE`.
 
@@ -783,7 +783,7 @@ Bộ quy tắc quyết định điểm của mọi lần đo sau, nên kích ho�
 
 **FR hiện thực.** FR-08-017, FR-08-018.
 
-**Truy vết.** REQ-08; FR-00-071, ADR-046; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; FR-00-071, ADR-046; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Nháp đã chạy thử nội dung hiện tại và có quy tắc bật; Hùng có `PERM-08-approve`, khác Lan.
 
@@ -851,7 +851,7 @@ DA cần thấy phiên bản mới khác phiên bản cũ ở đâu trước khi
 
 **FR hiện thực.** FR-08-019, FR-08-020.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-read`; sao chép, nhập cần `PERM-08-rule-admin`.
 
@@ -912,7 +912,7 @@ Trọng số sáu chiều và ngưỡng đạt, cảnh báo quyết định kế
 
 **FR hiện thực.** FR-08-021.
 
-**Truy vết.** REQ-08; FR-00-071; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; FR-00-071; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Lan có `PERM-08-rule-admin`; Hùng có `PERM-08-approve`.
 
@@ -976,7 +976,7 @@ Mặc định mỗi đối tượng `ACTIVE` được đo ngày 1 hằng tháng 
 
 **FR hiện thực.** FR-08-023, FR-08-024, FR-08-030.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-run`; đối tượng `ACTIVE` có bộ quy tắc `ACTIVE` và cấu hình trọng số hiệu lực.
 
@@ -1045,7 +1045,7 @@ Hình cho thấy lịch nội bộ và yêu cầu thủ công cùng đi vào m�
 
 **FR hiện thực.** FR-08-026, FR-08-027, FR-08-036.
 
-**Truy vết.** REQ-08, REQ-07; BP-10; LGC-DMDC-006…008, LGC-NGSP-003, 005 (gián tiếp).
+**Truy vết.** REQ-08, REQ-07; BP-11; LGC-DMDC-006…008, LGC-NGSP-003, 005 (gián tiếp).
 
 **Tiền điều kiện.** Lần đo `QUEUED` đã được xếp; bộ quy tắc và cấu hình trọng số hiệu lực; tài khoản `dq_reader` chỉ `SELECT`.
 
@@ -1112,7 +1112,7 @@ Sau khi mọi tác vụ xong, hệ thống tổng hợp điểm từng chiều t
 
 **FR hiện thực.** FR-08-028, FR-08-029.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Mọi tác vụ của lần đo kết thúc; có cấu hình trọng số hiệu lực.
 
@@ -1173,7 +1173,7 @@ Khi PH-07 hay nguồn lỗi, hệ thống không bịa điểm: chiều phụ th
 
 **FR hiện thực.** FR-08-031.
 
-**Truy vết.** REQ-08; BP-10, BP-07; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11, BP-07; hệ cũ: không có.
 
 **Tiền điều kiện.** Lần đo `RUNNING`.
 
@@ -1235,7 +1235,7 @@ Khi bản ghi vàng đổi hoặc danh mục được phát hành, hệ thống 
 
 **FR hiện thực.** FR-08-025.
 
-**Truy vết.** REQ-08, REQ-06, REQ-07; BP-03, BP-10; LGC-DMDC-006…008 (gián tiếp).
+**Truy vết.** REQ-08, REQ-06, REQ-07; BP-03, BP-11; LGC-DMDC-006…008 (gián tiếp).
 
 **Tiền điều kiện.** Đối tượng `ACTIVE` có bộ quy tắc hiệu lực, đã có lần đo `FULL` gần nhất và đã bật đo tăng dần (TO bật bằng API-08-130, tắt bằng API-08-131 kèm lý do).
 
@@ -1423,7 +1423,7 @@ Bản ghi lỗi chỉ chứa khóa bản ghi và giá trị đã che. DS, DO tra
 
 **FR hiện thực.** FR-08-037, FR-08-038, FR-08-039.
 
-**Truy vết.** REQ-08, REQ-09; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08, REQ-09; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-finding-read`; xuất cần `PERM-08-export`.
 
@@ -1486,7 +1486,7 @@ Có lỗi mà tổ chức chấp nhận tồn tại có thời hạn, ví dụ d
 
 **FR hiện thực.** FR-08-040.
 
-**Truy vết.** REQ-08; FR-00-071; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; FR-00-071; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Lan có `PERM-08-finding-read`, `PERM-08-rule-admin` hoặc quyền đề nghị; Hùng có `PERM-08-approve`.
 
@@ -1547,7 +1547,7 @@ Lỗi được gom thành nhóm (đối tượng, quy tắc) rồi thành một 
 
 **FR hiện thực.** FR-08-041, FR-08-042.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-remediate`; nhóm lỗi `OPEN` chưa thuộc phiếu mở khác; miền có chủ quản.
 
@@ -1609,7 +1609,7 @@ DO sửa ở nguồn bằng công cụ của chính HTTT; PH-08 không sửa d�
 
 **FR hiện thực.** FR-08-043.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Phiếu `ASSIGNED` cho tổ chức của Phúc; Phúc có `PERM-08-remediate` (○).
 
@@ -1671,7 +1671,7 @@ Chủ quản không tự xác nhận. Phiếu chỉ `VERIFIED` khi lần đo `VE
 
 **FR hiện thực.** FR-08-044.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Phiếu `FIXED`; đối tượng còn bộ quy tắc hiệu lực.
 
@@ -1733,7 +1733,7 @@ DO từ chối phiếu không thuộc mình; DS chuyển đúng đơn vị, hủ
 
 **FR hiện thực.** FR-08-045, FR-08-046.
 
-**Truy vết.** REQ-08, REQ-06; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08, REQ-06; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-remediate`; với chuyển PH-06, đối tượng là `MDM_DOMAIN`.
 
@@ -1856,7 +1856,7 @@ Lãnh đạo xem điểm tỉnh, thẻ miền, xu hướng 13 tháng; DS, DO xem
 
 **FR hiện thực.** FR-08-050, FR-08-051, FR-08-061.
 
-**Truy vết.** REQ-08, REQ-20; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08, REQ-20; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-read`; so sánh liên tenant chỉ khi tenant bật `08.benchmark.opt-in`.
 
@@ -1916,7 +1916,7 @@ Báo cáo kỳ (tháng) tự sinh nháp. Báo cáo chính thức hằng năm ch�
 
 **FR hiện thực.** FR-08-052, FR-08-053, FR-08-054.
 
-**Truy vết.** REQ-08; FR-00-071; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; FR-00-071; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Lan có `PERM-08-report`; Hùng có `PERM-08-approve`, khác Lan.
 
@@ -1982,7 +1982,7 @@ Báo cáo đã công bố xuất ra PDF hoặc XLSX, ký số tùy chọn, phân
 
 **FR hiện thực.** FR-08-055, FR-08-056, FR-08-057.
 
-**Truy vết.** REQ-08, REQ-13, REQ-16; BP-07, BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08, REQ-13, REQ-16; BP-07, BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Có `PERM-08-report`; báo cáo `PUBLISHED`.
 
@@ -2044,7 +2044,7 @@ TA chỉnh 40 tham số `08.*` trong trần của PA, chạy dọn dữ liệu t
 
 **FR hiện thực.** FR-08-058, FR-08-059, FR-08-060.
 
-**Truy vết.** REQ-08; BP-10; hệ cũ: không có.
+**Truy vết.** REQ-08; BP-11; hệ cũ: không có.
 
 **Tiền điều kiện.** Mai có `PERM-08-config`; Dũng, AU có `PERM-08-audit-read`.
 
@@ -2146,3 +2146,4 @@ Năm câu hỏi Q08-45…49 của bản 0.1 đã được FRS 0.2 chốt, không
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 27 use case phủ 61 FR, năm sơ đồ use case, mỗi use case một sơ đồ trình tự, ma trận UC với FR, UI, API, REQ, LGC, ánh xạ FR repo, bảy đề nghị đồng bộ, câu hỏi mở Q08-45…49 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ theo FRS 0.2: lịch đo do bộ lập lịch nội bộ (PH-18 là phụ thuộc mềm), dấu vân tay HMAC-SHA256, đo `VERIFY` do hệ thống tự tạo (UC-08-21 sửa theo FR-08-044, lý do xác nhận thủ công ≥ 50 ký tự), bảy đề nghị ĐN-UC-01…07 và Q08-45…49 đã được FRS xử lý; rà chéo cuối: xem trước trọng số API-08-132, bật, tắt đo tăng dần API-08-130, 131, `POST /findings:search` API-08-129, `ADVISORY` trả `WARN` khi có vi phạm, lô trực tuyến tối đa 100 bản ghi, ERR-08-016 cho `INLINE` với toán tử chỉ chạy lô, ERR-08-042 cho hạn tắt tiếng, ERR-08-056 cho kỳ không có lần đo |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q386 |

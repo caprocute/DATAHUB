@@ -16,7 +16,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH12 F
 
 **Mục tiêu.** Tài liệu chứng minh ba điều:
 
-- PH-12 làm đúng mọi yêu cầu đã duyệt ở D02-03-PH12 (62 FR, 45 BR, 33 NFR), qua 42 use case, 111 API và 19 màn hình.
+- PH-12 làm đúng mọi yêu cầu đã duyệt ở D02-03-PH12 (62 FR, 45 BR, 33 NFR), qua 42 use case, 113 API và 19 màn hình.
 - Không mất chức năng của hệ IAM cũ: SSO Keycloak, tạo realm, client, vai trò, người dùng, TOTP, LDAP/AD, quản lý phiên (LGC-IAM-001…006, 008), cùng quản lý group của Bus và tạo Application của APIM (LGC-BUS-032, LGC-APIM-020). Chức năng bị loại có chủ đích (đăng nhập mạng xã hội LGC-IAM-007, grant `password` LGC-IAM-006) được kiểm là **không còn** hoạt động.
 - Mặc định từ chối, từ chối thắng cho phép, cách ly tenant và không lộ bí mật là bất biến hệ thống: không có đường nào để quyết định ủy quyền sai theo hướng cho phép, và không có đường nào để tỉnh này thấy hay dùng định danh, client, chính sách của tỉnh khác.
 
@@ -61,7 +61,7 @@ Mục 1 nêu chiến lược và tổ chức kiểm thử, mục 2 dữ liệu k
 
 ### 1.1. Đối tượng kiểm thử
 
-Đối tượng là toàn bộ PH-12 ở ba lớp: (1) API quản trị `/api/iam/v1` của `dh-platform` (API-12-001…071, 080…085, 089…111); (2) Keycloak (điểm cuối OIDC, API-12-072…078) cùng theme đăng nhập UI-12-18; (3) OPA, bộ chuyển đổi và API quyết định `/api/authz/v1` (API-12-086…088). Ngoài phạm vi: nội dung chính sách của phân hệ khác (kiểm ở tập của phân hệ đó), tích hợp VNeID thật (dùng giả lập `SIM-VNEID`, Đợt 2), hiệu năng toàn hệ thống (D05-01).
+Đối tượng là toàn bộ PH-12 ở ba lớp: (1) API quản trị `/api/iam/v1` của `dh-platform` (API-12-001…071, 080…085, 089…113); (2) Keycloak (điểm cuối OIDC, API-12-072…078) cùng theme đăng nhập UI-12-18; (3) OPA, bộ chuyển đổi và API quyết định `/api/authz/v1` (API-12-086…088). Ngoài phạm vi: nội dung chính sách của phân hệ khác (kiểm ở tập của phân hệ đó), tích hợp VNeID thật (dùng giả lập `SIM-VNEID`, Đợt 2), hiệu năng toàn hệ thống (D05-01).
 
 ### 1.2. Mức kiểm thử
 
@@ -1091,16 +1091,17 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 
 **Mục tiêu.** Xác nhận realm khởi tạo ≤ 5 phút từ mẫu, phát hiện lệch cấu hình, tạm ngừng, khôi phục, chỉ đọc.
 
-**Phủ.** FR-12-041, 042, 043; BR-12-038; NFR-12-010, 017; UC-12-29, 30; UI-12-19; API-12-080, 081, 082, 083, 084, 085; ERR-12-041, 042.
+**Phủ.** FR-12-041, 042, 043; BR-12-038; NFR-12-010, 017; UC-12-29, 30; UI-12-19; API-12-080, 081, 082, 083, 084, 085, 113; ERR-12-041, 042, 007.
 
 #### TC-12-076 · Khởi tạo realm T90 từ mẫu <!--k:realm-create-->
 - **Loại** Dương, Âm  · **Ưu tiên** P1 · **Tự động** API, IT
-- **Truy vết** FR-12-041 · UC-12-29 · UI-12-19 · API-12-080, 081 · ERR-12-041 · NFR-12-010 · LGC-IAM-002 · SEC-20
+- **Truy vết** FR-12-041 · UC-12-29 · UI-12-19 · API-12-080, 081, 113 · ERR-12-041 · NFR-12-010 · LGC-IAM-002 · SEC-20
 - **Tiền điều kiện / dữ liệu** S-PH20; tenant T90 chưa có realm.
 - **Bước**
   1. `POST /realms` cho T90; theo dõi đến `ACTIVE`; gọi lại lần hai cùng khóa.
   2. `POST /realms` cho tenant đã có realm hoặc tenant `SUSPENDED`.
-- **Mong đợi** `ACTIVE` ≤ 5 phút; có vai trò chuẩn, client `dh-console`, chính sách mật khẩu `argon2id` hoặc `pbkdf2-sha512` ≥ 210.000 vòng; lần hai không tạo bản sao; bước 2 `409` ERR-12-041.
+  3. `GET /realms?driftStatus=DRIFTED` với `PERM-12-realm-admin`; gọi lại với người không có quyền.
+- **Mong đợi** `ACTIVE` ≤ 5 phút; có vai trò chuẩn, client `dh-console`, chính sách mật khẩu `argon2id` hoặc `pbkdf2-sha512` ≥ 210.000 vòng; lần hai không tạo bản sao; bước 2 `409` ERR-12-041; bước 3 chỉ trả realm lệch cấu hình, phân trang chuẩn, người không có quyền nhận `403` ERR-12-007.
 
 #### TC-12-077 · Phát hiện lệch cấu hình và áp lại, TA không sửa được cấu hình bảo mật <!--k:realm-drift-->
 - **Loại** Dương, Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
@@ -1222,7 +1223,7 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 
 **Mục tiêu.** Xác nhận dữ liệu OPA sinh từ ma trận D02-08, soạn Rego, bộ ca kiểm thử và chạy khô trên lưu lượng thật.
 
-**Phủ.** FR-12-051, 052, 053; BR-12-007, 009, 010, 011; UC-12-33, 34; UI-12-12, 13; API-12-089, 090, 091, 092, 093, 094, 095, 101, 102; ERR-12-024, 028.
+**Phủ.** FR-12-051, 052, 053; BR-12-007, 009, 010, 011; UC-12-33, 34; UI-12-12, 13; API-12-089, 090, 091, 092, 093, 094, 095, 101, 102, 112; ERR-12-024, 027, 028, 044.
 
 #### TC-12-089 · Sinh lại dữ liệu vai trò–quyền cho OPA <!--k:policy-data-regen-->
 - **Loại** Dương, Âm  · **Ưu tiên** P1 · **Tự động** API, IT
@@ -1234,13 +1235,14 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 - **Mong đợi** Gói mới có chữ ký, `bundleRevision` tăng; mọi OPA nạp ≤ 60 giây; OPA từ chối gói không chữ ký.
 
 #### TC-12-090 · Soạn chính sách, tạo phiên bản, chạy bộ ca kiểm thử <!--k:policy-author-test-->
-- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
-- **Truy vết** FR-12-052 · UC-12-34 · UI-12-12 · API-12-089, 090, 091, 092, 093, 094 · BR-12-009
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-12-052 · UC-12-34 · UI-12-12 · API-12-089, 090, 091, 092, 093, 094, 112 · BR-12-009
 - **Tiền điều kiện / dữ liệu** U-T68-SO; POL-T68-OK; bộ ca có 1 dương, 1 âm.
 - **Bước**
   1. `POST /policies`; `POST …/versions`; `GET` danh sách, chi tiết, phiên bản.
   2. `:test`.
-- **Mong đợi** Phiên bản `DRAFT`, `contentHash` cố định; kết quả test có độ phủ; KT: có (policy.create).
+  3. `PUT …/versions/{versionNo}` kèm `If-Match` ghi đè nội dung bản nháp (tự lưu); gọi lại với `If-Match` cũ; gọi với phiên bản không ở `DRAFT`.
+- **Mong đợi** Phiên bản `DRAFT`, `contentHash` cố định; kết quả test có độ phủ; KT: có (policy.create); bước 3 đổi `contentHash` và xóa kết quả kiểm thử đã có, `If-Match` cũ nhận `412` ERR-12-044, phiên bản không ở `DRAFT` nhận `409` ERR-12-027.
 
 #### TC-12-091 · Chính sách sai cú pháp hoặc có luật cho phép của tenant <!--k:policy-invalid-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, UT
@@ -1320,7 +1322,7 @@ Bảng sau nêu các máy trạng thái mà bộ ca phải đi qua đủ các ch
 - **Truy vết** FR-12-057, 058 · UC-12-37, 38 · UI-12-14 · API-12-103, 104 · NFR-12-029, 030 · BR-12-013 · CMP-LAW-05
 - **Tiền điều kiện / dữ liệu** 1.000 quyết định hỗn hợp; U-T68-AU; AU của T01.
 - **Bước**
-  1. Chạy 1.000 quyết định; so số bản ghi với bộ đếm `iam_decisions_total`.
+  1. Chạy 1.000 quyết định; so số bản ghi với bộ đếm `iam_decisions_total` lấy bằng truy vấn Prometheus từ điểm cuối `/metrics` của OPA và `dh-platform` (không có API công bố riêng cho bộ đếm; đã chốt 27/11/2026).
   2. `GET /decisions?ket-qua=deny`; `GET /decisions/{id}`; AU T01 gọi id của T68.
 - **Mong đợi** 100 % từ chối và mức Hạn chế, Nhạy cảm có vết; cho phép mức thấp lấy mẫu ~10 %; sai lệch tới bộ đếm ≤ ngưỡng; AU T01 nhận 404-ẩn ERR-12-001; cấu hình lưu giữ đúng NFR-12-030 (log xác thực 12 tháng, kiểm toán 12 tháng và WORM 5 năm).
 
@@ -1954,6 +1956,8 @@ Bảng sau cho biết mỗi API-12 được gọi trong những test case nào, 
 | API-12-109 | 100 |
 | API-12-110 | 101 |
 | API-12-111 | 101 |
+| API-12-112 | 090 |
+| API-12-113 | 076 |
 
 : API và test case
 
@@ -2112,4 +2116,4 @@ Danh sách sau gom các đề nghị với tài liệu chung và các tập khá
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: kịch bản và test case chức năng, phi chức năng, UAT tương đương hệ IAM cũ, ma trận truy vết sinh tự động |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph12_isolation_test.sql và TenantIsolationIT |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph12_isolation_test.sql và TenantIsolationIT; chốt câu hỏi mở đợt đồng bộ: Q450 |

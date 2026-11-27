@@ -321,7 +321,7 @@ Câu hiển thị lấy từ `detail` của RFC 9457 (FR-00-080) nếu có, ngư
 | ERR-02-025 | "Gói {mã} không nhận đăng ký mới. Chọn gói khác." | Dưới trường gói ở UI-02-09 |
 | ERR-02-026 | "HTTT {mã} chưa được kết nạp hoặc không hoạt động." | Dưới trường HTTT |
 | ERR-02-027 | "HTTT đã có đăng ký {trạng thái} cho phiên bản này." | Hộp cảnh báo đầu bước |
-| ERR-02-028 | "HTTT của bạn không thuộc nhóm được dùng gói này." | Dưới trường HTTT ở UI-02-09 |
+| ERR-02-028 | "HTTT của bạn không thuộc nhóm được dùng gói này." hoặc "API này vượt phạm vi khai thác đã được duyệt cho HTTT. Gửi Đề nghị mở rộng phạm vi ở mục Hệ thống thành viên." | Dưới trường HTTT ở UI-02-09 |
 | ERR-02-029 | "Cần nêu mục đích và khối lượng dự kiến." | Dưới trường mục đích ở UI-02-09 |
 | ERR-02-030 | "Còn {n} bên đang dùng hoặc phiên bản đang phục vụ. Ngừng dùng có báo trước trước khi ngừng hẳn hoặc xóa." kèm danh sách liên kết | `CMP-Modal` |
 | ERR-02-031 | "Hạn chuyển đổi tối thiểu {n} ngày. Chọn ngày muộn hơn {ngày}." | Dưới trường hạn |
@@ -1539,7 +1539,7 @@ Phụ lục này ghi các API mà màn hình cần và tình trạng của từn
 | Mã đề nghị | Nội dung | Màn dùng | Tình trạng ở D03-04-PH02 |
 |---|---|---|---|
 | B-1 | API-02-001 trả `facets` (đếm theo trạng thái, "cần chú ý") và cờ `attention` (`slaBreach`, `syncOverdue`, `gatewayDrift`) từng dòng | UI-02-01 | Đã có ở API-02-001 (`facets`, `attention`) |
-| B-2 | Xuất CSV cho API-02-001, 059, 072 (hoặc `Accept: text/csv`), không có bí mật, cùng bộ lọc | UI-02-01, 08, 12 | Còn mở: Q02-60 (đề xuất `Accept: text/csv`) |
+| B-2 | Xuất CSV cho API-02-001, 059, 072 (hoặc `Accept: text/csv`), không có bí mật, cùng bộ lọc | UI-02-01, 08, 12 | Đã chốt 27/11/2026 (Q02-60): dùng `Accept: text/csv` cùng bộ lọc, không có bí mật; đặc tả vào API-02 ở bản sau |
 | B-3 | `GET /plans` danh sách gói toàn tenant có lọc `apiCode`, `status`, `authType`, phân trang | UI-02-06 | Đã có: API-02-096 |
 | B-4 | `GET /sla/summary` tổng hợp tuân thủ SLA toàn tenant theo kỳ và nhóm | UI-02-11 | Đã có: API-02-097 |
 | B-5 | `allowedActions` và `disabledReasons` ở API-02-002, 059, 044 (như PH-05) | UI-02-02, 08, 10 | Đã có `allowedActions[]`, `disabledReasons` (quy ước chung, D03-04-PH02 §1) |
@@ -1559,7 +1559,7 @@ Các việc cần sửa ở tài liệu dùng chung, không sửa trong tập n�
 | 1 | D03-06-00 §2.3, §2.4 | Thêm route `/ket-noi/tuan-thu-sla`, `/ket-noi/dong-bo-quoc-gia`, nhóm `/ket-noi/quan-tri/{phan-loai, bo-luat, nhap-apim-cu, cai-dat}` và mục menu tương ứng (§4.2, §4.3 tập này) |
 | 2 | D02-08 | Thêm động từ quản trị phân hệ cho `PERM-02` (phân loại, bộ luật, chuyển chủ quản, nhập từ APIM cũ, tham số), đang ghi "đề nghị, động từ admin" ở D03-04-PH02 |
 | 3 | D03-05-04 | Đã xử lý Phụ lục A: A-1, A-3, A-4 đã có ở D03-05-04 bản 0.5; A-2 giữ cục bộ |
-| 4 | D03-04-PH02 | Phụ lục B đã được đáp ứng trừ B-2 (xuất CSV), ghi ở Q02-60 của tập API |
+| 4 | D03-04-PH02 | Phụ lục B đã được đáp ứng trừ B-2 (xuất CSV), đã chốt dùng `Accept: text/csv` ở Q02-60 của tập API, đặc tả vào API-02 ở bản sau |
 | 5 | D02-03-PH02 §12 | Ghi route cho UI-02-11, 12, 14…17 theo §4.2 |
 | 6 | ADR | Không đề xuất ADR mới |
 
@@ -1585,4 +1585,4 @@ Các việc cần sửa ở tài liệu dùng chung, không sửa trong tập n�
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Claude (Agent SDK, Actions) | Bản đầu: 17 màn UI-02-01…17 kèm ảnh hi-fi, điều hướng, thông báo ERR-02, truy cập WCAG 2.2 AA, truy vết FR, đề nghị đồng bộ, 6 câu hỏi mở Q02-30…35 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: bảng thông báo ERR-02 đủ 45 mã khớp D02-03-PH02 §9.2; thêm bảng cụm hiển thị cho ERR-02-012; thêm nhãn cấu hình ở cổng; gắn API-02-096, 097, 098 cho UI-02-06, 10, 11; cập nhật Phụ lục B; thêm câu mở cho các mục chỉ có bảng |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi kết quả xử lý A-1…A-4; dùng `CMP-KpiCard` biến thể `filter` và `CMP-FilterBar` thay `CMP-FilterChips` |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: Phụ lục A ghi kết quả xử lý A-1…A-4; dùng `CMP-KpiCard` biến thể `filter` và `CMP-FilterBar` thay `CMP-FilterChips`; chốt câu hỏi mở đợt đồng bộ: Q437 (xuất CSV theo Accept text/csv), ERR-02-028 vượt trần phạm vi (Q382) |

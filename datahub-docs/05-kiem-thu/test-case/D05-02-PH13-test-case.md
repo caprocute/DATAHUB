@@ -1008,7 +1008,7 @@ Bảng dưới liệt kê các đối tượng có vòng đời ở PH-13 và k�
 - **Bước**
   1. `GET /gateways/khong-co`.
   2. U-T68-IE gọi `GET /kafka/cluster`.
-- **Mong đợi** `404` ERR-13-001; IE không có phạm vi hạ tầng thì 403-PQ (hoặc chỉ dữ liệu tenant của mình nếu cấu hình cho phép, ghi theo D02-08); exporter ngừng hiện "Chưa có dữ liệu".
+- **Mong đợi** `404` ERR-13-001; IE giữ `PERM-13-dashboard` như D02-08 nên không nhận `403`, nhưng chỉ thấy dữ liệu của luồng và HTTT do mình thiết kế, hạ tầng chung chỉ ở mức tenant theo BR-13-030 (đã chốt 27/11/2026, Q13-41); exporter ngừng hiện "Chưa có dữ liệu".
 
 ### TS-13-22 · Hoạt động nghiệp vụ và bảng điều khiển an ninh
 
@@ -1986,7 +1986,7 @@ Ma trận truy vết, tệp Gherkin và bảng tính ca kiểm thử đều đư
 
 > **Câu hỏi mở Q13-40:** Ca TC-13-116 (mất site chính) và các ca chịu lỗi 4 giờ chạy rút gọn ở SIT (30 phút đến 2 giờ). Giả định: chạy đủ 4 giờ và 24 giờ một lần trước mỗi đợt phát hành ở môi trường PERF; cần chủ đầu tư xác nhận có cấp được cụm PERF đủ thời gian.
 
-> **Câu hỏi mở Q13-41:** Quyền xem hạ tầng của IE (TC-13-063) chưa chốt: D02-08 cho `PERM-13-dashboard` mọi vai trò nhưng FRS phân biệt dữ liệu tenant và hạ tầng chung. Giả định: IE xem được số liệu tenant của mình, hạ tầng chung hiển thị theo BR-13-030; ca chỉnh lại khi D02-08 chốt.
+> **Q13-41 (đã chốt 27/11/2026):** IE giữ `PERM-13-dashboard` (● ở D02-08 hiện hành), giới hạn ở bảng điều khiển của luồng và HTTT do mình thiết kế; hạ tầng chung hiển thị ở mức tenant theo BR-13-030; TC-13-063 theo đúng quyết định này. *Câu hỏi gốc:* Quyền xem hạ tầng của IE chưa chốt: D02-08 cho `PERM-13-dashboard` mọi vai trò nhưng FRS phân biệt dữ liệu tenant và hạ tầng chung.
 
 > **Câu hỏi mở Q13-42:** Số lượng nút thử trong bộ kiểm thử rò rỉ API (TC-13-099) liệt kê 24 API đại diện; cần quyết định có sinh bộ kiểm thử tự động từ OpenAPI để phủ 100 % API đọc không. Giả định: có, bổ sung ở CI-5 sau MVP.
 
@@ -2011,4 +2011,4 @@ Các đề nghị dưới đây thuộc tài liệu dùng chung hoặc tập c�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 41 kịch bản, 12 UAT, ma trận truy vết sinh tự động, công cụ `ph13/tools/` |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: chương 0 tách thành các mục theo khuôn; thêm UC-13-08 vào TC-13-027, 028, 029; thêm chú thích và đoạn mở cho bảng ma trận (bộ sinh `gen_matrix.py`, `fill_doc.py` đã sửa để giữ chú thích khi sinh lại) |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph13_isolation_test.sql và ca rò rỉ ClickHouse T90, T91 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: tầng kiểm thử CSDL ghi ph13_isolation_test.sql và ca rò rỉ ClickHouse T90, T91; chốt câu hỏi mở đợt đồng bộ: Q451 |

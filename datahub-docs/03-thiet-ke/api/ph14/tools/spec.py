@@ -100,6 +100,9 @@ OPS = [
     ("073", "GET", C + "/migration/parallel-runs/{runId}", "Kết quả phiên chạy song song", "055", "read", "", "200", "admin"),
     ("089", "POST", C + "/migration/parallel-runs/{runId}/observations", "Gửi quan sát cho phiên chạy song song", "055", "svc:national.parallel-observe", "", "202", "admin"),
     ("074", "POST", C + "/migration/legacy-services:import", "Nhập cấu hình dịch vụ từ hệ cũ", "056", "service", "x", "202", "admin"),
+    # J. Duyệt bốn mắt chung (chốt Q448, 27/11/2026)
+    ("093", "GET", C + "/approval-requests", "Liệt kê yêu cầu chờ duyệt bốn mắt của phân hệ", "003, 005, 013, 028, 030, 032, 039, 045", "approve", "", "200", "approval"),
+    ("094", "POST", C + "/approval-requests/{approvalId}:decide", "Duyệt hoặc từ chối một yêu cầu chờ duyệt", "005, 032, 039, 045", "approve", "", "200", "approval"),
     # Mặt phẳng dữ liệu nội bộ
     ("075", "POST", I + "/invocations", "Gọi dịch vụ quốc gia qua điểm gọi chung", "010, 017-022", "svc:national.invoke", "o", "200", "invoke"),
     ("076", "POST", I + "/async-invocations", "Gửi yêu cầu bất đồng bộ vào hàng chờ", "016, 018", "svc:national.invoke", "x", "202", "invoke"),
@@ -118,7 +121,7 @@ OPS = [
 
 TAGS = {"platform": "Nền tảng quốc gia", "service": "Dịch vụ quốc gia", "routing": "Định tuyến", "cert": "Chứng thư và sự cố chữ ký",
         "quota": "Hạn mức và đệm", "inbound": "Điểm cuối chiều vào", "sync": "Đồng bộ", "monitor": "Giám sát và nhật ký khai thác",
-        "admin": "Tham số và chuyển đổi", "invoke": "Gọi dịch vụ (nội bộ)", "catalog": "Cổng danh mục và cấu hình (nội bộ)", "edge": "Chiều vào (vùng biên)"}
+        "admin": "Tham số và chuyển đổi", "approval": "Duyệt bốn mắt chung", "invoke": "Gọi dịch vụ (nội bộ)", "catalog": "Cổng danh mục và cấu hình (nội bộ)", "edge": "Chiều vào (vùng biên)"}
 
 # (mã, HTTP, ý nghĩa)
 ERRS = [

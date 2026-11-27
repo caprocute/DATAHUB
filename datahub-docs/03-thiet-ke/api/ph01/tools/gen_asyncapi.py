@@ -127,7 +127,7 @@ EV = [
   ("handoverSecurityAlert", "EVT-01-10", "handover.security-alert", "HandoverSecurityAlert", "Sai người mở liên kết, mở sai nhiều lần, liên kết bị khóa (FR-01-022).", "`systemCode`", "PH-13, SO",
    {"tenantId": "T68", "systemCode": "HT-TUPHAP", "credentialId": "cr-0194f2c6", "handoverId": "0194f2c7-4e50-7044-8d88-5b6c7d8e9fa0", "alertType": "WRONG_RECIPIENT",
     "failedAttempts": 1, "attemptedBy": "user.khac", "locked": False, "at": "2026-11-27T05:20:00Z"}),
-  ("scopeCeilingChanged", "EVT-01-11", "scope-ceiling.changed", "ScopeCeilingChanged", "Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt trần.", "`systemCode`", "PH-02, PH-12, PH-13",
+  ("scopeCeilingChanged", "EVT-01-11", "scope-ceiling.changed", "ScopeCeilingChanged", "Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-02 hủy đăng ký vượt trần rồi gọi API-12-068 thay tập scope.", "`systemCode`", "PH-02, PH-13",
    {"tenantId": "T68", "systemCode": "HT-TUPHAP", "change": "CREATED", "ceiling": CEIL, "reason": None, "version": 1, "at": "2026-11-27T04:00:00Z", "actor": ACT}),
   ("accessReviewCompleted", "EVT-01-12", "access-review.completed", "AccessReviewCompleted", "Kỳ rà soát quyền đóng (FR-01-042).", "Mã kỳ `RS-…`", "PH-13, PH-18",
    {"tenantId": "T68", "cycleCode": "RS-2026-02", "kind": "PERIODIC", "itemCount": 118, "kept": 90, "narrowed": 20, "revoked": 8, "noResponseOrgs": 2,

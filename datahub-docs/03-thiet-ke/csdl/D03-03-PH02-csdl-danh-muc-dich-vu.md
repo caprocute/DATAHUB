@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH02
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-02 Danh mục dịch vụ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, DBA, cán bộ ATTT, hội đồng thẩm định
 phan_he: PH-02
@@ -133,7 +133,7 @@ Bảng dưới liệt kê ràng buộc hoặc trigger khóa từng quy tắc. M�
 | `uq_subscription_one_effective`, `fk_subscription_plan` | Mỗi HTTT một đăng ký hiệu lực cho một phiên bản; đăng ký khớp phiên bản của gói | BR-02-027; FR-02-046 |
 | `ck_subscription_legal_basis` | Dữ liệu cá nhân hoặc từ mức Hạn chế phải nêu căn cứ pháp lý | BR-02-012; FR-02-046 |
 | `ck_subscription_four_eyes`, `ck_review_decision_four_eyes`, `tg_review_decision_independent`, `tg_review_request_approve_gate` | Người duyệt khác người gửi và người sửa gần nhất; SV không duyệt công bố; API `SENSITIVE` cần CA và TA là hai người | BR-02-008, 026; FR-02-035, 047 |
-| `uq_review_request_one_open` | Một yêu cầu duyệt `OPEN` mỗi đối tượng | BR-02-008; FR-02-034 |
+| `uq_review_request_one_open` | Một yêu cầu duyệt `PENDING` mỗi đối tượng | BR-02-008; FR-02-034 |
 | `ck_*_state_history_reason`, `tg_*_append_only` | Mọi chuyển trạng thái có lý do và lưu lịch sử không sửa được | BR-02-028 |
 | `ck_change_notice_mandatory` | Chỉ thông báo tay `ANNOUNCEMENT` là không bắt buộc | BR-02-029; FR-02-057 |
 | `ck_sla_commitment_worsen`, `ck_sla_period_met`, `uq_sla_period_current` | Cam kết kém đi báo trước tối thiểu 7 ngày; kỳ thiếu dữ liệu là `INSUFFICIENT` và không có `met`; mỗi kỳ một kết quả hiện hành | BR-02-013, 029, 031; FR-02-055, 056 |
@@ -259,7 +259,7 @@ Phần danh sách và các mục 3.1 đến 3.45 sinh bằng [`ph02/tools/gen_ta
 | 11 | `diff_result` | Danh mục | — | mẫu P | 13 | — |
 | 12 | `lint_rule` | Kiểm tra, backend, gói | EN-02-13 | mẫu S | 16 | — |
 | 13 | `lint_rule_override` | Kiểm tra, backend, gói | EN-02-13 | mẫu P | 10 | — |
-| 14 | `lint_finding` | Kiểm tra, backend, gói | EN-02-04 | mẫu P | 18 | phân vùng tháng |
+| 14 | `lint_finding` | Kiểm tra, backend, gói | EN-02-04 | mẫu P | 21 | phân vùng tháng |
 | 15 | `backend` | Kiểm tra, backend, gói | EN-02-05 | mẫu P | 17 | — |
 | 16 | `plan` | Kiểm tra, backend, gói | EN-02-06 | mẫu P | 22 | — |
 | 17 | `plan_operation_scope` | Kiểm tra, backend, gói | — | mẫu P | 7 | — |
@@ -872,7 +872,7 @@ Phần danh sách và các mục 3.1 đến 3.45 sinh bằng [`ph02/tools/gen_ta
 
 **Khóa ngoại.** (spec_id, tenant_id) → `api_spec`.
 
-**Ràng buộc CHECK.** `ck_lint_finding_tenant`, `ck_lint_finding_layer`, `ck_lint_finding_severity`, `ck_lint_finding_status`, `ck_lint_finding_secret`, `ck_lint_finding_ack`, `ck_lint_finding_fingerprint`.
+**Ràng buộc CHECK.** `ck_lint_finding_tenant`, `ck_lint_finding_layer`, `ck_lint_finding_severity`, `ck_lint_finding_status`, `ck_lint_finding_secret`, `ck_lint_finding_ack`, `ck_lint_finding_dispute`, `ck_lint_finding_fingerprint`.
 
 **Chỉ mục.** `ix_lint_finding_spec`, `ix_lint_finding_version`, `ix_lint_finding_run`.
 
@@ -903,6 +903,9 @@ Phân vùng: `RANGE (checked_at)` theo tháng, tên phân vùng `lint_finding_YY
 | `acknowledged_by` | `varchar(64)` |  |  |  |
 | `acknowledged_at` | `timestamptz` |  |  |  |
 | `acknowledge_reason` | `varchar(1000)` |  |  |  |
+| `dispute_requested` | `boolean` | x | `false` | Người dùng đề nghị coi phát hiện là "không phải bí mật" (API-02-093); phát hiện vẫn OPEN và vẫn chặn gửi duyệt cho tới khi SO xác nhận ở API-02-094. |
+| `dispute_reason` | `varchar(1000)` |  |  | Lý do đề nghị không phải bí mật (API-02-093); bắt buộc khi dispute_requested = true. |
+| `dispute_requested_by` | `varchar(64)` |  |  | Người gửi đề nghị không phải bí mật (API-02-093). |
 | `checked_at` | `timestamptz` | x | `now()` |  |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
@@ -1229,13 +1232,13 @@ Phân vùng: `RANGE (checked_at)` theo tháng, tên phân vùng `lint_finding_YY
 ### 3.22. `review_request`
 
 ::: dac-ta
-**Mục đích.** EN-02-09 Yêu cầu duyệt: công bố, ngừng khuyến nghị, ngừng hẳn, công bố và ngừng gói, nâng mức hiển thị, đăng ký sử dụng (FR-02-030, 034, 035, 038, 039, 041, 047). Một yêu cầu OPEN mỗi đối tượng (uq_review_request_one_open). Chuyển sang APPROVED chỉ khi đủ chữ ký (tg_review_request_approve_gate): API SENSITIVE cần hai người CA và TA khác nhau (BR-02-008).
+**Mục đích.** EN-02-09 Yêu cầu duyệt: công bố, ngừng khuyến nghị, ngừng hẳn, công bố, ngừng và đóng gói, đổi backend, nâng mức hiển thị, đăng ký và gia hạn đăng ký (FR-02-030, 034, 035, 038, 039, 041, 047). Một yêu cầu PENDING mỗi đối tượng (uq_review_request_one_open). Chuyển sang APPROVED chỉ khi đủ chữ ký (tg_review_request_approve_gate): API SENSITIVE cần hai người CA và TA khác nhau (BR-02-008).
 
 **FR phục vụ.** FR-02-030, 034, 035, 038, 039, 041, 047.
 
 **Khóa chính.** (id).
 
-**Duy nhất.** `uq_review_request_requester` (id, requested_by, tenant_id), `uq_review_request_one_open` (tenant_id, subject_kind, subject_id) từng phần WHERE status = 'OPEN'.
+**Duy nhất.** `uq_review_request_requester` (id, requested_by, tenant_id), `uq_review_request_one_open` (tenant_id, subject_kind, subject_id) từng phần WHERE status = 'PENDING'.
 
 **Khóa ngoại.** (api_version_id, tenant_id) → `api_version`.
 
@@ -1254,16 +1257,16 @@ Phân vùng: `RANGE (checked_at)` theo tháng, tên phân vùng `lint_finding_YY
 |---|---|---|---|---|
 | `id` | `uuid` | x |  | Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5). |
 | `tenant_id` | `varchar(16)` | x |  | Mã tenant `T{nn}` (hoặc `COMMON` ở bảng dùng chung); khóa RLS và thành phần khóa ngoại kép. |
-| `kind` | `varchar(14)` | x |  | `PUBLISH`, `DEPRECATE`, `RETIRE`, `PLAN_PUBLISH`, `PLAN_DEPRECATE`, `VISIBILITY`, `SUBSCRIBE`. API trả `VERSION_PUBLISH`, `VERSION_DEPRECATE`, `VERSION_RETIRE`, `VISIBILITY_RAISE`, `SUBSCRIPTION` (ánh xạ ở dịch vụ); `PLAN_CLOSE`, `BACKEND_CHANGE`, `SUBSCRIPTION_RENEW` của API chưa có ở DDL (Q02-61). |
+| `kind` | `varchar(20)` | x |  | Mười giá trị trùng `ReviewKind` của OpenAPI: `VERSION_PUBLISH`, `VERSION_DEPRECATE`, `VERSION_RETIRE`, `PLAN_PUBLISH`, `PLAN_DEPRECATE`, `PLAN_CLOSE`, `BACKEND_CHANGE`, `VISIBILITY_RAISE`, `SUBSCRIPTION`, `SUBSCRIPTION_RENEW` (`ck_review_request_kind`, Q02-61 đã chốt 27/11/2026). |
 | `subject_kind` | `varchar(12)` | x |  | `API_VERSION`, `PLAN`, `SUBSCRIPTION`, `API`, khớp `kind` theo `ck_review_request_subject`. |
 | `subject_id` | `uuid` | x |  | Khóa của đối tượng được duyệt theo `subject_kind`. |
-| `api_version_id` | `uuid` |  |  | Phiên bản liên quan; bắt buộc trừ `kind = VISIBILITY`. |
-| `status` | `varchar(9)` | x | `'OPEN'` | `OPEN`, `APPROVED`, `REJECTED`, `WITHDRAWN`. API và FRS gọi `OPEN` là `PENDING` (ánh xạ ở dịch vụ, Q02-61). |
+| `api_version_id` | `uuid` |  |  | Phiên bản liên quan; bắt buộc trừ `kind = VISIBILITY_RAISE`. |
+| `status` | `varchar(9)` | x | `'PENDING'` | `PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, trùng FRS và API (Q02-61 đã chốt 27/11/2026). |
 | `requested_by` | `varchar(64)` | x |  |  |
 | `requested_at` | `timestamptz` | x | `now()` |  |
 | `required_approvals` | `smallint` | x | `1` | 1, hoặc 2 với API SENSITIVE (xác nhận của CA và TA là hai người khác nhau). |
 | `spec_sha256` | `char(64)` |  |  | Băm đặc tả lúc gửi duyệt; lệch lúc duyệt thì đưa về DRAFT (ERR-02-015). |
-| `payload` | `jsonb` | x | `'{}'` | Tham số của yêu cầu: sunsetAt, successorVersionId, urgentReason (DEPRECATE); visibility đích (VISIBILITY). |
+| `payload` | `jsonb` | x | `'{}'` | Tham số của yêu cầu: sunsetAt, successorVersionId, urgentReason (VERSION_DEPRECATE); visibility đích (VISIBILITY_RAISE). |
 | `comment` | `varchar(1000)` |  |  |  |
 | `due_at` | `timestamptz` |  |  |  |
 | `overdue_notified_at` | `timestamptz` |  |  |  |
@@ -1817,7 +1820,7 @@ Phân vùng: `RANGE (created_at)` theo tháng, tên phân vùng `config_change_l
 | `source_version` | `bigint` | x |  |  |
 | `change_kind` | `varchar(24)` | x |  |  |
 | `subject_kind` | `varchar(14)` | x |  |  |
-| `subject_id` | `uuid` | x |  |  |
+| `subject_id` | `uuid` | x |  | Khóa của đối tượng được duyệt theo `subject_kind`. |
 | `api_code` | `varchar(63)` |  |  |  |
 | `trace_id` | `char(32)` |  |  |  |
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
@@ -1854,8 +1857,8 @@ Phân vùng: `RANGE (created_at)` theo tháng, tên phân vùng `config_change_l
 | `id` | `uuid` | x |  | Khóa chính, UUID v7 sinh ở ứng dụng (D00-01 §5). |
 | `tenant_id` | `varchar(16)` | x |  | Mã tenant `T{nn}` (hoặc `COMMON` ở bảng dùng chung); khóa RLS và thành phần khóa ngoại kép. |
 | `env` | `varchar(8)` | x |  |  |
-| `subject_kind` | `varchar(12)` | x |  |  |
-| `subject_id` | `uuid` | x |  |  |
+| `subject_kind` | `varchar(12)` | x |  | `API_VERSION`, `PLAN`, `SUBSCRIPTION`, `API`, khớp `kind` theo `ck_review_request_subject`. |
+| `subject_id` | `uuid` | x |  | Khóa của đối tượng được duyệt theo `subject_kind`. |
 | `transition` | `varchar(24)` | x |  |  |
 | `policy` | `varchar(18)` | x |  |  |
 | `target_source_version` | `bigint` | x |  | source_version của config_epoch tại thời điểm quyết định; gom nhiều việc cùng môi trường vào một xác nhận khi ack.sourceVersion ≥ giá trị này. |
@@ -1904,7 +1907,7 @@ Phân vùng: `RANGE (created_at)` theo tháng, tên phân vùng `config_change_l
 | `env` | `varchar(8)` | x |  |  |
 | `kind` | `varchar(18)` | x |  |  |
 | `route_ref` | `varchar(255)` | x |  |  |
-| `api_version_id` | `uuid` |  |  |  |
+| `api_version_id` | `uuid` |  |  | Phiên bản liên quan; bắt buộc trừ `kind = VISIBILITY_RAISE`. |
 | `expected_hash` | `char(64)` |  |  |  |
 | `actual_hash` | `char(64)` |  |  |  |
 | `pod` | `varchar(64)` |  |  |  |
@@ -2323,7 +2326,7 @@ Chạy ngày 26/11/2026 trên PostgreSQL 16.16 (bản Debian) cài sạch, dữ 
 | Backend | 14 | Không URL tự do; `SYSTEM` phải trỏ kết nối PH-05; `PLACEHOLDER` chỉ cho `FLOW` |
 | Gói | 15 | `INTERNAL` không `KEYLESS`; `RESTRICTED` cấm `client_secret`; `KEYLESS` cần mức hiển thị `PUBLIC`; gói nhập từ hệ cũ được đánh dấu thay vì chặn; đơn giá không âm |
 | Đăng ký sử dụng | 16 | Một đăng ký hiệu lực mỗi HTTT mỗi phiên bản, đăng ký lại sau thu hồi; gói và phiên bản phải khớp; căn cứ pháp lý; người gửi không tự duyệt |
-| Duyệt bốn mắt | 17 | Một yêu cầu `OPEN` mỗi đối tượng; người gửi, người sửa đặc tả, SV đều không duyệt công bố; không đủ chữ ký thì không `APPROVED`; API `SENSITIVE` cần CA và TA; quyết định chỉ thêm |
+| Duyệt bốn mắt | 17 | Một yêu cầu `PENDING` mỗi đối tượng; người gửi, người sửa đặc tả, SV đều không duyệt công bố; không đủ chữ ký thì không `APPROVED`; API `SENSITIVE` cần CA và TA; quyết định chỉ thêm |
 | Lịch sử, SLA, thông báo | 18, 19 | Lý do bắt buộc, lịch sử không sửa; SLA kém đi cần thông báo và báo trước 7 ngày; kết luận `met` khớp trạng thái; một kết quả hiện hành mỗi kỳ; cửa sổ bảo trì không chồng; thông báo bắt buộc |
 | Đồng bộ quốc gia | 20 | Xếp hàng lặp vô hại; `ACKED` có mã quốc gia; `REJECTED` có lý do |
 | Hộp gửi, cấu hình | 21, 22 | Topic đúng tenant; không nội dung đặc tả trong sự kiện; chỉ đánh dấu `published_at`; `source_version` chỉ tăng |
@@ -2533,7 +2536,7 @@ Tiêu chí chấp nhận 10 của FRS (nhập thử một gói xuất APIM cũ: 
 
 > **Câu hỏi mở Q02-54:** Khi `02.search.engine = OPENSEARCH`, có tiếp tục cập nhật `api_search_doc` trong cùng giao dịch làm đường lùi không, hay bỏ để giảm ghi. Đề xuất tạm: vẫn cập nhật, vì chi phí nhỏ (một dòng mỗi API, 2.000 dòng ở trần) và cho phép tắt OpenSearch không mất tìm kiếm; chốt cùng Q02-02 sau khi đo với 10.000 phiên bản (NFR-02-002).
 
-> **Câu hỏi mở Q02-61:** DDL đã chạy thử lệch bốn chỗ so với FRS, API-02-092…098 và API-02-095, phát hiện khi rà soát chéo: (1) `review_request.kind` chỉ có bảy giá trị ngắn (`PUBLISH`…`SUBSCRIBE`, tối đa 14 ký tự) trong khi FRS FR-02-035 và OpenAPI `ReviewKind` có mười (`VERSION_PUBLISH`, `VERSION_DEPRECATE`, `VERSION_RETIRE`, `PLAN_PUBLISH`, `PLAN_DEPRECATE`, `PLAN_CLOSE`, `BACKEND_CHANGE`, `VISIBILITY_RAISE`, `SUBSCRIPTION`, `SUBSCRIPTION_RENEW`, tối đa 18 ký tự); (2) `review_request.status = 'OPEN'` trong khi FRS và API dùng `PENDING`; (3) `lint_finding` chưa có cột cho API-02-093, 094 (`dispute_requested`, `dispute_reason`, `dispute_requested_by`); (4) `async_operation.kind` chưa có loại cho đồng bộ quốc gia (API-02-069) và đối soát gateway (API-02-084). Đề xuất tạm: giữ DDL hiện tại làm nguồn, ánh xạ giá trị ở `ReviewMapper` của dịch vụ; ở lần sửa DDL kế tiếp đổi `kind` thành `varchar(20)` với đủ mười giá trị theo tên API, đổi `OPEN` thành `PENDING`, thêm ba cột cho `lint_finding`, thêm `NATIONAL_SYNC_RUN` và `GATEWAY_RECONCILE` vào `ck_async_operation_kind`, rồi chạy lại 77 điểm kiểm cô lập. Chưa sửa DDL trong lượt rà soát vì môi trường rà soát không có PostgreSQL kèm `pg_trgm`, `unaccent`, `btree_gist` để chạy lại.
+> **Đã chốt 27/11/2026 (Q02-61):** bốn chỗ lệch giữa DDL, FRS và API đã được sửa theo FRS và API (R5). (1) `review_request.kind` là `varchar(20)` với đủ mười giá trị của `ReviewKind` (`ck_review_request_kind`), `ck_review_request_subject` ánh xạ `BACKEND_CHANGE` sang `API_VERSION`, `PLAN_CLOSE` sang `PLAN`, `SUBSCRIPTION_RENEW` sang `SUBSCRIPTION`; (2) `review_request.status` dùng `PENDING` thay `OPEN`, kéo theo chỉ mục `uq_review_request_one_open` và các trigger; (3) `lint_finding` có thêm ba cột `dispute_requested`, `dispute_reason`, `dispute_requested_by` cho API-02-093, 094 kèm `ck_lint_finding_dispute`; (4) `ck_async_operation_kind` có thêm `NATIONAL_SYNC_RUN` (API-02-069) và `GATEWAY_RECONCILE` (API-02-084). Bộ kiểm cô lập `ph02_isolation_test.sql` đã chạy lại trên PostgreSQL 16 và đạt. Dịch vụ không còn cần `ReviewMapper` ánh xạ giá trị.
 
 ## Đề nghị đồng bộ
 
@@ -2561,3 +2564,4 @@ Các việc dưới đây nằm ngoài quyền sửa của tập này (tài li�
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-CSDL và quy chuẩn K-TRINH-BAY: 45 bảng (44 bảng của SDD cộng `api_owner_transfer`), 3 sơ đồ ER, bảng đặc tả 10 mục sinh từ DDL, DDL 8 tệp đã chạy thử trên PostgreSQL 16.16, bài kiểm cô lập tenant và ràng buộc 77/77 điểm, changeset di trú W1 đã chạy thử, chính sách lưu giữ và sao lưu, ánh xạ hệ cũ, 5 câu hỏi mở (Q02-50…54) |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: Giới thiệu theo khuôn; ghi chú cột `kind`, `status` của `review_request` kèm ánh xạ sang API; thêm Q02-61 về bốn chỗ DDL lệch FRS và API; bỏ đề nghị đồng bộ đã thực hiện |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q409 (Q02-61): sửa DDL review_request (kind 10 giá trị, PENDING), lint_finding (3 cột dispute), async_operation (NATIONAL_SYNC_RUN, GATEWAY_RECONCILE), sinh lại bảng |

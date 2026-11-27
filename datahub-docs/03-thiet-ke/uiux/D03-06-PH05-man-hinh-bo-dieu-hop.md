@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH05
 ten: Thiết kế giao diện màn hình phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, kiểm thử viên, kỹ sư tích hợp, ATTT, hội đồng thẩm định
 phan_he: PH-05
@@ -393,7 +393,7 @@ Mọi màn áp ST-01 (đang tải lần đầu), ST-02 (đang tải lại), ST-0
 |---|---|---|---|
 | Tổng quan | Ba `CMP-EnvCard` như wireframe; mô tả, nhãn, HTTT (liên kết PH-01), nguồn hệ cũ nếu có | `CMP-EnvCard`, `CMP-Descriptions` | 005, 010 |
 | Môi trường | Chọn môi trường bằng `CMP-SegmentedControl`; biểu mẫu tham số động theo `paramsSchema` (`CMP-DynamicForm`), mục Bí mật (`CMP-SecretField` mỗi khóa), khối "Bản chờ duyệt" khi PROD có `pendingParams` (`CMP-DiffViewer` giữa đang chạy và chờ); nút "Lưu tham số", "Ghi bí mật", "Bật", "Tắt" | `CMP-DynamicForm`, `CMP-SecretField`, `CMP-DiffViewer` | 010…016 |
-| Cấp sử dụng | Bảng cấp (phạm vi, mã, môi trường, hạn, người cấp); nút "Cấp" mở `CMP-Drawer` chọn không gian hoặc luồng (`CMP-ResourceSelect` tìm ở PH-04), môi trường, hạn | `CMP-DataTable`, `CMP-Drawer` | 022…024 |
+| Cấp sử dụng | Bảng cấp (phạm vi, mã, môi trường, hạn, người cấp); nút "Cấp" mở `CMP-Drawer` chọn phạm vi và không gian, luồng (`CMP-ResourceSelect` tìm ở PH-04) hoặc API (`CMP-ResourceSelect` tìm ở PH-02; phạm vi `API` chỉ hiện với kết nối `http-*`, Q383), môi trường, hạn | `CMP-DataTable`, `CMP-Drawer` | 022…024 |
 | Kiểm tra | Lịch sử lần kiểm tra (thời điểm, môi trường, loại, kết quả, nguyên nhân, người chạy); bấm dòng mở UI-05-04 chế độ xem | `CMP-DataTable` | 018, 019 |
 | Tài khoản CSDL | Chỉ hiện với loại `db-flow`; nội dung UI-05-05 | | 035…041 |
 | Sức khỏe | Biểu đồ lượt gọi, lỗi, p95, chờ nhóm kết nối 1 giờ, 24 giờ, 7 ngày; dải màu mức sức khỏe theo thời gian; danh sách lần đổi mức | `CMP-Chart`, `CMP-Timeline` | 034 |
@@ -444,7 +444,7 @@ Mọi màn áp ST-01 (đang tải lần đầu), ST-02 (đang tải lại), ST-0
 | 2 | Thông tin chung | Mã (gợi ý từ tên, kiểm trùng khi rời ô qua API-05-005 trả 404), tên, HTTT (`CMP-ResourceSelect` PH-01 chỉ HTTT `ACTIVE`), mục đích (`CMP-RadioCard` Chỉ đọc / Đọc ghi; Đọc ghi có cảnh báo cần SO đồng ý ở tài khoản CSDL), mô tả, chủ sở hữu, nhãn | Hợp lệ; bấm "Tạo" gọi API-05-004 (kết nối `DRAFT`) |
 | 3 | Giá trị theo môi trường | `CMP-Tabs` TEST, STAGING, PROD; mỗi tab: `CMP-DynamicForm` theo `paramsSchema`, mục Bí mật; nút "Sao chép từ TEST" cho tham số (không sao chép bí mật) | Ít nhất một môi trường có tham số và bí mật |
 | 4 | Kiểm tra | Chạy kiểm tra cho từng môi trường đã khai (UI-05-04 nhúng); kết quả theo bước | Không bắt buộc đạt để sang bước 5, nhưng bật môi trường cần đạt |
-| 5 | Cấp sử dụng và bật | Cấp cho không gian hoặc luồng; nút "Bật TEST", "Bật STAGING", "Xin bật PROD" theo `allowedActions` | Kết thúc → UI-05-02 |
+| 5 | Cấp sử dụng và bật | Cấp cho không gian, luồng hoặc API của PH-02 (kết nối `http-*`); nút "Bật TEST", "Bật STAGING", "Xin bật PROD" theo `allowedActions` | Kết thúc → UI-05-02 |
 
 : UI-05-03 · Các bước
 
@@ -1443,5 +1443,6 @@ Không có thành phần mới bắt buộc. Hai biến thể đề xuất ghi v
 | 9 | Câu lỗi lấy theo §5.2, có mã truy vết sao chép được | Mọi màn |
 | 10 | Thử ở 1280, 1440, 1920 px và thu phóng 200 % | UI-05-10 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: người đọc và thuật ngữ, bảng đặc tả cho 17 màn (mục đích, người dùng, FR, đường dẫn, mẫu, quyền, API), ảnh hi-fi UI-05-01 và UI-05-04, chú thích mọi bảng và hình |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q383 |
 
 : Phụ lục B. Danh sách kiểm tra khi dựng màn

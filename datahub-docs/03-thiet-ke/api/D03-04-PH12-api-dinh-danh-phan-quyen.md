@@ -6,7 +6,7 @@ ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, thư viện PEP, APISIX, giao diện; ATTT; đơn vị kết nối; hội đồng thẩm định
 phan_he: PH-12
-mo_ta: Đặc tả 111 endpoint REST và OIDC, 16 sự kiện Kafka và 66 mã lỗi của phân hệ Định danh và phân quyền, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
+mo_ta: Đặc tả 113 endpoint REST và OIDC, 16 sự kiện Kafka và 66 mã lỗi của phân hệ Định danh và phân quyền, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm tra trong CI.
 tai_lieu_lien_quan: D02-03-PH12 FRS; D02-04-PH12 Use case; D03-02-PH12 SDD; D03-03-PH12 CSDL; D03-07 ATTT; D02-08 Ma trận phân quyền; D04-01 Quy ước mã
 ---
 
@@ -16,15 +16,15 @@ tai_lieu_lien_quan: D02-03-PH12 FRS; D02-04-PH12 Use case; D03-02-PH12 SDD; D03-
 
 **Mục tiêu.** Tài liệu này là hợp đồng giao diện của PH-12, phân hệ trả lời "người gọi là ai" (Keycloak) và "người gọi được làm gì" (OPA) cho toàn bộ Datahub. Mọi phân hệ khác, cổng APISIX và các đơn vị kết nối gọi PH-12 qua hợp đồng này; kỹ sư dựa vào đó để viết mã mà không cần hỏi lại, kiểm thử viên dựa vào đó để viết ca kiểm thử hợp đồng.
 
-**Phạm vi.** PH-12 công bố 111 operation (API-12-001…111) ở ba mặt:
+**Phạm vi.** PH-12 công bố 113 operation (API-12-001…113) ở ba mặt:
 
-- **API quản trị** `/api/iam/v1`: 101 operation cho người dùng, vai trò, nhóm, quyền có thời hạn, rà soát quyền, liên kết định danh ngoài, client của hệ thống thông tin (HTTT), tài khoản dịch vụ, realm, chính sách và gói chính sách, nhật ký, cảnh báo, báo cáo, tham số.
+- **API quản trị** `/api/iam/v1`: 103 operation cho người dùng, vai trò, nhóm, quyền có thời hạn, rà soát quyền, liên kết định danh ngoài, client của hệ thống thông tin (HTTT), tài khoản dịch vụ, realm, chính sách và gói chính sách, nhật ký, cảnh báo, báo cáo, tham số.
 - **API quyết định ủy quyền** `/api/authz/v1`: 3 operation (`decide`, `decide:batch`, `xacml`), hợp đồng trung tâm giữa bên thực thi (PEP) và OPA.
 - **Điểm cuối OIDC chuẩn của Keycloak** `/realms/dh-{tenant}/protocol/openid-connect/*`: 7 operation (khám phá, cấp quyền, token, JWKS, đăng xuất, thu hồi token, userinfo), lỗi theo RFC 6749.
 
 Ngoài ra 16 sự kiện Kafka (EVT-12-01…16) và 66 mã lỗi (ERR-12-001…047, 101…125, một số mã chỉ phát sinh ở Keycloak). Hợp đồng máy đọc được:
 
-- [`ph12/openapi-iam.yaml`](ph12/openapi-iam.yaml): OpenAPI 3.1, 135 lược đồ, đã qua `openapi-spec-validator`; các ví dụ trong lược đồ được kiểm khớp bằng [`check_contracts.py`](ph12/tools/check_contracts.py).
+- [`ph12/openapi-iam.yaml`](ph12/openapi-iam.yaml): OpenAPI 3.1, 136 lược đồ, đã qua `openapi-spec-validator`; các ví dụ trong lược đồ được kiểm khớp bằng [`check_contracts.py`](ph12/tools/check_contracts.py).
 - [`ph12/asyncapi-iam.yaml`](ph12/asyncapi-iam.yaml): AsyncAPI 3.0, 16 kênh, đã qua `@asyncapi/parser` 3 không lỗi.
 
 Cả hai sinh từ bảng mã [`ph12/tools/spec.py`](ph12/tools/spec.py) bằng `gen_openapi.py`, `gen_asyncapi.py`; bảng ở chương 3, 4, 6 sinh bằng `gen_md.py`, chương 10 sinh bằng `build/tools/sinh_dac_ta_api.py`, nên các phần không lệch nhau.
@@ -43,13 +43,13 @@ Cả hai sinh từ bảng mã [`ph12/tools/spec.py`](ph12/tools/spec.py) bằng 
 
 | Chỉ số | Giá trị |
 |---|---|
-| Operation | 111 (API-12-001…111): 101 quản trị, 3 quyết định, 7 OIDC |
+| Operation | 113 (API-12-001…113): 103 quản trị, 3 quyết định, 7 OIDC |
 | Operation ghi có `If-Match` | 31 |
 | Operation tạo có `Idempotency-Key` | 29 |
 | Operation đòi xác thực bước lên | 52 (39 mức 2, 13 mức 3) |
 | Sự kiện | 16 (EVT-12-01…16): 15 qua outbox, 1 do Keycloak phát |
 | Mã lỗi | 66: 47 control plane, 19 runtime |
-| Lược đồ OpenAPI | 135 |
+| Lược đồ OpenAPI | 136 |
 | FR có API | 57 trong 62; 5 FR (007, 008, 010, 021, 050) chỉ giao diện hoặc tác vụ nền (mục 3.3) |
 | Câu hỏi mở | 5 (Q12-55…59) |
 
@@ -123,7 +123,7 @@ Bảng sau nêu nội dung của từng chương trong tài liệu này để ng
 |---|---|
 | 1 | Quy ước chung: đường gốc, phiên bản, phân trang, khóa lạc quan, chống trùng, lỗi |
 | 2 | Xác thực và phân quyền cho người dùng, máy và bên quyết định |
-| 3 | Danh mục 111 endpoint, phủ FR, ví dụ yêu cầu và phản hồi |
+| 3 | Danh mục 113 endpoint, phủ FR, ví dụ yêu cầu và phản hồi |
 | 4 | Danh mục 16 sự kiện |
 | 5 | Hợp đồng với phân hệ khác và bên ngoài |
 | 6 | Bảng mã lỗi ERR-12, thông báo hiển thị |
@@ -177,7 +177,7 @@ PH-12 vừa là nơi cấp định danh vừa là một dịch vụ cần đư�
 
 Người dùng đăng nhập bằng OIDC Authorization Code với PKCE `S256` qua BFF của `dh-console` (SEC-21); trình duyệt không giữ token. BFF gắn access token (ES256, sống tối đa 5 phút) vào lời gọi `/api/iam/v1`. Quyền gọi là mã `PERM-12-*` suy từ vai trò của người dùng theo ma trận D02-08; ánh xạ vai trò sang quyền nằm ở dữ liệu của OPA, không ở mã của `dh-platform`.
 
-Thao tác ghi cần mức xác thực tối thiểu: **mức 2** (mật khẩu cộng TOTP hoặc WebAuthn) cho 39 operation ghi quản trị; **mức 3** (WebAuthn, `userVerification=required`) cho 13 operation có rủi ro cao (phát hành, thu hồi, quay lui chính sách; tạo, xoay tài khoản dịch vụ; khóa realm, áp lại cấu hình; duyệt quyền có thời hạn; thu hồi client). Token phải có `auth_time` không quá `12.mfa.stepup-minutes` (5 phút). Thiếu một trong hai: `401` ERR-12-120 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", acr_values="…"`; BFF chuyển người dùng sang xác thực bước lên rồi gọi lại. Mức tối thiểu của từng operation ở khóa `x-datahub-acr` của OpenAPI.
+Thao tác ghi cần mức xác thực tối thiểu: **mức 2** (mật khẩu cộng TOTP hoặc WebAuthn) cho 40 operation ghi quản trị; **mức 3** (WebAuthn, `userVerification=required`) cho 13 operation có rủi ro cao (phát hành, thu hồi, quay lui chính sách; tạo, xoay tài khoản dịch vụ; khóa realm, áp lại cấu hình; duyệt quyền có thời hạn; thu hồi client). Token phải có `auth_time` không quá `12.mfa.stepup-minutes` (5 phút). Thiếu một trong hai: `401` ERR-12-120 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", acr_values="…"`; BFF chuyển người dùng sang xác thực bước lên rồi gọi lại. Mức tối thiểu của từng operation ở khóa `x-datahub-acr` của OpenAPI, và danh sách đã được cán bộ ATTT cùng quản trị nền tảng duyệt, ghi thành bảng ở D02-03-PH12 mục 4.8 (chủ đầu tư chốt 27/11/2026).
 
 ### 2.2. Máy gọi máy
 
@@ -210,7 +210,7 @@ API quyết định (`/api/authz/v1`) khác phần còn lại: bên gọi là m�
 
 ## 3. Danh mục endpoint
 
-Chương liệt kê 111 operation theo nhóm chức năng. Mỗi operation có đúng một mã `API-12-nnn`, khớp bảng API của FRS §9.4 (kiểm bằng `check_contracts.py`). Bảng ở mục 3.2 và 3.3 sinh từ OpenAPI; đặc tả đầy đủ từng endpoint (tham số, thân, phản hồi, lỗi) ở chương 10.
+Chương liệt kê 113 operation theo nhóm chức năng. Mỗi operation có đúng một mã `API-12-nnn`, khớp bảng API của FRS §9.4 (kiểm bằng `check_contracts.py`). Bảng ở mục 3.2 và 3.3 sinh từ OpenAPI; đặc tả đầy đủ từng endpoint (tham số, thân, phản hồi, lỗi) ở chương 10.
 
 ### 3.1. Cách đọc bảng
 
@@ -408,6 +408,7 @@ Cột **Quyền hoặc scope** là điều kiện gọi: `PERM-12-*` cho ngườ
 | API-12-083 | `POST /realms/{tenantCode}:reconcile` | Áp lại cấu hình mẫu cho realm | 042 | `PERM-12-realm-admin` | có | 202 |
 | API-12-084 | `POST /realms/{tenantCode}:suspend` | Tạm ngừng realm | 043 | scope `iam:realm-provision` hoặc `PERM-12-realm-admin` |  | 200 |
 | API-12-085 | `POST /realms/{tenantCode}:resume` | Khôi phục realm | 043 | scope `iam:realm-provision` hoặc `PERM-12-realm-admin` |  | 200 |
+| API-12-113 | `GET /realms` | Danh sách realm của các tenant, lọc theo lệch cấu hình | 042 | `PERM-12-realm-admin` |  | 200 |
 
 : Endpoint nhóm realm của tenant
 
@@ -439,6 +440,7 @@ Cột **Quyền hoặc scope** là điều kiện gọi: `PERM-12-*` cho ngườ
 | API-12-100 | `POST /policy-bundles:rollback` | Quay lui về gói chính sách đã từng chạy | 055 | `PERM-12-policy-approve` | có | 202 |
 | API-12-101 | `GET /policy-bundles` | Danh sách gói chính sách đã phát hành | 051, 054, 055 | `PERM-12-read` |  | 200 |
 | API-12-102 | `POST /policy-data:regenerate` | Sinh lại dữ liệu vai trò–quyền cho OPA | 051 | `PERM-12-policy-edit` hoặc hệ thống | có | 202 |
+| API-12-112 | `PUT /policies/{policyCode}/versions/{versionNo}` | Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu) | 052 | `PERM-12-policy-edit` |  | 200 |
 
 : Endpoint nhóm chính sách và gói
 
@@ -505,7 +507,7 @@ Mỗi FR của FRS PH-12 có ít nhất một API hoặc được ghi rõ là ch
 | FR-12-039 | Công bố JWKS và xoay khóa ký 90 ngày | API-12-075 |
 | FR-12-040 | Thu hồi truy cập tức thời và phân phối danh sách chặn | API-12-018, API-12-062, API-12-077, API-12-079 |
 | FR-12-041 | Khởi tạo realm của tenant từ mẫu | API-12-080 |
-| FR-12-042 | Cấu hình bảo mật realm bằng GitOps, phát hiện lệch | API-12-081, API-12-082, API-12-083 |
+| FR-12-042 | Cấu hình bảo mật realm bằng GitOps, phát hiện lệch | API-12-081, API-12-082, API-12-083, API-12-113 |
 | FR-12-043 | Tạm ngừng, khôi phục, chuyển chỉ-đọc realm theo vòng đời tenant | API-12-084, API-12-085 |
 | FR-12-044 | Quyết định ủy quyền theo hợp đồng PEP và PDP | API-12-086 |
 | FR-12-045 | Quy tắc gốc: từ chối mặc định, từ chối thắng, cách ly tenant | API-12-086 |
@@ -515,7 +517,7 @@ Mỗi FR của FRS PH-12 có ít nhất một API hoặc được ghi rõ là ch
 | FR-12-049 | Quyết định theo lô | API-12-087 |
 | FR-12-050 | Bộ đệm quyết định | Bộ đệm quyết định nằm ở thư viện PEP và plugin `dh-authz`; cấu hình `12.cache.ttl-seconds` ở API-12-110, 111 |
 | FR-12-051 | Sinh dữ liệu vai trò–quyền cho OPA từ ma trận D02-08 | API-12-101, API-12-102 |
-| FR-12-052 | Soạn và kiểm thử chính sách | API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094 |
+| FR-12-052 | Soạn và kiểm thử chính sách | API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094, API-12-112 |
 | FR-12-053 | Chạy khô chính sách trên lưu lượng thật | API-12-095 |
 | FR-12-054 | Duyệt bốn mắt và phát hành gói chính sách ký | API-12-096, API-12-097, API-12-098, API-12-101 |
 | FR-12-055 | Thu hồi và quay lui chính sách | API-12-099, API-12-100, API-12-101 |
@@ -721,7 +723,7 @@ Bảng sau liệt kê các hợp đồng giữa PH-12 và phân hệ khác hoặ
 |---|---|---|---|
 | PH-01 Kết nạp HTTT | PH-01 → PH-12 | API-12-058 (cấp client), 060, 061, 062, 068 bằng scope `iam:client-provision`; nhận EVT-12-06, 07 | PH-12 trả kết quả đồng bộ (`201`), không dùng callback API-01-087 (Q01-56); đổi trạng thái hoặc đơn vị của tài khoản đầu mối qua EVT-12-02. Saga cấp client dùng `Idempotency-Key` làm khóa tìm lại tiến trình dở; PH-01 mở địa chỉ bọc ở BFF, hiển thị bí mật một lần |
 | PH-02, PH-09, PH-10, PH-19 | Nguồn → PH-12 | `ScopeSourcePort.accept` (trong tiến trình) hoặc API-12-068 (REST) đẩy dữ liệu đã duyệt để sinh scope | Chỉ scope có nguồn duyệt mới được ghi (ERR-12-019) |
-| PH-03 Cổng API (APISIX) | PH-03 → PH-12; PH-12 → PH-03 | API-12-075 (JWKS), API-12-079 (danh sách chặn kéo mỗi 10 giây), API-12-086 (nếu không dùng OPA cục bộ); nhận EVT-12-08, 09, 10; PH-12 đẩy thu hồi qua API-03-053 bằng scope `gateway:revoke` | Plugin `dh-authz` ánh xạ trường theo SDD §3.4; báo `X-DH-Applied-Version` để PH-12 hiển thị "đã áp dụng n/m nút" |
+| PH-03 Cổng API (APISIX) | PH-03 → PH-12; PH-12 → PH-03 | API-12-075 (JWKS), API-12-079 (danh sách chặn kéo mỗi 10 giây), API-12-086 (nếu không dùng OPA cục bộ); nhận EVT-12-08, 09, 10; PH-12 đẩy thu hồi qua API-03-053 bằng scope `gateway:revoke` (đường nhanh); plugin `dh-authz` kéo API-12-079 mỗi 10 giây làm đường bù khi mất đẩy (đã chốt 27/11/2026) | Plugin `dh-authz` ánh xạ trường theo SDD §3.4; báo `X-DH-Applied-Version` để PH-12 hiển thị "đã áp dụng n/m nút" |
 | PH-04, PH-05, DU | DU → PH-12 | Thư viện PEP gọi OPA cục bộ; API-12-014 (danh bạ); nhận EVT-12-05, 09, 10 | `dh-runtime` (Quarkus) gọi API-12-086 trong giai đoạn đầu (Q12-26 của SDD) |
 | PH-07 Danh mục dùng chung | PH-12 đọc | Danh mục đơn vị (đồng bộ thuộc tính, kiểm `orgCode`) | ERR-12-004 khi đơn vị hết hiệu lực, ERR-12-040 khi PH-07 không khả dụng |
 | PH-13 Giám sát và kiểm toán | PH-12 → PH-13 | EVT-12-01…16; nhật ký quyết định theo đường log; bản ghi thay đổi quyền vào chuỗi băm của tenant bị truy cập | Hợp đồng tiếp nhận do PH-13 xác định |
@@ -774,13 +776,13 @@ Bảng sau là danh sách chuẩn các mã lỗi của API quản trị PH-12 v�
 
 | Mã | HTTP | Ý nghĩa | API phát sinh (API-12-) |
 |---|---|---|---|
-| ERR-12-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant, tổ chức khác | 63 API (xem OpenAPI) |
+| ERR-12-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant, tổ chức khác | 64 API (xem OpenAPI) |
 | ERR-12-002 | 409 | Mã, tên đăng nhập hoặc thư điện tử đã được dùng | 003, 022, 033, 052, 058, 063 và 3 API khác |
-| ERR-12-003 | 400 | Dữ liệu không hợp lệ theo lược đồ, kèm danh sách lỗi theo trường | 74 API (xem OpenAPI) |
+| ERR-12-003 | 400 | Dữ liệu không hợp lệ theo lược đồ, kèm danh sách lỗi theo trường | 76 API (xem OpenAPI) |
 | ERR-12-004 | 422 | Đơn vị không tồn tại hoặc hết hiệu lực ở PH-07 | 003, 004, 033 |
 | ERR-12-005 | 422 | Thư điện tử ngoài miền công vụ được phép | 003, 004 |
 | ERR-12-006 | 409 | Chuyển trạng thái tài khoản không hợp lệ | 005, 006, 007, 008, 009, 012 |
-| ERR-12-007 | 403 | Không có quyền | 101 API (xem OpenAPI) |
+| ERR-12-007 | 403 | Không có quyền | 103 API (xem OpenAPI) |
 | ERR-12-008 | 403 | Vi phạm bốn mắt | 030, 038, 039, 097, 098 |
 | ERR-12-009 | 409 | Cặp vai trò xung đột tách nhiệm vụ | 026 |
 | ERR-12-010 | 422 | Giá trị hoặc thao tác không hợp lệ về nghiệp vụ (vai trò, phạm vi gán, quyền trong vai trò tùy biến, nhóm đơn vị, yếu tố cuối cùng) | 003, 022, 023, 024, 026, 029 và 5 API khác |
@@ -797,11 +799,11 @@ Bảng sau là danh sách chuẩn các mã lỗi của API quản trị PH-12 v�
 | ERR-12-021 | 422 | Chứng thư hoặc khóa công khai không hợp lệ | 058, 064, 065 |
 | ERR-12-022 | 422 | Phương thức xác thực không đạt mức hợp đồng hoặc không áp dụng cho client | 058, 059, 064, 065, 066 |
 | ERR-12-023 | 409 | Đang trong thời gian chuyển tiếp của lần xoay bí mật | 066 |
-| ERR-12-024 | 422 | Chính sách sai cú pháp, biên dịch lỗi hoặc gói không hợp lệ | 091, 092, 094, 095, 102 |
+| ERR-12-024 | 422 | Chính sách sai cú pháp, biên dịch lỗi hoặc gói không hợp lệ | 091, 092, 094, 095, 102, 112 |
 | ERR-12-025 | 409 | Còn ca kiểm thử không đạt hoặc chưa đủ ca dương, ca âm | 094, 096 |
 | ERR-12-026 | 409 | Chưa chạy khô trên đúng nội dung hiện tại | 096 |
-| ERR-12-027 | 409 | Chuyển trạng thái phiên bản chính sách không hợp lệ, hoặc thu hồi chính sách gốc | 030, 031, 092, 095, 096, 097 và 3 API khác |
-| ERR-12-028 | 422 | Chính sách của tenant có luật cho phép hoặc nới quyền | 091, 092 |
+| ERR-12-027 | 409 | Chuyển trạng thái phiên bản chính sách không hợp lệ, hoặc thu hồi chính sách gốc | 030, 031, 092, 095, 096, 097 và 4 API khác |
+| ERR-12-028 | 422 | Chính sách của tenant có luật cho phép hoặc nới quyền | 091, 092, 112 |
 | ERR-12-029 | 409 | Thiếu xác nhận bổ sung khi chạy khô đổi quá ngưỡng | 097 |
 | ERR-12-030 | 422 | Quyền có thời hạn vượt tối đa hoặc thiếu mã phiếu | 029, 036, 038 |
 | ERR-12-031 | 409 | Chiến dịch rà soát đang mở hoặc đã đóng | 041, 043, 044 |
@@ -816,8 +818,8 @@ Bảng sau là danh sách chuẩn các mã lỗi của API quản trị PH-12 v�
 | ERR-12-040 | 503 | Phân hệ hoặc dịch vụ phụ thuộc không khả dụng (PH-01, PH-04, PH-07, PH-13, OPA, kho gói, bộ quét mã độc) | 003, 004, 045, 046, 058, 080 và 3 API khác |
 | ERR-12-041 | 409 | Realm hoặc tenant không ở trạng thái cho phép thao tác | 045, 046, 070, 080, 082, 083 và 2 API khác |
 | ERR-12-042 | 409 | Realm đang được đối chiếu hoặc áp cấu hình | 083, 084, 085 |
-| ERR-12-043 | 422 | Vượt trần tham số hoặc giới hạn số lượng | 003, 010, 012, 022, 035, 041 và 6 API khác |
-| ERR-12-044 | 412 | Phiên bản đối tượng đã thay đổi (`If-Match`) | 31 API (xem OpenAPI) |
+| ERR-12-043 | 422 | Vượt trần tham số hoặc giới hạn số lượng | 13 API (xem OpenAPI) |
+| ERR-12-044 | 412 | Phiên bản đối tượng đã thay đổi (`If-Match`) | 32 API (xem OpenAPI) |
 | ERR-12-045 | 422 | `Idempotency-Key` đã dùng với thân khác | 29 API (xem OpenAPI) |
 | ERR-12-046 | 409 | Không thể gỡ hoặc vô hiệu quản trị tỉnh cuối cùng | 005, 007, 027 |
 | ERR-12-047 | 422 | Trường do danh bạ LDAP quản lý, chỉ đọc | 004 |
@@ -839,11 +841,11 @@ Các mã dưới đây phát sinh ở API quyết định (`/api/authz/v1`, thâ
 | ERR-12-113 | 403 | Tài khoản bị khóa hẳn hoặc vô hiệu | API-12-074 |
 | ERR-12-114 | 400 | `state`, `code_verifier` hoặc `redirect_uri` không khớp, hoặc thiếu PKCE `S256` | API-12-073, API-12-074 |
 | ERR-12-115 | 401 | Refresh token đã dùng lại, họ token bị thu hồi (`invalid_grant`) | API-12-074 |
-| ERR-12-116 | 401 | Token hết hạn, bị thu hồi hoặc sai đối tượng | API-12-001, API-12-002, API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-011, API-12-012, API-12-013, API-12-014, API-12-015, API-12-016, API-12-017, API-12-018, API-12-019, API-12-020, API-12-021, API-12-022, API-12-023, API-12-024, API-12-025, API-12-026, API-12-027, API-12-028, API-12-029, API-12-030, API-12-031, API-12-032, API-12-033, API-12-034, API-12-035, API-12-036, API-12-037, API-12-038, API-12-039, API-12-040, API-12-041, API-12-042, API-12-043, API-12-044, API-12-045, API-12-046, API-12-047, API-12-048, API-12-049, API-12-050, API-12-051, API-12-052, API-12-053, API-12-054, API-12-055, API-12-056, API-12-057, API-12-058, API-12-059, API-12-060, API-12-061, API-12-062, API-12-063, API-12-064, API-12-065, API-12-066, API-12-067, API-12-068, API-12-069, API-12-070, API-12-071, API-12-076, API-12-078, API-12-079, API-12-080, API-12-081, API-12-082, API-12-083, API-12-084, API-12-085, API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094, API-12-095, API-12-096, API-12-097, API-12-098, API-12-099, API-12-100, API-12-101, API-12-102, API-12-103, API-12-104, API-12-105, API-12-106, API-12-107, API-12-108, API-12-109, API-12-110, API-12-111 |
+| ERR-12-116 | 401 | Token hết hạn, bị thu hồi hoặc sai đối tượng | API-12-001, API-12-002, API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-011, API-12-012, API-12-013, API-12-014, API-12-015, API-12-016, API-12-017, API-12-018, API-12-019, API-12-020, API-12-021, API-12-022, API-12-023, API-12-024, API-12-025, API-12-026, API-12-027, API-12-028, API-12-029, API-12-030, API-12-031, API-12-032, API-12-033, API-12-034, API-12-035, API-12-036, API-12-037, API-12-038, API-12-039, API-12-040, API-12-041, API-12-042, API-12-043, API-12-044, API-12-045, API-12-046, API-12-047, API-12-048, API-12-049, API-12-050, API-12-051, API-12-052, API-12-053, API-12-054, API-12-055, API-12-056, API-12-057, API-12-058, API-12-059, API-12-060, API-12-061, API-12-062, API-12-063, API-12-064, API-12-065, API-12-066, API-12-067, API-12-068, API-12-069, API-12-070, API-12-071, API-12-076, API-12-078, API-12-079, API-12-080, API-12-081, API-12-082, API-12-083, API-12-084, API-12-085, API-12-089, API-12-090, API-12-091, API-12-092, API-12-093, API-12-094, API-12-095, API-12-096, API-12-097, API-12-098, API-12-099, API-12-100, API-12-101, API-12-102, API-12-103, API-12-104, API-12-105, API-12-106, API-12-107, API-12-108, API-12-109, API-12-110, API-12-111, API-12-112, API-12-113 |
 | ERR-12-117 | 401 | Xác thực client thất bại (`invalid_client`) | API-12-074, API-12-077 |
 | ERR-12-118 | 403 | Client bị tạm ngừng hoặc thu hồi (`unauthorized_client`) | API-12-074 |
 | ERR-12-119 | 400 | Scope giao rỗng (`invalid_scope`) | API-12-074 |
-| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`), dùng cho API quản trị của PH-12 chứ không chỉ cho Keycloak | API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-012, API-12-015, API-12-017, API-12-018, API-12-022, API-12-023, API-12-024, API-12-026, API-12-027, API-12-029, API-12-030, API-12-031, API-12-033, API-12-034, API-12-035, API-12-036, API-12-038, API-12-039, API-12-040, API-12-041, API-12-044, API-12-048, API-12-049, API-12-050, API-12-052, API-12-053, API-12-055, API-12-059, API-12-060, API-12-061, API-12-062, API-12-064, API-12-065, API-12-066, API-12-070, API-12-071, API-12-074, API-12-083, API-12-084, API-12-085, API-12-097, API-12-098, API-12-099, API-12-100, API-12-111 |
+| ERR-12-120 | 401 | Cần xác thực bước lên (`insufficient_user_authentication`), dùng cho API quản trị của PH-12 chứ không chỉ cho Keycloak | API-12-003, API-12-004, API-12-005, API-12-006, API-12-007, API-12-008, API-12-009, API-12-010, API-12-012, API-12-015, API-12-017, API-12-018, API-12-022, API-12-023, API-12-024, API-12-026, API-12-027, API-12-029, API-12-030, API-12-031, API-12-033, API-12-034, API-12-035, API-12-036, API-12-038, API-12-039, API-12-040, API-12-041, API-12-044, API-12-048, API-12-049, API-12-050, API-12-052, API-12-053, API-12-055, API-12-059, API-12-060, API-12-061, API-12-062, API-12-064, API-12-065, API-12-066, API-12-070, API-12-071, API-12-074, API-12-083, API-12-084, API-12-085, API-12-097, API-12-098, API-12-099, API-12-100, API-12-111, API-12-112 |
 | ERR-12-121 | 403 | Tenant tạm ngừng hoặc realm không hoạt động | API-12-073, API-12-074 |
 | ERR-12-122 | 400 | Grant hoặc loại phản hồi bị cấm (`unsupported_grant_type`) | API-12-073, API-12-074 |
 | ERR-12-123 | 400 | Yêu cầu XACML sai lược đồ (phản hồi `Indeterminate`) | API-12-088 |
@@ -927,7 +929,7 @@ Hợp đồng chỉ có giá trị khi máy kiểm được. Các kiểm dưới
 | Kiểm | Công cụ | Cổng |
 |---|---|---|
 | OpenAPI 3.1 hợp lệ; ví dụ khớp lược đồ; mỗi operation có `x-datahub-id`, `x-datahub-fr`, `x-datahub-permission`; lệnh ghi có `If-Match` | `check_contracts.py` (`openapi-spec-validator`, `jsonschema`) | CI-5 |
-| Mã `API-12-001…111` đủ, khớp phương thức và đường dẫn ở FRS §9.4; mọi `ERR-12-*` của OpenAPI có trong FRS §9.1 | `check_contracts.py` | CI-5 |
+| Mã `API-12-001…113` đủ, khớp phương thức và đường dẫn ở FRS §9.4; mọi `ERR-12-*` của OpenAPI có trong FRS §9.1 | `check_contracts.py` | CI-5 |
 | Không trường bí mật ngoài lược đồ chỉ ghi; `writeOnly` ở `bindSecret`, `client_secret` | `check_contracts.py` | CI-5 |
 | AsyncAPI 3.0 hợp lệ; `EVT-12-01…16` đủ; topic đúng mẫu `{tenant}.iam.….v1`; payload không trường bí mật | `check_contracts.py` và `@asyncapi/parser` 3 | CI-5 |
 | Lint quy ước (hậu tố hành động, `problem+json`, phân trang) | Spectral với bộ luật dự án | CI-5 |
@@ -938,7 +940,7 @@ Hợp đồng chỉ có giá trị khi máy kiểm được. Các kiểm dưới
 
 : Kiểm tra hợp đồng trong CI
 
-Kết quả ngày 26/11/2026: OpenAPI hợp lệ với 111 operation, 9 ví dụ khớp lược đồ; AsyncAPI hợp lệ, 16 kênh, không lỗi (một khuyến nghị nâng phiên bản 3.1 của bộ phân tích, không áp dụng vì cả bộ tài liệu dùng 3.0).
+Kết quả ngày 26/11/2026: OpenAPI hợp lệ với 113 operation, 9 ví dụ khớp lược đồ; AsyncAPI hợp lệ, 16 kênh, không lỗi (một khuyến nghị nâng phiên bản 3.1 của bộ phân tích, không áp dụng vì cả bộ tài liệu dùng 3.0).
 
 ## 8. Ánh xạ từ hệ cũ
 
@@ -970,7 +972,7 @@ PH-12 phủ tám mục `LGC-IAM` của hệ cũ (D00-03 §4.8) và API quyết �
 
 > **Câu hỏi mở Q12-58:** Khi gói dữ liệu của tenant vượt ngưỡng chế độ đẩy (Q12-20 của SDD), OPA chuyển sang chế độ kéo bằng scope `iam:policy-data-read`, nhưng bản này chưa công bố API tương ứng. Cần xác nhận sau khi đo có cần thêm `GET /policy-data` (một operation mới ở mã kế tiếp của dải, trả gói theo `If-None-Match`) hay chỉ chia dữ liệu theo đơn vị mà vẫn đẩy qua bucket.
 
-> **Câu hỏi mở Q12-59:** Mức xác thực bước lên của từng operation (39 operation mức 2, 13 mức 3, khóa `x-datahub-acr`) là đề xuất của tập này dựa trên FRS §4.8, chưa có bảng chính thức ở FRS hay D02-08. Cần cán bộ ATTT và quản trị nền tảng duyệt danh sách (đặc biệt mức 3 cho thu hồi client và duyệt quyền có thời hạn) trước khi thư viện PEP áp dụng, vì mức 3 buộc khóa FIDO2 (GĐ-12-07).
+> **Câu hỏi Q12-59 (đã chốt 27/11/2026):** Chủ đầu tư chốt 27/11/2026: danh sách mức xác thực bước lên của từng operation (40 operation mức 2, 13 mức 3, khóa `x-datahub-acr`) do cán bộ ATTT cùng quản trị nền tảng duyệt, rồi ghi thành bảng ở D02-03-PH12 mục 4.8 lấy từ `x-datahub-acr` của OpenAPI. *Câu hỏi gốc:* ai duyệt danh sách mức xác thực bước lên trước khi thư viện PEP áp dụng, đặc biệt mức 3 cho thu hồi client và duyệt quyền có thời hạn.
 
 ## 10. Đặc tả từng endpoint
 
@@ -1001,7 +1003,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-12-003, ERR-12-007, ERR-12-116 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`, `LOCKED` xếp đầu khi không có `sort`.
+**Ghi chú.** `facets` kèm số người dùng thuộc nhóm bắt buộc MFA mà chưa có (`mfaRequiredMissing`) và số tài khoản sắp bị vô hiệu vì không dùng (`inactivitySoon`); lọc theo MFA bằng tham số `mfa`. Bản chiếu `ph12_iam` của tenant hiện hành; có thể chậm so với Keycloak, kèm tiêu đề `X-DH-Projection-Lag` (giây). `BLOCKED`, `LOCKED` xếp đầu khi không có `sort`.
 :::
 
 #### API-12-002 · Chi tiết người dùng
@@ -3096,6 +3098,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Không.
 :::
 
+#### API-12-113 · Danh sách realm của các tenant, lọc theo lệch cấu hình
+
+::: dac-ta
+**Mục đích.** Danh sách realm của các tenant, lọc theo lệch cấu hình.
+
+**Phương thức, đường dẫn.** `GET /realms`.
+
+**Quyền.** `PERM-12-realm-admin`.
+
+**FR hiện thực.** FR-12-042.
+
+**Tham số.** `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn); `driftStatus` (query, string, tùy chọn); `state` (query, RealmState, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RealmPage`; trường bắt buộc: `items`, `page`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-12-003, ERR-12-007, ERR-12-116 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Danh sách realm cho màn hình Realm của tenant; lọc `driftStatus=DRIFTED` để xem các realm lệch cấu hình so với mẫu. Phân trang chuẩn.
+:::
+
 ### Quyết định ủy quyền
 
 #### API-12-086 · Quyết định ủy quyền một yêu cầu
@@ -3508,6 +3534,30 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 **Ghi chú.** Sinh lại `data.dh.roles`, `assignments`… từ ma trận D02-08 và gán vai trò hiện tại.
 :::
 
+#### API-12-112 · Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu)
+
+::: dac-ta
+**Mục đích.** Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu).
+
+**Phương thức, đường dẫn.** `PUT /policies/{policyCode}/versions/{versionNo}`.
+
+**Quyền.** `PERM-12-policy-edit`.
+
+**FR hiện thực.** FR-12-052.
+
+**Tham số.** `policyCode` (path, string, bắt buộc); `versionNo` (path, integer, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `PolicyVersionCreate`; trường bắt buộc: `content`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PolicyVersion`; trường bắt buộc: `policyCode`, `versionNo`, `state`, `contentHash`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`; mã lỗi của thao tác: ERR-12-001, ERR-12-003, ERR-12-007, ERR-12-024, ERR-12-027, ERR-12-028, ERR-12-043, ERR-12-044, ERR-12-116, ERR-12-120 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tự lưu bản nháp: chỉ phiên bản `DRAFT` của chính người soạn, kèm `If-Match`; phiên bản đã gửi duyệt hoặc đã phát hành trả ERR-12-027. Mỗi lần ghi đè xóa kết quả kiểm thử và chạy khô đã có (gắn với `contentHash` cũ).
+:::
+
 ### Nhật ký, cảnh báo, báo cáo
 
 #### API-12-103 · Tra nhật ký quyết định ủy quyền
@@ -3555,7 +3605,7 @@ Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api
 
 **Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-12-001, ERR-12-007, ERR-12-116 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Không.
+**Ghi chú.** Mỗi lượt xem dữ liệu đã che được ghi vết sang PH-13 (FR-12-057); phản hồi liệt kê `maskedFields`.
 :::
 
 #### API-12-105 · Tra sự kiện xác thực và quản trị định danh
@@ -3688,7 +3738,7 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 
 | Tài liệu | Đề nghị |
 |---|---|
-| D00-04 §2, §3.2 | PH-12 "đủ tập api 0.1"; chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để cập nhật dải API-12 (001…111), EVT-12 (01…16), ERR-12 |
+| D00-04 §2, §3.2 | PH-12 "đủ tập api 0.1"; chạy `kiem_tra_ma.py --cap-nhat-so-tra-cuu` để cập nhật dải API-12 (001…113), EVT-12 (01…16), ERR-12 |
 | D02-03-PH12 (FRS) §9.4 | Tách phần ghi chú trong ngoặc khỏi cột đường dẫn: API-12-030 `POST /sod-exceptions/{exceptionId}:decide`; API-12-072…078 bỏ "(Keycloak)" khỏi đường dẫn và ghi vào cột quyền; ghi `X-DH-Applied-Version` và `X-DH-Node` ở API-12-079; ghi ERR-12-120 dùng cho xác thực bước lên của API quản trị, không chỉ của Keycloak |
 | D02-03-PH12 (FRS) §9.1 | ERR-12-035 có hai mã HTTP (`400` sai định dạng, `413` quá lớn): ghi cả hai ở cột HTTP; OpenAPI của API-12-010 khai báo cả hai phản hồi |
 | D02-03-PH12 (FRS) §4.5, §4.6 | Bổ sung bảng mức xác thực tối thiểu theo operation (Q12-59); OpenAPI dùng đúng các trạng thái của §4.3…4.7 (kể cả `CANCELLED`, `CHANGES_REQUESTED`, `DISCARDED`) |
@@ -3708,4 +3758,4 @@ Các việc dưới đây ở tài liệu dùng chung hoặc phân hệ khác do
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-API và K-TRINH-BAY |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: đồng bộ PH-01, PH-03, PH-20 (S03_REALM), tiêu đề X-DH-Grant-Id, facets, remainingSeconds, maskedFields; chốt câu hỏi mở đợt đồng bộ: Q413, Q445, Q446, Q412 |

@@ -759,7 +759,7 @@ Chi tiết thiết kế:
 ::: dac-ta
 **Mục đích.** Ghi mỗi lượt gọi ở mức siêu dữ liệu không chứa dữ liệu nhạy cảm, phát chỉ số và vết, và bảo đảm mọi lỗi do gateway sinh có một dạng thân thống nhất.
 
-**Lớp chính.** `dh-problem`, `plugins/dh/problem.lua`, `plugins/dh/metrics.lua`; plugin dựng sẵn `file-logger`, `prometheus`, `opentelemetry`.
+**Lớp chính.** `dh-problem`, `plugins/dh/problem.lua`, `plugins/dh/metrics.lua`; plugin dựng sẵn `file-logger`, `prometheus`, `opentelemetry`, `kafka-logger`.
 
 **Đơn vị chạy.** `apisix` (cả hai cửa); OTel Collector dạng DaemonSet.
 
@@ -767,7 +767,7 @@ Chi tiết thiết kế:
 
 **Giao diện vào.** Pha `header_filter`, `body_filter`, `log` của APISIX.
 
-**Phụ thuộc ra.** Đĩa cục bộ `emptyDir` (đệm nhật ký); OTel Collector; Prometheus; `kafka-logger` cho EVT-03-09.
+**Phụ thuộc ra.** Đĩa cục bộ `emptyDir` (đệm nhật ký); OTel Collector; Prometheus; `kafka-logger` cho EVT-03-09 và, đã chốt 27/11/2026, cho nhật ký truy cập của mọi route: ghi `{tenant}.obs.access.logged.v1` theo lược đồ `AccessLogged` của PH-13 (FR-13-006), chỉ siêu dữ liệu, không thân bản tin, không cắt `traceparent`.
 
 **Dữ liệu.** Tệp nhật ký xoay vòng `/var/log/dh/access.log` tối đa `gw.accessLog.bufferMiB`.
 
@@ -775,7 +775,7 @@ Chi tiết thiết kế:
 
 **Lỗi và xử lý.** Đệm đĩa đầy: bỏ bản ghi cũ nhất, `dh_gateway_accesslog_dropped_total`, cảnh báo Cao; không ảnh hưởng lượt gọi. Không định dạng được lỗi: trả thân tối giản `{"code":"ERR-03-129"}` kèm `X-Trace-Id`.
 
-**Quan sát.** `dh_gateway_accesslog_sent_total`, `dh_gateway_accesslog_dropped_total`, `dh_gateway_trace_invalid_total`, `dh_gateway_problem_total{code}`.
+**Quan sát.** `dh_gateway_accesslog_sent_total`, `dh_gateway_accesslog_dropped_total`, `dh_gateway_trace_invalid_total`, `dh_gateway_problem_total{code}`, `dh_connect_config_revision` (phiên bản cấu hình đang chạy, xuất cho PH-13; đã chốt 27/11/2026).
 :::
 
 Chi tiết thiết kế:
@@ -1017,7 +1017,7 @@ Khi `gw.snapshot.isolateBadRoute` bật, vi phạm mức `LỖI` chỉ gắn v�
 
 **FR hiện thực.** FR-03-041, 042, 044; BR-03-010, 016, 018.
 
-**Giao diện vào.** Ảnh chụp `BUILT` đã qua 4.9; API-03-060, 061, 062.
+**Giao diện vào.** Ảnh chụp `BUILT` đã qua 4.9; API-03-060, 061, 062, 098 (bỏ giữ sau quay lui, tách khỏi thao tác phát; đã chốt 27/11/2026).
 
 **Phụ thuộc ra.** OpenBao transit (ký); Garage (bucket `dh-platform-gateway`); Git cấu hình (JGit, khóa triển khai ở OpenBao); Kafka (outbox).
 
@@ -1107,7 +1107,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-03-018, 047; FR-03-004 (chặn IP tay đi đường bền), FR-03-026 (dựng lại khi Valkey về); BR-03-021, 025.
 
-**Giao diện vào.** API-03-053 (`gateway:revoke`), API-03-017…020 (`operate`).
+**Giao diện vào.** API-03-053 (`gateway:revoke`), API-03-017…020 (`operate`). Đã chốt 27/11/2026: đường đẩy này là đường nhanh; plugin `dh-authz` ở mỗi nút kéo thêm API-12-079 của PH-12 mỗi 10 giây kèm `X-DH-Applied-Version`, xử lý `blockAll`, làm đường bù khi mất đẩy, và dùng chung bộ fixture quyết định của PH-12.
 
 **Phụ thuộc ra.** Valkey; `pg-core`; `BuildCoordinator` (đường bền).
 
@@ -1175,7 +1175,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-03-005…008, 021…025, 056 (phần hạn mức); BR-03-006, 019.
 
-**Giao diện vào.** API-03-039…049 (WAF), 023…028 (hạn mức), 071…073 (yêu cầu thay đổi).
+**Giao diện vào.** API-03-039…049 (WAF), 097 (thử khô luật vá ảo, đã chốt 27/11/2026), 023…028 (hạn mức), 071…073 (yêu cầu thay đổi).
 
 **Phụ thuộc ra.** `pg-core`; Hộp việc chung (`TaskInboxApi`); PH-20 (trần hợp đồng); `BuildCoordinator`.
 
@@ -1249,7 +1249,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-03-045, 051, 053…059.
 
-**Giao diện vào.** API-03-056, 063, 064, 074…093.
+**Giao diện vào.** API-03-056, 063, 064, 074…093. Đã chốt 27/11/2026: API-03-074 (và API-03-039) dùng phân trang con trỏ `cursor`, `limit`, `approxTotal` vì đọc từ ClickHouse (Q03-56). Khi PH-18 chốt Q18-25, PH-03 thêm tuyến bóng (mẫu `tpl-migration-shadow`) và API đổi trọng số tuyến đồng bộ có xác nhận cho cắt chuyển, quay lui di trú; API nhập riêng ở đây (API-03-091…093) giữ nguyên, khi PH-18 chốt khung API nhập chung thì nhận thêm `X-Datahub-Migration: true` và khóa lũy đẳng `legacySystem:objectType:legacyKey`.
 
 **Phụ thuộc ra.** PH-13 (Mimir, ClickHouse, Alertmanager); `catalog.api` (API quan trọng); `pg-core`.
 
@@ -2097,4 +2097,4 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD và quy chuẩn trình bày: Tóm tắt cho hội đồng thẩm định, giới thiệu, vị trí kiến trúc (hai chặng, vùng mạng), cấu trúc mã nguồn (module `gateway`, plugin Lua, `dh-sync`), 16 thành phần với bảng đặc tả 10 mục, 11 biểu đồ tuần tự, 11 máy trạng thái, đa tenant, bảo mật theo SEC, thử lại và mở hay đóng, tham số và cờ, chỉ số và cảnh báo, ngân sách hiệu năng, kiểm thử, lộ trình kèm bảy điều cần xác minh, rủi ro, 8 câu hỏi mở Q03-20…27 và Đề nghị đồng bộ |
-| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: máy trạng thái ở CSDL (§8.1), GatewayApplyPort và PublishedConfigApi (§2.3) |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: máy trạng thái ở CSDL (§8.1), GatewayApplyPort và PublishedConfigApi (§2.3); chốt câu hỏi mở đợt đồng bộ: Q391 (kafka-logger, dh_connect_config_revision), Q413 (dh-authz), Q428, Q429, Q438, Q439, Q441 |

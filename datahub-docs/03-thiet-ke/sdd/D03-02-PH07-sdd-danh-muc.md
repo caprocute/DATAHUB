@@ -1870,9 +1870,9 @@ Mọi giá trị chuỗi khi xuất XLSX và CSV đi qua `FormulaInjectionSaniti
 Ứng dụng HTTT có scope `rdm.write` (hoặc người dùng có `PERM-07-update`) gửi tối đa 5.000 thao tác (`07.rdm.batch-max-ops`) vào bản nháp. Xử lý đồng bộ trong một giao dịch:
 
 1. Kiểm tra kích thước lô (ERR-07-026), `Idempotency-Key` bắt buộc với scope máy (§4.8.3).
-2. Lấy khóa tư vấn bản nháp; kiểm tra `If-Match` với `catalog_version.version` nếu có (ERR-07-018).
+2. Lấy khóa tư vấn bản nháp; kiểm tra `If-Match` với `catalog_version.version` nếu có (ERR-07-018). Mỗi thao tác có thể kèm `ifMatch` riêng (ETag của bản ghi, đã chốt 27/11/2026, Q07-72); lệch thì thao tác đó lỗi ERR-07-018.
 3. Kiểm tra từng thao tác tầng 1–3, rồi tầng 4–5 trên tập (nháp hợp với thao tác).
-4. Nếu có lỗi và `continueOnError = false`: hoàn tác, trả 422 ERR-07-009 với `errors[]` có `index` thao tác. Nếu `continueOnError = true`: ghi các thao tác hợp lệ, trả `207 Multi-Status` dạng JSON với kết quả từng thao tác.
+4. Nếu có lỗi và `atomic = true` (mặc định): hoàn tác, trả 422 ERR-07-009 với `errors[]` có `index` thao tác (riêng `ifMatch` lệch trả 412 ERR-07-018 kèm `results`). Nếu `atomic = false`: ghi các thao tác hợp lệ, trả `207 Multi-Status` dạng JSON với kết quả từng thao tác khi có thao tác `FAILED`, trả 200 khi mọi thao tác đạt.
 5. Ghi bằng `batchUpdate` qua `ItemWriter` (lô JDBC 500 câu), tăng `version` bản nháp, cập nhật `origin` thành `API` nếu bản nháp được tạo bởi API.
 
 #### 4.8.3. Idempotency-Key
@@ -3289,4 +3289,4 @@ FR-07-039 (đề xuất bổ sung lên NDXP, mức C) không thuộc MVP và đ�
 | 0.1 | 2026-11-22 | Nhóm phân hệ PH-07 | Bản đầu |
 | 0.2 | 2026-11-25 | Nhóm phân hệ PH-07 | Thống nhất với D03-05, D03-06-00 |
 | 0.3 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 10 mục cho 19 thành phần, bảng danh sách thành phần, thuật ngữ, cấu trúc tài liệu, chú thích bảng và hình |
-| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bộ đệm tham số 60 giây, type ERR-07-nnn, snapshotItems, NdxpCatalogClient theo API-14-079…083, audit qua OutboxRelay |
+| 0.4 | 2026-11-27 | Nhóm phân hệ PH-07 | Đồng bộ chéo cuối: bộ đệm tham số 60 giây, type ERR-07-nnn, snapshotItems, NdxpCatalogClient theo API-14-079…083, audit qua OutboxRelay; Chốt câu hỏi mở đợt đồng bộ: Q443 |

@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH01
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-01 Kết nạp hệ thống thông tin
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect, DBA, ATTT, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-01
@@ -1865,7 +1865,7 @@ Báo cáo đối soát nghiệm thu bước di trú của SDD §13.1 liệt kê:
 
 > **Câu hỏi mở Q01-54:** Sáp nhập tenant (D03-10 §5.4): chỉ mục duy nhất `(tenant_id, code)` và quy tắc mã bất biến (BR-01-018) xung đột khi hai tỉnh có cùng mã HTTT, còn D03-10 yêu cầu ghi `origin_tenant_id` cho mọi bản ghi được chuyển. Thiết kế hiện chỉ ghi `member_system.origin_tenant_id`; bảng con kế thừa qua khóa ngoại, `app_credential` được cấp mới. Cần PH-18 chốt cách xử lý xung đột mã (đề xuất hậu tố theo mã tenant nguồn, ví dụ `HT-TUPHAP-T68`) và có cần thêm `origin_tenant_id` cho `data_demand`, `scope_ceiling`, `review_step`, `state_history` để truy vết bằng chứng thẩm định không.
 
-Câu hỏi Q01-57 của tập API (bảng `background_job` cho tác vụ nền xuất tệp, API-01-088) cũng cần kết luận trước khi chốt số bảng của phân hệ; tập này chỉ ghi nhận ở đề nghị đồng bộ số 12 chứ không tạo câu hỏi mở thứ hai cho cùng việc.
+Q01-57 của tập API (bảng `background_job` cho tác vụ nền xuất tệp, API-01-088) đã chốt ngày 27/11/2026: ở MVP xuất tệp đồng bộ giới hạn 20.000 dòng nên số bảng giữ 26; bảng `background_job` lập theo mẫu `legacy_import_job` (mục 3.21) ở Đợt 2.
 
 ## Đề nghị đồng bộ
 
@@ -1897,3 +1897,4 @@ Các việc dưới đây thuộc tài liệu dùng chung hoặc phân hệ khá
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-CSDL và quy chuẩn trình bày: 26 bảng schema `ph01_onboarding`, ràng buộc bốn mắt và máy trạng thái ở CSDL, không lưu bí mật, RLS mẫu P và S, DDL chạy thử trên PostgreSQL 16.16 (207 khối kiểm cô lập, nghiệp vụ và 19 khối kiểm di trú đạt), ánh xạ ba nguồn dữ liệu hệ cũ, 5 câu hỏi mở Q01-50…54 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà soát chéo: sửa mã lỗi lũy đẳng (ERR-01-051, 054) ở mục 3.25 và DDL; ghi nhận thiếu bảng background_job cho API-01-088 ở đề nghị đồng bộ số 12 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q418 (Q01-57: xuất đồng bộ 20.000 dòng ở MVP, background_job ở Đợt 2) |

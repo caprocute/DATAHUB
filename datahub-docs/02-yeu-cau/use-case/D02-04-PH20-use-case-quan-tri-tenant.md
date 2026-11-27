@@ -352,7 +352,7 @@ Cột API gồm API của PH-20 (`API-20-nnn`) và API của phân hệ khác m�
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-Mọi use case truy vết tới REQ-20 (BRD). Quy trình BP-08 "Khởi tạo tenant tỉnh mới" có sẵn ở BRD; BP-12 "Sáp nhập tenant" và BP-13 "Phát hành sản phẩm" là đề nghị bổ sung của FRS (FRS mục 2.5), tài liệu này dùng tạm các mã đó. Cột LGC theo FRS mục 2.6 và 11.1.
+Mọi use case truy vết tới REQ-20 (BRD). Quy trình BP-08 "Khởi tạo tenant tỉnh mới" có sẵn ở BRD; BP-15 "Sáp nhập tenant" và BP-16 "Phát hành sản phẩm" là hai quy trình đã chốt ngày 27/11/2026 và được thêm vào D02-01 mục 6.2. Cột LGC theo FRS mục 2.6 và 11.1.
 
 | UC | REQ | BP | LGC |
 |---|---|---|---|
@@ -379,17 +379,17 @@ Mọi use case truy vết tới REQ-20 (BRD). Quy trình BP-08 "Khởi tạo ten
 | UC-20-21 | REQ-20 | — | — |
 | UC-20-22 | REQ-20 | — | — |
 | UC-20-23 | REQ-20 | — | — |
-| UC-20-24 | REQ-20 | BP-12 (đề nghị) | — |
-| UC-20-25 | REQ-20 | BP-12 (đề nghị) | — |
-| UC-20-26 | REQ-20 | BP-12 (đề nghị) | — |
-| UC-20-27 | REQ-20 | BP-12 (đề nghị) | — |
-| UC-20-28 | REQ-20 | BP-12 (đề nghị) | — |
-| UC-20-29 | REQ-20 | BP-12 (đề nghị) | — |
+| UC-20-24 | REQ-20 | BP-15 | — |
+| UC-20-25 | REQ-20 | BP-15 | — |
+| UC-20-26 | REQ-20 | BP-15 | — |
+| UC-20-27 | REQ-20 | BP-15 | — |
+| UC-20-28 | REQ-20 | BP-15 | — |
+| UC-20-29 | REQ-20 | BP-15 | — |
 | UC-20-30 | REQ-20 | BP-01 | LGC-IAM-002 (gián tiếp) |
 | UC-20-31 | REQ-20 | BP-03 | LGC-IAM-002 (gián tiếp) |
-| UC-20-32 | REQ-20 | BP-13 (đề nghị) | — |
-| UC-20-33 | REQ-20 | BP-13 (đề nghị) | — |
-| UC-20-34 | REQ-20 | BP-13 (đề nghị) | — |
+| UC-20-32 | REQ-20 | BP-16 | — |
+| UC-20-33 | REQ-20 | BP-16 | — |
+| UC-20-34 | REQ-20 | BP-16 | — |
 | UC-20-35 | REQ-20 | BP-07 | — |
 | UC-20-36 | REQ-20 | — | — |
 
@@ -510,7 +510,7 @@ Khai báo là bước ghi hồ sơ, chưa tạo tài nguyên thật. Wizard năm
 2. Hệ thống kiểm mã theo `^T\d{2}$`, chưa từng dùng kể cả tenant `DECOMMISSIONED`, `MERGED`; kiểm ĐVHC là cấp tỉnh còn hiệu lực và chưa có tenant.
 3. Hà chọn chế độ cách ly `SHARED`, hồ sơ quy mô `QM-VUA`, hồ sơ triển khai `HT-B` ở bước "Cách ly và quy mô".
 4. Hà chọn mẫu `tinh-chuan` phiên bản 3, xem phân hệ bật sẵn và hạn mức mặc định; bỏ chọn phân hệ không lõi nếu cần.
-5. Hà nhập tối thiểu đầu mối `TENANT_ADMIN` và `TECHNICAL` kèm thư công vụ.
+5. Hà nhập tối thiểu hai đầu mối `TENANT_ADMIN` (hai thư công vụ khác nhau) và một `TECHNICAL` kèm thư công vụ; mỗi tenant có ít nhất hai quản trị tỉnh (chủ đầu tư chốt 27/11/2026).
 6. Ở bước "Rà soát", hệ thống chạy kiểm tra sẵn sàng song song (mã trùng, ĐVHC, sức chứa nền tảng, tài nguyên cụm, mẫu, phân hệ đích), mỗi mục tối đa 10 giây, kết quả `PASS`, `WARN` hoặc `BLOCKER`.
 7. Hà bấm "Lưu khai báo"; hệ thống tạo tenant `PROVISIONING`, ghi lịch sử trạng thái và kiểm toán, trả `201` kèm `Location`.
 
@@ -559,7 +559,7 @@ Hồ sơ hành chính đổi theo thực tế (đổi tên theo quyết định,
 
 **Kích hoạt.** "Sửa hồ sơ" ở tab Tổng quan, hoặc "+ Đầu mối", "+ Hợp đồng", "Gia hạn" ở tab Hợp đồng và đầu mối của UI-20-03.
 
-**Đảm bảo tối thiểu.** `tenantCode`, `realm`, `kind` không đổi; luôn còn ít nhất một đầu mối `TENANT_ADMIN` và một `TECHNICAL` hoạt động; tên cũ vẫn truy được.
+**Đảm bảo tối thiểu.** `tenantCode`, `realm`, `kind` không đổi; luôn còn ít nhất hai đầu mối `TENANT_ADMIN` và một `TECHNICAL` hoạt động; tên cũ vẫn truy được.
 
 **Đảm bảo thành công.** Hồ sơ mới, `ETag` mới, phiên bản cấu hình mới (`tenant.yaml`) và kiểm toán trong chuỗi tenant.
 
@@ -794,7 +794,7 @@ Tenant chỉ `ACTIVE` khi chứng minh được dùng được và cách ly đú
 2. Ca `LOGIN_ADMIN`: lấy token quản trị tỉnh đầu tiên, kiểm claim `tenant = T68`. Ca `API_SAMPLE`: gọi `GET /api/tenant/v1/context` qua APISIX bằng host của tenant, kỳ vọng `200`.
 3. Ca `EVENT_SAMPLE`: phát và đọc lại một sự kiện trong 30 giây. Ca `CROSS_TENANT_LEAK`: token `T68` đọc tài nguyên cài sẵn của `T99`, kỳ vọng `404`.
 4. Cả bốn ca đạt: hệ thống lưu kết quả (EN-20-12), xóa tài khoản tạm, bước `S16` `SUCCEEDED`.
-5. Bước `S17`: hệ thống chuyển tenant `ACTIVE`, phát EVT-20-03 và EVT-20-04, gửi thư bàn giao mẫu `ph20-handover` tới đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`.
+5. Bước `S17`: hệ thống kiểm tenant có ít nhất hai tài khoản quản trị tỉnh hoạt động (thiếu: ERR-20-021), chuyển tenant `ACTIVE`, phát EVT-20-03 và EVT-20-04, gửi thư bàn giao mẫu `ph20-handover` tới đầu mối `TENANT_ADMIN`, `LEADER`, `TECHNICAL`.
 6. Hệ thống tính `provisionMinutes` và `leadTimeWorkingHours` (từ `declaredAt` tới `activatedAt` theo giờ làm việc), gọi API-16-030 với `idempotencyRef = {runId}`.
 7. Tuấn xem thời gian khởi tạo theo tenant, theo bước (trung vị, p95) ở UI-20-20.
 
@@ -1712,7 +1712,7 @@ Khi hai tỉnh sáp nhập theo quyết định hành chính, kế hoạch ghi c
 
 **FR hiện thực.** FR-20-045 (phần lập), FR-20-046.
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`; nguồn và đích `ACTIVE`, đều `PROVINCE`, không thuộc kế hoạch khác chưa kết thúc.
 
@@ -1759,7 +1759,7 @@ Trước khi duyệt phải biết sẽ chuyển bao nhiêu bản ghi, bao nhiê
 
 **FR hiện thực.** FR-20-047, FR-20-045 (phần gửi duyệt, duyệt).
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`, Khoa có `PERM-20-approve`; kế hoạch `DRAFT`, không còn dòng ánh xạ bắt buộc chưa quyết.
 
@@ -1828,7 +1828,7 @@ Dữ liệu tỉnh nguồn được chuyển sang tỉnh đích từng phân h�
 
 **FR hiện thực.** FR-20-048.
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`; kế hoạch `APPROVED`, đã tới `effectiveDate` (hoặc chạy sớm có lý do); chạy thử còn hợp lệ.
 
@@ -1892,7 +1892,7 @@ Hai tỉnh có cùng mã khác nghĩa (danh mục địa phương, mã HTTT, tê
 
 **FR hiện thực.** FR-20-049.
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`; kế hoạch `CONFLICT_REVIEW` hoặc `TRANSFERRING` có xung đột mở.
 
@@ -1936,7 +1936,7 @@ Người dùng và HTTT của tỉnh nguồn được tạo lại ở tỉnh đ�
 
 **FR hiện thực.** FR-20-050, FR-20-051.
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`; kế hoạch `IDENTITY_TRANSFER`; mọi phân hệ `SUCCEEDED`; không xung đột mở; cutover nằm trong cửa sổ bảo trì của hai tỉnh.
 
@@ -1955,7 +1955,7 @@ Người dùng và HTTT của tỉnh nguồn được tạo lại ở tỉnh đ�
 6. Hệ thống theo dõi 60 phút đầu tỷ lệ lỗi lượt gọi chuyển tiếp; vượt 1% thì cảnh báo Hà.
 
 **Luồng thay thế.**
-- **3a. Tổ chức kế thừa.** PH-01 nhận EVT-20-13 và tự tạo đề nghị đổi chủ quản HTTT chờ TA đích duyệt hàng loạt.
+- **3a. Tổ chức kế thừa.** PH-01 nhận EVT-20-13 và tự tạo đề nghị đổi chủ quản HTTT chờ TA đích duyệt hàng loạt (FR-01-054, UC-01-23; chủ đầu tư chốt 27/11/2026).
 - **5a. Không nhận EVT-03-10 sau 15 phút.** Cảnh báo PO.
 
 **Luồng ngoại lệ.**
@@ -2004,7 +2004,7 @@ Khép lại sáp nhập: tắt chuyển tiếp, thu hồi thông tin xác thực
 
 **FR hiện thực.** FR-20-052.
 
-**Truy vết.** REQ-20; quy trình BP-12 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-15; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-merge`; kế hoạch `TRANSITION`.
 
@@ -2148,7 +2148,7 @@ Có một danh mục phiên bản duy nhất, mỗi bản liệt kê thành ph�
 
 **FR hiện thực.** FR-20-059, FR-20-060.
 
-**Truy vết.** REQ-20; quy trình BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-16; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Có `PERM-20-release`; ảnh đã qua CI, có chữ ký cosign; `STABLE` cần phiên bản đã `PREVIEW`; đổi kênh tenant cần không có kế hoạch nâng cấp đang chạy.
 
@@ -2196,7 +2196,7 @@ Hơn ba mươi tỉnh không nâng cùng lúc: sóng 1 là kênh `PREVIEW`, són
 
 **FR hiện thực.** FR-20-061, FR-20-063.
 
-**Truy vết.** REQ-20; quy trình BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-16; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Hà có `PERM-20-release`; phiên bản `STABLE` (hoặc `PREVIEW` với tenant kênh `PREVIEW`); tenant đích chạy bản không thấp hơn `minFromVersion`.
 
@@ -2260,7 +2260,7 @@ Mỗi tenant nâng cấp có kiểm tra sau nâng cấp; sóng tự dừng khi t
 
 **FR hiện thực.** FR-20-062.
 
-**Truy vết.** REQ-20; quy trình BP-13 (đề nghị); hệ cũ: không có (năng lực mới).
+**Truy vết.** REQ-20; quy trình BP-16; hệ cũ: không có (năng lực mới).
 
 **Tiền điều kiện.** Kế hoạch `SCHEDULED` hoặc `RUNNING`; PO có `PERM-20-release` chỉ để theo dõi và dừng sóng; tiếp tục, quay lui, thử lại, hủy cần PA.
 
@@ -2459,7 +2459,7 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 | A-04 | FRS FR-20-012, tiền điều kiện | Ca `CROSS_TENANT_LEAK` cần tenant kiểm thử `T99` đang `ACTIVE` ở môi trường; nên ghi tiền điều kiện này và hành xử khi `T99` không có (ca `SKIPPED` kèm cảnh báo hay chặn kích hoạt) | FRS PH-20 |
 | A-05 | FRS FR-20-044, §9.4 | Thông báo đổi trạng thái chỉ có API-20-085 xem kết quả gửi; chưa có hành động "gửi lại thông báo" (UC-20-23 chỉ xem), trong khi FR-20-013 có "Gửi lại thư bàn giao" | FRS PH-20 |
 | A-06 | D02-08 | Thêm mười quyền `PERM-20-provision`, `lifecycle`, `approve`, `quota`, `merge`, `release`, `settings`, `org`, `org-read`, `usage-read` (FRS Phụ lục B) để UC dẫn đúng quyền | Luồng chính D02-08 |
-| A-07 | D02-01 BRD, danh mục BP | Bổ sung BP-12 "Sáp nhập tenant khi sắp xếp ĐVHC" và BP-13 "Phát hành và nâng cấp sản phẩm cho các tỉnh"; tập này dùng tạm hai mã ở bảng 5.3 | Luồng chính D02-01 |
+| A-07 | D02-01 BRD, danh mục BP | Bổ sung BP-15 "Sáp nhập tenant khi sắp xếp ĐVHC" và BP-16 "Phát hành và nâng cấp sản phẩm cho các tỉnh"; tập này dùng tạm hai mã ở bảng 5.3 | Luồng chính D02-01 |
 | A-08 | PH-18 FRS, hợp đồng `merge-transfers` | UC-20-25, 26 giả định `POST /api/ops/v1/merge-transfers` có `dryRun`, báo tiến độ về API-20-167 và lượt bù (delta) cuối; PH-18 cần xác nhận thân yêu cầu, thứ tự phụ thuộc phân hệ và idempotency `{mergePlanId}:{module}:transfer` (Q20-15 của FRS) | PH-18 |
 | A-09 | D03-06-00, menu | Thêm mục menu `/quan-tri/to-chuc`, `/nen-tang/sap-nhap`, `/nen-tang/phat-hanh`, `/nen-tang/tong-quan`, `/nen-tang/su-dung`, `/nen-tang/mau-khoi-tao` (FRS mục 10 và brief PH-20) để UC-20-30, 24…29, 32…35, 04 có lối vào | Luồng chính D03-06-00 |
 | A-10 | D05-02-PH20 | Mã `TS-20-nn` ở mục "Màn hình, API" của từng UC là chỗ giữ theo số UC; kiểm thử viên xác nhận khi viết D05-02-PH20 | D05-02-PH20 |
@@ -2472,6 +2472,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 |---|---|---|---|
 | 0.1 | 2026-11-27 | Claude | Bản đầu: 36 use case phủ 70 FR (51 M, 19 S), 12 sơ đồ trình tự, sáu luồng phụ, câu hỏi mở Q20-45…49, 10 đề nghị đồng bộ |
 | 0.2 | 2026-11-27 | Claude | Đồng bộ với FRS 0.2: tên ca kiểm tra khói theo OpenAPI, cửa sổ bảo trì 2 đến 6 giờ, 29 tham số, `RESOLVED`, mã KPI-12 `thoi-gian-khoi-tao-tenant`, cột FR của UI-20-20 (đóng A-01) |
-| 0.3 | 2026-11-27 | Claude | Đồng bộ chéo cuối: dẫn API-18-150, mã kế hoạch `SN-yyyy-nnn` |
+| 0.3 | 2026-11-27 | Claude | Đồng bộ chéo cuối: dẫn API-18-150, mã kế hoạch `SN-yyyy-nnn`; chốt Q407: mã BP-15, BP-16 cho sáp nhập tenant và phát hành sản phẩm; chốt câu hỏi mở đợt đồng bộ: Q401, Q403 |
 
 : Lịch sử phiên bản

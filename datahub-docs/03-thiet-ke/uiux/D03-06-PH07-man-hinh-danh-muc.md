@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH07
 ten: Thiết kế giao diện màn hình phân hệ Danh mục dùng chung
-phien_ban: 0.4
-ngay: 2026-11-26
+phien_ban: 0.5
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện, Thiết kế UX/UI, Phân tích nghiệp vụ, Kiểm thử, Kiến trúc sư
 phan_he: PH-07
@@ -1141,7 +1141,7 @@ Lưu xảy ra khi: người dùng rời một dòng đã sửa và dòng hợp l
 
 Xung đột ETag xử lý theo dòng: dòng nhận 412 (ERR-07-018) chuyển `conflict`, ô có ký hiệu ⚠ ở cột trạng thái, và thanh thông báo trên lưới ghi "{n} dòng bị xung đột do người khác vừa sửa. [Xem và xử lý]". Bấm xử lý mở `CMP-DiffViewer` cho từng dòng lần lượt, với ba cột "Trường", "Của bạn", "Hiện tại" và ba lựa chọn "Giữ của tôi (ghi đè)", "Lấy bản hiện tại", "Gộp" (gộp chỉ khả dụng khi hai bên sửa các trường khác nhau: lấy trường của bạn chồng lên bản hiện tại rồi lưu với ETag mới). Một xung đột không chặn việc lưu các dòng khác.
 
-> **Câu hỏi mở Q07-72:** Khi giao diện dùng API-07-031 để lưu lô, mỗi thao tác trong lô có mang được ETag riêng (`ifMatch` trong phần tử) và lô có trả kết quả từng phần (thành công một phần) không? Nếu lô là "tất cả hoặc không", giao diện sẽ chỉ dùng lô khi không có dòng sửa (chỉ thêm mới) và lưu dòng sửa bằng API-07-028. Câu hỏi này cũng được ghi ở Phụ lục B (B-09).
+> **Q07-72 (đã chốt 27/11/2026):** API-07-031 nhận `ifMatch` riêng cho từng phần tử của lô và, khi `atomic = false`, trả `207` kèm kết quả từng phần; phần tử có `ifMatch` lệch báo ERR-07-018 và giao diện đưa dòng đó vào luồng xung đột ETag ở trên. Giao diện vì vậy dùng lô cho cả dòng thêm mới lẫn dòng sửa (Phụ lục B, B-09). *Câu hỏi gốc:* Khi giao diện dùng API-07-031 để lưu lô, mỗi thao tác trong lô có mang được ETag riêng (`ifMatch` trong phần tử) và lô có trả kết quả từng phần (thành công một phần) không?
 
 ### 11.8. Ngừng dùng bản ghi và mã thay thế
 
@@ -1167,7 +1167,7 @@ Khi để trống mã thay thế, hộp hiện cảnh báo vàng "Bản ghi ng�
 | Lưu dòng, Lưu tất cả | Thanh công cụ, biểu mẫu | Có dòng `dirty`/`new` | API-07-027, 028, 031 | Không | "Đã lưu {n} bản ghi." hoặc "Đã lưu {a} bản ghi, {b} bản ghi còn lỗi." |
 | Hủy thay đổi dòng | Menu "⋯" dòng | Dòng `dirty` | — | Không | Dòng về bản gốc |
 | Ngừng dùng | Menu "⋯", thanh hàng loạt | Bản ghi `ACTIVE` | API-07-029 / 031 | Hộp mục 11.8 | "Đã ngừng dùng bản ghi "{mã}"." |
-| Khôi phục | Menu "⋯" | Bản ghi `DEPRECATED` trong nháp này | API-07-028 `status=ACTIVE` (Phụ lục B, B-08) | Không | "Đã khôi phục bản ghi." |
+| Khôi phục | Menu "⋯" | Bản ghi `DEPRECATED` trong nháp này | API-07-077 `:restore` (Phụ lục B, B-08) | Hộp nhập lý do 10…1.000 ký tự, tùy chọn "Khôi phục cả bản ghi con" (`cascade`) | "Đã khôi phục bản ghi." |
 | Xóa | Menu "⋯", thanh hàng loạt | Bản ghi mới thêm trong nháp (`allowedActions` có `DELETE`, hoặc chưa từng phát hành) | API-07-030 | `CMP-ConfirmDialog`: "Xóa bản ghi "{mã}"? Bản ghi chưa từng phát hành nên sẽ bị xóa khỏi bản nháp." | "Đã xóa bản ghi." ERR-07-013 nếu đã phát hành |
 | Đổi mã cha bằng kéo thả | Cây | Danh mục phân cấp | API-07-028 `parentCode` | "Chuyển "{mã}" và {n} bản ghi con sang dưới "{mã cha mới}"? Đây là thay đổi phá vỡ với bản ghi đã phát hành." | Cây cập nhật |
 | Sửa hiệu lực dự kiến, căn cứ, ghi chú | `Popover` trên dải bản nháp | `DRAFT` | API-07-014 với `If-Match` của phiên bản | Không | "Đã lưu thông tin phiên bản." |
@@ -2115,8 +2115,8 @@ Bảng dưới đây gom các đề nghị API đã nêu rải rác trong tài l
 | B-05 | Số chữ số thập phân của thuộc tính `DECIMAL`; biểu diễn giá trị thập phân là chuỗi | UI-07-04, 05 | Chưa có, đề nghị thêm `precision` vào `AttributeDef` |
 | B-06 | `personalDataHints` trong API-07-048 (danh sách từ khóa gợi ý dữ liệu cá nhân) | UI-07-04 | Chưa có; tạm đọc tham số `07.rdm.pii-keywords` qua PH-18 |
 | B-07 | `allowedActions`, `disabledReasons` trên `Catalog`, `CatalogVersion`, `ImportJob`, `SyncRun` (Q07-66) | Mọi màn | Chưa có, đề nghị bổ sung; là đề nghị quan trọng nhất của giao diện |
-| B-08 | Khôi phục bản ghi `DEPRECATED` trong bản nháp bằng API-07-028 `status = ACTIVE` | UI-07-05 | Cần xác nhận hợp đồng cho phép đổi trạng thái qua PATCH |
-| B-09 | API-07-031 nhận `ifMatch` riêng cho từng phần tử lô và trả kết quả từng phần (Q07-72) | UI-07-05 | Chưa có; đến khi có, giao diện chỉ dùng lô cho bản ghi thêm mới |
+| B-08 | Khôi phục bản ghi `DEPRECATED` trong bản nháp bằng thao tác riêng `:restore` (API-07-077), không đổi `status` qua API-07-028 vì `ItemUpdateRequest` không có `status` | UI-07-05 | Đã chốt 27/11/2026 và đã thêm vào `openapi-rdm.yaml` |
+| B-09 | API-07-031 nhận `ifMatch` riêng cho từng phần tử lô và trả `207` kèm kết quả từng phần khi `atomic = false` (Q07-72) | UI-07-05 | Đã chốt 27/11/2026 và đã thêm vào `openapi-rdm.yaml`; giao diện dùng lô cho cả dòng sửa |
 
 : Phụ lục B. Đề nghị bổ sung API cho giao diện
 
@@ -2129,5 +2129,6 @@ Luồng API xử lý Phụ lục B trong một lần sửa `openapi-rdm.yaml`; k
 | 0.1 | 2026-11-25 | Bản đầu: 13 màn UI-07-01…13 |
 | 0.3 | 2026-11-26 | Đối chiếu D03-05-01…04 và D03-06-00, dùng tên token và thành phần chuẩn |
 | 0.4 | 2026-11-26 | Nâng theo chuẩn kết hợp: khối đặc tả đầu mỗi màn, ảnh hi-fi ngay dưới khối, mục người đọc, chú thích bảng và hình |
+| 0.5 | 2026-11-27 | Chốt câu hỏi mở đợt đồng bộ: Q442, Q443 |
 
 : Lịch sử phiên bản

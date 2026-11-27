@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH03
 ten: Đặc tả use case phân hệ PH-03 Cổng API
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-connect và gateway, cán bộ ATTT, kiểm thử viên
 phan_he: PH-03
@@ -1548,7 +1548,7 @@ Chương này đặc tả 31 use case theo sáu nhóm: lượt gọi qua gateway
 
 **Truy vết.** REQ-03; quy trình Công bố API (PH-02); LGC-APIM-015; SEC-26, SEC-42.
 
-**Tiền điều kiện.** Bản phát hành nền tảng mang danh mục sáu mẫu đã ký (`tpl-api-oauth2`, `tpl-api-mtls`, `tpl-api-open-data`, `tpl-ui-bff`, `tpl-callback-ext`, `tpl-websocket`); Lan có `PERM-03-admin`; có ảnh chụp đang chạy và gói chính sách OPA hiện hành.
+**Tiền điều kiện.** Bản phát hành nền tảng mang danh mục mười một mẫu đã ký (`tpl-api-oauth2`, `tpl-api-mtls`, `tpl-api-open-data`, `tpl-ui-bff`, `tpl-callback-ext`, `tpl-websocket`, `tpl-sandbox-static`, `tpl-ai-egress`, `tpl-platform-int`, `tpl-inbound-ndxp`, `tpl-migration-shadow`); Lan có `PERM-03-admin`; có ảnh chụp đang chạy và gói chính sách OPA hiện hành.
 
 **Kích hoạt.** Lan mở UI-03-13; sau đó mở UI-03-14 và bấm "Chạy thử".
 
@@ -1558,7 +1558,7 @@ Chương này đặc tả 31 use case theo sáu nhóm: lượt gọi qua gateway
 
 **Luồng chính.**
 
-1. Lan mở UI-03-13 thấy sáu mẫu kèm danh sách plugin có thứ tự, tham số mặc định và miền cho phép chỉnh (FR-03-048).
+1. Lan mở UI-03-13 thấy mười một mẫu kèm danh sách plugin có thứ tự, tham số mặc định và miền cho phép chỉnh (FR-03-048).
 2. Lan tắt mẫu `tpl-websocket` cho tenant vì tỉnh chưa có API kết nối dài; hệ thống kiểm tra chưa route nào dùng mẫu này rồi lưu và ghi kiểm toán.
 3. Khi PH-02 soạn gói cho API mới, PH-02 chọn mẫu `tpl-api-oauth2` và chỉnh tham số trong miền; tham số ngoài miền bị từ chối ở kiểm tra cấu hình (UC-03-19).
 4. Lan mở UI-03-14, nhập `host` `api.t68.datahub.gov.vn`, `method` `GET`, `path` `/api/hotich/v1/ho-tich/123`, `consumerCode` `ht-qlvb`, `claims` `{"scope":"hotich.read"}` (FR-03-057).
@@ -2073,4 +2073,5 @@ Tập này không sửa tài liệu dùng chung; các việc dưới đây để
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 31 use case (27 M, 4 S) mỗi use case một khối 15 mục, phủ đủ 59 FR của D02-03-PH03; 4 sơ đồ use case tổng; ba bảng truy vết (FR, màn hình và API, REQ, quy trình và hệ cũ); 5 luồng phụ dùng chung LP-03-01…05; bảng độ phủ FR; 5 câu hỏi mở Q03-45…49 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q394, Q398, Q414, Q416, Q429 (danh mục mười một mẫu chính sách) |
 

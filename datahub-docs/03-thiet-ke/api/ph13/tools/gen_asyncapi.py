@@ -78,7 +78,7 @@ EV = [
   ("alertFired", "EVT-13-01", "{tenant}.obs.alert.fired.v1", "AlertFired", "Cảnh báo sang `FIRING` (FR-13-044).", 7, 3, "`alertId`", "PH-18, trung tâm thông báo"),
   ("alertResolved", "EVT-13-02", "{tenant}.obs.alert.resolved.v1", "AlertResolved", "Cảnh báo sang `RESOLVED`, tự động hoặc thủ công (FR-13-044, 047).", 7, 3, "`alertId`", "PH-18, trung tâm thông báo"),
   ("alertEscalated", "EVT-13-03", "{tenant}.obs.alert.escalated.v1", "AlertEscalated", "Cảnh báo leo thang lên cấp mới hoặc hết cấp (FR-13-046).", 7, 3, "`alertId`", "PH-18"),
-  ("securityAlertRaised", "EVT-13-04", "{tenant}.obs.security-alert.raised.v1", "SecurityAlertRaised", "Cảnh báo an ninh phát hiện, hoặc đề xuất tạm ngừng HTTT (FR-13-052, 053).", 30, 3, "`alertId`", "PH-01 (đề xuất), PH-18, bộ xuất SIEM"),
+  ("securityAlertRaised", "EVT-13-04", "{tenant}.obs.security-alert.raised.v1", "SecurityAlertRaised", "Cảnh báo an ninh phát hiện (FR-13-052); đề xuất tạm ngừng HTTT đi bằng API-01-089 của PH-01, không qua topic này (FR-13-053).", 30, 3, "`alertId`", "PH-18, bộ xuất SIEM"),
   ("chainBroken", "EVT-13-05", "{tenant}.obs.audit.chain-broken.v1", "ChainBroken", "Phát hiện đứt chuỗi kiểm toán hoặc neo không khớp (FR-13-015).", 30, 3, "`tenantId`", "PH-18, bộ xuất SIEM"),
   ("anchorCreated", "EVT-13-06", "{tenant}.obs.audit.anchor-created.v1", "AnchorCreated", "Neo băm mới được ký (FR-13-012).", 7, 3, "`anchorId`", "Bộ xuất SIEM"),
   ("verificationCompleted", "EVT-13-07", "{tenant}.obs.audit.verification-completed.v1", "VerificationCompleted", "Kiểm tra toàn vẹn xong (FR-13-014).", 7, 3, "`verificationId`", "PH-18, UI-13-14"),

@@ -82,7 +82,7 @@ channels:
   securityAlertRaised:
     address: '{tenant}.obs.security-alert.raised.v1'
     title: EVT-13-04
-    description: Cảnh báo an ninh phát hiện, hoặc đề xuất tạm ngừng HTTT (FR-13-052, 053).
+    description: Cảnh báo an ninh phát hiện (FR-13-052); đề xuất tạm ngừng HTTT đi bằng API-01-089 của PH-01, không qua topic này (FR-13-053).
     messages:
       securityAlertRaised:
         $ref: '#/components/messages/securityAlertRaised'
@@ -374,7 +374,7 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/securityAlertRaised'
-    title: PH-01 (đề xuất), PH-18, bộ xuất SIEM nhận
+    title: PH-18, bộ xuất SIEM nhận
   sendChainBroken:
     action: send
     channel:
@@ -600,7 +600,7 @@ components:
     securityAlertRaised:
       name: securityAlertRaised
       title: EVT-13-04
-      summary: Cảnh báo an ninh phát hiện, hoặc đề xuất tạm ngừng HTTT (FR-13-052, 053).
+      summary: Cảnh báo an ninh phát hiện (FR-13-052); đề xuất tạm ngừng HTTT đi bằng API-01-089 của PH-01, không qua topic này (FR-13-053).
       payload:
         $ref: '#/components/schemas/SecurityAlertRaised'
       headers: *id001

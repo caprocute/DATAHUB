@@ -167,11 +167,11 @@ COMMENT ON COLUMN ph02_catalog.grant_job.generation IS 'Số lần cấp lại; 
 CREATE TABLE ph02_catalog.review_request (
   id               uuid          NOT NULL,
   tenant_id        varchar(16)   NOT NULL,
-  kind             varchar(14)   NOT NULL,
+  kind             varchar(20)   NOT NULL,
   subject_kind     varchar(12)   NOT NULL,
   subject_id       uuid          NOT NULL,
   api_version_id   uuid,
-  status           varchar(9)    NOT NULL DEFAULT 'OPEN',
+  status           varchar(9)    NOT NULL DEFAULT 'PENDING',
   requested_by     varchar(64)   NOT NULL,
   requested_at     timestamptz   NOT NULL DEFAULT now(),
   required_approvals smallint    NOT NULL DEFAULT 1,
@@ -191,29 +191,29 @@ CREATE TABLE ph02_catalog.review_request (
   CONSTRAINT uq_review_request_requester UNIQUE (id, requested_by, tenant_id),
   CONSTRAINT fk_review_request_version FOREIGN KEY (api_version_id, tenant_id) REFERENCES ph02_catalog.api_version (id, tenant_id),
   CONSTRAINT ck_review_request_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
-  CONSTRAINT ck_review_request_kind CHECK (kind IN ('PUBLISH', 'DEPRECATE', 'RETIRE', 'PLAN_PUBLISH', 'PLAN_DEPRECATE', 'VISIBILITY', 'SUBSCRIBE')),
+  CONSTRAINT ck_review_request_kind CHECK (kind IN ('VERSION_PUBLISH', 'VERSION_DEPRECATE', 'VERSION_RETIRE', 'PLAN_PUBLISH', 'PLAN_DEPRECATE', 'PLAN_CLOSE', 'BACKEND_CHANGE', 'VISIBILITY_RAISE', 'SUBSCRIPTION', 'SUBSCRIPTION_RENEW')),
   CONSTRAINT ck_review_request_subject CHECK (
-    (kind IN ('PUBLISH', 'DEPRECATE', 'RETIRE') AND subject_kind = 'API_VERSION')
-    OR (kind IN ('PLAN_PUBLISH', 'PLAN_DEPRECATE') AND subject_kind = 'PLAN')
-    OR (kind = 'SUBSCRIBE' AND subject_kind = 'SUBSCRIPTION')
-    OR (kind = 'VISIBILITY' AND subject_kind = 'API')),
-  CONSTRAINT ck_review_request_version CHECK (kind = 'VISIBILITY' OR api_version_id IS NOT NULL),
-  CONSTRAINT ck_review_request_status CHECK (status IN ('OPEN', 'APPROVED', 'REJECTED', 'WITHDRAWN')),
+    (kind IN ('VERSION_PUBLISH', 'VERSION_DEPRECATE', 'VERSION_RETIRE', 'BACKEND_CHANGE') AND subject_kind = 'API_VERSION')
+    OR (kind IN ('PLAN_PUBLISH', 'PLAN_DEPRECATE', 'PLAN_CLOSE') AND subject_kind = 'PLAN')
+    OR (kind IN ('SUBSCRIPTION', 'SUBSCRIPTION_RENEW') AND subject_kind = 'SUBSCRIPTION')
+    OR (kind = 'VISIBILITY_RAISE' AND subject_kind = 'API')),
+  CONSTRAINT ck_review_request_version CHECK (kind = 'VISIBILITY_RAISE' OR api_version_id IS NOT NULL),
+  CONSTRAINT ck_review_request_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN')),
   CONSTRAINT ck_review_request_approvals CHECK (required_approvals IN (1, 2)),
-  CONSTRAINT ck_review_request_decided CHECK ((status = 'OPEN') = (decided_at IS NULL)),
+  CONSTRAINT ck_review_request_decided CHECK ((status = 'PENDING') = (decided_at IS NULL)),
   CONSTRAINT ck_review_request_payload CHECK (jsonb_typeof(payload) = 'object'),
   CONSTRAINT ck_review_request_spec CHECK (spec_sha256 IS NULL OR spec_sha256 ~ '^[0-9a-f]{64}$')
 );
-CREATE UNIQUE INDEX uq_review_request_one_open ON ph02_catalog.review_request (tenant_id, subject_kind, subject_id) WHERE status = 'OPEN';
-CREATE INDEX ix_review_request_inbox ON ph02_catalog.review_request (tenant_id, kind, requested_at) WHERE status = 'OPEN';
-CREATE INDEX ix_review_request_overdue ON ph02_catalog.review_request (due_at) WHERE status = 'OPEN' AND overdue_notified_at IS NULL;
+CREATE UNIQUE INDEX uq_review_request_one_open ON ph02_catalog.review_request (tenant_id, subject_kind, subject_id) WHERE status = 'PENDING';
+CREATE INDEX ix_review_request_inbox ON ph02_catalog.review_request (tenant_id, kind, requested_at) WHERE status = 'PENDING';
+CREATE INDEX ix_review_request_overdue ON ph02_catalog.review_request (due_at) WHERE status = 'PENDING' AND overdue_notified_at IS NULL;
 CREATE INDEX ix_review_request_version ON ph02_catalog.review_request (tenant_id, api_version_id);
 CREATE TRIGGER tg_review_request_touch BEFORE UPDATE ON ph02_catalog.review_request FOR EACH ROW EXECUTE FUNCTION ph02_catalog.tg_touch();
 CALL ph02_catalog.p_enable_rls('ph02_catalog.review_request', 'P');
-COMMENT ON TABLE ph02_catalog.review_request IS 'EN-02-09 Yêu cầu duyệt: công bố, ngừng khuyến nghị, ngừng hẳn, công bố và ngừng gói, nâng mức hiển thị, đăng ký sử dụng (FR-02-030, 034, 035, 038, 039, 041, 047). Một yêu cầu OPEN mỗi đối tượng (uq_review_request_one_open). Chuyển sang APPROVED chỉ khi đủ chữ ký (tg_review_request_approve_gate): API SENSITIVE cần hai người CA và TA khác nhau (BR-02-008).';
+COMMENT ON TABLE ph02_catalog.review_request IS 'EN-02-09 Yêu cầu duyệt: công bố, ngừng khuyến nghị, ngừng hẳn, công bố, ngừng và đóng gói, đổi backend, nâng mức hiển thị, đăng ký và gia hạn đăng ký (FR-02-030, 034, 035, 038, 039, 041, 047). Một yêu cầu PENDING mỗi đối tượng (uq_review_request_one_open). Chuyển sang APPROVED chỉ khi đủ chữ ký (tg_review_request_approve_gate): API SENSITIVE cần hai người CA và TA khác nhau (BR-02-008).';
 COMMENT ON COLUMN ph02_catalog.review_request.required_approvals IS '1, hoặc 2 với API SENSITIVE (xác nhận của CA và TA là hai người khác nhau).';
 COMMENT ON COLUMN ph02_catalog.review_request.spec_sha256 IS 'Băm đặc tả lúc gửi duyệt; lệch lúc duyệt thì đưa về DRAFT (ERR-02-015).';
-COMMENT ON COLUMN ph02_catalog.review_request.payload IS 'Tham số của yêu cầu: sunsetAt, successorVersionId, urgentReason (DEPRECATE); visibility đích (VISIBILITY).';
+COMMENT ON COLUMN ph02_catalog.review_request.payload IS 'Tham số của yêu cầu: sunsetAt, successorVersionId, urgentReason (VERSION_DEPRECATE); visibility đích (VISIBILITY_RAISE).';
 -- @rollback DROP TABLE IF EXISTS ph02_catalog.review_request CASCADE;
 
 -- @changeset ph02-0350-version-contributor
@@ -279,13 +279,13 @@ BEGIN
   IF NOT FOUND THEN
     RETURN NEW;  -- khóa ngoại báo lỗi
   END IF;
-  IF rq.status <> 'OPEN' THEN
-    RAISE EXCEPTION 'Yêu cầu duyệt % không còn OPEN', rq.id USING ERRCODE = '55000';
+  IF rq.status <> 'PENDING' THEN
+    RAISE EXCEPTION 'Yêu cầu duyệt % không còn PENDING', rq.id USING ERRCODE = '55000';
   END IF;
-  IF rq.kind <> 'SUBSCRIBE' AND NEW.decider_role = 'SV' THEN
+  IF rq.kind NOT IN ('SUBSCRIPTION', 'SUBSCRIPTION_RENEW') AND NEW.decider_role = 'SV' THEN
     RAISE EXCEPTION 'SV không giữ vai trò duyệt công bố hoặc vòng đời (BR-02-008, ERR-02-013)' USING ERRCODE = '23514';
   END IF;
-  IF rq.kind IN ('PUBLISH', 'DEPRECATE', 'RETIRE', 'PLAN_PUBLISH', 'PLAN_DEPRECATE') AND EXISTS (
+  IF rq.kind IN ('VERSION_PUBLISH', 'VERSION_DEPRECATE', 'VERSION_RETIRE', 'PLAN_PUBLISH', 'PLAN_DEPRECATE', 'PLAN_CLOSE') AND EXISTS (
        SELECT 1 FROM ph02_catalog.version_contributor c
         WHERE c.api_version_id = rq.api_version_id AND c.tenant_id = NEW.tenant_id
           AND c.contributor_role IN ('SPEC_EDITOR', 'PLAN_EDITOR', 'SUBMITTER')
@@ -318,7 +318,7 @@ BEGIN
       RAISE EXCEPTION 'API SENSITIVE cần cả CA và TA là hai người khác nhau (BR-02-008)' USING ERRCODE = '23514';
     END IF;
   END IF;
-  IF OLD.status <> 'OPEN' AND NEW.status IS DISTINCT FROM OLD.status THEN
+  IF OLD.status <> 'PENDING' AND NEW.status IS DISTINCT FROM OLD.status THEN
     RAISE EXCEPTION 'Yêu cầu duyệt đã kết thúc không đổi trạng thái được' USING ERRCODE = '55000';
   END IF;
   RETURN NEW;

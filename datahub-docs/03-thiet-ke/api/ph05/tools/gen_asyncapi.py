@@ -25,7 +25,7 @@ SCHEMAS = {
   "ConnectionStateChanged": {"allOf": [R("ConnRef"), obj({"scope": S(enum=["CONNECTION", "ENVIRONMENT"]), "env": ENV,
         "from": S(), "to": S(enum=["ACTIVE", "SUSPENDED", "RETIRED", "DISABLED", "ENABLED"]), "reason": S(maxLength=1000), "actor": R("Actor")}, ["scope", "to"])]},
   "GrantChanged": {"allOf": [R("ConnRef"), obj({"grantId": S(format="uuid"), "change": S(enum=["GRANTED", "REVOKED", "EXPIRED"]),
-        "scope": S(enum=["WORKSPACE", "FLOW"]), "targetCode": S(), "environments": A(ENV)}, ["grantId", "change", "scope", "targetCode"])]},
+        "scope": S(enum=["WORKSPACE", "FLOW", "API"]), "targetCode": S(), "environments": A(ENV)}, ["grantId", "change", "scope", "targetCode"])]},
   "HealthChanged": obj({"tenantId": TEN, "kind": S(enum=["CONNECTION", "ADAPTER"]), "code": S(), "env": ENV,
         "from": S(enum=["HEALTHY", "DEGRADED", "UNHEALTHY", "UNKNOWN"]), "to": S(enum=["HEALTHY", "DEGRADED", "UNHEALTHY", "UNKNOWN"]),
         "reasonCode": S(), "reasonDetail": S(maxLength=1000), "evaluatedAt": TS,

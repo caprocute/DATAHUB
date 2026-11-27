@@ -16,4 +16,4 @@ Tính năng: TS-13-21 · Hạ tầng: nút gateway, cụm Kafka
     Biết U-T68-IE; nút `khong-co`.
     Khi `GET /gateways/khong-co`.
     Và U-T68-IE gọi `GET /kafka/cluster`.
-    Thì `404` ERR-13-001; IE không có phạm vi hạ tầng thì 403-PQ (hoặc chỉ dữ liệu tenant của mình nếu cấu hình cho phép, ghi theo D02-08); exporter ngừng hiện "Chưa có dữ liệu".
+    Thì `404` ERR-13-001; IE giữ `PERM-13-dashboard` như D02-08 nên không nhận `403`, nhưng chỉ thấy dữ liệu của luồng và HTTT do mình thiết kế, hạ tầng chung chỉ ở mức tenant theo BR-13-030 (đã chốt 27/11/2026, Q13-41); exporter ngừng hiện "Chưa có dữ liệu".

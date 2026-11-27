@@ -108,6 +108,13 @@ SCHEMAS = {
   "ActivationRequest": obj({"note": STR(1000)}),
   "ApprovalDecision": obj({"decision": enum("APPROVE", "REJECT"), "comment": STR(2000)}, req=["decision"],
       desc="Người duyệt khác người đề nghị và người sửa gần nhất (BR-14-022, ERR-14-007). `REJECT` bắt buộc `comment`."),
+  "ApprovalRequest": obj({"approvalId": UUID, "type": enum("ph14.quota-prod", "ph14.inbound-activate", "ph14.setting-security", "ph14.service-relax", "ph14.open-data-first"),
+      "targetRef": STR(128, description="Mã đối tượng bị đổi (hạn mức, điểm cuối, khóa tham số, dịch vụ, tập dữ liệu); ứng với `object_code` của `approval_request`."),
+      "state": enum("PENDING", "APPROVED", "REJECTED", "EXPIRED", "CANCELLED"), "summary": STR(500), "requestedBy": STR(64), "requestedAt": TS, "reason": STR(1000),
+      "diff": ANYOBJ, "decidedBy": STR(64), "decidedAt": NULLTS, "expiresAt": TS, "version": INT()},
+      req=["approvalId", "type", "targetRef", "state", "requestedBy", "requestedAt", "expiresAt", "version"],
+      desc="Yêu cầu chờ người thứ hai duyệt cho năm loại thay đổi chưa có API duyệt riêng, ứng với `request_type` `QUOTA_PROD`, `INBOUND_ENABLE`, `SECURITY_PARAM_CHANGE`, `SERVICE_RELAX_CONTROL`, `OPEN_DATA_FIRST_PUBLISH` của bảng `ph14_national.approval_request`; ba loại còn lại (bật nền tảng, luật định tuyến, kích hoạt chứng thư) dùng API-14-009, 027, 033."),
+  "ApprovalRequestList": lst("ApprovalRequest"),
   "PlatformList": lst("PlatformSummary"),
   # ---- dịch vụ
   "ServiceSummary": allow(obj({

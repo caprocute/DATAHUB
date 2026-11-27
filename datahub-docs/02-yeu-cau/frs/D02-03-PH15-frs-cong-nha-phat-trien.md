@@ -2,7 +2,7 @@
 ma_tai_lieu: D02-03-PH15
 ten: Đặc tả yêu cầu chức năng phân hệ PH-15 Cổng nhà phát triển
 phien_ban: 0.4
-ngay: 2026-11-26
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-portal và dh-connect, kiểm thử viên, chủ dịch vụ, quản trị tỉnh
 phan_he: PH-15
@@ -4328,6 +4328,11 @@ PH-15 được nghiệm thu khi mười tiêu chí dưới đây đạt trên m�
 
 : Tiêu chí chấp nhận cấp phân hệ
 
+**Quyết định đã chốt ngày 27/11/2026.** Các điểm dưới đây từng là đề nghị hoặc câu hỏi, nay chốt theo đề xuất kỹ thuật; phần việc ở tập của phân hệ khác do tập đó ghi.
+
+- PH-03 phục vụ tuyến sandbox tĩnh kèm plugin `forward-auth` gọi API-15-082 (`allow_degradation: false`, thời hạn 300 ms) cho PH-15; PH-03 thêm mẫu route sandbox vào FR-03-048 (mẫu chính sách) và bảng PH-15 ở D03-04-PH03 mục 5.1 (FR-15-035, 039).
+- PH-01 cung cấp cho PH-15 hai API đọc nội bộ, một cho lược đồ biểu mẫu kết nạp và một cho định danh production chỉ đọc, dùng scope máy `onboarding:internal-read` (đã thêm ở D02-08 mục 5); PH-01 ghi hai API vào D03-04-PH01 (FR-15-032, 046).
+
 ## 15. Đề nghị đồng bộ
 
 > **Đợt đồng bộ chéo cuối (27/11/2026).** Các đề nghị dưới đây đã được xét; kết luận từng dòng (đã sửa, đã khớp sẵn, câu hỏi mở, không làm) ghi ở [D00-03-01 Sổ đồng bộ chéo cuối](../../00-chung/D00-03-01-so-dong-bo-cuoi.md).
@@ -4572,6 +4577,6 @@ Mục này ghi các lần sửa tài liệu để hội đồng thẩm định t
 | 0.1 | 26/11/2026 | Nhóm yêu cầu PH-15 | Bản đầu: 62 FR, 34 BR, 22 NFR, 63 ERR, 14 EVT, 137 API, 28 UI, 19 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm yêu cầu PH-15 | Hấp thụ đề nghị đồng bộ từ tập use case, thiết kế chi tiết, CSDL, màn hình và API (chi tiết ở mục 15.3): thêm API-15-138…142 (142 API); sửa tham chiếu phụ lục, câu thông báo theo §9.1, enum và thực thể theo CSDL, kiến trúc theo SDD; thêm Phụ lục A.9; năm quyền PERM-15 đã có ở D02-08 |
 | 0.3 | 26/11/2026 | Nhóm yêu cầu PH-15 | Rà chéo bộ PH-15: chốt mã lỗi cho Q15-40…44 của tập test case (FR-15-008, 020, 043, Phụ lục A.7), không đổi số mã |
-| 0.4 | 27/11/2026 | Nhóm yêu cầu PH-15 | Đồng bộ chéo cuối: ADR 095, nghe EVT-16-10 và EVT-18-16, biểu ngữ bảo trì ở FR-15-017 |
+| 0.4 | 27/11/2026 | Nhóm yêu cầu PH-15 | Đồng bộ chéo cuối: ADR 095, nghe EVT-16-10 và EVT-18-16, biểu ngữ bảo trì ở FR-15-017; chốt Q394, Q395: PH-03 phục vụ tuyến sandbox tĩnh kèm forward-auth; PH-01 cấp hai API đọc nội bộ với scope onboarding:internal-read |
 
 : Lịch sử phiên bản D02-03-PH15

@@ -31,6 +31,13 @@ def ienum(*v):
     return {"type": "integer", "enum": list(v)}
 def allow(*schemas):
     return {"allOf": list(schemas) + [R("AllowedActions")]}
+def cursor_page(item):
+    return obj({"items": arr(R(item)), "page": obj({"next": {"type": ["string", "null"], "maxLength": 2048, "description": "Con trỏ mờ cho trang kế; `null` khi hết."},
+                "limit": INT(minimum=1, maximum=100), "approxTotal": INT(minimum=0)}, req=["next", "limit"],
+                desc="Phân trang con trỏ, không có `totalElements` chính xác; `approxTotal` chỉ là ước lượng (Q03-56 đã chốt 27/11/2026).")},
+               req=["items", "page"])
+
+
 def page(item):
     return obj({"items": arr(R(item)), "page": INT(minimum=1), "size": INT(minimum=1, maximum=100), "totalElements": INT(minimum=0)},
                req=["items", "page", "size", "totalElements"])
@@ -202,7 +209,7 @@ SCHEMAS = {
       "severity": STR(16), "anomalyScore": INT(), "mode": R("WafModeValue"), "action": enum("LOGGED", "BLOCKED"), "consumerCode": R("ConsumerCode"),
       "srcIp": STR(45, description="Chỉ trả khi người gọi có `PERM-03-waf-request`."), "traceId": STR(32), "exceptionId": UUID},
       req=["eventId", "ts", "ruleId", "action"], desc="Không chứa nội dung yêu cầu; chỉ mã luật, điểm và siêu dữ liệu (BR-03-007)."),
-  "WafEventPage": page("WafEvent"),
+  "WafEventPage": cursor_page("WafEvent"),
   "WafModeInfo": obj({"scopes": arr(obj({"scope": STR(127, description="`TENANT` hoặc mã route."), "mode": R("WafModeValue"), "detectSince": TS, "detectDays": INT(),
       "autoDegradedAt": TS}, req=["scope", "mode"])),
       "eligibleForBlock": obj({"eligible": BOOL, "detectDays": INT(), "requiredDays": INT(), "openFalsePositives": INT(), "maxFalsePositives": INT()}, req=["eligible"]),
@@ -223,6 +230,12 @@ SCHEMAS = {
   "VirtualPatchCreate": obj({"ruleText": STR(4096, description="Cú pháp SecLang."), "appliesTo": enum("TENANT", "ROUTE"), "routeCodes": arr(R("RouteCode")),
       "reason": R("Reason"), "reference": STR(64, description="Mã CVE hoặc số cảnh báo."), "expiresAt": TS}, req=["ruleText", "appliesTo", "reason", "expiresAt"]),
   "VirtualPatchPage": page("VirtualPatch"),
+  "VirtualPatchDryRunRequest": obj({"ruleText": STR(4096, description="Cú pháp SecLang."), "appliesTo": enum("TENANT", "ROUTE"), "routeCodes": arr(R("RouteCode"))},
+      req=["ruleText", "appliesTo"], desc="Luật cần thử; không lưu, không đưa vào ảnh chụp."),
+  "VirtualPatchDryRunResult": obj({"windowHours": INT(minimum=1, maximum=24), "sampledRequests": INT(minimum=0), "wouldBlock": INT(minimum=0),
+      "wouldBlockRatio": NUM, "computedAt": TS, "partial": BOOL},
+      req=["windowHours", "sampledRequests", "wouldBlock", "computedAt"],
+      desc="Số yêu cầu mẫu trong 24 giờ gần nhất sẽ bị luật chặn nếu bật ở chế độ `BLOCK`. Chỉ có số đếm, không có nội dung yêu cầu (BR-03-007)."),
   # ---- CORS
   "CorsPolicy": obj({"routeCode": R("RouteCode"), "allowedOrigins": arr(STR(255, pattern="^https?://[^*]+$"), maxItems=20, description="Không dùng ký tự đại diện `*` (BR-03-012)."),
       "allowedMethods": arr(STR(10)), "allowedHeaders": arr(STR(100)), "exposedHeaders": arr(STR(100)), "allowCredentials": BOOL, "maxAgeSeconds": INT(minimum=0, maximum=86400),
@@ -256,6 +269,9 @@ SCHEMAS = {
   "BuildRequest": obj({"scope": enum("TENANT", "PLATFORM"), "tenant": R("TenantCode"), "trigger": enum("MANUAL", "IMPORT"), "dryRun": BOOL,
       "reason": STR(500)}, req=["scope"], desc="`PLATFORM` chỉ dành cho PA. `dryRun=true` chỉ tổng hợp và kiểm tra, trả `ValidationReport`, không ký."),
   "ValidationReport": obj({"valid": BOOL, "routeCount": INT(), "checkedAt": TS, "findings": arr(R("Finding"))}, req=["valid", "findings"]),
+  "ReleaseHoldResult": obj({"scope": enum("TENANT", "PLATFORM"), "released": BOOL, "heldSince": {"type": ["string", "null"], "format": "date-time"},
+      "holdUntil": {"type": ["string", "null"], "format": "date-time"}, "releasedAt": TS}, req=["scope", "released", "releasedAt"],
+      desc="Kết quả bỏ giữ: `released = false` khi không có hạn giữ nào đang hiệu lực."),
   "RollbackRequest": obj({"scope": enum("TENANT", "PLATFORM"), "reason": STR(500, minLength=10), "holdHours": INT(minimum=1, maximum=168, default=24)},
       req=["scope", "reason"], desc="Phiên bản đích nằm ở đường dẫn. Sinh ảnh chụp mới mang nội dung bản đích (BR-03-018); giữ tổng hợp tự động `holdHours` giờ."),
   "SnapshotDiff": obj({"fromVersion": INT(), "toVersion": INT(), "summary": obj({"added": INT(), "changed": INT(), "removed": INT()}, req=["added", "changed", "removed"]),
@@ -290,7 +306,7 @@ SCHEMAS = {
       "latencyMs": INT(), "upstreamMs": INT(), "bytesIn": INT(), "bytesOut": INT(), "srcIp": STR(45), "authResult": STR(24), "limitResult": STR(24),
       "wafResult": STR(24), "opaResult": STR(24), "node": STR(64), "upstreamNode": STR(255), "snapshotVersion": INT(), "synthetic": BOOL},
       req=["logId", "ts", "tenant", "traceId", "status"], desc="Siêu dữ liệu, tuyệt đối không có thân, tiêu đề xác thực, cookie, giá trị tham số (BR-03-007)."),
-  "AccessLogPage": page("AccessLogEntry"),
+  "AccessLogPage": cursor_page("AccessLogEntry"),
   "AccessLogExportRequest": obj({"from": TS, "to": TS, "consumerCode": R("ConsumerCode"), "routeCode": R("RouteCode"), "statusClass": enum("2xx", "3xx", "4xx", "5xx"),
       "errorCode": STR(16), "format": enum("CSV", "JSONL"), "reason": R("Reason")}, req=["from", "to", "format", "reason"],
       desc="Tối đa 31 ngày mỗi lần, trong 12 tháng; tối đa `gw.accessLog.export.maxRows` dòng (ERR-03-021)."),
@@ -394,6 +410,7 @@ EXAMPLES = {
   "RevocationCreate": {"kind": "SUBJECT", "sub": "9b1d2c3e-4f50-4a6b-8c7d-0e1f2a3b4c5d", "notBefore": "2026-11-26T09:20:00+07:00", "tokenExpiresAt": "2026-11-26T09:25:00+07:00",
       "reason": "Tài khoản dịch vụ nghi bị lộ khóa"},
   "BuildRequest": {"scope": "TENANT", "tenant": "T68", "trigger": "MANUAL", "dryRun": False, "reason": "Phát thủ công sau đợt nhập hệ cũ"},
+  "VirtualPatchDryRunRequest": {"ruleText": "SecRule REQUEST_URI \"@contains /actuator/\" \"id:1900001,phase:1,deny,status:403,msg:'chặn actuator'\"", "appliesTo": "TENANT"},
   "RollbackRequest": {"scope": "TENANT", "reason": "Bản 48213 làm tăng lỗi 5xx ở ba route", "holdHours": 24},
   "AccessLogExportRequest": {"from": "2026-11-26T08:00:00+07:00", "to": "2026-11-26T09:00:00+07:00", "consumerCode": "ht-qlvb", "statusClass": "4xx", "format": "CSV",
       "reason": "Điều tra HTTT báo bị chặn lúc 8 giờ"},
@@ -439,6 +456,8 @@ PARAMS = {
   "ImportIdPath": {"name": "importId", "in": "path", "required": True, "schema": UUID},
   "RedirectIdPath": {"name": "redirectId", "in": "path", "required": True, "schema": UUID},
   "Page": {"name": "page", "in": "query", "schema": INT(minimum=1, default=1)},
+  "Cursor": {"name": "cursor", "in": "query", "schema": STR(2048), "description": "Con trỏ mờ lấy từ `page.next` của lần gọi trước."},
+  "Limit": {"name": "limit", "in": "query", "schema": INT(minimum=1, maximum=100, default=50), "description": "Số dòng mỗi trang, tối đa 100."},
   "Size": {"name": "size", "in": "query", "schema": INT(minimum=1, maximum=100, default=20), "description": "Tối đa 100."},
   "IfMatch": {"name": "If-Match", "in": "header", "required": True, "schema": STR(128), "description": "ETag hiện tại của đối tượng; lệch trả ERR-03-004 (412) kèm `currentEtag`."},
   "IfMatchOptional": {"name": "If-Match", "in": "header", "schema": STR(128), "description": "ETag hiện tại; có thì kiểm, lệch trả ERR-03-004."},
@@ -550,7 +569,7 @@ X = {
   "037": ("createIpBlock", "IpBlockCreate", "IpBlock", ["003", "024"], "Ghi khóa chặn vào Valkey sau khi commit cơ sở dữ liệu; phát EVT-03-09.", []),
   "038": ("deleteIpBlock", None, None, [], None, []),
   "039": ("listWafEvents", None, "WafEventPage", ["021", "026"], "Sự kiện chặn của WAF (đọc từ PH-13). Không có nội dung yêu cầu.",
-          FROM_TO + [Q("routeCode", R("RouteCode")), Q("ruleId", STR(6)), Q("action", enum("LOGGED", "BLOCKED")), "Page", "Size"]),
+          FROM_TO + [Q("routeCode", R("RouteCode")), Q("ruleId", STR(6)), Q("action", enum("LOGGED", "BLOCKED")), "Cursor", "Limit"]),
   "040": ("getWafMode", None, "WafModeInfo", [], "Kèm điều kiện chuyển sang `BLOCK`: 14 ngày phát hiện và số cảnh báo giả chưa xử lý dưới `gw.waf.fpReviewMax`.", []),
   "041": ("putWafMode", "WafModeUpdate", "WafModeInfo", ["019", "027"], "Cần bốn mắt: trả 202 kèm `ChangeRequest`; người duyệt (API-03-072) khác người đề nghị.", []),
   "042": ("listWafExceptions", None, "WafExceptionPage", [], None, [QA("state", enum("REQUESTED", "ACTIVE", "EXPIRING", "REJECTED", "EXPIRED", "REVOKED")), Q("routeCode", R("RouteCode")), Q("ruleId", STR(6)), "Page", "Size"]),
@@ -560,6 +579,7 @@ X = {
   "046": ("revokeWafException", "ReasonRequest", "WafException", ["019"], "Gỡ khỏi ảnh chụp kế tiếp.", []),
   "047": ("listVirtualPatches", None, "VirtualPatchPage", [], "Tính năng Đợt 2 (cờ `gateway.virtualPatch.enabled`).", [QA("state", enum("ACTIVE", "RETIRED", "EXPIRED")), "Page", "Size"]),
   "048": ("createVirtualPatch", "VirtualPatchCreate", "VirtualPatch", ["009"], "Luật SecLang tối đa 4 KiB, có lý do và hạn.", []),
+  "097": ("dryRunVirtualPatch", "VirtualPatchDryRunRequest", "VirtualPatchDryRunResult", [], "Nút \"Thử khô\" của UI-03-08: đếm trên mẫu yêu cầu 24 giờ gần nhất (đọc từ PH-13) số yêu cầu sẽ bị chặn. Không ghi, không phát sự kiện, không tạo luật.", []),
   "049": ("retireVirtualPatch", "OptionalReason", "VirtualPatch", ["019"], None, []),
   "050": ("listCorsPolicies", None, "CorsPolicyPage", [], "Tính năng Đợt 2 (cờ `gateway.cors.enabled`).", [Q("routeCode", R("RouteCode")), "Page", "Size"]),
   "051": ("putCorsPolicy", "CorsPolicyWrite", "CorsPolicy", ["003"], "Không dùng ký tự đại diện cho nguồn gốc (BR-03-012).", []),
@@ -572,6 +592,7 @@ X = {
   "058": ("validateSnapshot", "ValidateRequest", "ValidationReport", [], "Tổng hợp thử và kiểm tra 18 quy tắc CHK (CHK-01…15 mức lỗi, CHK-16…18 mức cảnh báo), không ký, không phát. Luôn trả 200; xem `valid` và `findings`.", []),
   "059": ("buildSnapshot", "BuildRequest", "Snapshot", ["005", "006", "012", "013", "015"], "Tổng hợp, kiểm tra, ký. Kiểm tra không đạt: ERR-03-005 kèm `findings` và phát EVT-03-12. Với `dryRun=true` trả 200 `ValidationReport` thay cho 201.", []),
   "060": ("publishSnapshot", None, "Snapshot", ["006", "014", "015", "019"], "Chỉ ảnh chụp `SIGNED` mới phát được: ghi bucket rồi Git (Git lỗi thì xếp hàng, cờ `gitPending`). Phát EVT-03-01.", []),
+  "098": ("releaseSnapshotHold", "ReasonRequest", "ReleaseHoldResult", ["019"], "Nút \"Bỏ giữ\" của UI-03-10 sau quay lui (FRS §6.6): bỏ hạn giữ tổng hợp tự động `holdHours` của API-03-061, tách khỏi thao tác phát. Lý do bắt buộc; ghi kiểm toán.", []),
   "061": ("rollbackSnapshot", "RollbackRequest", "Snapshot", ["006", "007", "015", "019"], "Phiên bản trong đường dẫn là đích. Sinh ảnh chụp mới mang nội dung bản đích nên số phiên bản vẫn tăng. Phát EVT-03-02 và EVT-03-01. `PLATFORM` chỉ PA.", []),
   "062": ("diffSnapshot", None, "SnapshotDiff", [], "So với bản đang chạy hoặc bản chỉ định ở `against`.", [Q("against", INT(minimum=1), "Phiên bản đối chiếu, mặc định bản đang chạy.")]),
   "063": ("listNodes", None, "NodePage", [], "PH-13 đọc bằng scope `gateway:read-state`. Trạng thái suy ra từ chỉ số, không do nút gọi về.", [Q("gate", enum("EXT", "INT")), Q("site", STR(16)), QA("syncState", enum("IN_SYNC", "LAGGING", "FAILED", "UNKNOWN")), "Page", "Size"]),
@@ -587,7 +608,7 @@ X = {
   "073": ("rejectChangeRequest", "ReasonRequest", "ChangeRequest", ["008", "019"], None, []),
   "074": ("listAccessLogs", None, "AccessLogPage", ["021", "026"], "Chỉ siêu dữ liệu; đọc từ ClickHouse của PH-13, p95 ≤ 3 giây. Có `srcIp` nên cần `PERM-03-log-read`.",
           FROM_TO + [Q("consumerCode", R("ConsumerCode")), Q("routeCode", R("RouteCode")), Q("statusClass", enum("2xx", "3xx", "4xx", "5xx")), Q("errorCode", STR(16)), Q("traceId", STR(32, pattern="^[0-9a-f]{32}$")),
-                     Q("srcIp", STR(45)), SORT(["ts", "latencyMs"]), "Page", "Size"]),
+                     Q("srcIp", STR(45)), SORT(["ts", "latencyMs"]), "Cursor", "Limit"]),
   "075": ("getAccessLog", None, "AccessLogEntry", ["026"], "Ghi kiểm toán khi xem chi tiết có `srcIp`.", []),
   "076": ("exportAccessLogs", "AccessLogExportRequest", "ExportJob", ["021", "026"], "Tạo tệp xuất bất đồng bộ; trả 202 kèm `Location` tới `exportId`. Ghi kiểm toán: người dùng, bộ lọc, số dòng.", []),
   "077": ("getOverview", None, "Overview", ["026"], "Tổng quan lưu lượng, độ trễ, nút, suy giảm. PH-13 không trả số liệu thì ERR-03-026, không trả số 0 giả.", [WIN]),
@@ -613,7 +634,7 @@ X = {
 }
 # POST hành động không cần If-Match (tạo mới, chạy thử, gọi hệ thống)
 NO_404 = {"013"}  # PUT tạo hoặc cập nhật: không có "không tìm thấy"
-NO_IFMATCH = {"058", "059", "061", "070", "076", "088", "090", "091"}
+NO_IFMATCH = {"058", "059", "061", "070", "076", "088", "090", "091", "097", "098"}
 IFMATCH_OPTIONAL = {"013", "014", "017", "019"}
 MULTI_SUCCESS = {"008": {"202": "ChangeRequest"}, "024": {"202": "ChangeRequest"}, "041": {"202": "ChangeRequest"}, "087": {"202": "ChangeRequest"},
                  "013": {"201": "ConsumerDetail"}, "059": {"200": "ValidationReport"}}

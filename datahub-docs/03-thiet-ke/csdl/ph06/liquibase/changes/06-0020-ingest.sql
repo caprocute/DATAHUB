@@ -116,7 +116,7 @@ CREATE TABLE ph06_mdm.candidate_record (
   CONSTRAINT ck_candidate_record_warnings CHECK (warnings <@ ARRAY['IDENTIFIER_INVALID', 'DATE_PLACEHOLDER', 'ADMIN_UNIT_UNKNOWN', 'ADMIN_UNIT_SPLIT', 'ADMIN_UNIT_CONVERTED', 'CODE_UNMAPPED', 'ADDRESS_UNPARSED']::varchar[]),
   CONSTRAINT ck_candidate_record_hash CHECK (identifier_hash IS NULL OR octet_length(identifier_hash) = 32),
   CONSTRAINT ck_candidate_record_raw CHECK (raw_enc IS NULL OR (raw_kid IS NOT NULL AND octet_length(raw_enc) BETWEEN 29 AND 1048576)),
-  CONSTRAINT ck_candidate_record_reject CHECK (status <> 'REJECTED' OR COALESCE(reject_code ~ '^ERR-06-0[0-9]{2}$', false)),
+  CONSTRAINT ck_candidate_record_reject CHECK (status <> 'REJECTED' OR COALESCE(reject_code ~ '^ERR-06-0[0-9]{2}$' OR reject_code = 'DQ_GATE', false)),
   CONSTRAINT ck_candidate_record_birth CHECK (birth_year IS NULL OR birth_year BETWEEN 1850 AND 2100),
   CONSTRAINT ck_candidate_record_key CHECK (char_length(source_key) >= 1)
 ) PARTITION BY RANGE (received_at);
@@ -130,6 +130,7 @@ CREATE INDEX ix_candidate_record_golden ON ph06_mdm.candidate_record (tenant_id,
 CALL ph06_mdm.p_enable_rls('ph06_mdm.candidate_record');
 COMMENT ON TABLE ph06_mdm.candidate_record IS 'EN-06-09 Bản ghi ứng viên nhận từ nguồn (FR-06-010…017). Dữ liệu gốc mã hóa envelope ở raw_enc; số định danh chỉ ở dạng HMAC identifier_hash; khóa gom nhóm là HMAC (BR-06-016). Phân vùng tháng theo received_at; giữ 365 ngày sau xử lý (retention_policy, khớp SRS cũ), sau đó ẩn danh hóa raw_enc.';
 COMMENT ON COLUMN ph06_mdm.candidate_record.raw_enc IS 'Bản ghi gốc, mã hóa envelope (ADR-032); NULL sau khi dọn lưu giữ.';
+COMMENT ON COLUMN ph06_mdm.candidate_record.reject_code IS 'Mã ERR-06-0nn, hoặc DQ_GATE khi cổng chất lượng PH-08 từ chối (FR-06-010, FR-08-035).';
 COMMENT ON COLUMN ph06_mdm.candidate_record.identifier_hash IS 'HMAC-SHA256 của số định danh đã chuẩn hóa; dùng đối sánh xác định (FR-06-020).';
 COMMENT ON COLUMN ph06_mdm.candidate_record.block_keys IS 'Khóa gom nhóm dạng HMAC có tiền tố tên khóa (FR-06-019).';
 COMMENT ON COLUMN ph06_mdm.candidate_record.name_norm IS 'Họ tên không dấu, chữ thường (pg_trgm, FR-06-021).';

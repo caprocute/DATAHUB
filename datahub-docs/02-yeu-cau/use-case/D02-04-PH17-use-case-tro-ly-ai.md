@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH17
 ten: Đặc tả use case phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-17
@@ -69,7 +69,7 @@ Thuật ngữ đầy đủ ở FRS mục 1.4. Các thuật ngữ cần cho tập
 | D03-07 (SEC-49, SEC-16, SEC-38) | Ràng buộc ATTT của AI |
 | D03-06-00 mục 2.12 | Lối vào trợ lý, bảng bên, nhãn AI |
 | D02-08 | Ma trận quyền `PERM-17-*` |
-| D02-01 | Quy trình BP; BP-12 là đề nghị bổ sung |
+| D02-01 | Quy trình BP; BP-14 đã được thêm ở D02-01 mục 6.2 (chốt 27/11/2026) |
 | D00-04 và K-UC, K-TRINH-BAY | Khuôn và quy chuẩn trình bày |
 
 : Tài liệu tham chiếu
@@ -349,25 +349,25 @@ Mỗi use case có ít nhất một màn hình hoặc API. UC-17-35 không có m
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-Mọi use case truy về REQ-17 (ưu tiên C theo BRD; BO-03, BO-08). BP-01 đến BP-08 theo D02-01; BP-12 "Quản trị và sử dụng trợ lý AI" là đề nghị bổ sung (FRS Phụ lục B). Hệ cũ không có AI; chỉ có tám chức năng cũ được nâng cấp gián tiếp, "Không" là năng lực mới.
+Mọi use case truy về REQ-17 (ưu tiên C theo BRD; BO-03, BO-08). BP-01 đến BP-08 theo D02-01; BP-14 "Quản trị và sử dụng trợ lý AI" đã được thêm vào D02-01 mục 6.2 (chốt 27/11/2026). Hệ cũ không có AI; chỉ có tám chức năng cũ được nâng cấp gián tiếp, "Không" là năng lực mới.
 
 | UC | REQ, BO | BP | LGC |
 |---|---|---|---|
-| UC-17-01 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
-| UC-17-02 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
-| UC-17-03 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-04 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-05 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-06 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-07 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-08 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-09 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-10 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-11 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-12 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
-| UC-17-13 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
-| UC-17-14 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
-| UC-17-15 | REQ-17 | BP-08, BP-12 (đề nghị) | Không |
+| UC-17-01 | REQ-17 | BP-08, BP-14 | Không |
+| UC-17-02 | REQ-17 | BP-08, BP-14 | Không |
+| UC-17-03 | REQ-17 | BP-14 | Không |
+| UC-17-04 | REQ-17 | BP-14 | Không |
+| UC-17-05 | REQ-17 | BP-14 | Không |
+| UC-17-06 | REQ-17 | BP-14 | Không |
+| UC-17-07 | REQ-17 | BP-14 | Không |
+| UC-17-08 | REQ-17 | BP-14 | Không |
+| UC-17-09 | REQ-17 | BP-14 | Không |
+| UC-17-10 | REQ-17 | BP-14 | Không |
+| UC-17-11 | REQ-17 | BP-14 | Không |
+| UC-17-12 | REQ-17 | BP-08, BP-14 | Không |
+| UC-17-13 | REQ-17 | BP-08, BP-14 | Không |
+| UC-17-14 | REQ-17 | BP-08, BP-14 | Không |
+| UC-17-15 | REQ-17 | BP-08, BP-14 | Không |
 | UC-17-16 | REQ-17, BO-03 | BP-01, BP-05 | Không |
 | UC-17-17 | REQ-17, BO-03 | BP-01, BP-05 | LGC-BUS-002, 003, 004 |
 | UC-17-18 | REQ-17 | BP-01, BP-05 | Không |
@@ -376,16 +376,16 @@ Mọi use case truy về REQ-17 (ưu tiên C theo BRD; BO-03, BO-08). BP-01 đ�
 | UC-17-21 | REQ-17, BO-08 | BP-07 | LGC-BUS-037 |
 | UC-17-22 | REQ-17, BO-08 | BP-07 | LGC-BUS-027, 029, 037 |
 | UC-17-23 | REQ-17, BO-08 | BP-07 | LGC-BUS-037 |
-| UC-17-24 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-25 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-26 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-27 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-28 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-29 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-30 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-31 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-32 | REQ-17 | BP-12 (đề nghị) | Không |
-| UC-17-33 | REQ-17, BO-03 | BP-12 (đề nghị) | Không |
+| UC-17-24 | REQ-17 | BP-14 | Không |
+| UC-17-25 | REQ-17 | BP-14 | Không |
+| UC-17-26 | REQ-17 | BP-14 | Không |
+| UC-17-27 | REQ-17 | BP-14 | Không |
+| UC-17-28 | REQ-17 | BP-14 | Không |
+| UC-17-29 | REQ-17 | BP-14 | Không |
+| UC-17-30 | REQ-17 | BP-14 | Không |
+| UC-17-31 | REQ-17 | BP-14 | Không |
+| UC-17-32 | REQ-17 | BP-14 | Không |
+| UC-17-33 | REQ-17, BO-03 | BP-14 | Không |
 | UC-17-34 | REQ-17, BO-03 | BP-02 | Không |
 | UC-17-35 | REQ-17, BO-03 | Không | Không |
 | UC-17-36 | REQ-17, BO-03 | Không | Không |
@@ -454,7 +454,7 @@ Mỗi use case một mục `6.n` theo thứ tự UC-17-01 đến UC-17-36, nhóm
 
 **FR hiện thực.** FR-17-001.
 
-**Truy vết.** REQ-17; BO-03; SEC-49; SEC-16; CMP-LAW-16; BP-12 (đề nghị).
+**Truy vết.** REQ-17; BO-03; SEC-49; SEC-16; CMP-LAW-16; BP-14.
 
 **Tiền điều kiện.** Tenant T01 có `17.enabled = false`; có ít nhất một phiên bản mô hình hội thoại và một phiên bản mô hình nhúng `APPROVED` cho tenant (UC-17-07, UC-17-08); điều khoản dùng AI đã có phiên bản công bố (UC-17-04); Mai có `PERM-17-admin`.
 
@@ -666,7 +666,7 @@ Hình cho thấy trợ lý chỉ bật sau khi người thứ hai duyệt và ki
 
 **FR hiện thực.** FR-17-006.
 
-**Truy vết.** REQ-17; SEC-49; THR-55; THR-56; THR-57; NFR-17-004; BP-12 (đề nghị).
+**Truy vết.** REQ-17; SEC-49; THR-55; THR-56; THR-57; NFR-17-004; BP-14.
 
 **Tiền điều kiện.** Dũng hoặc Mai có `PERM-17-admin` (tenant); Hà có `PERM-17-model` (nền tảng).
 
@@ -1961,7 +1961,7 @@ Hình cho thấy hai lớp phòng thủ độc lập: lớp đầu chặn câu h
 6. Mai đặt ngưỡng cảnh báo (API-17-163).
 
 **Luồng thay thế.**
-- **1a. Đổi ý.** Quân sửa phản hồi trong 10 phút.
+- **1a. Đổi ý.** Quân sửa phản hồi trong 10 phút bằng `PUT /feedback/{feedbackId}` kèm `If-Match` (API-17-194, đã chốt 27/11/2026); quá 10 phút hoặc phản hồi đã được phân loại thì trả ERR-17-006.
 - **3a. Không an toàn đã xác nhận.** Người xử lý đưa phản hồi thành ca đỏ ứng viên (API-17-160) cần `PERM-17-eval` (UC-17-29).
 - **3b. Quá hạn.** Quá hạn xử lý thì nhắc người xử lý và hiện ở bảng chất lượng.
 - **5a. Mẫu ít.** Dưới 50 lượt trong ngày hiển thị "chưa đủ mẫu", không cảnh báo.
@@ -2332,7 +2332,7 @@ Các câu hỏi Q17-01 đến Q17-22 nằm ở FRS mục 13. Dưới đây là n
 
 > **Câu hỏi mở Q17-25:** UC-17-17 nhánh 2a: ngưỡng `17.rag.min-score` mặc định 0,55 chưa được hiệu chuẩn cho tiếng Việt và mô hình nhúng đa ngữ 1024 chiều. Đề xuất hiệu chuẩn bằng bộ đánh giá `SEARCH` ở đợt 3 và cho TA chỉnh trong miền 0,3 đến 0,9; cần kiến trúc sư và SO chốt ngưỡng nghiệm thu.
 
-> **Câu hỏi mở Q17-26:** UC-17-26 nhánh 2a: tiêm lệnh gián tiếp thường nằm sẵn trong mô tả API do HTTT đối tác hoặc nhà phát triển ghi, nghĩa là có thể chặn sớm ở bước lập chỉ mục (UC-17-13) thay vì chỉ lúc truy hồi. FRS chưa nêu quét mẫu tiêm lệnh khi lập chỉ mục. Đề xuất thêm quét và gắn cờ đoạn nghi ngờ (không bỏ đoạn, vẫn bọc ở lúc dùng); cần SO và chủ phân hệ nguồn quyết định.
+> **Câu hỏi mở Q17-26 (đã chốt 27/11/2026: có quét, chỉ gắn cờ đoạn nghi ngờ, không bỏ đoạn, vẫn bọc khi dùng; SO và chủ phân hệ nguồn rà cờ; đã ghi ở FR-17-018 bước 5):** UC-17-26 nhánh 2a: tiêm lệnh gián tiếp thường nằm sẵn trong mô tả API do HTTT đối tác hoặc nhà phát triển ghi, nghĩa là có thể chặn sớm ở bước lập chỉ mục (UC-17-13) thay vì chỉ lúc truy hồi. FRS chưa nêu quét mẫu tiêm lệnh khi lập chỉ mục. Đề xuất thêm quét và gắn cờ đoạn nghi ngờ (không bỏ đoạn, vẫn bọc ở lúc dùng); cần SO và chủ phân hệ nguồn quyết định.
 
 > **Câu hỏi mở Q17-27:** UC-17-22 bước 1: ERR-17-061 chỉ nói "không đúng định dạng" mà FRS chưa nêu định dạng `trace_id`. Đề xuất theo W3C Trace Context (32 ký tự thập lục phân) như PH-13 đang dùng; cần PH-13 xác nhận để thông báo lỗi ghi rõ định dạng.
 
@@ -2341,3 +2341,4 @@ Các câu hỏi Q17-01 đến Q17-22 nằm ở FRS mục 13. Dưới đây là n
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 36 use case phủ 62 FR của FRS 0.1, sáu sơ đồ use case, năm sơ đồ trình tự (bật trợ lý, tắt khẩn, hỏi đáp, áp dụng gợi ý, chặn tiêm lệnh), ma trận truy vết hai chiều, bốn luồng phụ, mười đề nghị đồng bộ, năm câu hỏi mở Q17-23…27 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q405, Q406: Q17-26 quét mẫu tiêm lệnh gắn cờ đoạn nghi ngờ; UC-17-30 nhánh 1a dùng API-17-194; BP-14 cho trợ lý AI (Q397) |

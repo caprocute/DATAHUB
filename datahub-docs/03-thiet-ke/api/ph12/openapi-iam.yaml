@@ -4259,6 +4259,57 @@ paths:
           $ref: '#/components/responses/Unprocessable'
         '503':
           $ref: '#/components/responses/Unavailable'
+    get:
+      tags:
+      - Realm của tenant
+      operationId: listRealms
+      summary: Danh sách realm của các tenant, lọc theo lệch cấu hình
+      x-datahub-id: API-12-113
+      x-datahub-fr:
+      - FR-12-042
+      x-datahub-permission:
+        permission: PERM-12-realm-admin
+        perms:
+        - PERM-12-realm-admin
+        scopes: []
+      description: Danh sách realm cho màn hình Realm của tenant; lọc `driftStatus=DRIFTED` để xem các realm lệch cấu hình so với mẫu. Phân trang
+        chuẩn.
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Sort'
+      - name: driftStatus
+        in: query
+        schema:
+          type: string
+          enum:
+          - IN_SYNC
+          - DRIFTED
+          - HELD
+          - UNKNOWN
+      - name: state
+        in: query
+        schema:
+          $ref: '#/components/schemas/RealmState'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-12-003
+      - ERR-12-007
+      - ERR-12-116
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /realms/{tenantCode}:
     get:
       tags:
@@ -4923,6 +4974,66 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Chính sách và gói
+      operationId: putPolicyVersionDraft
+      summary: Ghi đè nội dung bản nháp của phiên bản chính sách (tự lưu)
+      x-datahub-id: API-12-112
+      x-datahub-fr:
+      - FR-12-052
+      x-datahub-permission:
+        permission: PERM-12-policy-edit
+        perms:
+        - PERM-12-policy-edit
+        scopes: []
+      description: 'Tự lưu bản nháp: chỉ phiên bản `DRAFT` của chính người soạn, kèm `If-Match`; phiên bản đã gửi duyệt hoặc đã phát hành trả
+        ERR-12-027. Mỗi lần ghi đè xóa kết quả kiểm thử và chạy khô đã có (gắn với `contentHash` cũ).'
+      parameters:
+      - $ref: '#/components/parameters/policyCodePath'
+      - $ref: '#/components/parameters/versionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyVersionCreate'
+      x-datahub-acr: 2
+      x-datahub-errors:
+      - ERR-12-001
+      - ERR-12-003
+      - ERR-12-007
+      - ERR-12-024
+      - ERR-12-027
+      - ERR-12-028
+      - ERR-12-043
+      - ERR-12-044
+      - ERR-12-116
+      - ERR-12-120
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyVersion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
   /policies/{policyCode}/versions/{versionNo}:test:
     post:
       tags:
@@ -8807,6 +8918,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Policy'
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      additionalProperties: false
+      required:
+      - items
+      - page
+    RealmPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Realm'
         page:
           $ref: '#/components/schemas/PageMeta'
       additionalProperties: false

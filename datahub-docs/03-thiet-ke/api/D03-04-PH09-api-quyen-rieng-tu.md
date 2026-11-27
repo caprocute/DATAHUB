@@ -619,7 +619,7 @@ PH-09 không gọi NDXP, NDOP hay PayGov và không có API công khai ra ngoài
 | PH-10 Sự kiện | PH-10 gọi | 012, 014; EVT-09-03 | Phân loại hợp đồng topic, chặn luồng chứa dữ liệu Nhạy cảm |
 | PH-12 Chính sách (OPA) | PH-12 gọi | 233; EVT-09-11 | Nạp bundle đã ký |
 | PH-13 Kiểm toán | PH-09 phát | `audit.recorded.v1`, EVT-09-01, 14, 15, 17, 21, 28 | Chuyển nhật ký sang kho WORM |
-| PH-14 Cung cấp dữ liệu | PH-14 gọi | 227…229, 237 | Quyết định, che khi chia sẻ dữ liệu |
+| PH-14 Cung cấp dữ liệu | PH-14 gọi | 227…229, 237 | Quyết định, che khi chia sẻ dữ liệu; `purpose:decide` trả `ropaActivityId`, `classification:check` với `egressScope` là `OUT_OF_PROVINCE` kiểm cờ `noEgress` trước khi gửi ra ngoài tỉnh, p95 ≤ 200 ms (chủ đầu tư chốt 27/11/2026) |
 | PH-17 Dữ liệu AI | PH-17 gọi | 230, 137; EVT-09-18 | Giả danh hóa, nhận tập đã ẩn danh |
 | PH-18 Sự cố | Hai chiều | 203 (nguồn `INCIDENT_PH18`); EVT-09-13, 19, 30, 31 | Mở vụ việc vi phạm, cảnh báo đồng hồ |
 | PH-19 Thanh toán | PH-19 gọi | 228, 229, 172; EVT-09-20, 22, 26 | Che dữ liệu thanh toán, xử lý yêu cầu chủ thể |
@@ -1130,6 +1130,7 @@ HTTP/1.1 200
   "allow": true,
   "reason": "GRANTED",
   "grantId": "0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a4d",
+  "ropaActivityId": "0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a3c",
   "allowedFields": [
     "hoTen",
     "soThe"
@@ -1995,7 +1996,7 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`; mã lỗi của thao tác: ERR-09-101, ERR-09-102, ERR-09-103, ERR-09-104, ERR-09-106, ERR-09-111, ERR-09-113 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Đường nóng: p95 ≤ 50 ms khi gọi trực tiếp; thiếu mục đích thì ERR-09-103; không có chấp thuận thì ERR-09-102; chủ thể bị hạn chế xử lý thì ERR-09-104; không khả dụng thì điểm thực thi đóng an toàn.
+**Ghi chú.** Đường nóng: p95 ≤ 50 ms khi gọi trực tiếp; thiếu mục đích thì ERR-09-103; không có chấp thuận thì ERR-09-102; chủ thể bị hạn chế xử lý thì ERR-09-104; không khả dụng thì điểm thực thi đóng an toàn. Trả thêm `ropaActivityId` (hoạt động xử lý `ACTIVE` liên kết hợp đồng, vắng nếu chưa có) cho PH-14; trả `ropaActivityId` vẫn p95 ≤ 200 ms (NFR-09-027, chủ đầu tư chốt 27/11/2026).
 :::
 
 #### API-09-228 · Kế hoạch che theo chủ thể, mục đích, kênh
@@ -2087,11 +2088,11 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `200` thành công, `ClassificationCheckResponse`; trường bắt buộc: `blocked`, `effectiveClass`, `fields`.
+**Phản hồi thành công.** `200` thành công, `ClassificationCheckResponse`; trường bắt buộc: `blocked`, `effectiveClass`, `egressBlocked`, `fields`.
 
 **Lỗi.** HTTP `400`, `401`, `403`, `429`; mã lỗi của thao tác: ERR-09-101, ERR-09-106, ERR-09-111 (ý nghĩa ở chương mã lỗi).
 
-**Ghi chú.** Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi.
+**Ghi chú.** Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi. Với `egressScope` là `OUT_OF_PROVINCE`, thêm kiểm thuộc tính `noEgress` của từng trường: trả `egressBlocked` và `egressBlockedFields`, bên gọi (PH-14) không gửi ra ngoài tỉnh; p95 ≤ 200 ms (BR-09-063, NFR-09-027, chủ đầu tư chốt 27/11/2026).
 :::
 
 #### API-09-232 · Bản chụp chỉ mục phân loại (ETag)
@@ -2245,4 +2246,4 @@ API quyết định và áp che cho điểm thực thi, đường nóng, chỉ t
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-API và K-TRINH-BAY: 237 operation (226 control plane, 11 data plane), 33 kênh sự kiện, 91 mã lỗi, OpenAPI 3.1 và AsyncAPI 3.0 sinh từ FRS, ví dụ kiểm khớp lược đồ, đặc tả 10 mục cho 35 operation trọng yếu, năm câu hỏi mở Q09-55…59 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thêm API-09-238 đến 245 (245 operation, 234 control plane), ERR-09-082 và đưa 079 đến 081 về FRS, `requestKind`, `renewsGrantId`, `serverTime`, `remainingThisHour`, hạn 60 giây của kết quả khôi phục, giới hạn bản tin 1 MiB, 329 lược đồ, 37 operation trọng yếu, chốt bốn trong năm câu hỏi mở |
-| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: API-09-203 thêm scope `privacy:register` cho PH-18; thân xoay khóa API-09-116 thêm `confirmInconsistency`; bên tiêu thụ EVT-09-01, EVT-09-03 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: API-09-203 thêm scope `privacy:register` cho PH-18; thân xoay khóa API-09-116 thêm `confirmInconsistency`; bên tiêu thụ EVT-09-01, EVT-09-03; chốt câu hỏi mở đợt đồng bộ: Q393 |

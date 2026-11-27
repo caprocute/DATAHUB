@@ -48,6 +48,7 @@ NOTE = {
     "123": "Khóa rồi không mở lại; thêm cặp sau đó tạo tập nhãn phiên bản mới. Ghi kiểm toán.",
     "124": "Một lệnh nguyên tử (`SKIP LOCKED`); hết mục phù hợp trả `204`, không lỗi. Mục gán `ASSIGNED` giữ `06.queue.hold-minutes`.",
     "125": "Bỏ cờ `restricted`, bản ghi `LOCKED` về `ACTIVE`; yêu cầu `RESTRICTION` giữ `COMPLETED`; phát EVT-06-02.",
+    "126": "API nội bộ chỉ qua `apisix-int` với scope `mdm:steward-intake` của PH-08; tạo mục lý do `DQ_FINDING` (điểm cơ sở 35, hạn theo `06.queue.sla-days`, người nhận là DS của miền). `201` mục mới; `200` khi đã có mục mở cho `goldenId` nên chỉ gắn thêm mã quy tắc. Không nhận lý do khác.",
     "106": "Thân có `decision` (`ApprovalDecision`): `REJECT` chuyển job `AWAITING_CONFIRMATION` sang `CANCELLED`, không áp cặp nào.",
     "118": "Bắt buộc `cause` (nguyên nhân đã điều tra, từ 20 ký tự), lưu ở `national_sync_state`, kiểm toán và đưa vào EVT-06-13.",
     "045": "Lọc `partition`: `mine`, `unclaimed`, `overdue`, `pending-approval`.",
@@ -231,7 +232,7 @@ def build():
         "components": {"securitySchemes": {
             "oauth2User": {"type": "oauth2", "description": "Người dùng qua Keycloak; quyền `PERM-06-*`.", "flows": {"authorizationCode": {"authorizationUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/auth", "tokenUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/token", "scopes": {"openid": "Định danh người dùng"}}}},
             "oauth2Machine": {"type": "oauth2", "description": "Máy với máy (HTTT, PH-04, PH-08, PH-14).", "flows": {"clientCredentials": {"tokenUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/token", "scopes": {
-                "mdm:ingest": "Nạp ứng viên", "mdm:read": "Tra cứu bản ghi vàng đã che", "mdm:xref": "Tra liên kết chéo", "mdm:resolve": "Giải quyết trực tuyến", "mdm:search": "Tìm kiếm hạn chế", "mdm:national-sync": "Đồng bộ quốc gia (PH-14)"}}}}},
+                "mdm:ingest": "Nạp ứng viên", "mdm:read": "Tra cứu bản ghi vàng đã che", "mdm:xref": "Tra liên kết chéo", "mdm:resolve": "Giải quyết trực tuyến", "mdm:search": "Tìm kiếm hạn chế", "mdm:national-sync": "Đồng bộ quốc gia (PH-14)", "mdm:steward-intake": "PH-08 tạo mục hàng đợi từ lỗi chất lượng"}}}}},
             "parameters": params, "responses": responses, "schemas": schemas}}
     return d
 

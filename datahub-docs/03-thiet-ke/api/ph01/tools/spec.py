@@ -5,7 +5,7 @@ Mỗi dòng: (mã, phương thức, đường dẫn, mục đích, FR, quyền, 
    `base` là quyền cơ sở người dùng nội bộ tenant; `link` là người nhận liên kết một lần (đăng nhập, MFA).
  - mã thành công: "200|202" nghĩa là có hai mã thành công hợp lệ (mã đầu là mã thường gặp).
 Sinh OpenAPI (gen_openapi.py), AsyncAPI và bảng Markdown (gen_md.py) từ đây; không sửa tay bảng sinh ra.
-Mã API-01-001…086 theo FRS §9.4; 087, 088 do tập này thêm (callback saga, tra tác vụ nền).
+Mã API-01-001…086 theo FRS §9.4; 087, 088 do tập này thêm (callback saga, tra tác vụ nền); 089 thêm ngày 27/11/2026 (nhận đề xuất tạm ngừng HTTT từ PH-13, Q390).
 """
 
 BASE = "/api/onboarding/v1"
@@ -23,7 +23,7 @@ OPS = [
     # Tài liệu và mẫu
     ("006", "GET", "/systems/{systemCode}/attachments", "Danh sách tài liệu đính kèm", "005", "read", "", "200", "attach"),
     ("007", "POST", "/systems/{systemCode}/attachments", "Tải tài liệu đính kèm", "005", "create", "x", "201", "attach"),
-    ("008", "GET", "/systems/{systemCode}/attachments/{attachmentId}/content", "Tải nội dung tài liệu", "005", "read", "", "200", "attach"),
+    ("008", "GET", "/systems/{systemCode}/attachments/{attachmentId}/content", "Tải nội dung tài liệu", "005", "read", "", "200|206", "attach"),
     ("009", "DELETE", "/systems/{systemCode}/attachments/{attachmentId}", "Xóa tài liệu đính kèm", "005", "create", "", "204", "attach"),
     ("020", "GET", "/templates", "Danh sách mẫu văn bản và hướng dẫn kết nạp", "010", "base", "", "200", "attach"),
     ("021", "GET", "/templates/{templateCode}/content", "Tải nội dung mẫu văn bản", "010", "base", "", "200", "attach"),
@@ -77,13 +77,14 @@ OPS = [
     ("056", "GET", "/systems/{systemCode}/impact", "Phân tích tác động phụ thuộc", "033", "read", "", "200", "life"),
     ("057", "POST", "/systems/{systemCode}/change-requests", "Đề nghị thay đổi hồ sơ HTTT đã kết nạp", "034", "create", "x", "200|202", "life"),
     ("058", "GET", "/systems/{systemCode}/change-requests", "Danh sách đề nghị thay đổi", "034", "read", "", "200", "life"),
-    ("059", "POST", "/change-requests/{changeRequestId}:decide", "Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt", "031, 034", "approve", "", "200", "life"),
+    ("059", "POST", "/change-requests/{changeRequestId}:decide", "Duyệt hoặc từ chối đề nghị thay đổi, chấm dứt", "031, 034, 035", "approve", "", "200", "life"),
     ("060", "POST", "/systems/{systemCode}/scope-expansions", "Đề nghị mở rộng trần phạm vi khai thác", "035", "create", "x", "202", "life"),
     # Nội bộ
     ("062", "POST", "/internal/reconciliations", "Chạy đối chiếu và phát ảnh chụp trạng thái", "037", "service", "", "202", "internal"),
     ("063", "GET", "/internal/systems", "Bản sao đọc danh sách HTTT cho phân hệ khác", "038", "service", "", "200", "internal"),
     ("064", "GET", "/internal/systems/{systemCode}", "Bản sao đọc một HTTT cho phân hệ khác", "038", "service", "", "200", "internal"),
     ("087", "POST", "/internal/provisioning-callbacks", "Nhận kết quả bất đồng bộ của bước saga", "020", "service", "", "200", "internal"),
+    ("089", "POST", "/internal/suspension-proposals", "Nhận đề xuất tạm ngừng HTTT từ PH-13, tạo việc khẩn cho SO", "053", "service", "", "202", "internal"),
     # Rà soát quyền
     ("065", "POST", "/access-reviews", "Mở kỳ rà soát quyền", "039", "suspend", "x", "201", "ar"),
     ("066", "GET", "/access-reviews", "Danh sách kỳ rà soát", "039", "read", "", "200", "ar"),
@@ -114,6 +115,7 @@ OPS = [
 
 # Thao tác chấp nhận nhiều quyền (OR). Mã → danh sách quyền.
 ANY_PERM = {
+    "028": ["PERM-01-approve", "PERM-01-review-claim"],
     "030": ["PERM-01-approve", "PERM-01-read (được phân công)"],
     "031": ["PERM-01-approve", "PERM-01-read (được phân công)"],
     "045": ["PERM-01-credential", "PERM-01-suspend"],
@@ -121,9 +123,9 @@ ANY_PERM = {
 }
 # Scope token dịch vụ (client_credentials)
 SERVICE_SCOPE = {"062": "onboarding:reconcile", "063": "onboarding:internal-read", "064": "onboarding:internal-read",
-                 "087": "onboarding:provision-callback"}
+                 "087": "onboarding:provision-callback", "089": "onboarding:suspension-proposal"}
 # Thao tác không bắt buộc If-Match dù đổi trạng thái (khẩn cấp, không được chặn vì bản ghi cũ)
 IF_MATCH_OPTIONAL = {"047", "051", "054"}
 # Thao tác đổi trạng thái hoặc ghi nhưng không cần If-Match (không có ETag của đối tượng: tính toán, tạo con, mở một lần)
-NO_IF_MATCH = {"022", "024", "025", "026", "028", "029", "030", "040", "055", "062", "071", "072", "073", "082", "087",
+NO_IF_MATCH = {"022", "024", "025", "026", "028", "029", "030", "040", "055", "062", "071", "072", "073", "082", "087", "089",
                "035", "038", "041", "046", "059", "075", "079", "085", "065", "069", "053", "060", "057"}

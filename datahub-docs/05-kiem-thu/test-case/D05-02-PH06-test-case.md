@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH06
 ten: Kịch bản và test case phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
 phan_he: PH-06
@@ -1877,7 +1877,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận tạo mục không trùng, tính ưu tiên đúng, nhận việc không xung đột, SLA và cảnh báo quá tải.
 
-**Phủ.** FR-06-027, 028, 032; UC-06-12; API-06-045, 047, 050, 124; UI-06-04, 01; BR-06-002, 015, 019; ERR-06-027, 028; EVT-06-08.
+**Phủ.** FR-06-027, 028, 032; UC-06-12; API-06-045, 047, 050, 124, 126; UI-06-04, 01; BR-06-002, 015, 019; ERR-06-027, 028; EVT-06-08.
 
 #### TC-06-057 · Tạo mục hàng đợi, ưu tiên và SLA <!--k:q-create-->
 
@@ -1890,18 +1890,18 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** UT, API.
 
-**Truy vết.** FR-06-027 · BR-06-002, 019 · EVT-06-08 · API-06-045.
+**Truy vết.** FR-06-027 · BR-06-002, 019 · EVT-06-08 · API-06-045, 126.
 
-**Tiền điều kiện, dữ liệu.** Bảy lý do `QueueReason`; mặc định `06.queue.sla-days = 7`.
+**Tiền điều kiện, dữ liệu.** Tám lý do `QueueReason` (kể cả `DQ_FINDING` tạo bằng API-06-126 với scope `mdm:steward-intake`); mặc định `06.queue.sla-days = 7`.
 
 **Các bước.**
 
-1. Tạo mục cho từng `QueueReason`.
-2. Tạo mục lần hai cho cùng một cặp, đổi thứ tự hai bản ghi.
+1. Tạo mục cho từng `QueueReason`; với `DQ_FINDING` gọi API-06-126 cho một `goldenId`.
+2. Tạo mục lần hai cho cùng một cặp, đổi thứ tự hai bản ghi; gọi lại API-06-126 cho cùng `goldenId`.
 
-**Kết quả mong đợi.** Điểm cơ sở `IDENTIFIER_CONFLICT` 90, `CRITICAL_CONFLICT` 70, `MULTIPLE_CANDIDATES` 50, `POSSIBLE_MATCH` 40, `INSUFFICIENT_ATTRIBUTES` 30, `ORPHANED` 20, cộng tối đa 10 + 10 theo số liên kết và độ gần ngưỡng, trần 100. SLA 7 ngày, riêng `IDENTIFIER_CONFLICT` 1 ngày. Cặp trùng chỉ cập nhật điểm, không mục mới. Mỗi mục mới một EVT-06-08.
+**Kết quả mong đợi.** Điểm cơ sở `IDENTIFIER_CONFLICT` 90, `CRITICAL_CONFLICT` 70, `MULTIPLE_CANDIDATES` 50, `POSSIBLE_MATCH` 40, `DQ_FINDING` 35, `INSUFFICIENT_ATTRIBUTES` 30, `ORPHANED` 20, cộng tối đa 10 + 10 theo số liên kết và độ gần ngưỡng, trần 100. SLA 7 ngày, riêng `IDENTIFIER_CONFLICT` 1 ngày. Cặp trùng chỉ cập nhật điểm, không mục mới; gọi lại API-06-126 cùng `goldenId` trả `200` và gắn thêm mã quy tắc; scope khác `mdm:steward-intake` bị từ chối. Mỗi mục mới một EVT-06-08.
 
-**Hậu điều kiện.** Bảy mục `OPEN`.
+**Hậu điều kiện.** Tám mục `OPEN`.
 :::
 
 #### TC-06-058 · Liệt kê, nhận việc, phân công, nhả <!--k:q-claim-->
@@ -1917,7 +1917,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-06-028 · API-06-045, 047, 107, 108 · UI-06-04 · PERM-06-steward.
 
-**Tiền điều kiện, dữ liệu.** Bảy mục của q-create; DS1, DS2, DA1.
+**Tiền điều kiện, dữ liệu.** Tám mục của q-create; DS1, DS2, DA1.
 
 **Các bước.**
 
@@ -1996,7 +1996,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-06-028 · API-06-124, 045 · UI-06-04 · ERR-06-027, 028 · PERM-06-steward.
 
-**Tiền điều kiện, dữ liệu.** Bảy mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
+**Tiền điều kiện, dữ liệu.** Tám mục của q-create; DS1, DS2 cùng tổ chức; DS3 khác tổ chức.
 
 **Các bước.**
 
@@ -5011,6 +5011,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ api này
 | API-06-123 | 037, 152 |
 | API-06-124 | 154 |
 | API-06-125 | 158 |
+| API-06-126 | 057 |
 
 : API tới test case
 
@@ -5153,5 +5154,6 @@ FRS 0.2 (D02-03-PH06 §15) đã hấp thụ các đề nghị của bản 0.1; b
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-06-01…35, test case TC-06, ma trận truy vết, Gherkin, bảng tính |
 | 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: ERR-00-401, 403, 428 thay ký hiệu 401-XT, 403-PQ; ERR-06-051…053; giới hạn tra lô 500 (`06.xref.batch-max`); thêm ca cho API-06-121…125, FR-06-030 mở lại, FR-06-026 tự tắt tự hợp nhất, FR-06-058 gỡ hạn chế; `decision` ở API-06-106, `cause` ở API-06-118 |
+| 0.3 | 2026-11-27 | Chốt câu hỏi mở đợt đồng bộ: Q387 |
 
 : Lịch sử phiên bản

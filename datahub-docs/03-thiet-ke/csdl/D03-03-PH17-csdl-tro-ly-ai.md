@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-03-PH17
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-17 Trợ lý AI và quản trị AI
-phien_ban: 0.1
-ngay: 2026-11-26
+phien_ban: 0.2
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
 phan_he: PH-17
@@ -1094,6 +1094,7 @@ Cột khác: `source_id` uuid; `external_ref` v(512); `title` v(500); `class_che
 | `embedding` | `real[]` | vector(1024) khi có pgvector (đổi kiểu và chỉ mục HNSW vector_cosine_ops ở bước 17-0031-pgvector); real[] chỉ để CI trên postgres:16 không có pgvector. |
 | `embed_version_id` | `uuid` | Phiên bản mô hình nhúng; không trộn vector của hai phiên bản trong một truy hồi (BR-17-016). |
 | `acl` | `jsonb` | Phạm vi quyền đọc: visibility TENANT, ORG (orgIds) hoặc ROLE (roles); truy hồi lọc theo acl rồi xác minh quyền người hỏi (BR-17-035). |
+| `injection_suspect` | `boolean, mặc định false` | Đoạn bị quét mẫu tiêm lệnh gián tiếp khi lập chỉ mục gắn cờ nghi ngờ (chốt 27/11/2026); đoạn vẫn được giữ và vẫn bọc như dữ liệu không tin cậy khi dùng, cờ chỉ để SO và chủ phân hệ nguồn rà (FR-17-018). |
 
 : Cột của bảng `knowledge_chunk`
 
@@ -2142,5 +2143,6 @@ Người điều phối chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` đ�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-CSDL và K-TRINH-BAY: 50 bảng cho 39 thực thể, DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 182 khối PASS; ERD sáu nhóm; cột vector có điều kiện; bảy câu hỏi mở Q17-50…56 |
+| 0.2 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q405: thêm cột injection_suspect (boolean, mặc định false) vào knowledge_chunk để gắn cờ đoạn nghi tiêm lệnh |
 
 : Lịch sử phiên bản

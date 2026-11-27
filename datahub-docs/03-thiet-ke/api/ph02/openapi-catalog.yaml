@@ -310,7 +310,9 @@ paths:
         permission: PERM-02-read
         scopes:
         - catalog:read
-      description: 'Lọc theo mức hiển thị của người gọi (BR-02-039); `Cache-Control: private, max-age=300`, `public` chỉ với tập `PUBLIC`. Hỗ trợ `If-None-Match`.'
+        - catalog:read-meta
+      description: 'Lọc theo mức hiển thị của người gọi (BR-02-039); `Cache-Control: private, max-age=300`, `public` chỉ với tập `PUBLIC`. Hỗ trợ `If-None-Match`.
+        Token `catalog:read-meta` (PH-17 `svc-assist-index`) chỉ nhận siêu dữ liệu, không nhận đặc tả, gói, backend.'
       parameters:
       - $ref: '#/components/parameters/Q_updatedSince'
       - $ref: '#/components/parameters/Q_page'
@@ -355,7 +357,9 @@ paths:
         permission: PERM-02-read
         scopes:
         - catalog:read
-      description: 'Cùng quy tắc hiển thị với API-02-004; API ngoài mức hiển thị của người gọi trả ERR-02-001. Mã lỗi riêng: ERR-02-001.'
+        - catalog:read-meta
+      description: 'Cùng quy tắc hiển thị với API-02-004; API ngoài mức hiển thị của người gọi trả ERR-02-001. Token `catalog:read-meta` (PH-17 `svc-assist-index`)
+        chỉ nhận siêu dữ liệu, không nhận đặc tả, gói, backend. Mã lỗi riêng: ERR-02-001.'
       parameters:
       - $ref: '#/components/parameters/ApiCodePath'
       - $ref: '#/components/parameters/IfNoneMatch'
@@ -4241,6 +4245,7 @@ components:
             catalog:gateway-read: PH-03 đọc dữ liệu công bố
             catalog:gateway-ack: PH-03 xác nhận đã nạp cấu hình (đề nghị bổ sung ở FRS §3.3)
             catalog:portal-read: PH-15 đọc danh mục cho cổng nhà phát triển
+            catalog:read-meta: PH-17 (svc-assist-index) đọc siêu dữ liệu danh mục, không đặc tả, gói, backend
             catalog:flow-sync: PH-04 đăng ký API từ luồng và đọc đặc tả đã gộp
             catalog:metrics-read: PH-13, PH-16 đọc số liệu tuân thủ và thống kê
   parameters:
@@ -8163,8 +8168,8 @@ components:
           format: uuid
         kind:
           type: string
-          description: 'Loại tác vụ, khớp `async_operation.kind` ở D03-03-PH02: `SPEC_REFRESH`, `ROUTE_SKELETON`, `DIFF`, `IMPACT_ANALYSIS`, `LEGACY_IMPORT_COMMIT`;
-            đề nghị thêm `NATIONAL_SYNC_RUN`, `GATEWAY_RECONCILE` (Q02-61).'
+          description: 'Loại tác vụ, khớp `async_operation.kind` ở D03-03-PH02: `SPEC_REFRESH`, `ROUTE_SKELETON`, `DIFF`, `IMPACT_ANALYSIS`, `LEGACY_IMPORT_COMMIT`,
+            `NATIONAL_SYNC_RUN`, `GATEWAY_RECONCILE` (Q02-61 đã chốt 27/11/2026).'
           example: SPEC_REFRESH
         status:
           type: string

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH08
 ten: Đặc tả yêu cầu chức năng phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.3
+phien_ban: 0.4
 ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ quản lý dữ liệu, chủ quản dữ liệu, kỹ sư dh-data, kiểm thử viên
@@ -258,14 +258,14 @@ Hình cho thấy bộ thực thi là nơi duy nhất chạm dữ liệu được
 
 ### 2.5. Quy trình nghiệp vụ liên quan
 
-Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho chất lượng dữ liệu; tài liệu đề nghị bổ sung BP-10 "Đánh giá và cải thiện chất lượng dữ liệu" (Phụ lục B). PH-08 tham gia các quy trình sẵn có như bảng dưới.
+Bộ quy trình BP-01…09 của D02-01 chưa có quy trình riêng cho chất lượng dữ liệu; BP-11 "Đánh giá và cải thiện chất lượng dữ liệu" là quy trình đã chốt ngày 27/11/2026 và được bổ sung vào D02-01 mục 6.2 (Phụ lục B). PH-08 tham gia các quy trình sẵn có như bảng dưới.
 
 | Quy trình | Bước có PH-08 |
 |---|---|
 | BP-02 Xây dựng và phát hành luồng tích hợp | Kỹ sư tích hợp thêm bước Kamelet `dh-dq-check` vào luồng (FR-08-033) |
 | BP-03 Phát hành và đồng bộ danh mục | Sau khi danh mục phát hành, PH-08 đo lại danh mục và các đối tượng có quy tắc hợp lệ trỏ tới nó (FR-08-025) |
 | BP-07 Giám sát, xử lý sự cố, báo cáo | Cảnh báo chất lượng qua PH-13 (FR-08-048), KPI sang PH-16 (FR-08-057) |
-| BP-10 (đề nghị) Đánh giá và cải thiện chất lượng dữ liệu | Khai báo, soạn quy tắc, đo hằng tháng, khắc phục, báo cáo năm |
+| BP-11 Đánh giá và cải thiện chất lượng dữ liệu | Khai báo, soạn quy tắc, đo hằng tháng, khắc phục, báo cáo năm |
 
 : Quy trình nghiệp vụ có PH-08 tham gia
 
@@ -3263,7 +3263,7 @@ Hình cho thấy người duy nhất đưa phiếu tới `VERIFIED` là hệ th�
 ::: dac-ta
 **Mục đích.** Đưa lỗi do chính quá trình hợp nhất gây ra (trùng bản ghi vàng, giá trị thắng sai) tới người quản lý dữ liệu chủ, vì HTTT nguồn không sửa được.
 
-**Tác nhân, quyền.** DS (`PERM-08-remediate`); PH-06 nhận qua API nội bộ.
+**Tác nhân, quyền.** DS (`PERM-08-remediate`); PH-06 nhận qua API-06-126 (scope `mdm:steward-intake`).
 
 **Mức ưu tiên, đợt.** S · Đợt 3.
 
@@ -3278,7 +3278,7 @@ Hình cho thấy người duy nhất đưa phiếu tới `VERIFIED` là hệ th�
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm đối tượng `MDM_DOMAIN` (ERR-08-051).
-2. Hệ thống gọi PH-06 tạo mục hàng đợi (FR-06-027) cho từng `goldenId` với mã lý do `DQ_FINDING` (mã `DQ_GATE` chỉ dành cho ứng viên bị cổng chất lượng từ chối, FR-08-035), mã quy tắc và `suggestedAction`; mục đi vào hàng đợi người quản lý dữ liệu chủ của miền, SLA xử lý do PH-06 đặt theo hàng đợi của mình (PH-08 chỉ theo dõi bằng lần đo kế tiếp); PH-06 trả mã mục.
+2. Hệ thống gọi API-06-126 của PH-06 tạo mục hàng đợi (FR-06-027) cho từng `goldenId` với mã lý do `DQ_FINDING` (mã `DQ_GATE` chỉ dành cho ứng viên bị cổng chất lượng từ chối, FR-08-035), mã quy tắc và `suggestedAction`; mục đi vào hàng đợi người quản lý dữ liệu chủ của miền, SLA xử lý do PH-06 đặt theo hàng đợi của mình (PH-08 chỉ theo dõi bằng lần đo kế tiếp); PH-06 trả mã mục.
 3. Hệ thống ghi liên kết mục PH-06 vào lỗi; phiếu (nếu có) chuyển `ASSIGNED` cho DS dữ liệu chủ, theo dõi bằng lần đo kế tiếp như mọi phiếu.
 
 **Luồng thay thế.** PH-06 đã có mục mở cho `goldenId`: gắn thêm lý do, không tạo trùng. PH-06 từ chối nhận (lỗi do nguồn, không do hợp nhất): phiếu trả về DS kèm lý do để chuyển chủ quản (FR-08-045); sau khi PH-06 sửa, lần đo `VERIFY` chờ EVT-06-02 (FR-08-044).
@@ -4961,7 +4961,7 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 | D02-08 §3.2, §4 | Thêm mười quyền `PERM-08-read`, `PERM-08-asset`, `PERM-08-approve`, `PERM-08-run`, `PERM-08-finding-read`, `PERM-08-remediate`, `PERM-08-report`, `PERM-08-export`, `PERM-08-config`, `PERM-08-audit-read` theo ma trận 3.2, giữ `PERM-08-rule-admin`, thêm PA (mẫu `COMMON`); `PERM-08-export` cấp thêm cho DO (○) chỉ để chấp thuận xuất có trường Nhạy cảm; xác nhận, tắt tiếng cảnh báo dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; DA dự phòng cấp tỉnh (Q08-18); cặp loại trừ DS và DA trong cùng tenant, tách vai DS đo và DO sửa; scope máy `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT), `dq.ingest` (PH-05 `dh-integration`, chỉ gọi API-08-024) |
 | D00-04 §2, §3.1, §3.2, D00-02 | Dòng PH-08: tình trạng theo tập đã nộp; tiền tố khóa Valkey `{tenant}:dq:*`, khóa OpenBao `dh-{tenant}-dq-hmac`, `dh-{tenant}-dq-sign`; mở dải ADR 085–089 (đề xuất, chưa có tệp, năm nội dung ở 12.3); chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận đủ bảy tập |
 | D00-03 | Ghi chú "PH-08 dùng gián tiếp" cho LGC-DMDC-006, 007, 008, LGC-BUS-027, LGC-NGSP-003, 005 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-08 làm chính |
-| D02-01, D02-02 §5 | D02-01: thêm quy trình BP-10 "Đánh giá và cải thiện chất lượng dữ liệu" (mục 2.5). D02-02 §5: dòng PH-08 có 61 FR, tham chiếu D02-03-PH08 |
+| D02-01, D02-02 §5 | D02-01: thêm quy trình BP-11 "Đánh giá và cải thiện chất lượng dữ liệu" (mục 2.5). D02-02 §5: dòng PH-08 có 61 FR, tham chiếu D02-03-PH08 |
 | D02-03-PH06, D03-02-PH06, D03-04-PH06 | Khung nhìn hợp đồng ổn định `ph06_mdm.v_dq_{domain}` cho vai `dq_reader` (Q08-08); `QualityGatePort`, `StewardIntakeApi` ở `mdm::api`; API nội bộ tạo mục hàng đợi lý do `DQ_FINDING` (FR-08-046) và cổng chất lượng gọi `checks:evaluate` với lý do từ chối `DQ_GATE` (FR-08-035); SLA, người nhận; xử lý khi PH-06 từ chối chuyển |
 | D02-03-PH05, D03-02-PH05, D03-04-PH05 | Kamelet nền `dh-dq-check` (Q08-09) với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; cấp sử dụng kết nối chỉ đọc có hạn cho `dh-data/dq`; API khám phá lược đồ (API-08-018); đẩy chỉ số FR-05-041 sang API-08-024 với scope `dq.ingest`; xác nhận độ trễ bản sao chỉ đọc (Q08-19) |
 | D02-03-PH07, D03-02-PH07 | Xác nhận PH-08 dùng ảnh chụp danh mục (ADR-053), tra lô FR-07-027, tra theo thời điểm FR-07-026; `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản dịch vụ PH-08 |
@@ -4982,3 +4982,4 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 | 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ chéo cuối: EVT-08-14 mang `snapshotId` làm khóa lũy đẳng cho PH-16; ghi rõ PH-08 không có bảng kiểm toán riêng |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 56 đề nghị từ UC, SDD, CSDL, API, TC, MH (chương 15): sửa ví dụ FR-08-028 (86,37), BR-08-013 HMAC-SHA256 khóa theo tenant, PH-18 phụ thuộc mềm; thêm API-08-129…131, ERR-08-055, scope `dq.ingest`, EN-08-30…33, 3 khóa tham số; thống nhất `domain_status`, `weight_config.status`, `value_mode`; 19 enum mới ở Phụ lục A; làm rõ FR-08-016, 017, 021, 025, 035, 044, 046, 054; Q08-18, 19; hấp thụ thêm TC §10.1 và MH Phụ lục B: ADVISORY `WARN` khi có vi phạm, lô quá 100 bản ghi và `INLINE` với toán tử chỉ chạy lô, ERR-08-056 tách khỏi ERR-08-027, ERR-08-042 cho hạn tắt tiếng, API-08-132 xem trước trọng số, `etaSeconds`, `facets`, radar kỳ trước |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 61 FR đủ 17 mục chia mười nhóm, phủ 16 FR của SRS cũ; bảy máy trạng thái; 35 BR, 20 NFR, 40 tham số; 54 mã lỗi control và 19 runtime kèm câu thông báo; 14 sự kiện phát, 8 tiêu thụ; 128 API dự kiến; 20 màn hình; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; thay căn cứ NĐ 47/2020 bằng NĐ 278/2025 |
+| 0.4 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q386, Q411, Q424 |

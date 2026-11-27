@@ -259,7 +259,7 @@ CREATE TABLE ph05_adapter.connection_grant (
   version          integer       NOT NULL DEFAULT 0,
   CONSTRAINT pk_connection_grant PRIMARY KEY (id),
   CONSTRAINT fk_connection_grant_conn FOREIGN KEY (connection_id, tenant_id) REFERENCES ph05_adapter.connection (id, tenant_id) ON DELETE CASCADE,
-  CONSTRAINT ck_connection_grant_scope CHECK (scope IN ('WORKSPACE', 'FLOW')),
+  CONSTRAINT ck_connection_grant_scope CHECK (scope IN ('WORKSPACE', 'FLOW', 'API')),
   CONSTRAINT ck_connection_grant_envs CHECK (cardinality(environments) BETWEEN 1 AND 3 AND environments <@ ARRAY['TEST', 'STAGING', 'PROD']::varchar(8)[])
 );
 CREATE UNIQUE INDEX uq_connection_grant_active ON ph05_adapter.connection_grant (tenant_id, connection_id, scope, target_code) WHERE revoked_at IS NULL;
@@ -267,7 +267,7 @@ CREATE INDEX ix_connection_grant_target ON ph05_adapter.connection_grant (tenant
 CREATE TRIGGER tg_connection_grant_touch BEFORE UPDATE ON ph05_adapter.connection_grant FOR EACH ROW EXECUTE FUNCTION ph05_adapter.tg_touch();
 CALL ph05_adapter.p_enable_rls('ph05_adapter.connection_grant', 'P');
 COMMENT ON TABLE ph05_adapter.connection_grant IS 'EN-05-04 Cấp kết nối cho không gian làm việc hoặc luồng PH-04 (FR-05-009). Thu hồi giữ dòng (revoked_at) để kiểm toán.';
-COMMENT ON COLUMN ph05_adapter.connection_grant.target_code IS 'Mã không gian (scope WORKSPACE) hoặc mã luồng (scope FLOW) ở schema ph04; kiểm qua FlowQueryApi.';
+COMMENT ON COLUMN ph05_adapter.connection_grant.target_code IS 'Mã không gian (scope WORKSPACE) hoặc mã luồng (scope FLOW) ở schema ph04, kiểm qua FlowQueryApi; mã API (scope API) ở PH-02, kiểm qua REST API-02-002 (Q383).';
 -- @rollback DROP TABLE IF EXISTS ph05_adapter.connection_grant CASCADE;
 
 -- @changeset ph05-0140-connection-test

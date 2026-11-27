@@ -184,6 +184,7 @@ INPUT = {
     'RedteamCasePatch': 'attackText:s, status:e(ACTIVE|RETIRED), retiredReason:s',
     'RedteamRunInput': 'subjectType!:e(MODEL_VERSION|PROMPT_VERSION|GUARDRAIL_CODE), subjectId:u',
     'FeedbackInput': 'messageId!:u, feedbackKind!:#FeedbackKind, comment:s',
+    'FeedbackUpdateInput': 'feedbackKind!:#FeedbackKind, comment:s',
     'FeedbackTriageInput': 'assignedTo!:s, comment:s',
     'FeedbackResolveInput': 'resolution!:s',
     'QualityThresholdsInput': 'thresholds!:[#QualityThreshold]',

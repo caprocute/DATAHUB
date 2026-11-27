@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-04-PH09
 ten: Đặc tả use case phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.2
-ngay: 2026-11-26
+phien_ban: 0.3
+ngay: 2026-11-27
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
 phan_he: PH-09
@@ -307,22 +307,22 @@ Mỗi use case có ít nhất một màn hình hoặc API. Use case 13, 18, 19, 
 
 ### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
 
-Mọi use case truy về REQ-09 (BO-04, mức M). BP-01…09 theo D02-01; BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân" là đề nghị bổ sung (FRS Phụ lục B). Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (che dữ liệu nhạy cảm, nâng cấp thành chính sách tập trung) và LGC-NGSP-003 (tra cứu BHXH, giữ nguyên ở PH-14, PH-09 chỉ kiểm soát mục đích); "Không" là năng lực mới.
+Mọi use case truy về REQ-09 (BO-04, mức M). BP-01…09 theo D02-01; BP-12 "Quản lý quyền riêng tư và dữ liệu cá nhân" là quy trình đã chốt ngày 27/11/2026, bổ sung vào D02-01 mục 6.2 (FRS Phụ lục B). Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (che dữ liệu nhạy cảm, nâng cấp thành chính sách tập trung) và LGC-NGSP-003 (tra cứu BHXH, giữ nguyên ở PH-14, PH-09 chỉ kiểm soát mục đích); "Không" là năng lực mới.
 
 | UC | REQ | BP | LGC |
 |---|---|---|---|
-| UC-09-01 | REQ-09 | BP-08, BP-11 | Không |
-| UC-09-02, UC-09-04 | REQ-09 | BP-04, BP-11 | Không |
-| UC-09-03, UC-09-06, UC-09-07 | REQ-09 | BP-11 | Không |
+| UC-09-01 | REQ-09 | BP-08, BP-12 | Không |
+| UC-09-02, UC-09-04 | REQ-09 | BP-04, BP-12 | Không |
+| UC-09-03, UC-09-06, UC-09-07 | REQ-09 | BP-12 | Không |
 | UC-09-05 | REQ-09 | BP-02, BP-04 | Không |
-| UC-09-08 | REQ-09 | BP-11 | LGC-NGSP-003 |
+| UC-09-08 | REQ-09 | BP-12 | LGC-NGSP-003 |
 | UC-09-09, UC-09-10 | REQ-09 | BP-01 | LGC-NGSP-003 |
-| UC-09-11, UC-09-12 | REQ-09 | BP-11 | LGC-NGSP-003 |
+| UC-09-11, UC-09-12 | REQ-09 | BP-12 | LGC-NGSP-003 |
 | UC-09-13, UC-09-14 | REQ-09 | BP-06 | LGC-NGSP-003 |
 | UC-09-15 | REQ-09 | BP-01, BP-02 | LGC-NGSP-003 |
-| UC-09-16, UC-09-17, UC-09-18, UC-09-20, UC-09-21, UC-09-22, UC-09-23, UC-09-24, UC-09-25, UC-09-26 | REQ-09 | BP-11 | LGC-TOOL-012 |
+| UC-09-16, UC-09-17, UC-09-18, UC-09-20, UC-09-21, UC-09-22, UC-09-23, UC-09-24, UC-09-25, UC-09-26 | REQ-09 | BP-12 | LGC-TOOL-012 |
 | UC-09-19 | REQ-09 | BP-02 | LGC-TOOL-012 |
-| UC-09-27, UC-09-29, UC-09-30, UC-09-31, UC-09-32, UC-09-34 | REQ-09 | BP-11 | Không |
+| UC-09-27, UC-09-29, UC-09-30, UC-09-31, UC-09-32, UC-09-34 | REQ-09 | BP-12 | Không |
 | UC-09-28 | REQ-09 | BP-08 | Không |
 | UC-09-33 | REQ-09 | BP-07 | Không |
 : Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
@@ -617,6 +617,7 @@ Ba mươi bốn use case xếp theo nhóm A đến K của FRS. Mức ưu tiên 
 **Luồng thay thế.**
 - **1a. Gỡ nhãn.** Một người đề nghị kèm số và ngày văn bản giải mật (API-09-005); người thứ hai duyệt (API-09-006); nhãn gỡ có hiệu lực khi đủ hai người (LP-09-01).
 - **3a. Không xác định được phân loại.** Xử lý như `SENSITIVE` và cảnh báo cấu hình.
+- **3b. Kiểm cấm gửi ra ngoài tỉnh (PH-14).** Khi `egressScope` là `OUT_OF_PROVINCE`, hệ thống kiểm cờ `noEgress` của từng trường và trả `egressBlocked`, `egressBlockedFields[]`; PH-14 không gửi lô (FR-09-007, BR-09-063, NFR-09-027; chủ đầu tư chốt 27/11/2026).
 
 **Luồng ngoại lệ.**
 - **E1. Có nhãn khi đăng ký phần tử (UC-09-02).** ERR-09-018 (422): "Dữ liệu mang nhãn bí mật nhà nước không được đưa vào Datahub."
@@ -2039,7 +2040,7 @@ Bản 0.2 còn thêm vào các use case những điểm FRS 0.2 mới nêu: lo�
 
 ### 8.3. Đề nghị đồng bộ cho tập khác
 
-D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO không giữ `PERM-09-purpose-approve`; DS với DA; người soạn không duyệt chính sách của mình). D02-01: thêm BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân". D03-02-PH09 dùng năm sơ đồ trình tự làm nền luồng thành phần; D03-06-PH09 lấy câu thông báo từ chương 6 và đặt câu cho ERR-09-003; D03-04-PH09 đã có API-09-242, 243, 244; D05-02-PH09 dựng TS-09-nn ứng với UC-09-nn, ca đồng hồ (UC-09-20, 24, 30, 33) dùng đồng hồ giả lập. D00-02 chốt ADR 090 (điểm quyết định chính sách tập trung, PH-09 là PAP và PIP, OPA là PDP), ADR 091 (giả danh hóa HMAC-SHA256 theo tenant và mục đích, token qua OpenBao transit), ADR 092 (ẩn danh hóa k-ẩn danh bằng ARX), ADR 093 (phát hiện DLCN bằng bộ mẫu và kiểm tổng).
+D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO không giữ `PERM-09-purpose-approve`; DS với DA; người soạn không duyệt chính sách của mình). D02-01: thêm BP-12 "Quản lý quyền riêng tư và dữ liệu cá nhân". D03-02-PH09 dùng năm sơ đồ trình tự làm nền luồng thành phần; D03-06-PH09 lấy câu thông báo từ chương 6 và đặt câu cho ERR-09-003; D03-04-PH09 đã có API-09-242, 243, 244; D05-02-PH09 dựng TS-09-nn ứng với UC-09-nn, ca đồng hồ (UC-09-20, 24, 30, 33) dùng đồng hồ giả lập. D00-02 chốt ADR 090 (điểm quyết định chính sách tập trung, PH-09 là PAP và PIP, OPA là PDP), ADR 091 (giả danh hóa HMAC-SHA256 theo tenant và mục đích, token qua OpenBao transit), ADR 092 (ẩn danh hóa k-ẩn danh bằng ARX), ADR 093 (phát hiện DLCN bằng bộ mẫu và kiểm tổng).
 
 ## 9. Câu hỏi mở
 
@@ -2059,3 +2060,4 @@ D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO 
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 34 use case phủ 64 FR của FRS 0.1, bốn sơ đồ use case, năm sơ đồ trình tự (chấp thuận mục đích, xem đầy đủ, ẩn danh hóa, yêu cầu chủ thể, vi phạm 72 giờ), ma trận truy vết hai chiều, sáu đề nghị cho FRS |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: tên thư viện `dh-privacy-client`, nhánh ngừng phần tử, rút yêu cầu, gia hạn hạn trả lời, đề nghị gia hạn `RENEWAL`, tra đồng ý theo định danh, API-09-238 đến 245 vào bảng truy vết, ERR-09-079, 080, 082, BR-09-062, NFR-09-024 đến 026, đồng hồ 72 giờ dừng khi đã thông báo, mục 8.2 thành bảng kết quả |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q388, Q393 |

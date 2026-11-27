@@ -1,12 +1,12 @@
 ---
 ma_tai_lieu: D02-04-PH13
 ten: Đặc tả use case phân hệ PH-13 Giám sát và kiểm toán
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-platform, đội vận hành nền tảng, cán bộ an toàn thông tin, kiểm toán viên, kiểm thử viên
 phan_he: PH-13
-mo_ta: Đặc tả 42 use case của phân hệ giám sát xuyên suốt và nhật ký kiểm toán chỉ-thêm có chuỗi băm, phủ đủ 61 yêu cầu chức năng, theo hành trình thật của người trực, cán bộ ATTT, kiểm toán viên và các phân hệ khác, làm căn cứ thiết kế màn hình, API và ca kiểm thử.
+mo_ta: Đặc tả 43 use case của phân hệ giám sát xuyên suốt và nhật ký kiểm toán chỉ-thêm có chuỗi băm, phủ đủ 62 yêu cầu chức năng, theo hành trình thật của người trực, cán bộ ATTT, kiểm toán viên và các phân hệ khác, làm căn cứ thiết kế màn hình, API và ca kiểm thử.
 tai_lieu_lien_quan: D02-03-PH13 FRS; D03-04-PH13 API; D03-06-PH13 Màn hình; D05-02-PH13 Test case; D02-08 ma trận phân quyền
 ---
 
@@ -14,9 +14,9 @@ tai_lieu_lien_quan: D02-03-PH13 FRS; D03-04-PH13 API; D03-06-PH13 Màn hình; D0
 
 ## Tóm tắt cho hội đồng thẩm định
 
-**Mục tiêu.** Tài liệu mô tả 42 use case cho thấy PH-13 được dùng như thế nào trong thực tế, từ lúc một lượt gọi API sinh dữ liệu quan sát đến lúc người trực nhận cảnh báo lúc nửa đêm, và từ lúc một thao tác nghiệp vụ sinh bản ghi kiểm toán đến lúc kiểm toán viên cầm gói bằng chứng ký số trong tay. Use case đi theo hai trục mà FRS đã tách bạch: **quan sát vận hành** (hệ thống có khỏe không, chậm ở đâu, ai cần được gọi dậy) và **kiểm toán** (ai làm gì với đối tượng nào, khi nào, và dấu vết đó có bị sửa không). Mỗi use case ghi rõ người làm, điều kiện, từng bước kiểm chứng được, nhánh thay thế và nhánh lỗi kèm câu thông báo người dùng nhìn thấy.
+**Mục tiêu.** Tài liệu mô tả 43 use case cho thấy PH-13 được dùng như thế nào trong thực tế, từ lúc một lượt gọi API sinh dữ liệu quan sát đến lúc người trực nhận cảnh báo lúc nửa đêm, và từ lúc một thao tác nghiệp vụ sinh bản ghi kiểm toán đến lúc kiểm toán viên cầm gói bằng chứng ký số trong tay. Use case đi theo hai trục mà FRS đã tách bạch: **quan sát vận hành** (hệ thống có khỏe không, chậm ở đâu, ai cần được gọi dậy) và **kiểm toán** (ai làm gì với đối tượng nào, khi nào, và dấu vết đó có bị sửa không). Mỗi use case ghi rõ người làm, điều kiện, từng bước kiểm chứng được, nhánh thay thế và nhánh lỗi kèm câu thông báo người dùng nhìn thấy.
 
-**Phạm vi.** 42 use case phủ đủ 61 FR của [D02-03-PH13](../frs/D02-03-PH13-frs-giam-sat-kiem-toan.md): 52 FR mức M, 8 mức S, 1 mức C (FR-13-055, Đợt sau). Hai use case thuộc Đợt sau là UC-13-37 (báo cáo sự cố, thông báo vi phạm dữ liệu cá nhân) và UC-13-41 (đóng chuỗi kiểm toán khi tenant ngừng hoặc sáp nhập); chúng được đặc tả sớm để thiết kế không chặn việc mở rộng. 27 use case do người khởi phát, 15 use case do hệ thống hoặc phân hệ khác khởi phát (thu thập, ghi chuỗi, neo, đối chiếu, đánh giá luật, cung cấp dữ liệu, khởi tạo tenant); cả 15 vẫn được đặc tả ở mức đầy đủ vì chính chúng quyết định độ tin cậy của nhật ký.
+**Phạm vi.** 43 use case phủ đủ 62 FR của [D02-03-PH13](../frs/D02-03-PH13-frs-giam-sat-kiem-toan.md): 52 FR mức M, 8 mức S, 2 mức C (FR-13-055, 062, Đợt sau). Ba use case thuộc Đợt sau là UC-13-37 (báo cáo sự cố, thông báo vi phạm dữ liệu cá nhân), UC-13-41 (đóng chuỗi kiểm toán khi tenant ngừng hoặc sáp nhập) và UC-13-43 (khôi phục chuỗi kiểm toán sau sự cố, đường ngoại lệ có biên bản của BR-13-033); chúng được đặc tả sớm để thiết kế không chặn việc mở rộng. 27 use case do người khởi phát, 15 use case do hệ thống hoặc phân hệ khác khởi phát (thu thập, ghi chuỗi, neo, đối chiếu, đánh giá luật, cung cấp dữ liệu, khởi tạo tenant); cả 15 vẫn được đặc tả ở mức đầy đủ vì chính chúng quyết định độ tin cậy của nhật ký.
 
 **Căn cứ pháp lý.** Như FRS: CMP-LAW-09 (Công văn 631/THH-THHT: giám sát, thống kê theo thời gian thực), CMP-LAW-16 (Luật An ninh mạng 116/2025: nhật ký hệ thống, lưu trong nước), CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026, TCVN 14423:2026 cấp độ 3), CMP-LAW-01 (Luật Dữ liệu 60/2024: ghi vết khai thác dữ liệu), CMP-LAW-05 và CMP-LAW-04 (Luật BVDLCN 91/2025, NĐ 356/2025: không dữ liệu cá nhân trong log, báo vi phạm 72 giờ), CMP-LAW-03 (NĐ 278/2025: nhật ký khai thác dữ liệu kết nối quốc gia).
 
@@ -32,10 +32,10 @@ tai_lieu_lien_quan: D02-03-PH13 FRS; D03-04-PH13 API; D03-06-PH13 Màn hình; D0
 
 | Chỉ số | Giá trị |
 |---|---|
-| Use case | 42 (UC-13-01…42): 35 mức M, 6 mức S, 1 mức C |
-| FR được phủ | 61 trên 61 (FR-13-001…061) |
-| Người khởi phát, hệ thống khởi phát | 27 và 15 |
-| Luồng thay thế, luồng ngoại lệ | 112 và 202 (mỗi luồng là một ca kiểm thử ở D05-02-PH13) |
+| Use case | 43 (UC-13-01…43): 35 mức M, 6 mức S, 2 mức C |
+| FR được phủ | 62 trên 62 (FR-13-001…062) |
+| Người khởi phát, hệ thống khởi phát | 28 và 15 |
+| Luồng thay thế, luồng ngoại lệ | 114 và 206 (mỗi luồng là một ca kiểm thử ở D05-02-PH13) |
 | Luồng phụ dùng chung | 7 (LP-13-01…07) |
 | Tác nhân người | 10 vai trò (PA, PO, TA, TO, SO, IE, IA, SV, VW, AU) |
 | Câu hỏi mở của tập | 5 (Q13-45…49) |
@@ -265,6 +265,7 @@ flowchart LR
     U40["UC-13-40 Khởi tạo tenant"]
     U41["UC-13-41 Đóng chuỗi tenant"]
     U42["UC-13-42 Tham số, hạn mức"]
+    U43["UC-13-43 Khôi phục chuỗi sau sự cố"]
   end
   SO --> U33
   SO --> U35
@@ -332,10 +333,11 @@ Bảng dưới gắn mỗi use case với các chức năng FR-13 mà nó hiện
 | UC-13-40 | Khởi tạo quan sát và chuỗi kiểm toán cho tenant mới | PH-20 | M | 059 |
 | UC-13-41 | Đóng chuỗi kiểm toán khi tenant ngừng hoặc sáp nhập | PH-20 | S | 060 |
 | UC-13-42 | Đặt tham số và hạn mức quan sát theo tenant | PA, TA | S | 061 |
+| UC-13-43 | Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu (đường ngoại lệ có biên bản) | Đội vận hành; SO và TA cùng ký | C | 062 |
 
 : Use case và FR hiện thực
 
-Mọi FR mức M và S có ít nhất một use case; FR-13-055 (mức C, Đợt sau) thuộc UC-13-37 và FR-13-060 (mức S, Đợt sau) thuộc UC-13-41. FR-13-019 (ghi vết thao tác của PH-13) là yêu cầu xuyên suốt: ngoài UC-13-11, nó được áp dụng ở bước kiểm toán của UC-13-12, 14, 15, 16, 26, 29, 30, 33, 35, 36, 41, 42.
+Mọi FR mức M và S có ít nhất một use case; FR-13-055 (mức C, Đợt sau) thuộc UC-13-37, FR-13-060 (mức S, Đợt sau) thuộc UC-13-41 và FR-13-062 (mức C, Đợt sau) thuộc UC-13-43. FR-13-019 (ghi vết thao tác của PH-13) là yêu cầu xuyên suốt: ngoài UC-13-11, nó được áp dụng ở bước kiểm toán của UC-13-12, 14, 15, 16, 26, 29, 30, 33, 35, 36, 41, 42.
 
 ### 5.2. Use case, màn hình và API
 
@@ -385,6 +387,7 @@ Bảng dưới cho biết mỗi use case có người thao tác hiển thị ở
 | UC-13-40 | — | API-13-072 |
 | UC-13-41 | UI-13-17, UI-13-13 | API-13-073 |
 | UC-13-42 | UI-13-17 | API-13-070, 071 |
+| UC-13-43 | — | — |
 
 : Use case, màn hình và API
 
@@ -430,12 +433,13 @@ Quy trình dùng mã BP của D02-01: BP-07 là giám sát, xử lý sự cố v
 | UC-13-39 | REQ-13, REQ-18 | BP-07 | Không |
 | UC-13-40, 41 | REQ-13, REQ-20 | BP-08 | Không |
 | UC-13-42 | REQ-13 | BP-07 | Không |
+| UC-13-43 | REQ-13 | Sự cố ATTT (D03-07 §8) | Không |
 
 : Use case, REQ, quy trình và hệ cũ
 
 ## 6. Đặc tả chi tiết use case
 
-Chương này đặc tả 42 use case theo tám nhóm giống FRS: thu thập dữ liệu quan sát (UC-13-01…04), ghi vết kiểm toán (UC-13-05…11), tra cứu kiểm toán và bằng chứng (UC-13-12…16), chẩn đoán (UC-13-17…19), bảng điều khiển (UC-13-20…25), cảnh báo (UC-13-26…32), phát hiện bất thường an ninh (UC-13-33…37), cung cấp dữ liệu và vòng đời tenant (UC-13-38…42). Mỗi use case là một khối 15 mục; kỹ sư và kiểm thử viên đọc trực tiếp luồng chính, thay thế, ngoại lệ, hội đồng thẩm định đọc Mục tiêu, Đảm bảo thành công và Quy tắc áp dụng.
+Chương này đặc tả 43 use case theo tám nhóm giống FRS: thu thập dữ liệu quan sát (UC-13-01…04), ghi vết kiểm toán (UC-13-05…11 và UC-13-43, thuộc Đợt sau), tra cứu kiểm toán và bằng chứng (UC-13-12…16), chẩn đoán (UC-13-17…19), bảng điều khiển (UC-13-20…25), cảnh báo (UC-13-26…32), phát hiện bất thường an ninh (UC-13-33…37), cung cấp dữ liệu và vòng đời tenant (UC-13-38…42); UC-13-43 đặt cuối chương 6 để giữ nguyên số của các use case đã có. Mỗi use case là một khối 15 mục; kỹ sư và kiểm thử viên đọc trực tiếp luồng chính, thay thế, ngoại lệ, hội đồng thẩm định đọc Mục tiêu, Đảm bảo thành công và Quy tắc áp dụng.
 
 ### 6.1. UC-13-01 · Thu chỉ số, log, vết truy nguyên từ mọi thành phần
 
@@ -2217,8 +2221,8 @@ Chương này đặc tả 42 use case theo tám nhóm giống FRS: thu thập d�
 1. Dũng mở cảnh báo UC-SEC-10 của `HT-QLVB` ở UI-13-15; giao diện hiện luật, nguồn, chủ thể, bằng chứng (liên kết tới bản ghi kiểm toán và log), mức, thời điểm phát hiện và runbook điều tra (API-13-057).
 2. Dũng bấm "Tiếp nhận" (API-13-058). Hệ thống chuyển `ACKNOWLEDGED`, ghi người xử lý, dừng leo thang tới Giang và ghi `SECURITY.ALERT.ACK`.
 3. Dũng điều tra qua UC-13-12 (lọc `actor = HT-QLVB`), UC-13-17 và UC-13-18, và thấy `HT-QLVB` gọi hàng loạt bằng tài khoản dịch vụ nghi bị lộ.
-4. Dũng bấm "Đề xuất tạm ngừng HTTT", chọn `HT-QLVB` và nhập lý do "Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ". UI gọi API-13-060; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do, gửi đề nghị sang PH-01 qua EVT-13-04 với `proposedAction = SUSPEND_SYSTEM` và mở sẵn màn tạm ngừng của PH-01 (xem Q13-12 của FRS).
-5. Người có `PERM-01-suspend` (Giang hoặc Dũng) tạm ngừng `HT-QLVB` ở PH-01; PH-13 chỉ ghi liên kết và kết quả.
+4. Dũng bấm "Đề xuất tạm ngừng HTTT", chọn `HT-QLVB` và nhập lý do "Tra cứu bất thường 1.240 khóa trong 1 giờ, nghi lộ tài khoản dịch vụ". UI gọi API-13-060; hệ thống kiểm tra HTTT thuộc tenant, ghi lý do, gửi đề xuất sang PH-01 bằng API-01-089; PH-01 tạo việc khẩn cho SO (xem Q13-12 của FRS, đã chốt 27/11/2026).
+5. Người có `PERM-01-suspend` (Giang hoặc Dũng) mở việc ở PH-01 và tạm ngừng `HT-QLVB` bằng thao tác khẩn (FR-01-032), hoặc đóng việc không tạm ngừng; PH-13 chỉ ghi liên kết và kết quả.
 6. Dũng đóng cảnh báo (API-13-059) với kết luận `CONFIRMED_INCIDENT` và ghi chú; hệ thống ghi `SECURITY.ALERT.CLOSE`.
 7. Kết luận `CONFIRMED_INCIDENT` mở hồ sơ sự cố theo quy trình ứng cứu (D03-07 §8) và gợi ý lập báo cáo (UC-13-37).
 
@@ -2579,6 +2583,54 @@ Chương này đặc tả 42 use case theo tám nhóm giống FRS: thu thập d�
 **Màn hình, API.** UI-13-17 (tab Tham số và hạn mức); API-13-070, 071.
 :::
 
+### 6.43. UC-13-43 · Khôi phục chuỗi kiểm toán sau sự cố mất dữ liệu
+
+::: dac-ta
+**Mục tiêu.** Sau sự cố mất dữ liệu ở cơ sở dữ liệu kiểm toán, đội vận hành nạp lại nguyên văn các bản ghi đã nằm ở kho WORM để chuỗi băm liền lại và qua được kiểm tra toàn vẹn, mà không sửa hay dựng lại chuỗi. Đây là đường ngoại lệ duy nhất của BR-13-033, có biên bản; use case thuộc Đợt sau.
+
+**Tác nhân chính.** Đội vận hành (chạy công cụ `AuditRestore`).
+
+**Tác nhân phụ.** ROLE-SECURITY_OFFICER (Dũng) và ROLE-TENANT_ADMIN (Giang) cùng ký biên bản; kho WORM, PostgreSQL, OpenBao (kiểm neo), SIEM.
+
+**Mức ưu tiên.** C (Đợt sau).
+
+**FR hiện thực.** FR-13-062.
+
+**Truy vết.** REQ-13; quy trình ứng cứu sự cố (D03-07 §8); D03-03-PH13 §7.2.
+
+**Tiền điều kiện.** Sự cố mất dữ liệu đã được xác nhận; PostgreSQL đã khôi phục và mở chế độ chỉ đọc; `ingest` chưa cho ghi; Dũng và Giang đã duyệt biên bản mở và cửa sổ bảo trì.
+
+**Kích hoạt.** Dũng yêu cầu đội vận hành chạy thủ tục sau khi xác nhận sự cố.
+
+**Đảm bảo tối thiểu.** Không bản ghi nào bị sửa hoặc dựng mới; trigger `tg_audit_chain_guard` luôn áp dụng; không có màn hình hay API cho thao tác này.
+
+**Đảm bảo thành công.** Chuỗi của từng tenant liền lại, xác minh `ON_DEMAND` toàn chuỗi đạt, `AUDIT.CHAIN.RESTORE` ghi ở chuỗi `PLATFORM`, biên bản có chữ ký Dũng và Giang lưu ở `dh-evidence`.
+
+**Luồng chính.**
+
+1. Đội vận hành so `head_seq` và `head_hash` của chuỗi từng tenant với lô WORM mới nhất và neo gần nhất; thấy bảng đứng sau WORM khoảng 4 phút bản ghi.
+2. `AuditRestore` đọc lô từ WORM, kiểm băm lô và băm từng bản ghi, rồi chèn nguyên văn theo thứ tự; trigger kiểm liền kề và nối đúng.
+3. Đội vận hành mở lại `ingest`; DU gửi lại bản ghi chưa lên WORM từ hộp thư đi hoặc Kafka, hệ thống khử trùng theo `id` và nối tiếp bản còn lại.
+4. Hệ thống chạy lượt xác minh toàn chuỗi (UC-13-07); kết quả đạt.
+5. Hệ thống ghi `AUDIT.CHAIN.RESTORE` vào chuỗi `PLATFORM` và gửi SIEM.
+6. Dũng và Giang cùng ký biên bản; đội vận hành lưu ở `dh-evidence`.
+
+**Luồng thay thế.**
+
+- **2a. Bảng không đứng sau WORM.** Bỏ bước 2, chỉ xác minh và lập biên bản.
+- **2b. Nhiều tenant bị mất dữ liệu.** Chạy lần lượt từng tenant; mỗi tenant xác minh đạt rồi mới mở `ingest` cho tenant đó.
+
+**Luồng ngoại lệ.**
+
+- **E1. Băm không khớp neo (bước 2).** Dừng, không chèn thêm; xử lý như đứt chuỗi ở UC-13-08.
+- **E2. Thiếu chữ ký Dũng hoặc Giang (trước bước 1).** Không mở cửa sổ bảo trì, không chạy `AuditRestore`.
+- **E3. Xác minh không đạt (bước 4).** Chuỗi giữ trạng thái đứt; mở sự cố theo UC-13-08.
+
+**Quy tắc áp dụng.** BR-13-002, 033 (ngoại lệ có biên bản).
+
+**Màn hình, API.** Không có màn hình, không có API; thủ tục vận hành ở sổ tay của PH-18.
+:::
+
 ## 7. Luồng phụ dùng chung
 
 Bảy luồng phụ dưới đây được nhiều use case dẫn chiếu để mỗi use case không phải mô tả lại. Mỗi luồng phụ là một hành vi giao diện hoặc hệ thống cố định; mã lỗi và câu thông báo lấy nguyên văn từ FRS §9.2.
@@ -2597,9 +2649,9 @@ Bảy luồng phụ dưới đây được nhiều use case dẫn chiếu để 
 
 ## 8. Tổng hợp mã mới và đối chiếu
 
-Tập này không tạo mã FR, NFR, BR, API, ERR, EVT hay UI mới; mọi mã dùng ở chương 6 đều có ở FRS. Mã mới của tập: **UC-13-01…42** (42 use case) và **LP-13-01…07** (7 luồng phụ); câu hỏi mở **Q13-45…49**.
+Tập này không tạo mã FR, NFR, BR, API, ERR, EVT hay UI mới; mọi mã dùng ở chương 6 đều có ở FRS. Mã mới của tập: **UC-13-01…43** (43 use case) và **LP-13-01…07** (7 luồng phụ); câu hỏi mở **Q13-45…49**.
 
-**Đối chiếu độ phủ.** Mọi FR mức M (52 FR) và mức S (8 FR) có ít nhất một use case (bảng 5.1); FR-13-055 (mức C, Đợt sau) thuộc UC-13-37. Mỗi use case có FR, màn hình hoặc ghi rõ "không có màn riêng", và API hoặc ghi rõ "không có API riêng" (bảng 5.2). Mỗi mục `LGC` có phân hệ đích PH-13 ở FRS §11.1 xuất hiện ở cột LGC của bảng 5.3 ít nhất một lần; hai hàng `LGC-NFR` (004, 005) nằm ở UC-13-01, 06, 10, 17.
+**Đối chiếu độ phủ.** Mọi FR mức M (52 FR) và mức S (8 FR) có ít nhất một use case (bảng 5.1); FR-13-055 và FR-13-062 (mức C, Đợt sau) thuộc UC-13-37 và UC-13-43. Mỗi use case có FR, màn hình hoặc ghi rõ "không có màn riêng", và API hoặc ghi rõ "không có API riêng" (bảng 5.2). Mỗi mục `LGC` có phân hệ đích PH-13 ở FRS §11.1 xuất hiện ở cột LGC của bảng 5.3 ít nhất một lần; hai hàng `LGC-NFR` (004, 005) nằm ở UC-13-01, 06, 10, 17.
 
 **Đối chiếu hai yêu cầu xuyên suốt.** FR-13-009 (cách ly theo tenant) không có use case riêng: nó được hiện thực ở UC-13-01 (bước 7) và là điều kiện của mọi use case đọc dữ liệu quan sát. FR-13-019 (ghi vết thao tác của PH-13) có UC-13-11 và còn được áp dụng ở bước kiểm toán của UC-13-12, 14, 15, 16, 26, 29, 30, 33, 35, 36, 41, 42.
 
@@ -2641,4 +2693,5 @@ Các đề nghị dưới đây cần tài liệu khác cập nhật; tập này
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC và quy chuẩn K-TRINH-BAY: 42 use case (UC-13-01…42) phủ đủ 61 FR, mỗi use case một khối 15 mục kèm câu thông báo lấy từ FRS §9.2; sáu hình sơ đồ use case tổng; ba bảng truy vết (FR, màn hình và API, REQ-quy trình-hệ cũ); 7 luồng phụ dùng chung; 5 câu hỏi mở Q13-45…49; đề nghị đồng bộ cho FRS, API, màn hình, test case, SDD |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bảy tập PH-13: bảng 5.2 liệt kê đủ API và UI như trường "Màn hình, API" của từng use case; thêm đoạn mở cho mục 5.1, 5.2 |
+| 0.3 | 27/11/2026 | Nhóm viết tài liệu (Claude) | Chốt câu hỏi mở đợt đồng bộ: Q390, Q419 |
 

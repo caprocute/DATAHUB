@@ -999,7 +999,8 @@ paths:
       - FR-05-009
       x-datahub-permission:
         permission: PERM-05-connection
-      description: Không gian hoặc luồng không tồn tại ở PH-04 ERR-05-033. Phát EVT-05-05.
+      description: Không gian hoặc luồng không tồn tại ở PH-04, hoặc API không tồn tại ở PH-02 (phạm vi API, API-02-002) ERR-05-033; kết nối không
+        thuộc nhóm http-* với phạm vi API ERR-05-003. Phát EVT-05-05.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/ConnectionCodePath'
@@ -4976,6 +4977,7 @@ components:
           enum:
           - WORKSPACE
           - FLOW
+          - API
         targetCode:
           type: string
           maxLength: 63
@@ -5008,6 +5010,7 @@ components:
           enum:
           - WORKSPACE
           - FLOW
+          - API
         targetCode:
           type: string
           maxLength: 63
