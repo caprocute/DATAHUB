@@ -273,6 +273,16 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-18-migration | Chạy công cụ di trú | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-admin | Khởi tạo, cấu hình, tạm ngừng, sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-read | Xem thông tin, hạn mức tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | ● |
+| PERM-20-provision | Khai báo tenant, chạy, thử lại, hủy saga khởi tạo | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-lifecycle | Đề nghị tạm ngừng, khôi phục, chấm dứt tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-approve | Duyệt bốn mắt chấm dứt, sáp nhập, đổi hạn mức, đổi chế độ cách ly | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-quota | Đặt, đổi hạn mức hợp đồng, ghi đè tạm thời | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-merge | Lập, chạy, kết thúc sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-release | Quản lý phiên bản sản phẩm, kênh, kế hoạch nâng cấp (PO chỉ theo dõi, dừng sóng) | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-settings | Cài đặt tỉnh, chính sách tiếp nhận liên tenant, cửa sổ bảo trì của tỉnh | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-org | Tạo, sửa, ngừng, nhập, xuất tổ chức | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-20-org-read | Xem danh mục tổ chức | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| PERM-20-usage-read | Xem sử dụng tài nguyên, hạn mức của tỉnh | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | ● |
 
 : Ma trận vai trò theo quyền của các phân hệ MVP PH-01…PH-05, 07, 10, 12, 13, 14, 18, 20
 
