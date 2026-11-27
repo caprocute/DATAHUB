@@ -268,9 +268,17 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-14-audit-read | Tra giao dịch, nhật ký khai thác, báo cáo sử dụng, cảnh báo bất thường (nội dung đã che) | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-14-audit-reveal | Xem nội dung bản tin đầy đủ có lý do, xuất bằng chứng | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-invoke | Gọi dịch vụ quốc gia đã cung cấp lại (chỉ client máy, theo scope) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| PERM-18-dlq | Xem, xử lý lại, bỏ bản tin lỗi | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — |
-| PERM-18-config | Sửa tham số cấu hình | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
-| PERM-18-migration | Chạy công cụ di trú | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-dlq | Phân loại, gán, phát lại, bỏ qua, mở lại mục DLQ; lượt phát lại dưới ngưỡng | ○ | ● | ● | ● | ● | ○ | — | — | — | — | ○ | — | — | — | — |
+| PERM-18-config | Sửa giá trị tham số của tenant, cờ tính năng, egress | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-migration | Nguồn hệ cũ, kế hoạch, chạy thử, theo dõi song song | ● | ● | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
+| PERM-18-read | Xem màn vận hành: DLQ (siêu dữ liệu), tham số, sự cố, thống kê, sức khỏe | ● | ● | ● | ● | ● | ● | — | — | — | — | ● | — | — | ○ | ● |
+| PERM-18-dlq-payload | Xem payload có lý do, tạo bản sửa payload | — | ○ | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — |
+| PERM-18-approve | Duyệt bốn mắt chung của PH-18 | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-template | Mẫu thông báo, quy tắc, danh sách chặn | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-incident | Tạo, xử lý, đóng sự cố; chuyển PH-09 | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-backup | Xem sao lưu, tạo yêu cầu khôi phục, xuất tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-calendar | Lịch ngày làm việc, cửa sổ bảo trì, đóng băng | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-18-admin | Tham số `18.*`, nguồn DLQ, sổ tay ERR, gói tham số, báo cáo | ● | — | ○ | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-admin | Khởi tạo, cấu hình, tạm ngừng, sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-read | Xem thông tin, hạn mức tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | ● |
 | PERM-20-provision | Khai báo tenant, chạy, thử lại, hủy saga khởi tạo | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
