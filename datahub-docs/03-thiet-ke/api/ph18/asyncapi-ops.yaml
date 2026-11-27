@@ -1,0 +1,3539 @@
+# D03-04-PH18 · AsyncAPI PH-18. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay.
+asyncapi: 3.0.0
+info:
+  title: Datahub · PH-18 Sự kiện vận hành và xử lý lỗi
+  version: 1.0.0-draft
+  description: 'Sự kiện của PH-18 (EVT-18-01…29) phát từ bảng `outbox_event` qua Debezium Outbox Event Router; phong bì CloudEvents 1.0, khóa phân vùng theo FRS §9.3,
+    bên tiêu thụ khử trùng theo `eventId`. Dữ liệu chỉ mang mã, trạng thái, số đếm, thời điểm; không payload DLQ, không giá trị tham số ★, không địa chỉ người nhận
+    (BR-18-050). Kèm các kênh PH-18 tiêu thụ: topic DLQ chung `{tenant}.ops.dlq.v1` và sự kiện của PH-10, PH-13, PH-20. Tệp sinh bởi `tools/gen_asyncapi.py`; không
+    sửa tay.'
+  contact:
+    name: Nhóm phân hệ PH-18
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+  x-datahub-document: D03-04-PH18
+servers:
+  kafka:
+    host: kafka.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: Cụm Kafka KRaft của nền tảng (mTLS, ACL theo tenant).
+defaultContentType: application/cloudevents+json
+channels:
+  opsParamChanged:
+    address: '{tenant}.ops.param.changed.v1'
+    title: EVT-18-01 · param.changed
+    description: 'Bên nhận: Mọi DU dùng `dh-ops-client` (làm mới đệm), PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsParamChanged:
+        $ref: '#/components/messages/OpsParamChanged'
+    x-datahub-id: EVT-18-01
+    x-datahub-consumers: Mọi DU dùng `dh-ops-client` (làm mới đệm), PH-13
+    x-datahub-partition-key: ns
+    x-datahub-fr:
+    - FR-18-001
+    - FR-18-002
+    - FR-18-003
+    - FR-18-004
+    - FR-18-005
+    - FR-18-006
+    - FR-18-007
+    - FR-18-008
+    - FR-18-011
+    - FR-18-069
+  opsParamApprovalRequested:
+    address: '{tenant}.ops.param.approval-requested.v1'
+    title: EVT-18-02 · param.approval-requested
+    description: 'Bên nhận: PH-18 (Việc của tôi), PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsParamApprovalRequested:
+        $ref: '#/components/messages/OpsParamApprovalRequested'
+    x-datahub-id: EVT-18-02
+    x-datahub-consumers: PH-18 (Việc của tôi), PH-13
+    x-datahub-partition-key: requestId
+    x-datahub-fr:
+    - FR-18-004
+    - FR-18-008
+  opsFeatureFlagChanged:
+    address: '{tenant}.ops.feature-flag.changed.v1'
+    title: EVT-18-03 · feature-flag.changed
+    description: 'Bên nhận: Mọi DU, `dh-console`.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsFeatureFlagChanged:
+        $ref: '#/components/messages/OpsFeatureFlagChanged'
+    x-datahub-id: EVT-18-03
+    x-datahub-consumers: Mọi DU, `dh-console`
+    x-datahub-partition-key: flagKey
+    x-datahub-fr:
+    - FR-18-006
+    - FR-18-009
+  opsEgressChanged:
+    address: '{tenant}.ops.egress.changed.v1'
+    title: EVT-18-04 · egress.changed
+    description: 'Bên nhận: PH-13 (cập nhật egress), `dh-platform`, `dh-runtime`.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsEgressChanged:
+        $ref: '#/components/messages/OpsEgressChanged'
+    x-datahub-id: EVT-18-04
+    x-datahub-consumers: PH-13 (cập nhật egress), `dh-platform`, `dh-runtime`
+    x-datahub-partition-key: tenantId
+    x-datahub-fr:
+    - FR-18-006
+    - FR-18-010
+  opsDlqReceived:
+    address: '{tenant}.ops.dlq.received.v1'
+    title: EVT-18-05 · dlq.received
+    description: 'Bên nhận: PH-13 (bảng điều khiển), `dh-console`.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsDlqReceived:
+        $ref: '#/components/messages/OpsDlqReceived'
+    x-datahub-id: EVT-18-05
+    x-datahub-consumers: PH-13 (bảng điều khiển), `dh-console`
+    x-datahub-partition-key: sourceCode
+    x-datahub-fr:
+    - FR-18-013
+    - FR-18-014
+  opsDlqPoisonDetected:
+    address: '{tenant}.ops.dlq.poison-detected.v1'
+    title: EVT-18-06 · dlq.poison-detected
+    description: 'Bên nhận: PH-13, chủ nguồn.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsDlqPoisonDetected:
+        $ref: '#/components/messages/OpsDlqPoisonDetected'
+    x-datahub-id: EVT-18-06
+    x-datahub-consumers: PH-13, chủ nguồn
+    x-datahub-partition-key: sourceCode
+    x-datahub-fr:
+    - FR-18-013
+    - FR-18-015
+  opsDlqStateChanged:
+    address: '{tenant}.ops.dlq.state-changed.v1'
+    title: EVT-18-07 · dlq.state-changed
+    description: 'Bên nhận: PH-13, PH-17 (đọc ngữ cảnh).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsDlqStateChanged:
+        $ref: '#/components/messages/OpsDlqStateChanged'
+    x-datahub-id: EVT-18-07
+    x-datahub-consumers: PH-13, PH-17 (đọc ngữ cảnh)
+    x-datahub-partition-key: dlqId
+    x-datahub-fr:
+    - FR-18-023
+    - FR-18-024
+    - FR-18-027
+    - FR-18-030
+    - FR-18-031
+    - FR-18-032
+  opsDlqThresholdCrossed:
+    address: '{tenant}.ops.dlq.threshold-crossed.v1'
+    title: EVT-18-08 · dlq.threshold-crossed
+    description: 'Bên nhận: PH-13 (luật cảnh báo, lịch trực).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsDlqThresholdCrossed:
+        $ref: '#/components/messages/OpsDlqThresholdCrossed'
+    x-datahub-id: EVT-18-08
+    x-datahub-consumers: PH-13 (luật cảnh báo, lịch trực)
+    x-datahub-partition-key: sourceCode
+    x-datahub-fr:
+    - FR-18-015
+    - FR-18-018
+    - FR-18-029
+    - FR-18-033
+    - FR-18-034
+    - FR-18-047
+  opsReplayRequested:
+    address: '{tenant}.ops.replay.requested.v1'
+    title: EVT-18-09 · replay.requested
+    description: 'Bên nhận: Nguồn có cổng `KAFKA_TOPIC` (PH-04, PH-05, PH-06, PH-07, PH-08).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsReplayRequested:
+        $ref: '#/components/messages/OpsReplayRequested'
+    x-datahub-id: EVT-18-09
+    x-datahub-consumers: Nguồn có cổng `KAFKA_TOPIC` (PH-04, PH-05, PH-06, PH-07, PH-08)
+    x-datahub-partition-key: sourceCode
+    x-datahub-fr:
+    - FR-18-027
+    - FR-18-029
+  opsReplayJobStateChanged:
+    address: '{tenant}.ops.replay-job.state-changed.v1'
+    title: EVT-18-10 · replay-job.state-changed
+    description: 'Bên nhận: PH-13, `dh-console`.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsReplayJobStateChanged:
+        $ref: '#/components/messages/OpsReplayJobStateChanged'
+    x-datahub-id: EVT-18-10
+    x-datahub-consumers: PH-13, `dh-console`
+    x-datahub-partition-key: jobId
+    x-datahub-fr:
+    - FR-18-028
+    - FR-18-029
+    - FR-18-030
+  opsErrorGuideChanged:
+    address: '{tenant}.ops.error-guide.changed.v1'
+    title: EVT-18-11 · error-guide.changed
+    description: 'Bên nhận: PH-17 (lập chỉ mục tri thức).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsErrorGuideChanged:
+        $ref: '#/components/messages/OpsErrorGuideChanged'
+    x-datahub-id: EVT-18-11
+    x-datahub-consumers: PH-17 (lập chỉ mục tri thức)
+    x-datahub-partition-key: errorCode
+    x-datahub-fr:
+    - FR-18-025
+  opsNotificationBounced:
+    address: '{tenant}.ops.notification.bounced.v1'
+    title: EVT-18-12 · notification.bounced
+    description: 'Bên nhận: PH-12 (đánh dấu liên hệ), PH-01 (đầu mối HTTT), PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsNotificationBounced:
+        $ref: '#/components/messages/OpsNotificationBounced'
+    x-datahub-id: EVT-18-12
+    x-datahub-consumers: PH-12 (đánh dấu liên hệ), PH-01 (đầu mối HTTT), PH-13
+    x-datahub-partition-key: recipientRef
+    x-datahub-fr:
+    - FR-18-040
+  opsNotificationFailed:
+    address: '{tenant}.ops.notification.failed.v1'
+    title: EVT-18-13 · notification.failed
+    description: 'Bên nhận: Phân hệ gọi, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsNotificationFailed:
+        $ref: '#/components/messages/OpsNotificationFailed'
+    x-datahub-id: EVT-18-13
+    x-datahub-consumers: Phân hệ gọi, PH-13
+    x-datahub-partition-key: notificationId
+    x-datahub-fr:
+    - FR-18-036
+    - FR-18-040
+  opsTaskStateChanged:
+    address: '{tenant}.ops.task.state-changed.v1'
+    title: EVT-18-14 · task.state-changed
+    description: 'Bên nhận: `dh-console` (đếm việc), PH-16.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsTaskStateChanged:
+        $ref: '#/components/messages/OpsTaskStateChanged'
+    x-datahub-id: EVT-18-14
+    x-datahub-consumers: '`dh-console` (đếm việc), PH-16'
+    x-datahub-partition-key: taskId
+    x-datahub-fr:
+    - FR-18-043
+    - FR-18-044
+  opsCalendarChanged:
+    address: '{tenant}.ops.calendar.changed.v1'
+    title: EVT-18-15 · calendar.changed
+    description: 'Bên nhận: PH-01, PH-02, PH-09, PH-12, PH-16 (tính hạn).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsCalendarChanged:
+        $ref: '#/components/messages/OpsCalendarChanged'
+    x-datahub-id: EVT-18-15
+    x-datahub-consumers: PH-01, PH-02, PH-09, PH-12, PH-16 (tính hạn)
+    x-datahub-partition-key: year
+    x-datahub-fr:
+    - FR-18-011
+    - FR-18-045
+  opsMaintenanceWindowChanged:
+    address: '{tenant}.ops.maintenance-window.changed.v1'
+    title: EVT-18-16 · maintenance-window.changed
+    description: 'Bên nhận: PH-02, PH-04, PH-10, PH-15, PH-20, `dh-console`.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsMaintenanceWindowChanged:
+        $ref: '#/components/messages/OpsMaintenanceWindowChanged'
+    x-datahub-id: EVT-18-16
+    x-datahub-consumers: PH-02, PH-04, PH-10, PH-15, PH-20, `dh-console`
+    x-datahub-partition-key: windowId
+    x-datahub-fr:
+    - FR-18-046
+  opsIncidentOpened:
+    address: '{tenant}.ops.incident.opened.v1'
+    title: EVT-18-17 · incident.opened
+    description: 'Bên nhận: PH-13 (lịch trực), PH-09 (khi `hasPersonalData`).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsIncidentOpened:
+        $ref: '#/components/messages/OpsIncidentOpened'
+    x-datahub-id: EVT-18-17
+    x-datahub-consumers: PH-13 (lịch trực), PH-09 (khi `hasPersonalData`)
+    x-datahub-partition-key: incidentId
+    x-datahub-fr:
+    - FR-18-047
+    - FR-18-048
+  opsIncidentStateChanged:
+    address: '{tenant}.ops.incident.state-changed.v1'
+    title: EVT-18-18 · incident.state-changed
+    description: 'Bên nhận: PH-13, PH-16.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsIncidentStateChanged:
+        $ref: '#/components/messages/OpsIncidentStateChanged'
+    x-datahub-id: EVT-18-18
+    x-datahub-consumers: PH-13, PH-16
+    x-datahub-partition-key: incidentId
+    x-datahub-fr:
+    - FR-18-048
+    - FR-18-050
+    - FR-18-051
+  opsBackupFailed:
+    address: '{tenant}.ops.backup.failed.v1'
+    title: EVT-18-19 · backup.failed
+    description: 'Bên nhận: PH-13 (cảnh báo).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsBackupFailed:
+        $ref: '#/components/messages/OpsBackupFailed'
+    x-datahub-id: EVT-18-19
+    x-datahub-consumers: PH-13 (cảnh báo)
+    x-datahub-partition-key: objectRef
+    x-datahub-fr:
+    - FR-18-047
+    - FR-18-052
+  opsRestoreVerificationCompleted:
+    address: '{tenant}.ops.restore-verification.completed.v1'
+    title: EVT-18-20 · restore-verification.completed
+    description: 'Bên nhận: PH-13, PH-16.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsRestoreVerificationCompleted:
+        $ref: '#/components/messages/OpsRestoreVerificationCompleted'
+    x-datahub-id: EVT-18-20
+    x-datahub-consumers: PH-13, PH-16
+    x-datahub-partition-key: objectRef
+    x-datahub-fr:
+    - FR-18-053
+  opsTenantRestoreStateChanged:
+    address: '{tenant}.ops.tenant-restore.state-changed.v1'
+    title: EVT-18-21 · tenant-restore.state-changed
+    description: 'Bên nhận: PH-13, PH-20.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsTenantRestoreStateChanged:
+        $ref: '#/components/messages/OpsTenantRestoreStateChanged'
+    x-datahub-id: EVT-18-21
+    x-datahub-consumers: PH-13, PH-20
+    x-datahub-partition-key: restoreId
+    x-datahub-fr:
+    - FR-18-054
+    - FR-18-055
+  opsTenantRestored:
+    address: '{tenant}.ops.tenant.restored.v1'
+    title: EVT-18-22 · tenant.restored
+    description: 'Bên nhận: Mọi DU (xóa bộ đệm, đồng bộ lại), PH-10, PH-20.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsTenantRestored:
+        $ref: '#/components/messages/OpsTenantRestored'
+    x-datahub-id: EVT-18-22
+    x-datahub-consumers: Mọi DU (xóa bộ đệm, đồng bộ lại), PH-10, PH-20
+    x-datahub-partition-key: tenantId
+    x-datahub-fr:
+    - FR-18-055
+  opsTenantExportCompleted:
+    address: '{tenant}.ops.tenant-export.completed.v1'
+    title: EVT-18-23 · tenant-export.completed
+    description: 'Bên nhận: PH-20 (sáp nhập, ngừng tenant), PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsTenantExportCompleted:
+        $ref: '#/components/messages/OpsTenantExportCompleted'
+    x-datahub-id: EVT-18-23
+    x-datahub-consumers: PH-20 (sáp nhập, ngừng tenant), PH-13
+    x-datahub-partition-key: exportId
+    x-datahub-fr:
+    - FR-18-056
+  opsMergeTransferStateChanged:
+    address: '{tenant}.ops.merge-transfer.state-changed.v1'
+    title: EVT-18-24 · merge-transfer.state-changed
+    description: 'Bên nhận: PH-20, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsMergeTransferStateChanged:
+        $ref: '#/components/messages/OpsMergeTransferStateChanged'
+    x-datahub-id: EVT-18-24
+    x-datahub-consumers: PH-20, PH-13
+    x-datahub-partition-key: mergePlanId
+    x-datahub-fr:
+    - FR-18-057
+  opsMigrationRunCompleted:
+    address: '{tenant}.ops.migration.run-completed.v1'
+    title: EVT-18-25 · migration.run-completed
+    description: 'Bên nhận: PH-13, PH-16, phân hệ đích.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsMigrationRunCompleted:
+        $ref: '#/components/messages/OpsMigrationRunCompleted'
+    x-datahub-id: EVT-18-25
+    x-datahub-consumers: PH-13, PH-16, phân hệ đích
+    x-datahub-partition-key: runId
+    x-datahub-fr:
+    - FR-18-061
+    - FR-18-062
+    - FR-18-063
+  opsMigrationCredentialReissueRequired:
+    address: '{tenant}.ops.migration.credential-reissue-required.v1'
+    title: EVT-18-26 · migration.credential-reissue-required
+    description: 'Bên nhận: PH-01, PH-03 (tạo việc cấp lại).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsMigrationCredentialReissueRequired:
+        $ref: '#/components/messages/OpsMigrationCredentialReissueRequired'
+    x-datahub-id: EVT-18-26
+    x-datahub-consumers: PH-01, PH-03 (tạo việc cấp lại)
+    x-datahub-partition-key: systemCode
+    x-datahub-fr:
+    - FR-18-062
+    - FR-18-065
+  opsCutoverStateChanged:
+    address: '{tenant}.ops.cutover.state-changed.v1'
+    title: EVT-18-27 · cutover.state-changed
+    description: 'Bên nhận: PH-03 (APISIX), PH-10, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsCutoverStateChanged:
+        $ref: '#/components/messages/OpsCutoverStateChanged'
+    x-datahub-id: EVT-18-27
+    x-datahub-consumers: PH-03 (APISIX), PH-10, PH-13
+    x-datahub-partition-key: groupCode
+    x-datahub-fr:
+    - FR-18-067
+    - FR-18-068
+  opsReportPublished:
+    address: '{tenant}.ops.report.published.v1'
+    title: EVT-18-28 · report.published
+    description: 'Bên nhận: PH-16 (nguồn chỉ tiêu vận hành).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsReportPublished:
+        $ref: '#/components/messages/OpsReportPublished'
+    x-datahub-id: EVT-18-28
+    x-datahub-consumers: PH-16 (nguồn chỉ tiêu vận hành)
+    x-datahub-partition-key: period
+    x-datahub-fr:
+    - FR-18-071
+  opsHealthChanged:
+    address: '{tenant}.ops.health.changed.v1'
+    title: EVT-18-29 · health.changed
+    description: 'Bên nhận: PH-13, `dh-console` (dải cảnh báo).'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      OpsHealthChanged:
+        $ref: '#/components/messages/OpsHealthChanged'
+    x-datahub-id: EVT-18-29
+    x-datahub-consumers: PH-13, `dh-console` (dải cảnh báo)
+    x-datahub-partition-key: component
+    x-datahub-fr:
+    - FR-18-072
+  opsDlq:
+    address: '{tenant}.ops.dlq.v1'
+    title: Tiêu thụ · ops.dlq.v1
+    description: 'Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013). Bên phát: Mọi nguồn (PH-04 runtime và
+      nguồn khác). Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      DlqRecord:
+        $ref: '#/components/messages/DlqRecord'
+    x-datahub-producer: Mọi nguồn (PH-04 runtime và nguồn khác)
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  eventDeadLettered:
+    address: '{tenant}.event.delivery.dead-lettered.v1'
+    title: Tiêu thụ · event.delivery.dead-lettered.v1
+    description: 'EVT-10-11: có mục DLQ tầng sự kiện mới (gộp 1 phút); PH-18 hiển thị chung (FR-18-017). Bên phát: PH-10. Inbox khử trùng theo `eventId`; lỗi xử lý
+      ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-10
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  eventReplayCompleted:
+    address: '{tenant}.event.replay.completed.v1'
+    title: Tiêu thụ · event.replay.completed.v1
+    description: 'EVT-10-12: lượt phát lại của PH-10 kết thúc; cập nhật kết quả đề nghị (FR-18-030). Bên phát: PH-10. Inbox khử trùng theo `eventId`; lỗi xử lý ghi
+      ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-10
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  eventMigrationCutOver:
+    address: '{tenant}.event.migration.cut-over.v1'
+    title: Tiêu thụ · event.migration.cut-over.v1
+    description: 'EVT-10-15: ánh xạ di trú chuyển hẳn hoặc quay lui (FR-18-066). Bên phát: PH-10. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào
+      DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-10
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  eventBridgeStateChanged:
+    address: '{tenant}.event.bridge.state-changed.v1'
+    title: Tiêu thụ · event.bridge.state-changed.v1
+    description: 'EVT-10-16: cầu nối di trú đổi trạng thái (FR-18-066). Bên phát: PH-10. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính
+      PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-10
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  obsSecurityAlertRaised:
+    address: '{tenant}.obs.security-alert.raised.v1'
+    title: Tiêu thụ · obs.security-alert.raised.v1
+    description: 'EVT-13-04: cảnh báo an ninh, mở sự cố (FR-18-047). Bên phát: PH-13. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính
+      PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-13
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  obsAuditChainBroken:
+    address: '{tenant}.obs.audit.chain-broken.v1'
+    title: Tiêu thụ · obs.audit.chain-broken.v1
+    description: 'EVT-13-05: đứt chuỗi kiểm toán, mở sự cố (FR-18-047). Bên phát: PH-13. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính
+      PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-13
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+  platformTenantCreated:
+    address: platform.tenant.created.v1
+    title: Tiêu thụ · platform.tenant.created.v1
+    description: 'PH-20: tenant được tạo; ghi tham số mặc định, lịch mặc định, mẫu thông báo mặc định (FR-18-011, 045). Bên phát: PH-20. Inbox khử trùng theo `eventId`;
+      lỗi xử lý ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+  platformTenantStatusChanged:
+    address: platform.tenant.status-changed.v1
+    title: Tiêu thụ · platform.tenant.status-changed.v1
+    description: 'PH-20: tenant đổi trạng thái; dừng tác vụ nền khi `SUSPENDED`, điều kiện khôi phục (FR-18-036, 055, 072). Bên phát: PH-20. Inbox khử trùng theo
+      `eventId`; lỗi xử lý ghi ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+  platformTenantMergeStarted:
+    address: platform.tenant.merge-started.v1
+    title: Tiêu thụ · platform.tenant.merge-started.v1
+    description: 'PH-20: bắt đầu sáp nhập; khóa tác vụ nặng khác của hai tenant (FR-18-057). Bên phát: PH-20. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124
+      và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+  platformTenantExportReady:
+    address: platform.tenant.export-ready.v1
+    title: Tiêu thụ · platform.tenant.export-ready.v1
+    description: 'PH-20: gói xuất sẵn sàng khi ngừng tenant; đối chiếu với gói của PH-18 (FR-18-056). Bên phát: PH-20. Inbox khử trùng theo `eventId`; lỗi xử lý ghi
+      ERR-18-124 và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+  platformReleasePublished:
+    address: platform.release.published.v1
+    title: Tiêu thụ · platform.release.published.v1
+    description: 'PH-20: phát hành mới; thông báo và tạo cửa sổ bảo trì (FR-18-036, 046). Bên phát: PH-20. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124
+      và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+  platformTenantUpgradeChanged:
+    address: platform.tenant.upgrade-changed.v1
+    title: Tiêu thụ · platform.tenant.upgrade-changed.v1
+    description: 'PH-20: lịch nâng cấp tenant đổi; cập nhật cửa sổ bảo trì (FR-18-046). Bên phát: PH-20. Inbox khử trùng theo `eventId`; lỗi xử lý ghi ERR-18-124
+      và vào DLQ của chính PH-18 (nguồn `PH18_INBOX`).'
+    messages:
+      ExternalEvent:
+        $ref: '#/components/messages/ExternalEvent'
+    x-datahub-producer: PH-20
+operations:
+  sendOpsParamChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsParamChanged'
+    summary: Phát EVT-18-01
+    description: PH-18 phát qua outbox khi param.changed; bên nhận Mọi DU dùng `dh-ops-client` (làm mới đệm), PH-13.
+    messages:
+    - $ref: '#/channels/opsParamChanged/messages/OpsParamChanged'
+    x-datahub-id: EVT-18-01
+  sendOpsParamApprovalRequested:
+    action: send
+    channel:
+      $ref: '#/channels/opsParamApprovalRequested'
+    summary: Phát EVT-18-02
+    description: PH-18 phát qua outbox khi param.approval-requested; bên nhận PH-18 (Việc của tôi), PH-13.
+    messages:
+    - $ref: '#/channels/opsParamApprovalRequested/messages/OpsParamApprovalRequested'
+    x-datahub-id: EVT-18-02
+  sendOpsFeatureFlagChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsFeatureFlagChanged'
+    summary: Phát EVT-18-03
+    description: PH-18 phát qua outbox khi feature-flag.changed; bên nhận Mọi DU, `dh-console`.
+    messages:
+    - $ref: '#/channels/opsFeatureFlagChanged/messages/OpsFeatureFlagChanged'
+    x-datahub-id: EVT-18-03
+  sendOpsEgressChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsEgressChanged'
+    summary: Phát EVT-18-04
+    description: PH-18 phát qua outbox khi egress.changed; bên nhận PH-13 (cập nhật egress), `dh-platform`, `dh-runtime`.
+    messages:
+    - $ref: '#/channels/opsEgressChanged/messages/OpsEgressChanged'
+    x-datahub-id: EVT-18-04
+  sendOpsDlqReceived:
+    action: send
+    channel:
+      $ref: '#/channels/opsDlqReceived'
+    summary: Phát EVT-18-05
+    description: PH-18 phát qua outbox khi dlq.received; bên nhận PH-13 (bảng điều khiển), `dh-console`.
+    messages:
+    - $ref: '#/channels/opsDlqReceived/messages/OpsDlqReceived'
+    x-datahub-id: EVT-18-05
+  sendOpsDlqPoisonDetected:
+    action: send
+    channel:
+      $ref: '#/channels/opsDlqPoisonDetected'
+    summary: Phát EVT-18-06
+    description: PH-18 phát qua outbox khi dlq.poison-detected; bên nhận PH-13, chủ nguồn.
+    messages:
+    - $ref: '#/channels/opsDlqPoisonDetected/messages/OpsDlqPoisonDetected'
+    x-datahub-id: EVT-18-06
+  sendOpsDlqStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsDlqStateChanged'
+    summary: Phát EVT-18-07
+    description: PH-18 phát qua outbox khi dlq.state-changed; bên nhận PH-13, PH-17 (đọc ngữ cảnh).
+    messages:
+    - $ref: '#/channels/opsDlqStateChanged/messages/OpsDlqStateChanged'
+    x-datahub-id: EVT-18-07
+  sendOpsDlqThresholdCrossed:
+    action: send
+    channel:
+      $ref: '#/channels/opsDlqThresholdCrossed'
+    summary: Phát EVT-18-08
+    description: PH-18 phát qua outbox khi dlq.threshold-crossed; bên nhận PH-13 (luật cảnh báo, lịch trực).
+    messages:
+    - $ref: '#/channels/opsDlqThresholdCrossed/messages/OpsDlqThresholdCrossed'
+    x-datahub-id: EVT-18-08
+  sendOpsReplayRequested:
+    action: send
+    channel:
+      $ref: '#/channels/opsReplayRequested'
+    summary: Phát EVT-18-09
+    description: PH-18 phát qua outbox khi replay.requested; bên nhận Nguồn có cổng `KAFKA_TOPIC` (PH-04, PH-05, PH-06, PH-07, PH-08).
+    messages:
+    - $ref: '#/channels/opsReplayRequested/messages/OpsReplayRequested'
+    x-datahub-id: EVT-18-09
+  sendOpsReplayJobStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsReplayJobStateChanged'
+    summary: Phát EVT-18-10
+    description: PH-18 phát qua outbox khi replay-job.state-changed; bên nhận PH-13, `dh-console`.
+    messages:
+    - $ref: '#/channels/opsReplayJobStateChanged/messages/OpsReplayJobStateChanged'
+    x-datahub-id: EVT-18-10
+  sendOpsErrorGuideChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsErrorGuideChanged'
+    summary: Phát EVT-18-11
+    description: PH-18 phát qua outbox khi error-guide.changed; bên nhận PH-17 (lập chỉ mục tri thức).
+    messages:
+    - $ref: '#/channels/opsErrorGuideChanged/messages/OpsErrorGuideChanged'
+    x-datahub-id: EVT-18-11
+  sendOpsNotificationBounced:
+    action: send
+    channel:
+      $ref: '#/channels/opsNotificationBounced'
+    summary: Phát EVT-18-12
+    description: PH-18 phát qua outbox khi notification.bounced; bên nhận PH-12 (đánh dấu liên hệ), PH-01 (đầu mối HTTT), PH-13.
+    messages:
+    - $ref: '#/channels/opsNotificationBounced/messages/OpsNotificationBounced'
+    x-datahub-id: EVT-18-12
+  sendOpsNotificationFailed:
+    action: send
+    channel:
+      $ref: '#/channels/opsNotificationFailed'
+    summary: Phát EVT-18-13
+    description: PH-18 phát qua outbox khi notification.failed; bên nhận Phân hệ gọi, PH-13.
+    messages:
+    - $ref: '#/channels/opsNotificationFailed/messages/OpsNotificationFailed'
+    x-datahub-id: EVT-18-13
+  sendOpsTaskStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsTaskStateChanged'
+    summary: Phát EVT-18-14
+    description: PH-18 phát qua outbox khi task.state-changed; bên nhận `dh-console` (đếm việc), PH-16.
+    messages:
+    - $ref: '#/channels/opsTaskStateChanged/messages/OpsTaskStateChanged'
+    x-datahub-id: EVT-18-14
+  sendOpsCalendarChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsCalendarChanged'
+    summary: Phát EVT-18-15
+    description: PH-18 phát qua outbox khi calendar.changed; bên nhận PH-01, PH-02, PH-09, PH-12, PH-16 (tính hạn).
+    messages:
+    - $ref: '#/channels/opsCalendarChanged/messages/OpsCalendarChanged'
+    x-datahub-id: EVT-18-15
+  sendOpsMaintenanceWindowChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsMaintenanceWindowChanged'
+    summary: Phát EVT-18-16
+    description: PH-18 phát qua outbox khi maintenance-window.changed; bên nhận PH-02, PH-04, PH-10, PH-15, PH-20, `dh-console`.
+    messages:
+    - $ref: '#/channels/opsMaintenanceWindowChanged/messages/OpsMaintenanceWindowChanged'
+    x-datahub-id: EVT-18-16
+  sendOpsIncidentOpened:
+    action: send
+    channel:
+      $ref: '#/channels/opsIncidentOpened'
+    summary: Phát EVT-18-17
+    description: PH-18 phát qua outbox khi incident.opened; bên nhận PH-13 (lịch trực), PH-09 (khi `hasPersonalData`).
+    messages:
+    - $ref: '#/channels/opsIncidentOpened/messages/OpsIncidentOpened'
+    x-datahub-id: EVT-18-17
+  sendOpsIncidentStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsIncidentStateChanged'
+    summary: Phát EVT-18-18
+    description: PH-18 phát qua outbox khi incident.state-changed; bên nhận PH-13, PH-16.
+    messages:
+    - $ref: '#/channels/opsIncidentStateChanged/messages/OpsIncidentStateChanged'
+    x-datahub-id: EVT-18-18
+  sendOpsBackupFailed:
+    action: send
+    channel:
+      $ref: '#/channels/opsBackupFailed'
+    summary: Phát EVT-18-19
+    description: PH-18 phát qua outbox khi backup.failed; bên nhận PH-13 (cảnh báo).
+    messages:
+    - $ref: '#/channels/opsBackupFailed/messages/OpsBackupFailed'
+    x-datahub-id: EVT-18-19
+  sendOpsRestoreVerificationCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/opsRestoreVerificationCompleted'
+    summary: Phát EVT-18-20
+    description: PH-18 phát qua outbox khi restore-verification.completed; bên nhận PH-13, PH-16.
+    messages:
+    - $ref: '#/channels/opsRestoreVerificationCompleted/messages/OpsRestoreVerificationCompleted'
+    x-datahub-id: EVT-18-20
+  sendOpsTenantRestoreStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsTenantRestoreStateChanged'
+    summary: Phát EVT-18-21
+    description: PH-18 phát qua outbox khi tenant-restore.state-changed; bên nhận PH-13, PH-20.
+    messages:
+    - $ref: '#/channels/opsTenantRestoreStateChanged/messages/OpsTenantRestoreStateChanged'
+    x-datahub-id: EVT-18-21
+  sendOpsTenantRestored:
+    action: send
+    channel:
+      $ref: '#/channels/opsTenantRestored'
+    summary: Phát EVT-18-22
+    description: PH-18 phát qua outbox khi tenant.restored; bên nhận Mọi DU (xóa bộ đệm, đồng bộ lại), PH-10, PH-20.
+    messages:
+    - $ref: '#/channels/opsTenantRestored/messages/OpsTenantRestored'
+    x-datahub-id: EVT-18-22
+  sendOpsTenantExportCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/opsTenantExportCompleted'
+    summary: Phát EVT-18-23
+    description: PH-18 phát qua outbox khi tenant-export.completed; bên nhận PH-20 (sáp nhập, ngừng tenant), PH-13.
+    messages:
+    - $ref: '#/channels/opsTenantExportCompleted/messages/OpsTenantExportCompleted'
+    x-datahub-id: EVT-18-23
+  sendOpsMergeTransferStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsMergeTransferStateChanged'
+    summary: Phát EVT-18-24
+    description: PH-18 phát qua outbox khi merge-transfer.state-changed; bên nhận PH-20, PH-13.
+    messages:
+    - $ref: '#/channels/opsMergeTransferStateChanged/messages/OpsMergeTransferStateChanged'
+    x-datahub-id: EVT-18-24
+  sendOpsMigrationRunCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/opsMigrationRunCompleted'
+    summary: Phát EVT-18-25
+    description: PH-18 phát qua outbox khi migration.run-completed; bên nhận PH-13, PH-16, phân hệ đích.
+    messages:
+    - $ref: '#/channels/opsMigrationRunCompleted/messages/OpsMigrationRunCompleted'
+    x-datahub-id: EVT-18-25
+  sendOpsMigrationCredentialReissueRequired:
+    action: send
+    channel:
+      $ref: '#/channels/opsMigrationCredentialReissueRequired'
+    summary: Phát EVT-18-26
+    description: PH-18 phát qua outbox khi migration.credential-reissue-required; bên nhận PH-01, PH-03 (tạo việc cấp lại).
+    messages:
+    - $ref: '#/channels/opsMigrationCredentialReissueRequired/messages/OpsMigrationCredentialReissueRequired'
+    x-datahub-id: EVT-18-26
+  sendOpsCutoverStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsCutoverStateChanged'
+    summary: Phát EVT-18-27
+    description: PH-18 phát qua outbox khi cutover.state-changed; bên nhận PH-03 (APISIX), PH-10, PH-13.
+    messages:
+    - $ref: '#/channels/opsCutoverStateChanged/messages/OpsCutoverStateChanged'
+    x-datahub-id: EVT-18-27
+  sendOpsReportPublished:
+    action: send
+    channel:
+      $ref: '#/channels/opsReportPublished'
+    summary: Phát EVT-18-28
+    description: PH-18 phát qua outbox khi report.published; bên nhận PH-16 (nguồn chỉ tiêu vận hành).
+    messages:
+    - $ref: '#/channels/opsReportPublished/messages/OpsReportPublished'
+    x-datahub-id: EVT-18-28
+  sendOpsHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/opsHealthChanged'
+    summary: Phát EVT-18-29
+    description: PH-18 phát qua outbox khi health.changed; bên nhận PH-13, `dh-console` (dải cảnh báo).
+    messages:
+    - $ref: '#/channels/opsHealthChanged/messages/OpsHealthChanged'
+    x-datahub-id: EVT-18-29
+  receiveOpsDlq:
+    action: receive
+    channel:
+      $ref: '#/channels/opsDlq'
+    summary: Tiêu thụ {tenant}.ops.dlq.v1
+    description: 'Topic DLQ hạ tầng: nguồn ghi bản tin lỗi kèm header ngữ cảnh, PH-18 là bên tiêu thụ duy nhất (FR-18-013).'
+    messages:
+    - $ref: '#/channels/opsDlq/messages/DlqRecord'
+  receiveEventDeadLettered:
+    action: receive
+    channel:
+      $ref: '#/channels/eventDeadLettered'
+    summary: Tiêu thụ {tenant}.event.delivery.dead-lettered.v1
+    description: 'EVT-10-11: có mục DLQ tầng sự kiện mới (gộp 1 phút); PH-18 hiển thị chung (FR-18-017).'
+    messages:
+    - $ref: '#/channels/eventDeadLettered/messages/ExternalEvent'
+  receiveEventReplayCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/eventReplayCompleted'
+    summary: Tiêu thụ {tenant}.event.replay.completed.v1
+    description: 'EVT-10-12: lượt phát lại của PH-10 kết thúc; cập nhật kết quả đề nghị (FR-18-030).'
+    messages:
+    - $ref: '#/channels/eventReplayCompleted/messages/ExternalEvent'
+  receiveEventMigrationCutOver:
+    action: receive
+    channel:
+      $ref: '#/channels/eventMigrationCutOver'
+    summary: Tiêu thụ {tenant}.event.migration.cut-over.v1
+    description: 'EVT-10-15: ánh xạ di trú chuyển hẳn hoặc quay lui (FR-18-066).'
+    messages:
+    - $ref: '#/channels/eventMigrationCutOver/messages/ExternalEvent'
+  receiveEventBridgeStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/eventBridgeStateChanged'
+    summary: Tiêu thụ {tenant}.event.bridge.state-changed.v1
+    description: 'EVT-10-16: cầu nối di trú đổi trạng thái (FR-18-066).'
+    messages:
+    - $ref: '#/channels/eventBridgeStateChanged/messages/ExternalEvent'
+  receiveObsSecurityAlertRaised:
+    action: receive
+    channel:
+      $ref: '#/channels/obsSecurityAlertRaised'
+    summary: Tiêu thụ {tenant}.obs.security-alert.raised.v1
+    description: 'EVT-13-04: cảnh báo an ninh, mở sự cố (FR-18-047).'
+    messages:
+    - $ref: '#/channels/obsSecurityAlertRaised/messages/ExternalEvent'
+  receiveObsAuditChainBroken:
+    action: receive
+    channel:
+      $ref: '#/channels/obsAuditChainBroken'
+    summary: Tiêu thụ {tenant}.obs.audit.chain-broken.v1
+    description: 'EVT-13-05: đứt chuỗi kiểm toán, mở sự cố (FR-18-047).'
+    messages:
+    - $ref: '#/channels/obsAuditChainBroken/messages/ExternalEvent'
+  receivePlatformTenantCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/platformTenantCreated'
+    summary: Tiêu thụ platform.tenant.created.v1
+    description: 'PH-20: tenant được tạo; ghi tham số mặc định, lịch mặc định, mẫu thông báo mặc định (FR-18-011, 045).'
+    messages:
+    - $ref: '#/channels/platformTenantCreated/messages/ExternalEvent'
+  receivePlatformTenantStatusChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/platformTenantStatusChanged'
+    summary: Tiêu thụ platform.tenant.status-changed.v1
+    description: 'PH-20: tenant đổi trạng thái; dừng tác vụ nền khi `SUSPENDED`, điều kiện khôi phục (FR-18-036, 055, 072).'
+    messages:
+    - $ref: '#/channels/platformTenantStatusChanged/messages/ExternalEvent'
+  receivePlatformTenantMergeStarted:
+    action: receive
+    channel:
+      $ref: '#/channels/platformTenantMergeStarted'
+    summary: Tiêu thụ platform.tenant.merge-started.v1
+    description: 'PH-20: bắt đầu sáp nhập; khóa tác vụ nặng khác của hai tenant (FR-18-057).'
+    messages:
+    - $ref: '#/channels/platformTenantMergeStarted/messages/ExternalEvent'
+  receivePlatformTenantExportReady:
+    action: receive
+    channel:
+      $ref: '#/channels/platformTenantExportReady'
+    summary: Tiêu thụ platform.tenant.export-ready.v1
+    description: 'PH-20: gói xuất sẵn sàng khi ngừng tenant; đối chiếu với gói của PH-18 (FR-18-056).'
+    messages:
+    - $ref: '#/channels/platformTenantExportReady/messages/ExternalEvent'
+  receivePlatformReleasePublished:
+    action: receive
+    channel:
+      $ref: '#/channels/platformReleasePublished'
+    summary: Tiêu thụ platform.release.published.v1
+    description: 'PH-20: phát hành mới; thông báo và tạo cửa sổ bảo trì (FR-18-036, 046).'
+    messages:
+    - $ref: '#/channels/platformReleasePublished/messages/ExternalEvent'
+  receivePlatformTenantUpgradeChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/platformTenantUpgradeChanged'
+    summary: Tiêu thụ platform.tenant.upgrade-changed.v1
+    description: 'PH-20: lịch nâng cấp tenant đổi; cập nhật cửa sổ bảo trì (FR-18-046).'
+    messages:
+    - $ref: '#/channels/platformTenantUpgradeChanged/messages/ExternalEvent'
+components:
+  messages:
+    OpsParamChanged:
+      name: OpsParamChanged
+      title: '`ns`, `key`, `version`, `scope`, `changedBy`; không mang giá trị khóa ★'
+      summary: FR-18-001, 002, 003, 004, 005, 006, 007, 008, 011, 069
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsParamChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `ns`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-platform/ops
+          type: ops.param.changed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            ns: '18.'
+            key: 18.dlq.replay.batch-max
+            version: 5
+            scope: TENANT
+            changeType: VALUE_CHANGED
+            changedBy: nguyen.van.an
+            secure: false
+    OpsParamApprovalRequested:
+      name: OpsParamApprovalRequested
+      title: '`requestId`, `key`, `requestedBy`, `approvalOwner`'
+      summary: FR-18-004, 008
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsParamApprovalRequested'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `requestId`
+          bindingVersion: 0.5.0
+    OpsFeatureFlagChanged:
+      name: OpsFeatureFlagChanged
+      title: '`flagKey`, `enabled`, `owner`, `retireBy`'
+      summary: FR-18-006, 009
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsFeatureFlagChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `flagKey`
+          bindingVersion: 0.5.0
+    OpsEgressChanged:
+      name: OpsEgressChanged
+      title: '`entryId`, `host`, `port`, `purpose`, `action`, `expiresAt`'
+      summary: FR-18-006, 010
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsEgressChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `tenantId`
+          bindingVersion: 0.5.0
+    OpsDlqReceived:
+      name: OpsDlqReceived
+      title: '`sourceCode`, `count`, `poisonCount`, `windowStart` (gộp theo phút)'
+      summary: FR-18-013, 014
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsDlqReceived'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `sourceCode`
+          bindingVersion: 0.5.0
+    OpsDlqPoisonDetected:
+      name: OpsDlqPoisonDetected
+      title: '`dlqId`, `sourceCode`, `missingFields`, `errorCode`'
+      summary: FR-18-013, 015
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsDlqPoisonDetected'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `sourceCode`
+          bindingVersion: 0.5.0
+    OpsDlqStateChanged:
+      name: OpsDlqStateChanged
+      title: '`dlqId`, `from`, `to`, `reasonCode`, `actor`'
+      summary: FR-18-023, 024, 027, 030, 031, 032
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsDlqStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `dlqId`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b07
+          source: /dh-platform/ops
+          type: ops.dlq.state-changed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            dlqId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            from: REPLAYING
+            to: RESOLVED
+            reasonCode: REPLAY_SUCCEEDED
+            actor: svc-ops
+    OpsDlqThresholdCrossed:
+      name: OpsDlqThresholdCrossed
+      title: '`type` (`DEPTH`, `AGE`, `POISON_RATE`, `REPLAY_FAILURE_RATE`, `RECONCILE_MISSING`), `value`, `threshold`'
+      summary: FR-18-015, 018, 029, 033, 034, 047
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsDlqThresholdCrossed'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `sourceCode`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b08
+          source: /dh-platform/ops
+          type: ops.dlq.threshold-crossed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            sourceCode: ph04-runtime
+            type: DEPTH
+            value: 1240
+            threshold: 1000
+    OpsReplayRequested:
+      name: OpsReplayRequested
+      title: '`dlqId`, `revision`, `idempotencyKey`, `jobId`, `payloadRef`'
+      summary: FR-18-027, 029
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsReplayRequested'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `sourceCode`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b09
+          source: /dh-platform/ops
+          type: ops.replay.requested.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            dlqId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            revision: 1
+            idempotencyKey: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b:1
+            jobId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a3c
+            payloadRef: /ops/internal/v1/dlq/messages/0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b?includePayload=true
+            sourceCode: ph04-runtime
+            flow: hs-mot-cua-dong-bo
+    OpsReplayJobStateChanged:
+      name: OpsReplayJobStateChanged
+      title: '`jobId`, `from`, `to`, `total`, `succeeded`, `failed`'
+      summary: FR-18-028, 029, 030
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsReplayJobStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `jobId`
+          bindingVersion: 0.5.0
+    OpsErrorGuideChanged:
+      name: OpsErrorGuideChanged
+      title: '`errorCode`, `version`, `owner`'
+      summary: FR-18-025
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsErrorGuideChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `errorCode`
+          bindingVersion: 0.5.0
+    OpsNotificationBounced:
+      name: OpsNotificationBounced
+      title: '`recipientRef`, `bounceType`, `suppressed`'
+      summary: FR-18-040
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsNotificationBounced'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `recipientRef`
+          bindingVersion: 0.5.0
+    OpsNotificationFailed:
+      name: OpsNotificationFailed
+      title: '`notificationId`, `templateCode`, `channel`, `errorCode`, `callerPh`'
+      summary: FR-18-036, 040
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsNotificationFailed'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `notificationId`
+          bindingVersion: 0.5.0
+    OpsTaskStateChanged:
+      name: OpsTaskStateChanged
+      title: '`taskId`, `type`, `sourceRef`, `from`, `to`, `assignee`'
+      summary: FR-18-043, 044
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsTaskStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `taskId`
+          bindingVersion: 0.5.0
+    OpsCalendarChanged:
+      name: OpsCalendarChanged
+      title: '`year`, `calendarScope`, `version`'
+      summary: FR-18-011, 045
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsCalendarChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `year`
+          bindingVersion: 0.5.0
+    OpsMaintenanceWindowChanged:
+      name: OpsMaintenanceWindowChanged
+      title: '`windowId`, `kind` (`MAINTENANCE`, `FREEZE`), `envs`, `start`, `end`, `state`'
+      summary: FR-18-046
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsMaintenanceWindowChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `windowId`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b16
+          source: /dh-platform/ops
+          type: ops.maintenance-window.changed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            windowId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            kind: FREEZE
+            envs:
+            - PROD
+            start: '2026-12-20T00:00:00+07:00'
+            end: '2027-01-03T00:00:00+07:00'
+            state: PLANNED
+    OpsIncidentOpened:
+      name: OpsIncidentOpened
+      title: '`incidentId`, `severity`, `sourceRef`, `hasPersonalData`'
+      summary: FR-18-047, 048
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsIncidentOpened'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `incidentId`
+          bindingVersion: 0.5.0
+    OpsIncidentStateChanged:
+      name: OpsIncidentStateChanged
+      title: '`incidentId`, `from`, `to`, `severity`'
+      summary: FR-18-048, 050, 051
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsIncidentStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `incidentId`
+          bindingVersion: 0.5.0
+    OpsBackupFailed:
+      name: OpsBackupFailed
+      title: '`objectRef`, `tool`, `lastSuccessAt`, `reason`'
+      summary: FR-18-047, 052
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsBackupFailed'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `objectRef`
+          bindingVersion: 0.5.0
+    OpsRestoreVerificationCompleted:
+      name: OpsRestoreVerificationCompleted
+      title: '`objectRef`, `result`, `rowCountDiff`, `durationSec`'
+      summary: FR-18-053
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsRestoreVerificationCompleted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `objectRef`
+          bindingVersion: 0.5.0
+    OpsTenantRestoreStateChanged:
+      name: OpsTenantRestoreStateChanged
+      title: '`restoreId`, `step`, `from`, `to`, `pointInTime`'
+      summary: FR-18-054, 055
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsTenantRestoreStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `restoreId`
+          bindingVersion: 0.5.0
+    OpsTenantRestored:
+      name: OpsTenantRestored
+      title: '`restoreId`, `pointInTime`, `scope`, `completedAt`'
+      summary: FR-18-055
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsTenantRestored'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `tenantId`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b22
+          source: /dh-platform/ops
+          type: ops.tenant.restored.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            restoreId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            pointInTime: '2026-11-26T08:00:00+07:00'
+            scope: FULL_TENANT
+            completedAt: '2026-11-27T09:15:02+07:00'
+    OpsTenantExportCompleted:
+      name: OpsTenantExportCompleted
+      title: '`exportId`, `result`, `sizeBytes`, `manifestSha256`'
+      summary: FR-18-056
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsTenantExportCompleted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `exportId`
+          bindingVersion: 0.5.0
+    OpsMergeTransferStateChanged:
+      name: OpsMergeTransferStateChanged
+      title: '`mergePlanId`, `module`, `from`, `to`, `rows`, `dryRun`'
+      summary: FR-18-057
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsMergeTransferStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `mergePlanId`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b24
+          source: /dh-platform/ops
+          type: ops.merge-transfer.state-changed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            mergePlanId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            module: ph01_onboarding
+            from: RUNNING
+            to: SUCCEEDED
+            rows: 18240
+            dryRun: false
+    OpsMigrationRunCompleted:
+      name: OpsMigrationRunCompleted
+      title: '`runId`, `planCode`, `mode`, `result`, `read`, `written`, `rejected`'
+      summary: FR-18-061, 062, 063
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsMigrationRunCompleted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `runId`
+          bindingVersion: 0.5.0
+    OpsMigrationCredentialReissueRequired:
+      name: OpsMigrationCredentialReissueRequired
+      title: '`systemCode`, `credentialType`, `count`, `runId`'
+      summary: FR-18-062, 065
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsMigrationCredentialReissueRequired'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `systemCode`
+          bindingVersion: 0.5.0
+    OpsCutoverStateChanged:
+      name: OpsCutoverStateChanged
+      title: '`groupCode`, `from`, `to`, `routes`, `rollbackUntil`'
+      summary: FR-18-067, 068
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsCutoverStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `groupCode`
+          bindingVersion: 0.5.0
+      examples:
+      - name: viDu
+        payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b27
+          source: /dh-platform/ops
+          type: ops.cutover.state-changed.v1
+          time: '2026-11-27T09:15:02+07:00'
+          tenantid: T68
+          data:
+            groupCode: NHOM-HO-TICH
+            from: SHADOW_OK
+            to: PARTIAL_CUTOVER
+            routes:
+            - /api/ho-tich/v1/khai-sinh
+            rollbackUntil: '2026-11-27T09:30:02+07:00'
+            trafficPercent: 20
+    OpsReportPublished:
+      name: OpsReportPublished
+      title: '`period`, `reportId`, chỉ số tổng hợp'
+      summary: FR-18-071
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsReportPublished'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `period`
+          bindingVersion: 0.5.0
+    OpsHealthChanged:
+      name: OpsHealthChanged
+      title: '`component`, `from`, `to`, `readOnly`'
+      summary: FR-18-072
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/OpsHealthChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa phân vùng `component`
+          bindingVersion: 0.5.0
+    DlqRecord:
+      name: DlqRecord
+      title: Bản tin lỗi kèm header ngữ cảnh chuẩn (FRS bảng 4.1b)
+      contentType: application/octet-stream
+      headers:
+        $ref: '#/components/schemas/DlqRecordHeaders'
+      payload:
+        $ref: '#/components/schemas/DlqRecordPayload'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Khóa `dh-source-ph:dh-flow`; 6 phân vùng, giữ 7 ngày.
+          bindingVersion: 0.5.0
+    ExternalEvent:
+      name: ExternalEvent
+      title: Sự kiện của phân hệ khác (phong bì CloudEvents)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ExternalEvent'
+  schemas:
+    OpsParamChangedData:
+      type: object
+      properties:
+        ns:
+          type: string
+        key:
+          $ref: '#/components/schemas/ParamKey'
+        version:
+          type: integer
+        scope:
+          type: string
+          enum:
+          - PLATFORM
+          - TENANT
+        changeType:
+          type: string
+          enum:
+          - VALUE_CHANGED
+          - SCHEMA_CHANGED
+          - FLAG_CHANGED
+          - EGRESS_CHANGED
+        changedBy:
+          type: string
+        secure:
+          type: boolean
+      required:
+      - ns
+      - key
+      - version
+      - scope
+      - changeType
+      - changedBy
+      - secure
+    OpsParamChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.param.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsParamChangedData'
+    OpsParamApprovalRequestedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        key:
+          $ref: '#/components/schemas/ParamKey'
+        requestedBy:
+          type: string
+        approvalOwner:
+          $ref: '#/components/schemas/ModuleCode'
+      required:
+      - requestId
+      - key
+      - requestedBy
+      - approvalOwner
+    OpsParamApprovalRequested:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.param.approval-requested.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsParamApprovalRequestedData'
+    OpsFeatureFlagChangedData:
+      type: object
+      properties:
+        flagKey:
+          $ref: '#/components/schemas/FlagKey'
+        enabled:
+          type: boolean
+        owner:
+          type: string
+        retireBy:
+          type: string
+          format: date
+      required:
+      - flagKey
+      - enabled
+      - owner
+    OpsFeatureFlagChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.feature-flag.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsFeatureFlagChangedData'
+    OpsEgressChangedData:
+      type: object
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        host:
+          type: string
+        port:
+          type: integer
+        purpose:
+          $ref: '#/components/schemas/EgressPurpose'
+        action:
+          type: string
+          enum:
+          - ADDED
+          - REMOVED
+          - EXPIRED
+        expiresAt:
+          type: string
+          format: date
+      required:
+      - entryId
+      - host
+      - port
+      - purpose
+      - action
+    OpsEgressChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.egress.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsEgressChangedData'
+    OpsDlqReceivedData:
+      type: object
+      properties:
+        sourceCode:
+          $ref: '#/components/schemas/SourceCode'
+        count:
+          type: integer
+        poisonCount:
+          type: integer
+        windowStart:
+          type: string
+          format: date-time
+      required:
+      - sourceCode
+      - count
+      - poisonCount
+      - windowStart
+    OpsDlqReceived:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.dlq.received.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsDlqReceivedData'
+    OpsDlqPoisonDetectedData:
+      type: object
+      properties:
+        dlqId:
+          type: string
+          format: uuid
+        sourceCode:
+          $ref: '#/components/schemas/SourceCode'
+        missingFields:
+          type: array
+          items:
+            type: string
+        errorCode:
+          type: string
+      required:
+      - dlqId
+      - sourceCode
+      - missingFields
+    OpsDlqPoisonDetected:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.dlq.poison-detected.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsDlqPoisonDetectedData'
+    OpsDlqStateChangedData:
+      type: object
+      properties:
+        dlqId:
+          type: string
+          format: uuid
+        from:
+          $ref: '#/components/schemas/DlqStatus'
+        to:
+          $ref: '#/components/schemas/DlqStatus'
+        reasonCode:
+          type: string
+        actor:
+          type: string
+      required:
+      - dlqId
+      - to
+      - actor
+    OpsDlqStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.dlq.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsDlqStateChangedData'
+    OpsDlqThresholdCrossedData:
+      type: object
+      properties:
+        sourceCode:
+          $ref: '#/components/schemas/SourceCode'
+        type:
+          type: string
+          enum:
+          - DEPTH
+          - AGE
+          - POISON_RATE
+          - REPLAY_FAILURE_RATE
+          - RECONCILE_MISSING
+        value:
+          type: number
+        threshold:
+          type: number
+      required:
+      - sourceCode
+      - type
+      - value
+      - threshold
+    OpsDlqThresholdCrossed:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.dlq.threshold-crossed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsDlqThresholdCrossedData'
+    OpsReplayRequestedData:
+      type: object
+      properties:
+        dlqId:
+          type: string
+          format: uuid
+        revision:
+          type: integer
+        idempotencyKey:
+          $ref: '#/components/schemas/ReplayIdempotencyKey'
+        jobId:
+          type: string
+          format: uuid
+        payloadRef:
+          type: string
+        sourceCode:
+          $ref: '#/components/schemas/SourceCode'
+        flow:
+          type: string
+      required:
+      - dlqId
+      - revision
+      - idempotencyKey
+      - payloadRef
+      - sourceCode
+    OpsReplayRequested:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.replay.requested.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsReplayRequestedData'
+    OpsReplayJobStateChangedData:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        from:
+          $ref: '#/components/schemas/ReplayJobStatus'
+        to:
+          $ref: '#/components/schemas/ReplayJobStatus'
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+      required:
+      - jobId
+      - to
+      - total
+      - succeeded
+      - failed
+    OpsReplayJobStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.replay-job.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsReplayJobStateChangedData'
+    OpsErrorGuideChangedData:
+      type: object
+      properties:
+        errorCode:
+          $ref: '#/components/schemas/ErrorCode'
+        version:
+          type: integer
+        owner:
+          $ref: '#/components/schemas/ModuleCode'
+      required:
+      - errorCode
+      - version
+      - owner
+    OpsErrorGuideChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.error-guide.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsErrorGuideChangedData'
+    OpsNotificationBouncedData:
+      type: object
+      properties:
+        recipientRef:
+          $ref: '#/components/schemas/RecipientRef'
+        bounceType:
+          type: string
+          enum:
+          - HARD
+          - SOFT
+          - COMPLAINT
+        suppressed:
+          type: boolean
+        channel:
+          type: string
+          enum:
+          - EMAIL
+          - SMS
+      required:
+      - recipientRef
+      - bounceType
+      - suppressed
+    OpsNotificationBounced:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.notification.bounced.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsNotificationBouncedData'
+    OpsNotificationFailedData:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        templateCode:
+          $ref: '#/components/schemas/TemplateCode'
+        channel:
+          $ref: '#/components/schemas/Channel'
+        errorCode:
+          type: string
+        callerPh:
+          $ref: '#/components/schemas/ModuleCode'
+      required:
+      - notificationId
+      - templateCode
+      - channel
+      - errorCode
+      - callerPh
+    OpsNotificationFailed:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.notification.failed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsNotificationFailedData'
+    OpsTaskStateChangedData:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/TaskTypeCode'
+        sourceRef:
+          type: string
+        from:
+          $ref: '#/components/schemas/TaskStatus'
+        to:
+          $ref: '#/components/schemas/TaskStatus'
+        assignee:
+          type: string
+      required:
+      - taskId
+      - type
+      - sourceRef
+      - to
+    OpsTaskStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.task.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsTaskStateChangedData'
+    OpsCalendarChangedData:
+      type: object
+      properties:
+        year:
+          type: integer
+        calendarScope:
+          type: string
+          enum:
+          - COMMON
+          - TENANT
+        version:
+          type: integer
+      required:
+      - year
+      - calendarScope
+      - version
+    OpsCalendarChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.calendar.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsCalendarChangedData'
+    OpsMaintenanceWindowChangedData:
+      type: object
+      properties:
+        windowId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - MAINTENANCE
+          - FREEZE
+        envs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Environment'
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum:
+          - PLANNED
+          - ACTIVE
+          - COMPLETED
+          - CANCELLED
+      required:
+      - windowId
+      - kind
+      - envs
+      - start
+      - end
+      - state
+    OpsMaintenanceWindowChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.maintenance-window.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsMaintenanceWindowChangedData'
+    OpsIncidentOpenedData:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          format: uuid
+        severity:
+          $ref: '#/components/schemas/Severity'
+        sourceRef:
+          type: string
+        hasPersonalData:
+          type: boolean
+      required:
+      - incidentId
+      - severity
+      - hasPersonalData
+    OpsIncidentOpened:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.incident.opened.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsIncidentOpenedData'
+    OpsIncidentStateChangedData:
+      type: object
+      properties:
+        incidentId:
+          type: string
+          format: uuid
+        from:
+          $ref: '#/components/schemas/IncidentStatus'
+        to:
+          $ref: '#/components/schemas/IncidentStatus'
+        severity:
+          $ref: '#/components/schemas/Severity'
+      required:
+      - incidentId
+      - to
+      - severity
+    OpsIncidentStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.incident.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsIncidentStateChangedData'
+    OpsBackupFailedData:
+      type: object
+      properties:
+        objectRef:
+          type: string
+        tool:
+          $ref: '#/components/schemas/BackupTool'
+        lastSuccessAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+      required:
+      - objectRef
+      - tool
+      - reason
+    OpsBackupFailed:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.backup.failed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsBackupFailedData'
+    OpsRestoreVerificationCompletedData:
+      type: object
+      properties:
+        objectRef:
+          type: string
+        result:
+          type: string
+          enum:
+          - PASSED
+          - FAILED
+        rowCountDiff:
+          type: integer
+        durationSec:
+          type: integer
+      required:
+      - objectRef
+      - result
+      - durationSec
+    OpsRestoreVerificationCompleted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.restore-verification.completed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsRestoreVerificationCompletedData'
+    OpsTenantRestoreStateChangedData:
+      type: object
+      properties:
+        restoreId:
+          type: string
+          format: uuid
+        step:
+          type: integer
+        from:
+          $ref: '#/components/schemas/RestoreStatus'
+        to:
+          $ref: '#/components/schemas/RestoreStatus'
+        pointInTime:
+          type: string
+          format: date-time
+      required:
+      - restoreId
+      - to
+      - pointInTime
+    OpsTenantRestoreStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.tenant-restore.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsTenantRestoreStateChangedData'
+    OpsTenantRestoredData:
+      type: object
+      properties:
+        restoreId:
+          type: string
+          format: uuid
+        pointInTime:
+          type: string
+          format: date-time
+        scope:
+          type: string
+          enum:
+          - FULL_TENANT
+          - MODULES
+        modules:
+          type: array
+          items:
+            type: string
+        completedAt:
+          type: string
+          format: date-time
+      required:
+      - restoreId
+      - pointInTime
+      - scope
+      - completedAt
+    OpsTenantRestored:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.tenant.restored.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsTenantRestoredData'
+    OpsTenantExportCompletedData:
+      type: object
+      properties:
+        exportId:
+          type: string
+          format: uuid
+        result:
+          $ref: '#/components/schemas/JobStatus'
+        sizeBytes:
+          type: integer
+        manifestSha256:
+          $ref: '#/components/schemas/Sha256'
+      required:
+      - exportId
+      - result
+    OpsTenantExportCompleted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.tenant-export.completed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsTenantExportCompletedData'
+    OpsMergeTransferStateChangedData:
+      type: object
+      properties:
+        mergePlanId:
+          type: string
+          format: uuid
+        module:
+          type: string
+        from:
+          $ref: '#/components/schemas/JobStatus'
+        to:
+          $ref: '#/components/schemas/JobStatus'
+        rows:
+          type: integer
+        dryRun:
+          type: boolean
+      required:
+      - mergePlanId
+      - module
+      - to
+      - dryRun
+    OpsMergeTransferStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.merge-transfer.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsMergeTransferStateChangedData'
+    OpsMigrationRunCompletedData:
+      type: object
+      properties:
+        runId:
+          type: string
+          format: uuid
+        planCode:
+          type: string
+        mode:
+          $ref: '#/components/schemas/RunMode'
+        result:
+          $ref: '#/components/schemas/MigrationRunStatus'
+        read:
+          type: integer
+        written:
+          type: integer
+        rejected:
+          type: integer
+      required:
+      - runId
+      - planCode
+      - mode
+      - result
+      - read
+      - written
+      - rejected
+    OpsMigrationRunCompleted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.migration.run-completed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsMigrationRunCompletedData'
+    OpsMigrationCredentialReissueRequiredData:
+      type: object
+      properties:
+        systemCode:
+          type: string
+        credentialType:
+          $ref: '#/components/schemas/CredentialKind'
+        count:
+          type: integer
+        runId:
+          type: string
+          format: uuid
+      required:
+      - systemCode
+      - credentialType
+      - count
+      - runId
+    OpsMigrationCredentialReissueRequired:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.migration.credential-reissue-required.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsMigrationCredentialReissueRequiredData'
+    OpsCutoverStateChangedData:
+      type: object
+      properties:
+        groupCode:
+          type: string
+        from:
+          $ref: '#/components/schemas/CutoverStatus'
+        to:
+          $ref: '#/components/schemas/CutoverStatus'
+        routes:
+          type: array
+          items:
+            type: string
+        rollbackUntil:
+          type: string
+          format: date-time
+        trafficPercent:
+          type: integer
+      required:
+      - groupCode
+      - to
+      - routes
+    OpsCutoverStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.cutover.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsCutoverStateChangedData'
+    OpsReportPublishedData:
+      type: object
+      properties:
+        period:
+          type: string
+        reportId:
+          type: string
+          format: uuid
+        metrics:
+          $ref: '#/components/schemas/ReportMetrics'
+      required:
+      - period
+      - reportId
+      - metrics
+    OpsReportPublished:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.report.published.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsReportPublishedData'
+    OpsHealthChangedData:
+      type: object
+      properties:
+        component:
+          type: string
+        from:
+          $ref: '#/components/schemas/HealthState'
+        to:
+          $ref: '#/components/schemas/HealthState'
+        readOnly:
+          type: boolean
+      required:
+      - component
+      - to
+      - readOnly
+    OpsHealthChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      - tenantid
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-platform/ops
+        type:
+          type: string
+          const: ops.health.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/OpsHealthChangedData'
+    ExternalEvent:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - data
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+        type:
+          type: string
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          type: string
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          description: Dữ liệu theo hợp đồng của phân hệ phát; PH-18 chỉ đọc mã, trạng thái.
+    DlqRecordHeaders:
+      type: object
+      required:
+      - dh-tenant
+      - dh-source-ph
+      - dh-dlq-reason
+      - dh-dlq-error-code
+      - dh-dlq-stage
+      - dh-dlq-attempts
+      properties:
+        dh-tenant:
+          type: string
+          description: Mã tenant, khớp tiền tố topic
+        dh-source-ph:
+          type: string
+          description: Phân hệ nguồn, ví dụ `PH-04`
+        dh-dlq-reason:
+          type: string
+          description: Lý do ngắn, ví dụ `TARGET_UNAVAILABLE`
+        dh-dlq-error-code:
+          type: string
+          description: Mã ERR của nguồn
+        dh-dlq-stage:
+          type: string
+          description: Bước lỗi trong luồng
+        dh-dlq-attempts:
+          type: string
+          description: Số lần nguồn đã thử (chuỗi số)
+        dh-flow:
+          type: string
+          description: 'Bắt buộc với nguồn `KAFKA_TOPIC`: mã luồng để phát lại đúng lối vào'
+        dh-version:
+          type: string
+          description: 'Bắt buộc với nguồn `KAFKA_TOPIC`: phiên bản luồng'
+        traceparent:
+          type: string
+          description: W3C Trace Context để lấy chẩn đoán PH-13
+        dh-message-id:
+          type: string
+          description: Định danh bản tin gốc để khử trùng
+    DlqRecordPayload:
+      description: Thân bản tin gốc không sửa (JSON hoặc nhị phân); > `18.dlq.payload.inline-max-kb` thì PH-18 lưu ở Garage `dh-{tenant}-ops`.
+    ReportMetrics:
+      type: object
+      properties:
+        dlqOpen:
+          type: integer
+        dlqResolved:
+          type: integer
+        replaySuccessPercent:
+          type: number
+        backupFreshPercent:
+          type: number
+        restoreVerificationsPassed:
+          type: integer
+        incidentsOpened:
+          type: integer
+        incidentsClosed:
+          type: integer
+        migrationRuns:
+          type: integer
+        notificationsSent:
+          type: integer
+      required:
+      - dlqOpen
+      - dlqResolved
+      - incidentsOpened
+      - incidentsClosed
+    ErrorCode:
+      type: string
+      pattern: ^ERR-[0-9]{2}-[0-9]{3}$
+      description: Mã lỗi của phân hệ nguồn hoặc của PH-18.
+    BackupTool:
+      type: string
+      enum:
+      - CNPG_BARMAN
+      - DH_TENANT_EXPORT
+      - RCLONE
+      - OPENBAO_RAFT
+      - VELERO
+      - VELERO_KOPIA
+      - GIT_MIRROR
+      - HARBOR_REPLICATION
+      - CLICKHOUSE_BACKUP
+      - PH13_WORM
+      - SHAMIR_OFFLINE
+    RunMode:
+      type: string
+      enum:
+      - DRY_RUN
+      - REAL
+    Severity:
+      type: string
+      enum:
+      - SEV1
+      - SEV2
+      - SEV3
+      - SEV4
+    SourceCode:
+      type: string
+      pattern: ^[a-z0-9-]{3,40}$
+      description: Mã nguồn DLQ (FR-18-012).
+    RestoreStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - APPROVED
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+      - ROLLED_BACK
+      - REJECTED
+      - CANCELLED
+    ReplayIdempotencyKey:
+      type: string
+      pattern: ^[0-9a-f-]{36}:[0-9]+$
+      description: Khóa lũy đẳng phát lại `dlqId:revision` (ADR-182).
+    Channel:
+      type: string
+      enum:
+      - EMAIL
+      - SMS
+      - IN_APP
+    MigrationRunStatus:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - SUCCEEDED_WITH_ERRORS
+      - FAILED
+      - CANCELLED
+    ModuleCode:
+      type: string
+      pattern: ^PH-[0-9]{2}$
+      description: Mã phân hệ, ví dụ `PH-04`.
+    FlagKey:
+      type: string
+      pattern: ^ff\.[a-z0-9-]+\.[a-z0-9-]+$
+      description: Cờ tính năng `ff.{module}.{tính-năng}` (FR-18-009).
+    ReplayJobStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - APPROVED
+      - RUNNING
+      - PAUSED
+      - COMPLETED
+      - PARTIAL
+      - FAILED
+      - CANCELLED
+      - REJECTED
+    CredentialKind:
+      type: string
+      enum:
+      - OAUTH_CLIENT
+      - CLIENT_CERT
+      - API_KEY_LEGACY
+      - PASSWORD
+    ParamKey:
+      type: string
+      pattern: ^[a-z0-9][a-z0-9.-]{2,127}$
+      description: Khóa tham số có tiền tố không gian tên, ví dụ `18.dlq.replay.batch-max`.
+    Sha256:
+      type: string
+      pattern: ^[0-9a-f]{64}$
+      description: Tổng kiểm tra SHA-256 dạng hex.
+    HealthState:
+      type: string
+      enum:
+      - UP
+      - DEGRADED
+      - DOWN
+    JobStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - SUCCEEDED_WITH_ERRORS
+      - FAILED
+      - CANCELLED
+    TemplateCode:
+      type: string
+      pattern: ^[a-z0-9.-]{3,80}$
+      description: Mã mẫu thông báo (FR-18-035).
+    Environment:
+      type: string
+      enum:
+      - PROD
+      - STAGING
+      - TEST
+    TaskTypeCode:
+      type: string
+      pattern: ^ph[0-9]{2}\.[a-z0-9.-]+$
+      description: Loại việc có tiền tố `ph{nn}.` (FR-18-042).
+    IncidentStatus:
+      type: string
+      enum:
+      - OPEN
+      - INVESTIGATING
+      - MITIGATED
+      - RESOLVED
+      - CLOSED
+    CutoverStatus:
+      type: string
+      enum:
+      - PARALLEL
+      - SHADOW_OK
+      - PARTIAL_CUTOVER
+      - CUT_OVER
+      - ROLLED_BACK
+    DlqStatus:
+      type: string
+      enum:
+      - NEW
+      - TRIAGED
+      - REPLAY_PENDING
+      - REPLAYING
+      - RESOLVED
+      - REPLAY_FAILED
+      - DISCARDED
+      - POISON
+      - EXPIRED
+    EgressPurpose:
+      type: string
+      enum:
+      - DEV_PORTAL_BACKEND
+      - GIT_REPO
+      - WEBHOOK
+      - MODEL_PROVIDER
+      - OTHER
+    TaskStatus:
+      type: string
+      enum:
+      - OPEN
+      - IN_PROGRESS
+      - DONE
+      - CANCELLED
+      - EXPIRED
+    RecipientRef:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/RecipientKind'
+        ref:
+          type: string
+      required:
+      - kind
+      - ref
+    RecipientKind:
+      type: string
+      enum:
+      - USER
+      - GROUP
+      - ROLE
+      - SYSTEM_CONTACT
+      - ON_CALL
